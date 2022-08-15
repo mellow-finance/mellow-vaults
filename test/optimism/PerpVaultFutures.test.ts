@@ -1,7 +1,13 @@
 import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { encodeToBytes, mint, sleep, withSigner, randomAddress } from "../library/Helpers";
+import {
+    encodeToBytes,
+    mint,
+    sleep,
+    withSigner,
+    randomAddress,
+} from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault, ERC20Vault, PerpFuturesVault } from "../types";
 import { combineVaults, setupVault } from "../../deploy/0000_utils";
@@ -147,9 +153,9 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     ) => {
                         const delta = x.sub(y).abs();
                         const max = x.gt(y) ? x : y;
-                        const deltaM = delta.mul(closeMeasure); 
+                        const deltaM = delta.mul(closeMeasure);
 
-                        return (max.gt(deltaM));
+                        return max.gt(deltaM);
                     };
 
                     this.pushIntoVault = async (x: BigNumber) => {
@@ -254,7 +260,6 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
         });
 
         describe("#tvl", () => {
-            
             it("zero tvl when nothing is done", async () => {
                 const tvl = await this.subject.tvl();
                 expect(tvl[0][0]).to.be.eq(BigNumber.from(0));
@@ -432,28 +437,26 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(isSpotClose).to.be.true;
             });
 
-            it ("access control", async() => {
-                it ("anyone can call", async() => {
-
+            it("access control", async () => {
+                it("anyone can call", async () => {
                     await withSigner(randomAddress(), async (s) => {
-                        await expect(this.subject.connect(s).tvl()).to.not
-                            .be.reverted;
+                        await expect(this.subject.connect(s).tvl()).to.not.be
+                            .reverted;
                     });
-
                 });
-
             });
         });
 
         describe("#getPositionSize", () => {
-            
-            it ("positionSize equals zero when no position opened", async () => {
+            it("positionSize equals zero when no position opened", async () => {
                 const positionSize = await this.subject.getPositionSize();
                 expect(positionSize).to.be.eq(0);
             });
 
-            it ("positionSize equals to the amount of ether got (long)", async () => {
-                const tx = await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
+            it("positionSize equals to the amount of ether got (long)", async () => {
+                const tx = await this.pushIntoVault(
+                    BigNumber.from(10).pow(6).mul(4)
+                ); // longing ether
                 const receipt = await tx.wait();
                 let etherAmount = 0;
                 for (const event of receipt.events) {
@@ -466,8 +469,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(positionSize).to.be.gt(BigNumber.from(0));
             });
 
-            it ("positionSize equals to the amount of ether got (short)", async () => {
-
+            it("positionSize equals to the amount of ether got (short)", async () => {
                 await this.subject.updateLeverage(
                     BigNumber.from(10).pow(9).mul(5),
                     false,
@@ -475,7 +477,9 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     0
                 ); // change sentiment to short
 
-                const tx = await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
+                const tx = await this.pushIntoVault(
+                    BigNumber.from(10).pow(6).mul(4)
+                ); // longing ether
                 const receipt = await tx.wait();
                 let etherAmount = 0;
                 for (const event of receipt.events) {
@@ -489,8 +493,10 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(positionSize).to.be.lt(BigNumber.from(0));
             });
 
-            it ("positionSize is zero after position closed (long)", async () => {
-                const tx = await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
+            it("positionSize is zero after position closed (long)", async () => {
+                const tx = await this.pushIntoVault(
+                    BigNumber.from(10).pow(6).mul(4)
+                ); // longing ether
                 const oldSize = await this.subject.getPositionSize();
                 expect(oldSize).to.be.gt(BigNumber.from(0));
                 await this.subject.closePosition(
@@ -501,8 +507,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(newSize).to.be.eq(BigNumber.from(0));
             });
 
-            it ("positionSize is zero after position closed (short)", async () => {
-
+            it("positionSize is zero after position closed (short)", async () => {
                 await this.subject.updateLeverage(
                     BigNumber.from(10).pow(9).mul(5),
                     false,
@@ -510,7 +515,9 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     0
                 );
 
-                const tx = await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
+                const tx = await this.pushIntoVault(
+                    BigNumber.from(10).pow(6).mul(4)
+                ); // longing ether
                 const oldSize = await this.subject.getPositionSize();
                 expect(oldSize).to.be.lt(BigNumber.from(0));
                 await this.subject.closePosition(
@@ -520,12 +527,12 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 const newSize = await this.subject.getPositionSize();
                 expect(newSize).to.be.eq(BigNumber.from(0));
             });
-          
-            it ("position size is updating in both sides", async () => {
+
+            it("position size is updating in both sides", async () => {
                 await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
                 const veryOldSize = await this.subject.getPositionSize();
 
-                await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); 
+                await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4));
                 const oldSize = await this.subject.getPositionSize();
 
                 await this.pullFromVault(BigNumber.from(10).pow(6));
@@ -534,35 +541,36 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(veryOldSize).to.be.lt(oldSize);
                 expect(veryOldSize).to.be.lt(newSize);
                 expect(oldSize).to.be.gt(newSize);
-            })
+            });
 
-            it ("access control", async() => {
-                it ("anyone can call", async() => {
-                    
+            it("access control", async () => {
+                it("anyone can call", async () => {
                     await withSigner(randomAddress(), async (s) => {
-                        await expect(this.subject.connect(s).getPositionSize()).to.not
-                            .be.reverted;
+                        await expect(this.subject.connect(s).getPositionSize())
+                            .to.not.be.reverted;
                     });
-
                 });
-            })
-
+            });
         });
 
         describe("#supportsInterface", () => {
             it(`returns true if this contract supports ${PERP_VAULT_INTERFACE_ID} interface`, async () => {
                 expect(
-                    await this.subject.supportsInterface(PERP_VAULT_INTERFACE_ID)
+                    await this.subject.supportsInterface(
+                        PERP_VAULT_INTERFACE_ID
+                    )
                 ).to.be.true;
             });
-    
+
             describe("access control:", () => {
                 it("allowed: any address", async () => {
                     await withSigner(randomAddress(), async (s) => {
                         await expect(
                             this.subject
                                 .connect(s)
-                                .supportsInterface(INTEGRATION_VAULT_INTERFACE_ID)
+                                .supportsInterface(
+                                    INTEGRATION_VAULT_INTERFACE_ID
+                                )
                         ).to.not.be.reverted;
                     });
                 });
@@ -570,9 +578,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
         });
 
         describe("#initialize", () => {
-
             beforeEach(async () => {
-
                 this.nft = await ethers.provider.send("eth_getStorageAt", [
                     this.subject.address,
                     "0x4", // address of _nft
@@ -583,9 +589,8 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     "0x0000000000000000000000000000000000000000000000000000000000000000",
                 ]);
 
-                const {vethAddress} = await getNamedAccounts();
+                const { vethAddress } = await getNamedAccounts();
                 this.veth = vethAddress;
-
             });
 
             it("emits Initialized event", async () => {
@@ -595,7 +600,12 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .initialize(this.nft, this.veth, BigNumber.from(10).pow(9).mul(5), true)
+                                .initialize(
+                                    this.nft,
+                                    this.veth,
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    true
+                                )
                         ).to.emit(this.subject, "Initialized");
                     }
                 );
@@ -608,7 +618,12 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .initialize(this.nft, this.veth, BigNumber.from(10).pow(9).mul(5), true)
+                                .initialize(
+                                    this.nft,
+                                    this.veth,
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    true
+                                )
                         ).not.to.be.reverted;
                     }
                 );
@@ -621,74 +636,131 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .initialize(this.nft, this.veth, BigNumber.from(10).pow(9).mul(5), false)
+                                .initialize(
+                                    this.nft,
+                                    this.veth,
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    false
+                                )
                         ).not.to.be.reverted;
                     }
                 );
             });
 
-            it ("reverts when a token market is closed", async () => {
-                const lunaAddress = "0xB24F50Dd9918934AB2228bE7A097411ca28F6C14";
+            it("reverts when a token market is closed", async () => {
+                const lunaAddress =
+                    "0xB24F50Dd9918934AB2228bE7A097411ca28F6C14";
                 await withSigner(
                     this.perpVaultGovernance.address,
                     async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).initialize(this.nft, lunaAddress, BigNumber.from(10).pow(9).mul(5), true)
-                    ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                });
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .initialize(
+                                    this.nft,
+                                    lunaAddress,
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    true
+                                )
+                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                    }
+                );
             });
 
-            it ("okay with some third token", async () => {
-                const maticAddress = "0xBe5de48197fc974600929196239E264EcB703eE8";
+            it("okay with some third token", async () => {
+                const maticAddress =
+                    "0xBe5de48197fc974600929196239E264EcB703eE8";
                 await withSigner(
                     this.perpVaultGovernance.address,
                     async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).initialize(this.nft, maticAddress, BigNumber.from(10).pow(9).mul(5), true)
-                    ).not.to.be.reverted;
-                });
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .initialize(
+                                    this.nft,
+                                    maticAddress,
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    true
+                                )
+                        ).not.to.be.reverted;
+                    }
+                );
             });
 
-            it ("reverts when no Perp token", async () => {
+            it("reverts when no Perp token", async () => {
                 await withSigner(
                     this.perpVaultGovernance.address,
                     async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).initialize(this.nft, randomAddress(), BigNumber.from(10).pow(9).mul(5), true)
-                    ).to.be.reverted;
-                });
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .initialize(
+                                    this.nft,
+                                    randomAddress(),
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    true
+                                )
+                        ).to.be.reverted;
+                    }
+                );
             });
 
-            it ("revertes with too large leverage multiplier", async () => {
+            it("revertes with too large leverage multiplier", async () => {
                 await withSigner(
                     this.perpVaultGovernance.address,
                     async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).initialize(this.nft, this.veth, BigNumber.from(10).pow(10), true)
-                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .initialize(
+                                    this.nft,
+                                    this.veth,
+                                    BigNumber.from(10).pow(10),
+                                    true
+                                )
+                        ).to.be.revertedWith(Exceptions.INVALID_VALUE);
 
-                    await expect(
-                        this.subject.connect(signer).initialize(this.nft, this.veth, BigNumber.from(10).pow(10), false)
-                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                });
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .initialize(
+                                    this.nft,
+                                    this.veth,
+                                    BigNumber.from(10).pow(10),
+                                    false
+                                )
+                        ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                    }
+                );
             });
 
-            it ("okay with zero leverage multiplier", async () => {
+            it("okay with zero leverage multiplier", async () => {
                 await withSigner(
                     this.perpVaultGovernance.address,
                     async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).initialize(this.nft, this.veth, BigNumber.from(0), true)
-                    ).not.to.be.reverted;
-                });
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .initialize(
+                                    this.nft,
+                                    this.veth,
+                                    BigNumber.from(0),
+                                    true
+                                )
+                        ).not.to.be.reverted;
+                    }
+                );
             });
 
-
-            it ("access control", async () => {
+            it("access control", async () => {
                 it("not allowed: any address", async () => {
                     await expect(
-                        this.subject
-                            .initialize(this.nft, this.veth, BigNumber.from(0), true)
+                        this.subject.initialize(
+                            this.nft,
+                            this.veth,
+                            BigNumber.from(0),
+                            true
+                        )
                     ).to.be.reverted;
                 });
             });
@@ -703,10 +775,18 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     await withSigner(
                         this.perpVaultGovernance.address,
                         async (signer) => {
-                        await expect(
-                            this.subject.connect(signer).initialize(0, this.veth, BigNumber.from(0), true)
-                        ).to.be.revertedWith(Exceptions.INIT);
-                    });
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(
+                                        0,
+                                        this.veth,
+                                        BigNumber.from(0),
+                                        true
+                                    )
+                            ).to.be.revertedWith(Exceptions.INIT);
+                        }
+                    );
                 });
             });
 
@@ -715,78 +795,135 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     await withSigner(
                         this.perpVaultGovernance.address,
                         async (signer) => {
-                        await expect(
-                            this.subject.connect(signer).initialize(0, this.veth, BigNumber.from(0), true)
-                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
-                    });
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(
+                                        0,
+                                        this.veth,
+                                        BigNumber.from(0),
+                                        true
+                                    )
+                            ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                        }
+                    );
                 });
             });
-
         });
-        
 
         describe("#updateLeverage", () => {
-
-
-            it ("call with the same parameter goes okay", async () => {
-                await expect(this.subject.updateLeverage(BigNumber.from(10).pow(9).mul(5), true, ethers.constants.MaxUint256, 0)).not.to.be.reverted;
+            it("call with the same parameter goes okay", async () => {
+                await expect(
+                    this.subject.updateLeverage(
+                        BigNumber.from(10).pow(9).mul(5),
+                        true,
+                        ethers.constants.MaxUint256,
+                        0
+                    )
+                ).not.to.be.reverted;
             });
 
-            it ("revertes with too large leverage multiplier (long & short)", async () => {
+            it("revertes with too large leverage multiplier (long & short)", async () => {
                 await expect(
-                    this.subject.updateLeverage(BigNumber.from(10).pow(10), true, ethers.constants.MaxUint256, 0)
+                    this.subject.updateLeverage(
+                        BigNumber.from(10).pow(10),
+                        true,
+                        ethers.constants.MaxUint256,
+                        0
+                    )
                 ).to.be.revertedWith(Exceptions.INVALID_VALUE);
 
                 await expect(
-                    this.subject.updateLeverage(BigNumber.from(10).pow(10), false, ethers.constants.MaxUint256, 0)
+                    this.subject.updateLeverage(
+                        BigNumber.from(10).pow(10),
+                        false,
+                        ethers.constants.MaxUint256,
+                        0
+                    )
                 ).to.be.revertedWith(Exceptions.INVALID_VALUE);
             });
 
             it("emits UpdatedLeverage event", async () => {
                 await expect(
-                    this.subject.updateLeverage(BigNumber.from(10).pow(9), true, ethers.constants.MaxUint256, 0)
+                    this.subject.updateLeverage(
+                        BigNumber.from(10).pow(9),
+                        true,
+                        ethers.constants.MaxUint256,
+                        0
+                    )
                 ).to.emit(this.subject, "UpdatedLeverage");
             });
 
             it("reverts with wrong deadline", async () => {
                 await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
                 await expect(
-                    this.subject.updateLeverage(BigNumber.from(10).pow(9), true, 1, 0)
+                    this.subject.updateLeverage(
+                        BigNumber.from(10).pow(9),
+                        true,
+                        1,
+                        0
+                    )
                 ).to.be.reverted;
             });
 
-            it ("leverage is updated proportionally", async () => {
+            it("leverage is updated proportionally", async () => {
                 await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
-                const fourLeveragePositionSize = await this.subject.getPositionSize();
+                const fourLeveragePositionSize =
+                    await this.subject.getPositionSize();
 
-                await this.subject.updateLeverage(BigNumber.from(10).pow(9).mul(2), true, ethers.constants.MaxUint256, 0);
-                const twoLeveragePositionSize = await this.subject.getPositionSize();
+                await this.subject.updateLeverage(
+                    BigNumber.from(10).pow(9).mul(2),
+                    true,
+                    ethers.constants.MaxUint256,
+                    0
+                );
+                const twoLeveragePositionSize =
+                    await this.subject.getPositionSize();
 
-                await this.subject.updateLeverage(BigNumber.from(10).pow(9).mul(3), false, ethers.constants.MaxUint256, 0);
-                const threeLeverageShortPositionSize = await this.subject.getPositionSize();
+                await this.subject.updateLeverage(
+                    BigNumber.from(10).pow(9).mul(3),
+                    false,
+                    ethers.constants.MaxUint256,
+                    0
+                );
+                const threeLeverageShortPositionSize =
+                    await this.subject.getPositionSize();
 
-                const isAClose = await this.isClose(fourLeveragePositionSize.mul(2), twoLeveragePositionSize.mul(4), BigNumber.from(50));
-                const isBClose = await this.isClose(threeLeverageShortPositionSize.mul(4).mul(-1), fourLeveragePositionSize.mul(3), BigNumber.from(50))
+                const isAClose = await this.isClose(
+                    fourLeveragePositionSize.mul(2),
+                    twoLeveragePositionSize.mul(4),
+                    BigNumber.from(50)
+                );
+                const isBClose = await this.isClose(
+                    threeLeverageShortPositionSize.mul(4).mul(-1),
+                    fourLeveragePositionSize.mul(3),
+                    BigNumber.from(50)
+                );
 
                 expect(isAClose).to.be.true;
                 expect(isBClose).to.be.true;
             });
 
-            it ("access control", async () => {
+            it("access control", async () => {
                 it("not allowed: any address", async () => {
-                    await withSigner(
-                        randomAddress(),
-                        async (signer) => {
-                            await expect(
-                                this.subject.connect(signer).updateLeverage(BigNumber.from(10).pow(9).mul(5), true, ethers.constants.MaxUint256, 0)
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .updateLeverage(
+                                    BigNumber.from(10).pow(9).mul(5),
+                                    true,
+                                    ethers.constants.MaxUint256,
+                                    0
+                                )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
-
         });
-        
-        describe("#closePosition", () => { // several cases are tested earlier
+
+        describe("#closePosition", () => {
+            // several cases are tested earlier
 
             it("emits ClosedPosition event", async () => {
                 await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
@@ -797,33 +934,34 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
 
             it("reverts with wrong deadline", async () => {
                 await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
-                await expect(
-                    this.subject.closePosition(1, 0)
-                ).to.be.reverted;
+                await expect(this.subject.closePosition(1, 0)).to.be.reverted;
             });
 
-            it ("goes to zero position", async () => {
+            it("goes to zero position", async () => {
                 await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4)); // longing ether
-                await this.subject.closePosition(ethers.constants.MaxUint256, 0);
+                await this.subject.closePosition(
+                    ethers.constants.MaxUint256,
+                    0
+                );
                 const positionSize = await this.subject.getPositionSize();
                 expect(positionSize).to.be.eq(0);
             });
 
-            it ("access control", async () => {
+            it("access control", async () => {
                 it("not allowed: any address", async () => {
-                    await withSigner(
-                        randomAddress(),
-                        async (signer) => {
-                            await expect(
-                                this.subject.connect(signer).closePosition(ethers.constants.MaxUint256, 0)
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .closePosition(ethers.constants.MaxUint256, 0)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
-
         });
 
-        describe("#adjustPosition", () => { // several cases are tested earlier
+        describe("#adjustPosition", () => {
+            // several cases are tested earlier
 
             it("emits AdjustedPosition event", async () => {
                 await expect(
@@ -831,18 +969,17 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 ).to.emit(this.subject, "AdjustedPosition");
             });
 
-            it ("access control", async () => {
+            it("access control", async () => {
                 it("not allowed: any address", async () => {
-                    await withSigner(
-                        randomAddress(),
-                        async (signer) => {
-                            await expect(
-                                this.subject.connect(signer).adjustPosition(ethers.constants.MaxUint256, 0)
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .adjustPosition(ethers.constants.MaxUint256, 0)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
-
         });
 
         integrationVaultBehavior.call(this, {});

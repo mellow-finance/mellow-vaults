@@ -86,7 +86,6 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         uint256 leverageMultiplierD_,
         bool isLongBaseToken_
     ) external {
-
         require(IBaseToken(baseToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
         IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(msg.sender))
             .delayedProtocolParams();

@@ -347,7 +347,7 @@ contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
                 }
             );
         });
-        
+
         it("initializes contract successfully", async () => {
             await withSigner(
                 this.aaveVaultGovernance.address,
