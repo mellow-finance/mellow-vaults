@@ -15,6 +15,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/CommonLibrary.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/IPerpVaultGovernance.sol";
+import "hardhat/console.sol";
 
 // FUTURE: CHECK SECURITY & SLIPPAGE EVERYWHERE
 // check liquidation scenario
@@ -85,11 +86,12 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         uint256 leverageMultiplierD_,
         bool isLongBaseToken_
     ) external {
+
         require(IBaseToken(baseToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
         IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(msg.sender))
             .delayedProtocolParams();
         uint256 maxProtocolLeverage = params.maxProtocolLeverage;
-        require(leverageMultiplierD_ <= DENOMINATOR * (maxProtocolLeverage - 1)); // leverage more than 10x isn't available on Perp (exactly 10x may be subject to precision failures)
+        require(leverageMultiplierD_ <= DENOMINATOR * (maxProtocolLeverage - 1), ExceptionsLibrary.INVALID_VALUE); // leverage more than 10x isn't available on Perp (exactly 10x may be subject to precision failures)
 
         leverageMultiplierD = leverageMultiplierD_;
         isLongBaseToken = isLongBaseToken_;
@@ -119,7 +121,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(_vaultGovernance))
             .delayedProtocolParams();
         uint256 maxProtocolLeverage = params.maxProtocolLeverage;
-        require(newLeverageMultiplierD_ <= DENOMINATOR * (maxProtocolLeverage - 1));
+        require(newLeverageMultiplierD_ <= DENOMINATOR * (maxProtocolLeverage - 1), ExceptionsLibrary.INVALID_VALUE);
 
         leverageMultiplierD = newLeverageMultiplierD_;
         isLongBaseToken = isLongBaseToken_;
@@ -224,7 +226,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         _adjustPosition(capitalToUse, opts.deadline, opts.oppositeAmountBound);
 
         uint256 freeCollateral = vault.getFreeCollateral(address(this));
-        if (usdcAmount < freeCollateral) {
+        if (usdcAmount > freeCollateral) {
             usdcAmount = freeCollateral;
         }
 
