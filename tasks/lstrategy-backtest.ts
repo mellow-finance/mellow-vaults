@@ -930,6 +930,8 @@ const execute = async (
         "upperFee1",
     ];
 
+    console.log("stEthPerToken: ");
+
     for (let i = 0; i < keys.length; ++i) {
         if (i == 0) {
             fs.writeFileSync("output.csv", keys[i], { flag: "w" });
