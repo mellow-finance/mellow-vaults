@@ -6,38 +6,11 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify chat 1
+      - name: Notify telegram chat
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_CHAT_1 }}
+          to: ${{ secrets.TELEGRAM_NOTIFICATIONS_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
-            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
-      - name: Notify chat 2
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_2 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
-      - name: Notify chat 3
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_3 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
-      - name: Notify chat 4
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_4 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
-      - name: Notify chat 5
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_5 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }} in https://github.com/${{ github.repository }}
+      
