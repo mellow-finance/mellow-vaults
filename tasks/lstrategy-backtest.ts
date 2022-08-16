@@ -421,7 +421,7 @@ class PermissionIdsLibrary {
 
 const parseFile = (
     filename: string
-): [BigNumber[], string[], BigNumber[], BigNumber[]] => {
+): [BigNumber[], string[], BigNumber[], BigNumber[], BigNumber[]] => {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: "utf-8" });
     const rows = fileContent.split("\n");
@@ -430,6 +430,7 @@ const parseFile = (
 
     let stethAmounts = new Array();
     let wethAmounts = new Array();
+    let stEthPerToken = new Array();
     let cols = rows[0].split(",");
     for (let i = 1; i < rows.length; ++i) {
         if (rows[i].length == 0) {
@@ -449,10 +450,13 @@ const parseFile = (
             if (cols[col] == "ETH_amount") {
                 wethAmounts.push(BigNumber.from(data[col]));
             }
+            if (cols[col] == "stEthPerToken") {
+                stEthPerToken.push(BigNumber.from(data[col]));
+            }
         }
     }
 
-    return [blockNumbers, prices, stethAmounts, wethAmounts];
+    return [blockNumbers, prices, stethAmounts, wethAmounts, stEthPerToken];
 };
 
 const changePrice = async (currentTick: BigNumber, context: Context) => {
@@ -680,7 +684,8 @@ const ERC20UniRebalance = async (
     context: Context,
     priceX96: BigNumber,
     wstethAmount: BigNumber,
-    wethAmount: BigNumber
+    wethAmount: BigNumber,
+    stEthPerToken: BigNumber
 ): Promise<SwapStats[]> => {
     const { ethers, getNamedAccounts } = hre;
     const totalStats: SwapStats[] = [];
@@ -740,6 +745,7 @@ const ERC20UniRebalance = async (
             context,
             wstethAmount,
             wethAmount,
+            stEthPerToken,
             curvePool,
             wethContract,
             wstethContract,
@@ -765,7 +771,8 @@ const makeRebalances = async (
     context: Context,
     priceX96: BigNumber,
     wstethAmount: BigNumber,
-    wethAmount: BigNumber
+    wethAmount: BigNumber,
+    stEthPerToken: BigNumber
 ): Promise<SwapStats[]> => {
     const { ethers, getNamedAccounts } = hre;
 
@@ -814,6 +821,7 @@ const makeRebalances = async (
             context,
             wstethAmount,
             wethAmount,
+            stEthPerToken,
             curvePool,
             wethContract,
             wstethContract,
@@ -836,7 +844,8 @@ const makeRebalances = async (
             context,
             priceX96,
             wstethAmount,
-            wethAmount
+            wethAmount,
+            stEthPerToken
         );
         totalStats.concat(tmpSwap);
     }
@@ -872,7 +881,8 @@ const execute = async (
 
     await mintMockPosition(hre, context);
 
-    let [blocks, prices, stethAmounts, wethAmounts] = parseFile(filename);
+    let [blocks, prices, stethAmounts, wethAmounts, stEthPerToken] =
+        parseFile(filename);
 
     console.log("Before price update");
 
@@ -902,7 +912,8 @@ const execute = async (
         context,
         stringToPriceX96(prices[0]),
         stethAmounts[0],
-        wethAmounts[0]
+        wethAmounts[0],
+        stEthPerToken[0]
     );
     fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), { flag: "w" });
     fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
@@ -955,7 +966,8 @@ const execute = async (
                 context,
                 stringToPriceX96(prices[i]),
                 stethAmounts[i],
-                wethAmounts[i]
+                wethAmounts[i],
+                stEthPerToken[i]
             );
             fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), {
                 flag: "a+",

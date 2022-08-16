@@ -122,6 +122,7 @@ export const swapOnCowswap = async (
     context: Context,
     stethAmountInPool: BigNumber,
     wethAmountInPool: BigNumber,
+    stEthPerToken: BigNumber,
     curvePool: any,
     wethContract: any,
     wstethContract: any,
@@ -143,9 +144,9 @@ export const swapOnCowswap = async (
         } as SwapStats;
     }
     if (preOrder.tokenIn == context.weth.address) {
-        return await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut, stethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
+        return await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut, stethAmountInPool, wethAmountInPool, stEthPerToken, curvePool, wstethContract, wethContract, stethContract);
     } else {
-        return await swapWstethToWeth(hre, context, preOrder.amountIn, preOrder.minAmountOut, stethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
+        return await swapWstethToWeth(hre, context, preOrder.amountIn, preOrder.minAmountOut, stethAmountInPool, wethAmountInPool, stEthPerToken, curvePool, wstethContract, wethContract, stethContract);
     }
 };
 
@@ -222,6 +223,7 @@ const exchange = async (
     amountIn: BigNumber,
     stethAmountInPool: BigNumber,
     wethAmountInPool: BigNumber,
+    stEthPerToken: BigNumber,
     curvePool: any,
     wstethContract: any,
     wethContract: any,
@@ -262,15 +264,13 @@ const exchange = async (
     const delta = firstMultiplier.sub(secondMuliplier).abs();
     expect(delta.mul(1000)).to.be.lt(firstMultiplier);
 
-    let curvePrice = await curvePool.get_dy(0, 1, BigNumber.from(10).pow(18));
     const fee = await curvePool.fee();
     const feeDenominator = BigNumber.from(10).pow(10);
-    curvePrice = curvePrice.mul(feeDenominator).div(feeDenominator.sub(fee));
 
     if (wstethToWeth) {
 
         let valWsteth = amountIn;
-        let valSteth = valWsteth.mul(priceX96).div(BigNumber.from(2).pow(96)).mul(curvePrice).div(BigNumber.from(10).pow(18));
+        let valSteth = valWsteth.mul(stEthPerToken).div(BigNumber.from(10).pow(18));
         let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool).div(context.poolScale);
         // proportional to the our situation in the pool
         const balance = await stethContract.balanceOf(context.deployer.address);
@@ -292,27 +292,30 @@ const exchange = async (
             console.log("Before steth->eth swap");
         }
 
-        // scale expectedOut to the correpsonding pool scale
-        const actualOut = result.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale);
-        // 
-        const swapFees = actualOut.mul(fee).div(feeDenominator.sub(fee));
-        const slippageFees = amountIn.mul(priceX96).div(BigNumber.from(2).pow(96)).sub(actualOut).sub(swapFees);
+        // dy - dy * fee / feeDenominator = result
+        // dy * fee / feeDenominator = dy - result
+        // dy * (1 - fee / feeDenominator) = result
+        // dy = result * feeDenominator / (feeDenominator - fee)
+        // dy * fee / feeDenominator = result * fee / (feeDenominator - fee)
+        const fees = result.mul(fee).div(feeDenominator.sub(fee));
+        const amountToCalc = BigNumber.from(10).pow(18).lt(adjustedVal) ? BigNumber.from(10).pow(18) : adjustedVal;
+        const expectedWithoutSlippage = (await curvePool.get_dy(1, 0, amountToCalc)).mul(adjustedVal).div(amountToCalc).mul(feeDenominator).div(feeDenominator.sub(fee));
+        const slippageFees = expectedWithoutSlippage.sub(fees).sub(result);
+
         if (slippageFees.lt(0)) {
-            console.log("amount in: ", amountIn.toString());
-            console.log("actual out: ", actualOut.toString());
-            console.log("swap fees: ", swapFees.toString());
+            console.log("adjustedVal: ", adjustedVal.toString());
+            console.log("result: ", result.toString());
+            console.log("swap fees: ", fees.toString());
             console.log("slippage fees: ", slippageFees.toString());
-            console.log("priceX96: ", priceX96.toString());
-            console.log("curvePrice: ", curvePrice.toString());
         }
+        // scale to the correpsonding pool scale
         return {
-            expectedOut: actualOut,
-            swapFees: swapFees,
-            slippageFees: slippageFees,
+            expectedOut: result.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale),
+            swapFees: fees.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale),
+            slippageFees: slippageFees.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale),
         };
     } else {
         let valWeth = amountIn;
-
         let adjustedVal = valWeth.mul(newPoolEth).div(wethAmountInPool).div(context.poolScale);
         // proportional to the our situation in the pool
         const balance = await provider.getBalance(context.deployer.address);
@@ -333,24 +336,29 @@ const exchange = async (
             valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
             console.log("After eth->steth swap");
         }
-        let result = valSteth.mul(BigNumber.from(10).pow(18)).div(curvePrice).mul(BigNumber.from(2).pow(96)).div(priceX96);
-        // scale expectedOut to the correpsonding pool scale
-        const actualOut = result.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale);
-        //
-        const swapFees = actualOut.mul(fee).div(feeDenominator.sub(fee));
-        const slippageFees = amountIn.mul(BigNumber.from(2).pow(96)).div(priceX96).sub(actualOut).sub(swapFees);
+        let result = valSteth.mul(BigNumber.from(10).pow(18)).div(stEthPerToken);
+
+        // dy - dy * fee / feeDenominator = result
+        // dy * fee / feeDenominator = dy - result
+        // dy * (1 - fee / feeDenominator) = result
+        // dy = result * feeDenominator / (feeDenominator - fee)
+        // dy * fee / feeDenominator = result * fee / (feeDenominator - fee)
+        const fees = result.mul(fee).div(feeDenominator.sub(fee));
+        const amountToCalc = BigNumber.from(10).pow(18).lt(adjustedVal) ? BigNumber.from(10).pow(18) : adjustedVal;
+        const expectedWithoutSlippage = (await curvePool.get_dy(0, 1, amountToCalc)).mul(adjustedVal).div(amountToCalc).mul(feeDenominator).div(feeDenominator.sub(fee));
+        const slippageFees = expectedWithoutSlippage.sub(fees).sub(result);
+
         if (slippageFees.lt(0)) {
-            console.log("Result: ", result.toString());
-            console.log("amount in: ", amountIn.toString());
-            console.log("actual out: ", actualOut.toString());
-            console.log("slippage fees: ", slippageFees.toString()); 
-            console.log("priceX96: ", priceX96.toString());
-            console.log("curvePrice: ", curvePrice.toString());
+            console.log("adjustedVal: ", adjustedVal.toString());
+            console.log("result: ", result.toString());
+            console.log("swap fees: ", fees.toString());
+            console.log("slippage fees: ", slippageFees.toString());
         }
+        // scale to the correpsonding pool scale
         return {
-            expectedOut: actualOut,
-            swapFees: swapFees,
-            slippageFees: slippageFees,
+            expectedOut: result.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale),
+            swapFees: fees.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale),
+            slippageFees: slippageFees.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale),
         };
     }
 }
@@ -362,6 +370,7 @@ const swapWethToWsteth = async (
     minAmountOut: BigNumber,
     stethAmountInPool: BigNumber,
     wethAmountInPool: BigNumber,
+    stEthPerToken: BigNumber,
     curvePool: any,
     wstethContract: any,
     wethContract: any,
@@ -372,7 +381,7 @@ const swapWethToWsteth = async (
     const { deployer, wsteth, weth} = context;
     const balance = await wsteth.balanceOf(deployer.address);
 
-    let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, stethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, false);
+    let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, stethAmountInPool, wethAmountInPool, stEthPerToken, curvePool, wstethContract, wethContract, stethContract, false);
 
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
@@ -409,6 +418,7 @@ const swapWstethToWeth = async (
     minAmountOut: BigNumber,
     stethAmountInPool: BigNumber,
     wethAmountInPool: BigNumber,
+    stEthPerToken: BigNumber,
     curvePool: any,
     wstethContract: any,
     wethContract: any,
@@ -419,7 +429,7 @@ const swapWstethToWeth = async (
     const { deployer, wsteth, weth } = context;
     const balance = await weth.balanceOf(deployer.address);
 
-    let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, stethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, true);
+    let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, stethAmountInPool, wethAmountInPool, stEthPerToken, curvePool, wstethContract, wethContract, stethContract, true);
 
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
