@@ -389,34 +389,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     );
                 };
 
-                // this.tvlToken0 = async () => {
-                //     const positionParams: DomainPositionParamsStruct =
-                //         await this.getPositionParams();
-                //     const averagePriceSqrtX96 = BigNumber.from(
-                //         positionParams.averagePriceSqrtX96
-                //     );
-                //     const price = averagePriceSqrtX96
-                //         .mul(averagePriceSqrtX96)
-                //         .div(Q96);
-                //     const currentAmounts =
-                //         await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                //             this.erc20Vault.address,
-                //             this.yearnVault.address,
-                //             positionParams
-                //         );
-                //     return {
-                //         erc20Vault: currentAmounts.erc20Token0.add(
-                //             currentAmounts.erc20Token1.mul(Q96).div(price)
-                //         ),
-                //         moneyVault: currentAmounts.moneyToken0.add(
-                //             currentAmounts.moneyToken1.mul(Q96).div(price)
-                //         ),
-                //         uniV3Vault: currentAmounts.uniV3Token0.add(
-                //             currentAmounts.uniV3Token1.mul(Q96).div(price)
-                //         ),
-                //     };
-                // };
-
                 return this.subject;
             }
         );
@@ -715,136 +687,136 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    // describe("#rebalance", () => {
-    //     it("performs a rebalance according to strategy params", async () => {
-    //         await this.subject
-    //             .connect(this.mStrategyAdmin)
-    //             .updateStrategyParams({
-    //                 ...this.strategyParams,
-    //                 tickNeighborhood: 10,
-    //                 halfOfShortInterval: 60,
-    //                 domainlLowerTick: -870000,
-    //                 domainUpperTick: 870000,
-    //             } as StrategyParamsStruct);
-    //         const pullExistentials =
-    //             await this.erc20RootVault.pullExistentials();
-    //         for (var i = 0; i < 2; i++) {
-    //             await this.tokens[i].approve(
-    //                 this.erc20RootVault.address,
-    //                 pullExistentials[i].mul(10)
-    //             );
-    //         }
+    describe("#rebalance", () => {
+        it("performs a rebalance according to strategy params", async () => {
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...this.strategyParams,
+                    tickNeighborhood: 10,
+                    halfOfShortInterval: 60,
+                    domainlLowerTick: -870000,
+                    domainUpperTick: 870000,
+                } as StrategyParamsStruct);
+            const pullExistentials =
+                await this.erc20RootVault.pullExistentials();
+            for (var i = 0; i < 2; i++) {
+                await this.tokens[i].approve(
+                    this.erc20RootVault.address,
+                    pullExistentials[i].mul(10)
+                );
+            }
 
-    //         await mint(
-    //             "USDC",
-    //             this.subject.address,
-    //             BigNumber.from(10).pow(10)
-    //         );
-    //         await mint(
-    //             "WETH",
-    //             this.subject.address,
-    //             BigNumber.from(10).pow(10)
-    //         );
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
 
-    //         // deposit to zero-vault
-    //         await this.erc20RootVault.deposit(
-    //             [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
-    //             0,
-    //             []
-    //         );
+            // deposit to zero-vault
+            await this.erc20RootVault.deposit(
+                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
+                0,
+                []
+            );
 
-    //         // normal deposit
-    //         await this.erc20RootVault.deposit(
-    //             [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
-    //             0,
-    //             []
-    //         );
+            // normal deposit
+            await this.erc20RootVault.deposit(
+                [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
+                0,
+                []
+            );
 
-    //         var restrictions = {
-    //             pulledToUniV3Vault: [0, 0],
-    //             swappedAmounts: [0, 0],
-    //             burnedAmounts: [0, 0],
-    //             deadline: ethers.constants.MaxUint256,
-    //             newPositionMinted: true,
-    //         } as RebalanceTokenAmountsStruct;
-    //         await expect(
-    //             this.subject
-    //                 .connect(this.mStrategyAdmin)
-    //                 .rebalance(restrictions, [])
-    //         ).not.to.be.reverted;
+            var restrictions = {
+                pulledFromUniV3Vault: [0, 0],
+                pulledToUniV3Vault: [0, 0],
+                swappedAmounts: [0, 0],
+                burnedAmounts: [0, 0],
+                deadline: ethers.constants.MaxUint256,
+            } as RebalanceTokenAmountsStruct;
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
 
-    //         await expect(
-    //             this.subject
-    //                 .connect(this.mStrategyAdmin)
-    //                 .rebalance(restrictions, [])
-    //         ).to.be.revertedWith(Exceptions.INVARIANT);
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            );
 
-    //         for (var i = 0; i < 4; i++) {
-    //             await push(BigNumber.from(10).pow(21), "WETH");
-    //             await sleep(this.governanceDelay);
-    //         }
+            for (var i = 0; i < 4; i++) {
+                await push(BigNumber.from(10).pow(21), "WETH");
+                await sleep(this.governanceDelay);
+            }
 
-    //         {
-    //             const ratioParams = await this.subject.ratioParams();
-    //             await this.subject
-    //                 .connect(this.mStrategyAdmin)
-    //                 .updateRatioParams({
-    //                     ...ratioParams,
-    //                     minErc20CaptialDeviationD: 0,
-    //                     minRebalanceDeviationD: 0,
-    //                 } as RatioParamsStruct);
-    //         }
-    //         await expect(
-    //             this.subject
-    //                 .connect(this.mStrategyAdmin)
-    //                 .rebalance(restrictions, [])
-    //         ).not.to.be.reverted;
-    //         const { tickLower, tickUpper } =
-    //             await this.positionManager.callStatic.positions(
-    //                 await this.uniV3Vault.uniV3Nft()
-    //             );
+            {
+                const ratioParams = await this.subject.ratioParams();
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateRatioParams({
+                        ...ratioParams,
+                        minErc20CaptialDeviationD: 0,
+                        minRebalanceDeviationD: 1,
+                    } as RatioParamsStruct);
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+            const { tickLower, tickUpper } =
+                await this.positionManager.callStatic.positions(
+                    await this.uniV3Vault.uniV3Nft()
+                );
 
-    //         await this.subject
-    //             .connect(this.mStrategyAdmin)
-    //             .updateStrategyParams({
-    //                 tickNeighborhood: 10,
-    //                 halfOfShortInterval: 60,
-    //                 domainLowerTick: tickLower,
-    //                 domainUpperTick: tickUpper + 60,
-    //             } as StrategyParamsStruct);
-    //         await sleep(this.governanceDelay);
-    //         while (true) {
-    //             let { tick } = await this.pool.slot0();
-    //             if (tick <= tickUpper + 30) {
-    //                 await push(BigNumber.from(10).pow(20), "WETH");
-    //                 await sleep(this.governanceDelay);
-    //             } else {
-    //                 break;
-    //             }
-    //         }
-    //         await expect(
-    //             this.subject
-    //                 .connect(this.mStrategyAdmin)
-    //                 .rebalance(restrictions, [])
-    //         ).not.to.be.reverted;
-    //         await sleep(this.governanceDelay);
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    halfOfShortInterval: 60,
+                    tickNeighborhood: 10,
+                    domainLowerTick: tickLower,
+                    domainUpperTick: tickUpper + 60,
+                } as StrategyParamsStruct);
+            await sleep(this.governanceDelay);
+            while (true) {
+                let { tick } = await this.pool.slot0();
+                if (tick <= tickUpper + 30) {
+                    await push(BigNumber.from(10).pow(20), "WETH");
+                    await sleep(this.governanceDelay);
+                } else {
+                    break;
+                }
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+            await sleep(this.governanceDelay);
 
-    //         while (true) {
-    //             let { tick } = await this.pool.slot0();
-    //             if (tick >= tickLower + 30) {
-    //                 await push(BigNumber.from(10).pow(11), "USDC");
-    //                 await sleep(this.governanceDelay);
-    //             } else {
-    //                 break;
-    //             }
-    //         }
-    //         await expect(
-    //             this.subject
-    //                 .connect(this.mStrategyAdmin)
-    //                 .rebalance(restrictions, [])
-    //         ).not.to.be.reverted;
-    //     });
-    // });
+            while (true) {
+                let { tick } = await this.pool.slot0();
+                if (tick >= tickLower + 30) {
+                    await push(BigNumber.from(10).pow(11), "USDC");
+                    await sleep(this.governanceDelay);
+                } else {
+                    break;
+                }
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+        });
+    });
 
     describe("calculateExpectedRatios", () => {
         it("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
