@@ -732,7 +732,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 ExceptionsLibrary.LIMIT_UNDERFLOW
             );
             require(
-                restrictions.swappedAmounts[tokenInIndex ^ 1] <= -int256(amountIn),
+                restrictions.swappedAmounts[tokenInIndex ^ 1] >= -int256(amountIn),
                 ExceptionsLibrary.LIMIT_OVERFLOW
             );
 
