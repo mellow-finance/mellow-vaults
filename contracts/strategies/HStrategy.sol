@@ -510,7 +510,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     ) internal returns (int256[] memory swappedAmounts) {
         (uint256 expectedToken0Amount, uint256 expectedToken1Amount) = _accumulateTokens(expectedTokenAmounts);
         (uint256 currentToken0Amount, uint256 currentToken1Amount) = _accumulateTokens(currentTokenAmounts);
-        if (currentToken0Amount > expectedToken0Amount) {
+
+        if (currentToken0Amount >= expectedToken0Amount && currentToken1Amount <= expectedToken1Amount) {
             swappedAmounts = _swapTokensOnERC20Vault(
                 currentToken0Amount - expectedToken0Amount,
                 0,
@@ -518,7 +519,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 erc20Vault_,
                 tokens_
             );
-        } else {
+        } else if (currentToken0Amount <= expectedToken0Amount && currentToken1Amount >= expectedToken1Amount) {
             swappedAmounts = _swapTokensOnERC20Vault(
                 currentToken1Amount - expectedToken1Amount,
                 1,
@@ -526,6 +527,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 erc20Vault_,
                 tokens_
             );
+        } else {
+            revert(ExceptionsLibrary.INVALID_STATE);
         }
     }
 
