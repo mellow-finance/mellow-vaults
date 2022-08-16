@@ -34,41 +34,10 @@ jobs:
           echo "$STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Notify chat 1
+      - name: Notify chat
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_CHAT_1 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
-
-      - name: Notify chat 2
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_2 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
-
-      - name: Notify chat 3
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_3 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
-      - name: Notify chat 4
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_4 }}
-          token: ${{ secrets.TELEGRAM_API_KEY }}
-          message: |
-            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
-
-      - name: Notify chat 5
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_5 }}
+          to: ${{ secrets.TELEGRAM_NOTIFICATIONS_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
             📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
