@@ -166,7 +166,7 @@ contract HStrategyHelper {
     /// @param expectedTokenAmountsInToken0 expected capitals (in token0) on the strategy vaults
     /// @param domainPositionParams current position and pool state combined with predictions from the oracle
     /// @return amounts amounts of tokens expected after rebalance on the strategy vaults
-    function calculateExpectedTokenAmounts(
+    function calculateExpectedTokenAmountsByExpectedRatios(
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
         HStrategy.DomainPositionParams memory domainPositionParams,
@@ -474,7 +474,7 @@ contract HStrategyHelper {
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
             .calculateExpectedTokenAmountsInToken0(currentCapitalInToken0, expectedRatios, ratioParams);
         return
-            hStrategyHelper_.calculateExpectedTokenAmounts(
+            hStrategyHelper_.calculateExpectedTokenAmountsByExpectedRatios(
                 expectedRatios,
                 expectedTokenAmountsInToken0,
                 domainPositionParams,

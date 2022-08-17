@@ -439,16 +439,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             moneyVault_,
             domainPositionParams
         );
-        TokenAmounts memory expectedTokenAmounts;
-        {
-            expectedTokenAmounts = hStrategyHelper_.calculateExpectedTokenAmounts(
-                currentTokenAmounts,
-                domainPositionParams,
-                hStrategyHelper_,
-                _uniV3Helper,
-                ratioParams
-            );
-        }
+        TokenAmounts memory expectedTokenAmounts = hStrategyHelper_.calculateExpectedTokenAmounts(
+            currentTokenAmounts,
+            domainPositionParams,
+            hStrategyHelper_,
+            _uniV3Helper,
+            ratioParams
+        );
+
         if (!hStrategyHelper_.tokenRebalanceNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams)) {
             return actualPulledAmounts;
         }
@@ -779,27 +777,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
-    }
-
-    function _calculateExpectedTokenAmounts(
-        TokenAmounts memory currentTokenAmounts,
-        DomainPositionParams memory domainPositionParams,
-        HStrategyHelper hStrategyHelper_
-    ) internal view returns (TokenAmounts memory expectedTokenAmounts) {
-        ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
-        uint256 currentCapitalInToken0 = hStrategyHelper_.calculateCurrentCapitalInToken0(
-            domainPositionParams,
-            currentTokenAmounts
-        );
-        TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
-            .calculateExpectedTokenAmountsInToken0(currentCapitalInToken0, expectedRatios, ratioParams);
-        return
-            hStrategyHelper_.calculateExpectedTokenAmounts(
-                expectedRatios,
-                expectedTokenAmountsInToken0,
-                domainPositionParams,
-                _uniV3Helper
-            );
     }
 
     /// @notice Emitted when new position in UniV3Pool has been minted.

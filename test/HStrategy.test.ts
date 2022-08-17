@@ -1298,7 +1298,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExpectedTokenAmounts", () => {
+    describe("calculateExpectedTokenAmountsByExpectedRatios", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -1339,7 +1339,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     ratioParams
                 );
             const params =
-                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmounts(
+                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmountsByExpectedRatios(
                     ratios,
                     expectedInToken0,
                     positionParams,
@@ -1577,7 +1577,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     ratioParams
                 );
             const expectedAmounts =
-                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmounts(
+                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmountsByExpectedRatios(
                     ratios,
                     amountsInToken0,
                     position,
@@ -1682,7 +1682,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     ratioParams
                 );
             const expectedAmounts =
-                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmounts(
+                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmountsByExpectedRatios(
                     ratios,
                     amountsInToken0,
                     position,
@@ -1822,7 +1822,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     ratioParams
                 );
             const expectedAmounts =
-                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmounts(
+                await this.hStrategyHelper.callStatic.calculateExpectedTokenAmountsByExpectedRatios(
                     ratios,
                     amountsInToken0,
                     position,
