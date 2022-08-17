@@ -458,4 +458,27 @@ contract HStrategyHelper {
             lowerTick = upperTick - (strategyParams_.halfOfShortInterval << 1);
         }
     }
+
+    function calculateExpectedTokenAmounts(
+        HStrategy.TokenAmounts memory currentTokenAmounts,
+        HStrategy.DomainPositionParams memory domainPositionParams,
+        HStrategyHelper hStrategyHelper_,
+        UniV3Helper uniV3Helper,
+        HStrategy.RatioParams memory ratioParams
+    ) external pure returns (HStrategy.TokenAmounts memory expectedTokenAmounts) {
+        HStrategy.ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
+        uint256 currentCapitalInToken0 = hStrategyHelper_.calculateCurrentCapitalInToken0(
+            domainPositionParams,
+            currentTokenAmounts
+        );
+        HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
+            .calculateExpectedTokenAmountsInToken0(currentCapitalInToken0, expectedRatios, ratioParams);
+        return
+            hStrategyHelper_.calculateExpectedTokenAmounts(
+                expectedRatios,
+                expectedTokenAmountsInToken0,
+                domainPositionParams,
+                uniV3Helper
+            );
+    }
 }

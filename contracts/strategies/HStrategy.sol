@@ -439,11 +439,16 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             moneyVault_,
             domainPositionParams
         );
-        TokenAmounts memory expectedTokenAmounts = _calculateExpectedTokenAmounts(
-            currentTokenAmounts,
-            domainPositionParams,
-            hStrategyHelper_
-        );
+        TokenAmounts memory expectedTokenAmounts;
+        {
+            expectedTokenAmounts = hStrategyHelper_.calculateExpectedTokenAmounts(
+                currentTokenAmounts,
+                domainPositionParams,
+                hStrategyHelper_,
+                _uniV3Helper,
+                ratioParams
+            );
+        }
         if (!hStrategyHelper_.tokenRebalanceNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams)) {
             return actualPulledAmounts;
         }
