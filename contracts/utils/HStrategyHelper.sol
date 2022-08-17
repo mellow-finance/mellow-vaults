@@ -166,7 +166,7 @@ contract HStrategyHelper {
     /// @param expectedTokenAmountsInToken0 expected capitals (in token0) on the strategy vaults
     /// @param domainPositionParams current position and pool state combined with predictions from the oracle
     /// @return amounts amounts of tokens expected after rebalance on the strategy vaults
-    function calculateExpectedTokenAmounts(
+    function calculateExpectedTokenAmountsByExpectedRatios(
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
         HStrategy.DomainPositionParams memory domainPositionParams,
@@ -457,5 +457,28 @@ contract HStrategyHelper {
             upperTick = strategyParams_.domainUpperTick;
             lowerTick = upperTick - (strategyParams_.halfOfShortInterval << 1);
         }
+    }
+
+    function calculateExpectedTokenAmounts(
+        HStrategy.TokenAmounts memory currentTokenAmounts,
+        HStrategy.DomainPositionParams memory domainPositionParams,
+        HStrategyHelper hStrategyHelper_,
+        UniV3Helper uniV3Helper,
+        HStrategy.RatioParams memory ratioParams
+    ) external pure returns (HStrategy.TokenAmounts memory expectedTokenAmounts) {
+        HStrategy.ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
+        uint256 currentCapitalInToken0 = hStrategyHelper_.calculateCurrentCapitalInToken0(
+            domainPositionParams,
+            currentTokenAmounts
+        );
+        HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
+            .calculateExpectedTokenAmountsInToken0(currentCapitalInToken0, expectedRatios, ratioParams);
+        return
+            hStrategyHelper_.calculateExpectedTokenAmountsByExpectedRatios(
+                expectedRatios,
+                expectedTokenAmountsInToken0,
+                domainPositionParams,
+                uniV3Helper
+            );
     }
 }

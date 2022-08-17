@@ -439,11 +439,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             moneyVault_,
             domainPositionParams
         );
-        TokenAmounts memory expectedTokenAmounts = _calculateExpectedTokenAmounts(
+        TokenAmounts memory expectedTokenAmounts = hStrategyHelper_.calculateExpectedTokenAmounts(
             currentTokenAmounts,
             domainPositionParams,
-            hStrategyHelper_
+            hStrategyHelper_,
+            _uniV3Helper,
+            ratioParams
         );
+
         if (!hStrategyHelper_.tokenRebalanceNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams)) {
             return actualPulledAmounts;
         }
@@ -510,7 +513,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     ) internal returns (int256[] memory swappedAmounts) {
         (uint256 expectedToken0Amount, uint256 expectedToken1Amount) = _accumulateTokens(expectedTokenAmounts);
         (uint256 currentToken0Amount, uint256 currentToken1Amount) = _accumulateTokens(currentTokenAmounts);
-        if (currentToken0Amount > expectedToken0Amount) {
+
+        if (currentToken0Amount >= expectedToken0Amount && currentToken1Amount <= expectedToken1Amount) {
             swappedAmounts = _swapTokensOnERC20Vault(
                 currentToken0Amount - expectedToken0Amount,
                 0,
@@ -518,7 +522,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 erc20Vault_,
                 tokens_
             );
-        } else {
+        } else if (currentToken0Amount <= expectedToken0Amount && currentToken1Amount >= expectedToken1Amount) {
             swappedAmounts = _swapTokensOnERC20Vault(
                 currentToken1Amount - expectedToken1Amount,
                 1,
@@ -526,6 +530,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 erc20Vault_,
                 tokens_
             );
+        } else {
+            revert(ExceptionsLibrary.INVALID_STATE);
         }
     }
 
@@ -731,10 +737,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 restrictions.swappedAmounts[tokenInIndex ^ 1] <= int256(amountOut),
                 ExceptionsLibrary.LIMIT_UNDERFLOW
             );
-            require(
-                restrictions.swappedAmounts[tokenInIndex ^ 1] <= -int256(amountIn),
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
+            require(restrictions.swappedAmounts[tokenInIndex] >= -int256(amountIn), ExceptionsLibrary.LIMIT_OVERFLOW);
 
             amountsOut = new int256[](2);
             amountsOut[tokenInIndex ^ 1] = int256(amountOut);
@@ -774,27 +777,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
-    }
-
-    function _calculateExpectedTokenAmounts(
-        TokenAmounts memory currentTokenAmounts,
-        DomainPositionParams memory domainPositionParams,
-        HStrategyHelper hStrategyHelper_
-    ) internal view returns (TokenAmounts memory expectedTokenAmounts) {
-        ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
-        uint256 currentCapitalInToken0 = hStrategyHelper_.calculateCurrentCapitalInToken0(
-            domainPositionParams,
-            currentTokenAmounts
-        );
-        TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
-            .calculateExpectedTokenAmountsInToken0(currentCapitalInToken0, expectedRatios, ratioParams);
-        return
-            hStrategyHelper_.calculateExpectedTokenAmounts(
-                expectedRatios,
-                expectedTokenAmountsInToken0,
-                domainPositionParams,
-                _uniV3Helper
-            );
     }
 
     /// @notice Emitted when new position in UniV3Pool has been minted.
