@@ -3,6 +3,7 @@ import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/in
 import { abi as ICurvePool } from "../test/helpers/curvePoolABI.json";
 import { abi as IWETH } from "../test/helpers/wethABI.json";
 import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
+import { abi as ISTETH } from "../test/helpers/stethABI.json";
 import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -14,7 +15,6 @@ import {
     getUniV3Tick,
     swapTokens,
     getTvl,
-    makeSwap,
     stringToPriceX96,
     getStrategyStats,
     checkUniV3Balance,
@@ -43,10 +43,27 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         undefined,
         types.int
     )
-    .setAction(async ({ filename, width }, hre: HardhatRuntimeEnvironment) => {
-        const context = await setup(hre, width);
-        await execute(filename, width, hre, context);
-    });
+    .addParam(
+        "weth",
+        "The amount of weth to be deposited on the strategy",
+        undefined,
+        types.int
+    )
+    .addParam(
+        "wsteth",
+        "The amount of wsteth to be deposited on the strategy",
+        undefined,
+        types.int
+    )
+    .setAction(
+        async (
+            { filename, width, weth, wsteth },
+            hre: HardhatRuntimeEnvironment
+        ) => {
+            const context = await setup(hre, width);
+            await execute(filename, width, weth, wsteth, hre, context);
+        }
+    );
 
 let erc20RebalanceCount = 0;
 let uniV3RebalanceCount = 0;
@@ -105,6 +122,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         weth,
         wsteth,
     } = await getNamedAccounts();
+
     const swapRouter = await ethers.getContractAt(ISwapRouter, uniswapV3Router);
     const positionManager = await ethers.getContractAt(
         INonfungiblePositionManager,
@@ -285,12 +303,6 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
     );
 
-    await mint(
-        hre,
-        "WETH",
-        lstrategy.address,
-        BigNumber.from(10).pow(18).mul(1000)
-    );
     console.log("Minted lstrategy");
     await mint(
         hre,
@@ -317,11 +329,11 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
 
     await wstethContract.transfer(
         lstrategy.address,
-        BigNumber.from(10).pow(18).mul(3)
+        BigNumber.from(10).pow(17).mul(3)
     );
     await wethContract.transfer(
         lstrategy.address,
-        BigNumber.from(10).pow(18).mul(3)
+        BigNumber.from(10).pow(17).mul(3)
     );
 
     let oracleDeployParams = await deploy("MockOracle", {
@@ -371,7 +383,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         intervalWidthInTicks: 100,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
-        rebalanceDeadline: BigNumber.from(10).pow(6),
+        secondsBetweenRebalances: BigNumber.from(10).pow(6),
     });
 
     return {
@@ -398,29 +410,40 @@ class PermissionIdsLibrary {
     static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
-const parseFile = (filename: string): [BigNumber[], string[]] => {
+const parseFile = (
+    filename: string
+): [BigNumber[], string[], BigNumber[], BigNumber[]] => {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: "utf-8" });
-    const fileLen = 30048;
-    const blockNumberLen = 8;
-    const pricePrecision = 29;
+    const rows = fileContent.split("\n");
     let prices = new Array();
     let blockNumbers = new Array();
 
-    let index = 0;
-    for (let i = 0; i < fileLen; ++i) {
-        //let blockNumber = fileContent.slice(index, index + blockNumberLen);
-        let price = fileContent.slice(
-            index + blockNumberLen + 1,
-            index + blockNumberLen + pricePrecision + 1
-        );
-        let block = fileContent.slice(index, index + blockNumberLen);
-        prices.push(price);
-        blockNumbers.push(BigNumber.from(block));
-        index += blockNumberLen + pricePrecision + 2;
+    let stethAmounts = new Array();
+    let wethAmounts = new Array();
+    let cols = rows[0].split(",");
+    for (let i = 1; i < rows.length; ++i) {
+        if (rows[i].length == 0) {
+            continue;
+        }
+        const data = rows[i].split(",");
+        for (let col = 0; col < cols.length; ++col) {
+            if (cols[col] == "wsteth_eth") {
+                prices.push(data[col]);
+            }
+            if (cols[col] == "block_number") {
+                blockNumbers.push(BigNumber.from(data[col]));
+            }
+            if (cols[col] == "stETH_amount") {
+                stethAmounts.push(BigNumber.from(data[col]));
+            }
+            if (cols[col] == "ETH_amount") {
+                wethAmounts.push(BigNumber.from(data[col]));
+            }
+        }
     }
 
-    return [blockNumbers, prices];
+    return [blockNumbers, prices, stethAmounts, wethAmounts];
 };
 
 const changePrice = async (currentTick: BigNumber, context: Context) => {
@@ -458,7 +481,9 @@ const mintMockPosition = async (
 const buildInitialPositions = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
-    width: number
+    width: number,
+    weth_amount: number,
+    wsteth_amount: number
 ) => {
     let tick = await getUniV3Tick(hre, context);
     await changePrice(tick, context);
@@ -491,9 +516,14 @@ const buildInitialPositions = async (
     });
 
     let erc20 = await context.LStrategy.erc20Vault();
-    for (let token of [context.weth, context.wsteth]) {
-        await token.transfer(erc20, BigNumber.from(10).pow(18).mul(10));
-    }
+    await context.weth.transfer(
+        erc20,
+        BigNumber.from(10).pow(18).mul(weth_amount)
+    );
+    await context.wsteth.transfer(
+        erc20,
+        BigNumber.from(10).pow(18).mul(wsteth_amount)
+    );
 };
 
 const makeDesiredPoolPrice = async (
@@ -607,9 +637,11 @@ const getCapital = async (
 const ERC20UniRebalance = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
-    priceX96: BigNumber
+    priceX96: BigNumber,
+    wstethAmount: BigNumber,
+    wethAmount: BigNumber
 ) => {
-    const { ethers } = hre;
+    const { ethers, getNamedAccounts } = hre;
 
     let i = 0;
     while (true) {
@@ -648,11 +680,32 @@ const ERC20UniRebalance = async (
         let receipt = await tx.wait();
         erc20UniV3Gas = erc20UniV3Gas.add(receipt.gasUsed);
         erc20RebalanceCount += 1;
-        await swapOnCowswap(hre, context);
 
-        await makeSwap(hre, context);
+        const curvePool = await ethers.getContractAt(
+            ICurvePool,
+            "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+        );
+        const { weth, wsteth } = await getNamedAccounts();
+        const wethContract = await ethers.getContractAt(IWETH, weth);
+        const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+        const stethContract = await ethers.getContractAt(
+            ISTETH,
+            "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+        );
+
+        await swapOnCowswap(
+            hre,
+            context,
+            wstethAmount,
+            wethAmount,
+            curvePool,
+            wethContract,
+            wstethContract,
+            stethContract
+        );
+
         i += 1;
-        if (i >= 20) {
+        if (i >= 10) {
             console.log(
                 "More than 20 iterations of rebalanceERC20UniV3Vaults needed!"
             );
@@ -666,9 +719,11 @@ const ERC20UniRebalance = async (
 const makeRebalances = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
-    priceX96: BigNumber
+    priceX96: BigNumber,
+    wstethAmount: BigNumber,
+    wethAmount: BigNumber
 ) => {
-    const { ethers } = hre;
+    const { ethers, getNamedAccounts } = hre;
 
     let wasRebalance = false;
 
@@ -696,9 +751,32 @@ const makeRebalances = async (
         receipt = await tx.wait();
         erc20UniV3Gas = erc20UniV3Gas.add(receipt.gasUsed);
         erc20RebalanceCount += 1;
-        await swapOnCowswap(hre, context);
+
+        const curvePool = await ethers.getContractAt(
+            ICurvePool,
+            "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+        );
+        const { weth, wsteth } = await getNamedAccounts();
+        const wethContract = await ethers.getContractAt(IWETH, weth);
+        const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+        const stethContract = await ethers.getContractAt(
+            ISTETH,
+            "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+        );
+
+        await swapOnCowswap(
+            hre,
+            context,
+            wstethAmount,
+            wethAmount,
+            curvePool,
+            wethContract,
+            wstethContract,
+            stethContract
+        );
+
         iter += 1;
-        if (iter >= 20) {
+        if (iter >= 10) {
             console.log(
                 "More than 20 iterations of rebalance needed needed!!!"
             );
@@ -706,7 +784,14 @@ const makeRebalances = async (
         }
     }
 
-    if (wasRebalance) await ERC20UniRebalance(hre, context, priceX96);
+    if (wasRebalance)
+        await ERC20UniRebalance(
+            hre,
+            context,
+            priceX96,
+            wstethAmount,
+            wethAmount
+        );
 };
 
 const reportStats = async (
@@ -729,6 +814,8 @@ const reportStats = async (
 const execute = async (
     filename: string,
     width: number,
+    weth_amount: number,
+    wsteth_amount: number,
     hre: HardhatRuntimeEnvironment,
     context: Context
 ) => {
@@ -736,7 +823,7 @@ const execute = async (
 
     await mintMockPosition(hre, context);
 
-    let [blocks, prices] = parseFile(filename);
+    let [blocks, prices, stethAmounts, wethAmounts] = parseFile(filename);
 
     console.log("Before price update");
 
@@ -747,7 +834,13 @@ const execute = async (
     );
     console.log("After price update");
     console.log("Price is: ", (await getUniV3Price(hre, context)).toString());
-    await buildInitialPositions(hre, context, width);
+    await buildInitialPositions(
+        hre,
+        context,
+        width,
+        weth_amount,
+        wsteth_amount
+    );
     const lowerVault = await context.LStrategy.lowerVault();
     const upperVault = await context.LStrategy.upperVault();
     const erc20vault = await context.LStrategy.erc20Vault();
@@ -755,7 +848,13 @@ const execute = async (
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
 
-    await ERC20UniRebalance(hre, context, stringToPriceX96(prices[0]));
+    await ERC20UniRebalance(
+        hre,
+        context,
+        stringToPriceX96(prices[0]),
+        stethAmounts[0],
+        wethAmounts[0]
+    );
 
     const keys = [
         "erc20token0",
@@ -793,7 +892,13 @@ const execute = async (
     let prev_block = BigNumber.from(0);
     for (let i = 1; i < prices.length; ++i) {
         if (blocks[i].sub(prev_block).gte((24 * 60 * 60) / 15)) {
-            await makeRebalances(hre, context, stringToPriceX96(prices[i]));
+            await makeRebalances(
+                hre,
+                context,
+                stringToPriceX96(prices[i]),
+                stethAmounts[i],
+                wethAmounts[i]
+            );
             prev_block = blocks[i];
         }
         if (i % 500 == 0) {

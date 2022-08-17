@@ -7,7 +7,6 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
-import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/utils/ILStrategyHelper.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
@@ -16,7 +15,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is DefaultAccessControl, ILpCallback {
+contract LStrategy is DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -35,6 +34,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
+    uint256 public lastRebalanceERC20UniV3VaultsTimestamp;
+    uint256 public lastRebalanceUniV3VaultsTimestamp;
     uint256 public orderDeadline;
     uint256[] internal _pullExistentials;
 
@@ -60,7 +61,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     struct OtherParams {
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
-        uint256 rebalanceDeadline;
+        uint256 secondsBetweenRebalances;
     }
 
     struct PreOrder {
@@ -179,6 +180,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         )
     {
         _requireAtLeastOperator();
+        require(
+            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
+            ExceptionsLibrary.TIMESTAMP
+        );
+        lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
         uint128 lowerVaultLiquidity;
@@ -288,6 +294,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         )
     {
         _requireAtLeastOperator();
+        require(
+            block.timestamp >= lastRebalanceUniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
+            ExceptionsLibrary.TIMESTAMP
+        );
+        lastRebalanceUniV3VaultsTimestamp = block.timestamp;
         LiquidityParams memory liquidityParams;
 
         {
@@ -531,29 +542,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 (newOtherParams.minToken1ForOpening > 0) &&
                 (newOtherParams.minToken0ForOpening <= 1000000000) &&
                 (newOtherParams.minToken1ForOpening <= 1000000000) &&
-                (newOtherParams.rebalanceDeadline <= 86400 * 30),
+                (newOtherParams.secondsBetweenRebalances <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         otherParams = newOtherParams;
         emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
-    }
-
-    /// @notice Callback function called after for ERC20RootVault::deposit
-    function depositCallback() external {
-        rebalanceERC20UniV3Vaults(
-            _pullExistentials,
-            _pullExistentials,
-            block.timestamp + otherParams.rebalanceDeadline
-        );
-    }
-
-    /// @notice Callback function called after for ERC20RootVault::withdraw
-    function withdrawCallback() external {
-        rebalanceERC20UniV3Vaults(
-            _pullExistentials,
-            _pullExistentials,
-            block.timestamp + otherParams.rebalanceDeadline
-        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

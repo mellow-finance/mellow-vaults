@@ -103,6 +103,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
+        _chargeFees(thisNft, minTvl, supply, tokens);
+        supply = totalSupply;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
@@ -135,7 +137,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
-        _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
         // lock tokens on first deposit
         if (supply == 0) {
             _mint(address(0), lpAmount);
@@ -174,6 +175,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
+        _chargeFees(_nft, minTvl, supply, tokens);
+        supply = totalSupply;
         uint256 balance = balanceOf[msg.sender];
         if (lpTokenAmount > balance) {
             lpTokenAmount = balance;
@@ -195,7 +198,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
         _updateWithdrawnAmounts(actualTokenAmounts);
-        _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         if (sufficientAmountRest) {
             _burn(msg.sender, lpTokenAmount);
         } else {
@@ -307,17 +309,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    /// @dev We don't charge on any deposit / withdraw to save gas.
-    /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
-    /// So the error results in slightly lower management fees than in exact case
+    /// @dev we are charging fees on the deposit / withdrawal
+    /// fees are charged before the tokens transfer and change the balance of the lp tokens
     function _chargeFees(
         uint256 thisNft,
         uint256[] memory tvls,
         uint256 supply,
-        uint256[] memory deltaTvls,
-        uint256 deltaSupply,
-        address[] memory tokens,
-        bool isWithdraw
+        address[] memory tokens
     ) internal {
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
@@ -325,23 +323,16 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
             return;
         }
-        (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
-            tvls,
-            supply,
-            deltaTvls,
-            deltaSupply,
-            isWithdraw
-        );
         lastFeeCharge = uint64(block.timestamp);
-        // don't charge on initial deposit as well as on the last withdraw
-        if (baseSupply == 0) {
+        // don't charge on initial deposit
+        if (supply == 0) {
             return;
         }
         {
             bool needSkip = true;
             uint256[] memory pullExistentials = _pullExistentials;
             for (uint256 i = 0; i < pullExistentials.length; ++i) {
-                if (baseTvls[i] >= pullExistentials[i]) {
+                if (tvls[i] >= pullExistentials[i]) {
                     needSkip = false;
                     break;
                 }
@@ -359,40 +350,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             strategyParams.strategyTreasury,
             protocolTreasury,
             elapsed,
-            baseSupply
+            supply
         );
 
         _chargePerformanceFees(
-            baseSupply,
-            baseTvls,
+            supply,
+            tvls,
             strategyParams.performanceFee,
             strategyParams.strategyPerformanceTreasury,
             tokens,
             delayedProtocolParams.oracle
         );
-    }
-
-    function _getBaseParamsForFees(
-        uint256[] memory tvls,
-        uint256 supply,
-        uint256[] memory deltaTvls,
-        uint256 deltaSupply,
-        bool isWithdraw
-    ) internal pure returns (uint256 baseSupply, uint256[] memory baseTvls) {
-        // the base for lp Supply charging. preSupply for deposit, postSupply for withdraw,
-        // thus lowering overall fees
-        baseSupply = supply;
-        if (isWithdraw) {
-            baseSupply = 0;
-            if (supply > deltaSupply) {
-                baseSupply = supply - deltaSupply;
-            }
-        }
-        baseTvls = new uint256[](tvls.length);
-        for (uint256 i = 0; i < baseTvls.length; ++i) {
-            if (isWithdraw) baseTvls[i] = tvls[i] - deltaTvls[i];
-            else baseTvls[i] = tvls[i];
-        }
     }
 
     function _chargeManagementFees(
