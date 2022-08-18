@@ -480,8 +480,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
 
         describe("#rebalance", () => {
             const intervals = [
-                [60000, "wide"],
                 [600, "small"],
+                [60000, "wide"],
             ];
             intervals.forEach((data) => {
                 it(`works correctly for ${data[1]} interval`, async () => {
