@@ -627,7 +627,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
-            describe.only("non-zero management fees", () => {
+            describe("non-zero management fees", () => {
                 beforeEach(async () => {
                     const erc20RootVaultNft = await this.subject.nft();
                     let currentStrategyParams =
