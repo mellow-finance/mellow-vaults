@@ -67,6 +67,7 @@ contract HStrategyHelper {
     /// @param moneyVault the strategy money vault
     /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
     /// @param domainPositionParams current position and pool state combined with predictions from the oracle
+    /// @param liquidity current liquidity in position
     /// @return missingTokenAmounts amounts of missing tokens
     function calculateMissingTokenAmounts(
         IIntegrationVault moneyVault,
@@ -165,6 +166,7 @@ contract HStrategyHelper {
     /// @param expectedRatios ratios of the capital on different assets
     /// @param expectedTokenAmountsInToken0 expected capitals (in token0) on the strategy vaults
     /// @param domainPositionParams current position and pool state combined with predictions from the oracle
+    /// @param uniV3Helper helper for uniswap V3 calculations
     /// @return amounts amounts of tokens expected after rebalance on the strategy vaults
     function calculateExpectedTokenAmountsByExpectedRatios(
         HStrategy.ExpectedRatios memory expectedRatios,
@@ -235,7 +237,7 @@ contract HStrategyHelper {
         }
     }
 
-    /// @notice calculates current capitals on the vaults of the strategy (in token0)
+    /// @notice calculates current capital of the strategy in token0
     /// @param params current position and pool state combined with predictions from the oracle
     /// @param currentTokenAmounts amounts of the tokens on the erc20 and money vaults
     /// @return capital total capital measured in token0
@@ -283,6 +285,7 @@ contract HStrategyHelper {
     /// @param currentTokenAmounts the amounts of tokens on the vaults
     /// @param expectedTokenAmounts the amounts of tokens expected after rebalancing
     /// @param ratioParams ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
+    /// @param domainPositionParams the current state of the position, pool and oracle prediction
     /// @return needed true if the token swap is needed
     function swapNeeded(
         HStrategy.TokenAmounts memory currentTokenAmounts,
@@ -370,7 +373,7 @@ contract HStrategyHelper {
     }
 
     /// @param tick current price tick
-    /// @param strategyParams_ the current parameters of the strategy`
+    /// @param strategyParams_ the current parameters of the strategy
     /// @param uniV3Nft the nft of the position from position manager
     /// @param positionManager_ the position manager for uniV3
     function calculateAndCheckDomainPositionParams(
@@ -407,6 +410,10 @@ contract HStrategyHelper {
         }
     }
 
+    /// @param tick current price tick
+    /// @param pool_ address of uniV3 pool
+    /// @param oracleParams_ oracle parameters
+    /// @param uniV3Helper helper for uniswap V3 calculations
     function checkSpotTickDeviationFromAverage(
         int24 tick,
         address pool_,
@@ -425,6 +432,10 @@ contract HStrategyHelper {
         require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
+    /// @param spotTick current price tick
+    /// @param strategyParams_ parameters of strategy
+    /// @return lowerTick lower tick of new position
+    /// @return upperTick upper tick of new position
     function calculateNewPositionTicks(int24 spotTick, HStrategy.StrategyParams memory strategyParams_)
         external
         pure
@@ -459,6 +470,12 @@ contract HStrategyHelper {
         }
     }
 
+    /// @param currentTokenAmounts current token amounts on vaults in both tokens
+    /// @param domainPositionParams the current state of the position, pool and oracle prediction
+    /// @param hStrategyHelper_ address of HStrategyHelper
+    /// @param uniV3Helper helper for uniswap V3 calculations
+    /// @param ratioParams ratio parameters
+    /// @return expectedTokenAmounts expected amounts of tokens after rebalance on vaults
     function calculateExpectedTokenAmounts(
         HStrategy.TokenAmounts memory currentTokenAmounts,
         HStrategy.DomainPositionParams memory domainPositionParams,

@@ -346,6 +346,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param moneyVaultOptions additional parameters for pulling for `pull` method for money vault
     /// @return actualPulledAmounts actual transferred amounts
+    /// @return burnedAmounts actual burned amounts from uniV3 position
     function rebalance(RebalanceTokenAmounts memory restrictions, bytes memory moneyVaultOptions)
         external
         returns (RebalanceTokenAmounts memory actualPulledAmounts, uint256[] memory burnedAmounts)
@@ -413,6 +414,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @notice rebalance amount of tokens between vaults. Need to be called when no new position is needed
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param moneyVaultOptions additional parameters for pulling for `pull` method for money vault
+    /// @param tick spot tick for calculations
     /// @return actualPulledAmounts actual transferred amounts
     function _capitalRebalance(
         RebalanceTokenAmounts memory restrictions,
@@ -625,6 +627,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param positionManager_ uniV3 position manager
     /// @param uniV3Vault_ UniswapV3 vault of the strategy
     /// @param oldNft the nft of the burning position
+    /// @param tokens_ addresses of tokens of strategy
     /// @param tokens_ the addresses of the tokens managed by the strategy
     function _mintPosition(
         IUniswapV3Pool pool_,
