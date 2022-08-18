@@ -5,26 +5,19 @@ import { BigNumber } from "@ethersproject/bignumber";
 import {
     mint,
     mintUniV3Position_USDC_WETH,
-    withSigner,
     randomAddress,
     sleep,
-    addSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
     ERC20Vault,
     IntegrationVault,
-    MockLpCallback,
     UniV3Vault,
-    IERC20RootVaultGovernance,
-    ERC20Token,
-    IOracle,
+    MockOracle,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import Exceptions from "./library/Exceptions";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import {
     DelayedProtocolParamsStructOutput,
     DelayedProtocolPerVaultParamsStructOutput,
@@ -207,6 +200,35 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         []
                     );
 
+                    const { deploy } = deployments;
+                    let oracleDeployParams = await deploy("MockOracle", {
+                        from: this.deployer.address,
+                        contract: "MockOracle",
+                        args: [],
+                        log: true,
+                        autoMine: true,
+                    });
+
+                    this.mockOracle = await ethers.getContractAt(
+                        "MockOracle",
+                        oracleDeployParams.address
+                    );
+
+                    const protocolParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolParams();
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedProtocolParams({
+                            ...protocolParams,
+                            oracle: oracleDeployParams.address,
+                        });
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedProtocolParams();
+
                     return this.subject;
                 }
             );
@@ -267,11 +289,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 "ERC20RootVaultHelper",
                 helperAddress
             );
-            const tvlInToken0 = await helper.getTvlInToken0(
-                tvls,
-                tokens,
-                oracle
-            );
+            const tvlInToken0 = await helper.getTvlToken0(tvls, tokens, oracle);
             const D18 = BigNumber.from(10).pow(18);
             const lpPriceD18 = tvlInToken0.mul(D18).div(lpSupply);
             const hwmsD18 = await erc20RootVault.lpPriceHighWaterMarkD18();
@@ -279,7 +297,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 return BigNumber.from(0);
             }
             let result = BigNumber.from(0);
-            if (lpPriceD18.gt(0)) {
+            if (hwmsD18.gt(0)) {
                 let toMint = lpSupply.mul(lpPriceD18.sub(hwmsD18)).div(hwmsD18);
                 const DENOMINATOR = BigNumber.from(10).pow(9);
                 toMint = toMint.mul(performanceFees).div(DENOMINATOR);
@@ -296,12 +314,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             protocolParams: DelayedProtocolParamsStructOutput,
             protocolPerVaultParams: DelayedProtocolPerVaultParamsStructOutput
         ) => {
-            const tokens = await erc20RootVault.callStatic.vaultTokens();
-            const pullExistentials =
-                await erc20RootVault.callStatic.pullExistentials();
+            const tokens = await erc20RootVault.vaultTokens();
+            const pullExistentials = await erc20RootVault.pullExistentials();
             const nextBlockTimestamp = await getNextBlockTimestamp();
-            const lastFeeCharge =
-                await erc20RootVault.callStatic.lastFeeCharge();
+            const lastFeeCharge = await erc20RootVault.lastFeeCharge();
             const elapsed =
                 BigNumber.from(nextBlockTimestamp).sub(lastFeeCharge);
             if (elapsed.lt(protocolParams.managementFeeChargeDelay)) {
@@ -387,23 +403,23 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             tokenAmounts: BigNumber[]
         ) => {
             const erc20RootVault = this.subject;
-            const erc20RootVaultNft = await erc20RootVault.callStatic.nft();
+            const erc20RootVaultNft = await erc20RootVault.nft();
             const strategyParams =
-                await this.erc20RootVaultGovernance.callStatic.delayedStrategyParams(
+                await this.erc20RootVaultGovernance.delayedStrategyParams(
                     erc20RootVaultNft
                 );
             const protocolPerVaultParams =
-                await this.erc20RootVaultGovernance.callStatic.delayedProtocolPerVaultParams(
+                await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(
                     erc20RootVaultNft
                 );
             const protocolParams =
-                await this.erc20RootVaultGovernance.callStatic.delayedProtocolParams();
+                await this.erc20RootVaultGovernance.delayedProtocolParams();
             const pullExistentials = await erc20RootVault.pullExistentials();
-            let lpSupply = await erc20RootVault.callStatic.totalSupply();
+            let lpSupply = await erc20RootVault.totalSupply();
             if (lpSupply.eq(0)) {
                 throw new Error("Supply should not be equal to zero");
             }
-            const [minTvl, maxTvl] = await erc20RootVault.callStatic.tvl();
+            const [minTvl, maxTvl] = await erc20RootVault.tvl();
             const fees = await calculateFees(
                 erc20RootVault,
                 minTvl,
@@ -432,20 +448,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     )
                 );
             }
-            const actualTokenAmounts = await erc20RootVault.callStatic.deposit(
-                tokenAmounts,
-                BigNumber.from(0),
-                []
-            );
             const { lpAmount } = getLpAmount(
                 maxTvl,
-                actualTokenAmounts,
+                normalizedAmounts,
                 lpSupply,
                 pullExistentials
             );
             return {
                 expectedLp: lpAmount,
-                expectedTokenAmounts: actualTokenAmounts,
+                expectedTokenAmounts: normalizedAmounts,
             };
         };
 
@@ -474,6 +485,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             ...currentProtocolPerVaultParams,
                             protocolFee: BigNumber.from(0),
                         });
+                    const currentProtocolParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolParams();
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedProtocolParams({
+                            ...currentProtocolParams,
+                            managementFeeChargeDelay: BigNumber.from(0),
+                        });
                     await sleep(
                         await this.protocolGovernance.governanceDelay()
                     );
@@ -483,6 +502,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await this.erc20RootVaultGovernance
                         .connect(this.admin)
                         .commitDelayedStrategyParams(erc20RootVaultNft);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedProtocolParams();
                 });
                 it("works exactly", async () => {
                     const pullExistentials =
@@ -501,6 +523,178 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ];
                         const stats = await calculateExpectedDepositStats(
                             tokenAmounts
+                        );
+                        await this.subject.deposit(
+                            tokenAmounts,
+                            BigNumber.from(0),
+                            []
+                        );
+                        const balanceAfter = await this.subject.balanceOf(
+                            this.deployer.address
+                        );
+                        const depositedLp = balanceAfter.sub(balanceBefore);
+                        expect(
+                            stats.expectedLp.sub(depositedLp).toNumber()
+                        ).to.be.eq(0);
+                    }
+                });
+            });
+
+            describe("non-zero performance fees", () => {
+                beforeEach(async () => {
+                    const erc20RootVaultNft = await this.subject.nft();
+                    let currentStrategyParams =
+                        await this.erc20RootVaultGovernance.delayedStrategyParams(
+                            erc20RootVaultNft
+                        );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedStrategyParams(erc20RootVaultNft, {
+                            ...currentStrategyParams,
+                            managementFee: BigNumber.from(0),
+                            performanceFee: BigNumber.from(10).pow(7).mul(50),
+                            strategyPerformanceTreasury: randomAddress(),
+                        });
+                    let currentProtocolPerVaultParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(
+                            erc20RootVaultNft
+                        );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(erc20RootVaultNft, {
+                            ...currentProtocolPerVaultParams,
+                            protocolFee: BigNumber.from(0),
+                        });
+                    const currentProtocolParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolParams();
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedProtocolParams({
+                            ...currentProtocolParams,
+                            managementFeeChargeDelay: BigNumber.from(0),
+                        });
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedProtocolPerVaultParams(erc20RootVaultNft);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedStrategyParams(erc20RootVaultNft);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedProtocolParams();
+                });
+
+                it("works exactly", async () => {
+                    const pullExistentials =
+                        await this.subject.pullExistentials();
+                    const defaultAmount = [
+                        pullExistentials[0].mul(pullExistentials[0]),
+                        pullExistentials[1].mul(pullExistentials[1]),
+                    ];
+                    await this.mockOracle.updatePrice(
+                        BigNumber.from(1).shl(95)
+                    );
+                    for (let i = 1; i <= 101; i += 10) {
+                        const tokenAmounts = [
+                            defaultAmount[0].mul(i),
+                            defaultAmount[1].mul(i ** 2),
+                        ];
+                        const stats = await calculateExpectedDepositStats(
+                            tokenAmounts
+                        );
+                        const balanceBefore = await this.subject.balanceOf(
+                            this.deployer.address
+                        );
+                        await this.subject.deposit(
+                            tokenAmounts,
+                            BigNumber.from(0),
+                            []
+                        );
+                        const balanceAfter = await this.subject.balanceOf(
+                            this.deployer.address
+                        );
+                        const depositedLp = balanceAfter.sub(balanceBefore);
+                        expect(
+                            stats.expectedLp.sub(depositedLp).toNumber()
+                        ).to.be.eq(0);
+                        await this.mockOracle.updatePrice(
+                            BigNumber.from(1).shl(95 - ((i - 1) / 10) * 3)
+                        );
+                    }
+                });
+            });
+
+            describe.only("non-zero management fees", () => {
+                beforeEach(async () => {
+                    const erc20RootVaultNft = await this.subject.nft();
+                    let currentStrategyParams =
+                        await this.erc20RootVaultGovernance.delayedStrategyParams(
+                            erc20RootVaultNft
+                        );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedStrategyParams(erc20RootVaultNft, {
+                            ...currentStrategyParams,
+                            managementFee: BigNumber.from(10).pow(8),
+                            performanceFee: BigNumber.from(0),
+                            strategyTreasury: randomAddress(),
+                        });
+                    let currentProtocolPerVaultParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(
+                            erc20RootVaultNft
+                        );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(erc20RootVaultNft, {
+                            ...currentProtocolPerVaultParams,
+                            protocolFee: BigNumber.from(10).pow(7).mul(5),
+                        });
+                    const currentProtocolParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolParams();
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedProtocolParams({
+                            ...currentProtocolParams,
+                            managementFeeChargeDelay: BigNumber.from(0),
+                        });
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedProtocolPerVaultParams(erc20RootVaultNft);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedStrategyParams(erc20RootVaultNft);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedProtocolParams();
+                });
+
+                it("works exactly", async () => {
+                    const pullExistentials =
+                        await this.subject.pullExistentials();
+                    const defaultAmount = [
+                        pullExistentials[0].mul(pullExistentials[0]),
+                        pullExistentials[1].mul(pullExistentials[1]),
+                    ];
+                    for (let i = 1; i <= 101; i += 10) {
+                        const tokenAmounts = [
+                            defaultAmount[0].mul(i),
+                            defaultAmount[1].mul(i ** 2),
+                        ];
+                        const stats = await calculateExpectedDepositStats(
+                            tokenAmounts
+                        );
+                        const balanceBefore = await this.subject.balanceOf(
+                            this.deployer.address
+                        );
+                        await ethers.provider.send(
+                            "evm_setNextBlockTimestamp",
+                            [await getNextBlockTimestamp()]
                         );
                         await this.subject.deposit(
                             tokenAmounts,
