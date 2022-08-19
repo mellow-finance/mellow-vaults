@@ -17,6 +17,7 @@ import {
     UniV3Vault,
     ISwapRouter as SwapRouterInterface,
     HStrategyHelper,
+    IUniswapV3Pool,
 } from "../types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -33,6 +34,7 @@ import {
 } from "../types/MockHStrategy";
 import { TickMath } from "@uniswap/v3-sdk";
 import { RebalanceTokenAmountsStruct } from "../types/HStrategy";
+import { expect } from "chai";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -56,7 +58,7 @@ const DENOMINATOR = BigNumber.from(10).pow(9);
 const Q96 = BigNumber.from(2).pow(96);
 
 contract<MockHStrategy, DeployOptions, CustomContext>(
-    "Integration__hstrategy6_erc20_yearn",
+    "Integration__hstrategy_erc20_yearn",
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
@@ -358,60 +360,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
 
                     this.uniV3Helper = await ethers.getContract("UniV3Helper");
 
-                    this.mintMockPosition = async () => {
-                        const existentials =
-                            await this.uniV3Vault.pullExistentials();
-                        let { tick } = await this.pool.slot0();
-                        tick = BigNumber.from(tick).div(60).mul(60).toNumber();
-                        const { tokenId } = await mintUniV3Position_USDC_WETH({
-                            tickLower: tick,
-                            tickUpper: tick + 60,
-                            usdcAmount: existentials[0],
-                            wethAmount: existentials[1],
-                            fee: 3000,
-                        });
-
-                        await this.positionManager.functions[
-                            "transferFrom(address,address,uint256)"
-                        ](this.deployer.address, this.subject.address, tokenId);
-                        await withSigner(
-                            this.subject.address,
-                            async (signer) => {
-                                await this.positionManager
-                                    .connect(signer)
-                                    .functions[
-                                        "safeTransferFrom(address,address,uint256)"
-                                    ](
-                                        signer.address,
-                                        this.uniV3Vault.address,
-                                        tokenId
-                                    );
-                            }
-                        );
-                    };
-
-                    this.getPositionParams = async () => {
-                        const strategyParams =
-                            await this.subject.strategyParams();
-                        const slot0 = await this.pool.slot0();
-                        const params =
-                            await this.hStrategyHelper.callStatic.calculateAndCheckDomainPositionParams(
-                                slot0.tick,
-                                strategyParams,
-                                await this.uniV3Vault.uniV3Nft(),
-                                this.positionManager.address
-                            );
-                        return params;
-                    };
-
-                    this.getSqrtRatioAtTick = (tick: number) => {
-                        return BigNumber.from(
-                            TickMath.getSqrtRatioAtTick(
-                                BigNumber.from(tick).toNumber()
-                            ).toString()
-                        );
-                    };
-
                     return this.subject;
                 }
             );
@@ -472,13 +420,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
             return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
         };
 
-        const getAveragePriceX96 = async () => {
-            let tick = await getAverageTick();
-            const sqrtPriceX96 = this.getSqrtRatioAtTick(tick);
-            return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
-        };
-
-        describe("#rebalance", () => {
+        describe.only("#rebalance", () => {
             const intervals = [
                 [600, "small"],
                 [60000, "wide"],
@@ -580,10 +522,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         y: BigNumber,
                         delta: number
                     ) => {
-                        return x
-                            .sub(y)
-                            .abs()
-                            .lte((x.lt(y) ? y : x).mul(delta).div(100));
+                        const val = x.sub(y).abs();
+                        const deltaX = x.mul(delta).div(100);
+                        const deltaY = y.mul(delta).div(100);
+                        const maxDelta = deltaX.lt(deltaY) ? deltaY : deltaX;
+                        expect(val.lte(maxDelta)).to.be.true;
                     };
 
                     const checkState = async () => {
@@ -600,11 +543,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             await this.subject.strategyParams();
                         const lower0Tick = strategyParams.domainLowerTick;
                         const upper0Tick = strategyParams.domainUpperTick;
-                        var averageTick = await getAverageTick();
-                        if (averageTick < lower0Tick) {
-                            averageTick = lower0Tick;
-                        } else if (averageTick > upper0Tick) {
-                            averageTick = upper0Tick;
+                        var spotTick = (await this.pool.slot0()).tick;
+                        if (spotTick < lowerTick) {
+                            spotTick = lowerTick;
+                        } else if (spotTick > upperTick) {
+                            spotTick = upperTick;
                         }
                         const erc20CapitalRatioD = (
                             await this.subject.ratioParams()
@@ -621,7 +564,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         const sqrtB = this.getSqrtRatioAtTick(upperTick);
                         const sqrtA0 = this.getSqrtRatioAtTick(lower0Tick);
                         const sqrtB0 = this.getSqrtRatioAtTick(upper0Tick);
-                        const sqrtC0 = this.getSqrtRatioAtTick(averageTick);
+                        const sqrtC0 = this.getSqrtRatioAtTick(spotTick);
 
                         // devide all by sqrtC0
                         const getWxD = () => {
@@ -676,18 +619,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             .sub(uniV3Capital)
                             .sub(erc20Capital);
 
-                        const currentUniV3Capital = uniV3Tvl[0].add(
-                            uniV3Tvl[1].mul(Q96).div(spotPriceX96)
-                        );
-                        const averagePriceX96 = await getAveragePriceX96();
-
                         const expectedErc20Token0Amount = erc20Capital
                             .mul(wxD)
                             .div(wxD.add(wyD));
                         const expectedErc20Token1Amount = erc20Capital
                             .mul(wyD)
                             .div(wxD.add(wyD))
-                            .mul(averagePriceX96)
+                            .mul(spotPriceX96)
                             .div(Q96);
                         const expectedMoneyToken0Amount = moneyCapital
                             .mul(wxD)
@@ -695,18 +633,28 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         const expectedMoneyToken1Amount = moneyCapital
                             .mul(wyD)
                             .div(wxD.add(wyD))
-                            .mul(averagePriceX96)
+                            .mul(spotPriceX96)
                             .div(Q96);
 
-                        compare(uniV3Capital, currentUniV3Capital, 1);
-                        compare(expectedErc20Token0Amount, erc20Tvl[0], 1);
-                        compare(expectedErc20Token1Amount, erc20Tvl[1], 1);
+                        compare(expectedErc20Token0Amount, erc20Tvl[0], 5);
+                        compare(expectedErc20Token1Amount, erc20Tvl[1], 5);
                         compare(expectedMoneyToken0Amount, moneyTvl[0], 1);
                         compare(expectedMoneyToken1Amount, moneyTvl[1], 1);
                     };
 
                     const interationsNumber = 10;
                     for (var i = 0; i < interationsNumber; i++) {
+                        console.log(i + 1);
+                        const usdcAmount = BigNumber.from(10).pow(18);
+                        const wethAmount = BigNumber.from(10).pow(21);
+                        await mint("USDC", this.deployer.address, usdcAmount);
+                        await mint("WETH", this.deployer.address, wethAmount);
+                        await this.erc20RootVault.deposit(
+                            [usdcAmount, wethAmount],
+                            0,
+                            []
+                        );
+
                         var doFullRebalance =
                             i == 0 ? true : Math.random() < 0.5;
                         if (doFullRebalance) {
@@ -714,6 +662,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (currentTick - initialTick >= -100) {
+                                    console.log("her1", currentTick - initialTick)
                                     await push(
                                         BigNumber.from(10).pow(11).mul(5),
                                         "USDC"
@@ -725,6 +674,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (initialTick - currentTick >= -100) {
+                                    console.log("her2", currentTick - initialTick)
                                     await push(
                                         BigNumber.from(10).pow(21),
                                         "WETH"
@@ -747,9 +697,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         }
 
                         await sleep(this.governanceDelay);
+                        console.log("here")
                         await this.subject
                             .connect(this.mStrategyAdmin)
                             .rebalance(restrictions, []);
+                        console.log("rebalance")
                         await checkState();
                     }
                 });

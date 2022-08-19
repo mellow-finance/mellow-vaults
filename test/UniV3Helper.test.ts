@@ -3,13 +3,10 @@ import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
-    encodeToBytes,
     makeFirstDeposit,
     mint,
     mintUniV3Position_USDC_WETH,
-    mintUniV3Position_WBTC_WETH,
     randomAddress,
-    withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
@@ -17,24 +14,20 @@ import {
     UniV3Helper,
     IUniswapV3Pool,
     ERC20RootVault,
+    IIntegrationVault,
 } from "./types";
 import {
     combineVaults,
-    PermissionIdsLibrary,
     setupVault,
     TRANSACTION_GAS_LIMITS,
 } from "../deploy/0000_utils";
-import { integrationVaultBehavior } from "./behaviors/integrationVault";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-import { UNIV3_VAULT_INTERFACE_ID } from "./library/Constants";
-import Exceptions from "./library/Exceptions";
 import { TickMath } from "@uniswap/v3-sdk";
-import { BigNumberish } from "ethers";
-import { bigInt } from "fast-check";
+import { MaxUint256 } from "@uniswap/sdk-core";
 
 type CustomContext = {
     rootVault: ERC20RootVault;
+    erc20Vault: IIntegrationVault;
     uniV3Vault: UniV3Vault;
     pool: IUniswapV3Pool;
 };
@@ -49,12 +42,8 @@ contract<UniV3Helper, DeployOptions, CustomContext>("UniV3Helper", function () {
             async (_, __?: DeployOptions) => {
                 const { read, deploy } = deployments;
 
-                const {
-                    uniswapV3PositionManager,
-                    curveRouter,
-                    uniswapV3Router,
-                    deployer,
-                } = await getNamedAccounts();
+                const { uniswapV3PositionManager, deployer } =
+                    await getNamedAccounts();
 
                 await deploy("UniV3Helper", {
                     from: deployer,
@@ -153,39 +142,129 @@ contract<UniV3Helper, DeployOptions, CustomContext>("UniV3Helper", function () {
     });
 
     describe("#getPositionTokenAmountsByCapitalOfToken0", () => {
-        it("test uniV3Helper", async () => {
-            const result = await mintUniV3Position_USDC_WETH({
-                fee: 3000,
-                tickLower: 204000,
-                tickUpper: 210000,
-                usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                wethAmount: BigNumber.from(10).pow(18),
-            });
-
-            await this.positionManager.functions[
-                "safeTransferFrom(address,address,uint256)"
-            ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
-            const position = await this.positionManager.functions[
-                "positions(uint256)"
-            ](result.tokenId);
-            const Q96 = BigNumber.from(2).pow(96);
-            const tickToSqrtPrice = (tick: number) => {
-                return BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(tick).toString()
+        const intervals = [
+            [-600, 0],
+            [600, 1200],
+            [-600, 600],
+        ];
+        intervals.forEach((borders) => {
+            it(`test uniV3Helper, borders: ${borders[0]} ${borders[1]}`, async () => {
+                await this.rootVault
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist([this.deployer.address]);
+                await mint(
+                    "USDC",
+                    this.deployer.address,
+                    BigNumber.from(10).pow(15)
                 );
-            };
-            const tickToPrice = (tick: number) => {
-                const sqrtPrice = tickToSqrtPrice(tick);
-                return sqrtPrice.pow(2).div(Q96);
-            };
-            const spotTick = (await this.pool.slot0()).tick;
-            await this.subject.getPositionTokenAmountsByCapitalOfToken0(
-                tickToSqrtPrice(position.tickLower),
-                tickToSqrtPrice(position.tickUpper),
-                tickToSqrtPrice(spotTick),
-                tickToPrice(spotTick),
-                BigNumber.from(10).pow(10)
-            );
+                await mint(
+                    "WETH",
+                    this.deployer.address,
+                    BigNumber.from(10).pow(15)
+                );
+                await this.usdc
+                    .connect(this.deployer)
+                    .approve(
+                        this.rootVault.address,
+                        ethers.constants.MaxUint256
+                    );
+                await this.weth
+                    .connect(this.deployer)
+                    .approve(
+                        this.rootVault.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.rootVault
+                    .connect(this.deployer)
+                    .deposit(
+                        [BigNumber.from(10).pow(6), BigNumber.from(10).pow(11)],
+                        0,
+                        []
+                    );
+
+                var tick = (await this.pool.slot0()).tick;
+                tick -= tick % 600;
+                const lowerTick = tick + borders[0];
+                const upperTick = tick + borders[1];
+
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: 3000,
+                    tickLower: lowerTick,
+                    tickUpper: upperTick,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
+                });
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](
+                    this.deployer.address,
+                    this.uniV3Vault.address,
+                    result.tokenId
+                );
+
+                const position = await this.positionManager.functions[
+                    "positions(uint256)"
+                ](result.tokenId);
+                const Q96 = BigNumber.from(2).pow(96);
+                const tickToSqrtPrice = (tick: number) => {
+                    return BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(tick).toString()
+                    );
+                };
+                const tickToPrice = (tick: number) => {
+                    const sqrtPrice = tickToSqrtPrice(tick);
+                    return sqrtPrice.pow(2).div(Q96);
+                };
+                var spotTick = (await this.pool.slot0()).tick;
+
+                if (position.tickLower >= spotTick) {
+                    spotTick = position.tickLower;
+                } else if (position.tickUpper <= spotTick) {
+                    spotTick = position.tickUpper;
+                }
+                const { token0Amount, token1Amount } =
+                    await this.subject.getPositionTokenAmountsByCapitalOfToken0(
+                        tickToSqrtPrice(position.tickLower),
+                        tickToSqrtPrice(position.tickUpper),
+                        tickToSqrtPrice(spotTick),
+                        tickToPrice((await this.pool.slot0()).tick),
+                        BigNumber.from(10).pow(10)
+                    );
+
+                const usdcAmount = BigNumber.from(10).pow(18);
+                const wethAmount = BigNumber.from(10).pow(21).mul(4);
+
+                await mint("USDC", this.deployer.address, usdcAmount);
+                await mint("WETH", this.deployer.address, wethAmount);
+                await this.rootVault.deposit([usdcAmount, wethAmount], 0, []);
+                const getUniV3Tvl = async () => {
+                    const liquidity = await this.pool.liquidity();
+                    return await this.uniV3Vault.liquidityToTokenAmounts(
+                        liquidity
+                    );
+                };
+                const tvlBefore = await getUniV3Tvl();
+                await this.erc20Vault.pull(
+                    this.uniV3Vault.address,
+                    [this.usdc.address, this.weth.address],
+                    [token0Amount, token1Amount],
+                    []
+                );
+
+                const tvlAfter = await getUniV3Tvl();
+                const deltaToken0 = tvlAfter[0].sub(tvlBefore[0]);
+                const deltaToken1 = tvlAfter[1].sub(tvlBefore[1]);
+
+                const relativeDeltaToken0 = token0Amount.sub(deltaToken0).abs();
+                const relativeDeltaToken1 = token1Amount.sub(deltaToken1).abs();
+
+                const borderToken0 = tvlBefore[0].div(1000).add(10000);
+                const borderToken1 = tvlBefore[1].div(1000).add(10000);
+
+                expect(relativeDeltaToken0.lte(borderToken0)).to.be.true;
+                expect(relativeDeltaToken1.lte(borderToken1)).to.be.true;
+            });
         });
     });
 
@@ -225,8 +304,7 @@ contract<UniV3Helper, DeployOptions, CustomContext>("UniV3Helper", function () {
             await this.positionManager.functions[
                 "safeTransferFrom(address,address,uint256)"
             ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
-            const { deployer, uniswapV3Router, uniswapV3PositionManager } =
-                await getNamedAccounts();
+            const { uniswapV3PositionManager } = await getNamedAccounts();
 
             const uint128Max = BigNumber.from(2).pow(128).sub(1);
             const liquidityToTokenAmountsResponse =
