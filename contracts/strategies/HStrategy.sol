@@ -18,7 +18,6 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/HStrategyHelper.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/UniV3Helper.sol";
-import "hardhat/console.sol";
 
 contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -353,16 +352,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (RebalanceTokenAmounts memory actualPulledAmounts, uint256[] memory burnedAmounts)
     {
         _requireAtLeastOperator();
-        console.log("-1");
         IUniswapV3Pool pool_ = pool;
         (, int24 tick, , , , , ) = pool_.slot0();
-        console.log("0");
         _hStrategyHelper.checkSpotTickDeviationFromAverage(tick, address(pool_), oracleParams, _uniV3Helper);
-        console.log("1");
         burnedAmounts = _partialRebalanceOfUniV3Position(restrictions, tick);
-        console.log("2");
         actualPulledAmounts = _capitalRebalance(restrictions, moneyVaultOptions, tick);
-        console.log("3");
     }
 
     /// @notice rebalance, that if needed burns old univ3 position and mints new

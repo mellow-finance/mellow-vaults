@@ -662,7 +662,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (currentTick - initialTick >= -100) {
-                                    console.log("her1", currentTick - initialTick)
+                                    console.log(
+                                        "her1",
+                                        currentTick - initialTick
+                                    );
                                     await push(
                                         BigNumber.from(10).pow(11).mul(5),
                                         "USDC"
@@ -674,7 +677,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (initialTick - currentTick >= -100) {
-                                    console.log("her2", currentTick - initialTick)
+                                    console.log(
+                                        "her2",
+                                        currentTick - initialTick
+                                    );
                                     await push(
                                         BigNumber.from(10).pow(21),
                                         "WETH"
@@ -697,11 +703,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         }
 
                         await sleep(this.governanceDelay);
-                        console.log("here")
+                        console.log("here");
                         await this.subject
                             .connect(this.mStrategyAdmin)
                             .rebalance(restrictions, []);
-                        console.log("rebalance")
+                        console.log("rebalance");
                         await checkState();
                     }
                 });
