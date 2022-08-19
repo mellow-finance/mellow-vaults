@@ -420,7 +420,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
             return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
         };
 
-        describe.only("#rebalance", () => {
+        describe("#rebalance", () => {
             const intervals = [
                 [600, "small"],
                 [60000, "wide"],
@@ -529,7 +529,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         expect(val.lte(maxDelta)).to.be.true;
                     };
 
-                    const checkState = async () => {
+                    const checkState = async (spotTick: number) => {
                         const erc20Tvl = (await this.erc20Vault.tvl())
                             .minTokenAmounts;
                         const moneyTvl = (await this.yearnVault.tvl())
@@ -543,7 +543,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             await this.subject.strategyParams();
                         const lower0Tick = strategyParams.domainLowerTick;
                         const upper0Tick = strategyParams.domainUpperTick;
-                        var spotTick = (await this.pool.slot0()).tick;
                         if (spotTick < lowerTick) {
                             spotTick = lowerTick;
                         } else if (spotTick > upperTick) {
@@ -560,6 +559,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             await this.uniV3Vault.liquidityToTokenAmounts(
                                 liquidity
                             );
+                        this.getSqrtRatioAtTick = (tick: number) => {
+                            return BigNumber.from(
+                                TickMath.getSqrtRatioAtTick(
+                                    BigNumber.from(tick).toNumber()
+                                ).toString()
+                            );
+                        };
                         const sqrtA = this.getSqrtRatioAtTick(lowerTick);
                         const sqrtB = this.getSqrtRatioAtTick(upperTick);
                         const sqrtA0 = this.getSqrtRatioAtTick(lower0Tick);
@@ -602,7 +608,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         const totalToken1 = erc20Tvl[1]
                             .add(moneyTvl[1])
                             .add(uniV3Tvl[1]);
-                        const spotPriceX96 = await getSpotPriceX96();
+                        const spotPriceX96 = sqrtC0.mul(sqrtC0).div(Q96);
 
                         const totalCapital = totalToken0.add(
                             totalToken1.mul(Q96).div(spotPriceX96)
@@ -635,37 +641,20 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             .div(wxD.add(wyD))
                             .mul(spotPriceX96)
                             .div(Q96);
-
-                        compare(expectedErc20Token0Amount, erc20Tvl[0], 5);
-                        compare(expectedErc20Token1Amount, erc20Tvl[1], 5);
+                        compare(expectedErc20Token0Amount, erc20Tvl[0], 20);
+                        compare(expectedErc20Token1Amount, erc20Tvl[1], 1);
                         compare(expectedMoneyToken0Amount, moneyTvl[0], 1);
                         compare(expectedMoneyToken1Amount, moneyTvl[1], 1);
                     };
 
                     const interationsNumber = 10;
                     for (var i = 0; i < interationsNumber; i++) {
-                        console.log(i + 1);
-                        const usdcAmount = BigNumber.from(10).pow(18);
-                        const wethAmount = BigNumber.from(10).pow(21);
-                        await mint("USDC", this.deployer.address, usdcAmount);
-                        await mint("WETH", this.deployer.address, wethAmount);
-                        await this.erc20RootVault.deposit(
-                            [usdcAmount, wethAmount],
-                            0,
-                            []
-                        );
-
-                        var doFullRebalance =
-                            i == 0 ? true : Math.random() < 0.5;
+                        var doFullRebalance = i % 2 == 0;
                         if (doFullRebalance) {
                             if (Math.random() < 0.5) {
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (currentTick - initialTick >= -100) {
-                                    console.log(
-                                        "her1",
-                                        currentTick - initialTick
-                                    );
                                     await push(
                                         BigNumber.from(10).pow(11).mul(5),
                                         "USDC"
@@ -677,10 +666,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (initialTick - currentTick >= -100) {
-                                    console.log(
-                                        "her2",
-                                        currentTick - initialTick
-                                    );
                                     await push(
                                         BigNumber.from(10).pow(21),
                                         "WETH"
@@ -703,12 +688,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         }
 
                         await sleep(this.governanceDelay);
-                        console.log("here");
                         await this.subject
                             .connect(this.mStrategyAdmin)
                             .rebalance(restrictions, []);
-                        console.log("rebalance");
-                        await checkState();
+                        if (!doFullRebalance) {
+                            const tick = (await this.pool.slot0()).tick;
+                            await checkState(tick);
+                        }
                     }
                 });
             });
