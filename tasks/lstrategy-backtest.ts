@@ -957,7 +957,7 @@ const execute = async (
     let prev = Date.now();
     console.log("length: ", prices.length);
     let prev_block = BigNumber.from(0);
-    for (let i = 1; i < 1_000; ++i) {
+    for (let i = 1; i < prices.length; ++i) {
         if (blocks[i].sub(prev_block).gte((24 * 60 * 60) / 15)) {
             const totalSwaps = await makeRebalances(
                 hre,
