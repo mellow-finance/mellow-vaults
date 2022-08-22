@@ -270,6 +270,9 @@ const exchange = async (
     if (wstethToWeth) {
 
         let valWsteth = amountIn;
+        if (stEthPerToken.lt(BigNumber.from(10).pow(18))) {
+            console.log("stEthPerToken alert: ", stEthPerToken.toString());
+        }
         let valSteth = valWsteth.mul(stEthPerToken).div(BigNumber.from(10).pow(18));
         let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool).div(context.poolScale);
         // proportional to the our situation in the pool
@@ -336,6 +339,9 @@ const exchange = async (
             valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
             console.log("After eth->steth swap");
         }
+        if (stEthPerToken.lt(BigNumber.from(10).pow(18))) {
+            console.log("stEthPerToken alert: ", stEthPerToken.toString());
+        }
         let result = valSteth.mul(BigNumber.from(10).pow(18)).div(stEthPerToken);
 
         // dy - dy * fee / feeDenominator = result
@@ -377,14 +383,23 @@ const swapWethToWsteth = async (
     stethContract: any
 ): Promise<SwapStats> => {
 
+    const { ethers } = hre;
     const erc20 = await context.LStrategy.erc20Vault();
     const { deployer, wsteth, weth} = context;
     const balance = await wsteth.balanceOf(deployer.address);
 
     let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, stethAmountInPool, wethAmountInPool, stEthPerToken, curvePool, wstethContract, wethContract, stethContract, false);
 
-    if (expectedOut.gt(balance)) {
-        expectedOut = balance;
+    while (
+        (await context.wsteth.balanceOf(context.deployer.address)).lt(expectedOut.mul(11).div(10))
+    ) {
+        const mintNow = BigNumber.from(10).pow(21);
+        await mint(hre, "WETH", context.deployer.address, mintNow);
+        await context.weth.withdraw(mintNow);
+        await stethContract.submit(context.deployer.address, {
+            value: mintNow,
+        });
+        await wstethContract.wrap(mintNow);
     }
     if (expectedOut.lt(minAmountOut)) {
         console.log("Expected out less than minAmountOut weth=>wsteth");
@@ -431,8 +446,11 @@ const swapWstethToWeth = async (
 
     let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, stethAmountInPool, wethAmountInPool, stEthPerToken, curvePool, wstethContract, wethContract, stethContract, true);
 
-    if (expectedOut.gt(balance)) {
-        expectedOut = balance;
+    while (
+        (await context.weth.balanceOf(context.deployer.address)).lt(expectedOut.mul(11).div(10))
+    ) {
+        const mintNow = BigNumber.from(10).pow(21);
+        await mint(hre, "WETH", context.deployer.address, mintNow);
     }
     if (expectedOut.lt(minAmountOut)) {
         console.log("Expected out less than minAmountOut wsteth=>weth");

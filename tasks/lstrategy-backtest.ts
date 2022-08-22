@@ -756,7 +756,7 @@ const ERC20UniRebalance = async (
         i += 1;
         if (i >= 10) {
             console.log(
-                "More than 20 iterations of rebalanceERC20UniV3Vaults needed!"
+                "More than 10 iterations of rebalanceERC20UniV3Vaults needed!"
             );
             break;
         }
@@ -907,17 +907,6 @@ const execute = async (
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
 
-    const totalSwaps = await ERC20UniRebalance(
-        hre,
-        context,
-        stringToPriceX96(prices[0]),
-        stethAmounts[0],
-        wethAmounts[0],
-        stEthPerToken[0]
-    );
-    fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), { flag: "w" });
-    fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
-
     const keys = [
         "erc20token0",
         "erc20token1",
@@ -940,9 +929,6 @@ const execute = async (
         "upperFee0",
         "upperFee1",
     ];
-
-    console.log("stEthPerToken: ");
-
     for (let i = 0; i < keys.length; ++i) {
         if (i == 0) {
             fs.writeFileSync("output.csv", keys[i], { flag: "w" });
@@ -956,10 +942,22 @@ const execute = async (
         }
     }
 
+    await reportStats(hre, context, "output.csv", keys);
+    const totalSwaps = await ERC20UniRebalance(
+        hre,
+        context,
+        stringToPriceX96(prices[0]),
+        stethAmounts[0],
+        wethAmounts[0],
+        stEthPerToken[0]
+    );
+    fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), { flag: "w" });
+    fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
+
     let prev = Date.now();
     console.log("length: ", prices.length);
     let prev_block = BigNumber.from(0);
-    for (let i = 1; i < prices.length; ++i) {
+    for (let i = 1; i < 1_000; ++i) {
         if (blocks[i].sub(prev_block).gte((24 * 60 * 60) / 15)) {
             const totalSwaps = await makeRebalances(
                 hre,
