@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 // Interfaces
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {ISwapRouter} from "../univ3/ISwapRouter.sol";
 
 import {IWPowerPerp} from "./IWPowerPerp.sol";
 import {IWETH9} from "./IWETH9.sol";
@@ -43,4 +43,10 @@ interface ISqueethShortHelper is IERC721Receiver {
      * @dev only receive eth from weth contract and controller.
      */
     receive() external payable;
+
+    function controller() external view returns (IController);
+    function router() external view returns (ISwapRouter);
+    function weth() external view returns (IWETH9);
+    function shortPowerPerp() external view returns (IShortPowerPerp);
+    function wPowerPerp() external view returns (address);
 }
