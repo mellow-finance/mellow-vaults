@@ -56,11 +56,11 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
     function takeShort(
         uint256 wPowerPerpAmountExpected,
-        uint256 wethDebtAmount,
+        uint256 ethDebtAmount,
         uint256 minWethAmountOut
     ) external payable nonReentrant returns (uint256 wPowerPerpMintedAmount, uint256 wethAmountOut) {
         require(isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        require(wethDebtAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
+        require(ethDebtAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
 
         uint256 shortVaultId = shortPositionInfo.vaultId;
         if (shortVaultId != 0) {
@@ -71,7 +71,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
             );
         }
 
-        (uint256 vaultId, uint256 actualWPowerPerpAmount) = controller.mintPowerPerpAmount{value: wethDebtAmount}(
+        (uint256 vaultId, uint256 actualWPowerPerpAmount) = controller.mintPowerPerpAmount{value: ethDebtAmount}(
             shortVaultId,
             wPowerPerpAmountExpected,
             0
@@ -96,6 +96,9 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
         wethAmountOut = router.exactInputSingle(exactInputParams);
 
+        IWETH9(weth).withdraw(wethAmountOut);
+        payable(msg.sender).transfer(wethAmountOut);
+
         if (vaultId == 0) {
             // if a new short vault has been created
             IShortPowerPerp(payable(shortPowerPerp)).safeTransferFrom(address(this), msg.sender, vaultId);
@@ -103,12 +106,13 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         shortPositionInfo.vaultId = vaultId;
     }
 
-    function closeShort(uint256 wPowerPerpBurnAmount, uint256 maxWethAmountIn)
-        external
-        payable
-        nonReentrant
-        returns (uint256 wethAmountReceived)
-    {
+    function closeShort(
+        uint256 wPowerPerpBurnAmount,
+        uint256 ethAmountIn,
+        uint256 maxWethAmountIn
+    ) external payable nonReentrant returns (uint256 ethAmountReceived) {
+        require(isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(wPowerPerpBurnAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
         uint256 shortVaultId = shortPositionInfo.vaultId;
         require(
             IShortPowerPerp(controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
@@ -118,6 +122,9 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         address wPowerPerp = controller.wPowerPerp();
         address weth = controller.weth();
         address shortPowerPerp = controller.shortPowerPerp();
+
+        // wrap eth to weth
+        IWETH9(weth).deposit{value: ethAmountIn}();
 
         ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
             tokenIn: weth,
@@ -132,17 +139,60 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
         // pay weth and get wPowerPerp in return.
         uint256 actualWethAmountIn = router.exactOutputSingle(exactOutputParams);
+
+        // burn wPowerPerpBurnAmount and expect to receive actualWethAmountIn (the amount of eth, that we sent to UniV3 pool while buying wPowerPerp back)
         controller.burnWPowerPerpAmount(shortVaultId, wPowerPerpBurnAmount, actualWethAmountIn);
-        uint256 wethVaultBalance = IWETH9(weth).balanceOf(address(this));
-        IWETH9(weth).transfer(msg.sender, wethVaultBalance);
+
+        // send back unused eth and withdrawn collateral
+        IWETH9(weth).withdraw(ethAmountIn - actualWethAmountIn);
+
+        ethAmountReceived = address(this).balance;
+        payable(msg.sender).transfer(ethAmountReceived);
     }
 
-    function takeLong(uint256 wethAmount, uint256 minWPowerPerpAmountOut) external {
-        // buy wPowerPerp with swap router
+    function takeLong(uint256 wethAmount, uint256 minWPowerPerpAmountOut)
+        external
+        returns (uint256 wPowerPerpAmountOut)
+    {
+        require(!isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(wethAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
+
+        address wPowerPerp = controller.wPowerPerp();
+        address weth = controller.weth();
+
+        ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
+            tokenIn: weth,
+            tokenOut: wPowerPerp,
+            fee: IUniswapV3Pool(controller.ethQuoteCurrencyPool()).fee(),
+            recipient: msg.sender,
+            deadline: block.timestamp + 1,
+            amountIn: wethAmount,
+            amountOutMinimum: minWPowerPerpAmountOut,
+            sqrtPriceLimitX96: 0
+        });
+
+        wPowerPerpAmountOut = router.exactInputSingle(exactInputParams);
     }
 
-    function closeLong(uint256 wPowerPerpAmount, uint256 maxWethAmountIn) external {
-        // buy wPowerPerp with swap router
+    function closeLong(uint256 wPowerPerpAmount, uint256 maxWethAmountIn) external returns (uint256 wethAmountIn) {
+        require(!isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(wPowerPerpAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
+
+        address wPowerPerp = controller.wPowerPerp();
+        address weth = controller.weth();
+
+        ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
+            tokenIn: weth,
+            tokenOut: wPowerPerp,
+            fee: IUniswapV3Pool(controller.ethQuoteCurrencyPool()).fee(),
+            recipient: msg.sender,
+            deadline: block.timestamp + 1,
+            amountOut: wPowerPerpAmount,
+            amountInMaximum: maxWethAmountIn,
+            sqrtPriceLimitX96: 0
+        });
+
+        wethAmountIn = router.exactOutputSingle(exactOutputParams);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
