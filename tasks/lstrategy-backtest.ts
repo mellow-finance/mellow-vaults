@@ -371,7 +371,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         .commitDelayedProtocolParams();
 
     await lstrategy.connect(adminSigned).updateTradingParams({
-        maxSlippageD: BigNumber.from(10).pow(9),
+        maxSlippageD: BigNumber.from(10).pow(7),
         oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
         oracle: oracleDeployParams.address,
