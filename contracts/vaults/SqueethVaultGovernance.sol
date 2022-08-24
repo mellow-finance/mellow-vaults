@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/ISqueethVaultGovernance.sol";
+import "../interfaces/external/squeeth/IController.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
@@ -63,7 +64,19 @@ contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultG
     }
 
     /// @inheritdoc ISqueethVaultGovernance
-    function createVault(address owner_, bool isShortPosition) external returns (ISqueethVault vault, uint256 nft) {}
+    function createVault(address owner_, bool isShortPosition) external returns (ISqueethVault vault, uint256 nft) {
+        address vaddr;
+        (vaddr, nft) = _createVault(owner_);
+        vault = ISqueethVault(vaddr);
+        IController controller = (delayedProtocolParams()).controller;
+
+        address[] memory vaultTokens = new address[](2);
+        vaultTokens[0] = controller.weth();
+        vaultTokens[1] = controller.wPowerPerp();
+
+        vault.initialize(nft, vaultTokens, isShortPosition);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens, "", owner_, vaddr, nft);
+    }
 
     // -------------------  INTERNAL, VIEW  -------------------
 
