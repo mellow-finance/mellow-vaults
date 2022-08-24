@@ -466,7 +466,7 @@ const swapWstethToWeth = async (
     await withSigner(hre, erc20, async (signer) => {
         await wsteth.connect(signer).transfer(deployer.address, amountIn);
     });
-    await wsteth.transfer(erc20, expectedOut);
+    await weth.transfer(erc20, expectedOut);
     return {
         tokenIn: "wsteth",
         tokenOut: "weth",
