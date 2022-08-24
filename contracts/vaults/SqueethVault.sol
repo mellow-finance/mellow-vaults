@@ -30,13 +30,17 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 wPowerPerpAmount;
     }
 
-    bool private isShortPosition;
+    bool private _isShortPosition;
 
-    ShortPositionInfo private shortPositionInfo;
-    LongPositionInfo private longPositionInfo;
+    ShortPositionInfo private _shortPositionInfo;
+    LongPositionInfo private _longPositionInfo;
 
-    IController private controller;
-    ISwapRouter private router;
+    IController private _controller;
+    ISwapRouter private _router;
+
+    address private _wPowerPerp;
+    address private _weth;
+    address private _shortPowerPerp;
 
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {}
 
@@ -46,12 +50,23 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     }
 
     /// @inheritdoc ISqueethVault
-    function initialize(uint256 nft_, bool isShortPosition_) external {
-        controller = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().controller;
-        router = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().router;
-        _vaultTokens = [controller.wPowerPerp(), controller.weth()];
-        _initialize(_vaultTokens, nft_);
-        isShortPosition = isShortPosition_;
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        bool isShortPosition_
+    ) external {
+        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
+        _initialize(vaultTokens_, nft_);
+        _controller = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().controller;
+        _router = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().router;
+
+        _wPowerPerp = _controller.wPowerPerp();
+        _weth = _controller.weth();
+        _shortPowerPerp = _controller.shortPowerPerp();
+
+        require(vaultTokens_[0] == _weth || vaultTokens_[0] == _wPowerPerp, ExceptionsLibrary.INVALID_TOKEN);
+        require(vaultTokens_[1] == _weth || vaultTokens_[1] == _wPowerPerp, ExceptionsLibrary.INVALID_TOKEN);
+        _isShortPosition = isShortPosition_;
     }
 
     function takeShort(
@@ -59,19 +74,19 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 ethDebtAmount,
         uint256 minWethAmountOut
     ) external payable nonReentrant returns (uint256 wPowerPerpMintedAmount, uint256 wethAmountOut) {
-        require(isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(ethDebtAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
 
-        uint256 shortVaultId = shortPositionInfo.vaultId;
+        uint256 shortVaultId = _shortPositionInfo.vaultId;
         if (shortVaultId != 0) {
             // short position has already been taken
             require(
-                IShortPowerPerp(controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
+                IShortPowerPerp(_controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
                 ExceptionsLibrary.FORBIDDEN
             );
         }
 
-        (uint256 vaultId, uint256 actualWPowerPerpAmount) = controller.mintPowerPerpAmount{value: ethDebtAmount}(
+        (uint256 vaultId, uint256 actualWPowerPerpAmount) = _controller.mintPowerPerpAmount{value: ethDebtAmount}(
             shortVaultId,
             wPowerPerpAmountExpected,
             0
@@ -79,14 +94,10 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
         wPowerPerpMintedAmount = actualWPowerPerpAmount;
 
-        address wPowerPerp = controller.wPowerPerp();
-        address weth = controller.weth();
-        address shortPowerPerp = controller.shortPowerPerp();
-
         ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: wPowerPerp,
-            tokenOut: weth,
-            fee: IUniswapV3Pool(controller.ethQuoteCurrencyPool()).fee(),
+            tokenIn: _wPowerPerp,
+            tokenOut: _weth,
+            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
             recipient: msg.sender,
             deadline: block.timestamp + 1,
             amountIn: wPowerPerpMintedAmount,
@@ -94,16 +105,16 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
             sqrtPriceLimitX96: 0
         });
 
-        wethAmountOut = router.exactInputSingle(exactInputParams);
+        wethAmountOut = _router.exactInputSingle(exactInputParams);
 
-        IWETH9(weth).withdraw(wethAmountOut);
+        IWETH9(_weth).withdraw(wethAmountOut);
         payable(msg.sender).transfer(wethAmountOut);
 
         if (vaultId == 0) {
             // if a new short vault has been created
-            IShortPowerPerp(payable(shortPowerPerp)).safeTransferFrom(address(this), msg.sender, vaultId);
+            IShortPowerPerp(payable(_shortPowerPerp)).safeTransferFrom(address(this), msg.sender, vaultId);
         }
-        shortPositionInfo.vaultId = vaultId;
+        _shortPositionInfo.vaultId = vaultId;
     }
 
     function closeShort(
@@ -111,25 +122,21 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 ethAmountIn,
         uint256 maxWethAmountIn
     ) external payable nonReentrant returns (uint256 ethAmountReceived) {
-        require(isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(wPowerPerpBurnAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
-        uint256 shortVaultId = shortPositionInfo.vaultId;
+        uint256 shortVaultId = _shortPositionInfo.vaultId;
         require(
-            IShortPowerPerp(controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
+            IShortPowerPerp(_controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
             ExceptionsLibrary.FORBIDDEN
         );
 
-        address wPowerPerp = controller.wPowerPerp();
-        address weth = controller.weth();
-        address shortPowerPerp = controller.shortPowerPerp();
-
-        // wrap eth to weth
-        IWETH9(weth).deposit{value: ethAmountIn}();
+        // wrap eth to _weth
+        IWETH9(_weth).deposit{value: ethAmountIn}();
 
         ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
-            tokenIn: weth,
-            tokenOut: wPowerPerp,
-            fee: IUniswapV3Pool(controller.ethQuoteCurrencyPool()).fee(),
+            tokenIn: _weth,
+            tokenOut: _wPowerPerp,
+            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
             recipient: msg.sender,
             deadline: block.timestamp + 1,
             amountOut: wPowerPerpBurnAmount,
@@ -137,14 +144,14 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
             sqrtPriceLimitX96: 0
         });
 
-        // pay weth and get wPowerPerp in return.
-        uint256 actualWethAmountIn = router.exactOutputSingle(exactOutputParams);
+        // pay _weth and get _wPowerPerp in return.
+        uint256 actualWethAmountIn = _router.exactOutputSingle(exactOutputParams);
 
-        // burn wPowerPerpBurnAmount and expect to receive actualWethAmountIn (the amount of eth, that we sent to UniV3 pool while buying wPowerPerp back)
-        controller.burnWPowerPerpAmount(shortVaultId, wPowerPerpBurnAmount, actualWethAmountIn);
+        // burn wPowerPerpBurnAmount and expect to receive actualWethAmountIn (the amount of eth, that we sent to UniV3 pool while buying _wPowerPerp back)
+        _controller.burnWPowerPerpAmount(shortVaultId, wPowerPerpBurnAmount, actualWethAmountIn);
 
         // send back unused eth and withdrawn collateral
-        IWETH9(weth).withdraw(ethAmountIn - actualWethAmountIn);
+        IWETH9(_weth).withdraw(ethAmountIn - actualWethAmountIn);
 
         ethAmountReceived = address(this).balance;
         payable(msg.sender).transfer(ethAmountReceived);
@@ -154,16 +161,13 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         external
         returns (uint256 wPowerPerpAmountOut)
     {
-        require(!isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(wethAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
 
-        address wPowerPerp = controller.wPowerPerp();
-        address weth = controller.weth();
-
         ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: weth,
-            tokenOut: wPowerPerp,
-            fee: IUniswapV3Pool(controller.ethQuoteCurrencyPool()).fee(),
+            tokenIn: _weth,
+            tokenOut: _wPowerPerp,
+            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
             recipient: msg.sender,
             deadline: block.timestamp + 1,
             amountIn: wethAmount,
@@ -171,20 +175,17 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
             sqrtPriceLimitX96: 0
         });
 
-        wPowerPerpAmountOut = router.exactInputSingle(exactInputParams);
+        wPowerPerpAmountOut = _router.exactInputSingle(exactInputParams);
     }
 
     function closeLong(uint256 wPowerPerpAmount, uint256 maxWethAmountIn) external returns (uint256 wethAmountIn) {
-        require(!isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(wPowerPerpAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
 
-        address wPowerPerp = controller.wPowerPerp();
-        address weth = controller.weth();
-
         ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
-            tokenIn: weth,
-            tokenOut: wPowerPerp,
-            fee: IUniswapV3Pool(controller.ethQuoteCurrencyPool()).fee(),
+            tokenIn: _weth,
+            tokenOut: _wPowerPerp,
+            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
             recipient: msg.sender,
             deadline: block.timestamp + 1,
             amountOut: wPowerPerpAmount,
@@ -192,7 +193,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
             sqrtPriceLimitX96: 0
         });
 
-        wethAmountIn = router.exactOutputSingle(exactOutputParams);
+        wethAmountIn = _router.exactOutputSingle(exactOutputParams);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -208,14 +209,17 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     ) internal override returns (uint256[] memory actualTokenAmounts) {}
 
     function _isReclaimForbidden(address token) internal view override returns (bool) {
-        if (token == address(controller.weth()) || token == controller.wPowerPerp()) {
+        if (token == address(_controller.weth()) || token == _controller.wPowerPerp()) {
             return true;
         }
         return false;
     }
 
     receive() external payable {
-        require(msg.sender == controller.weth() || msg.sender == address(controller), ExceptionsLibrary.INVALID_TOKEN);
+        require(
+            msg.sender == _controller.weth() || msg.sender == address(_controller),
+            ExceptionsLibrary.INVALID_TOKEN
+        );
     }
 
     function onERC721Received(
@@ -225,5 +229,13 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         bytes memory
     ) public virtual override returns (bytes4) {
         return this.onERC721Received.selector;
+    }
+
+    function controller() external view returns (IController) {
+        return _controller;
+    }
+
+    function router() external view returns (ISwapRouter) {
+        return _router;
     }
 }

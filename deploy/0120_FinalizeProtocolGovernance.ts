@@ -109,6 +109,7 @@ async function registerGovernances(
         "UniV3VaultGovernance",
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
+        "SqueethVaultGovernance",
         "ERC20RootVaultGovernance",
         "MellowVaultGovernance",
         "ERC20RootVaultGovernanceForRequestable"

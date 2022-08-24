@@ -47,6 +47,8 @@ export interface TestContext<T, F> extends Suite {
     aaveVaultSingleton: AaveVault;
     uniV3VaultGovernance: UniV3VaultGovernance;
     uniV3VaultSingleton: UniV3Vault;
+    squeethVaultGovernance: UniV3VaultGovernance;
+    squeethVaultSingleton: UniV3Vault;
     erc20RootVaultGovernance: ERC20RootVaultGovernance;
     erc20RootVaultSingleton: ERC20RootVault;
     mellowOracle: MellowOracle;
@@ -58,6 +60,7 @@ export interface TestContext<T, F> extends Suite {
     wbtc: ERC20;
     dai: ERC20;
     wsteth: ERC20;
+    squeeth: ERC20;
     tokens: ERC20[];
     deployer: SignerWithAddress;
     admin: SignerWithAddress;
@@ -145,6 +148,11 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.uniV3VaultSingleton = await ethers.getContract("UniV3Vault");
 
+    this.squeethVaultGovernance = await ethers.getContract(
+        "SqueethVaultGovernance"
+    );
+    this.squeethVaultSingleton = await ethers.getContract("SqueethVault");
+
     this.erc20RootVaultGovernance = await ethers.getContract(
         "ERC20RootVaultGovernance"
     );
@@ -166,12 +174,16 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         const signer = await addSigner(address);
         this[name] = signer;
     }
-    const { usdc, wbtc, dai } = namedAccounts;
+    const { usdc, wbtc, dai, squeethWrappedPowerPerp } = namedAccounts;
     this.usdc = await ethers.getContractAt("ERC20Token", usdc);
     this.weth = await ethers.getContractAt("ERC20Token", weth);
     this.wbtc = await ethers.getContractAt("ERC20Token", wbtc);
     this.dai = await ethers.getContractAt("ERC20Token", dai);
     this.wsteth = await ethers.getContractAt("ERC20Token", wsteth);
+    this.squeeth = await ethers.getContractAt(
+        "ERC20Token",
+        squeethWrappedPowerPerp
+    );
     this.tokens = sortBy(
         (c: ERC20) => c.address.toLowerCase(),
         [this.usdc, this.weth, this.wbtc, this.dai]

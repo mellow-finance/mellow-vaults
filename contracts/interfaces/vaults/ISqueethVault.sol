@@ -7,5 +7,5 @@ interface ISqueethVault is IIntegrationVault {
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
-    function initialize(uint256 nft_, bool isShortPosition_) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, bool isShortPosition_) external;
 }
