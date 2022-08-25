@@ -292,7 +292,10 @@ const config: HardhatUserConfig = {
         },
         curveRouter: {
             default: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
-        }
+        },
+        chainlinkSteth: {
+            default: "0xcfe54b5cd566ab89272946f602d76ea879cab4a8",
+        },
     },
 
     solidity: {

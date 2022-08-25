@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/chainlink/IAggregatorV3.sol";
 import "../libraries/external/FullMath.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 contract AggregatorV3wstEth is IAggregatorV3 {
     address public immutable wsteth;
@@ -38,8 +39,7 @@ contract AggregatorV3wstEth is IAggregatorV3 {
             uint80 answeredInRound
         )
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = steth_oracle.getRoundData(_roundId);
-        answer = _stethToWsteth(answer);
+        revert(ExceptionsLibrary.DISABLED);
     }
 
     function latestRoundData()
@@ -63,11 +63,10 @@ contract AggregatorV3wstEth is IAggregatorV3 {
         if (!res) {
             assembly {
                 let returndata_size := mload(data)
-                // Bubble up revert reason
                 revert(add(32, data), returndata_size)
             }
         }
         uint256 tokensPerStEth = abi.decode(data, (uint256));
-        return int256(FullMath.mulDiv(uint256(amount), tokensPerStEth, 10**steth_decimals));
+        return int256(FullMath.mulDiv(uint256(amount), 10**steth_decimals, tokensPerStEth));
     }
 }
