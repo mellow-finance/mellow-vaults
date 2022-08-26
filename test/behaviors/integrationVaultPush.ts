@@ -15,7 +15,6 @@ export function integrationVaultPushBehavior<S extends Contract>(
         isTransferPush?: boolean;
     }
 ) {
-    
     it("emits Push event", async () => {
         await expect(
             this.pushFunction(
@@ -26,7 +25,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
             )
         ).to.emit(this.subject, "Push");
     });
-    
+
     it("pushes tokens to the underlying protocol", async () => {
         await this.preparePush();
         let args = [
@@ -42,9 +41,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
             args = [
                 ...this.prefixArgs,
                 [this.usdc.address],
-                [
-                    BigNumber.from(10).pow(6).mul(3000),
-                ],
+                [BigNumber.from(10).pow(6).mul(3000)],
                 [],
             ];
         }
@@ -123,8 +120,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
-            }
-            else if (!isTransferPush) {
+            } else if (!isTransferPush) {
                 it(`reverts because only one token required`, async () => {
                     await expect(
                         this.pushFunction(
@@ -133,12 +129,9 @@ export function integrationVaultPushBehavior<S extends Contract>(
                             [BigNumber.from(1), BigNumber.from(1)],
                             []
                         )
-                    ).to.be.revertedWith(
-                        "TPS"
-                    );
+                    ).to.be.revertedWith("TPS");
                 });
-            }
-            else {
+            } else {
                 it(`reverts because we don't have one of the tokens`, async () => {
                     await expect(
                         this.pushFunction(
@@ -147,9 +140,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
                             [BigNumber.from(1), BigNumber.from(1)],
                             []
                         )
-                    ).to.be.revertedWith(
-                        "SafeERC20: low-level call failed"
-                    );
+                    ).to.be.revertedWith("SafeERC20: low-level call failed");
                 });
             }
         });
@@ -185,8 +176,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
-            }
-            else {
+            } else {
                 it(`reverts because we don't have one of the tokens`, async () => {
                     await expect(
                         this.pushFunction(
@@ -195,9 +185,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
                             [BigNumber.from(1), BigNumber.from(1)],
                             []
                         )
-                    ).to.be.revertedWith(
-                        "SafeERC20: low-level call failed"
-                    );
+                    ).to.be.revertedWith("SafeERC20: low-level call failed");
                 });
             }
         });

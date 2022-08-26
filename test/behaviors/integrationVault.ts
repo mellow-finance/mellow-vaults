@@ -48,7 +48,11 @@ export function integrationVaultBehavior<S extends Contract>(
             this.prefixArgs = [];
         });
 
-        integrationVaultPushBehavior.call(this, {isPerp: isPerp, isTransferPush: false, ...this});
+        integrationVaultPushBehavior.call(this, {
+            isPerp: isPerp,
+            isTransferPush: false,
+            ...this,
+        });
 
         describe("access control", () => {
             it("allowed: any address", async () => {
@@ -76,7 +80,11 @@ export function integrationVaultBehavior<S extends Contract>(
             this.prefixArgs = [this.deployer.address];
         });
 
-        integrationVaultPushBehavior.call(this, {isPerp: isPerp, isTransferPush: true, ...this});
+        integrationVaultPushBehavior.call(this, {
+            isPerp: isPerp,
+            isTransferPush: true,
+            ...this,
+        });
 
         it("emits Push event even when tokenAmounts are zero", async () => {
             await expect(
@@ -185,9 +193,7 @@ export function integrationVaultBehavior<S extends Contract>(
                 if (isPerp) {
                     args = [
                         [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
+                        [BigNumber.from(10).pow(6).mul(3000)],
                         [],
                     ];
                 }
@@ -200,9 +206,9 @@ export function integrationVaultBehavior<S extends Contract>(
                     await this.usdc.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
                 if (!isPerp) {
-                expect(
-                    await this.weth.balanceOf(this.subject.address)
-                ).to.deep.equal(BigNumber.from(0));
+                    expect(
+                        await this.weth.balanceOf(this.subject.address)
+                    ).to.deep.equal(BigNumber.from(0));
                 }
             });
             it("reclaims successfully using token not from vaultToken", async () => {
@@ -218,9 +224,7 @@ export function integrationVaultBehavior<S extends Contract>(
                 if (isPerp) {
                     args = [
                         [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
+                        [BigNumber.from(10).pow(6).mul(3000)],
                         [],
                     ];
                 }
@@ -236,8 +240,7 @@ export function integrationVaultBehavior<S extends Contract>(
                         this.usdc.address,
                         this.weth.address,
                     ]);
-                }
-                else {
+                } else {
                     await mint(
                         "OWBTC",
                         this.subject.address,
@@ -255,9 +258,9 @@ export function integrationVaultBehavior<S extends Contract>(
                     await this.usdc.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
                 if (!isPerp) {
-                expect(
-                    await this.weth.balanceOf(this.subject.address)
-                ).to.deep.equal(BigNumber.from(0));
+                    expect(
+                        await this.weth.balanceOf(this.subject.address)
+                    ).to.deep.equal(BigNumber.from(0));
                 }
             });
 
@@ -313,9 +316,7 @@ export function integrationVaultBehavior<S extends Contract>(
             if (isPerp) {
                 args = [
                     [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
+                    [BigNumber.from(10).pow(6).mul(3000)],
                     [],
                 ];
             }

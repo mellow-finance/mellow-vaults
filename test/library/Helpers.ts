@@ -344,8 +344,12 @@ export const mint = async (
 
             let address = wbtc;
             let data = `0x8da5cb5b`;
-            if (token == "OUSDC" || token == "OWBTC") {
+            if (token == "OUSDC") {
                 address = usdc;
+                data = "0xae1f6aaf"; //l2Bridge()
+            }
+
+            if (token == "OWBTC") {
                 data = "0xae1f6aaf"; //l2Bridge()
             }
 
