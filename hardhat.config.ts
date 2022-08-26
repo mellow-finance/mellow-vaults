@@ -299,6 +299,9 @@ const config: HardhatUserConfig = {
         clearingHouse: {
             default: "0x82ac2CE43e33683c58BE4cDc40975E73aA50f459"
         },
+        marketRegistry: {
+            default: "0xd5820eE0F55205f6cdE8BB0647072143b3060067",
+        },
         accountBalance: {
             default: "0xA7f3FC32043757039d5e13d790EE43edBcBa8b7c"
         },

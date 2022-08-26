@@ -32,7 +32,13 @@ export type IntegrationVaultContext<S extends Contract, F> = TestContext<
 
 export function integrationVaultBehavior<S extends Contract>(
     this: IntegrationVaultContext<S, {}>,
-    { skipReclaimTokensTest }: any
+    {
+        isPerp,
+        skipReclaimTokensTest,
+    }: {
+        isPerp?: boolean;
+        skipReclaimTokensTest?: boolean;
+    }
 ) {
     const APPROVE_SELECTOR = "0x095ea7b3";
     describe("#push", () => {
@@ -42,7 +48,7 @@ export function integrationVaultBehavior<S extends Contract>(
             this.prefixArgs = [];
         });
 
-        integrationVaultPushBehavior.call(this);
+        integrationVaultPushBehavior.call(this, {isPerp: isPerp, isTransferPush: false, ...this});
 
         describe("access control", () => {
             it("allowed: any address", async () => {
@@ -70,7 +76,7 @@ export function integrationVaultBehavior<S extends Contract>(
             this.prefixArgs = [this.deployer.address];
         });
 
-        integrationVaultPushBehavior.call(this);
+        integrationVaultPushBehavior.call(this, {isPerp: isPerp, isTransferPush: true, ...this});
 
         it("emits Push event even when tokenAmounts are zero", async () => {
             await expect(
@@ -168,7 +174,7 @@ export function integrationVaultBehavior<S extends Contract>(
             });
             it("reclaims successfully", async () => {
                 await this.preparePush();
-                const args = [
+                let args = [
                     [this.usdc.address, this.weth.address],
                     [
                         BigNumber.from(10).pow(6).mul(3000),
@@ -176,6 +182,15 @@ export function integrationVaultBehavior<S extends Contract>(
                     ],
                     [],
                 ];
+                if (isPerp) {
+                    args = [
+                        [this.usdc.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                        ],
+                        [],
+                    ];
+                }
                 await this.subject.push(...args);
                 await this.subject.reclaimTokens([
                     this.usdc.address,
@@ -184,13 +199,15 @@ export function integrationVaultBehavior<S extends Contract>(
                 expect(
                     await this.usdc.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
+                if (!isPerp) {
                 expect(
                     await this.weth.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
+                }
             });
             it("reclaims successfully using token not from vaultToken", async () => {
                 await this.preparePush();
-                const args = [
+                let args = [
                     [this.usdc.address, this.weth.address],
                     [
                         BigNumber.from(10).pow(6).mul(3000),
@@ -198,26 +215,50 @@ export function integrationVaultBehavior<S extends Contract>(
                     ],
                     [],
                 ];
+                if (isPerp) {
+                    args = [
+                        [this.usdc.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                        ],
+                        [],
+                    ];
+                }
                 await this.subject.push(...args);
-                await mint(
-                    this.wbtc.address,
-                    this.subject.address,
-                    BigNumber.from(10).pow(8).mul(100)
-                );
-                await this.subject.reclaimTokens([
-                    this.wbtc.address,
-                    this.usdc.address,
-                    this.weth.address,
-                ]);
+                if (!isPerp) {
+                    await mint(
+                        this.wbtc.address,
+                        this.subject.address,
+                        BigNumber.from(10).pow(8).mul(100)
+                    );
+                    await this.subject.reclaimTokens([
+                        this.wbtc.address,
+                        this.usdc.address,
+                        this.weth.address,
+                    ]);
+                }
+                else {
+                    await mint(
+                        "OWBTC",
+                        this.subject.address,
+                        BigNumber.from(10).pow(8).mul(100)
+                    );
+                    await this.subject.reclaimTokens([
+                        this.wbtc.address,
+                        this.usdc.address,
+                    ]);
+                }
                 expect(
                     await this.wbtc.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
                 expect(
                     await this.usdc.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
+                if (!isPerp) {
                 expect(
                     await this.weth.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));
+                }
             });
 
             describe("edge cases:", () => {
@@ -261,7 +302,7 @@ export function integrationVaultBehavior<S extends Contract>(
         });
         it("pulls tokens", async () => {
             await this.preparePush();
-            const args = [
+            let args = [
                 [this.usdc.address, this.weth.address],
                 [
                     BigNumber.from(10).pow(6).mul(3000),
@@ -269,6 +310,15 @@ export function integrationVaultBehavior<S extends Contract>(
                 ],
                 [],
             ];
+            if (isPerp) {
+                args = [
+                    [this.usdc.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                    ],
+                    [],
+                ];
+            }
             await this.subject.push(...args);
             await expect(
                 this.subject.pull(

@@ -259,6 +259,8 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
+        /*
+
         describe("#tvl", () => {
             it("zero tvl when nothing is done", async () => {
                 const tvl = await this.subject.tvl();
@@ -982,7 +984,12 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
             });
         });
 
-        integrationVaultBehavior.call(this, {});
+        */
+
+        integrationVaultBehavior.call(this, {
+            isPerp: true,
+            ...this,
+        });
     }
 );
 

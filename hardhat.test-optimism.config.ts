@@ -88,9 +88,6 @@ const config: HardhatUserConfig = {
         perpVault: {
             default: "0xAD7b4C162707E0B2b5f6fdDbD3f8538A5fbA0d60",
         },
-        marketRegistry: {
-            default: "0xd5820eE0F55205f6cdE8BB0647072143b3060067",
-        },
         vethAddress: {
             default: "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB",
         },

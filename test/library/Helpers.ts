@@ -258,7 +258,7 @@ export const deployVault = async (
     return { nft, address };
 };
 
-export type MintableToken = "USDC" | "WETH" | "WBTC" | "OUSDC";
+export type MintableToken = "USDC" | "WETH" | "WBTC" | "OUSDC" | "OWBTC";
 
 export const mint = async (
     token: MintableToken | string,
@@ -339,13 +339,14 @@ export const mint = async (
             break;
         case "WBTC":
         case "OUSDC":
+        case "OWBTC":
             // owner()
 
             let address = wbtc;
             let data = `0x8da5cb5b`;
-            if (token == "OUSDC") {
+            if (token == "OUSDC" || token == "OWBTC") {
                 address = usdc;
-                data = "0xae1f6aaf";
+                data = "0xae1f6aaf"; //l2Bridge()
             }
 
             let owner = await ethers.provider.call({

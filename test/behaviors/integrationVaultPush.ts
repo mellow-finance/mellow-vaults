@@ -6,8 +6,16 @@ import Exceptions from "../library/Exceptions";
 import { encodeToBytes } from "../library/Helpers";
 
 export function integrationVaultPushBehavior<S extends Contract>(
-    this: IntegrationVaultContext<S, {}>
+    this: IntegrationVaultContext<S, {}>,
+    {
+        isPerp,
+        isTransferPush,
+    }: {
+        isPerp?: boolean;
+        isTransferPush?: boolean;
+    }
 ) {
+    
     it("emits Push event", async () => {
         await expect(
             this.pushFunction(
@@ -18,9 +26,10 @@ export function integrationVaultPushBehavior<S extends Contract>(
             )
         ).to.emit(this.subject, "Push");
     });
+    
     it("pushes tokens to the underlying protocol", async () => {
         await this.preparePush();
-        const args = [
+        let args = [
             ...this.prefixArgs,
             [this.usdc.address, this.weth.address],
             [
@@ -29,10 +38,22 @@ export function integrationVaultPushBehavior<S extends Contract>(
             ],
             [],
         ];
+        if (isPerp) {
+            args = [
+                ...this.prefixArgs,
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                ],
+                [],
+            ];
+        }
         const amounts = await this.staticCallPushFunction(...args);
         await this.pushFunction(...args);
         expect(BigNumber.from(amounts[0]).gt(0)).to.be.true;
-        expect(BigNumber.from(amounts[1]).gt(0)).to.be.true;
+        if (!isPerp) {
+            expect(BigNumber.from(amounts[1]).gt(0)).to.be.true;
+        }
     });
 
     describe("edge cases", () => {
@@ -91,16 +112,46 @@ export function integrationVaultPushBehavior<S extends Contract>(
             });
         });
         describe("when tokens are not sorted", () => {
-            it(`reverts with ${Exceptions.INVARIANT}`, async () => {
-                await expect(
-                    this.pushFunction(
-                        ...this.prefixArgs,
-                        [this.weth.address, this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
+            if (!isPerp && !isTransferPush) {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [this.weth.address, this.usdc.address],
+                            [BigNumber.from(1), BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            }
+            else if (!isTransferPush) {
+                it(`reverts because only one token required`, async () => {
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [this.weth.address, this.usdc.address],
+                            [BigNumber.from(1), BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(
+                        "TPS"
+                    );
+                });
+            }
+            else {
+                it(`reverts because we don't have one of the tokens`, async () => {
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [this.weth.address, this.usdc.address],
+                            [BigNumber.from(1), BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(
+                        "SafeERC20: low-level call failed"
+                    );
+                });
+            }
         });
         describe("when tokens are not unique", () => {
             it(`reverts with ${Exceptions.INVARIANT}`, async () => {
@@ -115,24 +166,40 @@ export function integrationVaultPushBehavior<S extends Contract>(
             });
         });
         describe("when tokens not sorted nor unique", () => {
-            it(`reverts with ${Exceptions.INVARIANT}`, async () => {
-                await expect(
-                    this.pushFunction(
-                        ...this.prefixArgs,
-                        [
-                            this.weth.address,
-                            this.usdc.address,
-                            this.weth.address,
-                        ],
-                        [
-                            BigNumber.from(1),
-                            BigNumber.from(1),
-                            BigNumber.from(1),
-                        ],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
+            if (!isPerp || !isTransferPush) {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [
+                                this.weth.address,
+                                this.usdc.address,
+                                this.weth.address,
+                            ],
+                            [
+                                BigNumber.from(1),
+                                BigNumber.from(1),
+                                BigNumber.from(1),
+                            ],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            }
+            else {
+                it(`reverts because we don't have one of the tokens`, async () => {
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [this.weth.address, this.usdc.address],
+                            [BigNumber.from(1), BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(
+                        "SafeERC20: low-level call failed"
+                    );
+                });
+            }
         });
     });
 }
