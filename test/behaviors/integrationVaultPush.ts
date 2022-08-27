@@ -109,7 +109,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
             });
         });
         describe("when tokens are not sorted", () => {
-            if (!isPerp && !isTransferPush) {
+            if (!isPerp) {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     await expect(
                         this.pushFunction(
