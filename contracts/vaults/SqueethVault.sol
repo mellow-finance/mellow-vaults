@@ -6,6 +6,10 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/CommonLibrary.sol";
+import "../libraries/external/FullMath.sol";
+
 import "../interfaces/vaults/ISqueethVaultGovernance.sol";
 import "../interfaces/external/squeeth/IController.sol";
 import "../interfaces/external/squeeth/IShortPowerPerp.sol";
@@ -14,21 +18,12 @@ import "../interfaces/external/squeeth/IWETH9.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
-import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Opyn Squeeth protocol in the integration layer.
 contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault {
-    uint256 public DUST = 10**3;
-
-    struct ShortPositionInfo {
-        uint256 vaultId;
-        uint256 wPowerPerpAmount;
-    }
-
-    struct LongPositionInfo {
-        uint256 wPowerPerpAmount;
-    }
+    using SafeERC20 for IERC20;
+    uint256 public immutable DUST = 10**3;
 
     bool private _isShortPosition;
 
@@ -47,6 +42,11 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(ISqueethVault).interfaceId;
+    }
+
+    // fix
+    function write() external view returns (bytes4) {
+        return type(ISqueethVault).interfaceId;
     }
 
     /// @inheritdoc ISqueethVault
@@ -74,6 +74,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 ethDebtAmount,
         uint256 minWethAmountOut
     ) external payable nonReentrant returns (uint256 wPowerPerpMintedAmount, uint256 wethAmountOut) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(ethDebtAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
 
@@ -122,6 +123,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 ethAmountIn,
         uint256 maxWethAmountIn
     ) external payable nonReentrant returns (uint256 ethAmountReceived) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(wPowerPerpBurnAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
         uint256 shortVaultId = _shortPositionInfo.vaultId;
@@ -159,41 +161,68 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
     function takeLong(uint256 wethAmount, uint256 minWPowerPerpAmountOut)
         external
+        nonReentrant
         returns (uint256 wPowerPerpAmountOut)
     {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(wethAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
+        require(IWETH9(_weth).balanceOf(msg.sender) >= wethAmount, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(IWETH9(_weth).allowance(msg.sender, address(this)) >= wethAmount, ExceptionsLibrary.FORBIDDEN);
+
+        IWETH9(_weth).transferFrom(msg.sender, address(this), wethAmount);
 
         ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
             tokenIn: _weth,
             tokenOut: _wPowerPerp,
             fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
-            recipient: msg.sender,
+            recipient: address(this),
             deadline: block.timestamp + 1,
             amountIn: wethAmount,
             amountOutMinimum: minWPowerPerpAmountOut,
             sqrtPriceLimitX96: 0
         });
 
+        IERC20(_weth).safeIncreaseAllowance(address(_router), wethAmount);
         wPowerPerpAmountOut = _router.exactInputSingle(exactInputParams);
+        IERC20(_weth).safeApprove(address(_router), 0);
+
+        _longPositionInfo.wPowerPerpAmount += wPowerPerpAmountOut;
+        emit LongTaken(tx.origin, msg.sender, _longPositionInfo);
     }
 
-    function closeLong(uint256 wPowerPerpAmount, uint256 maxWethAmountIn) external returns (uint256 wethAmountIn) {
+    function closeLong(uint256 wPowerPerpAmount, uint256 minWethAmountOut)
+        external
+        nonReentrant
+        returns (uint256 wethAmountOut)
+    {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
         require(wPowerPerpAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
+        require(
+            IWPowerPerp(_wPowerPerp).balanceOf(address(this)) >= wPowerPerpAmount,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
 
-        ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
-            tokenIn: _weth,
-            tokenOut: _wPowerPerp,
+        ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
+            tokenIn: _wPowerPerp,
+            tokenOut: _weth,
             fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
-            recipient: msg.sender,
+            recipient: address(this),
             deadline: block.timestamp + 1,
-            amountOut: wPowerPerpAmount,
-            amountInMaximum: maxWethAmountIn,
+            amountIn: wPowerPerpAmount,
+            amountOutMinimum: minWethAmountOut,
             sqrtPriceLimitX96: 0
         });
 
-        wethAmountIn = _router.exactOutputSingle(exactOutputParams);
+        IERC20(_wPowerPerp).safeIncreaseAllowance(address(_router), wPowerPerpAmount);
+        wethAmountOut = _router.exactInputSingle(exactInputParams);
+        IERC20(_wPowerPerp).safeIncreaseAllowance(address(_router), 0);
+
+        IWETH9(_weth).transfer(msg.sender, wethAmountOut);
+
+        _longPositionInfo.wPowerPerpAmount -= wPowerPerpAmount;
+        emit LongClosed(tx.origin, msg.sender, _longPositionInfo);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -238,4 +267,51 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     function router() external view returns (ISwapRouter) {
         return _router;
     }
+
+    function longPositionInfo() external view returns (LongPositionInfo memory) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        return _longPositionInfo;
+    }
+
+    function shortPositionInfo() external view returns (ShortPositionInfo memory) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
+        return _shortPositionInfo;
+    }
+
+    function getTwapIndexPrice(uint32 twapPeriod_) external view returns (uint256 twapIndexPrice) {
+        require(twapPeriod_ > 0, ExceptionsLibrary.VALUE_ZERO);
+        twapIndexPrice = _controller.getUnscaledIndex(twapPeriod_);
+    }
+
+    function getTwapMarkPrice(uint32 twapPeriod_) external view returns (uint256 twapMarkPrice) {
+        require(twapPeriod_ > 0, ExceptionsLibrary.VALUE_ZERO);
+        twapMarkPrice = _controller.getDenormalizedMark(twapPeriod_);
+    }
+
+    function getSpotSqrtPrice() external view returns (uint256 usdcWPowerPerpPriceX96) {
+        IUniswapV3Pool ethQuoteCurrencyPool = IUniswapV3Pool(_controller.ethQuoteCurrencyPool());
+        IUniswapV3Pool wPowerPerpPool = IUniswapV3Pool(_controller.wPowerPerpPool());
+
+        (uint160 usdcWethSqrtPriceX96, , , , , , ) = ethQuoteCurrencyPool.slot0();
+        (uint160 wethWPowerPerpSqrtPriceX96, , , , , , ) = wPowerPerpPool.slot0();
+
+        usdcWPowerPerpPriceX96 = FullMath.mulDiv(usdcWethSqrtPriceX96, wethWPowerPerpSqrtPriceX96, CommonLibrary.Q96);
+    }
+
+    function getSqrtIndexPrice() external view returns (uint256 usdcWethSqrtPriceX96) {
+        IUniswapV3Pool ethQuoteCurrencyPool = IUniswapV3Pool(_controller.ethQuoteCurrencyPool());
+        (usdcWethSqrtPriceX96, , , , , , ) = ethQuoteCurrencyPool.slot0();
+    }
+
+    // --------------------------  EVENTS  --------------------------
+
+    event LongTaken(address indexed origin, address indexed sender, LongPositionInfo longPositionInfo);
+
+    event LongClosed(address indexed origin, address indexed sender, LongPositionInfo longPositionInfo);
+
+    event ShortTaken(address indexed origin, address indexed sender, ShortPositionInfo shortPositionInfo);
+
+    event ShortClosed(address indexed origin, address indexed sender, ShortPositionInfo shortPositionInfo);
 }

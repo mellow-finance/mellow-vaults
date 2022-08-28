@@ -67,7 +67,7 @@ contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultG
     function createVault(address owner_, bool isShortPosition) external returns (ISqueethVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
-        vault = ISqueethVault(vaddr);
+        vault = ISqueethVault(payable(vaddr));
         IController controller = (delayedProtocolParams()).controller;
 
         address[] memory vaultTokens = new address[](2);

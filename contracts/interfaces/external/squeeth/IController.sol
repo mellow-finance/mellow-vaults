@@ -85,4 +85,8 @@ interface IController {
     function depositUniPositionToken(uint256 _vaultId, uint256 _uniTokenId) external;
 
     function withdrawUniPositionToken(uint256 _vaultId) external;
+
+    function getUnscaledIndex(uint32 _period) external view returns (uint256);
+
+    function getDenormalizedMark(uint32 _period) external view returns (uint256);
 }

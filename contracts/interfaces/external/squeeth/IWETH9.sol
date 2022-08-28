@@ -10,4 +10,6 @@ interface IWETH9 is IERC20 {
     function withdraw(uint256 wad) external;
 
     function transfer(address dst, uint wad) external returns (bool);
+
+    function transferFrom(address src, address dst, uint wad) external returns (bool);
 }
