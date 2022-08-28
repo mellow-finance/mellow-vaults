@@ -259,7 +259,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        /*
+        
 
         describe("#tvl", () => {
             it("zero tvl when nothing is done", async () => {
@@ -398,6 +398,31 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(oldTvl[1][0]).to.be.gt(newTvl[1][0]);
             });
 
+            it ("the price is moved to the chainlink average and tvl does well", async() => {
+                await this.pushIntoVault(BigNumber.from(10).pow(6).mul(4));
+
+                let oldTvl = await this.subject.tvl();
+
+                await ethers.provider.send("evm_increaseTime", [900]);
+                await ethers.provider.send("evm_mine", []);
+
+                let newTvl = await this.subject.tvl();
+
+                const closeA = await this.isClose(oldTvl[0][0], newTvl[0][0], 2000);
+                expect(closeA).to.be.true;
+
+                let expectedRatioThisBlock = BigNumber.from(16987).mul(BigNumber.from(10).pow(5)); //constant only for this block
+
+                let deltaOld = oldTvl[1][0].sub(oldTvl[0][0]);
+                let deltaNew = newTvl[1][0].sub(newTvl[0][0]);
+
+                let ratio = deltaOld.mul(BigNumber.from(10).pow(9));
+                const closeB = await this.isClose(expectedRatioThisBlock.mul(deltaNew), ratio, 100);
+                expect(closeB).to.be.true;
+            });
+
+            
+
             it("tvl goes to zero in case of sharp decline", async () => {
                 await this.subject.updateLeverage(
                     BigNumber.from(10).pow(9).mul(9),
@@ -448,6 +473,8 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 });
             });
         });
+
+        
 
         describe("#getPositionSize", () => {
             it("positionSize equals zero when no position opened", async () => {
@@ -984,14 +1011,9 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
             });
         });
 
-        */
-
         integrationVaultBehavior.call(this, {
             isPerp: true,
             ...this,
         });
     }
 );
-
-// TO DO: ADD TESTS WHEN THE PRICE SHIFTS (I.E TIMESTAMP MOVES; DIDN'T SUCCEED IN HOW TO DO THAT YET)
-// TO DO: FIX INTEGRATION FAILED TESTS

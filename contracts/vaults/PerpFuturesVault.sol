@@ -15,7 +15,6 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/CommonLibrary.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/IPerpVaultGovernance.sol";
-import "hardhat/console.sol";
 
 // FUTURE: CHECK SECURITY & SLIPPAGE EVERYWHERE
 // check liquidation scenario
