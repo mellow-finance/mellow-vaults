@@ -44,11 +44,6 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(ISqueethVault).interfaceId;
     }
 
-    // fix
-    function write() external view returns (bytes4) {
-        return type(ISqueethVault).interfaceId;
-    }
-
     /// @inheritdoc ISqueethVault
     function initialize(
         uint256 nft_,
