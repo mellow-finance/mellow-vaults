@@ -34,6 +34,7 @@ import {
 } from "../types/ERC20RootVaultGovernance";
 import { Arbitrary, Random } from "fast-check";
 import { mersenne } from "pure-rand";
+import { expect } from "chai";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -674,4 +675,15 @@ export async function mintUniV3Position_WBTC_WETH(options: {
     const result = await positionManagerContract.callStatic.mint(mintParams);
     await positionManagerContract.mint(mintParams);
     return result;
+}
+
+export async function approxEqual(
+    param1: BigNumber,
+    param2: BigNumber,
+    percents: BigNumber
+): Promise<boolean> {
+    // (param1 - param2) == (percents % 100) * param1
+    let delta = param1.sub(param2);
+    percents = percents.mod(100);
+    return delta.sub(param1.mul(percents).div(100)).lte(0);
 }

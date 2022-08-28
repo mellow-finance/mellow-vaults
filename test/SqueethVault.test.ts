@@ -8,6 +8,7 @@ import {
     randomAddress,
     sleep,
     withSigner,
+    approxEqual,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
 import { ERC20RootVault, ERC20Vault, SqueethVault } from "./types";
@@ -22,6 +23,7 @@ import {
     SQUEETH_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import Exceptions from "./library/Exceptions";
+import { assert } from "console";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -391,6 +393,434 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                                     INTEGRATION_VAULT_INTERFACE_ID
                                 )
                         ).to.not.be.reverted;
+                    });
+                });
+            });
+        });
+
+        describe("#controller", () => {
+            it("returns squeeth controller", async () => {
+                const { squeethController } = await getNamedAccounts();
+                expect(await this.subject.controller()).to.be.equal(
+                    squeethController
+                );
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(this.subject.controller()).to.not.be
+                            .reverted;
+                    });
+                });
+            });
+        });
+
+        describe("#router", () => {
+            it("returns univ3 swap router", async () => {
+                const { uniswapV3Router } = await getNamedAccounts();
+                expect(await this.subject.router()).to.be.equal(
+                    uniswapV3Router
+                );
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(this.subject.router()).to.not.be.reverted;
+                    });
+                });
+            });
+        });
+
+        describe("#takeLong", () => {
+            let one: BigNumber = BigNumber.from(10).pow(18);
+            let wethAmountIn = one.mul(64);
+            let minWPowerPerpAmountOut = 0;
+            beforeEach(async () => {
+                let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
+
+                await setupVault(hre, nft, "SqueethVaultGovernance", {
+                    createVaultArgs: [this.deployer.address, false],
+                });
+                const squeethVault = await this.vaultRegistry.vaultForNft(nft);
+                this.subject = await ethers.getContractAt(
+                    "SqueethVault",
+                    squeethVault
+                );
+
+                await this.weth.approve(this.subject.address, wethAmountIn);
+            });
+
+            it("gets squeeth wPowerPerp tokens from the oSQTH/WETH pool", async () => {
+                let { wPowerPerpAmount: initialAmount } =
+                    await this.subject.longPositionInfo();
+                assert(initialAmount.eq(0));
+
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                ).to.not.be.reverted;
+
+                await this.weth.approve(this.subject.address, 0);
+
+                let { wPowerPerpAmount } =
+                    await this.subject.longPositionInfo();
+
+                expect(wPowerPerpAmount.gt(0)).to.be.true;
+
+                let usdcSqthSqrtPrice = await this.subject.getSpotSqrtPrice();
+                let usdcWethPow2SqrtPrice =
+                    await this.subject.getSqrtIndexPrice();
+                let Q192 = BigNumber.from(2).pow(192);
+
+                let usdcSqthPrice = usdcSqthSqrtPrice.pow(2).div(Q192);
+                let usdcWethPow2Price = usdcWethPow2SqrtPrice.pow(2).div(Q192);
+
+                // delta is less than or equal 5% wethAmountIn
+                let eps = BigNumber.from(5);
+                expect(
+                    await approxEqual(
+                        wethAmountIn,
+                        usdcSqthPrice
+                            .mul(wPowerPerpAmount)
+                            .div(usdcWethPow2Price),
+                        eps
+                    )
+                ).to.be.true;
+            });
+
+            it("multiple takeLong calls increse total wPowerPerp received amount", async () => {
+                let { wPowerPerpAmount: initialAmount } =
+                    await this.subject.longPositionInfo();
+                assert(initialAmount.eq(0));
+                const wPowerPerpAmountFirst = await this.subject
+                    .connect(this.deployer)
+                    .callStatic.takeLong(wethAmountIn, minWPowerPerpAmountOut);
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                ).to.not.be.reverted;
+
+                await this.weth.approve(this.subject.address, wethAmountIn);
+                const wPowerPerpAmountSecond = await this.subject
+                    .connect(this.deployer)
+                    .callStatic.takeLong(wethAmountIn, minWPowerPerpAmountOut);
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                ).to.not.be.reverted;
+
+                let { wPowerPerpAmount } =
+                    await this.subject.longPositionInfo();
+
+                expect(wPowerPerpAmount).to.be.eq(
+                    wPowerPerpAmountFirst.add(wPowerPerpAmountSecond)
+                );
+            });
+
+            it("emits LongTaken event", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                ).to.emit(this.subject, "LongTaken");
+            });
+
+            describe("access control:", () => {
+                it("allowed: vault owner", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                    ).to.not.be.reverted;
+                });
+                it("allowed: approved account", async () => {
+                    let account = randomAddress();
+                    let nft = Number(await this.vaultRegistry.vaultsCount());
+                    await this.vaultRegistry
+                        .connect(this.deployer)
+                        .approve(account, nft);
+                    await this.weth
+                        .connect(this.deployer)
+                        .transfer(account, wethAmountIn);
+                    await withSigner(account, async (s) => {
+                        await this.weth
+                            .connect(s)
+                            .approve(this.subject.address, wethAmountIn);
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                        ).to.not.be.reverted;
+                    });
+                });
+                it("denied: other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            describe("edge cases:", () => {
+                describe("when position is short", () => {
+                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
+                        let nft =
+                            Number(await this.vaultRegistry.vaultsCount()) + 1;
+
+                        await setupVault(hre, nft, "SqueethVaultGovernance", {
+                            createVaultArgs: [this.deployer.address, true],
+                        });
+                        const squeethVault =
+                            await this.vaultRegistry.vaultForNft(nft);
+                        this.subject = await ethers.getContractAt(
+                            "SqueethVault",
+                            squeethVault
+                        );
+
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                        ).to.be.revertedWith(Exceptions.INVALID_STATE);
+                    });
+                });
+
+                describe("when wethAmountIn is less than or equal dust amount of squeeth vault", () => {
+                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                        let newWethAmountIn = (await this.subject.DUST()).sub(
+                            1
+                        );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .takeLong(
+                                    newWethAmountIn,
+                                    minWPowerPerpAmountOut
+                                )
+                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                    });
+                });
+
+                describe("when wethAmountIn is greater than balance of msg.sender", () => {
+                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        let newWethAmountIn = (
+                            await this.weth.balanceOf(this.deployer.address)
+                        ).add(1);
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .takeLong(
+                                    newWethAmountIn,
+                                    minWPowerPerpAmountOut
+                                )
+                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                    });
+                });
+
+                describe("when wethAmountIn is greater than allowance from msg.sender to squeethVault", () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        await this.weth.approve(
+                            this.subject.address,
+                            wethAmountIn.sub(1)
+                        );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#closeLong", () => {
+            let one: BigNumber = BigNumber.from(10).pow(18);
+            let minWethAmountOut = 0;
+            let dust: BigNumber;
+            beforeEach(async () => {
+                let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
+
+                await setupVault(hre, nft, "SqueethVaultGovernance", {
+                    createVaultArgs: [this.deployer.address, false],
+                });
+                const squeethVault = await this.vaultRegistry.vaultForNft(nft);
+                this.subject = await ethers.getContractAt(
+                    "SqueethVault",
+                    squeethVault
+                );
+
+                let wethAmountIn = one.mul(64);
+                let minWPowerPerpAmountOut = 0;
+
+                await this.weth.approve(this.subject.address, wethAmountIn);
+
+                await this.subject
+                    .connect(this.deployer)
+                    .takeLong(wethAmountIn, minWPowerPerpAmountOut);
+
+                await this.weth.approve(this.subject.address, 0);
+                dust = await this.subject.DUST();
+            });
+            it("sells squeeth wPowerPerp tokens back to the oSQTH/WETH pool", async () => {
+                let { wPowerPerpAmount: initialAmount } =
+                    await this.subject.longPositionInfo();
+                assert(initialAmount.gt(dust));
+                await this.subject.closeLong(initialAmount, minWethAmountOut);
+
+                let { wPowerPerpAmount: latestAmount } =
+                    await this.subject.longPositionInfo();
+                // 1% >= deviation
+                expect(
+                    approxEqual(
+                        latestAmount,
+                        BigNumber.from(0),
+                        BigNumber.from(1)
+                    )
+                );
+
+                let vaultSqthBalance = await this.squeeth.balanceOf(
+                    this.subject.address
+                );
+                expect(vaultSqthBalance.lte(dust));
+            });
+
+            it("multiple closeLong calls decrese total wPowerPerp amount aquired by the user", async () => {
+                let { wPowerPerpAmount: initialAmount } =
+                    await this.subject.longPositionInfo();
+                assert(initialAmount.gt(dust));
+
+                await this.subject.closeLong(
+                    initialAmount.div(2),
+                    minWethAmountOut
+                );
+                await this.subject.closeLong(
+                    initialAmount.div(2),
+                    minWethAmountOut
+                );
+
+                let { wPowerPerpAmount: latestAmount } =
+                    await this.subject.longPositionInfo();
+                // 1% >= deviation
+                expect(
+                    approxEqual(
+                        latestAmount,
+                        BigNumber.from(0),
+                        BigNumber.from(1)
+                    )
+                );
+
+                let vaultSqthBalance = await this.squeeth.balanceOf(
+                    this.subject.address
+                );
+                expect(vaultSqthBalance.lte(dust));
+            });
+
+            it("emits LongClosed event", async () => {
+                let { wPowerPerpAmount: initialAmount } =
+                    await this.subject.longPositionInfo();
+                assert(initialAmount.gt(dust));
+
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .closeLong(initialAmount, minWethAmountOut)
+                ).to.emit(this.subject, "LongClosed");
+            });
+
+            describe("access control:", () => {
+                it("allowed: vault owner", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .closeLong(dust.add(1), minWethAmountOut)
+                    ).to.not.be.reverted;
+                });
+                it("allowed: approved account", async () => {
+                    let account = randomAddress();
+                    let nft = Number(await this.vaultRegistry.vaultsCount());
+                    await this.vaultRegistry
+                        .connect(this.deployer)
+                        .approve(account, nft);
+                    await withSigner(account, async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .closeLong(dust.add(1), minWethAmountOut)
+                        ).to.not.be.reverted;
+                    });
+                });
+                it("denied: other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .closeLong(dust.add(1), minWethAmountOut)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            describe("edge cases:", () => {
+                describe("when position is short", () => {
+                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
+                        let nft =
+                            Number(await this.vaultRegistry.vaultsCount()) + 1;
+
+                        await setupVault(hre, nft, "SqueethVaultGovernance", {
+                            createVaultArgs: [this.deployer.address, true],
+                        });
+                        const squeethVault =
+                            await this.vaultRegistry.vaultForNft(nft);
+                        this.subject = await ethers.getContractAt(
+                            "SqueethVault",
+                            squeethVault
+                        );
+
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .closeLong(dust.add(1), minWethAmountOut)
+                        ).to.be.revertedWith(Exceptions.INVALID_STATE);
+                    });
+                });
+
+                describe("when wPowerPerpAmount is less than or equal dust amount of squeeth vault", () => {
+                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                        let newWPowerPerpAmount = (
+                            await this.subject.DUST()
+                        ).sub(1);
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .closeLong(
+                                    newWPowerPerpAmount,
+                                    minWethAmountOut
+                                )
+                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                    });
+                });
+
+                describe("when wPowerPerpAmount is greater than balance of squeeth vault", () => {
+                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        let newWPowerPerpAmount = (
+                            await this.squeeth.balanceOf(this.subject.address)
+                        ).add(1);
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .closeLong(
+                                    newWPowerPerpAmount,
+                                    minWethAmountOut
+                                )
+                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                     });
                 });
             });
