@@ -7,14 +7,24 @@ export const addSigner = async (
     address: string
 ): Promise<SignerWithAddress> => {
     const { ethers, network } = hre;
-    await network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [address],
-    });
-    await network.provider.send("hardhat_setBalance", [
-        address,
-        "0x1000000000000000000",
-    ]);
+    while (true) {
+        try {
+            await network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [address],
+            });
+            break;
+        } catch(error) {}
+    }
+    while (true) {
+        try {
+            await network.provider.send("hardhat_setBalance", [
+                address,
+                "0x1000000000000000000",
+            ]);
+            break;
+        } catch(error) {}
+    }
     return await ethers.getSigner(address);
 };
 
@@ -29,8 +39,13 @@ export const withSigner = async (
 };
 
 export const removeSigner = async (network: Network, address: string) => {
-    await network.provider.request({
-        method: "hardhat_stopImpersonatingAccount",
-        params: [address],
-    });
+    while (true) {
+        try {
+            await network.provider.request({
+                method: "hardhat_stopImpersonatingAccount",
+                params: [address],
+            });
+            break;
+        } catch(error) {}
+    }
 };
