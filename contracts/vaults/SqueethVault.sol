@@ -19,7 +19,6 @@ import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
 import "./IntegrationVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces Opyn Squeeth protocol in the integration layer.
 contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault {
@@ -91,7 +90,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         if (shortVaultId != 0) {
             // short position has already been taken
             require(
-                IShortPowerPerp(_controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
+                IShortPowerPerp(_controller.shortPowerPerp()).ownerOf(shortVaultId) == address(this),
                 ExceptionsLibrary.FORBIDDEN
             );
         }

@@ -489,6 +489,17 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         eps
                     )
                 ).to.be.true;
+
+                let vaultSqthBalance = await this.squeeth.balanceOf(
+                    this.subject.address
+                );
+                expect(
+                    approxEqual(
+                        wPowerPerpAmount,
+                        vaultSqthBalance,
+                        BigNumber.from(1)
+                    )
+                );
             });
 
             it("multiple takeLong calls increse total wPowerPerp received amount", async () => {
@@ -519,6 +530,17 @@ contract<SqueethVault, DeployOptions, CustomContext>(
 
                 expect(wPowerPerpAmount).to.be.eq(
                     wPowerPerpAmountFirst.add(wPowerPerpAmountSecond)
+                );
+
+                let vaultSqthBalance = await this.squeeth.balanceOf(
+                    this.subject.address
+                );
+                expect(
+                    approxEqual(
+                        wPowerPerpAmount,
+                        vaultSqthBalance,
+                        BigNumber.from(1)
+                    )
                 );
             });
 
@@ -835,6 +857,9 @@ contract<SqueethVault, DeployOptions, CustomContext>(
         describe.only("#takeShort", () => {
             let one: BigNumber = BigNumber.from(10).pow(18);
             let dust: BigNumber;
+            let wPowerPerpExpectedAmount = one.mul(1);
+            let wethDebtAmount = one.mul(10);
+            let minWethAmountOut = BigNumber.from(0);
             beforeEach(async () => {
                 let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
 
@@ -848,17 +873,134 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 );
 
                 dust = await this.subject.DUST();
+                await this.weth.approve(this.subject.address, wethDebtAmount);
             });
 
             it("mints wPowerPerp using weth as a collateral, than immediately sells wPowerPerp to the oSQTH/WETH univ3 pool", async () => {
-                let wPowerPerpExpectedAmount = one.mul(1);
-                let wethDebtAmount = one.mul(10);
-                let minWethAmountOut = BigNumber.from(0);
-                await this.weth.approve(this.subject.address, wethDebtAmount);
-                let {wPowerPerpMintedAmount, wethAmountOut} = await this.subject.callStatic.takeShort(wPowerPerpExpectedAmount, wethDebtAmount, minWethAmountOut);
-                await this.subject.takeShort(wPowerPerpExpectedAmount, wethDebtAmount, minWethAmountOut);
-                let {wPo} = await this.subject.shortPositionInfo();
-                expect()
+                let {
+                    wPowerPerpAmount: initialWPowerPerpAmount,
+                    wethAmount: initialWethAmount,
+                    vaultId: id,
+                } = await this.subject.shortPositionInfo();
+                expect(initialWPowerPerpAmount.eq(0)).to.be.true;
+                expect(initialWethAmount.eq(0)).to.be.true;
+                expect(id.eq(0)).to.be.true;
+
+                let { wPowerPerpMintedAmount, wethAmountOut } =
+                    await this.subject.callStatic.takeShort(
+                        wPowerPerpExpectedAmount,
+                        wethDebtAmount,
+                        minWethAmountOut
+                    );
+                expect(wPowerPerpMintedAmount.gt(0)).to.be.true;
+                expect(wethAmountOut.gt(0)).to.be.true;
+
+                // sold all minted squeeth
+                expect(
+                    await this.squeeth.balanceOf(this.subject.address)
+                ).to.eq(BigNumber.from(0));
+
+                await this.subject.takeShort(
+                    wPowerPerpExpectedAmount,
+                    wethDebtAmount,
+                    minWethAmountOut
+                );
+
+                let { wPowerPerpAmount, wethAmount, vaultId } =
+                    await this.subject.shortPositionInfo();
+                expect(wPowerPerpAmount.gt(0)).to.be.true;
+                expect(wethAmount.gt(0)).to.be.true;
+                expect(vaultId.gt(0)).to.be.true;
+            });
+
+            it("multiple takeShort calls increase the total amount of minted wPowerPerp and increases the amount of weth, which comes from selling the minted wPowerPerp to a univ3 pool", async () => {
+                let newWethDebtAmount = wethDebtAmount.mul(2);
+                let {
+                    wPowerPerpAmount: initialWPowerPerpAmount,
+                    wethAmount: initialWethAmount,
+                    vaultId: id,
+                } = await this.subject.shortPositionInfo();
+                expect(initialWPowerPerpAmount.eq(0)).to.be.true;
+                expect(initialWethAmount.eq(0)).to.be.true;
+                expect(id.eq(0)).to.be.true;
+
+                await this.weth.approve(
+                    this.subject.address,
+                    newWethDebtAmount
+                );
+
+                let {
+                    wPowerPerpMintedAmount: firstSqthMinted,
+                    wethAmountOut: firstWethMinted,
+                } = await this.subject.callStatic.takeShort(
+                    wPowerPerpExpectedAmount.div(2),
+                    newWethDebtAmount.div(2),
+                    minWethAmountOut
+                );
+                await this.subject.takeShort(
+                    wPowerPerpExpectedAmount.div(2),
+                    newWethDebtAmount.div(2),
+                    minWethAmountOut
+                );
+
+                let {
+                    wPowerPerpMintedAmount: secondSqthMinted,
+                    wethAmountOut: secondWethMinted,
+                } = await this.subject.callStatic.takeShort(
+                    wPowerPerpExpectedAmount.div(2),
+                    newWethDebtAmount.div(2),
+                    minWethAmountOut
+                );
+                await this.subject.takeShort(
+                    wPowerPerpExpectedAmount.div(2),
+                    newWethDebtAmount.div(2),
+                    minWethAmountOut
+                );
+
+                let { wPowerPerpAmount, wethAmount, vaultId } =
+                    await this.subject.shortPositionInfo();
+                expect(wPowerPerpAmount.gt(0)).to.be.true;
+                expect(wethAmount.gt(0)).to.be.true;
+                expect(vaultId.gt(0)).to.be.true;
+
+                expect(
+                    approxEqual(
+                        wPowerPerpAmount,
+                        firstSqthMinted.add(secondSqthMinted),
+                        BigNumber.from(1)
+                    )
+                );
+
+                // sold all minted squeeth
+                expect(
+                    await this.squeeth.balanceOf(this.subject.address)
+                ).to.eq(BigNumber.from(0));
+
+                let deployerWethBalance = BigNumber.from(10).pow(18).mul(3000);
+                let realWethDeployerBalance = await this.weth.balanceOf(
+                    this.deployer.address
+                );
+                let expectedWethDeployerBalance = deployerWethBalance
+                    .sub(newWethDebtAmount)
+                    .add(firstWethMinted)
+                    .add(secondWethMinted);
+                expect(
+                    approxEqual(
+                        realWethDeployerBalance,
+                        expectedWethDeployerBalance,
+                        BigNumber.from(1)
+                    )
+                );
+            });
+
+            it("emits ShortTaken event", async () => {
+                expect(
+                    this.subject.takeShort(
+                        wPowerPerpExpectedAmount,
+                        wethDebtAmount,
+                        minWethAmountOut
+                    )
+                ).to.emit(this.subject, "ShortTaken");
             });
         });
 
