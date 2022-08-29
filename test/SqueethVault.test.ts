@@ -826,6 +826,42 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
         });
 
+        // describe.only("write", () => {
+        //     it("", async () => {
+        //         console.log(await this.subject.write());
+        //     });
+        // });
+
+        describe.only("#takeShort", () => {
+            let one: BigNumber = BigNumber.from(10).pow(18);
+            let dust: BigNumber;
+            beforeEach(async () => {
+                let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
+
+                await setupVault(hre, nft, "SqueethVaultGovernance", {
+                    createVaultArgs: [this.deployer.address, true],
+                });
+                const squeethVault = await this.vaultRegistry.vaultForNft(nft);
+                this.subject = await ethers.getContractAt(
+                    "SqueethVault",
+                    squeethVault
+                );
+
+                dust = await this.subject.DUST();
+            });
+
+            it("mints wPowerPerp using weth as a collateral, than immediately sells wPowerPerp to the oSQTH/WETH univ3 pool", async () => {
+                let wPowerPerpExpectedAmount = one.mul(1);
+                let wethDebtAmount = one.mul(10);
+                let minWethAmountOut = BigNumber.from(0);
+                await this.weth.approve(this.subject.address, wethDebtAmount);
+                let {wPowerPerpMintedAmount, wethAmountOut} = await this.subject.callStatic.takeShort(wPowerPerpExpectedAmount, wethDebtAmount, minWethAmountOut);
+                await this.subject.takeShort(wPowerPerpExpectedAmount, wethDebtAmount, minWethAmountOut);
+                let {wPo} = await this.subject.shortPositionInfo();
+                expect()
+            });
+        });
+
         //integrationVaultBehavior.call(this, {});
     }
 );
