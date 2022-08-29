@@ -8,6 +8,8 @@ import "./IVaultGovernance.sol";
 
 interface ISqueethVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param controller Squeeth protocol Controller, which is used to mint/burn oSQTH, manage positions and etc
+    /// @param router UniswapV3 SwapRouter contracts, which is used to perform swaps in the oSQTH/WETH pool
     struct DelayedProtocolParams {
         IController controller;
         ISwapRouter router;

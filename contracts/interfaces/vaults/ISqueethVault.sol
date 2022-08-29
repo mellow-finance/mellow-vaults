@@ -9,6 +9,7 @@ interface ISqueethVault is IIntegrationVault {
     struct ShortPositionInfo {
         uint256 vaultId;
         uint256 wPowerPerpAmount;
+        uint wethAmount;
     }
 
     struct LongPositionInfo {
