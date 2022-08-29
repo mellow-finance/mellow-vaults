@@ -292,6 +292,21 @@ const config: HardhatUserConfig = {
         },
         curveRouter: {
             default: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
+        },
+        squeethController: {
+            default: "0x64187ae08781B09368e6253F9E94951243A493D5",
+        },
+        squeethOracle: {
+            default: "0x65D66c76447ccB45dAf1e8044e918fA786A483A1",
+        },
+        squeethShortPowerPerp: {
+            default: "0xa653e22A963ff0026292Cc8B67941c0ba7863a38",
+        },
+        squeethWrappedPowerPerp: {
+            default: "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B",
+        },
+        squeethShortPositionHelper: {
+            default: "0x3b4095D5ff0e629972CAAa50bd3004B09a1632C5",
         }
     },
 
