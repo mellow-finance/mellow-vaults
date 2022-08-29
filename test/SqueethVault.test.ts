@@ -409,8 +409,8 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             describe("access control:", () => {
                 it("allowed: any address", async () => {
                     await withSigner(randomAddress(), async (s) => {
-                        await expect(this.subject.controller()).to.not.be
-                            .reverted;
+                        await expect(this.subject.connect(s).controller()).to
+                            .not.be.reverted;
                     });
                 });
             });
@@ -427,7 +427,8 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             describe("access control:", () => {
                 it("allowed: any address", async () => {
                     await withSigner(randomAddress(), async (s) => {
-                        await expect(this.subject.router()).to.not.be.reverted;
+                        await expect(this.subject.connect(s).router()).to.not.be
+                            .reverted;
                     });
                 });
             });
@@ -854,7 +855,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
         //     });
         // });
 
-        describe.only("#takeShort", () => {
+        describe("#takeShort", () => {
             let one: BigNumber = BigNumber.from(10).pow(18);
             let dust: BigNumber;
             let wPowerPerpExpectedAmount = one.mul(1);
@@ -994,7 +995,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
 
             it("emits ShortTaken event", async () => {
-                expect(
+                await expect(
                     this.subject.takeShort(
                         wPowerPerpExpectedAmount,
                         wethDebtAmount,
@@ -1002,6 +1003,65 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     )
                 ).to.emit(this.subject, "ShortTaken");
             });
+
+            describe("access control:", () => {
+                it("allowed: vault owner", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .takeShort(
+                                wPowerPerpExpectedAmount,
+                                wethDebtAmount,
+                                minWethAmountOut
+                            )
+                    ).to.not.be.reverted;
+                });
+
+                it("allowed: approved account", async () => {
+                    let account = randomAddress();
+                    let nft = Number(await this.vaultRegistry.vaultsCount());
+                    await this.vaultRegistry
+                        .connect(this.deployer)
+                        .approve(account, nft);
+                    await this.weth
+                        .connect(this.deployer)
+                        .transfer(account, wethDebtAmount);
+                    await withSigner(account, async (s) => {
+                        await this.weth
+                            .connect(s)
+                            .approve(this.subject.address, wethDebtAmount);
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .takeShort(
+                                    wPowerPerpExpectedAmount,
+                                    wethDebtAmount,
+                                    minWethAmountOut
+                                )
+                        ).to.not.be.reverted;
+                    });
+                });
+
+                it("denied: any other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await this.weth.approve(
+                            this.subject.address,
+                            wethDebtAmount
+                        );
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .takeShort(
+                                    wPowerPerpExpectedAmount,
+                                    wethDebtAmount,
+                                    minWethAmountOut
+                                )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            describe("edge cases:", () => {});
         });
 
         //integrationVaultBehavior.call(this, {});
