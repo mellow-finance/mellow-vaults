@@ -31,10 +31,7 @@ contract PerpVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGove
     /// @inheritdoc IGearboxVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return
-                DelayedProtocolParams({
-                    kek: 0
-                });
+            return DelayedProtocolParams({kek: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -70,7 +67,15 @@ contract PerpVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGove
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
-        gearboxVault.initialize(nft, primaryToken_, secondaryToken_, curveAdapter_, convexAdapter_, facade_, convexPoolId_);
+        gearboxVault.initialize(
+            nft,
+            primaryToken_,
+            secondaryToken_,
+            curveAdapter_,
+            convexAdapter_,
+            facade_,
+            convexPoolId_
+        );
         vault = IGearboxVault(vaddr);
         address[] memory vaultTokens = new address[](1);
         vaultTokens[0] = primaryToken_;
