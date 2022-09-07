@@ -59,7 +59,9 @@ const setupStrategy = async (
     erc20Vault: string,
     moneyVault: string,
     tokens: string[],
-    deploymentName: string
+    deploymentName: string,
+    tickMin: any,
+    tickMax: any
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get } = deployments;
@@ -79,11 +81,21 @@ const setupStrategy = async (
         mStrategyAddress
     );
 
-    const fee = 3000;
+    const fee = 500;
     await setupCardinality(hre, tokens, fee);
     const params = [tokens, erc20Vault, moneyVault, fee, deployer];
     const address = await mStrategy.callStatic.createStrategy(...params);
-    await mStrategy.createStrategy(...params);
+    log(`CREATING STRATEGY`);
+    const tx = await mStrategy.populateTransaction.createStrategy(...params, {
+        ...TRANSACTION_GAS_LIMITS
+    });
+    const [operator] = await hre.ethers.getSigners();
+    const txResp = await operator.sendTransaction(tx);
+    log(
+        `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
+    );
+    const receipt = await txResp.wait(1);
+    log("Transaction confirmed");
     await deployments.save(deploymentName, {
         abi: (await deployments.get(mStrategyName)).abi,
         address,
@@ -101,9 +113,9 @@ const setupStrategy = async (
         maxSlippageD: BigNumber.from(10).pow(9).div(100),
     };
     const ratioParams = {
-        tickMin: 189324,
-        tickMax: 207242,
-        minTickRebalanceThreshold: BigNumber.from(1200),
+        tickMin: tickMin,
+        tickMax: tickMax,
+        minTickRebalanceThreshold: BigNumber.from(600),
         tickNeighborhood: 50,
         tickIncrease: 10,
         erc20MoneyRatioD: BigNumber.from(10).pow(8),
@@ -134,6 +146,8 @@ const setupStrategy = async (
     log("Transferring ownership to mStrategyAdmin");
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    const adminDelegateRole = await read("ProtocolGovernance", "ADMIN_DELEGATE_ROLE");
+    const operatorRole = await read("ProtocolGovernance", "OPERATOR");
     txs.push(
         mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
             adminRole,
@@ -142,8 +156,29 @@ const setupStrategy = async (
     );
 
     txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            adminDelegateRole,
+            deployer
+        ])
+    );
+
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            operatorRole,
+            deployer
+        ])
+    );
+
+    txs.push(
         mStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
             adminRole,
+            deployer
+        ])
+    );
+
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
+            adminDelegateRole,
             deployer
         ])
     );
@@ -165,7 +200,10 @@ const buildMStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
     tokens: any,
-    deploymentName: any
+    deploymentName: any,
+    tokenLimit: any,
+    tickMin: any,
+    tickMax: any
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
@@ -184,6 +222,8 @@ const buildMStrategy = async (
         createVaultArgs: [tokens, deployer],
     });
 
+    log("SET UP ALL VAULTS");
+
     const erc20Vault = await read(
         "VaultRegistry",
         "vaultForNft",
@@ -194,13 +234,16 @@ const buildMStrategy = async (
         "vaultForNft",
         yearnVaultNft
     );
+
     await setupStrategy(
         hre,
         kind,
         erc20Vault,
         moneyVault,
         tokens,
-        deploymentName
+        deploymentName,
+        tickMin,
+        tickMax
     );
 
     const strategy = await get(deploymentName);
@@ -210,8 +253,90 @@ const buildMStrategy = async (
         erc20VaultNft + 1,
         [erc20VaultNft, yearnVaultNft],
         strategy.address,
-        mStrategyTreasury
+        mStrategyTreasury,
+        {
+            limits: tokens.map((_: any) => ethers.constants.MaxUint256),
+            strategyPerformanceTreasuryAddress: mStrategyTreasury,
+            tokenLimitPerAddress: tokenLimit,
+            tokenLimit: tokenLimit,
+            managementFee: BigNumber.from(10).pow(7).mul(2),
+            performanceFee: BigNumber.from(10).pow(8).mul(2)
+        }
     );
+
+    const rootVaultAddress = await read(
+        "VaultRegistry",
+        "vaultForNft",
+        erc20VaultNft + 1
+    );
+
+    const rootVault = await hre.ethers.getContractAt(
+        "ERC20RootVault",
+        rootVaultAddress
+    )
+
+    let tokensAmounts = [];
+
+    for (let token of tokens) {
+        const tokenContract = await hre.ethers.getContractAt("ERC20Token", token);
+        const tx = await tokenContract.populateTransaction.approve(rootVaultAddress, BigNumber.from(2).pow(200));
+        const [operator] = await hre.ethers.getSigners();
+        const txResp = await operator.sendTransaction(tx);
+        log(
+            `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
+        );
+        const receipt = await txResp.wait(1);
+        log("Transaction confirmed");
+        let decimals = await tokenContract.decimals();
+        tokensAmounts.push(BigNumber.from(10).pow(decimals / 2 + 1));
+    }
+
+    const mstrategy = await hre.ethers.getContractAt("MStrategy", strategy.address);
+    log("Making first deposit", map((x) => x.toString(), tokensAmounts));
+    await deployments.save(`${deploymentName}_RootVault`, {
+        abi: (await deployments.get("ERC20RootVault")).abi,
+        address: rootVaultAddress,
+    });
+    await execute(
+        `${deploymentName}_RootVault`,
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS
+        },
+        "deposit",
+        tokensAmounts,
+        0,
+        []
+    )
+    await rootVault.deposit(tokensAmounts, 0, []);
+    log("Rebalancing...");
+    const txs = [];
+    txs.push(mstrategy.interface.encodeFunctionData("rebalance", [
+        [0, 0],
+        []
+    ]));
+    // await mstrategy.rebalance([0, 0], []);
+
+    const operatorRole = await read("ProtocolGovernance", "OPERATOR");
+    txs.push(mstrategy.interface.encodeFunctionData("renounceRole", [
+        operatorRole,
+        deployer
+    ]));
+    // await mstrategy.renounceRole(operatorRole, deployer);
+
+    await execute(
+        deploymentName,
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        },
+        "multicall",
+        txs
+    )
 };
 
 export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
@@ -220,11 +345,11 @@ export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
         const { weth, usdc, wbtc } = await getNamedAccounts();
         await deployMStrategy(hre, kind);
 
-        for (let [tokens, deploymentName] of [
-            [[weth, usdc], `MStrategy${kind}_WETH_USDC`],
-            [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`],
+        for (let [tokens, deploymentName, tokenLimit, tickMin, tickMax] of [
+            [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`, BigNumber.from(10).pow(13).mul(44), 255800, 256000],
+            [[weth, usdc], `MStrategy${kind}_WETH_USDC`, BigNumber.from(10).pow(18), 200805, 201005],
         ]) {
-            await buildMStrategy(hre, kind, tokens, deploymentName);
+            await buildMStrategy(hre, kind, tokens, deploymentName, tokenLimit, tickMin, tickMax);
         }
     };
 

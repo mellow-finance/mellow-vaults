@@ -6,7 +6,7 @@ import {
     ALL_NETWORKS,
     combineVaults,
     MAIN_NETWORKS,
-    setupVault,
+    setupVault, TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
 import { BigNumber } from "ethers";
 import { map } from "ramda";
@@ -28,12 +28,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         mStrategyAdmin,
     } = await getNamedAccounts();
     const tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
-    const startNft =
-        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+    // const startNft =
+    //     (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
-    let uniV3LowerVaultNft = startNft;
-    let uniV3UpperVaultNft = startNft + 1;
-    let erc20VaultNft = startNft + 2;
+    let uniV3LowerVaultNft = 37;
+    let uniV3UpperVaultNft = 38;
+    let erc20VaultNft = 39;
     const intervalWidthInTicks = 100;
 
     const positionManager = await ethers.getContractAt(
@@ -50,7 +50,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const lStrategy = await ethers.getContract("LStrategy");
         const vaultRegistry = await ethers.getContract("VaultRegistry");
 
-        vaultRegistry.approve(approver, nft);
+        log("approving", approver, nft);
+        await vaultRegistry.approve(approver, nft, {...TRANSACTION_GAS_LIMITS});
+        log("approved!");
 
         let signer = await ethers.getSigner(approver);
 
@@ -58,15 +60,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const wstethContract = await ethers.getContractAt("ERC20Token", wsteth);
         const amount = BigNumber.from(10).pow(12);
 
+        log("approve tokens");
         await wethContract.approve(
             uniswapV3PositionManager,
-            amount
+            amount, {...TRANSACTION_GAS_LIMITS}
         );
         await wstethContract.approve(
             uniswapV3PositionManager,
-            amount
+            amount, {...TRANSACTION_GAS_LIMITS}
         );
-        
+
         const mintParams = {
             token0: wsteth,
             token1: weth,
@@ -80,29 +83,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             recipient: approver,
             deadline: ethers.constants.MaxUint256,
         };
+        log("Minting...");
         const result = await positionManager.callStatic.mint(
             mintParams
         );
 
-        await positionManager.mint(mintParams);
+        await positionManager.mint(mintParams, {...TRANSACTION_GAS_LIMITS});
 
+        log("Transferring...");
         await positionManager.connect(signer).functions[
             "safeTransferFrom(address,address,uint256)"
         ](approver, vault, result.tokenId);
-        await wethContract.approve(
-            uniswapV3PositionManager,
-            0
-        );
-        await wstethContract.approve(
-            uniswapV3PositionManager,
-            0
-        );
+        log("Transferred!");
 
-        vaultRegistry.approve(lStrategy.address, nft);
+        vaultRegistry.approve(lStrategy.address, nft, {...TRANSACTION_GAS_LIMITS});
 
     };
 
     const uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
+
+    log("Setting up vaults");
 
     await setupVault(hre, uniV3LowerVaultNft, "UniV3VaultGovernance", {
         createVaultArgs: [tokens, deployer, 500, uniV3Helper],
@@ -113,6 +113,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
         createVaultArgs: [tokens, deployer],
     });
+
+
 
     const erc20Vault = await read(
         "VaultRegistry",
@@ -153,7 +155,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const sqrtPriceX48 = BigNumber.from(sqrt(JSBI.BigInt(priceX96)).toString());
         const denominator = BigNumber.from(2).pow(48);
         const tick = TickMath.getTickAtSqrtRatio(JSBI.BigInt(sqrtPriceX48.mul(denominator)));
-        
+
         return BigNumber.from(tick);
     };
 
@@ -180,6 +182,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
         autoMine: true,
+        ...TRANSACTION_GAS_LIMITS
     });
 
     const lStrategy = await ethers.getContract("LStrategy");
@@ -195,8 +198,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let tickRightLower = tickLeftLower + semiPositionRange;
     let tickRightUpper = tickLeftUpper + semiPositionRange;
 
+    log("Make UniV3Positions");
+
     await preparePush(uniV3LowerVault, tickLeftLower, tickLeftUpper, uniV3LowerVaultNft);
     await preparePush(uniV3UpperVault, tickRightLower, tickRightUpper, uniV3UpperVaultNft);
+
+    log("Combining vaults");
 
     await combineVaults(
         hre,
@@ -206,16 +213,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         mStrategyTreasury
     );
 
+    log("Combined!");
+
+    const rootVaultAddress = await read(
+        "VaultRegistry",
+        "vaultForNft",
+        uniV3UpperVaultNft
+    );
+
+    await deployments.save(`LStrategy_RootVault`, {
+        abi: (await deployments.get("ERC20RootVault")).abi,
+        address: rootVaultAddress,
+    });
+
     const mellowOracle = await get("MellowOracle");
+
+    log("Setting Params");
 
     await lStrategy.updateTradingParams({
         oracle: mellowOracle.address,
         maxSlippageD: BigNumber.from(10).pow(7),
-        oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
+        oracleSafetyMask: 0x20,
         maxFee0: BigNumber.from(10).pow(15),
         maxFee1: BigNumber.from(10).pow(15)
-    });
+    }, {...TRANSACTION_GAS_LIMITS});
 
     await lStrategy.updateRatioParams({
         erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
@@ -223,14 +245,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         minErc20UniV3CapitalRatioDeviationD: BigNumber.from(10).pow(8),
         minErc20TokenRatioDeviationD: BigNumber.from(10).pow(8).div(2),
         minUniV3LiquidityRatioDeviationD: BigNumber.from(10).pow(8).div(2),
-    });
-
+    }, {...TRANSACTION_GAS_LIMITS});
     await lStrategy.updateOtherParams({
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
         secondsBetweenRebalances: 600,
-    });
+    }, {...TRANSACTION_GAS_LIMITS});
 
+    log("Set Params");
     const ADMIN_ROLE =
     "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
     const ADMIN_DELEGATE_ROLE =
@@ -238,13 +260,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OPERATOR_ROLE =
         "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
 
-    await lStrategy.grantRole(ADMIN_ROLE, mStrategyAdmin);
-    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, mStrategyAdmin);
-    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
-    await lStrategy.grantRole(OPERATOR_ROLE, mStrategyAdmin);
-    await lStrategy.revokeRole(OPERATOR_ROLE, deployer);
-    await lStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
-    await lStrategy.revokeRole(ADMIN_ROLE, deployer);
+    await lStrategy.grantRole(ADMIN_ROLE, mStrategyAdmin, {...TRANSACTION_GAS_LIMITS});
+    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, mStrategyAdmin, {...TRANSACTION_GAS_LIMITS});
+    await lStrategy.renounceRole(ADMIN_ROLE, deployer, {...TRANSACTION_GAS_LIMITS});
 };
 
 export default func;

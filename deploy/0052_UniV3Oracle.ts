@@ -21,10 +21,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         pools.push(await factory.getPool(tokens[0], tokens[1], 3000));
     }
 
-    for (const tokens of [
-        [wsteth, weth],
-    ]) {
-        pools.push(await factory.getPool(tokens[0], tokens[1], 500));
+    if (wsteth) {
+        for (const tokens of [
+            [wsteth, weth],
+        ]) {
+            pools.push(await factory.getPool(tokens[0], tokens[1], 500));
+        }
     }
 
     await deploy("UniV3Oracle", {
