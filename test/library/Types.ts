@@ -36,6 +36,8 @@ export type TestVaultGovernance = Contract;
 export type VaultFactory = Contract;
 export type Vault = Contract;
 export type LpIssuer = Contract;
+export type VoltzVaultGovernance = Contract;
+export type VoltzVault = Contract;
 
 export type ProtocolGovernance_Params = {
     permissionless: boolean;
@@ -125,11 +127,12 @@ export type ERC20Test_constructorArgs = {
     symbol: string;
 };
 
-export type SubVaultType = "ERC20Vault" | "AaveVault" | "UniV3Vault";
+export type SubVaultType = "ERC20Vault" | "AaveVault" | "UniV3Vault" | "VoltzVault";
 export type SubVaultTypeTest =
     | "ERC20VaultTest"
     | "AaveVaultTest"
-    | "UniV3VaultTest";
+    | "UniV3VaultTest"
+    | "VoltzVaultTest";
 export type VaultTypeTest = "GatewayVaultTest";
 export type VaultType =
     | SubVaultType

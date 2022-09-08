@@ -128,4 +128,13 @@ library FullMath {
             }
         }
     }
+
+    function mulDivSigned(
+        int256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (int256 result) {
+        if (a < 0) return -int256(mulDiv(uint256(-a), b, denominator));
+        return int256(mulDiv(uint256(a), b, denominator));
+    }
 }

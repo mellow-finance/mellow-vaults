@@ -33,6 +33,9 @@ import {
     MellowOracle,
     MStrategy,
     LStrategy,
+    VoltzVaultGovernance,
+    VoltzVault,
+    LPOptimiserStrategy,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
@@ -52,6 +55,9 @@ export interface TestContext<T, F> extends Suite {
     mellowOracle: MellowOracle;
     mStrategy: MStrategy;
     lStrategy: LStrategy;
+    voltzVaultGovernance: VoltzVaultGovernance;
+    voltzVaultSingleton: VoltzVault;
+    lPOptimiserStrategy: LPOptimiserStrategy;
 
     usdc: ERC20;
     weth: ERC20;
@@ -145,6 +151,9 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.uniV3VaultSingleton = await ethers.getContract("UniV3Vault");
 
+    this.voltzVaultGovernance = await ethers.getContract("VoltzVaultGovernance");
+    this.voltzVaultSingleton = await ethers.getContract("VoltzVault");
+
     this.erc20RootVaultGovernance = await ethers.getContract(
         "ERC20RootVaultGovernance"
     );
@@ -159,6 +168,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         this.mStrategy = mStrategy;
     }
     this.lStrategy = await ethers.getContract("LStrategy");
+    this.lPOptimiserStrategy = await ethers.getContract("LPOptimiserStrategy");
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
