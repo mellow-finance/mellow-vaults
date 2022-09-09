@@ -25,4 +25,5 @@ library ExceptionsLibrary {
     string constant INVALID_LENGTH = "INVL";
     string constant LOCK = "LCKD";
     string constant DISABLED = "DIS";
+    string constant REBALANCE_NOT_NEEDED = "RNN";
 }

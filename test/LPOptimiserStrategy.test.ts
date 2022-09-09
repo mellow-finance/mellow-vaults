@@ -236,6 +236,13 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         await this.deploymentFixture();
     });
 
+    describe("new rebalance function", async () => {
+        it( "rebalance get the current position", async () => {
+            const result = await this.subject.rebalanceCheck();
+            expect(result).to.be.equal(true);
+        })
+    })
+
     describe("one signal", async () => {
         for (let signal of [1, 2, 3]) {
             for (let leverage of [1, 10]) {
