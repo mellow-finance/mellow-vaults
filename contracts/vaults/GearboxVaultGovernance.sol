@@ -6,8 +6,9 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-contract PerpVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
+contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
@@ -31,7 +32,7 @@ contract PerpVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGove
     /// @inheritdoc IGearboxVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({kek: 0});
+            return DelayedProtocolParams({maxCollateralTokensPerVault: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -57,28 +58,34 @@ contract PerpVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGove
     /// @inheritdoc IGearboxVaultGovernance
     function createVault(
         address owner_,
-        address primaryToken_,
-        address secondaryToken_,
+        address[] memory collateralTokens_,
         address curveAdapter_,
         address convexAdapter_,
         address facade_,
-        uint256 convexPoolId_
+        uint256 convexPoolId_,
+        uint256 targetHealthFactorD_,
+        bytes memory options
     ) external returns (IGearboxVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
+        IERC20Metadata token = IERC20Metadata(collateralTokens_[0]);
+
+        uint256 pullExistential = 10**(token.decimals() / 2);
+        require(token.balanceOf(address(this)) >= pullExistential, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        token.transfer(vaddr, pullExistential);
+
         gearboxVault.initialize(
             nft,
-            primaryToken_,
-            secondaryToken_,
+            collateralTokens_,
             curveAdapter_,
             convexAdapter_,
             facade_,
-            convexPoolId_
+            convexPoolId_,
+            targetHealthFactorD_,
+            options
         );
         vault = IGearboxVault(vaddr);
-        address[] memory vaultTokens = new address[](1);
-        vaultTokens[0] = primaryToken_;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
