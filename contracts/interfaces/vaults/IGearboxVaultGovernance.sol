@@ -7,7 +7,7 @@ import "./IVaultGovernance.sol";
 interface IGearboxVaultGovernance is IVaultGovernance {
 
     struct DelayedProtocolParams {
-        uint256 kek;
+        uint256 maxCollateralTokensPerVault;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -29,7 +29,8 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     function commitDelayedProtocolParams() external;
 
 
-    function createVault(address owner_, address primaryToken_, address secondaryToken_, address curveAdapter_, address convexAdapter_, address facade_, uint256 convexPoolId_)
+    function createVault(address owner_, address[] memory collateralTokens_, address curveAdapter_, address convexAdapter_, address facade_, uint256 convexPoolId_, uint256 targetHealthFactorD_,
+        bytes memory options)
         external
         returns (IGearboxVault vault, uint256 nft);
 }
