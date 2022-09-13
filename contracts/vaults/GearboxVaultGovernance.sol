@@ -58,7 +58,8 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     /// @inheritdoc IGearboxVaultGovernance
     function createVault(
         address owner_,
-        address[] memory collateralTokens_,
+        address primaryToken_,
+        address depositToken_,
         address curveAdapter_,
         address convexAdapter_,
         address facade_,
@@ -69,15 +70,20 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
-        IERC20Metadata token = IERC20Metadata(collateralTokens_[0]);
+        IERC20Metadata token = IERC20Metadata(primaryToken_);
 
-        uint256 pullExistential = 10**(token.decimals() / 2);
-        require(token.balanceOf(address(this)) >= pullExistential, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        token.transfer(vaddr, pullExistential);
+        {
+
+            uint256 pullExistential = 10**(token.decimals() / 2);
+            require(token.balanceOf(address(this)) >= pullExistential, ExceptionsLibrary.LIMIT_UNDERFLOW);
+            token.transfer(vaddr, pullExistential);
+
+        }
 
         gearboxVault.initialize(
             nft,
-            collateralTokens_,
+            primaryToken_,
+            depositToken_,
             curveAdapter_,
             convexAdapter_,
             facade_,
