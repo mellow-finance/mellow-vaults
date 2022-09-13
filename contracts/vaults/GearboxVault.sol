@@ -36,13 +36,20 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         (uint256 total, ) = _creditFacade.calcTotalValue(creditAccount);
         (, , uint256 borrowAmountWithInterestAndFees) = _creditManager.calcCreditAccountAccruedInterest(creditAccount);
-        uint256 len = _vaultTokens.length;
 
-        minTokenAmounts = new uint256[](len);
-        maxTokenAmounts = new uint256[](len);
+        minTokenAmounts = new uint256[](1);
+        uint256 valueUnderlying = 0;
 
-        minTokenAmounts[0] = total - borrowAmountWithInterestAndFees;
-        maxTokenAmounts[0] = total - borrowAmountWithInterestAndFees;
+        if (total >= borrowAmountWithInterestAndFees) {
+            valueUnderlying = total - borrowAmountWithInterestAndFees;
+        }
+
+        IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
+        uint256 valueUsd = oracle.convertToUSD(valueUnderlying, primaryToken);
+        uint256 valueDeposit = oracle.convertFromUSD(valueUsd, depositToken);
+
+        minTokenAmounts[0] = valueDeposit;
+        maxTokenAmounts = minTokenAmounts;
     }
 
     function initialize(
@@ -160,7 +167,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         calls[0] = MultiCall({
             target: _creditManager.universalAdapter(),
-            callData: abi.encodeWithSelector(IUniversalAdapter.withdraw.selector, primaryToken, amount)
+            callData: abi.encodeWithSelector(IUniversalAdapter.withdraw.selector, primaryToken, underlyingToPull)
         });
 
         uint256 returnedAmount = IERC20(primaryToken).balanceOf(address(this));
@@ -275,7 +282,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             } else {
                 uint256 convexToOutput = _calcConvexTokensToOutput(delta - currentAmount);
 
-                MultiCall[] memory calls = new MultiCall[](2);
+                MultiCall[] memory calls = new MultiCall[](3);
                 calls[0] = MultiCall({
                     target: convexAdapter,
                     callData: abi.encodeWithSelector(IBooster.withdraw.selector, poolId, convexToOutput)
