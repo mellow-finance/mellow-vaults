@@ -73,11 +73,9 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         IERC20Metadata token = IERC20Metadata(primaryToken_);
 
         {
-
             uint256 pullExistential = 10**(token.decimals() / 2);
             require(token.balanceOf(address(this)) >= pullExistential, ExceptionsLibrary.LIMIT_UNDERFLOW);
             token.transfer(vaddr, pullExistential);
-
         }
 
         gearboxVault.initialize(
