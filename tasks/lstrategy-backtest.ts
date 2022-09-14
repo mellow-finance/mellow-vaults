@@ -25,6 +25,7 @@ import {
     getTick,
     getPool,
     swapOnCowswap,
+    SwapStats,
 } from "./helpers/lstrategy";
 import { addSigner, withSigner } from "./helpers/sign";
 import { mint, sleep } from "./helpers/utils";
@@ -55,12 +56,19 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         undefined,
         types.int
     )
+    .addParam(
+        "poolScale",
+        "The scale factor of the amount of tokens in the pool",
+        undefined,
+        types.int
+    )
     .setAction(
         async (
-            { filename, width, weth, wsteth },
+            { filename, width, weth, wsteth, poolScale },
             hre: HardhatRuntimeEnvironment
         ) => {
-            const context = await setup(hre, width);
+            let context = await setup(hre, width);
+            context.poolScale = poolScale;
             await execute(filename, width, weth, wsteth, hre, context);
         }
     );
@@ -380,10 +388,10 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
     });
 
     await lstrategy.connect(adminSigned).updateOtherParams({
-        intervalWidthInTicks: 100,
+        intervalWidthInTicks: width,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
-        secondsBetweenRebalances: BigNumber.from(10).pow(6),
+        secondsBetweenRebalances: BigNumber.from(0),
     });
 
     return {
@@ -397,6 +405,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         deployer: deployerSigned,
         mockOracle: mockOracle,
         erc20RootVault: erc20RootVaultContract,
+        poolScale: 0,
     } as Context;
 };
 
@@ -412,7 +421,7 @@ class PermissionIdsLibrary {
 
 const parseFile = (
     filename: string
-): [BigNumber[], string[], BigNumber[], BigNumber[]] => {
+): [BigNumber[], string[], BigNumber[], BigNumber[], BigNumber[]] => {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: "utf-8" });
     const rows = fileContent.split("\n");
@@ -421,6 +430,7 @@ const parseFile = (
 
     let stethAmounts = new Array();
     let wethAmounts = new Array();
+    let stEthPerToken = new Array();
     let cols = rows[0].split(",");
     for (let i = 1; i < rows.length; ++i) {
         if (rows[i].length == 0) {
@@ -440,10 +450,13 @@ const parseFile = (
             if (cols[col] == "ETH_amount") {
                 wethAmounts.push(BigNumber.from(data[col]));
             }
+            if (cols[col] == "stEthPerToken") {
+                stEthPerToken.push(BigNumber.from(data[col]));
+            }
         }
     }
 
-    return [blockNumbers, prices, stethAmounts, wethAmounts];
+    return [blockNumbers, prices, stethAmounts, wethAmounts, stEthPerToken];
 };
 
 const changePrice = async (currentTick: BigNumber, context: Context) => {
@@ -485,6 +498,8 @@ const buildInitialPositions = async (
     weth_amount: number,
     wsteth_amount: number
 ) => {
+    const { ethers, getNamedAccounts } = hre;
+    const { wsteth } = await getNamedAccounts();
     let tick = await getUniV3Tick(hre, context);
     await changePrice(tick, context);
 
@@ -516,10 +531,40 @@ const buildInitialPositions = async (
     });
 
     let erc20 = await context.LStrategy.erc20Vault();
+    while (
+        (await context.weth.balanceOf(context.deployer.address)).lt(
+            BigNumber.from(10)
+                .pow(18)
+                .mul(weth_amount + 10)
+        )
+    ) {
+        const mintNow = BigNumber.from(10).pow(21);
+        await mint(hre, "WETH", context.deployer.address, mintNow);
+    }
     await context.weth.transfer(
         erc20,
         BigNumber.from(10).pow(18).mul(weth_amount)
     );
+    const stethContract = await ethers.getContractAt(
+        ISTETH,
+        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    );
+    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+    while (
+        (await context.wsteth.balanceOf(context.deployer.address)).lt(
+            BigNumber.from(10)
+                .pow(18)
+                .mul(wsteth_amount + 10)
+        )
+    ) {
+        const mintNow = BigNumber.from(10).pow(21);
+        await mint(hre, "WETH", context.deployer.address, mintNow);
+        await context.weth.withdraw(mintNow);
+        await stethContract.submit(context.deployer.address, {
+            value: mintNow,
+        });
+        await wstethContract.wrap(mintNow);
+    }
     await context.wsteth.transfer(
         erc20,
         BigNumber.from(10).pow(18).mul(wsteth_amount)
@@ -532,7 +577,7 @@ const makeDesiredPoolPrice = async (
     tick: BigNumber
 ) => {
     let pool = await getPool(hre, context);
-    let startTry = BigNumber.from(10).pow(17).mul(60);
+    let startTry = BigNumber.from(10).pow(18);
 
     let needIncrease = 0; //mock initialization
 
@@ -639,9 +684,11 @@ const ERC20UniRebalance = async (
     context: Context,
     priceX96: BigNumber,
     wstethAmount: BigNumber,
-    wethAmount: BigNumber
-) => {
+    wethAmount: BigNumber,
+    stEthPerToken: BigNumber
+): Promise<SwapStats[]> => {
     const { ethers, getNamedAccounts } = hre;
+    const totalStats: SwapStats[] = [];
 
     let i = 0;
     while (true) {
@@ -693,26 +740,29 @@ const ERC20UniRebalance = async (
             "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
         );
 
-        await swapOnCowswap(
+        const swapStats = await swapOnCowswap(
             hre,
             context,
             wstethAmount,
             wethAmount,
+            stEthPerToken,
             curvePool,
             wethContract,
             wstethContract,
             stethContract
         );
+        totalStats.push(swapStats);
 
         i += 1;
         if (i >= 10) {
             console.log(
-                "More than 20 iterations of rebalanceERC20UniV3Vaults needed!"
+                "More than 10 iterations of rebalanceERC20UniV3Vaults needed!"
             );
             break;
         }
     }
 
+    return totalStats;
     //  expect(assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))).to.be.true;
 };
 
@@ -721,11 +771,13 @@ const makeRebalances = async (
     context: Context,
     priceX96: BigNumber,
     wstethAmount: BigNumber,
-    wethAmount: BigNumber
-) => {
+    wethAmount: BigNumber,
+    stEthPerToken: BigNumber
+): Promise<SwapStats[]> => {
     const { ethers, getNamedAccounts } = hre;
 
     let wasRebalance = false;
+    const totalStats: SwapStats[] = [];
 
     let iter = 0;
 
@@ -764,16 +816,18 @@ const makeRebalances = async (
             "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
         );
 
-        await swapOnCowswap(
+        const swapStats = await swapOnCowswap(
             hre,
             context,
             wstethAmount,
             wethAmount,
+            stEthPerToken,
             curvePool,
             wethContract,
             wstethContract,
             stethContract
         );
+        totalStats.push(swapStats);
 
         iter += 1;
         if (iter >= 10) {
@@ -784,14 +838,18 @@ const makeRebalances = async (
         }
     }
 
-    if (wasRebalance)
-        await ERC20UniRebalance(
+    if (wasRebalance) {
+        const tmpSwap = await ERC20UniRebalance(
             hre,
             context,
             priceX96,
             wstethAmount,
-            wethAmount
+            wethAmount,
+            stEthPerToken
         );
+        totalStats.concat(tmpSwap);
+    }
+    return totalStats;
 };
 
 const reportStats = async (
@@ -823,7 +881,8 @@ const execute = async (
 
     await mintMockPosition(hre, context);
 
-    let [blocks, prices, stethAmounts, wethAmounts] = parseFile(filename);
+    let [blocks, prices, stethAmounts, wethAmounts, stEthPerToken] =
+        parseFile(filename);
 
     console.log("Before price update");
 
@@ -848,14 +907,6 @@ const execute = async (
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
 
-    await ERC20UniRebalance(
-        hre,
-        context,
-        stringToPriceX96(prices[0]),
-        stethAmounts[0],
-        wethAmounts[0]
-    );
-
     const keys = [
         "erc20token0",
         "erc20token1",
@@ -871,8 +922,13 @@ const execute = async (
         "currentTick",
         "totalToken0",
         "totalToken1",
+        "lowerPositionLiquidity",
+        "upperPositionLiquidity",
+        "lowerFee0",
+        "lowerFee1",
+        "upperFee0",
+        "upperFee1",
     ];
-
     for (let i = 0; i < keys.length; ++i) {
         if (i == 0) {
             fs.writeFileSync("output.csv", keys[i], { flag: "w" });
@@ -886,20 +942,38 @@ const execute = async (
         }
     }
 
-    console.log(process.memoryUsage());
+    await reportStats(hre, context, "output.csv", keys);
+    const totalSwaps = await ERC20UniRebalance(
+        hre,
+        context,
+        stringToPriceX96(prices[0]),
+        stethAmounts[0],
+        wethAmounts[0],
+        stEthPerToken[0]
+    );
+    fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), { flag: "w" });
+    fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
+
     let prev = Date.now();
     console.log("length: ", prices.length);
     let prev_block = BigNumber.from(0);
     for (let i = 1; i < prices.length; ++i) {
         if (blocks[i].sub(prev_block).gte((24 * 60 * 60) / 15)) {
-            await makeRebalances(
+            const totalSwaps = await makeRebalances(
                 hre,
                 context,
                 stringToPriceX96(prices[i]),
                 stethAmounts[i],
-                wethAmounts[i]
+                wethAmounts[i],
+                stEthPerToken[i]
             );
+            fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), {
+                flag: "a+",
+            });
+            fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
             prev_block = blocks[i];
+        } else {
+            fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
         }
         if (i % 500 == 0) {
             let now = Date.now();
