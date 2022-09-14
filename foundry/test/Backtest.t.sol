@@ -292,19 +292,21 @@ contract Backtest is Test {
 
     function mintMockPosition() public {
         INonFungiblePositionManager positionManager = INonFungiblePositionManager(uniswapV3PositionManager);
-        positionManager.mint(INonfungiblePositionManager.MintParams({
-            token0: wsteth,
-            token1: weth,
-            fee: 500,
-            tickLower: -10000,
-            tickUpper: 10000,
-            amount0Desired: 5*10**20,
-            amount1Desired: 5*10**20,
-            amount0Min: 0,
-            amount1Min: 0,
-            recipient: deployer,
-            deadline: type(uint256).max
-        }));
+        positionManager.mint(
+            INonfungiblePositionManager.MintParams({
+                token0: wsteth,
+                token1: weth,
+                fee: 500,
+                tickLower: -10000,
+                tickUpper: 10000,
+                amount0Desired: 5 * 10**20,
+                amount1Desired: 5 * 10**20,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: deployer,
+                deadline: type(uint256).max
+            })
+        );
     }
 
     // rawPrice = realPrice * 10^27
@@ -319,20 +321,28 @@ contract Backtest is Test {
         return TickMath.getTickAtSqrtRatio(uint160(x));
     }
 
-    function fullPriceUpdate(int24 tick) public {
-        
-    }
+    function fullPriceUpdate(int24 tick) public {}
 
-    function execute(string memory filename, uint256 width, uint256 weth_amount, uint256 wsteth_amount) public {
+    function execute(
+        string memory filename,
+        uint256 width,
+        uint256 weth_amount,
+        uint256 wsteth_amount
+    ) public {
         console2.log("Process started");
 
         mintMockPosition();
         Feed feed = new Feed();
-        (uint256[] memory blocks, uint256[] memory prices, uint256[] memory stethAmounts, uint256[] memory wethAmoutns, uint256[] memory stEthPerToken) = feed.parseFile();
+        (
+            uint256[] memory blocks,
+            uint256[] memory prices,
+            uint256[] memory stethAmounts,
+            uint256[] memory wethAmoutns,
+            uint256[] memory stEthPerToken
+        ) = feed.parseFile();
 
         console2.log("Before price update");
         fullPriceUpdate(getTick(stringToSqrtPriceX96(prices[0])));
-
     }
 
     function test() public {
