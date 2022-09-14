@@ -1,0 +1,21 @@
+{
+    "name": "mellow-nft-stable",
+    "license": "BSL-1.1",
+    "version": "1.0.0",
+    "files": [
+      "src/**/*.sol"
+    ],
+    "repository": "https://github.com/mellow-finance/stable-nft",
+    "devDependencies": {
+      "prettier": "^2.3.1",
+      "prettier-plugin-solidity": "^1.0.0-beta.13"
+    },
+    "scripts": {
+      "prettier": "prettier --write **.sol",
+      "prettier:check": "prettier --check **.sol",
+      "test": "forge test -vvvv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15000000",
+      "test:better": "forge test -vvvv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15035420 --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2)",
+      "size": "forge build --sizes --force --via-ir",
+      "compile": "forge build"
+    }
+  }
