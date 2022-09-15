@@ -1014,8 +1014,10 @@ contract Backtest is Test {
         IUniV3Vault lowerVault = lstrategy.lowerVault();
         IUniV3Vault upperVault = lstrategy.upperVault();
 
-        (,,,,,,, uint128 lowerVaultLiquidity, , , ,) = INonFungiblePositionManager(uniswapV3PositionManager).positions(lowerVault.uniV3Nft());
-        (,,,,,,, uint128 upperVaultLiquidity, , , ,) = INonFungiblePositionManager(uniswapV3PositionManager).positions(upperVault.uniV3Nft());
+        (, , , , , , , uint128 lowerVaultLiquidity, , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+            .positions(lowerVault.uniV3Nft());
+        (, , , , , , , uint128 upperVaultLiquidity, , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+            .positions(upperVault.uniV3Nft());
 
         uint256 total = uint256(lowerVaultLiquidity) + uint256(upperVaultLiquidity);
         return D9 - FullMath.mulDiv(uint256(lowerVaultLiquidity), D9, total);
@@ -1067,15 +1069,17 @@ contract Backtest is Test {
             erc20UniV3Gas += gasBefore - gasAfter;
             erc20RebalanceCount += 1;
 
-            swapOnCowswap(wstethAmount, wethAmount, stEthPerToken, ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022));
+            swapOnCowswap(
+                wstethAmount,
+                wethAmount,
+                stEthPerToken,
+                ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022)
+            );
             iter += 1;
             if (iter >= 10) {
-                console2.log(
-                    "More than 20 iterations of rebalance needed needed!!!"
-                );
+                console2.log("More than 20 iterations of rebalance needed needed!!!");
                 break;
             }
-
         }
 
         if (wasRebalance) {
