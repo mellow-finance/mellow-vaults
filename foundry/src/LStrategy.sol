@@ -298,6 +298,7 @@ contract LStrategy is DefaultAccessControl {
             block.timestamp >= lastRebalanceUniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
             ExceptionsLibrary.TIMESTAMP
         );
+        
         lastRebalanceUniV3VaultsTimestamp = block.timestamp;
         LiquidityParams memory liquidityParams;
 
@@ -308,7 +309,6 @@ contract LStrategy is DefaultAccessControl {
                 liquidityParams.targetUniV3LiquidityRatioD,
                 liquidityParams.isNegativeLiquidityRatio
             ) = targetUniV3LiquidityRatio(targetTick);
-            // we crossed the interval right to left
             if (liquidityParams.isNegativeLiquidityRatio) {
                 (, , uint128 liquidity) = _getVaultStats(upperVault);
                 if (liquidity > 0) {

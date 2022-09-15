@@ -46,11 +46,14 @@ contract Backtest is Test {
     address public mockOracleAddress;
     LStrategy lstrategy;
 
+    address public rootVault;
+
     uint256 constant Q48 = 2**48;
     uint256 constant Q96 = 2**96;
     uint256 constant D27 = 10**27;
     uint256 constant D18 = 10**18;
     uint256 constant D10 = 10**10;
+    uint256 constant D9 = 10**9;
 
     uint256 erc20UniV3Gas;
     uint256 erc20RebalanceCount;
@@ -102,7 +105,8 @@ contract Backtest is Test {
         for (uint256 i = 0; i < nfts.length; ++i) {
             IVaultRegistry(registry).approve(rootGovernance, nfts[i]);
         }
-        (, uint256 nft) = rootVaultGovernance.createVault(tokens, address(lstrategy), nfts, admin);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(lstrategy), nfts, admin);
+        rootVault = address(w);
         rootVaultGovernance.setStrategyParams(
             nft,
             IERC20RootVaultGovernance.StrategyParams({
@@ -315,6 +319,7 @@ contract Backtest is Test {
     }
 
     function getTick(uint256 x) public returns (int24) {
+        console2.log(x);
         return TickMath.getTickAtSqrtRatio(uint160(x));
     }
 
@@ -397,7 +402,7 @@ contract Backtest is Test {
                     needIncrease = 0;
                     startTry = startTry / 2;
                 }
-                swapTokens(deployer, deployer, weth, wsteth, startTry);
+                swapTokens(deployer, deployer, wsteth, weth, startTry);
             }
         }
     }
@@ -981,6 +986,41 @@ contract Backtest is Test {
         }
     }
 
+    function getExpectedRatio() public returns (uint256) {
+        address[] memory tokens = new address[](2);
+        tokens[0] = wsteth;
+        tokens[1] = weth;
+
+        (IOracle p1, uint32 p2, uint32 p3, uint256 p4, uint256 p5, uint256 p6) = lstrategy.tradingParams();
+        LStrategy.TradingParams memory pp = LStrategy.TradingParams({
+            oracle: p1,
+            maxSlippageD: p2,
+            orderDeadline: p3,
+            oracleSafetyMask: p4,
+            maxFee0: p5,
+            maxFee1: p6
+        });
+
+        uint256 targetPriceX96 = lstrategy.getTargetPriceX96(tokens[0], tokens[1], pp);
+        uint256 sqrtTargetPriceX48 = CommonLibrary.sqrt(targetPriceX96);
+
+        int24 targetTick = TickMath.getTickAtSqrtRatio(uint160(sqrtTargetPriceX48 * Q48));
+        (uint256 neededRatio, ) = lstrategy.targetUniV3LiquidityRatio(targetTick);
+
+        return neededRatio;
+    }
+
+    function getVaultsLiquidityRatio() public returns (uint256) {
+        IUniV3Vault lowerVault = lstrategy.lowerVault();
+        IUniV3Vault upperVault = lstrategy.upperVault();
+
+        (,,,,,,, uint128 lowerVaultLiquidity, , , ,) = INonFungiblePositionManager(uniswapV3PositionManager).positions(lowerVault.uniV3Nft());
+        (,,,,,,, uint128 upperVaultLiquidity, , , ,) = INonFungiblePositionManager(uniswapV3PositionManager).positions(upperVault.uniV3Nft());
+
+        uint256 total = uint256(lowerVaultLiquidity) + uint256(upperVaultLiquidity);
+        return D9 - FullMath.mulDiv(uint256(lowerVaultLiquidity), D9, total);
+    }
+
     function uniV3Balance() public returns (bool) {
         uint256 neededRatio = getExpectedRatio();
         uint256 currentRatio = getVaultsLiquidityRatio();
@@ -1007,7 +1047,40 @@ contract Backtest is Test {
         bool wasRebalance = false;
         uint256 iter = 0;
 
-        while (!checkUniV3Balance()) {}
+        while (!uniV3Balance()) {
+            wasRebalance = true;
+            vm.startPrank(admin);
+            uint256[] memory arr = new uint256[](2);
+            uint256 gasBefore = gasleft();
+            lstrategy.rebalanceUniV3Vaults(arr, arr, type(uint256).max);
+            uint256 gasAfter = gasleft();
+
+            uniV3Gas += gasBefore - gasAfter;
+            uniV3RebalanceCount += 1;
+
+            gasBefore = gasleft();
+            lstrategy.rebalanceERC20UniV3Vaults(arr, arr, type(uint256).max);
+            gasAfter = gasleft();
+
+            vm.stopPrank();
+
+            erc20UniV3Gas += gasBefore - gasAfter;
+            erc20RebalanceCount += 1;
+
+            swapOnCowswap(wstethAmount, wethAmount, stEthPerToken, ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022));
+            iter += 1;
+            if (iter >= 10) {
+                console2.log(
+                    "More than 20 iterations of rebalance needed needed!!!"
+                );
+                break;
+            }
+
+        }
+
+        if (wasRebalance) {
+            ERC20UniRebalance(priceX96, wstethAmount, wethAmount, stEthPerToken);
+        }
     }
 
     function execute(
@@ -1039,25 +1112,31 @@ contract Backtest is Test {
 
         uint256 prev_block = 0;
         for (uint256 i = 1; i < prices.length; ++i) {
+            console2.log(gasleft());
+            console2.log(i);
             if (blocks[i] - prev_block > 86400 / 15) {
-                makeRebalances(stringToPriceX96(prices[i], stethAmounts[i], wethAmounts[i], stEthPerToken[i]));
+                console2.log("MAKE REBALANCE");
+                makeRebalances(stringToPriceX96(prices[i]), stethAmounts[i], wethAmounts[i], stEthPerToken[i]);
                 prev_block = blocks[i];
             }
             if (i % 500 == 0) {
-                console.log("Iteration: ", i);
-                console.log("ERC20Rebalances: ", erc20RebalanceCount);
-                console.log("UniV3 rebalances: ", uniV3RebalanceCount);
-                console.log("UniV3 used: ", uniV3Gas);
-                console.log("ERC20UniV3 used: ", erc20UniV3Gas);
+                console2.log("Iteration: ", i);
+                console2.log("ERC20Rebalances: ", erc20RebalanceCount);
+                console2.log("UniV3 rebalances: ", uniV3RebalanceCount);
+                console2.log("UniV3 used: ", uniV3Gas);
+                console2.log("ERC20UniV3 used: ", erc20UniV3Gas);
             }
 
             fullPriceUpdate(getTick(stringToSqrtPriceX96(prices[i])));
+            (uint256[] memory minTvl, uint256[] memory maxTvl) = IERC20RootVault(rootVault).tvl();
+            console2.log("WSTETH", minTvl[0]);
+            console2.log("WETH", minTvl[1]);
         }
 
-        console.log("ERC20Rebalances: ", erc20RebalanceCount);
-        console.log("UniV3 rebalances: ", uniV3RebalanceCount);
-        console.log("UniV3 used: ", uniV3Gas.toString());
-        console.log("ERC20UniV3 used: ", erc20UniV3Gas.toString());
+        console2.log("ERC20Rebalances: ", erc20RebalanceCount);
+        console2.log("UniV3 rebalances: ", uniV3RebalanceCount);
+        console2.log("UniV3 used: ", uniV3Gas);
+        console2.log("ERC20UniV3 used: ", erc20UniV3Gas);
     }
 
     function test() public {
