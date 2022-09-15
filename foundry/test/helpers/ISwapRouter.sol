@@ -22,12 +22,23 @@ interface ISwapRouter {
         uint160 sqrtPriceLimitX96;
     }
 
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+
     function exactInput(ExactOutputParams memory params)
         external
         payable
         returns (uint256 amountOut);
 
-    function exactInputSingle(ExactOutputSingleParams memory params)
+    function exactInputSingle(ExactInputSingleParams memory params)
         external
         payable
         returns (uint256 amountOut);
