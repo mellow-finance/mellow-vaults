@@ -408,7 +408,9 @@ contract Backtest is Test {
     }
 
     function fullPriceUpdate(int24 tick) public {
+        console2.log("FULL UPDATE STARTED");
         makeDesiredPoolPrice(tick);
+        console2.log("DESIRED PRICE MADE");
         changePrice(tick);
     }
 
@@ -1055,6 +1057,7 @@ contract Backtest is Test {
             uint256[] memory arr = new uint256[](2);
             uint256 gasBefore = gasleft();
             lstrategy.rebalanceUniV3Vaults(arr, arr, type(uint256).max);
+            console2.log("UNIV3 REBALANCED");
             uint256 gasAfter = gasleft();
 
             uniV3Gas += gasBefore - gasAfter;
@@ -1062,6 +1065,7 @@ contract Backtest is Test {
 
             gasBefore = gasleft();
             lstrategy.rebalanceERC20UniV3Vaults(arr, arr, type(uint256).max);
+            console2.log("ERC20 UNIV3 REBALANCED");
             gasAfter = gasleft();
 
             vm.stopPrank();
@@ -1075,6 +1079,7 @@ contract Backtest is Test {
                 stEthPerToken,
                 ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022)
             );
+            console2.log("COWSWAP SWAPPED");
             iter += 1;
             if (iter >= 10) {
                 console2.log("More than 20 iterations of rebalance needed needed!!!");
@@ -1105,6 +1110,9 @@ contract Backtest is Test {
             uint256[] memory stEthPerToken
         ) = feed.parseFile();
 
+        console2.log(blocks.length);
+        return;
+
         console2.log("Before price update");
         fullPriceUpdate(getTick(stringToSqrtPriceX96(prices[0])));
         console2.log("After price update");
@@ -1131,7 +1139,9 @@ contract Backtest is Test {
                 console2.log("ERC20UniV3 used: ", erc20UniV3Gas);
             }
 
-            fullPriceUpdate(getTick(stringToSqrtPriceX96(prices[i])));
+            int24 tick = getTick(stringToSqrtPriceX96(prices[i]));
+            console2.log("TICK OBTAINED");
+            fullPriceUpdate(tick);
             (uint256[] memory minTvl, uint256[] memory maxTvl) = IERC20RootVault(rootVault).tvl();
             console2.log("WSTETH", minTvl[0]);
             console2.log("WETH", minTvl[1]);
@@ -1144,6 +1154,13 @@ contract Backtest is Test {
     }
 
     function test() public {
+
+        address stethGovernance = 0x2e59A20f205bB85a89C53f1936454680651E618e;
+
+        vm.startPrank(stethGovernance);
+        ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84).removeStakingLimit();
+        vm.stopPrank();
+
         uint256 nft = setup();
         execute(Constants.width, Constants.wethAmount, Constants.wstethAmount, nft);
     }
