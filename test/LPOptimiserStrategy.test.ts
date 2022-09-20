@@ -241,6 +241,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const result = await this.subject.rebalanceCheck();
             expect(result).to.be.equal(true);
         })
+        // it("Do Not rebalance the current position", async () => {
+        //     const result = await this.subject.rebalanceCheck();
+        //     expect(result).to.be.equal(false);
+        // })
+
     })
 
     describe("one signal", async () => {

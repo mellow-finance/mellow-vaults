@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVoltzVault.sol";
 import "../interfaces/external/voltz/IMarginEngine.sol";
@@ -32,8 +33,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     uint256 _lastSignal;
     uint256 _lastLeverage;
-    uint256 _proximity; // x (closeness parameter)
-    uint256 _sigma; // y (standard deviation parameter)
+    uint256 _logProximityWad; // x (closeness parameter in wad 10^18) in log base 1.0001
+    uint256 _sigmaWad; // y (standard deviation parameter in wad 10^18)
     uint256 _max_possible_lower_bound; // should be in fixed rate
     uint256 _k_unwind_parameter; // parameter for k*leverage (for unwinding so this needs to be sent to the contract vault but not used in the strategy vault)
 
@@ -60,32 +61,30 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     function rebalanceCheck() public returns (bool) {
         // TODO: NEED TO HANDLE THE MULTIPLICATIONS AND CONVERSIONS FROM FIXED TO FLOATING POINT PROPERLY
 
-        // 1. Get current position, lower, and upper ticks
-        // _currentPosition = _vault.currentPosition(); // this and 2 lines below will depend on how Alex structures the VoltzVault contract
-        // int24 _tickLower = _currentPosition.tickLower; 
+        // 1. Get current position, lower, and upper ticks (uncomment once you have the logic nailed down)
+        // _currentPosition = _vault.currentPosition();
+        // int24 _tickLower = _currentPosition.tickLower;
         // int24 _tickUpper = _currentPosition.tickUpper;
+
+        // Setting _proximity, ticklower and tickUpper here for testing purposes but this should be set as a variable
+        _logProximityWad = 960000000000000000; // 0.96 in wad
         uint256 _tickLower = 0;
         uint256 _tickUpper = 8000;
+
+        uint256 _tickLowerWad = PRBMathUD60x18.mul(_tickLower, 1000000000000000000);
+        uint256 _tickUpperWad = PRBMathUD60x18.mul(_tickUpper, 1000000000000000000);
+
         // 2. Get current tick
         // int24 _currentTick = _marginEngine.getCurrentTick(); // should this be _periphery.getCurrentTick()?
+        // Set the current tick for testing purposes
         uint256 _currentTick = 4000;
-        // 3. Convert ticks to fixed rates
-        uint256 _currentFixedRateWad = PRBMathUD60x18.pow(
-            2,
-            _currentTick
-        );
-        uint256 _currentFixedLowWad = PRBMathUD60x18.pow(
-            2,
-            _tickLower
-        );
-        uint256 _currentFixedHighWad = PRBMathUD60x18.pow(
-            PRBMathUD60x18.mul(1.0001, 1e18), 
-            _tickUpper
-        );
-        // 4. Compare current fixed rate to lower and upper bounds
+        uint256 _currentTickWad = PRBMathUD60x18.mul(_currentTick, 1000000000000000000);
+
+        // 3. Compare current fixed rate to lower and upper bounds
         if (
-            PRBMathUD60x18.div(_currentFixedLowWad, _proximity) < _currentFixedRateWad 
-            && PRBMathUD60x18.mul(_currentFixedHighWad, _proximity) > _currentFixedRateWad
+            _tickLowerWad - _logProximityWad <= _currentTickWad &&
+            _currentTickWad <= _tickUpperWad + _logProximityWad
+            
             ) {
             // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
             return (false);
@@ -95,30 +94,36 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         }
     }
 
-    // /// @notice Set new optimimal tick range based on current tick
-    // function rebalance () public returns (int24 newTickLower, int24 newTickUpper) {
-    //     _requireAtLeastOperator();
-    //     if (rebalanceCheck()) {
-    //         // 1. Get the current fixed rate
-    //         int24 _currentTick = _marginEngine.getCurrentTick();
-    //         // 2. Convert current tick to fixed rate
-    //         uint256 _currentFixedRateWad = PRBMathUD60x18.pow( mul(1.0001, 1e18), -_currentTick);
-    //         // 3. Get the new tick lower
-    //         int24 _newFixedLower = min(max(0, _currentFixedRateWad - _sigma), _max_possible_lower_bound);
-    //         // 4. Get the new tick upper
-    //         int24 _newFixedUpper = _newFixedLower + PRBMathUD60x18.mul(_sigma, 2);
-    //         // 5. Convert new fixed lower back to tick
-    //         int24 _newTickLower = -log2(_newFixedLower).div(
-    //             log2(mul(1.0001, 1e18) )
-    //         );
-    //         return _newTickLower, _newTickUpper;
-    //     } else {
-    //         revert ExceptionsLibrary.rebalanceNotNeeded();
-    //       }
-    //     }
+    /// @notice Set new optimimal tick range based on current tick
+    /// @param _currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
+    // Q: Is the range or the actual fixed rate passed to the strategy vault?
+    function rebalance (uint256 _currentFixedRateWad) public returns (int24 newTickLower, int24 newTickUpper) {
+        _requireAtLeastOperator();
+        if (rebalanceCheck()) {
+            // 1. Get the current fixed rate
+            // int24 _currentTick = _periphery.getCurrentTick(_marginEngine.address());
+            // 2. Convert current tick to fixed rate (this is retrieved off chain and passed in as argument)
+            // uint256 _currentFixedRateWad = PRBMathUD60x18.pow( 1000100000000000000, -_currentTick);
+            // 3. Get the new tick lower (min and max should be handled by Math.sol)
+            uint256 _newFixedLowerWad = Math.min(Math.max(0, _currentFixedRateWad - _sigmaWad), _max_possible_lower_bound);
+            // 4. Get the new tick upper
+            uint256 _newFixedUpperWad = _newFixedLowerWad + PRBMathUD60x18.mul(_sigmaWad, 2);
+            // 5. Convert new fixed lower back to tick
+            int24 _newTickLower = PRBMathUD60x18.div(PRBMathUD60x18.log2(_newFixedLowerWad), 
+                                                        PRBMathUD60x18.log2(1000100000000000000)
+                                                        ); 
+            // 6. Convert new fixed upper back to tick
+            int24 _newTickUpper = PRBMathUD60x18.div(-PRBMathUD60x18.log2(_newFixedUpperWad),
+                                                        PRBMathUD60x18.log2(1000100000000000000)
+                                                        );
+            return (_newTickLower, _newTickUpper);
+        } else {
+            revert ExceptionsLibrary.rebalanceNotNeeded();
+          }
+        }
 
 
-//--------------------// Don't need the below functions// ---------------------//
+//--------------------// Don't need the below functions // ---------------------//
 
     /// @notice Get new signal and act according to it
     /// @param signal New signal (1 - short/fixed, 2 - long/variable, 3 - exit)
