@@ -248,9 +248,8 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         })
         it.only("Rebalance the position and return new ticks", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
-            expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).eq(1);
-
-
+            const newTicks = this.subject.connect(this.admin).rebalance(currentFixedRateWad);
+            expect(newTicks).to.be.equal([-5280, -4020]);
         })
 
     })
