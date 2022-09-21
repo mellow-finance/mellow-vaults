@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../interfaces/external/voltz/utils/SafeCastUni.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVoltzVault.sol";
 import "../interfaces/external/voltz/IMarginEngine.sol";
@@ -97,7 +98,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @notice Set new optimimal tick range based on current tick
     /// @param _currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
     // Q: Is the range or the actual fixed rate passed to the strategy vault?
-    function rebalance (uint256 _currentFixedRateWad) public returns (int24 newTickLower, int24 newTickUpper) {
+    function rebalance (uint256 _currentFixedRateWad) public returns (int256 newTickLower, int256 newTickUpper) {
         _requireAtLeastOperator();
         if (rebalanceCheck()) {
             // 1. Get the current fixed rate
@@ -108,17 +109,17 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             uint256 _newFixedLowerWad = Math.min(Math.max(0, _currentFixedRateWad - _sigmaWad), _max_possible_lower_bound);
             // 4. Get the new tick upper
             uint256 _newFixedUpperWad = _newFixedLowerWad + PRBMathUD60x18.mul(_sigmaWad, 2);
-            // 5. Convert new fixed lower back to tick
-            int24 _newTickLower = PRBMathUD60x18.div(PRBMathUD60x18.log2(_newFixedLowerWad), 
+            // 5. Convert new fixed lower back to tick (minus sign is missing for newTickLower and newTickUpper)
+            int256 _newTickLower = -SafeCastUni.toInt256(PRBMathUD60x18.div(PRBMathUD60x18.log2(_newFixedLowerWad), 
                                                         PRBMathUD60x18.log2(1000100000000000000)
-                                                        ); 
+                                                        )); 
             // 6. Convert new fixed upper back to tick
-            int24 _newTickUpper = PRBMathUD60x18.div(-PRBMathUD60x18.log2(_newFixedUpperWad),
+            int256 _newTickUpper = -SafeCastUni.toInt256(PRBMathUD60x18.div(PRBMathUD60x18.log2(_newFixedUpperWad),
                                                         PRBMathUD60x18.log2(1000100000000000000)
-                                                        );
+                                                        ));
             return (_newTickLower, _newTickUpper);
         } else {
-            revert ExceptionsLibrary.rebalanceNotNeeded();
+            revert (ExceptionsLibrary.REBALANCE_NOT_NEEDED);
           }
         }
 
