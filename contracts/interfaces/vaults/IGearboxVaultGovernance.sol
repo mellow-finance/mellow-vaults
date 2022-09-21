@@ -7,7 +7,7 @@ import "./IVaultGovernance.sol";
 interface IGearboxVaultGovernance is IVaultGovernance {
 
     struct DelayedProtocolParams {
-        uint256 maxCollateralTokensPerVault;
+        uint256 withdrawDelay;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
