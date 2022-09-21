@@ -234,17 +234,23 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
 
     beforeEach(async () => {
         await this.deploymentFixture();
+        await this.subject.connect(this.admin).setLogProximity(-1000);
     });
 
     describe("new rebalance function", async () => {
         it( "rebalance get the current position", async () => {
             const result = await this.subject.rebalanceCheck();
-            expect(result).to.be.equal(true);
+            expect(result).to.be.equal(false);
         })
         // it("Do Not rebalance the current position", async () => {
         //     const result = await this.subject.rebalanceCheck();
-        //     expect(result).to.be.equal(false);
+        //     expect(result).to.be.equal(true);
         // })
+        it.only("Rebalance function call to return new lower and upper tick", async () => {
+            const currentFixedRateWad = BigNumber.from("2000000000000000000");
+            const result = await this.subject.connect(this.admin).rebalance(currentFixedRateWad);
+            expect(result).to.be.revertedWith("RNN");
+        })
 
     })
 
