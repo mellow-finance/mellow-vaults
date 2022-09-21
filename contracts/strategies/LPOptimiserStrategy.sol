@@ -94,6 +94,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         }
     }
 
+    /// @notice Get the nearest tick multiple given a tick and tick spacing
+    function nearestTickMultiple(int24 newTick, int24 tickSpacing) internal pure returns (int24) {
+     return (newTick / tickSpacing + (newTick % tickSpacing >= tickSpacing/2 ? int24(1) : int24(0)) ) * tickSpacing;
+    }
+
     /// @notice Set new optimimal tick range based on current tick
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
     // Q: Is the range or the actual fixed rate passed to the strategy vault?
@@ -102,6 +107,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // Set for testing purposes
         _sigmaWad = 100000000000000000; // received in WAD
         _max_possible_lower_bound = 1500000000000000000; // ideally receive this in a fixed rate
+        int24 _tickSpacing = 60;
+        int24 _newTickLower = 2030;
 
         // console.log('my console logs start here:');
         // console.logInt(PRBMathSD59x18.log2(currentFixedRateWad));
@@ -111,32 +118,33 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // console.log(
         //     Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound)
         // );
-        console.log(PRBMathUD60x18.mul(_sigmaWad, 2000000000000000000));
+        // console.log(PRBMathUD60x18.mul(_sigmaWad, 2000000000000000000));
+        // console.logInt( ( (_newTickLower / _tickSpacing) + 1 ) * _tickSpacing); // this gets the closest rounded up tickSpacing multiple
+        console.logInt(nearestTickMultiple(_newTickLower, _tickSpacing));
 
         if (rebalanceCheck()) {
             // 0. Get tickspacing from vamm
             // int24 _tickSpacing = _vamm.tickSpacing(_vamm.address());
 
-            // 1. Get the new tick lower (if clauses instead of min and max functions because of gas efficiency)
-            uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound);
+            // 1. Get the new tick lower
+            // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound);
             uint256 deltaWad = uint256(currentFixedRateWad) - _sigmaWad;
-            // if (deltaWad > 0) {
-            //     // delta is greater than 0 => choose delta
-            //     if (deltaWad < _max_possible_lower_bound) {
-            //         uint256 _newFixedLowerWad = delta;
-            //     } else {
-            //         uint256 _newFixedLowerWad = _max_possible_lower_bound;
-            //     }
-            //     return _newFixedLowerWad;
-            // } else {
-            //     // delta is less than 0 => choose 0
-            //     if (_max_possible_lower_bound > 0) {
-            //         uint256 _newFixedLowerWad = 0;
-            //     } else {
-            //         uint256 _newFixedLowerWad = _max_possible_lower_bound;
-            //     }
-            //     return _newFixedLowerWad;
-            // }
+            uint256 _newFixedLowerWad =  0;
+            if (deltaWad > 0) {
+                // delta is greater than 0 => choose delta
+                if (deltaWad < _max_possible_lower_bound) {
+                    _newFixedLowerWad = deltaWad;
+                } else {
+                    _newFixedLowerWad = _max_possible_lower_bound;
+                }
+            } else {
+                // delta is less than 0 => choose 0
+                if (_max_possible_lower_bound > 0) {
+                    _newFixedLowerWad = 0;
+                } else {
+                    _newFixedLowerWad = _max_possible_lower_bound;
+                }
+            }
             // 2. Get the new tick upper
             uint256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
             // 3. Convert new fixed lower rate back to tick
@@ -147,11 +155,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            // ticks have to be multiples of tick spacing
-            // convert lower tick 1111 for example to closest multiplier of tick spacing
-            // tickspacing=60 (can get this from the margin engine or the vamm)
-            // 1111/60=18.5 integer part is 19 (round up) mul with 60 again. 
-            // 1140 considered multiple of the tick space (has to be done for lower and upper ticks)
+            // int24 _newTickLower = nearestTickMultiple(_newTickLowerWad/1e18, _tickSpacing);
+            // int24 _newTickUpper = nearestTickMultiple(_newTickUpperWad/1e18, _tickSpacing);
 
 
             return (_newTickLowerWad/1e18, _newTickUpperWad/1e18); // divide by 1e18 to return the original ticks from tickWad
