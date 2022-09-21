@@ -170,8 +170,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
-    mapping (address => uint256) private _withdrawalRequests;
-    mapping (address => uint256) private _lastRequestTimestamp;
+    mapping(address => uint256) private _withdrawalRequests;
+    mapping(address => uint256) private _lastRequestTimestamp;
     uint256 private _beforeLastWithdrawalsExecutionTimestamp;
     uint256 private _lastWithdrawalsExecutionTimestamp;
     uint256 private _totalLpWitdrawalRequests;
@@ -183,23 +183,19 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             return 0;
         }
         return _withdrawalRequests[addr];
-    } 
+    }
 
     /// @inheritdoc IGearboxRootVault
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested) {
-
         uint256 existingRequests = 0;
-        
-        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.DISABLED); 
+
+        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.DISABLED);
 
         if (_lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp) {
             existingRequests = _withdrawalRequests[msg.sender];
-        }
-
-        else if (_lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp) {
+        } else if (_lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp) {
             require(_withdrawalRequests[msg.sender] == 0, ExceptionsLibrary.FORBIDDEN);
         }
-
 
         uint256 balance = balanceOf[msg.sender];
         if (lpTokenAmount > balance - existingRequests) {
@@ -211,29 +207,24 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         _totalLpWitdrawalRequests += lpTokenAmount;
 
         return _withdrawalRequests[msg.sender];
-
     }
 
     /// @inheritdoc IGearboxRootVault
-    function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested)  {
-
-        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.DISABLED); 
+    function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested) {
+        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.DISABLED);
         require(_lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.VALUE_ZERO);
 
         if (_withdrawalRequests[msg.sender] > lpTokenAmount) {
             _withdrawalRequests[msg.sender] -= lpTokenAmount;
-        }
-        else {
+        } else {
             _withdrawalRequests[msg.sender] = 0;
         }
 
         return _withdrawalRequests[msg.sender];
-
     }
 
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() external {
-
         IIntegrationVault zeroVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(0));
         IIntegrationVault gearboxVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(1));
 
@@ -255,9 +246,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             uint256[] memory amounts = new uint256[](1);
             amounts[0] = currentErc20Amount - totalAmount;
             zeroVault.pull(address(gearboxVault), tokens, amounts, "");
-        }
-
-        else {
+        } else {
             address[] memory tokens = _vaultTokens;
             uint256[] memory amounts = new uint256[](1);
             amounts[0] = totalAmount - currentErc20Amount;
@@ -267,7 +256,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         _priceForLpTokenD18 = FullMath.mulDiv(totalAmount, D18, totalSupply);
         _totalLpWitdrawalRequests = 0;
-
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -289,7 +277,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         {
             uint256 availableLpTokens = 0;
-            if (_lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp && _lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp) {
+            if (
+                _lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp &&
+                _lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp
+            ) {
                 availableLpTokens = _withdrawalRequests[msg.sender];
             }
 
