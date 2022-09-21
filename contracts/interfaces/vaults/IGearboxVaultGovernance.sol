@@ -8,6 +8,19 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     struct DelayedProtocolParams {
         uint256 withdrawDelay;
+        uint16 referralCode;
+        address crvEthPool;
+        address cvxEthPool;
+    }
+
+    struct DelayedProtocolPerVaultParams {
+        address primaryToken;
+        address curveAdapter;
+        address convexAdapter;
+        address facade;
+        uint256 convexPoolId;
+        uint256 initialMarginalValue;
+        address ethToPrimaryTokenPool;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -17,6 +30,13 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     /// @notice Delayed Protocol Params staged for commit after delay.
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory);
+
+    function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory);
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
@@ -28,9 +48,12 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function commitDelayedProtocolParams() external;
 
+    function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external;
 
-    function createVault(address owner_, address primaryToken_, address depositToken_, address curveAdapter_, address convexAdapter_, address facade_, uint256 convexPoolId_, uint256 targetHealthFactorD_,
-        bytes memory options)
+    function commitDelayedProtocolPerVaultParams(uint256 nft) external;
+
+
+    function createVault(address[] memory vaultTokens_, address owner_)
         external
         returns (IGearboxVault vault, uint256 nft);
 }
