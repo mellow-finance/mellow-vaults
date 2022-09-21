@@ -14,7 +14,6 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../utils/DefaultAccessControl.sol";
 import "@prb/math/contracts/PRBMathSD59x18.sol";
-// import "@prb/math/contracts/PRBMathUD60x18.sol";
 import "hardhat/console.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
@@ -115,7 +114,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // console.logInt(PRBMathSD59x18.log2(1000100000000000000));
         // console.logInt(-PRBMathSD59x18.div(PRBMathSD59x18.log2(currentFixedRateWad), PRBMathSD59x18.log2(1000100000000000000)));
         // console.log(PRBMathUD60x18.mul(_sigmaWad, 2000000000000000000));
-        console.logInt(nearestTickMultiple(_newTickLower, _tickSpacing));
+        // console.logInt(nearestTickMultiple(_newTickLower, _tickSpacing));
 
         if (rebalanceCheck()) {
             // 0. Get tickspacing from vamm
@@ -124,6 +123,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             // 1. Get the new tick lower
             // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound);
             uint256 deltaWad = uint256(currentFixedRateWad) - _sigmaWad;
+            console.log(deltaWad);
             uint256 _newFixedLowerWad =  0;
             if (deltaWad > 0) {
                 // delta is greater than 0 => choose delta
@@ -141,24 +141,34 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
                 }
             }
             // 2. Get the new tick upper
+            console.log(_newFixedLowerWad);
             uint256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
+            console.log(_newFixedUpperWad);
             // 3. Convert new fixed lower rate back to tick
             int256 _newTickLowerWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedUpperWad)), 
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
+            console.logInt(_newTickLowerWad);
             // 4. Convert new fixed upper rate back to tick
             int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
+            console.logInt(_newTickUpperWad);
 
             int256 _newTickLower = _newTickLowerWad/1e18;
             int256 _newTickUpper = _newTickUpperWad/1e18;
 
+            console.logInt(_newTickLower);
+            console.logInt(_newTickUpper);
+
             int24 _newTickLowerMul = nearestTickMultiple(int24(_newTickLower), _tickSpacing);
             int24 _newTickUpperMul = nearestTickMultiple(int24(_newTickUpper), _tickSpacing);
 
+            console.logInt(_newTickLowerMul);
+            console.logInt(_newTickUpperMul);
 
-            return (_newTickLowerMul, _newTickUpperMul); // divide by 1e18 to return the original ticks from tickWad
+
+            return (_newTickLowerMul, _newTickUpperMul);
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
           }

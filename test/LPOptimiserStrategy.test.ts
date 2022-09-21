@@ -248,7 +248,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         })
         it.only("Rebalance the position and return new ticks", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
-            await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).eq([1, 5]);
+            expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).eq(1);
 
 
         })
