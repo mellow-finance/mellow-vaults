@@ -69,8 +69,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
         // Setting _proximity, ticklower, tickUpper, current tick here for testing purposes but this should be set as a variable
         int24 _tickLower = 0;
-        int24 _tickUpper = 8000;
-        int24 _currentTick = 4000;
+        int24 _tickUpper = 6000;
+        int24 _currentTick = 7000;
 
         // 1. Get current position, lower, and upper ticks (uncomment once you have the logic nailed down)
         // _currentPosition = _vault.currentPosition();
@@ -108,18 +108,13 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _sigmaWad = 100000000000000000; // received in WAD
         _max_possible_lower_bound = 1500000000000000000; // ideally receive this in a fixed rate
         int24 _tickSpacing = 60;
-        int24 _newTickLower = 2030;
+        int24 _newTickLower = 2000;
 
         // console.log('my console logs start here:');
         // console.logInt(PRBMathSD59x18.log2(currentFixedRateWad));
         // console.logInt(PRBMathSD59x18.log2(1000100000000000000));
         // console.logInt(-PRBMathSD59x18.div(PRBMathSD59x18.log2(currentFixedRateWad), PRBMathSD59x18.log2(1000100000000000000)));
-        // The below spits out a uint256
-        // console.log(
-        //     Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound)
-        // );
         // console.log(PRBMathUD60x18.mul(_sigmaWad, 2000000000000000000));
-        // console.logInt( ( (_newTickLower / _tickSpacing) + 1 ) * _tickSpacing); // this gets the closest rounded up tickSpacing multiple
         console.logInt(nearestTickMultiple(_newTickLower, _tickSpacing));
 
         if (rebalanceCheck()) {
@@ -155,11 +150,15 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            int24 _newTickLower = nearestTickMultiple(int24(_newTickLowerWad)/1e18, _tickSpacing);
-            int24 _newTickUpper = nearestTickMultiple(int24(_newTickUpperWad)/1e18, _tickSpacing);
+
+            int256 _newTickLower = _newTickLowerWad/1e18;
+            int256 _newTickUpper = _newTickUpperWad/1e18;
+
+            int24 _newTickLowerMul = nearestTickMultiple(int24(_newTickLower), _tickSpacing);
+            int24 _newTickUpperMul = nearestTickMultiple(int24(_newTickUpper), _tickSpacing);
 
 
-            return (_newTickLowerWad/1e18, _newTickUpperWad/1e18); // divide by 1e18 to return the original ticks from tickWad
+            return (_newTickLowerMul, _newTickUpperMul); // divide by 1e18 to return the original ticks from tickWad
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
           }
