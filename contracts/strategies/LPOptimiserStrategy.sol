@@ -155,8 +155,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            int24 _newTickLower = nearestTickMultiple(_newTickLowerWad/1e18, _tickSpacing);
-            int24 _newTickUpper = nearestTickMultiple(_newTickUpperWad/1e18, _tickSpacing);
+            int24 _newTickLower = nearestTickMultiple(int24(_newTickLowerWad)/1e18, _tickSpacing);
+            int24 _newTickUpper = nearestTickMultiple(int24(_newTickUpperWad)/1e18, _tickSpacing);
 
 
             return (_newTickLowerWad/1e18, _newTickUpperWad/1e18); // divide by 1e18 to return the original ticks from tickWad
