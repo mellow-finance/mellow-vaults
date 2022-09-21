@@ -14,7 +14,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../utils/DefaultAccessControl.sol";
 import "@prb/math/contracts/PRBMathSD59x18.sol";
-import "@prb/math/contracts/PRBMathUD60x18.sol";
+// import "@prb/math/contracts/PRBMathUD60x18.sol";
 import "hardhat/console.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
@@ -100,8 +100,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     function rebalance (int256 currentFixedRateWad) public returns (int256 newTickLower, int256 newTickUpper) {
         _requireAtLeastOperator();
         // Set for testing purposes
-        _sigmaWad = 1000000000000000000; //1e18
-        _max_possible_lower_bound = 1000;
+        _sigmaWad = 100000000000000000; // received in WAD
+        _max_possible_lower_bound = 1500000000000000000; // ideally receive this in a fixed rate
 
         // console.log('my console logs start here:');
         // console.logInt(PRBMathSD59x18.log2(currentFixedRateWad));
@@ -111,23 +111,50 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // console.log(
         //     Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound)
         // );
-        // console.log(PRBMathUD60x18.mul(_sigmaWad, 2)); // if _sigmaWad is below 1e18 then it returns 0 (returns in non wad format)
-
+        console.log(PRBMathUD60x18.mul(_sigmaWad, 2000000000000000000));
 
         if (rebalanceCheck()) {
-            // 1.. Get the new tick lower
+            // 0. Get tickspacing from vamm
+            // int24 _tickSpacing = _vamm.tickSpacing(_vamm.address());
+
+            // 1. Get the new tick lower (if clauses instead of min and max functions because of gas efficiency)
             uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound);
+            uint256 deltaWad = uint256(currentFixedRateWad) - _sigmaWad;
+            // if (deltaWad > 0) {
+            //     // delta is greater than 0 => choose delta
+            //     if (deltaWad < _max_possible_lower_bound) {
+            //         uint256 _newFixedLowerWad = delta;
+            //     } else {
+            //         uint256 _newFixedLowerWad = _max_possible_lower_bound;
+            //     }
+            //     return _newFixedLowerWad;
+            // } else {
+            //     // delta is less than 0 => choose 0
+            //     if (_max_possible_lower_bound > 0) {
+            //         uint256 _newFixedLowerWad = 0;
+            //     } else {
+            //         uint256 _newFixedLowerWad = _max_possible_lower_bound;
+            //     }
+            //     return _newFixedLowerWad;
+            // }
             // 2. Get the new tick upper
-            uint256 _newFixedUpperWad = _newFixedLowerWad + PRBMathUD60x18.mul(_sigmaWad, 2);
-            // 3. Convert new fixed lower back to tick (minus sign is missing for newTickLower and newTickUpper)
-            int256 _newTickLower = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)), 
+            uint256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
+            // 3. Convert new fixed lower rate back to tick
+            int256 _newTickLowerWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedUpperWad)), 
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            // 4. Convert new fixed upper back to tick
-            int256 _newTickUpper = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedUpperWad)),
+            // 4. Convert new fixed upper rate back to tick
+            int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            return (_newTickLower, _newTickUpper);
+            // ticks have to be multiples of tick spacing
+            // convert lower tick 1111 for example to closest multiplier of tick spacing
+            // tickspacing=60 (can get this from the margin engine or the vamm)
+            // 1111/60=18.5 integer part is 19 (round up) mul with 60 again. 
+            // 1140 considered multiple of the tick space (has to be done for lower and upper ticks)
+
+
+            return (_newTickLowerWad/1e18, _newTickUpperWad/1e18); // divide by 1e18 to return the original ticks from tickWad
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
           }

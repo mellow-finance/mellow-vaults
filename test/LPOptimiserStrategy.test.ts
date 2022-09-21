@@ -248,8 +248,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         // })
         it.only("Rebalance function call to return new lower and upper tick", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
-            const result = await this.subject.connect(this.admin).rebalance(currentFixedRateWad);
-            expect(result).to.be.revertedWith("RNN");
+            await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).to.be.reverted;
         })
 
     })
