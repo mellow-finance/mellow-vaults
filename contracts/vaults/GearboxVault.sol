@@ -33,6 +33,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     uint256 marginalFactorD;
 
+    mapping (address => uint256) public lpTokensToWithdrawOrder;
+    mapping (address => uint256) public lastOrderTimestamp;
+    uint256 lastWithdrawResetTimestamp;
+    
+
+
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         (uint256 total, ) = _creditFacade.calcTotalValue(creditAccount);
         (, , uint256 borrowAmountWithInterestAndFees) = _creditManager.calcCreditAccountAccruedInterest(creditAccount);

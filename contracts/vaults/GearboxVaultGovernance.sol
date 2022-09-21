@@ -32,7 +32,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     /// @inheritdoc IGearboxVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({maxCollateralTokensPerVault: 0});
+            return DelayedProtocolParams({withdrawDelay: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
