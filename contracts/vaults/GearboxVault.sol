@@ -226,7 +226,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         _checkDepositExchange(underlyingWant);
         uint256 currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
 
-        if (underlyingWant >= underlyingCurrent && !forceToClose) {
+        if (underlyingWant >= underlyingCurrent) {
             uint256 delta = underlyingWant - underlyingCurrent;
             MultiCall[] memory calls = new MultiCall[](3);
             calls[0] = MultiCall({
@@ -304,18 +304,22 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         uint256 amount = IERC20(depositToken).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
-        uint256 valueConvexToUsd = oracle.convertToUSD(amount, convexOutputToken);
-        uint256 valueConvexToUnderlying = oracle.convertFromUSD(valueConvexToUsd, primaryToken);
+        uint256 valueDepositTokenToUsd = oracle.convertToUSD(amount, depositToken);
+        uint256 valueDepositTokenToUnderlying = oracle.convertFromUSD(valueDepositTokenToUsd, primaryToken);
 
-        if (valueConvexToUnderlying > underlyingWant) {
-            uint256 toSwap = FullMath.mulDiv(amount, valueConvexToUnderlying - underlyingWant, valueConvexToUnderlying);
+        if (valueDepositTokenToUnderlying > underlyingWant) {
+            uint256 toSwap = FullMath.mulDiv(
+                amount,
+                valueDepositTokenToUnderlying - underlyingWant,
+                valueDepositTokenToUnderlying
+            );
             MultiCall[] memory calls = new MultiCall[](0);
 
             calls[0] = MultiCall({ // swap deposit to primary token
                 target: params.depositToPrimaryTokenPool,
                 callData: abi.encodeWithSelector(
                     ISwapRouter.exactInputSingle.selector,
-                    _creditManager.getCreditAccountOrRevert(address(this)),
+                    creditAccount,
                     abi.encode(depositToken, 500, primaryToken),
                     block.timestamp + 900,
                     toSwap,
@@ -339,7 +343,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         calls[0] = MultiCall({ // taking crv and cvx
             target: IConvexV1BoosterAdapter(convexAdapter).stakerRewards(),
-            callData: abi.encodeWithSelector(GET_REWARD_SELECTOR, address(this), false)
+            callData: abi.encodeWithSelector(GET_REWARD_SELECTOR, creditAccount, false)
         });
 
         calls[1] = MultiCall({ // swap crv to weth
