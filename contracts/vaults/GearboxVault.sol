@@ -138,14 +138,13 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         _adjustPosition(realValue, previousTotal, true);
         if (primaryToken != depositToken) {
-
             MultiCall[] memory calls = new MultiCall[](1);
 
             calls[0] = MultiCall({ // swap deposit to primary token
                 target: params.depositToPrimaryTokenPool,
                 callData: abi.encodeWithSelector(
                     IUniswapV3Adapter.exactAllInputSingle.selector,
-                    abi.encode(primaryToken, 500, depositToken), 
+                    abi.encode(primaryToken, 500, depositToken),
                     block.timestamp + 900,
                     0
                 )
@@ -166,7 +165,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         actualTokenAmounts = new uint256[](1);
 
         actualTokenAmounts[0] = amount;
-
     }
 
     function _verifyInstances(
@@ -218,7 +216,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         return false;
     }
 
-    function _adjustPosition(uint256 underlyingWant, uint256 underlyingCurrent, bool forceToClose) internal {
+    function _adjustPosition(
+        uint256 underlyingWant,
+        uint256 underlyingCurrent,
+        bool forceToClose
+    ) internal {
         ICreditFacade creditFacade = _creditFacade;
 
         _checkDepositExchange(underlyingWant);
@@ -314,7 +316,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 callData: abi.encodeWithSelector(
                     ISwapRouter.exactInputSingle.selector,
                     _creditManager.getCreditAccountOrRevert(address(this)),
-                    abi.encode(depositToken, 500, primaryToken), 
+                    abi.encode(depositToken, 500, primaryToken),
                     block.timestamp + 900,
                     toSwap,
                     0
@@ -323,7 +325,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
             _creditFacade.multicall(calls);
         }
-
     }
 
     function _claimRewards() internal {
@@ -355,7 +356,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             target: params.ethToPrimaryTokenPool,
             callData: abi.encodeWithSelector(
                 IUniswapV3Adapter.exactAllInputSingle.selector,
-                abi.encode(protocolParams.wethAddress, 500, params.primaryToken), 
+                abi.encode(protocolParams.wethAddress, 500, params.primaryToken),
                 block.timestamp + 900,
                 0
             )
