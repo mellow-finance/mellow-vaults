@@ -3,11 +3,11 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../interfaces/external/voltz/utils/SafeCastUni.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVoltzVault.sol";
 import "../interfaces/external/voltz/IMarginEngine.sol";
+import "../interfaces/external/voltz/IPeriphery.sol";
+import "../interfaces/external/voltz/IVAMM.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
@@ -28,21 +28,23 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     IVoltzVault internal _vault;
     uint256[] internal _pullExistentials;
     IMarginEngine internal _marginEngine;
+    IPeriphery internal _periphery;
+    IVAMM internal _vamm;
     IVoltzVault.TickRange internal _currentPosition;
 
     // MUTABLE PARAMS
 
     uint256 _lastSignal;
     uint256 _lastLeverage;
-    int24 _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
     uint256 _sigmaWad; // y (standard deviation parameter in wad 10^18)
     uint256 _max_possible_lower_bound; // should be in fixed rate
     uint256 _k_unwind_parameter; // parameter for k*leverage (for unwinding so this needs to be sent to the contract vault but not used in the strategy vault)
 
-    uint256 _lastFixedLow;
-    uint256 _lastFixedHigh;
-
+    int24 _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
     int24 _currentTick;
+    int24 _tickLower;
+    int24 _tickUpper;
+    int24 _tickSpacing;
 
     /// @notice Constructor for a new contract
     /// @param erc20vault_ Reference to ERC20 Vault
@@ -55,37 +57,40 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _erc20Vault = erc20vault_;
         _vault = vault_;
         _marginEngine = IMarginEngine(vault_.marginEngine());
+        _periphery = IPeriphery(vault_.periphery());
+        _vamm = IVAMM(vault_.vamm());
         _currentPosition = vault_.currentPosition();
         _tokens = vault_.vaultTokens();
         _pullExistentials = vault_.pullExistentials();
     }
 
-    function setLogProximity(int24 logProx) public {
+    event rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
+
+    function setConstants(int24 logProx, uint256 sigmaWad, uint256 max_possible_lower_bound, int24 tickSpacing) public {
         _requireAtLeastOperator();
         _logProximity = logProx;
+        _sigmaWad = sigmaWad;
+        _max_possible_lower_bound = max_possible_lower_bound;
+        _tickSpacing = tickSpacing;
     }
 
-    function setCurrentTick(int24 tick) public {
+    function setTickValues(int24 currentTick, int24 tickLower, int24 tickUpper) public {
         _requireAtLeastOperator();
-        _currentTick = tick;
+        _currentTick = currentTick;
+        _tickLower = tickLower;
+        _tickUpper = tickUpper;
     }
 
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     function rebalanceCheck() public view returns (bool) {
-
-        // Setting _proximity, ticklower, tickUpper, current tick here for testing purposes but this should be set as a variable
-        int24 _tickLower = 0;
-        // int24 _currentTick = 7000;
-        int24 _tickUpper = 6000;
         
-
         // 1. Get current position, lower, and upper ticks (uncomment once you have the logic nailed down)
         // _currentPosition = _vault.currentPosition();
         // int24 _tickLower = _currentPosition.tickLower;
         // int24 _tickUpper = _currentPosition.tickUpper;
 
         // 2. Get current tick
-        // int24 _currentTick = _periphery.getCurrentTick(_marginEngine.address());
+        // int24 _currentTick = _periphery.getCurrentTick(_periphery.address());
 
         // 3. Compare current fixed rate to lower and upper bounds
         if (
@@ -110,11 +115,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
     function rebalance (int256 currentFixedRateWad) public returns (int256 newTickLower, int256 newTickUpper) {
         _requireAtLeastOperator();
-        // Set for testing purposes
-        _sigmaWad = 100000000000000000; // received in WAD
-        _max_possible_lower_bound = 1500000000000000000; // ideally receive this in a fixed rate
-        int24 _tickSpacing = 60;
-        int24 _newTickLower = 2000;
 
         // console.log('my console logs start here:');
         // console.logInt(PRBMathSD59x18.log2(currentFixedRateWad));
@@ -174,7 +174,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             console.logInt(_newTickLowerMul);
             console.logInt(_newTickUpperMul);
 
-
+            emit rebalanced(_newTickLowerMul, _newTickUpperMul);
             return (_newTickLowerMul, _newTickUpperMul);
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
