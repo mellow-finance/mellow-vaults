@@ -70,8 +70,6 @@ contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGover
         int24 initialTickLow,
         int24 initialTickHigh
     ) external returns (IVoltzVault vault, uint256 nft) {
-        console.log("IVoltzVaultGovernance");
-        console.logBytes4(type(IVoltzVaultGovernance).interfaceId);
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = IVoltzVault(vaddr);

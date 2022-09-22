@@ -678,17 +678,15 @@ export async function mintUniV3Position_WBTC_WETH(options: {
     return result;
 }
 
-export async function mintUSDCForVoltz(options: {
-    tickLower: BigNumberish;
-    tickUpper: BigNumberish;
-    usdcAmount: BigNumberish;
-}): Promise<any> {
+export async function mintUSDCForVoltz(
+    usdcAmount: BigNumberish
+): Promise<any> {
     const { usdc, deployer, voltzPeriphery } =
         await getNamedAccounts();
 
     const usdcContract = await ethers.getContractAt("ERC20Token", usdc);
 
-    await mint("USDC", deployer, options.usdcAmount);
+    await mint("USDC", deployer, usdcAmount);
 
     if (
         (await usdcContract.allowance(deployer, voltzPeriphery)).eq(
@@ -711,13 +709,13 @@ console.log("----------------------------------------------------");
 console.log("");
 console.log("number of opened positions:", openedPositions.length);
 for (let i = 0; i < openedPositions.length; i++) {
-    console.log("low:", openedPositions[i].low.toString(), "; high", openedPositions[i].high.toString());
+    console.log("low:", openedPositions[i].tickLower.toString(), "; high", openedPositions[i].tickUpper.toString());
     console.log();
     const position = 
         await (marginEngineContract as IMarginEngine).callStatic.getPosition(
             subject,
-            openedPositions[i].low,
-            openedPositions[i].high
+            openedPositions[i].tickLower,
+            openedPositions[i].tickUpper
         );
     
     console.log("margin:", position.margin.toString());
