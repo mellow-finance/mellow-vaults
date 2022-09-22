@@ -61,12 +61,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
-
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         _initialize(vaultTokens_, nft_);
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(address(_vaultGovernance)).delayedProtocolPerVaultParams(nft_);
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolPerVaultParams(nft_);
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolParams();
 
         primaryToken = params.primaryToken;
         depositToken = vaultTokens_[0];
@@ -116,7 +119,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         IERC20(token).approve(creditFacadeAddress, 0);
         actualTokenAmounts = tokenAmounts;
         (, uint256 total, uint256 previousTotal) = _calculateDesiredTotalValue();
-        _adjustPosition(total, previousTotal);
+        _adjustPosition(total, previousTotal, false);
     }
 
     function _pull(
@@ -127,8 +130,42 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         uint256 amount = tokenAmounts[0];
 
-        MultiCall[] memory calls = new MultiCall[](2);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolPerVaultParams(_nft);
 
+        (uint256 realValue, , uint256 previousTotal) = _calculateDesiredTotalValue();
+
+        _adjustPosition(realValue, previousTotal, true);
+        if (primaryToken != depositToken) {
+
+            MultiCall[] memory calls = new MultiCall[](1);
+
+            calls[0] = MultiCall({ // swap deposit to primary token
+                target: params.depositToPrimaryTokenPool,
+                callData: abi.encodeWithSelector(
+                    IUniswapV3Adapter.exactAllInputSingle.selector,
+                    abi.encode(primaryToken, 500, depositToken), 
+                    block.timestamp + 900,
+                    0
+                )
+            });
+
+            _creditFacade.multicall(calls);
+        }
+
+        MultiCall[] memory noCalls = new MultiCall[](0);
+        _creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
+
+        uint256 balance = IERC20(depositToken).balanceOf(address(this));
+        if (amount > balance) {
+            amount = balance;
+        }
+
+        IERC20(depositToken).safeTransfer(to, amount);
+        actualTokenAmounts = new uint256[](1);
+
+        actualTokenAmounts[0] = amount;
 
     }
 
@@ -174,22 +211,20 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         marginalFactorD = marginalFactorD_;
         (, uint256 realValueWithMargin, ) = _calculateDesiredTotalValue();
 
-        _adjustPosition(realValueWithMargin, allAssetsValue);
+        _adjustPosition(realValueWithMargin, allAssetsValue, false);
     }
 
     function _isReclaimForbidden(address) internal pure override returns (bool) {
         return false;
     }
 
-    function _adjustPosition(
-        uint256 underlyingWant,
-        uint256 underlyingCurrent
-    ) internal {
+    function _adjustPosition(uint256 underlyingWant, uint256 underlyingCurrent, bool forceToClose) internal {
         ICreditFacade creditFacade = _creditFacade;
 
+        _checkDepositExchange(underlyingWant);
         uint256 currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
 
-        if (underlyingWant >= underlyingCurrent) {
+        if (underlyingWant >= underlyingCurrent && !forceToClose) {
             uint256 delta = underlyingWant - underlyingCurrent;
             MultiCall[] memory calls = new MultiCall[](3);
             calls[0] = MultiCall({
@@ -214,15 +249,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
             creditFacade.multicall(calls);
         } else {
-
             uint256 delta = underlyingCurrent - underlyingWant;
 
-            if (currentAmount < delta) {
+            if (currentAmount < delta || forceToClose) {
                 _claimRewards();
                 currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
             }
 
-            if (currentAmount >= delta) {
+            if (currentAmount >= delta && !forceToClose) {
                 MultiCall[] memory calls = new MultiCall[](1);
                 calls[0] = MultiCall({
                     target: address(creditFacade),
@@ -230,7 +264,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 });
                 creditFacade.multicall(calls);
             } else {
-                uint256 convexToOutput = _calcConvexTokensToOutput(delta - currentAmount);
+                uint256 convexToOutput = _calcConvexTokensToOutput(delta - currentAmount, forceToClose);
 
                 MultiCall[] memory calls = new MultiCall[](3);
                 calls[0] = MultiCall({
@@ -251,48 +285,83 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                     target: address(creditFacade),
                     callData: abi.encodeWithSelector(ICreditFacade.decreaseDebt.selector, delta)
                 });
+
+                creditFacade.multicall(calls);
             }
         }
     }
 
-    function _claimRewards() internal {
-        
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(address(_vaultGovernance)).delayedProtocolPerVaultParams(_nft);
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+    function _checkDepositExchange(uint256 underlyingWant) internal {
+        if (depositToken == primaryToken) {
+            return;
+        }
 
-        MultiCall[] memory calls = new MultiCall[](3);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolPerVaultParams(_nft);
+
+        uint256 amount = IERC20(depositToken).balanceOf(creditAccount);
+        IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
+        uint256 valueConvexToUsd = oracle.convertToUSD(amount, convexOutputToken);
+        uint256 valueConvexToUnderlying = oracle.convertFromUSD(valueConvexToUsd, primaryToken);
+
+        if (valueConvexToUnderlying > underlyingWant) {
+            uint256 toSwap = FullMath.mulDiv(amount, valueConvexToUnderlying - underlyingWant, valueConvexToUnderlying);
+            MultiCall[] memory calls = new MultiCall[](0);
+
+            calls[0] = MultiCall({ // swap deposit to primary token
+                target: params.depositToPrimaryTokenPool,
+                callData: abi.encodeWithSelector(
+                    ISwapRouter.exactInputSingle.selector,
+                    _creditManager.getCreditAccountOrRevert(address(this)),
+                    abi.encode(depositToken, 500, primaryToken), 
+                    block.timestamp + 900,
+                    toSwap,
+                    0
+                )
+            });
+
+            _creditFacade.multicall(calls);
+        }
+
+    }
+
+    function _claimRewards() internal {
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolPerVaultParams(_nft);
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolParams();
+
+        MultiCall[] memory calls = new MultiCall[](4);
 
         calls[0] = MultiCall({ // taking crv and cvx
             target: IConvexV1BoosterAdapter(convexAdapter).stakerRewards(),
             callData: abi.encodeWithSelector(GET_REWARD_SELECTOR, address(this), false)
         });
 
-        calls[1] = MultiCall({ // swap crv to eth
+        calls[1] = MultiCall({ // swap crv to weth
             target: protocolParams.crvEthPool,
-            callData: abi.encodeWithSelector(
-                ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
-                0, 1, 0
-            )
+            callData: abi.encodeWithSelector(ICurvePool.exchange.selector, 0, 1, 0)
         });
 
-        calls[2] = MultiCall({ // swap cvx to eth
+        calls[2] = MultiCall({ // swap cvx to weth
             target: protocolParams.cvxEthPool,
-            callData: abi.encodeWithSelector(
-                ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
-                0, 1, 0
-            )
+            callData: abi.encodeWithSelector(ICurvePool.exchange.selector, 0, 1, 0)
         });
 
-        calls[3] = MultiCall({ // swap eth to primary token
+        calls[3] = MultiCall({ // swap weth to primary token
             target: params.ethToPrimaryTokenPool,
             callData: abi.encodeWithSelector(
                 IUniswapV3Adapter.exactAllInputSingle.selector,
-                abi.encode(), // ADD SWAP HERE TOMORROW
+                abi.encode(protocolParams.wethAddress, 500, params.primaryToken), 
                 block.timestamp + 900,
                 0
             )
         });
 
+        _creditFacade.multicall(calls);
     }
 
     function _calculateDesiredTotalValue()
@@ -310,12 +379,20 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         realValueWithMargin = FullMath.mulDiv(realValue, marginalFactorD, DENOMINATOR);
     }
 
-    function _calcConvexTokensToOutput(uint256 underlyingAmount) internal view returns (uint256) {
+    function _calcConvexTokensToOutput(uint256 underlyingAmount, bool forceToClose) internal view returns (uint256) {
         uint256 amount = IERC20(convexOutputToken).balanceOf(creditAccount);
+
+        if (forceToClose) {
+            return amount;
+        }
 
         IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
         uint256 valueConvexToUsd = oracle.convertToUSD(amount, convexOutputToken);
         uint256 valueConvexToUnderlying = oracle.convertFromUSD(valueConvexToUsd, primaryToken);
+
+        if (underlyingAmount >= valueConvexToUnderlying) {
+            return amount;
+        }
 
         return FullMath.mulDiv(amount, underlyingAmount, valueConvexToUnderlying);
     }
