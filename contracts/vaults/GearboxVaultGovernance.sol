@@ -9,8 +9,7 @@ import "./VaultGovernance.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
-    
-    uint256 constant public DENOMINATOR = 10**9;
+    uint256 public constant DENOMINATOR = 10**9;
 
     /// @notice Creates a new contract
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
@@ -19,6 +18,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(delayedProtocolParams_.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
         require(delayedProtocolParams_.crvEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.cvxEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.wethAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -38,7 +38,14 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     /// @inheritdoc IGearboxVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({withdrawDelay: 0, referralCode: 0, crvEthPool: address(0), cvxEthPool: address(0)});
+            return
+                DelayedProtocolParams({
+                    withdrawDelay: 0,
+                    referralCode: 0,
+                    crvEthPool: address(0),
+                    cvxEthPool: address(0),
+                    wethAddress: address(0)
+                });
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -50,15 +57,17 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         returns (DelayedProtocolPerVaultParams memory)
     {
         if (_stagedDelayedProtocolPerVaultParams[nft].length == 0) {
-            return DelayedProtocolPerVaultParams({
-                primaryToken: address(0),
-                curveAdapter: address(0),
-                convexAdapter: address(0),
-                facade: address(0),
-                convexPoolId: 0,
-                initialMarginalValue: 0,
-                ethToPrimaryTokenPool: address(0)
-            });
+            return
+                DelayedProtocolPerVaultParams({
+                    primaryToken: address(0),
+                    curveAdapter: address(0),
+                    convexAdapter: address(0),
+                    facade: address(0),
+                    convexPoolId: 0,
+                    initialMarginalValue: 0,
+                    ethToPrimaryTokenPool: address(0),
+                    depositToPrimaryTokenPool: address(0)
+                });
         }
         return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
     }
@@ -66,15 +75,17 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     /// @inheritdoc IGearboxVaultGovernance
     function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
         if (_delayedProtocolPerVaultParams[nft].length == 0) {
-            return DelayedProtocolPerVaultParams({
-                primaryToken: address(0),
-                curveAdapter: address(0),
-                convexAdapter: address(0),
-                facade: address(0),
-                convexPoolId: 0,
-                initialMarginalValue: 0,
-                ethToPrimaryTokenPool: address(0)
-            });
+            return
+                DelayedProtocolPerVaultParams({
+                    primaryToken: address(0),
+                    curveAdapter: address(0),
+                    convexAdapter: address(0),
+                    facade: address(0),
+                    convexPoolId: 0,
+                    initialMarginalValue: 0,
+                    ethToPrimaryTokenPool: address(0),
+                    depositToPrimaryTokenPool: address(0)
+                });
         }
         return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
     }
@@ -86,6 +97,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
         require(params.crvEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvxEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.wethAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
@@ -106,6 +118,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.convexAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.ethToPrimaryTokenPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.depositToPrimaryTokenPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.initialMarginalValue >= DENOMINATOR, ExceptionsLibrary.INVALID_VALUE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
@@ -129,11 +142,17 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     }
 
     /// @inheritdoc IGearboxVaultGovernance
-    function createVault(address[] memory vaultTokens_, address owner_) external returns (IGearboxVault vault, uint256 nft) {
+    function createVault(address[] memory vaultTokens_, address owner_)
+        external
+        returns (IGearboxVault vault, uint256 nft)
+    {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
-        DelayedProtocolPerVaultParams memory params = abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
+        DelayedProtocolPerVaultParams memory params = abi.decode(
+            _delayedProtocolPerVaultParams[nft],
+            (DelayedProtocolPerVaultParams)
+        );
         IERC20Metadata token = IERC20Metadata(params.primaryToken);
 
         {

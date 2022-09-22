@@ -11,6 +11,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         uint16 referralCode;
         address crvEthPool;
         address cvxEthPool;
+        address wethAddress;
     }
 
     struct DelayedProtocolPerVaultParams {
@@ -21,6 +22,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         uint256 convexPoolId;
         uint256 initialMarginalValue;
         address ethToPrimaryTokenPool;
+        address depositToPrimaryTokenPool;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
