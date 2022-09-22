@@ -242,11 +242,16 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             );
     });
 
-    describe("new rebalance function", async () => {
-        it( "rebalance get the current position", async () => {
+    describe("Rebalance Logic", async () => {
+        it( "Check if in-range position needs to be rebalanced", async () => {
             await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
             const result = await this.subject.rebalanceCheck();
             expect(result).to.be.equal(false);
+        })
+        it("Check if out-of-range position needs to be rebalanced", async () => {
+            await this.subject.connect(this.admin).setTickValues(8000, 0, 6000);
+            const result = await this.subject.rebalanceCheck();
+            expect(result).to.be.equal(true);
         })
         it("No need to rebalance position", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
