@@ -84,7 +84,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     function rebalanceCheck() public view returns (bool) {
         
-        // 1. Get current position, lower, and upper ticks (uncomment once you have the logic nailed down)
+        // 1. Get current position, lower, and upper ticks
         // _currentPosition = _vault.currentPosition();
         // int24 _tickLower = _currentPosition.tickLower;
         // int24 _tickUpper = _currentPosition.tickUpper;
