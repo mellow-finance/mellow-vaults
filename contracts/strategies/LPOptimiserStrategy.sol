@@ -68,8 +68,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
         Position.Info memory position = _marginEngine.getPosition(
             address(_vault), 
-            _currentPosition.low, 
-            _currentPosition.high
+            _currentPosition.tickLower, 
+            _currentPosition.tickUpper
         );
 
         uint256[] memory tokenAmounts = new uint256[](1);
