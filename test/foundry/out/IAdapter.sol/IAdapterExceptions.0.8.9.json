@@ -1,0 +1,714 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "TokenIsNotInAllowedList",
+      "type": "error"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"TokenIsNotInAllowedList\",\"type\":\"error\"}],\"devdoc\":{\"errors\":{\"TokenIsNotInAllowedList(address)\":[{\"details\":\"Thrown when the adapter attempts to use a token      that is not recognized as collateral in the connected      Credit Manager\"}]},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/gearbox/helpers/IAdapter.sol\":\"IAdapterExceptions\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/external/gearbox/helpers/IAdapter.sol\":{\"keccak256\":\"0x53d9c431227c9fda393c1627351b7cd209b9c8053c6e1f57780d661682386faa\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://5c5e3288253cebb1baf277e4de243ce216ab01c6dfd81f537f6e6b54a37abb17\",\"dweb:/ipfs/QmSMLkPhcXUot3AnQD7uqLteFNhvqdu74rsw5TvgkpTL22\"]},\"src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol\":{\"keccak256\":\"0x71b5f65aa68e4813f539f03889b43dc3656efbca68d0ffc551595c684bea0f9a\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://9ebf2849bed5df6d5d9a2cfffb666c1d98cbeba7089285abc2d0a3d4fb7904ad\",\"dweb:/ipfs/QmboWvFHKDh4vYtJXX1pb1QqbjDfKTYDLEUp3gqDQoBJry\"]},\"src/interfaces/external/gearbox/helpers/IPriceOracle.sol\":{\"keccak256\":\"0x0d57767a0bc3f65da11555786ef19cc337e94df510929150d48444107d5de8cc\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://d4de7d80939d2d29e7d5558caf8f56c012b13017debcad3fa5302c4d355e41a6\",\"dweb:/ipfs/QmdxDtGi9RqRr2SAxmgcruaDRzpiNrY7boSLP93haZFySC\"]},\"src/interfaces/external/gearbox/helpers/IVersion.sol\":{\"keccak256\":\"0xddc0816823b7fbcb6debff617668663ae1c3fd36f3c4c3ca8fce150d08c7d421\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://cfcfd7cc5f615c36691f04c37dcef595c03fbef11d5b2f87b81941f6266d3211\",\"dweb:/ipfs/QmVGCeFDQpZYSY4K4qkDddhMeF4DxUJbQ9vUJng2v9pUTM\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "TokenIsNotInAllowedList"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/gearbox/helpers/IAdapter.sol": "IAdapterExceptions"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/gearbox/helpers/IAdapter.sol": {
+        "keccak256": "0x53d9c431227c9fda393c1627351b7cd209b9c8053c6e1f57780d661682386faa",
+        "urls": [
+          "bzz-raw://5c5e3288253cebb1baf277e4de243ce216ab01c6dfd81f537f6e6b54a37abb17",
+          "dweb:/ipfs/QmSMLkPhcXUot3AnQD7uqLteFNhvqdu74rsw5TvgkpTL22"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol": {
+        "keccak256": "0x71b5f65aa68e4813f539f03889b43dc3656efbca68d0ffc551595c684bea0f9a",
+        "urls": [
+          "bzz-raw://9ebf2849bed5df6d5d9a2cfffb666c1d98cbeba7089285abc2d0a3d4fb7904ad",
+          "dweb:/ipfs/QmboWvFHKDh4vYtJXX1pb1QqbjDfKTYDLEUp3gqDQoBJry"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IPriceOracle.sol": {
+        "keccak256": "0x0d57767a0bc3f65da11555786ef19cc337e94df510929150d48444107d5de8cc",
+        "urls": [
+          "bzz-raw://d4de7d80939d2d29e7d5558caf8f56c012b13017debcad3fa5302c4d355e41a6",
+          "dweb:/ipfs/QmdxDtGi9RqRr2SAxmgcruaDRzpiNrY7boSLP93haZFySC"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IVersion.sol": {
+        "keccak256": "0xddc0816823b7fbcb6debff617668663ae1c3fd36f3c4c3ca8fce150d08c7d421",
+        "urls": [
+          "bzz-raw://cfcfd7cc5f615c36691f04c37dcef595c03fbef11d5b2f87b81941f6266d3211",
+          "dweb:/ipfs/QmVGCeFDQpZYSY4K4qkDddhMeF4DxUJbQ9vUJng2v9pUTM"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/gearbox/helpers/IAdapter.sol",
+    "id": 41057,
+    "exportedSymbols": {
+      "AdapterType": [
+        41015
+      ],
+      "IAdapter": [
+        41056
+      ],
+      "IAdapterExceptions": [
+        41021
+      ],
+      "ICreditManagerV2": [
+        24088
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "136:1354:42",
+    "nodes": [
+      {
+        "id": 40997,
+        "nodeType": "PragmaDirective",
+        "src": "136:23:42",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 40999,
+        "nodeType": "ImportDirective",
+        "src": "160:58:42",
+        "absolutePath": "src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol",
+        "file": "./ICreditManagerV2.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 41057,
+        "sourceUnit": 24089,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 40998,
+              "name": "ICreditManagerV2",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "src": "169:16:42",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 41015,
+        "nodeType": "EnumDefinition",
+        "src": "220:343:42",
+        "canonicalName": "AdapterType",
+        "members": [
+          {
+            "id": 41000,
+            "name": "ABSTRACT",
+            "nameLocation": "243:8:42",
+            "nodeType": "EnumValue",
+            "src": "243:8:42"
+          },
+          {
+            "id": 41001,
+            "name": "UNISWAP_V2_ROUTER",
+            "nameLocation": "257:17:42",
+            "nodeType": "EnumValue",
+            "src": "257:17:42"
+          },
+          {
+            "id": 41002,
+            "name": "UNISWAP_V3_ROUTER",
+            "nameLocation": "280:17:42",
+            "nodeType": "EnumValue",
+            "src": "280:17:42"
+          },
+          {
+            "id": 41003,
+            "name": "CURVE_V1_EXCHANGE_ONLY",
+            "nameLocation": "303:22:42",
+            "nodeType": "EnumValue",
+            "src": "303:22:42"
+          },
+          {
+            "id": 41004,
+            "name": "YEARN_V2",
+            "nameLocation": "331:8:42",
+            "nodeType": "EnumValue",
+            "src": "331:8:42"
+          },
+          {
+            "id": 41005,
+            "name": "CURVE_V1_2ASSETS",
+            "nameLocation": "345:16:42",
+            "nodeType": "EnumValue",
+            "src": "345:16:42"
+          },
+          {
+            "id": 41006,
+            "name": "CURVE_V1_3ASSETS",
+            "nameLocation": "367:16:42",
+            "nodeType": "EnumValue",
+            "src": "367:16:42"
+          },
+          {
+            "id": 41007,
+            "name": "CURVE_V1_4ASSETS",
+            "nameLocation": "389:16:42",
+            "nodeType": "EnumValue",
+            "src": "389:16:42"
+          },
+          {
+            "id": 41008,
+            "name": "CURVE_V1_STECRV_POOL",
+            "nameLocation": "411:20:42",
+            "nodeType": "EnumValue",
+            "src": "411:20:42"
+          },
+          {
+            "id": 41009,
+            "name": "CURVE_V1_WRAPPER",
+            "nameLocation": "437:16:42",
+            "nodeType": "EnumValue",
+            "src": "437:16:42"
+          },
+          {
+            "id": 41010,
+            "name": "CONVEX_V1_BASE_REWARD_POOL",
+            "nameLocation": "459:26:42",
+            "nodeType": "EnumValue",
+            "src": "459:26:42"
+          },
+          {
+            "id": 41011,
+            "name": "CONVEX_V1_BOOSTER",
+            "nameLocation": "491:17:42",
+            "nodeType": "EnumValue",
+            "src": "491:17:42"
+          },
+          {
+            "id": 41012,
+            "name": "CONVEX_V1_CLAIM_ZAP",
+            "nameLocation": "514:19:42",
+            "nodeType": "EnumValue",
+            "src": "514:19:42"
+          },
+          {
+            "id": 41013,
+            "name": "LIDO_V1",
+            "nameLocation": "539:7:42",
+            "nodeType": "EnumValue",
+            "src": "539:7:42"
+          },
+          {
+            "id": 41014,
+            "name": "UNIVERSAL",
+            "nameLocation": "552:9:42",
+            "nodeType": "EnumValue",
+            "src": "552:9:42"
+          }
+        ],
+        "name": "AdapterType",
+        "nameLocation": "225:11:42"
+      },
+      {
+        "id": 41021,
+        "nodeType": "ContractDefinition",
+        "src": "565:232:42",
+        "nodes": [
+          {
+            "id": 41020,
+            "nodeType": "ErrorDefinition",
+            "src": "756:39:42",
+            "documentation": {
+              "id": 41016,
+              "nodeType": "StructuredDocumentation",
+              "src": "600:151:42",
+              "text": "@dev Thrown when the adapter attempts to use a token\n      that is not recognized as collateral in the connected\n      Credit Manager"
+            },
+            "name": "TokenIsNotInAllowedList",
+            "nameLocation": "762:23:42",
+            "parameters": {
+              "id": 41019,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41018,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41020,
+                  "src": "786:7:42",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41017,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "786:7:42",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "785:9:42"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAdapterExceptions",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          41021
+        ],
+        "name": "IAdapterExceptions",
+        "nameLocation": "575:18:42",
+        "scope": 41057,
+        "usedErrors": [
+          41020
+        ]
+      },
+      {
+        "id": 41056,
+        "nodeType": "ContractDefinition",
+        "src": "799:691:42",
+        "nodes": [
+          {
+            "id": 41030,
+            "nodeType": "FunctionDefinition",
+            "src": "911:66:42",
+            "documentation": {
+              "id": 41024,
+              "nodeType": "StructuredDocumentation",
+              "src": "846:60:42",
+              "text": "@dev Returns the Credit Manager connected to the adapter"
+            },
+            "functionSelector": "c12c21c0",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "creditManager",
+            "nameLocation": "920:13:42",
+            "parameters": {
+              "id": 41025,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "933:2:42"
+            },
+            "returnParameters": {
+              "id": 41029,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41028,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41030,
+                  "src": "959:16:42",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_ICreditManagerV2_$24088",
+                    "typeString": "contract ICreditManagerV2"
+                  },
+                  "typeName": {
+                    "id": 41027,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41026,
+                      "name": "ICreditManagerV2",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 24088,
+                      "src": "959:16:42"
+                    },
+                    "referencedDeclaration": 24088,
+                    "src": "959:16:42",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_ICreditManagerV2_$24088",
+                      "typeString": "contract ICreditManagerV2"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "958:18:42"
+            },
+            "scope": 41056,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 41036,
+            "nodeType": "FunctionDefinition",
+            "src": "1064:56:42",
+            "documentation": {
+              "id": 41031,
+              "nodeType": "StructuredDocumentation",
+              "src": "983:76:42",
+              "text": "@dev Returns the Credit Facade connected to the adapter's Credit Manager"
+            },
+            "functionSelector": "2f7a1881",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "creditFacade",
+            "nameLocation": "1073:12:42",
+            "parameters": {
+              "id": 41032,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1085:2:42"
+            },
+            "returnParameters": {
+              "id": 41035,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41034,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41036,
+                  "src": "1111:7:42",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41033,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1111:7:42",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1110:9:42"
+            },
+            "scope": 41056,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 41042,
+            "nodeType": "FunctionDefinition",
+            "src": "1207:58:42",
+            "documentation": {
+              "id": 41037,
+              "nodeType": "StructuredDocumentation",
+              "src": "1126:76:42",
+              "text": "@dev Returns the address of the contract the adapter is interacting with"
+            },
+            "functionSelector": "bd90df70",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "targetContract",
+            "nameLocation": "1216:14:42",
+            "parameters": {
+              "id": 41038,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1230:2:42"
+            },
+            "returnParameters": {
+              "id": 41041,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41040,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41042,
+                  "src": "1256:7:42",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41039,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1256:7:42",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1255:9:42"
+            },
+            "scope": 41056,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 41049,
+            "nodeType": "FunctionDefinition",
+            "src": "1309:67:42",
+            "documentation": {
+              "id": 41043,
+              "nodeType": "StructuredDocumentation",
+              "src": "1271:33:42",
+              "text": "@dev Returns the adapter type"
+            },
+            "functionSelector": "ce30bbdb",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "_gearboxAdapterType",
+            "nameLocation": "1318:19:42",
+            "parameters": {
+              "id": 41044,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1337:2:42"
+            },
+            "returnParameters": {
+              "id": 41048,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41047,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41049,
+                  "src": "1363:11:42",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_AdapterType_$41015",
+                    "typeString": "enum AdapterType"
+                  },
+                  "typeName": {
+                    "id": 41046,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41045,
+                      "name": "AdapterType",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41015,
+                      "src": "1363:11:42"
+                    },
+                    "referencedDeclaration": 41015,
+                    "src": "1363:11:42",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_AdapterType_$41015",
+                      "typeString": "enum AdapterType"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1362:13:42"
+            },
+            "scope": 41056,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 41055,
+            "nodeType": "FunctionDefinition",
+            "src": "1423:65:42",
+            "documentation": {
+              "id": 41050,
+              "nodeType": "StructuredDocumentation",
+              "src": "1382:36:42",
+              "text": "@dev Returns the adapter version"
+            },
+            "functionSelector": "78aa73a4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "_gearboxAdapterVersion",
+            "nameLocation": "1432:22:42",
+            "parameters": {
+              "id": 41051,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1454:2:42"
+            },
+            "returnParameters": {
+              "id": 41054,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41053,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41055,
+                  "src": "1480:6:42",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint16",
+                    "typeString": "uint16"
+                  },
+                  "typeName": {
+                    "id": 41052,
+                    "name": "uint16",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1480:6:42",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint16",
+                      "typeString": "uint16"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1479:8:42"
+            },
+            "scope": 41056,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 41022,
+              "name": "IAdapterExceptions",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 41021,
+              "src": "821:18:42"
+            },
+            "id": 41023,
+            "nodeType": "InheritanceSpecifier",
+            "src": "821:18:42"
+          }
+        ],
+        "canonicalName": "IAdapter",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          41056,
+          41021
+        ],
+        "name": "IAdapter",
+        "nameLocation": "809:8:42",
+        "scope": 41057,
+        "usedErrors": [
+          41020
+        ]
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 42
+}

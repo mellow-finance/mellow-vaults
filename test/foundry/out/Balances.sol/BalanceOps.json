@@ -1,0 +1,3333 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "UnknownToken",
+      "type": "error"
+    }
+  ],
+  "bytecode": {
+    "object": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220c41861ce21efc930e0e810f0ab722661284da3d01119a98c6c1dd02239a9d76f64736f6c63430008090033",
+    "sourceMap": "221:2177:49:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;221:2177:49;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220c41861ce21efc930e0e810f0ab722661284da3d01119a98c6c1dd02239a9d76f64736f6c63430008090033",
+    "sourceMap": "221:2177:49:-:0;;;;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"UnknownToken\",\"type\":\"error\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/gearbox/helpers/libraries/Balances.sol\":\"BalanceOps\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/external/gearbox/helpers/libraries/Balances.sol\":{\"keccak256\":\"0x86cfbfd404f83484ca8b991b836c59ede706b0af885f969f740c069bff3bc816\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://8dc59e23147ce31a45c7d9d237e530cf073217a8fae4e1570b006f0ba0ab5b0c\",\"dweb:/ipfs/QmU6q5XttNxNXumGBvadLoVy4wGRsopo6WnKVrjmTQoGT3\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "UnknownToken"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/gearbox/helpers/libraries/Balances.sol": "BalanceOps"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/gearbox/helpers/libraries/Balances.sol": {
+        "keccak256": "0x86cfbfd404f83484ca8b991b836c59ede706b0af885f969f740c069bff3bc816",
+        "urls": [
+          "bzz-raw://8dc59e23147ce31a45c7d9d237e530cf073217a8fae4e1570b006f0ba0ab5b0c",
+          "dweb:/ipfs/QmU6q5XttNxNXumGBvadLoVy4wGRsopo6WnKVrjmTQoGT3"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/gearbox/helpers/libraries/Balances.sol",
+    "id": 41334,
+    "exportedSymbols": {
+      "Balance": [
+        41073
+      ],
+      "BalanceOps": [
+        41333
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "136:2262:49",
+    "nodes": [
+      {
+        "id": 41068,
+        "nodeType": "PragmaDirective",
+        "src": "136:23:49",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 41073,
+        "nodeType": "StructDefinition",
+        "src": "161:58:49",
+        "canonicalName": "Balance",
+        "members": [
+          {
+            "constant": false,
+            "id": 41070,
+            "mutability": "mutable",
+            "name": "token",
+            "nameLocation": "190:5:49",
+            "nodeType": "VariableDeclaration",
+            "scope": 41073,
+            "src": "182:13:49",
+            "stateVariable": false,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 41069,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "182:7:49",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "constant": false,
+            "id": 41072,
+            "mutability": "mutable",
+            "name": "balance",
+            "nameLocation": "209:7:49",
+            "nodeType": "VariableDeclaration",
+            "scope": 41073,
+            "src": "201:15:49",
+            "stateVariable": false,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 41071,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "201:7:49",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "visibility": "internal"
+          }
+        ],
+        "name": "Balance",
+        "nameLocation": "168:7:49",
+        "scope": 41334,
+        "visibility": "public"
+      },
+      {
+        "id": 41333,
+        "nodeType": "ContractDefinition",
+        "src": "221:2177:49",
+        "nodes": [
+          {
+            "id": 41077,
+            "nodeType": "ErrorDefinition",
+            "src": "246:28:49",
+            "name": "UnknownToken",
+            "nameLocation": "252:12:49",
+            "parameters": {
+              "id": 41076,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41075,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41077,
+                  "src": "265:7:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41074,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "265:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "264:9:49"
+            }
+          },
+          {
+            "id": 41094,
+            "nodeType": "FunctionDefinition",
+            "src": "280:177:49",
+            "body": {
+              "id": 41093,
+              "nodeType": "Block",
+              "src": "386:71:49",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "id": 41087,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41080,
+                          "src": "420:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                            "typeString": "struct Balance memory"
+                          }
+                        },
+                        "id": 41088,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "token",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 41070,
+                        "src": "420:7:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "id": 41089,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41080,
+                          "src": "438:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                            "typeString": "struct Balance memory"
+                          }
+                        },
+                        "id": 41090,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "balance",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 41072,
+                        "src": "438:9:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 41086,
+                      "name": "Balance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41073,
+                      "src": "403:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_struct$_Balance_$41073_storage_ptr_$",
+                        "typeString": "type(struct Balance storage pointer)"
+                      }
+                    },
+                    "id": 41091,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "structConstructorCall",
+                    "lValueRequested": false,
+                    "names": [
+                      "token",
+                      "balance"
+                    ],
+                    "nodeType": "FunctionCall",
+                    "src": "403:47:49",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                      "typeString": "struct Balance memory"
+                    }
+                  },
+                  "functionReturnParameters": 41085,
+                  "id": 41092,
+                  "nodeType": "Return",
+                  "src": "396:54:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "copyBalance",
+            "nameLocation": "289:11:49",
+            "parameters": {
+              "id": 41081,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41080,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "316:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41094,
+                  "src": "301:16:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                    "typeString": "struct Balance"
+                  },
+                  "typeName": {
+                    "id": 41079,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41078,
+                      "name": "Balance",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41073,
+                      "src": "301:7:49"
+                    },
+                    "referencedDeclaration": 41073,
+                    "src": "301:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                      "typeString": "struct Balance"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "300:18:49"
+            },
+            "returnParameters": {
+              "id": 41085,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41084,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41094,
+                  "src": "366:14:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                    "typeString": "struct Balance"
+                  },
+                  "typeName": {
+                    "id": 41083,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41082,
+                      "name": "Balance",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41073,
+                      "src": "366:7:49"
+                    },
+                    "referencedDeclaration": 41073,
+                    "src": "366:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                      "typeString": "struct Balance"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "365:16:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41116,
+            "nodeType": "FunctionDefinition",
+            "src": "463:171:49",
+            "body": {
+              "id": 41115,
+              "nodeType": "Block",
+              "src": "578:56:49",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 41113,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 41105,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41098,
+                          "src": "588:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct Balance memory[] memory"
+                          }
+                        },
+                        "id": 41110,
+                        "indexExpression": {
+                          "arguments": [
+                            {
+                              "id": 41107,
+                              "name": "b",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41098,
+                              "src": "599:1:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              }
+                            },
+                            {
+                              "id": 41108,
+                              "name": "token",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41100,
+                              "src": "602:5:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            ],
+                            "id": 41106,
+                            "name": "getIndex",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41219,
+                            "src": "590:8:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$returns$_t_uint256_$",
+                              "typeString": "function (struct Balance memory[] memory,address) pure returns (uint256)"
+                            }
+                          },
+                          "id": 41109,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "590:18:49",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "588:21:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                          "typeString": "struct Balance memory"
+                        }
+                      },
+                      "id": 41111,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "balance",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 41072,
+                      "src": "588:29:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "+=",
+                    "rightHandSide": {
+                      "id": 41112,
+                      "name": "amount",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41102,
+                      "src": "621:6:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "588:39:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 41114,
+                  "nodeType": "ExpressionStatement",
+                  "src": "588:39:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "addBalance",
+            "nameLocation": "472:10:49",
+            "parameters": {
+              "id": 41103,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41098,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "509:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41116,
+                  "src": "492:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41096,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41095,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "492:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "492:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41097,
+                    "nodeType": "ArrayTypeName",
+                    "src": "492:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41100,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "528:5:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41116,
+                  "src": "520:13:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41099,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "520:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41102,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "551:6:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41116,
+                  "src": "543:14:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41101,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "543:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "482:81:49"
+            },
+            "returnParameters": {
+              "id": 41104,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "578:0:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41138,
+            "nodeType": "FunctionDefinition",
+            "src": "640:171:49",
+            "body": {
+              "id": 41137,
+              "nodeType": "Block",
+              "src": "755:56:49",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 41135,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 41127,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41120,
+                          "src": "765:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct Balance memory[] memory"
+                          }
+                        },
+                        "id": 41132,
+                        "indexExpression": {
+                          "arguments": [
+                            {
+                              "id": 41129,
+                              "name": "b",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41120,
+                              "src": "776:1:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              }
+                            },
+                            {
+                              "id": 41130,
+                              "name": "token",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41122,
+                              "src": "779:5:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            ],
+                            "id": 41128,
+                            "name": "getIndex",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41219,
+                            "src": "767:8:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$returns$_t_uint256_$",
+                              "typeString": "function (struct Balance memory[] memory,address) pure returns (uint256)"
+                            }
+                          },
+                          "id": 41131,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "767:18:49",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "765:21:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                          "typeString": "struct Balance memory"
+                        }
+                      },
+                      "id": 41133,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "balance",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 41072,
+                      "src": "765:29:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "-=",
+                    "rightHandSide": {
+                      "id": 41134,
+                      "name": "amount",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41124,
+                      "src": "798:6:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "765:39:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 41136,
+                  "nodeType": "ExpressionStatement",
+                  "src": "765:39:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "subBalance",
+            "nameLocation": "649:10:49",
+            "parameters": {
+              "id": 41125,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41120,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "686:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41138,
+                  "src": "669:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41118,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41117,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "669:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "669:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41119,
+                    "nodeType": "ArrayTypeName",
+                    "src": "669:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41122,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "705:5:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41138,
+                  "src": "697:13:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41121,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "697:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41124,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "728:6:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41138,
+                  "src": "720:14:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41123,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "720:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "659:81:49"
+            },
+            "returnParameters": {
+              "id": 41126,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "755:0:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41158,
+            "nodeType": "FunctionDefinition",
+            "src": "817:175:49",
+            "body": {
+              "id": 41157,
+              "nodeType": "Block",
+              "src": "939:53:49",
+              "statements": [
+                {
+                  "expression": {
+                    "expression": {
+                      "baseExpression": {
+                        "id": 41149,
+                        "name": "b",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41142,
+                        "src": "956:1:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        }
+                      },
+                      "id": 41154,
+                      "indexExpression": {
+                        "arguments": [
+                          {
+                            "id": 41151,
+                            "name": "b",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41142,
+                            "src": "967:1:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                              "typeString": "struct Balance memory[] memory"
+                            }
+                          },
+                          {
+                            "id": 41152,
+                            "name": "token",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41144,
+                            "src": "970:5:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                              "typeString": "struct Balance memory[] memory"
+                            },
+                            {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          ],
+                          "id": 41150,
+                          "name": "getIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41219,
+                          "src": "958:8:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$returns$_t_uint256_$",
+                            "typeString": "function (struct Balance memory[] memory,address) pure returns (uint256)"
+                          }
+                        },
+                        "id": 41153,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "958:18:49",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "956:21:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                        "typeString": "struct Balance memory"
+                      }
+                    },
+                    "id": 41155,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "balance",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 41072,
+                    "src": "956:29:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 41148,
+                  "id": 41156,
+                  "nodeType": "Return",
+                  "src": "949:36:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getBalance",
+            "nameLocation": "826:10:49",
+            "parameters": {
+              "id": 41145,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41142,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "854:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41158,
+                  "src": "837:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41140,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41139,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "837:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "837:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41141,
+                    "nodeType": "ArrayTypeName",
+                    "src": "837:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41144,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "865:5:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41158,
+                  "src": "857:13:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41143,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "857:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "836:35:49"
+            },
+            "returnParameters": {
+              "id": 41148,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41147,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "927:6:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41158,
+                  "src": "919:14:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41146,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "919:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "918:16:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41180,
+            "nodeType": "FunctionDefinition",
+            "src": "998:170:49",
+            "body": {
+              "id": 41179,
+              "nodeType": "Block",
+              "src": "1113:55:49",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 41177,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 41169,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41162,
+                          "src": "1123:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct Balance memory[] memory"
+                          }
+                        },
+                        "id": 41174,
+                        "indexExpression": {
+                          "arguments": [
+                            {
+                              "id": 41171,
+                              "name": "b",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41162,
+                              "src": "1134:1:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              }
+                            },
+                            {
+                              "id": 41172,
+                              "name": "token",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41164,
+                              "src": "1137:5:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            ],
+                            "id": 41170,
+                            "name": "getIndex",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41219,
+                            "src": "1125:8:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$returns$_t_uint256_$",
+                              "typeString": "function (struct Balance memory[] memory,address) pure returns (uint256)"
+                            }
+                          },
+                          "id": 41173,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1125:18:49",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1123:21:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                          "typeString": "struct Balance memory"
+                        }
+                      },
+                      "id": 41175,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "balance",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 41072,
+                      "src": "1123:29:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "id": 41176,
+                      "name": "amount",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41166,
+                      "src": "1155:6:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1123:38:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 41178,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1123:38:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setBalance",
+            "nameLocation": "1007:10:49",
+            "parameters": {
+              "id": 41167,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41162,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "1044:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41180,
+                  "src": "1027:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41160,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41159,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "1027:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "1027:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41161,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1027:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41164,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1063:5:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41180,
+                  "src": "1055:13:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41163,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1055:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41166,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "1086:6:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41180,
+                  "src": "1078:14:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41165,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1078:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1017:81:49"
+            },
+            "returnParameters": {
+              "id": 41168,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1113:0:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41219,
+            "nodeType": "FunctionDefinition",
+            "src": "1174:353:49",
+            "body": {
+              "id": 41218,
+              "nodeType": "Block",
+              "src": "1293:234:49",
+              "statements": [
+                {
+                  "body": {
+                    "id": 41212,
+                    "nodeType": "Block",
+                    "src": "1335:150:49",
+                    "statements": [
+                      {
+                        "condition": {
+                          "commonType": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          },
+                          "id": 41203,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftExpression": {
+                            "expression": {
+                              "baseExpression": {
+                                "id": 41198,
+                                "name": "b",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41184,
+                                "src": "1353:1:49",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                  "typeString": "struct Balance memory[] memory"
+                                }
+                              },
+                              "id": 41200,
+                              "indexExpression": {
+                                "id": 41199,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41192,
+                                "src": "1355:1:49",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "1353:4:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                                "typeString": "struct Balance memory"
+                              }
+                            },
+                            "id": 41201,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "token",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 41070,
+                            "src": "1353:10:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          },
+                          "nodeType": "BinaryOperation",
+                          "operator": "==",
+                          "rightExpression": {
+                            "id": 41202,
+                            "name": "token",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41186,
+                            "src": "1367:5:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          },
+                          "src": "1353:19:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        },
+                        "id": 41207,
+                        "nodeType": "IfStatement",
+                        "src": "1349:66:49",
+                        "trueBody": {
+                          "id": 41206,
+                          "nodeType": "Block",
+                          "src": "1374:41:49",
+                          "statements": [
+                            {
+                              "expression": {
+                                "id": 41204,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41192,
+                                "src": "1399:1:49",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "functionReturnParameters": 41190,
+                              "id": 41205,
+                              "nodeType": "Return",
+                              "src": "1392:8:49"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": 41211,
+                        "nodeType": "UncheckedBlock",
+                        "src": "1429:46:49",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41209,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "1457:3:49",
+                              "subExpression": {
+                                "id": 41208,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41192,
+                                "src": "1459:1:49",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41210,
+                            "nodeType": "ExpressionStatement",
+                            "src": "1457:3:49"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41197,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41194,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41192,
+                      "src": "1319:1:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "expression": {
+                        "id": 41195,
+                        "name": "b",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41184,
+                        "src": "1323:1:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        }
+                      },
+                      "id": 41196,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "src": "1323:8:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1319:12:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41213,
+                  "initializationExpression": {
+                    "assignments": [
+                      41192
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 41192,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "1316:1:49",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 41213,
+                        "src": "1308:9:49",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 41191,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1308:7:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 41193,
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "1308:9:49"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "1303:182:49"
+                },
+                {
+                  "errorCall": {
+                    "arguments": [
+                      {
+                        "id": 41215,
+                        "name": "token",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41186,
+                        "src": "1514:5:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 41214,
+                      "name": "UnknownToken",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41077,
+                      "src": "1501:12:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_error_pure$_t_address_$returns$__$",
+                        "typeString": "function (address) pure"
+                      }
+                    },
+                    "id": 41216,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1501:19:49",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 41217,
+                  "nodeType": "RevertStatement",
+                  "src": "1494:26:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getIndex",
+            "nameLocation": "1183:8:49",
+            "parameters": {
+              "id": 41187,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41184,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "1209:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41219,
+                  "src": "1192:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41182,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41181,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "1192:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "1192:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41183,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1192:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41186,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1220:5:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41219,
+                  "src": "1212:13:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41185,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1212:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1191:35:49"
+            },
+            "returnParameters": {
+              "id": 41190,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41189,
+                  "mutability": "mutable",
+                  "name": "index",
+                  "nameLocation": "1282:5:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41219,
+                  "src": "1274:13:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41188,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1274:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1273:15:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41264,
+            "nodeType": "FunctionDefinition",
+            "src": "1533:307:49",
+            "body": {
+              "id": 41263,
+              "nodeType": "Block",
+              "src": "1653:187:49",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 41239,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 41232,
+                      "name": "res",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41230,
+                      "src": "1663:3:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct Balance memory[] memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 41237,
+                          "name": "len",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41225,
+                          "src": "1683:3:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41236,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "NewExpression",
+                        "src": "1669:13:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (uint256) pure returns (struct Balance memory[] memory)"
+                        },
+                        "typeName": {
+                          "baseType": {
+                            "id": 41234,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                              "id": 41233,
+                              "name": "Balance",
+                              "nodeType": "IdentifierPath",
+                              "referencedDeclaration": 41073,
+                              "src": "1673:7:49"
+                            },
+                            "referencedDeclaration": 41073,
+                            "src": "1673:7:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                              "typeString": "struct Balance"
+                            }
+                          },
+                          "id": 41235,
+                          "nodeType": "ArrayTypeName",
+                          "src": "1673:9:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                            "typeString": "struct Balance[]"
+                          }
+                        }
+                      },
+                      "id": 41238,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1669:18:49",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct Balance memory[] memory"
+                      }
+                    },
+                    "src": "1663:24:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct Balance memory[] memory"
+                    }
+                  },
+                  "id": 41240,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1663:24:49"
+                },
+                {
+                  "body": {
+                    "id": 41261,
+                    "nodeType": "Block",
+                    "src": "1724:110:49",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 41255,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "id": 41247,
+                              "name": "res",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41230,
+                              "src": "1738:3:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              }
+                            },
+                            "id": 41249,
+                            "indexExpression": {
+                              "id": 41248,
+                              "name": "i",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41242,
+                              "src": "1742:1:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "1738:6:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                              "typeString": "struct Balance memory"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "arguments": [
+                              {
+                                "baseExpression": {
+                                  "id": 41251,
+                                  "name": "b",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41223,
+                                  "src": "1759:1:49",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                    "typeString": "struct Balance memory[] memory"
+                                  }
+                                },
+                                "id": 41253,
+                                "indexExpression": {
+                                  "id": 41252,
+                                  "name": "i",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41242,
+                                  "src": "1761:1:49",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                  }
+                                },
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "nodeType": "IndexAccess",
+                                "src": "1759:4:49",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                                  "typeString": "struct Balance memory"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                                  "typeString": "struct Balance memory"
+                                }
+                              ],
+                              "id": 41250,
+                              "name": "copyBalance",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41094,
+                              "src": "1747:11:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_function_internal_pure$_t_struct$_Balance_$41073_memory_ptr_$returns$_t_struct$_Balance_$41073_memory_ptr_$",
+                                "typeString": "function (struct Balance memory) pure returns (struct Balance memory)"
+                              }
+                            },
+                            "id": 41254,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "functionCall",
+                            "lValueRequested": false,
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "1747:17:49",
+                            "tryCall": false,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                              "typeString": "struct Balance memory"
+                            }
+                          },
+                          "src": "1738:26:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Balance_$41073_memory_ptr",
+                            "typeString": "struct Balance memory"
+                          }
+                        },
+                        "id": 41256,
+                        "nodeType": "ExpressionStatement",
+                        "src": "1738:26:49"
+                      },
+                      {
+                        "id": 41260,
+                        "nodeType": "UncheckedBlock",
+                        "src": "1778:46:49",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41258,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "1806:3:49",
+                              "subExpression": {
+                                "id": 41257,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41242,
+                                "src": "1808:1:49",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41259,
+                            "nodeType": "ExpressionStatement",
+                            "src": "1806:3:49"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41246,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41244,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41242,
+                      "src": "1713:1:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "id": 41245,
+                      "name": "len",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41225,
+                      "src": "1717:3:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1713:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41262,
+                  "initializationExpression": {
+                    "assignments": [
+                      41242
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 41242,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "1710:1:49",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 41262,
+                        "src": "1702:9:49",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 41241,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1702:7:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 41243,
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "1702:9:49"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "1697:137:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "copy",
+            "nameLocation": "1542:4:49",
+            "parameters": {
+              "id": 41226,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41223,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "1564:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41264,
+                  "src": "1547:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41221,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41220,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "1547:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "1547:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41222,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1547:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41225,
+                  "mutability": "mutable",
+                  "name": "len",
+                  "nameLocation": "1575:3:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41264,
+                  "src": "1567:11:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41224,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1567:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1546:33:49"
+            },
+            "returnParameters": {
+              "id": 41231,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41230,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "1644:3:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41264,
+                  "src": "1627:20:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41228,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41227,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "1627:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "1627:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41229,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1627:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1626:22:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41282,
+            "nodeType": "FunctionDefinition",
+            "src": "1846:145:49",
+            "body": {
+              "id": 41281,
+              "nodeType": "Block",
+              "src": "1950:41:49",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 41276,
+                        "name": "b",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41268,
+                        "src": "1972:1:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "id": 41277,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41268,
+                          "src": "1975:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct Balance memory[] memory"
+                          }
+                        },
+                        "id": 41278,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "length",
+                        "nodeType": "MemberAccess",
+                        "src": "1975:8:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 41275,
+                      "name": "copy",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41264,
+                      "src": "1967:4:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_uint256_$returns$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$",
+                        "typeString": "function (struct Balance memory[] memory,uint256) pure returns (struct Balance memory[] memory)"
+                      }
+                    },
+                    "id": 41279,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1967:17:49",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct Balance memory[] memory"
+                    }
+                  },
+                  "functionReturnParameters": 41274,
+                  "id": 41280,
+                  "nodeType": "Return",
+                  "src": "1960:24:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "clone",
+            "nameLocation": "1855:5:49",
+            "parameters": {
+              "id": 41269,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41268,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "1878:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41282,
+                  "src": "1861:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41266,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41265,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "1861:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "1861:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41267,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1861:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1860:20:49"
+            },
+            "returnParameters": {
+              "id": 41274,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41273,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41282,
+                  "src": "1928:16:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41271,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41270,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "1928:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "1928:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41272,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1928:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1927:18:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41332,
+            "nodeType": "FunctionDefinition",
+            "src": "1997:399:49",
+            "body": {
+              "id": 41331,
+              "nodeType": "Block",
+              "src": "2212:184:49",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 41307,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 41301,
+                      "name": "res",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41299,
+                      "src": "2222:3:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct Balance memory[] memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 41303,
+                          "name": "b",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41286,
+                          "src": "2233:1:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct Balance memory[] memory"
+                          }
+                        },
+                        {
+                          "expression": {
+                            "id": 41304,
+                            "name": "b",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41286,
+                            "src": "2236:1:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                              "typeString": "struct Balance memory[] memory"
+                            }
+                          },
+                          "id": 41305,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "length",
+                          "nodeType": "MemberAccess",
+                          "src": "2236:8:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct Balance memory[] memory"
+                          },
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41302,
+                        "name": "copy",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41264,
+                        "src": "2228:4:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_uint256_$returns$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (struct Balance memory[] memory,uint256) pure returns (struct Balance memory[] memory)"
+                        }
+                      },
+                      "id": 41306,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "2228:17:49",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct Balance memory[] memory"
+                      }
+                    },
+                    "src": "2222:23:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct Balance memory[] memory"
+                    }
+                  },
+                  "id": 41308,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2222:23:49"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 41310,
+                        "name": "res",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41299,
+                        "src": "2266:3:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        }
+                      },
+                      {
+                        "id": 41311,
+                        "name": "tokenFrom",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41288,
+                        "src": "2271:9:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "id": 41317,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "arguments": [
+                            {
+                              "id": 41313,
+                              "name": "b",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41286,
+                              "src": "2293:1:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              }
+                            },
+                            {
+                              "id": 41314,
+                              "name": "tokenFrom",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41288,
+                              "src": "2296:9:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            ],
+                            "id": 41312,
+                            "name": "getBalance",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41158,
+                            "src": "2282:10:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$returns$_t_uint256_$",
+                              "typeString": "function (struct Balance memory[] memory,address) pure returns (uint256)"
+                            }
+                          },
+                          "id": 41315,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2282:24:49",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "-",
+                        "rightExpression": {
+                          "id": 41316,
+                          "name": "amountFrom",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41290,
+                          "src": "2309:10:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "src": "2282:37:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 41309,
+                      "name": "setBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41180,
+                      "src": "2255:10:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (struct Balance memory[] memory,address,uint256) pure"
+                      }
+                    },
+                    "id": 41318,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2255:65:49",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 41319,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2255:65:49"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 41321,
+                        "name": "res",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41299,
+                        "src": "2341:3:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        }
+                      },
+                      {
+                        "id": 41322,
+                        "name": "tokenTo",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41292,
+                        "src": "2346:7:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "id": 41328,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "arguments": [
+                            {
+                              "id": 41324,
+                              "name": "b",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41286,
+                              "src": "2366:1:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              }
+                            },
+                            {
+                              "id": 41325,
+                              "name": "tokenTo",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41292,
+                              "src": "2369:7:49",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct Balance memory[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            ],
+                            "id": 41323,
+                            "name": "getBalance",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41158,
+                            "src": "2355:10:49",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$returns$_t_uint256_$",
+                              "typeString": "function (struct Balance memory[] memory,address) pure returns (uint256)"
+                            }
+                          },
+                          "id": 41326,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2355:22:49",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "+",
+                        "rightExpression": {
+                          "id": 41327,
+                          "name": "amountTo",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41294,
+                          "src": "2380:8:49",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "src": "2355:33:49",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct Balance memory[] memory"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 41320,
+                      "name": "setBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41180,
+                      "src": "2330:10:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr_$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (struct Balance memory[] memory,address,uint256) pure"
+                      }
+                    },
+                    "id": 41329,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2330:59:49",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 41330,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2330:59:49"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getModifiedAfterSwap",
+            "nameLocation": "2006:20:49",
+            "parameters": {
+              "id": 41295,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41286,
+                  "mutability": "mutable",
+                  "name": "b",
+                  "nameLocation": "2053:1:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41332,
+                  "src": "2036:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41284,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41283,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "2036:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "2036:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41285,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2036:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41288,
+                  "mutability": "mutable",
+                  "name": "tokenFrom",
+                  "nameLocation": "2072:9:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41332,
+                  "src": "2064:17:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41287,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2064:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41290,
+                  "mutability": "mutable",
+                  "name": "amountFrom",
+                  "nameLocation": "2099:10:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41332,
+                  "src": "2091:18:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41289,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2091:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41292,
+                  "mutability": "mutable",
+                  "name": "tokenTo",
+                  "nameLocation": "2127:7:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41332,
+                  "src": "2119:15:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 41291,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2119:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41294,
+                  "mutability": "mutable",
+                  "name": "amountTo",
+                  "nameLocation": "2152:8:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41332,
+                  "src": "2144:16:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41293,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2144:7:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2026:140:49"
+            },
+            "returnParameters": {
+              "id": 41300,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41299,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "2207:3:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41332,
+                  "src": "2190:20:49",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Balance_$41073_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct Balance[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41297,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41296,
+                        "name": "Balance",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41073,
+                        "src": "2190:7:49"
+                      },
+                      "referencedDeclaration": 41073,
+                      "src": "2190:7:49",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Balance_$41073_storage_ptr",
+                        "typeString": "struct Balance"
+                      }
+                    },
+                    "id": 41298,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2190:9:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Balance_$41073_storage_$dyn_storage_ptr",
+                      "typeString": "struct Balance[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2189:22:49"
+            },
+            "scope": 41333,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "BalanceOps",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          41333
+        ],
+        "name": "BalanceOps",
+        "nameLocation": "229:10:49",
+        "scope": 41334,
+        "usedErrors": [
+          41077
+        ]
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 49
+}

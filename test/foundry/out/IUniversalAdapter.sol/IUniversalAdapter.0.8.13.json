@@ -1,0 +1,1007 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "TokenIsNotInAllowedList",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "expected",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "actual",
+          "type": "address"
+        }
+      ],
+      "name": "UnexpectedCreditAccountException",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "_gearboxAdapterType",
+      "outputs": [
+        {
+          "internalType": "enum AdapterType",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "_gearboxAdapterVersion",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "creditFacade",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "creditManager",
+      "outputs": [
+        {
+          "internalType": "contract ICreditManagerV2",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct RevocationPair[]",
+          "name": "revocations",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "revokeAdapterAllowances",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct RevocationPair[]",
+          "name": "revocations",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "address",
+          "name": "expectedCreditAccount",
+          "type": "address"
+        }
+      ],
+      "name": "revokeAdapterAllowances",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "targetContract",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "_gearboxAdapterType()": "ce30bbdb",
+    "_gearboxAdapterVersion()": "78aa73a4",
+    "creditFacade()": "2f7a1881",
+    "creditManager()": "c12c21c0",
+    "revokeAdapterAllowances((address,address)[])": "565a820d",
+    "revokeAdapterAllowances((address,address)[],address)": "e6d6b153",
+    "targetContract()": "bd90df70",
+    "withdraw(address,uint256)": "f3fef3a3"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"TokenIsNotInAllowedList\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"expected\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"actual\",\"type\":\"address\"}],\"name\":\"UnexpectedCreditAccountException\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"_gearboxAdapterType\",\"outputs\":[{\"internalType\":\"enum AdapterType\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"_gearboxAdapterVersion\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"creditFacade\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"creditManager\",\"outputs\":[{\"internalType\":\"contract ICreditManagerV2\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"internalType\":\"struct RevocationPair[]\",\"name\":\"revocations\",\"type\":\"tuple[]\"}],\"name\":\"revokeAdapterAllowances\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"internalType\":\"struct RevocationPair[]\",\"name\":\"revocations\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"expectedCreditAccount\",\"type\":\"address\"}],\"name\":\"revokeAdapterAllowances\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"errors\":{\"TokenIsNotInAllowedList(address)\":[{\"details\":\"Thrown when the adapter attempts to use a token      that is not recognized as collateral in the connected      Credit Manager\"}],\"UnexpectedCreditAccountException(address,address)\":[{\"details\":\"Thrown when the Credit Account of msg.sender does not match the provided expected account\"}]},\"kind\":\"dev\",\"methods\":{\"_gearboxAdapterType()\":{\"details\":\"Returns the adapter type\"},\"_gearboxAdapterVersion()\":{\"details\":\"Returns the adapter version\"},\"creditFacade()\":{\"details\":\"Returns the Credit Facade connected to the adapter's Credit Manager\"},\"creditManager()\":{\"details\":\"Returns the Credit Manager connected to the adapter\"},\"revokeAdapterAllowances((address,address)[])\":{\"details\":\"Sets allowances to zero for provided spender/token pairs, for msg.sender's CA\",\"params\":{\"revocations\":\"Pairs of spenders/tokens to revoke allowances for\"}},\"revokeAdapterAllowances((address,address)[],address)\":{\"details\":\"Sets allowances to zero for the provided spender/token pairs Checks that the msg.sender CA matches the expected account, since provided revocations are specific to a particular CA\",\"params\":{\"expectedCreditAccount\":\"Credit account that msg.sender is expected to have\",\"revocations\":\"Pairs of spenders/tokens to revoke allowances for\"}},\"targetContract()\":{\"details\":\"Returns the address of the contract the adapter is interacting with\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/gearbox/IUniversalAdapter.sol\":\"IUniversalAdapter\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/external/gearbox/IUniversalAdapter.sol\":{\"keccak256\":\"0x6782cf172f00fcdafceb597c96a037b6b1be617a2818e3ad6cc3a7b8709a9460\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://1d0e50f7398cb684779474f12aebd6e2b1469659ffe471a72a8d2de3d6267afc\",\"dweb:/ipfs/QmevRN9kA9fnAWjA7zp1My5DJcWuTe7wgMA1PK8t26yQjW\"]},\"src/interfaces/external/gearbox/helpers/IAdapter.sol\":{\"keccak256\":\"0x53d9c431227c9fda393c1627351b7cd209b9c8053c6e1f57780d661682386faa\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://5c5e3288253cebb1baf277e4de243ce216ab01c6dfd81f537f6e6b54a37abb17\",\"dweb:/ipfs/QmSMLkPhcXUot3AnQD7uqLteFNhvqdu74rsw5TvgkpTL22\"]},\"src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol\":{\"keccak256\":\"0x71b5f65aa68e4813f539f03889b43dc3656efbca68d0ffc551595c684bea0f9a\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://9ebf2849bed5df6d5d9a2cfffb666c1d98cbeba7089285abc2d0a3d4fb7904ad\",\"dweb:/ipfs/QmboWvFHKDh4vYtJXX1pb1QqbjDfKTYDLEUp3gqDQoBJry\"]},\"src/interfaces/external/gearbox/helpers/IPriceOracle.sol\":{\"keccak256\":\"0x0d57767a0bc3f65da11555786ef19cc337e94df510929150d48444107d5de8cc\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://d4de7d80939d2d29e7d5558caf8f56c012b13017debcad3fa5302c4d355e41a6\",\"dweb:/ipfs/QmdxDtGi9RqRr2SAxmgcruaDRzpiNrY7boSLP93haZFySC\"]},\"src/interfaces/external/gearbox/helpers/IVersion.sol\":{\"keccak256\":\"0xddc0816823b7fbcb6debff617668663ae1c3fd36f3c4c3ca8fce150d08c7d421\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://cfcfd7cc5f615c36691f04c37dcef595c03fbef11d5b2f87b81941f6266d3211\",\"dweb:/ipfs/QmVGCeFDQpZYSY4K4qkDddhMeF4DxUJbQ9vUJng2v9pUTM\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.13+commit.abaa5c0e"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "TokenIsNotInAllowedList"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "expected",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "actual",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "UnexpectedCreditAccountException"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "_gearboxAdapterType",
+          "outputs": [
+            {
+              "internalType": "enum AdapterType",
+              "name": "",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "_gearboxAdapterVersion",
+          "outputs": [
+            {
+              "internalType": "uint16",
+              "name": "",
+              "type": "uint16"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "creditFacade",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "creditManager",
+          "outputs": [
+            {
+              "internalType": "contract ICreditManagerV2",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct RevocationPair[]",
+              "name": "revocations",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "spender",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "revokeAdapterAllowances"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct RevocationPair[]",
+              "name": "revocations",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "spender",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                }
+              ]
+            },
+            {
+              "internalType": "address",
+              "name": "expectedCreditAccount",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "revokeAdapterAllowances"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetContract",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdraw"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "_gearboxAdapterType()": {
+            "details": "Returns the adapter type"
+          },
+          "_gearboxAdapterVersion()": {
+            "details": "Returns the adapter version"
+          },
+          "creditFacade()": {
+            "details": "Returns the Credit Facade connected to the adapter's Credit Manager"
+          },
+          "creditManager()": {
+            "details": "Returns the Credit Manager connected to the adapter"
+          },
+          "revokeAdapterAllowances((address,address)[])": {
+            "details": "Sets allowances to zero for provided spender/token pairs, for msg.sender's CA",
+            "params": {
+              "revocations": "Pairs of spenders/tokens to revoke allowances for"
+            }
+          },
+          "revokeAdapterAllowances((address,address)[],address)": {
+            "details": "Sets allowances to zero for the provided spender/token pairs Checks that the msg.sender CA matches the expected account, since provided revocations are specific to a particular CA",
+            "params": {
+              "expectedCreditAccount": "Credit account that msg.sender is expected to have",
+              "revocations": "Pairs of spenders/tokens to revoke allowances for"
+            }
+          },
+          "targetContract()": {
+            "details": "Returns the address of the contract the adapter is interacting with"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/gearbox/IUniversalAdapter.sol": "IUniversalAdapter"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/gearbox/IUniversalAdapter.sol": {
+        "keccak256": "0x6782cf172f00fcdafceb597c96a037b6b1be617a2818e3ad6cc3a7b8709a9460",
+        "urls": [
+          "bzz-raw://1d0e50f7398cb684779474f12aebd6e2b1469659ffe471a72a8d2de3d6267afc",
+          "dweb:/ipfs/QmevRN9kA9fnAWjA7zp1My5DJcWuTe7wgMA1PK8t26yQjW"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IAdapter.sol": {
+        "keccak256": "0x53d9c431227c9fda393c1627351b7cd209b9c8053c6e1f57780d661682386faa",
+        "urls": [
+          "bzz-raw://5c5e3288253cebb1baf277e4de243ce216ab01c6dfd81f537f6e6b54a37abb17",
+          "dweb:/ipfs/QmSMLkPhcXUot3AnQD7uqLteFNhvqdu74rsw5TvgkpTL22"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol": {
+        "keccak256": "0x71b5f65aa68e4813f539f03889b43dc3656efbca68d0ffc551595c684bea0f9a",
+        "urls": [
+          "bzz-raw://9ebf2849bed5df6d5d9a2cfffb666c1d98cbeba7089285abc2d0a3d4fb7904ad",
+          "dweb:/ipfs/QmboWvFHKDh4vYtJXX1pb1QqbjDfKTYDLEUp3gqDQoBJry"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IPriceOracle.sol": {
+        "keccak256": "0x0d57767a0bc3f65da11555786ef19cc337e94df510929150d48444107d5de8cc",
+        "urls": [
+          "bzz-raw://d4de7d80939d2d29e7d5558caf8f56c012b13017debcad3fa5302c4d355e41a6",
+          "dweb:/ipfs/QmdxDtGi9RqRr2SAxmgcruaDRzpiNrY7boSLP93haZFySC"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IVersion.sol": {
+        "keccak256": "0xddc0816823b7fbcb6debff617668663ae1c3fd36f3c4c3ca8fce150d08c7d421",
+        "urls": [
+          "bzz-raw://cfcfd7cc5f615c36691f04c37dcef595c03fbef11d5b2f87b81941f6266d3211",
+          "dweb:/ipfs/QmVGCeFDQpZYSY4K4qkDddhMeF4DxUJbQ9vUJng2v9pUTM"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/gearbox/IUniversalAdapter.sol",
+    "id": 701,
+    "exportedSymbols": {
+      "IAdapter": [
+        761
+      ],
+      "IUniversalAdapter": [
+        700
+      ],
+      "IUniversalAdapterExceptions": [
+        670
+      ],
+      "RevocationPair": [
+        662
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "136:1281:6",
+    "nodes": [
+      {
+        "id": 655,
+        "nodeType": "PragmaDirective",
+        "src": "136:23:6",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 657,
+        "nodeType": "ImportDirective",
+        "src": "161:50:6",
+        "absolutePath": "src/interfaces/external/gearbox/helpers/IAdapter.sol",
+        "file": "./helpers/IAdapter.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 701,
+        "sourceUnit": 762,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 656,
+              "name": "IAdapter",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 761,
+              "src": "170:8:6",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 662,
+        "nodeType": "StructDefinition",
+        "src": "213:65:6",
+        "canonicalName": "RevocationPair",
+        "members": [
+          {
+            "constant": false,
+            "id": 659,
+            "mutability": "mutable",
+            "name": "spender",
+            "nameLocation": "249:7:6",
+            "nodeType": "VariableDeclaration",
+            "scope": 662,
+            "src": "241:15:6",
+            "stateVariable": false,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 658,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "241:7:6",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "constant": false,
+            "id": 661,
+            "mutability": "mutable",
+            "name": "token",
+            "nameLocation": "270:5:6",
+            "nodeType": "VariableDeclaration",
+            "scope": 662,
+            "src": "262:13:6",
+            "stateVariable": false,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 660,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "262:7:6",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "internal"
+          }
+        ],
+        "name": "RevocationPair",
+        "nameLocation": "220:14:6",
+        "scope": 701,
+        "visibility": "public"
+      },
+      {
+        "id": 670,
+        "nodeType": "ContractDefinition",
+        "src": "280:222:6",
+        "nodes": [
+          {
+            "id": 669,
+            "nodeType": "ErrorDefinition",
+            "src": "427:73:6",
+            "documentation": {
+              "id": 663,
+              "nodeType": "StructuredDocumentation",
+              "src": "324:98:6",
+              "text": "@dev Thrown when the Credit Account of msg.sender does not match the provided expected account"
+            },
+            "errorSelector": "4050c5c0",
+            "name": "UnexpectedCreditAccountException",
+            "nameLocation": "433:32:6",
+            "parameters": {
+              "id": 668,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 665,
+                  "mutability": "mutable",
+                  "name": "expected",
+                  "nameLocation": "474:8:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 669,
+                  "src": "466:16:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 664,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "466:7:6",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 667,
+                  "mutability": "mutable",
+                  "name": "actual",
+                  "nameLocation": "492:6:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 669,
+                  "src": "484:14:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 666,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "484:7:6",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "465:34:6"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IUniversalAdapterExceptions",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          670
+        ],
+        "name": "IUniversalAdapterExceptions",
+        "nameLocation": "290:27:6",
+        "scope": 701,
+        "usedErrors": [
+          669
+        ]
+      },
+      {
+        "id": 700,
+        "nodeType": "ContractDefinition",
+        "src": "504:913:6",
+        "nodes": [
+          {
+            "id": 682,
+            "nodeType": "FunctionDefinition",
+            "src": "747:89:6",
+            "documentation": {
+              "id": 675,
+              "nodeType": "StructuredDocumentation",
+              "src": "579:163:6",
+              "text": "@dev Sets allowances to zero for provided spender/token pairs, for msg.sender's CA\n @param revocations Pairs of spenders/tokens to revoke allowances for"
+            },
+            "functionSelector": "565a820d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "revokeAdapterAllowances",
+            "nameLocation": "756:23:6",
+            "parameters": {
+              "id": 680,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 679,
+                  "mutability": "mutable",
+                  "name": "revocations",
+                  "nameLocation": "806:11:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 682,
+                  "src": "780:37:6",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_RevocationPair_$662_calldata_ptr_$dyn_calldata_ptr",
+                    "typeString": "struct RevocationPair[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 677,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 676,
+                        "name": "RevocationPair",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 662,
+                        "src": "780:14:6"
+                      },
+                      "referencedDeclaration": 662,
+                      "src": "780:14:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_RevocationPair_$662_storage_ptr",
+                        "typeString": "struct RevocationPair"
+                      }
+                    },
+                    "id": 678,
+                    "nodeType": "ArrayTypeName",
+                    "src": "780:16:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_RevocationPair_$662_storage_$dyn_storage_ptr",
+                      "typeString": "struct RevocationPair[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "779:39:6"
+            },
+            "returnParameters": {
+              "id": 681,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "835:0:6"
+            },
+            "scope": 700,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 692,
+            "nodeType": "FunctionDefinition",
+            "src": "1216:134:6",
+            "documentation": {
+              "id": 683,
+              "nodeType": "StructuredDocumentation",
+              "src": "842:369:6",
+              "text": "@dev Sets allowances to zero for the provided spender/token pairs\n Checks that the msg.sender CA matches the expected account, since\n provided revocations are specific to a particular CA\n @param revocations Pairs of spenders/tokens to revoke allowances for\n @param expectedCreditAccount Credit account that msg.sender is expected to have"
+            },
+            "functionSelector": "e6d6b153",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "revokeAdapterAllowances",
+            "nameLocation": "1225:23:6",
+            "parameters": {
+              "id": 690,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 687,
+                  "mutability": "mutable",
+                  "name": "revocations",
+                  "nameLocation": "1284:11:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 692,
+                  "src": "1258:37:6",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_RevocationPair_$662_calldata_ptr_$dyn_calldata_ptr",
+                    "typeString": "struct RevocationPair[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 685,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 684,
+                        "name": "RevocationPair",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 662,
+                        "src": "1258:14:6"
+                      },
+                      "referencedDeclaration": 662,
+                      "src": "1258:14:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_RevocationPair_$662_storage_ptr",
+                        "typeString": "struct RevocationPair"
+                      }
+                    },
+                    "id": 686,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1258:16:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_RevocationPair_$662_storage_$dyn_storage_ptr",
+                      "typeString": "struct RevocationPair[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 689,
+                  "mutability": "mutable",
+                  "name": "expectedCreditAccount",
+                  "nameLocation": "1313:21:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 692,
+                  "src": "1305:29:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 688,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1305:7:6",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1248:92:6"
+            },
+            "returnParameters": {
+              "id": 691,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1349:0:6"
+            },
+            "scope": 700,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 699,
+            "nodeType": "FunctionDefinition",
+            "src": "1356:58:6",
+            "functionSelector": "f3fef3a3",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdraw",
+            "nameLocation": "1365:8:6",
+            "parameters": {
+              "id": 697,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 694,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1382:5:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 699,
+                  "src": "1374:13:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 693,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1374:7:6",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 696,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "1397:6:6",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 699,
+                  "src": "1389:14:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 695,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1389:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1373:31:6"
+            },
+            "returnParameters": {
+              "id": 698,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1413:0:6"
+            },
+            "scope": 700,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 671,
+              "name": "IAdapter",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 761,
+              "src": "535:8:6"
+            },
+            "id": 672,
+            "nodeType": "InheritanceSpecifier",
+            "src": "535:8:6"
+          },
+          {
+            "baseName": {
+              "id": 673,
+              "name": "IUniversalAdapterExceptions",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 670,
+              "src": "545:27:6"
+            },
+            "id": 674,
+            "nodeType": "InheritanceSpecifier",
+            "src": "545:27:6"
+          }
+        ],
+        "canonicalName": "IUniversalAdapter",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          700,
+          670,
+          761,
+          726
+        ],
+        "name": "IUniversalAdapter",
+        "nameLocation": "514:17:6",
+        "scope": 701,
+        "usedErrors": [
+          669,
+          725
+        ]
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 6
+}
