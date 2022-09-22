@@ -42,6 +42,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     uint256 _lastFixedLow;
     uint256 _lastFixedHigh;
 
+    int24 _currentTick;
+
     /// @notice Constructor for a new contract
     /// @param erc20vault_ Reference to ERC20 Vault
     /// @param vault_ Reference to Voltz Vault
@@ -63,13 +65,19 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _logProximity = logProx;
     }
 
+    function setCurrentTick(int24 tick) public {
+        _requireAtLeastOperator();
+        _currentTick = tick;
+    }
+
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     function rebalanceCheck() public view returns (bool) {
 
         // Setting _proximity, ticklower, tickUpper, current tick here for testing purposes but this should be set as a variable
         int24 _tickLower = 0;
+        // int24 _currentTick = 7000;
         int24 _tickUpper = 6000;
-        int24 _currentTick = 7000;
+        
 
         // 1. Get current position, lower, and upper ticks (uncomment once you have the logic nailed down)
         // _currentPosition = _vault.currentPosition();
@@ -100,7 +108,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Set new optimimal tick range based on current tick
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
-    // Q: Is the range or the actual fixed rate passed to the strategy vault?
     function rebalance (int256 currentFixedRateWad) public returns (int256 newTickLower, int256 newTickUpper) {
         _requireAtLeastOperator();
         // Set for testing purposes
