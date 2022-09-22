@@ -16,6 +16,7 @@ import {
     setupVault,
 } from "../deploy/0000_utils";
 import { VOLTZ_VAULT_INTERFACE_ID } from "./library/Constants";
+import { TickMath } from "@uniswap/v3-sdk";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -29,8 +30,11 @@ type DeployOptions = {};
 
 contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
     this.timeout(200000);
-    const initialTickLow = -6000;
-    const initialTickHigh = 0;
+    const leverage = 10;
+    const k = 2;
+
+    const MIN_SQRT_RATIO = BigNumber.from("2503036416286949174936592462");
+    const MAX_SQRT_RATIO = BigNumber.from("2507794810551837817144115957740");
 
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
@@ -64,11 +68,9 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         ).to.not.be.reverted;
                     });
 
-                    await mintUSDCForVoltz({
-                        tickLower: initialTickLow,
-                        tickUpper: initialTickHigh,
-                        usdcAmount: BigNumber.from(10).pow(6).mul(10000),
-                    });
+                    await mintUSDCForVoltz(
+                        BigNumber.from(10).pow(6).mul(10000),
+                    );
                 };
 
                 const tokens = [this.usdc.address]
@@ -81,13 +83,17 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 let voltzVaultNft = startNft;
                 let erc20VaultNft = startNft + 1;
 
+                const currentTick = (await this.vammContract.vammVars()).tick;
+                this.initialTickLow = currentTick - currentTick % 60  - 600;
+                this.initialTickHigh = currentTick - currentTick % 60 + 600;
+
                 await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
                     createVaultArgs: [
                         tokens,
                         this.deployer.address,
                         marginEngine,
-                        initialTickLow,
-                        initialTickHigh
+                        this.initialTickLow,
+                        this.initialTickHigh
                     ],
                 });
 
@@ -160,7 +166,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         await this.deploymentFixture();
     });
 
-    describe("sequences of operations", () => {
+    describe("Test Deposit (Push)", () => {
         beforeEach(async () => {
             await withSigner(this.subject.address, async (signer) => {
                 await this.usdc
@@ -175,1014 +181,600 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     .transfer(
                         this.deployer.address,
                         await this.usdc.balanceOf(this.subject.address)
-                    );
+                    ); 
             });
         });
 
-        it("returns total value locked", async () => {
+        it("push #1", async () => {
             await mint(
                 "USDC",
                 this.subject.address,
-                BigNumber.from(10).pow(6).mul(3000)
+                BigNumber.from(10).pow(6).mul(1000)
             );
 
             await this.preparePush();
             await this.subject.push(
                 [this.usdc.address],
                 [
-                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(6).mul(1000),
                 ],
                 encodeToBytes(
-                    ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                    [
-                        BigNumber.from(0),
-                        BigNumber.from(0),
-                        BigNumber.from(0),
-                        false,
-                        0,
-                        0,
-                        false,
-                        0
-                    ]
+                    [],
+                    []
                 )
             );
-            const result = await this.subject.tvl();
-            for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                expect(result[amountsId][0]).to.be.equal(BigNumber.from(10).pow(6).mul(3000));
+            
+            const ticks = await this.subject.currentPosition();
+            const currentVoltzPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                ticks.tickLower,
+                ticks.tickUpper
+            );
+
+            expect(currentVoltzPositionInfo.margin).to.be.equal(BigNumber.from(10).pow(6).mul(1000));
+
+            const sqrtPriceLower = BigNumber.from(TickMath.getSqrtRatioAtTick(ticks.tickLower).toString());
+            const sqrtPriceUpper = BigNumber.from(TickMath.getSqrtRatioAtTick(ticks.tickUpper).toString());
+            const liquidityNotional = 
+                currentVoltzPositionInfo._liquidity.mul(sqrtPriceUpper.sub(sqrtPriceLower)).div(BigNumber.from(2).pow(96));
+                    
+            expect(liquidityNotional).to.be.closeTo(
+                BigNumber.from(10).pow(6).mul(1000).mul(leverage), 
+                BigNumber.from(10).pow(6).mul(1000).mul(leverage).div(1000).toNumber());
+        });
+    })
+
+    describe("Test Current Position Getter", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    ); 
+            });
+        });
+        
+        it("currentPosition #1", async () => {
+            const initialPosition = await this.subject.currentPosition();
+
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+            
+            expect(await this.subject.currentPosition()).to.deep.equal(initialPosition);
+
+            let newPosition = {
+                tickLower: -60,
+                tickUpper: 60
+            };
+            await this.subject.rebalance(newPosition);
+            expect(await this.subject.currentPosition()).to.deep.equal([newPosition.tickLower, newPosition.tickUpper]);
+        });
+
+    });
+
+    describe("Test Withdraw (Pull)", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    ); 
+            });
+        });
+        
+        it("pull #1", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+            
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+            
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.equal(BigNumber.from(0));
+
+            {
+                const actualTokenAmounts = await this.subject.callStatic.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(1000),
+                    ],
+                    encodeToBytes(
+                        [],
+                        []
+                    )
+                );
+                expect(actualTokenAmounts[0]).to.be.equal(BigNumber.from(0));
             }
-        });
 
-        describe("edge cases:", () => {
-            describe("when there are no initial funds", () => {
-                it("returns zeroes", async () => {
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0]).eq(0);
-                    }
-                });
-            });
-        });
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
+            await network.provider.send("evm_mine", []);
 
-        describe("perfors operations along push", () => {
-            describe("mint in push", () => {
-                it("mint with no leverage in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0]).to.be.equal(BigNumber.from(10).pow(6).mul(3000));
-                    }
-                });
-    
-                it("mint with leverage (10x) in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000).mul(10),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0]).to.be.equal(BigNumber.from(10).pow(6).mul(3000));
-                    }
-                });
-    
-                it("mint with too much leverage (10000x) in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await expect(this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000).mul(10000),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    )).to.be.reverted;
-                });
-            });
-
-            describe("trade fixed in push", () => {
-                it("trade fixed with no leverage in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(10).pow(6).mul(3000),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0].lt(BigNumber.from(10).pow(6).mul(3000)));
-                        expect(result[amountsId][0].gt(0));
-                    }
-                });
-    
-                it("trade fixed with leverage (10x) in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(10).pow(6).mul(3000).mul(10),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0].lt(BigNumber.from(10).pow(6).mul(3000)));
-                        expect(result[amountsId][0].gt(0));
-                    }
-                });
-
-                it("trade fixed with too much leverage (10000x) in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await expect(this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(10).pow(6).mul(3000).mul(10000),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    )).to.be.reverted;
-                });
-            });
-
-            describe("trade variable in push", () => {
-                it("trade variable with no leverage in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(10).pow(6).mul(3000).mul(-1),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0].lt(BigNumber.from(10).pow(6).mul(3000)));
-                        expect(result[amountsId][0].gt(0));
-                    }
-                });
-    
-                it("trade variable with leverage (10x) in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(10).pow(6).mul(3000).mul(10).mul(-1),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0].lt(BigNumber.from(10).pow(6).mul(3000)));
-                        expect(result[amountsId][0].gt(0));
-                    }
-                });
-
-                it("trade variable with too much leverage (10000x) in push", async () => {
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-        
-                    await this.preparePush();
-                    await expect(this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(10).pow(6).mul(3000).mul(10000).mul(-1),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    )).to.be.reverted;
-                });
-            });
-        });
-
-        describe("rebalances position", () => {
-            const rebalanceTickLow = -7200;
-            const rebalanceTickHigh = 0;
-
-            it("direct rebalance fails if liquidity in the current position", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-    
-                await this.preparePush();
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                           BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-                
-                await expect(this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(0),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            true,
-                            rebalanceTickLow,
-                            rebalanceTickHigh,
-                            false,
-                            0
-                        ]
-                    )
-                )).to.be.reverted;
-            }); 
-
-            it("rebalance", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-    
-                await this.preparePush();
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                const erc20VaultBalanceS = await this.usdc.balanceOf(this.erc20Vault.address);
-
-                await this.subject.pull(
+            {
+                const actualTokenAmounts = await this.subject.callStatic.pull(
                     this.erc20Vault.address,
                     [this.usdc.address],
                     [
-                        BigNumber.from(10).pow(6).mul(2000),
+                        BigNumber.from(10).pow(6).mul(1000),
                     ],
                     encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000).mul(-1),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
+                        [],
+                        []
                     )
                 );
+                expect(actualTokenAmounts[0]).to.be.equal(BigNumber.from(10).pow(6).mul(1000));
+            }
 
-                const erc20VaultBalanceE = await this.usdc.balanceOf(this.erc20Vault.address);
-                expect(erc20VaultBalanceE.sub(erc20VaultBalanceS)).to.be.equal(BigNumber.from(10).pow(6).mul(2000));
-
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(2000)
-                );
-                
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(2000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            true,
-                            rebalanceTickLow,
-                            rebalanceTickHigh,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                const result = await this.subject.tvl();
-                for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                    expect(result[amountsId][0]).to.be.equal(BigNumber.from(10).pow(6).mul(3000));
-                }
-            }); 
-
-            it("settle all opened positions at once", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-    
-                await this.preparePush();
-
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(2000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000).mul(-1),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(2000)
-                );
-                
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(2000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            true,
-                            rebalanceTickLow,
-                            rebalanceTickHigh,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                // advance time by 60 days to reach maturity
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 60]);
-                await network.provider.send("evm_mine", []);
-
-                {
-                    const numberOfClosedPositions = await this.subject.closing();
-                    expect(numberOfClosedPositions).to.be.equal(BigNumber.from(0));
-                }
-                
-                const openedPositions = await this.subject.numberOpenedPositions();
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            true,
-                            openedPositions
-                        ]
-                    )
-                );
-
-                {
-                    const numberOfClosedPositions = await this.subject.closing();
-                    expect(numberOfClosedPositions).to.be.equal(BigNumber.from(2));
-                }
-            }); 
-
-            it("multiple rebalance", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(6000)
-                );
-    
-                await this.preparePush();
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(6000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                const number_of_rebalances = 5;
-                for (let i = 0; i < number_of_rebalances; i++) {
-                    await this.subject.pull(
-                        this.erc20Vault.address,
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(1000).mul((number_of_rebalances - i)),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000).mul(-1),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-    
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(1000).mul((number_of_rebalances - i))
-                    );
-                    
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(1000).mul((number_of_rebalances - i)),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                true,
-                                -120 * (i+1),
-                                120 * (i+1),
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                };
-
-                const result = await this.subject.tvl();
-                for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                    expect(result[amountsId][0]).to.be.equal(BigNumber.from(10).pow(6).mul(6000));
-                }
-            }); 
-
-            it("settle all positions in batches", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(6000)
-                );
-    
-                await this.preparePush();
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(6000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                const number_of_rebalances = 5;
-                for (let i = 0; i < number_of_rebalances; i++) {
-                    await this.subject.pull(
-                        this.erc20Vault.address,
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(1000).mul((number_of_rebalances - i)),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000).mul(-1),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-    
-                    await mint(
-                        "USDC",
-                        this.subject.address,
-                        BigNumber.from(10).pow(6).mul(1000).mul((number_of_rebalances - i))
-                    );
-                    
-                    await this.subject.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(1000).mul((number_of_rebalances - i)),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(10).pow(6).mul(3000),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                true,
-                                -120 * (i+1),
-                                120 * (i+1),
-                                false,
-                                0
-                            ]
-                        )
-                    );
-                };
-
-                // advance time by 60 days to reach maturity
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 60]);
-                await network.provider.send("evm_mine", []);
-
-                {
-                    const numberOfClosedPositions = await this.subject.closing();
-                    expect(numberOfClosedPositions).to.be.equal(BigNumber.from(0));
-                }
-                
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            true,
-                            2
-                        ]
-                    )
-                );
-
-                {
-                    const numberOfClosedPositions = await this.subject.closing();
-                    expect(numberOfClosedPositions).to.be.equal(BigNumber.from(2));
-                }
-                
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            true,
-                            2
-                        ]
-                    )
-                );
-
-                {
-                    const numberOfClosedPositions = await this.subject.closing();
-                    expect(numberOfClosedPositions).to.be.equal(BigNumber.from(4));
-                }
-                
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            true,
-                            2
-                        ]
-                    )
-                );
-
-                {
-                    const numberOfClosedPositions = await this.subject.closing();
-                    expect(numberOfClosedPositions).to.be.equal(BigNumber.from(6));
-                }
-            }); 
-
-            it("tvl if fees accumulated", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-    
-                await this.preparePush();
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                await withSigner(randomAddress(), async (s) => {
-                    await mint(
-                        "USDC",
-                        s.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
-
-                    await this.usdc.connect(s).approve(
-                        this.periphery, 
-                        BigNumber.from(10).pow(6).mul(1000)
-                    );
-
-                    const swapParams = {
-                        marginEngine: this.marginEngine,
-                        isFT: true,
-                        notional: BigNumber.from(10).pow(6).mul(1000),
-                        sqrtPriceLimitX96: BigNumber.from("2507794810551837817144115957739"),
-                        tickLower: -60,
-                        tickUpper: 0,
-                        marginDelta: BigNumber.from(10).pow(6).mul(1000),
-                    };
-                    await this.peripheryContract.connect(s).swap(swapParams);
-                });
-
-                {
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0].eq(BigNumber.from(10).pow(6).mul(3000)));
-                    }
-                }
-                
-                {
-                    await this.subject.updateTvl();
-                    const result = await this.subject.tvl();
-                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
-                        expect(result[amountsId][0].gt(BigNumber.from(10).pow(6).mul(3000)));
-                    }
-                }
-                
-            }); 
-
-            it("maximum withdrawal to still cover position", async () => {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-    
-                await this.preparePush();
-                await this.subject.push(
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(10).pow(6).mul(3000).mul(10),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                const amounts = await this.subject.callStatic.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-                
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                    ],
-                    encodeToBytes(
-                        ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            false,
-                            0,
-                            0,
-                            false,
-                            0
-                        ]
-                    )
-                );
-
-                expect(amounts[0].lt(BigNumber.from(10).pow(6).mul(3000)));
-            });
+            const erc20VaultFundsBeforePull = await this.usdc.balanceOf(this.erc20Vault.address);
+            await this.subject.pull(
+                this.erc20Vault.address,
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+            const erc20VaultFundsAfterPull = await this.usdc.balanceOf(this.erc20Vault.address);
+            expect(erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)).to.be.equal(BigNumber.from(10).pow(6).mul(1000));
         });
     });
 
-    describe("#supportsInterface", () => {
-        it(`returns true if this contract supports ${VOLTZ_VAULT_INTERFACE_ID} interface`, async () => {
-            expect(
-                await this.subject.supportsInterface(VOLTZ_VAULT_INTERFACE_ID)
-            ).to.be.true;
+    describe("Test Rebalance", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    ); 
+            });
         });
 
-        describe("access control:", () => {
-            it("allowed: any address", async () => {
-                await withSigner(randomAddress(), async (s) => {
-                    await expect(
-                        this.subject
-                            .connect(s)
-                            .supportsInterface(VOLTZ_VAULT_INTERFACE_ID)
-                    ).to.not.be.reverted;
-                });
+        it("rebalance #1: vt = 0", async () => {
+            // Push 1000
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            await this.usdc.connect(testSigner).approve(
+                this.periphery, BigNumber.from(10).pow(27)
+            );
+
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(1000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(1000)
             });
+
+            // rebalance to some new position
+            const newPosition = {
+                tickLower: -60,
+                tickUpper: 60
+            };
+            await this.subject.rebalance(newPosition);
+
+            // must check the following on the previous position
+            // liquidity = 0
+            // vt = 0
+            // margin left in position is margin requirement + 1 
+            const lpInitialPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                this.initialTickLow,
+                this.initialTickHigh
+            );
+            
+            expect(lpInitialPositionInfo._liquidity).to.be.equal(BigNumber.from(0));
+            expect(lpInitialPositionInfo.variableTokenBalance).to.be.equal(BigNumber.from(0));
+
+            const positionRequirementInitial =
+                await this.marginEngineContract.callStatic.getPositionMarginRequirement(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh,
+                    false,  
+                );
+
+            expect(lpInitialPositionInfo.margin).to.be.equal(positionRequirementInitial.add(BigNumber.from(1)));
+            
+
+            // must check the following on the new position
+            // margin is 1000 - lpInitialPositionInfo.margin - fees
+            const lpNewPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                newPosition.tickLower,
+                newPosition.tickUpper
+            );
+            const fees = BigNumber.from(1);
+            expect(lpNewPositionInfo.margin).to.be.equal(BigNumber.from(10).pow(6).mul(1000).sub(lpInitialPositionInfo.margin.add(fees)));
+        });
+
+        it("rebalance #2: vt = 0", async () => {
+            // Push 1000
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000000000)
+            );
+
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000000000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            await this.usdc.connect(testSigner).approve(
+                this.periphery, BigNumber.from(10).pow(27)
+            );
+
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(1000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(1000)
+            });
+
+            // rebalance to some new position
+            const newPosition = {
+                tickLower: -60,
+                tickUpper: 60
+            };
+            await this.subject.rebalance(newPosition);
+
+            // must check the following on the previous position
+            // liquidity = 0
+            // vt = 0
+            // margin left in position is margin requirement + 1 
+            const lpInitialPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                this.initialTickLow,
+                this.initialTickHigh
+            );
+
+            expect(lpInitialPositionInfo._liquidity).to.be.equal(BigNumber.from(0));
+            expect(lpInitialPositionInfo.variableTokenBalance).to.be.equal(BigNumber.from(0));
+
+            const positionRequirementInitial =
+                await this.marginEngineContract.callStatic.getPositionMarginRequirement(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh,
+                    false,  
+                );
+            
+            expect(lpInitialPositionInfo.margin).to.be.equal(positionRequirementInitial.add(BigNumber.from(1)));
+            
+
+            // must check the following on the new position
+            // margin is 1000 - lpInitialPositionInfo.margin - fees
+            const lpNewPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                newPosition.tickLower,
+                newPosition.tickUpper
+            );
+            const feesLower = BigNumber.from(1);
+            const feesUpper = BigNumber.from(2);
+            expect(lpNewPositionInfo.margin).to.be.lte(BigNumber.from(10).pow(6).mul(1000000000).sub(lpInitialPositionInfo.margin.add(feesLower)));
+            expect(lpNewPositionInfo.margin).to.be.gte(BigNumber.from(10).pow(6).mul(1000000000).sub(lpInitialPositionInfo.margin.add(feesUpper)));
+        });
+
+        it("rebalance #3: vt < 0, all money blocked", async () => {
+            // Push 1000
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000000000)
+            );
+
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000000000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(1000000000)
+            );
+
+            await this.usdc.connect(testSigner).approve(
+                this.periphery, BigNumber.from(10).pow(27)
+            );
+
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(1000000000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(1000000000)
+            });
+
+            const lpInitialPositionInfoBeforeRebalance = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                this.initialTickLow,
+                this.initialTickHigh
+            );
+
+            // rebalance to some new position
+            const newPosition = {
+                tickLower: -60,
+                tickUpper: 60
+            };
+            await this.subject.rebalance(newPosition);
+
+            // must check the following on the previous position
+            // liquidity = 0
+            // margin left in position stayed the same
+            const lpInitialPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                this.initialTickLow,
+                this.initialTickHigh
+            );
+
+            expect(lpInitialPositionInfo._liquidity).to.be.equal(BigNumber.from(0));
+
+            const positionRequirementInitial =
+                await this.marginEngineContract.callStatic.getPositionMarginRequirement(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh,
+                    false,  
+                );
+            
+            expect(lpInitialPositionInfo.margin).to.be.gt(lpInitialPositionInfoBeforeRebalance.margin.mul(999).div(1000));
+            
+            // must check the following on the new position
+            // margin is 0
+            const lpNewPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                newPosition.tickLower,
+                newPosition.tickUpper
+            );
+            expect(lpNewPositionInfo.margin).to.be.equal(BigNumber.from(0));
+        });
+
+        it("rebalance #4: vt < 0, leave k*req behind", async () => {
+            // Push 1000
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000000000)
+            );
+
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000000000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(100000000)
+            );
+
+            await this.usdc.connect(testSigner).approve(
+                this.periphery, BigNumber.from(10).pow(27)
+            );
+
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(100000000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(100000000)
+            });
+
+            // rebalance to some new position
+            const newPosition = {
+                tickLower: -60,
+                tickUpper: 60
+            };
+            await this.subject.rebalance(newPosition);
+
+            // must check the following on the previous position
+            // liquidity = 0
+            // margin left in position is k*req
+            const lpInitialPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                this.initialTickLow,
+                this.initialTickHigh
+            );
+
+            expect(lpInitialPositionInfo._liquidity).to.be.equal(BigNumber.from(0));
+
+            const positionRequirementInitial =
+                await this.marginEngineContract.callStatic.getPositionMarginRequirement(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh,
+                    false,  
+                );
+            
+            expect(lpInitialPositionInfo.margin).to.be.equal(positionRequirementInitial.mul(k));
+            
+            // must check the following on the new position
+            // margin is 1000000000 - lpInitialPositionInfo.margin - fees + rewards
+            const lpNewPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                this.subject.address,
+                newPosition.tickLower,
+                newPosition.tickUpper
+            );
+            const rewardsFeeLower = BigNumber.from(30000000000);
+            const rewardsFeeUpper = BigNumber.from(32000000000)
+            expect(lpNewPositionInfo.margin).to.be.gt(BigNumber.from(10).pow(6).mul(1000000000).sub(lpInitialPositionInfo.margin.sub(rewardsFeeLower)));
+            expect(lpNewPositionInfo.margin).to.be.lt(BigNumber.from(10).pow(6).mul(1000000000).sub(lpInitialPositionInfo.margin.sub(rewardsFeeUpper)));
+
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
+            await network.provider.send("evm_mine", []);
+
+            const sumOfMargins = lpInitialPositionInfo.margin.add(lpNewPositionInfo.margin);
+
+            // pull 0 to triger settle
+            await this.subject.pull(
+                this.erc20Vault.address,
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(0),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+
+            // make sure both positions are settled
+            {
+                const lpInitialPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh
+                );
+                expect(lpInitialPositionInfo.isSettled).to.be.equal(true);
+
+                const lpNewPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    newPosition.tickLower,
+                    newPosition.tickUpper
+                );
+                expect(lpNewPositionInfo.isSettled).to.be.equal(true);
+            }
+
+            // balance of vault should be the sum of the margins of the two positions
+            // plus the cashflow of the first position
+            const cashflowFirstPosition = BigNumber.from(19506091355);
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.closeTo(
+                sumOfMargins.add(cashflowFirstPosition),
+                sumOfMargins.add(cashflowFirstPosition).div(1000)
+            );
         });
     });
 });
