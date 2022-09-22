@@ -20,6 +20,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     uint256 public constant DENOMINATOR = 10**9;
+    uint256 public constant D27 = 10**27;
     bytes4 public constant GET_REWARD_SELECTOR = 0x7050ccd9;
 
     ICreditFacade private _creditFacade;
@@ -298,9 +299,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
-        ).delayedProtocolPerVaultParams(_nft);
+        ).delayedProtocolParams();
 
         uint256 amount = IERC20(depositToken).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
@@ -315,56 +316,69 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             );
             MultiCall[] memory calls = new MultiCall[](0);
 
+            uint256 usdAmount = oracle.convertToUSD(toSwap, depositToken);
+            uint256 finalAmount = oracle.convertFromUSD(usdAmount, primaryToken); 
+
+            ISwapRouter.ExactInputParams memory inputParams = ISwapRouter.ExactInputParams({
+                path: abi.encode(depositToken, 500, primaryToken),
+                recipient: creditAccount,
+                deadline: block.timestamp + 900,
+                amountIn: toSwap,
+                amountOutMinimum: finalAmount
+            });
+
             calls[0] = MultiCall({ // swap deposit to primary token
-                target: params.depositToPrimaryTokenPool,
+                target: protocolParams.univ3Adapter,
                 callData: abi.encodeWithSelector(
                     ISwapRouter.exactInputSingle.selector,
-                    creditAccount,
-                    abi.encode(depositToken, 500, primaryToken),
-                    block.timestamp + 900,
-                    toSwap,
-                    0
-                )
+                    inputParams)
             });
 
             _creditFacade.multicall(calls);
         }
     }
 
+    function _createUniswapMulticall(address tokenFrom, address tokenTo, uint256 fee, uint256 minSlippageD, address adapter) internal view returns (MultiCall memory) {
+        IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
+
+        uint256 amount = IERC20(tokenFrom).balanceOf(creditAccount);
+
+        uint256 usdAmount = oracle.convertToUSD(amount, tokenFrom);
+        uint256 finalAmount = oracle.convertFromUSD(usdAmount, tokenTo); 
+
+        uint256 priceD27 = FullMath.mulDiv(finalAmount, D27, usdAmount);
+        uint256 rateMinRAY = FullMath.mulDiv(priceD27, DENOMINATOR - minSlippageD, DENOMINATOR);
+
+        IUniswapV3Adapter.ExactAllInputParams memory params = IUniswapV3Adapter.ExactAllInputParams({
+            path: abi.encode(tokenFrom, fee, tokenTo),
+            deadline: block.timestamp + 900,
+            rateMinRAY: rateMinRAY
+        });
+
+        return MultiCall({ // taking crv and cvx
+            target: adapter,
+            callData: abi.encodeWithSelector(IUniswapV3Adapter.exactAllInput.selector, params)
+        });
+
+    }
+
     function _claimRewards() internal {
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedProtocolPerVaultParams(_nft);
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
         ).delayedProtocolParams();
 
         MultiCall[] memory calls = new MultiCall[](4);
 
+        address weth = _creditManager.wethAddress();
+
         calls[0] = MultiCall({ // taking crv and cvx
             target: IConvexV1BoosterAdapter(convexAdapter).stakerRewards(),
             callData: abi.encodeWithSelector(GET_REWARD_SELECTOR, creditAccount, false)
         });
 
-        calls[1] = MultiCall({ // swap crv to weth
-            target: protocolParams.crvEthPool,
-            callData: abi.encodeWithSelector(ICurvePool.exchange.selector, 0, 1, 0)
-        });
-
-        calls[2] = MultiCall({ // swap cvx to weth
-            target: protocolParams.cvxEthPool,
-            callData: abi.encodeWithSelector(ICurvePool.exchange.selector, 0, 1, 0)
-        });
-
-        calls[3] = MultiCall({ // swap weth to primary token
-            target: params.ethToPrimaryTokenPool,
-            callData: abi.encodeWithSelector(
-                IUniswapV3Adapter.exactAllInputSingle.selector,
-                abi.encode(protocolParams.wethAddress, 500, params.primaryToken),
-                block.timestamp + 900,
-                0
-            )
-        });
+        calls[1] = _createUniswapMulticall(protocolParams.crv, weth, 10000, protocolParams.minSlippageD, protocolParams.univ3Adapter);
+        calls[2] = _createUniswapMulticall(protocolParams.cvx, weth, 10000, protocolParams.minSlippageD, protocolParams.univ3Adapter);
+        calls[3] = _createUniswapMulticall(weth, primaryToken, 500, protocolParams.minSlippageD, protocolParams.univ3Adapter);
 
         _creditFacade.multicall(calls);
     }

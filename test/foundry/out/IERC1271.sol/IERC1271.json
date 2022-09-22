@@ -1,0 +1,293 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_hash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "isValidSignature",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "magicValue",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "isValidSignature(bytes32,bytes)": "1626ba7e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"isValidSignature\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"magicValue\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"isValidSignature(bytes32,bytes)\":{\"details\":\"Should return whether the signature provided is valid for the provided hash MUST return the bytes4 magic value 0x1626ba7e when function passes. MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5) MUST allow external calls\",\"params\":{\"_hash\":\"Hash of the data to be signed\",\"_signature\":\"Signature byte array associated with _hash\"},\"returns\":{\"magicValue\":\"0x1626ba7e if valid, 0xffffffff otherwise\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"isValidSignature(bytes32,bytes)\":{\"notice\":\"Verifies offchain signature.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/erc/IERC1271.sol\":\"IERC1271\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0xfce1c38d1bd95ffde243b787ef51e91a4dcc3eecb025bd2d33b1c2ed17938f77\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b5e8ba7ae8d54f4d9f115dc57bc8da0e409b9e0ca4fc7f052ba60bac5b971d23\",\"dweb:/ipfs/QmVhfCQdRCwdLLepeaJmYixVpBc5q1NqSu18JsNrkv2Srn\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_hash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_signature",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isValidSignature",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "magicValue",
+              "type": "bytes4"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "isValidSignature(bytes32,bytes)": {
+            "details": "Should return whether the signature provided is valid for the provided hash MUST return the bytes4 magic value 0x1626ba7e when function passes. MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5) MUST allow external calls",
+            "params": {
+              "_hash": "Hash of the data to be signed",
+              "_signature": "Signature byte array associated with _hash"
+            },
+            "returns": {
+              "magicValue": "0x1626ba7e if valid, 0xffffffff otherwise"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "isValidSignature(bytes32,bytes)": {
+            "notice": "Verifies offchain signature."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/erc/IERC1271.sol": "IERC1271"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0xfce1c38d1bd95ffde243b787ef51e91a4dcc3eecb025bd2d33b1c2ed17938f77",
+        "urls": [
+          "bzz-raw://b5e8ba7ae8d54f4d9f115dc57bc8da0e409b9e0ca4fc7f052ba60bac5b971d23",
+          "dweb:/ipfs/QmVhfCQdRCwdLLepeaJmYixVpBc5q1NqSu18JsNrkv2Srn"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/erc/IERC1271.sol",
+    "id": 12462,
+    "exportedSymbols": {
+      "IERC1271": [
+        12461
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:711:35",
+    "nodes": [
+      {
+        "id": 12450,
+        "nodeType": "PragmaDirective",
+        "src": "32:22:35",
+        "literals": [
+          "solidity",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 12461,
+        "nodeType": "ContractDefinition",
+        "src": "56:686:35",
+        "nodes": [
+          {
+            "id": 12460,
+            "nodeType": "FunctionDefinition",
+            "src": "632:108:35",
+            "documentation": {
+              "id": 12451,
+              "nodeType": "StructuredDocumentation",
+              "src": "81:546:35",
+              "text": "@notice Verifies offchain signature.\n @dev Should return whether the signature provided is valid for the provided hash\n MUST return the bytes4 magic value 0x1626ba7e when function passes.\n MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5)\n MUST allow external calls\n @param _hash Hash of the data to be signed\n @param _signature Signature byte array associated with _hash\n @return magicValue 0x1626ba7e if valid, 0xffffffff otherwise"
+            },
+            "functionSelector": "1626ba7e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isValidSignature",
+            "nameLocation": "641:16:35",
+            "parameters": {
+              "id": 12456,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12453,
+                  "mutability": "mutable",
+                  "name": "_hash",
+                  "nameLocation": "666:5:35",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12460,
+                  "src": "658:13:35",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 12452,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "658:7:35",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12455,
+                  "mutability": "mutable",
+                  "name": "_signature",
+                  "nameLocation": "686:10:35",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12460,
+                  "src": "673:23:35",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 12454,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "673:5:35",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "657:40:35"
+            },
+            "returnParameters": {
+              "id": 12459,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12458,
+                  "mutability": "mutable",
+                  "name": "magicValue",
+                  "nameLocation": "728:10:35",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12460,
+                  "src": "721:17:35",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes4",
+                    "typeString": "bytes4"
+                  },
+                  "typeName": {
+                    "id": 12457,
+                    "name": "bytes4",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "721:6:35",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "720:19:35"
+            },
+            "scope": 12461,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IERC1271",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          12461
+        ],
+        "name": "IERC1271",
+        "nameLocation": "66:8:35",
+        "scope": 12462,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 35
+}

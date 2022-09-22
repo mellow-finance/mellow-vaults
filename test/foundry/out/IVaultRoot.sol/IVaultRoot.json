@@ -1,0 +1,638 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        }
+      ],
+      "name": "hasSubvault",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "subvaultAt",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "subvaultNfts",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        }
+      ],
+      "name": "subvaultOneBasedIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "hasSubvault(uint256)": "9d9fd0d9",
+    "subvaultAt(uint256)": "9bd0911b",
+    "subvaultNfts()": "79183973",
+    "subvaultOneBasedIndex(uint256)": "9ddc875f"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"}],\"name\":\"hasSubvault\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"subvaultAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"subvaultNfts\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"}],\"name\":\"subvaultOneBasedIndex\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"hasSubvault(uint256)\":{\"params\":{\"nft_\":\"index of subvault for check\"},\"returns\":{\"_0\":\"`true` if subvault present, `false` otherwise\"}},\"subvaultAt(uint256)\":{\"params\":{\"index\":\"Index of subvault\"},\"returns\":{\"_0\":\"address Address of the contract\"}},\"subvaultNfts()\":{\"returns\":{\"_0\":\"subvaultNfts Subvaults of NTFs\"}},\"subvaultOneBasedIndex(uint256)\":{\"params\":{\"nft_\":\"Nft for getting subvault\"},\"returns\":{\"_0\":\"index Index of subvault\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"hasSubvault(uint256)\":{\"notice\":\"Checks if subvault is present\"},\"subvaultAt(uint256)\":{\"notice\":\"Get subvault by index\"},\"subvaultNfts()\":{\"notice\":\"Get all subvalutNfts in the current Vault\"},\"subvaultOneBasedIndex(uint256)\":{\"notice\":\"Get index of subvault by nft\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IVaultRoot.sol\":\"IVaultRoot\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/vaults/IVaultRoot.sol\":{\"keccak256\":\"0x6f98973ef2b3281d35cd8f2e7c990a08b5fbedb94f68747afe47a65a69247c5f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://26201babaf4aa5412c3cc2a9554bf6d9e19668a2ae71c37e77bfe1d6f4a9d8c5\",\"dweb:/ipfs/QmQD9WA11iK6VaXd7m4eLx8gPrbmrb6LU5HXuphhiYm3hQ\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "hasSubvault",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultAt",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultNfts",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultOneBasedIndex",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "hasSubvault(uint256)": {
+            "params": {
+              "nft_": "index of subvault for check"
+            },
+            "returns": {
+              "_0": "`true` if subvault present, `false` otherwise"
+            }
+          },
+          "subvaultAt(uint256)": {
+            "params": {
+              "index": "Index of subvault"
+            },
+            "returns": {
+              "_0": "address Address of the contract"
+            }
+          },
+          "subvaultNfts()": {
+            "returns": {
+              "_0": "subvaultNfts Subvaults of NTFs"
+            }
+          },
+          "subvaultOneBasedIndex(uint256)": {
+            "params": {
+              "nft_": "Nft for getting subvault"
+            },
+            "returns": {
+              "_0": "index Index of subvault"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "hasSubvault(uint256)": {
+            "notice": "Checks if subvault is present"
+          },
+          "subvaultAt(uint256)": {
+            "notice": "Get subvault by index"
+          },
+          "subvaultNfts()": {
+            "notice": "Get all subvalutNfts in the current Vault"
+          },
+          "subvaultOneBasedIndex(uint256)": {
+            "notice": "Get index of subvault by nft"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IVaultRoot.sol": "IVaultRoot"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/vaults/IVaultRoot.sol": {
+        "keccak256": "0x6f98973ef2b3281d35cd8f2e7c990a08b5fbedb94f68747afe47a65a69247c5f",
+        "urls": [
+          "bzz-raw://26201babaf4aa5412c3cc2a9554bf6d9e19668a2ae71c37e77bfe1d6f4a9d8c5",
+          "dweb:/ipfs/QmQD9WA11iK6VaXd7m4eLx8gPrbmrb6LU5HXuphhiYm3hQ"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IVaultRoot.sol",
+    "id": 13457,
+    "exportedSymbols": {
+      "IVaultRoot": [
+        13456
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:861:70",
+    "nodes": [
+      {
+        "id": 13424,
+        "nodeType": "PragmaDirective",
+        "src": "32:22:70",
+        "literals": [
+          "solidity",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 13456,
+        "nodeType": "ContractDefinition",
+        "src": "56:836:70",
+        "nodes": [
+          {
+            "id": 13432,
+            "nodeType": "FunctionDefinition",
+            "src": "239:64:70",
+            "documentation": {
+              "id": 13425,
+              "nodeType": "StructuredDocumentation",
+              "src": "83:151:70",
+              "text": "@notice Checks if subvault is present\n @param nft_ index of subvault for check\n @return `true` if subvault present, `false` otherwise"
+            },
+            "functionSelector": "9d9fd0d9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "hasSubvault",
+            "nameLocation": "248:11:70",
+            "parameters": {
+              "id": 13428,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13427,
+                  "mutability": "mutable",
+                  "name": "nft_",
+                  "nameLocation": "268:4:70",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13432,
+                  "src": "260:12:70",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13426,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "260:7:70",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "259:14:70"
+            },
+            "returnParameters": {
+              "id": 13431,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13430,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13432,
+                  "src": "297:4:70",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 13429,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "297:4:70",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "296:6:70"
+            },
+            "scope": 13456,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13440,
+            "nodeType": "FunctionDefinition",
+            "src": "434:67:70",
+            "documentation": {
+              "id": 13433,
+              "nodeType": "StructuredDocumentation",
+              "src": "309:120:70",
+              "text": "@notice Get subvault by index\n @param index Index of subvault\n @return address Address of the contract"
+            },
+            "functionSelector": "9bd0911b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "subvaultAt",
+            "nameLocation": "443:10:70",
+            "parameters": {
+              "id": 13436,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13435,
+                  "mutability": "mutable",
+                  "name": "index",
+                  "nameLocation": "462:5:70",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13440,
+                  "src": "454:13:70",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13434,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "454:7:70",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "453:15:70"
+            },
+            "returnParameters": {
+              "id": 13439,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13438,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13440,
+                  "src": "492:7:70",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13437,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "492:7:70",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "491:9:70"
+            },
+            "scope": 13456,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13448,
+            "nodeType": "FunctionDefinition",
+            "src": "637:77:70",
+            "documentation": {
+              "id": 13441,
+              "nodeType": "StructuredDocumentation",
+              "src": "507:125:70",
+              "text": "@notice Get index of subvault by nft\n @param nft_ Nft for getting subvault\n @return index Index of subvault"
+            },
+            "functionSelector": "9ddc875f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "subvaultOneBasedIndex",
+            "nameLocation": "646:21:70",
+            "parameters": {
+              "id": 13444,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13443,
+                  "mutability": "mutable",
+                  "name": "nft_",
+                  "nameLocation": "676:4:70",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13448,
+                  "src": "668:12:70",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13442,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "668:7:70",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "667:14:70"
+            },
+            "returnParameters": {
+              "id": 13447,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13446,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13448,
+                  "src": "705:7:70",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13445,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "705:7:70",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "704:9:70"
+            },
+            "scope": 13456,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13455,
+            "nodeType": "FunctionDefinition",
+            "src": "825:65:70",
+            "documentation": {
+              "id": 13449,
+              "nodeType": "StructuredDocumentation",
+              "src": "720:100:70",
+              "text": "@notice Get all subvalutNfts in the current Vault\n @return subvaultNfts Subvaults of NTFs"
+            },
+            "functionSelector": "79183973",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "subvaultNfts",
+            "nameLocation": "834:12:70",
+            "parameters": {
+              "id": 13450,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "846:2:70"
+            },
+            "returnParameters": {
+              "id": 13454,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13453,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13455,
+                  "src": "872:16:70",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 13451,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "872:7:70",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 13452,
+                    "nodeType": "ArrayTypeName",
+                    "src": "872:9:70",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "871:18:70"
+            },
+            "scope": 13456,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IVaultRoot",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          13456
+        ],
+        "name": "IVaultRoot",
+        "nameLocation": "66:10:70",
+        "scope": 13457,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 70
+}

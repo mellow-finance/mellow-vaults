@@ -1,0 +1,358 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tvls",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "contract IOracle",
+          "name": "oracle",
+          "type": "address"
+        }
+      ],
+      "name": "getTvlToken0",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "tvl0",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getTvlToken0(uint256[],address[],address)": "4bd89114"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tvls\",\"type\":\"uint256[]\"},{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"name\":\"getTvlToken0\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"tvl0\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/utils/IERC20RootVaultHelper.sol\":\"IERC20RootVaultHelper\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/oracles/IOracle.sol\":{\"keccak256\":\"0x64a04c20495bc7e46040acb0df28c866cfd2d4fd8eced03bc3595d817619dc19\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b2d2956b7c712ec6e1ac5580a0d96a47ae6527165128888c4681a0da21f1c60c\",\"dweb:/ipfs/QmP4aL5YTZ3NTCD1gjCN17nNwzeabLHkaK8rEtsdnnZ12R\"]},\"src/interfaces/utils/IERC20RootVaultHelper.sol\":{\"keccak256\":\"0x83d7bc6139b7654637cb4c131756e04c1821196b02881b2889e69b77f0c2d607\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9c92ae78998d63a6017895e4ad5e9a72e1b38538c593a57dacb02b422b102e22\",\"dweb:/ipfs/QmYg9mPcgyfPH3yn15GqtiYdD7BYogey3HoMpFAbm55VV8\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "tvls",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getTvlToken0",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "tvl0",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/utils/IERC20RootVaultHelper.sol": "IERC20RootVaultHelper"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/oracles/IOracle.sol": {
+        "keccak256": "0x64a04c20495bc7e46040acb0df28c866cfd2d4fd8eced03bc3595d817619dc19",
+        "urls": [
+          "bzz-raw://b2d2956b7c712ec6e1ac5580a0d96a47ae6527165128888c4681a0da21f1c60c",
+          "dweb:/ipfs/QmP4aL5YTZ3NTCD1gjCN17nNwzeabLHkaK8rEtsdnnZ12R"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IERC20RootVaultHelper.sol": {
+        "keccak256": "0x83d7bc6139b7654637cb4c131756e04c1821196b02881b2889e69b77f0c2d607",
+        "urls": [
+          "bzz-raw://9c92ae78998d63a6017895e4ad5e9a72e1b38538c593a57dacb02b422b102e22",
+          "dweb:/ipfs/QmYg9mPcgyfPH3yn15GqtiYdD7BYogey3HoMpFAbm55VV8"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/utils/IERC20RootVaultHelper.sol",
+    "id": 12544,
+    "exportedSymbols": {
+      "IERC20RootVaultHelper": [
+        12543
+      ],
+      "IOracle": [
+        12480
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:256:55",
+    "nodes": [
+      {
+        "id": 12527,
+        "nodeType": "PragmaDirective",
+        "src": "32:22:55",
+        "literals": [
+          "solidity",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 12528,
+        "nodeType": "ImportDirective",
+        "src": "56:32:55",
+        "absolutePath": "src/interfaces/oracles/IOracle.sol",
+        "file": "../oracles/IOracle.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 12544,
+        "sourceUnit": 12481,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 12543,
+        "nodeType": "ContractDefinition",
+        "src": "90:197:55",
+        "nodes": [
+          {
+            "id": 12542,
+            "nodeType": "FunctionDefinition",
+            "src": "128:157:55",
+            "functionSelector": "4bd89114",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getTvlToken0",
+            "nameLocation": "137:12:55",
+            "parameters": {
+              "id": 12538,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12531,
+                  "mutability": "mutable",
+                  "name": "tvls",
+                  "nameLocation": "178:4:55",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12542,
+                  "src": "159:23:55",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_calldata_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 12529,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "159:7:55",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 12530,
+                    "nodeType": "ArrayTypeName",
+                    "src": "159:9:55",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12534,
+                  "mutability": "mutable",
+                  "name": "tokens",
+                  "nameLocation": "211:6:55",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12542,
+                  "src": "192:25:55",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_calldata_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 12532,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "192:7:55",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 12533,
+                    "nodeType": "ArrayTypeName",
+                    "src": "192:9:55",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12537,
+                  "mutability": "mutable",
+                  "name": "oracle",
+                  "nameLocation": "235:6:55",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12542,
+                  "src": "227:14:55",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IOracle_$12480",
+                    "typeString": "contract IOracle"
+                  },
+                  "typeName": {
+                    "id": 12536,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12535,
+                      "name": "IOracle",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12480,
+                      "src": "227:7:55"
+                    },
+                    "referencedDeclaration": 12480,
+                    "src": "227:7:55",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IOracle_$12480",
+                      "typeString": "contract IOracle"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "149:98:55"
+            },
+            "returnParameters": {
+              "id": 12541,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12540,
+                  "mutability": "mutable",
+                  "name": "tvl0",
+                  "nameLocation": "279:4:55",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12542,
+                  "src": "271:12:55",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12539,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "271:7:55",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "270:14:55"
+            },
+            "scope": 12543,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IERC20RootVaultHelper",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          12543
+        ],
+        "name": "IERC20RootVaultHelper",
+        "nameLocation": "100:21:55",
+        "scope": 12544,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 55
+}

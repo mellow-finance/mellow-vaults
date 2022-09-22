@@ -1,0 +1,1271 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "commitInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedInternalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "commitInternalParams()": "d4a07d34",
+    "delayedProtocolParamsTimestamp()": "e4af6e79",
+    "delayedProtocolPerVaultParamsTimestamp(uint256)": "511ce798",
+    "delayedStrategyParamsTimestamp(uint256)": "6707acee",
+    "internalParams()": "7ac46fbb",
+    "internalParamsTimestamp()": "1c7f4c73",
+    "stageInternalParams((address,address,address))": "09946538",
+    "stagedInternalParams()": "86c6be3e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"commitInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedInternalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"delayedStrategyParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"stageInternalParams((address,address,address))\":{\"params\":{\"newParams\":\"New Internal Params\"}},\"stagedInternalParams()\":{\"details\":\"The Internal Params could be committed after internalParamsTimestamp\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitInternalParams()\":{\"notice\":\"Commit staged Internal Params.\"},\"delayedProtocolParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.\"},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\"},\"delayedStrategyParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\"},\"internalParams()\":{\"notice\":\"Internal Params of the contract.\"},\"internalParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Internal Params could be committed.\"},\"stageInternalParams((address,address,address))\":{\"notice\":\"Stage new Internal Params.\"},\"stagedInternalParams()\":{\"notice\":\"Staged new Internal Params.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IVaultGovernance.sol\":\"IVaultGovernance\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x086fbe904291497e1532ef340f1bd589078f49e3d4d0bbfd88f5e02fb89261eb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0df1e3e965b78a0d98dda2d1d6a6acde88f515b1d3a9ad02f505e93fa7babeda\",\"dweb:/ipfs/QmW4cSbGriRAj7XRZu6zSaqspe4eyYWkF7WfJbj3rmmLbk\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x04ea2514f49503cc66574a08382b57f266d23dee04046b479e0cf64c9a0db270\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://87d8ca060d5ee11bc12b697c580e43267c45ab0d3a690f02b1388cf244eff7d7\",\"dweb:/ipfs/QmXW4jwheCFMtCjNu4bCxvc4XLr2DJyhKLq9DkqQhNU9rp\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x861ae02ad4ba132b8e03ceb19faf915dc800fed8a6f877c344ea2ebd83feb29c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c68568570ed80f1c5516bccf2554c4d228ff479b4bc5da473fff7b789b36abab\",\"dweb:/ipfs/Qmc1geu9fQwe166SY5dKLq3QGGovkCmfk36ZYd3eYp9pUM\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0x6c30a6796998d981b6614e57c857c74b38565df25606756635a29388257de21c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://60e248f1bf4749beb11979798ef0c7eb0f603ea49de2edcada8a503946bed962\",\"dweb:/ipfs/QmRCgnzokSjV3AKwHETNFm1yjgxgAJ9XrWueeyPBqS3EgD\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf4198613cc054350ce3ad3399fee584b363c27082f2a86645c58a2aab543862d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://71a66b3f5794aa7ff48a123a2927f5d588518638c65f6308d92f28b6205ef473\",\"dweb:/ipfs/QmVpCZwQcz8CDHKJL1DSbvmjJTRex3RyQHsAhFCX85GHBj\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x60d0972c0324d048aac990cef2830b8e4f4f76dc78f2490f1b3f448be325ec1e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b54d5934557e99e65b4736d5a5f9c88d235e1f8337c0c8c84cb3143de43bf90c\",\"dweb:/ipfs/QmXUGxGiEr6RxZtzcGUYqWvfvjqeH25Y2yWmZZ4dTc25yj\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0x316819e93c849dc1abe39baec0451c414e5998f51ec256c59c3fdc1ef5c22113\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be0b88b4099826d3a601f015edf91d601a8d2a7b910a84191d2d0044e4c92900\",\"dweb:/ipfs/QmNzsZ9RS9crmgxRdZMbRW2N6UvydjhAyWiVY8mL1uK6eS\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedInternalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "stageInternalParams((address,address,address))": {
+            "params": {
+              "newParams": "New Internal Params"
+            }
+          },
+          "stagedInternalParams()": {
+            "details": "The Internal Params could be committed after internalParamsTimestamp"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitInternalParams()": {
+            "notice": "Commit staged Internal Params."
+          },
+          "delayedProtocolParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed."
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed."
+          },
+          "internalParams()": {
+            "notice": "Internal Params of the contract."
+          },
+          "internalParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Internal Params could be committed."
+          },
+          "stageInternalParams((address,address,address))": {
+            "notice": "Stage new Internal Params."
+          },
+          "stagedInternalParams()": {
+            "notice": "Staged new Internal Params."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IVaultGovernance.sol": "IVaultGovernance"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x086fbe904291497e1532ef340f1bd589078f49e3d4d0bbfd88f5e02fb89261eb",
+        "urls": [
+          "bzz-raw://0df1e3e965b78a0d98dda2d1d6a6acde88f515b1d3a9ad02f505e93fa7babeda",
+          "dweb:/ipfs/QmW4cSbGriRAj7XRZu6zSaqspe4eyYWkF7WfJbj3rmmLbk"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x04ea2514f49503cc66574a08382b57f266d23dee04046b479e0cf64c9a0db270",
+        "urls": [
+          "bzz-raw://87d8ca060d5ee11bc12b697c580e43267c45ab0d3a690f02b1388cf244eff7d7",
+          "dweb:/ipfs/QmXW4jwheCFMtCjNu4bCxvc4XLr2DJyhKLq9DkqQhNU9rp"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x861ae02ad4ba132b8e03ceb19faf915dc800fed8a6f877c344ea2ebd83feb29c",
+        "urls": [
+          "bzz-raw://c68568570ed80f1c5516bccf2554c4d228ff479b4bc5da473fff7b789b36abab",
+          "dweb:/ipfs/Qmc1geu9fQwe166SY5dKLq3QGGovkCmfk36ZYd3eYp9pUM"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0x6c30a6796998d981b6614e57c857c74b38565df25606756635a29388257de21c",
+        "urls": [
+          "bzz-raw://60e248f1bf4749beb11979798ef0c7eb0f603ea49de2edcada8a503946bed962",
+          "dweb:/ipfs/QmRCgnzokSjV3AKwHETNFm1yjgxgAJ9XrWueeyPBqS3EgD"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf4198613cc054350ce3ad3399fee584b363c27082f2a86645c58a2aab543862d",
+        "urls": [
+          "bzz-raw://71a66b3f5794aa7ff48a123a2927f5d588518638c65f6308d92f28b6205ef473",
+          "dweb:/ipfs/QmVpCZwQcz8CDHKJL1DSbvmjJTRex3RyQHsAhFCX85GHBj"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x60d0972c0324d048aac990cef2830b8e4f4f76dc78f2490f1b3f448be325ec1e",
+        "urls": [
+          "bzz-raw://b54d5934557e99e65b4736d5a5f9c88d235e1f8337c0c8c84cb3143de43bf90c",
+          "dweb:/ipfs/QmXUGxGiEr6RxZtzcGUYqWvfvjqeH25Y2yWmZZ4dTc25yj"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0x316819e93c849dc1abe39baec0451c414e5998f51ec256c59c3fdc1ef5c22113",
+        "urls": [
+          "bzz-raw://be0b88b4099826d3a601f015edf91d601a8d2a7b910a84191d2d0044e4c92900",
+          "dweb:/ipfs/QmNzsZ9RS9crmgxRdZMbRW2N6UvydjhAyWiVY8mL1uK6eS"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IVaultGovernance.sol",
+    "id": 13423,
+    "exportedSymbols": {
+      "IAccessControl": [
+        6209
+      ],
+      "IAccessControlEnumerable": [
+        6234
+      ],
+      "IDefaultAccessControl": [
+        12525
+      ],
+      "IERC165": [
+        8445
+      ],
+      "IERC721": [
+        7782
+      ],
+      "IProtocolGovernance": [
+        12304
+      ],
+      "IUnitPricesGovernance": [
+        12357
+      ],
+      "IVault": [
+        13353
+      ],
+      "IVaultGovernance": [
+        13422
+      ],
+      "IVaultRegistry": [
+        12448
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:2048:69",
+    "nodes": [
+      {
+        "id": 13355,
+        "nodeType": "PragmaDirective",
+        "src": "32:22:69",
+        "literals": [
+          "solidity",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 13356,
+        "nodeType": "ImportDirective",
+        "src": "56:36:69",
+        "absolutePath": "src/interfaces/IProtocolGovernance.sol",
+        "file": "../IProtocolGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 13423,
+        "sourceUnit": 12305,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 13357,
+        "nodeType": "ImportDirective",
+        "src": "93:31:69",
+        "absolutePath": "src/interfaces/IVaultRegistry.sol",
+        "file": "../IVaultRegistry.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 13423,
+        "sourceUnit": 12449,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 13358,
+        "nodeType": "ImportDirective",
+        "src": "125:22:69",
+        "absolutePath": "src/interfaces/vaults/IVault.sol",
+        "file": "./IVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 13423,
+        "sourceUnit": 13354,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 13422,
+        "nodeType": "ContractDefinition",
+        "src": "149:1930:69",
+        "nodes": [
+          {
+            "id": 13368,
+            "nodeType": "StructDefinition",
+            "src": "354:136:69",
+            "canonicalName": "IVaultGovernance.InternalParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 13361,
+                "mutability": "mutable",
+                "name": "protocolGovernance",
+                "nameLocation": "406:18:69",
+                "nodeType": "VariableDeclaration",
+                "scope": 13368,
+                "src": "386:38:69",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IProtocolGovernance_$12304",
+                  "typeString": "contract IProtocolGovernance"
+                },
+                "typeName": {
+                  "id": 13360,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 13359,
+                    "name": "IProtocolGovernance",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 12304,
+                    "src": "386:19:69"
+                  },
+                  "referencedDeclaration": 12304,
+                  "src": "386:19:69",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IProtocolGovernance_$12304",
+                    "typeString": "contract IProtocolGovernance"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 13364,
+                "mutability": "mutable",
+                "name": "registry",
+                "nameLocation": "449:8:69",
+                "nodeType": "VariableDeclaration",
+                "scope": 13368,
+                "src": "434:23:69",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IVaultRegistry_$12448",
+                  "typeString": "contract IVaultRegistry"
+                },
+                "typeName": {
+                  "id": 13363,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 13362,
+                    "name": "IVaultRegistry",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 12448,
+                    "src": "434:14:69"
+                  },
+                  "referencedDeclaration": 12448,
+                  "src": "434:14:69",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IVaultRegistry_$12448",
+                    "typeString": "contract IVaultRegistry"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 13367,
+                "mutability": "mutable",
+                "name": "singleton",
+                "nameLocation": "474:9:69",
+                "nodeType": "VariableDeclaration",
+                "scope": 13368,
+                "src": "467:16:69",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IVault_$13353",
+                  "typeString": "contract IVault"
+                },
+                "typeName": {
+                  "id": 13366,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 13365,
+                    "name": "IVault",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 13353,
+                    "src": "467:6:69"
+                  },
+                  "referencedDeclaration": 13353,
+                  "src": "467:6:69",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IVault_$13353",
+                    "typeString": "contract IVault"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "InternalParams",
+            "nameLocation": "361:14:69",
+            "scope": 13422,
+            "visibility": "public"
+          },
+          {
+            "id": 13376,
+            "nodeType": "FunctionDefinition",
+            "src": "707:85:69",
+            "documentation": {
+              "id": 13369,
+              "nodeType": "StructuredDocumentation",
+              "src": "561:141:69",
+              "text": "@notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\n @param nft Nft of the vault"
+            },
+            "functionSelector": "6707acee",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedStrategyParamsTimestamp",
+            "nameLocation": "716:30:69",
+            "parameters": {
+              "id": 13372,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13371,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "755:3:69",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13376,
+                  "src": "747:11:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13370,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "747:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "746:13:69"
+            },
+            "returnParameters": {
+              "id": 13375,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13374,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13376,
+                  "src": "783:7:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13373,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "783:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "782:9:69"
+            },
+            "scope": 13422,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13382,
+            "nodeType": "FunctionDefinition",
+            "src": "908:74:69",
+            "documentation": {
+              "id": 13377,
+              "nodeType": "StructuredDocumentation",
+              "src": "798:105:69",
+              "text": "@notice Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+            },
+            "functionSelector": "e4af6e79",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedProtocolParamsTimestamp",
+            "nameLocation": "917:30:69",
+            "parameters": {
+              "id": 13378,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "947:2:69"
+            },
+            "returnParameters": {
+              "id": 13381,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13380,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13382,
+                  "src": "973:7:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13379,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "973:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "972:9:69"
+            },
+            "scope": 13422,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13390,
+            "nodeType": "FunctionDefinition",
+            "src": "1144:93:69",
+            "documentation": {
+              "id": 13383,
+              "nodeType": "StructuredDocumentation",
+              "src": "988:151:69",
+              "text": "@notice Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\n @param nft Nft of the vault"
+            },
+            "functionSelector": "511ce798",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedProtocolPerVaultParamsTimestamp",
+            "nameLocation": "1153:38:69",
+            "parameters": {
+              "id": 13386,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13385,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1200:3:69",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13390,
+                  "src": "1192:11:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13384,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1192:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1191:13:69"
+            },
+            "returnParameters": {
+              "id": 13389,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13388,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13390,
+                  "src": "1228:7:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13387,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1228:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1227:9:69"
+            },
+            "scope": 13422,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13396,
+            "nodeType": "FunctionDefinition",
+            "src": "1345:67:69",
+            "documentation": {
+              "id": 13391,
+              "nodeType": "StructuredDocumentation",
+              "src": "1243:97:69",
+              "text": "@notice Timestamp in unix time seconds after which staged Internal Params could be committed."
+            },
+            "functionSelector": "1c7f4c73",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "internalParamsTimestamp",
+            "nameLocation": "1354:23:69",
+            "parameters": {
+              "id": 13392,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1377:2:69"
+            },
+            "returnParameters": {
+              "id": 13395,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13394,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13396,
+                  "src": "1403:7:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13393,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1403:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1402:9:69"
+            },
+            "scope": 13422,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13403,
+            "nodeType": "FunctionDefinition",
+            "src": "1467:72:69",
+            "documentation": {
+              "id": 13397,
+              "nodeType": "StructuredDocumentation",
+              "src": "1418:44:69",
+              "text": "@notice Internal Params of the contract."
+            },
+            "functionSelector": "7ac46fbb",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "internalParams",
+            "nameLocation": "1476:14:69",
+            "parameters": {
+              "id": 13398,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1490:2:69"
+            },
+            "returnParameters": {
+              "id": 13402,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13401,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13403,
+                  "src": "1516:21:69",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_InternalParams_$13368_memory_ptr",
+                    "typeString": "struct IVaultGovernance.InternalParams"
+                  },
+                  "typeName": {
+                    "id": 13400,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 13399,
+                      "name": "InternalParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 13368,
+                      "src": "1516:14:69"
+                    },
+                    "referencedDeclaration": 13368,
+                    "src": "1516:14:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_InternalParams_$13368_storage_ptr",
+                      "typeString": "struct IVaultGovernance.InternalParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1515:23:69"
+            },
+            "scope": 13422,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13410,
+            "nodeType": "FunctionDefinition",
+            "src": "1671:78:69",
+            "documentation": {
+              "id": 13404,
+              "nodeType": "StructuredDocumentation",
+              "src": "1545:121:69",
+              "text": "@notice Staged new Internal Params.\n @dev The Internal Params could be committed after internalParamsTimestamp"
+            },
+            "functionSelector": "86c6be3e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedInternalParams",
+            "nameLocation": "1680:20:69",
+            "parameters": {
+              "id": 13405,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1700:2:69"
+            },
+            "returnParameters": {
+              "id": 13409,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13408,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13410,
+                  "src": "1726:21:69",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_InternalParams_$13368_memory_ptr",
+                    "typeString": "struct IVaultGovernance.InternalParams"
+                  },
+                  "typeName": {
+                    "id": 13407,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 13406,
+                      "name": "InternalParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 13368,
+                      "src": "1726:14:69"
+                    },
+                    "referencedDeclaration": 13368,
+                    "src": "1726:14:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_InternalParams_$13368_storage_ptr",
+                      "typeString": "struct IVaultGovernance.InternalParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1725:23:69"
+            },
+            "scope": 13422,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13417,
+            "nodeType": "FunctionDefinition",
+            "src": "1912:71:69",
+            "documentation": {
+              "id": 13411,
+              "nodeType": "StructuredDocumentation",
+              "src": "1824:83:69",
+              "text": "@notice Stage new Internal Params.\n @param newParams New Internal Params"
+            },
+            "functionSelector": "09946538",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageInternalParams",
+            "nameLocation": "1921:19:69",
+            "parameters": {
+              "id": 13415,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13414,
+                  "mutability": "mutable",
+                  "name": "newParams",
+                  "nameLocation": "1963:9:69",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13417,
+                  "src": "1941:31:69",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_InternalParams_$13368_memory_ptr",
+                    "typeString": "struct IVaultGovernance.InternalParams"
+                  },
+                  "typeName": {
+                    "id": 13413,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 13412,
+                      "name": "InternalParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 13368,
+                      "src": "1941:14:69"
+                    },
+                    "referencedDeclaration": 13368,
+                    "src": "1941:14:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_InternalParams_$13368_storage_ptr",
+                      "typeString": "struct IVaultGovernance.InternalParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1940:33:69"
+            },
+            "returnParameters": {
+              "id": 13416,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1982:0:69"
+            },
+            "scope": 13422,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 13421,
+            "nodeType": "FunctionDefinition",
+            "src": "2036:41:69",
+            "documentation": {
+              "id": 13418,
+              "nodeType": "StructuredDocumentation",
+              "src": "1989:42:69",
+              "text": "@notice Commit staged Internal Params."
+            },
+            "functionSelector": "d4a07d34",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitInternalParams",
+            "nameLocation": "2045:20:69",
+            "parameters": {
+              "id": 13419,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2065:2:69"
+            },
+            "returnParameters": {
+              "id": 13420,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2076:0:69"
+            },
+            "scope": 13422,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IVaultGovernance",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          13422
+        ],
+        "name": "IVaultGovernance",
+        "nameLocation": "159:16:69",
+        "scope": 13423,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 69
+}

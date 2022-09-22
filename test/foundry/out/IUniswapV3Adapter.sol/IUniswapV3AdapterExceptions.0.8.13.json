@@ -1,0 +1,763 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "IncorrectPathLengthException",
+      "type": "error"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"IncorrectPathLengthException\",\"type\":\"error\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/gearbox/IUniswapV3Adapter.sol\":\"IUniswapV3AdapterExceptions\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/external/gearbox/IUniswapV3Adapter.sol\":{\"keccak256\":\"0x059af473510785cf163b773fc4d1f0303d8e132179ada690a8a08bedbec44c1d\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://b2a29faaf4537695b32533f6ad251c4d1ea1e0c954f514641d0f8f2c4fa12821\",\"dweb:/ipfs/QmZP3qB8ZdRNwtpRXWvyBgdpSVvSB3xQdhaVwUzsZfB37o\"]},\"src/interfaces/external/gearbox/helpers/IAdapter.sol\":{\"keccak256\":\"0x53d9c431227c9fda393c1627351b7cd209b9c8053c6e1f57780d661682386faa\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://5c5e3288253cebb1baf277e4de243ce216ab01c6dfd81f537f6e6b54a37abb17\",\"dweb:/ipfs/QmSMLkPhcXUot3AnQD7uqLteFNhvqdu74rsw5TvgkpTL22\"]},\"src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol\":{\"keccak256\":\"0x71b5f65aa68e4813f539f03889b43dc3656efbca68d0ffc551595c684bea0f9a\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://9ebf2849bed5df6d5d9a2cfffb666c1d98cbeba7089285abc2d0a3d4fb7904ad\",\"dweb:/ipfs/QmboWvFHKDh4vYtJXX1pb1QqbjDfKTYDLEUp3gqDQoBJry\"]},\"src/interfaces/external/gearbox/helpers/IPriceOracle.sol\":{\"keccak256\":\"0x0d57767a0bc3f65da11555786ef19cc337e94df510929150d48444107d5de8cc\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://d4de7d80939d2d29e7d5558caf8f56c012b13017debcad3fa5302c4d355e41a6\",\"dweb:/ipfs/QmdxDtGi9RqRr2SAxmgcruaDRzpiNrY7boSLP93haZFySC\"]},\"src/interfaces/external/gearbox/helpers/IVersion.sol\":{\"keccak256\":\"0xddc0816823b7fbcb6debff617668663ae1c3fd36f3c4c3ca8fce150d08c7d421\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://cfcfd7cc5f615c36691f04c37dcef595c03fbef11d5b2f87b81941f6266d3211\",\"dweb:/ipfs/QmVGCeFDQpZYSY4K4qkDddhMeF4DxUJbQ9vUJng2v9pUTM\"]},\"src/interfaces/external/gearbox/helpers/uniswap/IUniswapV3.sol\":{\"keccak256\":\"0x4a1e5a2f9edba24591ff1a6061d0da599c2df910d1800ecaa24dfa9d4cc43ff7\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://b20b9eadd7f4c4e69473dbc3e1a06abe53d7dd02756dad808b945d4d12b59c77\",\"dweb:/ipfs/QmbXXaS5kP6nwmQXV1ddR5mBEBSQG9q8ZsuYJDmuTx5kTo\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.13+commit.abaa5c0e"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "IncorrectPathLengthException"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/gearbox/IUniswapV3Adapter.sol": "IUniswapV3AdapterExceptions"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/gearbox/IUniswapV3Adapter.sol": {
+        "keccak256": "0x059af473510785cf163b773fc4d1f0303d8e132179ada690a8a08bedbec44c1d",
+        "urls": [
+          "bzz-raw://b2a29faaf4537695b32533f6ad251c4d1ea1e0c954f514641d0f8f2c4fa12821",
+          "dweb:/ipfs/QmZP3qB8ZdRNwtpRXWvyBgdpSVvSB3xQdhaVwUzsZfB37o"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IAdapter.sol": {
+        "keccak256": "0x53d9c431227c9fda393c1627351b7cd209b9c8053c6e1f57780d661682386faa",
+        "urls": [
+          "bzz-raw://5c5e3288253cebb1baf277e4de243ce216ab01c6dfd81f537f6e6b54a37abb17",
+          "dweb:/ipfs/QmSMLkPhcXUot3AnQD7uqLteFNhvqdu74rsw5TvgkpTL22"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol": {
+        "keccak256": "0x71b5f65aa68e4813f539f03889b43dc3656efbca68d0ffc551595c684bea0f9a",
+        "urls": [
+          "bzz-raw://9ebf2849bed5df6d5d9a2cfffb666c1d98cbeba7089285abc2d0a3d4fb7904ad",
+          "dweb:/ipfs/QmboWvFHKDh4vYtJXX1pb1QqbjDfKTYDLEUp3gqDQoBJry"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IPriceOracle.sol": {
+        "keccak256": "0x0d57767a0bc3f65da11555786ef19cc337e94df510929150d48444107d5de8cc",
+        "urls": [
+          "bzz-raw://d4de7d80939d2d29e7d5558caf8f56c012b13017debcad3fa5302c4d355e41a6",
+          "dweb:/ipfs/QmdxDtGi9RqRr2SAxmgcruaDRzpiNrY7boSLP93haZFySC"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IVersion.sol": {
+        "keccak256": "0xddc0816823b7fbcb6debff617668663ae1c3fd36f3c4c3ca8fce150d08c7d421",
+        "urls": [
+          "bzz-raw://cfcfd7cc5f615c36691f04c37dcef595c03fbef11d5b2f87b81941f6266d3211",
+          "dweb:/ipfs/QmVGCeFDQpZYSY4K4qkDddhMeF4DxUJbQ9vUJng2v9pUTM"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/uniswap/IUniswapV3.sol": {
+        "keccak256": "0x4a1e5a2f9edba24591ff1a6061d0da599c2df910d1800ecaa24dfa9d4cc43ff7",
+        "urls": [
+          "bzz-raw://b20b9eadd7f4c4e69473dbc3e1a06abe53d7dd02756dad808b945d4d12b59c77",
+          "dweb:/ipfs/QmbXXaS5kP6nwmQXV1ddR5mBEBSQG9q8ZsuYJDmuTx5kTo"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/gearbox/IUniswapV3Adapter.sol",
+    "id": 654,
+    "exportedSymbols": {
+      "IAdapter": [
+        761
+      ],
+      "ISwapRouter": [
+        2535
+      ],
+      "IUniswapV3Adapter": [
+        653
+      ],
+      "IUniswapV3AdapterExceptions": [
+        608
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "136:2841:5",
+    "nodes": [
+      {
+        "id": 601,
+        "nodeType": "PragmaDirective",
+        "src": "136:23:5",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 603,
+        "nodeType": "ImportDirective",
+        "src": "161:50:5",
+        "absolutePath": "src/interfaces/external/gearbox/helpers/IAdapter.sol",
+        "file": "./helpers/IAdapter.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 654,
+        "sourceUnit": 762,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 602,
+              "name": "IAdapter",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 761,
+              "src": "170:8:5",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 605,
+        "nodeType": "ImportDirective",
+        "src": "212:63:5",
+        "absolutePath": "src/interfaces/external/gearbox/helpers/uniswap/IUniswapV3.sol",
+        "file": "./helpers/uniswap/IUniswapV3.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 654,
+        "sourceUnit": 2536,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 604,
+              "name": "ISwapRouter",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 2535,
+              "src": "221:11:5",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 608,
+        "nodeType": "ContractDefinition",
+        "src": "277:83:5",
+        "nodes": [
+          {
+            "id": 607,
+            "nodeType": "ErrorDefinition",
+            "src": "321:37:5",
+            "errorSelector": "8287466d",
+            "name": "IncorrectPathLengthException",
+            "nameLocation": "327:28:5",
+            "parameters": {
+              "id": 606,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "355:2:5"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IUniswapV3AdapterExceptions",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          608
+        ],
+        "name": "IUniswapV3AdapterExceptions",
+        "nameLocation": "287:27:5",
+        "scope": 654,
+        "usedErrors": [
+          607
+        ]
+      },
+      {
+        "id": 653,
+        "nodeType": "ContractDefinition",
+        "src": "362:2615:5",
+        "nodes": [
+          {
+            "id": 627,
+            "nodeType": "StructDefinition",
+            "src": "1133:200:5",
+            "canonicalName": "IUniswapV3Adapter.ExactAllInputSingleParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 616,
+                "mutability": "mutable",
+                "name": "tokenIn",
+                "nameLocation": "1184:7:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 627,
+                "src": "1176:15:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 615,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1176:7:5",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 618,
+                "mutability": "mutable",
+                "name": "tokenOut",
+                "nameLocation": "1209:8:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 627,
+                "src": "1201:16:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 617,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1201:7:5",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 620,
+                "mutability": "mutable",
+                "name": "fee",
+                "nameLocation": "1234:3:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 627,
+                "src": "1227:10:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint24",
+                  "typeString": "uint24"
+                },
+                "typeName": {
+                  "id": 619,
+                  "name": "uint24",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1227:6:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint24",
+                    "typeString": "uint24"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 622,
+                "mutability": "mutable",
+                "name": "deadline",
+                "nameLocation": "1255:8:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 627,
+                "src": "1247:16:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 621,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1247:7:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 624,
+                "mutability": "mutable",
+                "name": "rateMinRAY",
+                "nameLocation": "1281:10:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 627,
+                "src": "1273:18:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 623,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1273:7:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 626,
+                "mutability": "mutable",
+                "name": "sqrtPriceLimitX96",
+                "nameLocation": "1309:17:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 627,
+                "src": "1301:25:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint160",
+                  "typeString": "uint160"
+                },
+                "typeName": {
+                  "id": 625,
+                  "name": "uint160",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1301:7:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "ExactAllInputSingleParams",
+            "nameLocation": "1140:25:5",
+            "scope": 653,
+            "visibility": "public"
+          },
+          {
+            "id": 636,
+            "nodeType": "FunctionDefinition",
+            "src": "1697:125:5",
+            "documentation": {
+              "id": 628,
+              "nodeType": "StructuredDocumentation",
+              "src": "1339:353:5",
+              "text": "@notice Sends an order to swap the entire balance of one token for as much as possible of another token\n - Fills the `ExactInputSingleParams` struct\n - Makes a max allowance fast check call, passing the new struct as params\n @param params The parameters necessary for the swap, encoded as `ExactAllInputSingleParams` in calldata"
+            },
+            "functionSelector": "c7fbf4de",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "exactAllInputSingle",
+            "nameLocation": "1706:19:5",
+            "parameters": {
+              "id": 632,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 631,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "1761:6:5",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 636,
+                  "src": "1726:41:5",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_ExactAllInputSingleParams_$627_calldata_ptr",
+                    "typeString": "struct IUniswapV3Adapter.ExactAllInputSingleParams"
+                  },
+                  "typeName": {
+                    "id": 630,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 629,
+                      "name": "ExactAllInputSingleParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 627,
+                      "src": "1726:25:5"
+                    },
+                    "referencedDeclaration": 627,
+                    "src": "1726:25:5",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_ExactAllInputSingleParams_$627_storage_ptr",
+                      "typeString": "struct IUniswapV3Adapter.ExactAllInputSingleParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1725:43:5"
+            },
+            "returnParameters": {
+              "id": 635,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 634,
+                  "mutability": "mutable",
+                  "name": "amountOut",
+                  "nameLocation": "1811:9:5",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 636,
+                  "src": "1803:17:5",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 633,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1803:7:5",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1802:19:5"
+            },
+            "scope": 653,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 643,
+            "nodeType": "StructDefinition",
+            "src": "2385:108:5",
+            "canonicalName": "IUniswapV3Adapter.ExactAllInputParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 638,
+                "mutability": "mutable",
+                "name": "path",
+                "nameLocation": "2428:4:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 643,
+                "src": "2422:10:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes_storage_ptr",
+                  "typeString": "bytes"
+                },
+                "typeName": {
+                  "id": 637,
+                  "name": "bytes",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "2422:5:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_storage_ptr",
+                    "typeString": "bytes"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 640,
+                "mutability": "mutable",
+                "name": "deadline",
+                "nameLocation": "2450:8:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 643,
+                "src": "2442:16:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 639,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "2442:7:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 642,
+                "mutability": "mutable",
+                "name": "rateMinRAY",
+                "nameLocation": "2476:10:5",
+                "nodeType": "VariableDeclaration",
+                "scope": 643,
+                "src": "2468:18:5",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 641,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "2468:7:5",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "ExactAllInputParams",
+            "nameLocation": "2392:19:5",
+            "scope": 653,
+            "visibility": "public"
+          },
+          {
+            "id": 652,
+            "nodeType": "FunctionDefinition",
+            "src": "2862:113:5",
+            "documentation": {
+              "id": 644,
+              "nodeType": "StructuredDocumentation",
+              "src": "2499:358:5",
+              "text": "@notice Swaps the entire balance of one token for as much as possible of another along the specified path\n - Fills the `ExactAllInputParams` struct\n - Makes a max allowance fast check call, passing the new struct as `params`\n @param params The parameters necessary for the multi-hop swap, encoded as `ExactAllInputParams` in calldata"
+            },
+            "functionSelector": "f4f18d90",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "exactAllInput",
+            "nameLocation": "2871:13:5",
+            "parameters": {
+              "id": 648,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 647,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "2914:6:5",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 652,
+                  "src": "2885:35:5",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_ExactAllInputParams_$643_calldata_ptr",
+                    "typeString": "struct IUniswapV3Adapter.ExactAllInputParams"
+                  },
+                  "typeName": {
+                    "id": 646,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 645,
+                      "name": "ExactAllInputParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 643,
+                      "src": "2885:19:5"
+                    },
+                    "referencedDeclaration": 643,
+                    "src": "2885:19:5",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_ExactAllInputParams_$643_storage_ptr",
+                      "typeString": "struct IUniswapV3Adapter.ExactAllInputParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2884:37:5"
+            },
+            "returnParameters": {
+              "id": 651,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 650,
+                  "mutability": "mutable",
+                  "name": "amountOut",
+                  "nameLocation": "2964:9:5",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 652,
+                  "src": "2956:17:5",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 649,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2956:7:5",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2955:19:5"
+            },
+            "scope": 653,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 609,
+              "name": "IAdapter",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 761,
+              "src": "397:8:5"
+            },
+            "id": 610,
+            "nodeType": "InheritanceSpecifier",
+            "src": "397:8:5"
+          },
+          {
+            "baseName": {
+              "id": 611,
+              "name": "ISwapRouter",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 2535,
+              "src": "411:11:5"
+            },
+            "id": 612,
+            "nodeType": "InheritanceSpecifier",
+            "src": "411:11:5"
+          },
+          {
+            "baseName": {
+              "id": 613,
+              "name": "IUniswapV3AdapterExceptions",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 608,
+              "src": "428:27:5"
+            },
+            "id": 614,
+            "nodeType": "InheritanceSpecifier",
+            "src": "428:27:5"
+          }
+        ],
+        "canonicalName": "IUniswapV3Adapter",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          653,
+          608,
+          2535,
+          761,
+          726
+        ],
+        "name": "IUniswapV3Adapter",
+        "nameLocation": "372:17:5",
+        "scope": 654,
+        "usedErrors": [
+          607,
+          725
+        ]
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 5
+}

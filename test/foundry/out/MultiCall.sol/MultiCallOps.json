@@ -1,0 +1,4347 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212207e753d2d2314f5266b34d751544a2c8a7c5939dc1acbe39e921c89cf7f3651b864736f6c63430008090033",
+    "sourceMap": "124:2708:50:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;124:2708:50;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212207e753d2d2314f5266b34d751544a2c8a7c5939dc1acbe39e921c89cf7f3651b864736f6c63430008090033",
+    "sourceMap": "124:2708:50:-:0;;;;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/gearbox/helpers/libraries/MultiCall.sol\":\"MultiCallOps\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/external/gearbox/helpers/libraries/MultiCall.sol\":{\"keccak256\":\"0xdc0e0f704a4f0e83d6e4a96efccdc7bffc1a0aa87011762a47a5ed7cac7b1598\",\"license\":\"BUSL-1.1\",\"urls\":[\"bzz-raw://54b0e3b66531ae0e3fc52c10c76e270e7b0ba198ce6a5c01a6d4a45a2b6e6f35\",\"dweb:/ipfs/QmRzmZ4Tx1QgnFh9hCdoCUtMaUnk4P7P43qCitEzRrkv9y\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/gearbox/helpers/libraries/MultiCall.sol": "MultiCallOps"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/gearbox/helpers/libraries/MultiCall.sol": {
+        "keccak256": "0xdc0e0f704a4f0e83d6e4a96efccdc7bffc1a0aa87011762a47a5ed7cac7b1598",
+        "urls": [
+          "bzz-raw://54b0e3b66531ae0e3fc52c10c76e270e7b0ba198ce6a5c01a6d4a45a2b6e6f35",
+          "dweb:/ipfs/QmRzmZ4Tx1QgnFh9hCdoCUtMaUnk4P7P43qCitEzRrkv9y"
+        ],
+        "license": "BUSL-1.1"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/gearbox/helpers/libraries/MultiCall.sol",
+    "id": 41692,
+    "exportedSymbols": {
+      "MultiCall": [
+        41340
+      ],
+      "MultiCallOps": [
+        41691
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "37:2795:50",
+    "nodes": [
+      {
+        "id": 41335,
+        "nodeType": "PragmaDirective",
+        "src": "37:23:50",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 41340,
+        "nodeType": "StructDefinition",
+        "src": "62:60:50",
+        "canonicalName": "MultiCall",
+        "members": [
+          {
+            "constant": false,
+            "id": 41337,
+            "mutability": "mutable",
+            "name": "target",
+            "nameLocation": "93:6:50",
+            "nodeType": "VariableDeclaration",
+            "scope": 41340,
+            "src": "85:14:50",
+            "stateVariable": false,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 41336,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "85:7:50",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "constant": false,
+            "id": 41339,
+            "mutability": "mutable",
+            "name": "callData",
+            "nameLocation": "111:8:50",
+            "nodeType": "VariableDeclaration",
+            "scope": 41340,
+            "src": "105:14:50",
+            "stateVariable": false,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bytes_storage_ptr",
+              "typeString": "bytes"
+            },
+            "typeName": {
+              "id": 41338,
+              "name": "bytes",
+              "nodeType": "ElementaryTypeName",
+              "src": "105:5:50",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes_storage_ptr",
+                "typeString": "bytes"
+              }
+            },
+            "visibility": "internal"
+          }
+        ],
+        "name": "MultiCall",
+        "nameLocation": "69:9:50",
+        "scope": 41692,
+        "visibility": "public"
+      },
+      {
+        "id": 41691,
+        "nodeType": "ContractDefinition",
+        "src": "124:2708:50",
+        "nodes": [
+          {
+            "id": 41357,
+            "nodeType": "FunctionDefinition",
+            "src": "151:198:50",
+            "body": {
+              "id": 41356,
+              "nodeType": "Block",
+              "src": "266:83:50",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "id": 41350,
+                          "name": "call",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41343,
+                          "src": "303:4:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        },
+                        "id": 41351,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "target",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 41337,
+                        "src": "303:11:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "id": 41352,
+                          "name": "call",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41343,
+                          "src": "326:4:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        },
+                        "id": 41353,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "callData",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 41339,
+                        "src": "326:13:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "id": 41349,
+                      "name": "MultiCall",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41340,
+                      "src": "283:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_struct$_MultiCall_$41340_storage_ptr_$",
+                        "typeString": "type(struct MultiCall storage pointer)"
+                      }
+                    },
+                    "id": 41354,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "structConstructorCall",
+                    "lValueRequested": false,
+                    "names": [
+                      "target",
+                      "callData"
+                    ],
+                    "nodeType": "FunctionCall",
+                    "src": "283:59:50",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                      "typeString": "struct MultiCall memory"
+                    }
+                  },
+                  "functionReturnParameters": 41348,
+                  "id": 41355,
+                  "nodeType": "Return",
+                  "src": "276:66:50"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "copyMulticall",
+            "nameLocation": "160:13:50",
+            "parameters": {
+              "id": 41344,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41343,
+                  "mutability": "mutable",
+                  "name": "call",
+                  "nameLocation": "191:4:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41357,
+                  "src": "174:21:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                    "typeString": "struct MultiCall"
+                  },
+                  "typeName": {
+                    "id": 41342,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41341,
+                      "name": "MultiCall",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41340,
+                      "src": "174:9:50"
+                    },
+                    "referencedDeclaration": 41340,
+                    "src": "174:9:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                      "typeString": "struct MultiCall"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "173:23:50"
+            },
+            "returnParameters": {
+              "id": 41348,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41347,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41357,
+                  "src": "244:16:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                    "typeString": "struct MultiCall"
+                  },
+                  "typeName": {
+                    "id": 41346,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41345,
+                      "name": "MultiCall",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41340,
+                      "src": "244:9:50"
+                    },
+                    "referencedDeclaration": 41340,
+                    "src": "244:9:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                      "typeString": "struct MultiCall"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "243:18:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41413,
+            "nodeType": "FunctionDefinition",
+            "src": "355:465:50",
+            "body": {
+              "id": 41412,
+              "nodeType": "Block",
+              "src": "474:346:50",
+              "statements": [
+                {
+                  "assignments": [
+                    41369
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 41369,
+                      "mutability": "mutable",
+                      "name": "len",
+                      "nameLocation": "492:3:50",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 41412,
+                      "src": "484:11:50",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 41368,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "484:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 41372,
+                  "initialValue": {
+                    "expression": {
+                      "id": 41370,
+                      "name": "calls",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41361,
+                      "src": "498:5:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "id": 41371,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "length",
+                    "nodeType": "MemberAccess",
+                    "src": "498:12:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "484:26:50"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41375,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41373,
+                      "name": "len",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41369,
+                      "src": "525:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "hexValue": "30",
+                      "id": 41374,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "532:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_0_by_1",
+                        "typeString": "int_const 0"
+                      },
+                      "value": "0"
+                    },
+                    "src": "525:8:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41378,
+                  "nodeType": "IfStatement",
+                  "src": "521:26:50",
+                  "trueBody": {
+                    "expression": {
+                      "id": 41376,
+                      "name": "calls",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41361,
+                      "src": "542:5:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "functionReturnParameters": 41367,
+                    "id": 41377,
+                    "nodeType": "Return",
+                    "src": "535:12:50"
+                  }
+                },
+                {
+                  "assignments": [
+                    41380
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 41380,
+                      "mutability": "mutable",
+                      "name": "foundLen",
+                      "nameLocation": "566:8:50",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 41412,
+                      "src": "558:16:50",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 41379,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "558:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 41381,
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "558:16:50"
+                },
+                {
+                  "body": {
+                    "id": 41401,
+                    "nodeType": "Block",
+                    "src": "629:128:50",
+                    "statements": [
+                      {
+                        "id": 41400,
+                        "nodeType": "UncheckedBlock",
+                        "src": "643:104:50",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41392,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "671:10:50",
+                              "subExpression": {
+                                "id": 41391,
+                                "name": "foundLen",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41380,
+                                "src": "673:8:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41393,
+                            "nodeType": "ExpressionStatement",
+                            "src": "671:10:50"
+                          },
+                          {
+                            "condition": {
+                              "commonType": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              },
+                              "id": 41396,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "leftExpression": {
+                                "id": 41394,
+                                "name": "foundLen",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41380,
+                                "src": "703:8:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "nodeType": "BinaryOperation",
+                              "operator": "==",
+                              "rightExpression": {
+                                "id": 41395,
+                                "name": "len",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41369,
+                                "src": "715:3:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "src": "703:15:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                              }
+                            },
+                            "id": 41399,
+                            "nodeType": "IfStatement",
+                            "src": "699:33:50",
+                            "trueBody": {
+                              "expression": {
+                                "id": 41397,
+                                "name": "calls",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41361,
+                                "src": "727:5:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                  "typeString": "struct MultiCall memory[] memory"
+                                }
+                              },
+                              "functionReturnParameters": 41367,
+                              "id": 41398,
+                              "nodeType": "Return",
+                              "src": "720:12:50"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 41390,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "expression": {
+                        "baseExpression": {
+                          "id": 41382,
+                          "name": "calls",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41361,
+                          "src": "591:5:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        },
+                        "id": 41384,
+                        "indexExpression": {
+                          "id": 41383,
+                          "name": "foundLen",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41380,
+                          "src": "597:8:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "591:15:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                          "typeString": "struct MultiCall memory"
+                        }
+                      },
+                      "id": 41385,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "target",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 41337,
+                      "src": "591:22:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "!=",
+                    "rightExpression": {
+                      "arguments": [
+                        {
+                          "hexValue": "30",
+                          "id": 41388,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "625:1:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 41387,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "617:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 41386,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "617:7:50",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 41389,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "617:10:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "591:36:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41402,
+                  "nodeType": "WhileStatement",
+                  "src": "584:173:50"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41405,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41403,
+                      "name": "foundLen",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41380,
+                      "src": "771:8:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": ">",
+                    "rightExpression": {
+                      "hexValue": "30",
+                      "id": 41404,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "782:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_0_by_1",
+                        "typeString": "int_const 0"
+                      },
+                      "value": "0"
+                    },
+                    "src": "771:12:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41411,
+                  "nodeType": "IfStatement",
+                  "src": "767:46:50",
+                  "trueBody": {
+                    "expression": {
+                      "arguments": [
+                        {
+                          "id": 41407,
+                          "name": "calls",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41361,
+                          "src": "797:5:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        },
+                        {
+                          "id": 41408,
+                          "name": "foundLen",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41380,
+                          "src": "804:8:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          },
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41406,
+                        "name": "copy",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41458,
+                        "src": "792:4:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$_t_uint256_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (struct MultiCall memory[] memory,uint256) pure returns (struct MultiCall memory[] memory)"
+                        }
+                      },
+                      "id": 41409,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "792:21:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "functionReturnParameters": 41367,
+                    "id": 41410,
+                    "nodeType": "Return",
+                    "src": "785:28:50"
+                  }
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "trim",
+            "nameLocation": "364:4:50",
+            "parameters": {
+              "id": 41362,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41361,
+                  "mutability": "mutable",
+                  "name": "calls",
+                  "nameLocation": "388:5:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41413,
+                  "src": "369:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41359,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41358,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "369:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "369:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41360,
+                    "nodeType": "ArrayTypeName",
+                    "src": "369:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "368:26:50"
+            },
+            "returnParameters": {
+              "id": 41367,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41366,
+                  "mutability": "mutable",
+                  "name": "trimmed",
+                  "nameLocation": "461:7:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41413,
+                  "src": "442:26:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41364,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41363,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "442:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "442:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41365,
+                    "nodeType": "ArrayTypeName",
+                    "src": "442:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "441:28:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41458,
+            "nodeType": "FunctionDefinition",
+            "src": "826:323:50",
+            "body": {
+              "id": 41457,
+              "nodeType": "Block",
+              "src": "954:195:50",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 41433,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 41426,
+                      "name": "res",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41424,
+                      "src": "964:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 41431,
+                          "name": "len",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41419,
+                          "src": "986:3:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41430,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "NewExpression",
+                        "src": "970:15:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (uint256) pure returns (struct MultiCall memory[] memory)"
+                        },
+                        "typeName": {
+                          "baseType": {
+                            "id": 41428,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                              "id": 41427,
+                              "name": "MultiCall",
+                              "nodeType": "IdentifierPath",
+                              "referencedDeclaration": 41340,
+                              "src": "974:9:50"
+                            },
+                            "referencedDeclaration": 41340,
+                            "src": "974:9:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                              "typeString": "struct MultiCall"
+                            }
+                          },
+                          "id": 41429,
+                          "nodeType": "ArrayTypeName",
+                          "src": "974:11:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                            "typeString": "struct MultiCall[]"
+                          }
+                        }
+                      },
+                      "id": 41432,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "970:20:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "src": "964:26:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct MultiCall memory[] memory"
+                    }
+                  },
+                  "id": 41434,
+                  "nodeType": "ExpressionStatement",
+                  "src": "964:26:50"
+                },
+                {
+                  "body": {
+                    "id": 41455,
+                    "nodeType": "Block",
+                    "src": "1027:116:50",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 41449,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "id": 41441,
+                              "name": "res",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41424,
+                              "src": "1041:3:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct MultiCall memory[] memory"
+                              }
+                            },
+                            "id": 41443,
+                            "indexExpression": {
+                              "id": 41442,
+                              "name": "i",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41436,
+                              "src": "1045:1:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "1041:6:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "arguments": [
+                              {
+                                "baseExpression": {
+                                  "id": 41445,
+                                  "name": "calls",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41417,
+                                  "src": "1064:5:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                    "typeString": "struct MultiCall memory[] memory"
+                                  }
+                                },
+                                "id": 41447,
+                                "indexExpression": {
+                                  "id": 41446,
+                                  "name": "i",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41436,
+                                  "src": "1070:1:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                  }
+                                },
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "nodeType": "IndexAccess",
+                                "src": "1064:8:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                  "typeString": "struct MultiCall memory"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                  "typeString": "struct MultiCall memory"
+                                }
+                              ],
+                              "id": 41444,
+                              "name": "copyMulticall",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41357,
+                              "src": "1050:13:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                                "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                              }
+                            },
+                            "id": 41448,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "functionCall",
+                            "lValueRequested": false,
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "1050:23:50",
+                            "tryCall": false,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "src": "1041:32:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        },
+                        "id": 41450,
+                        "nodeType": "ExpressionStatement",
+                        "src": "1041:32:50"
+                      },
+                      {
+                        "id": 41454,
+                        "nodeType": "UncheckedBlock",
+                        "src": "1087:46:50",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41452,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "1115:3:50",
+                              "subExpression": {
+                                "id": 41451,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41436,
+                                "src": "1117:1:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41453,
+                            "nodeType": "ExpressionStatement",
+                            "src": "1115:3:50"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41440,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41438,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41436,
+                      "src": "1016:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "id": 41439,
+                      "name": "len",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41419,
+                      "src": "1020:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1016:7:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41456,
+                  "initializationExpression": {
+                    "assignments": [
+                      41436
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 41436,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "1013:1:50",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 41456,
+                        "src": "1005:9:50",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 41435,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1005:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 41437,
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "1005:9:50"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "1000:143:50"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "copy",
+            "nameLocation": "835:4:50",
+            "parameters": {
+              "id": 41420,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41417,
+                  "mutability": "mutable",
+                  "name": "calls",
+                  "nameLocation": "859:5:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41458,
+                  "src": "840:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41415,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41414,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "840:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "840:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41416,
+                    "nodeType": "ArrayTypeName",
+                    "src": "840:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41419,
+                  "mutability": "mutable",
+                  "name": "len",
+                  "nameLocation": "874:3:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41458,
+                  "src": "866:11:50",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 41418,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "866:7:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "839:39:50"
+            },
+            "returnParameters": {
+              "id": 41425,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41424,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "945:3:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41458,
+                  "src": "926:22:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41422,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41421,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "926:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "926:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41423,
+                    "nodeType": "ArrayTypeName",
+                    "src": "926:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "925:24:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41476,
+            "nodeType": "FunctionDefinition",
+            "src": "1155:165:50",
+            "body": {
+              "id": 41475,
+              "nodeType": "Block",
+              "src": "1271:49:50",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 41470,
+                        "name": "calls",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41462,
+                        "src": "1293:5:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "id": 41471,
+                          "name": "calls",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41462,
+                          "src": "1300:5:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        },
+                        "id": 41472,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "length",
+                        "nodeType": "MemberAccess",
+                        "src": "1300:12:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 41469,
+                      "name": "copy",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41458,
+                      "src": "1288:4:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$_t_uint256_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                        "typeString": "function (struct MultiCall memory[] memory,uint256) pure returns (struct MultiCall memory[] memory)"
+                      }
+                    },
+                    "id": 41473,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1288:25:50",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct MultiCall memory[] memory"
+                    }
+                  },
+                  "functionReturnParameters": 41468,
+                  "id": 41474,
+                  "nodeType": "Return",
+                  "src": "1281:32:50"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "clone",
+            "nameLocation": "1164:5:50",
+            "parameters": {
+              "id": 41463,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41462,
+                  "mutability": "mutable",
+                  "name": "calls",
+                  "nameLocation": "1189:5:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41476,
+                  "src": "1170:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41460,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41459,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "1170:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "1170:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41461,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1170:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1169:26:50"
+            },
+            "returnParameters": {
+              "id": 41468,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41467,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "1262:3:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41476,
+                  "src": "1243:22:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41465,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41464,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "1243:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "1243:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41466,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1243:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1242:24:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41537,
+            "nodeType": "FunctionDefinition",
+            "src": "1326:421:50",
+            "body": {
+              "id": 41536,
+              "nodeType": "Block",
+              "src": "1469:278:50",
+              "statements": [
+                {
+                  "assignments": [
+                    41491
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 41491,
+                      "mutability": "mutable",
+                      "name": "len",
+                      "nameLocation": "1487:3:50",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 41536,
+                      "src": "1479:11:50",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 41490,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1479:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 41494,
+                  "initialValue": {
+                    "expression": {
+                      "id": 41492,
+                      "name": "calls",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41480,
+                      "src": "1493:5:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "id": 41493,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "length",
+                    "nodeType": "MemberAccess",
+                    "src": "1493:12:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1479:26:50"
+                },
+                {
+                  "expression": {
+                    "id": 41504,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 41495,
+                      "name": "res",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41488,
+                      "src": "1515:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "commonType": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          "id": 41502,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftExpression": {
+                            "id": 41500,
+                            "name": "len",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41491,
+                            "src": "1537:3:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          },
+                          "nodeType": "BinaryOperation",
+                          "operator": "+",
+                          "rightExpression": {
+                            "hexValue": "31",
+                            "id": 41501,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "number",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "1543:1:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_rational_1_by_1",
+                              "typeString": "int_const 1"
+                            },
+                            "value": "1"
+                          },
+                          "src": "1537:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41499,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "NewExpression",
+                        "src": "1521:15:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (uint256) pure returns (struct MultiCall memory[] memory)"
+                        },
+                        "typeName": {
+                          "baseType": {
+                            "id": 41497,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                              "id": 41496,
+                              "name": "MultiCall",
+                              "nodeType": "IdentifierPath",
+                              "referencedDeclaration": 41340,
+                              "src": "1525:9:50"
+                            },
+                            "referencedDeclaration": 41340,
+                            "src": "1525:9:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                              "typeString": "struct MultiCall"
+                            }
+                          },
+                          "id": 41498,
+                          "nodeType": "ArrayTypeName",
+                          "src": "1525:11:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                            "typeString": "struct MultiCall[]"
+                          }
+                        }
+                      },
+                      "id": 41503,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1521:24:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "src": "1515:30:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct MultiCall memory[] memory"
+                    }
+                  },
+                  "id": 41505,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1515:30:50"
+                },
+                {
+                  "body": {
+                    "id": 41526,
+                    "nodeType": "Block",
+                    "src": "1582:116:50",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 41520,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "id": 41512,
+                              "name": "res",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41488,
+                              "src": "1596:3:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct MultiCall memory[] memory"
+                              }
+                            },
+                            "id": 41514,
+                            "indexExpression": {
+                              "id": 41513,
+                              "name": "i",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41507,
+                              "src": "1600:1:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "1596:6:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "arguments": [
+                              {
+                                "baseExpression": {
+                                  "id": 41516,
+                                  "name": "calls",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41480,
+                                  "src": "1619:5:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                    "typeString": "struct MultiCall memory[] memory"
+                                  }
+                                },
+                                "id": 41518,
+                                "indexExpression": {
+                                  "id": 41517,
+                                  "name": "i",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41507,
+                                  "src": "1625:1:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                  }
+                                },
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "nodeType": "IndexAccess",
+                                "src": "1619:8:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                  "typeString": "struct MultiCall memory"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                  "typeString": "struct MultiCall memory"
+                                }
+                              ],
+                              "id": 41515,
+                              "name": "copyMulticall",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41357,
+                              "src": "1605:13:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                                "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                              }
+                            },
+                            "id": 41519,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "functionCall",
+                            "lValueRequested": false,
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "1605:23:50",
+                            "tryCall": false,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "src": "1596:32:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        },
+                        "id": 41521,
+                        "nodeType": "ExpressionStatement",
+                        "src": "1596:32:50"
+                      },
+                      {
+                        "id": 41525,
+                        "nodeType": "UncheckedBlock",
+                        "src": "1642:46:50",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41523,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "1670:3:50",
+                              "subExpression": {
+                                "id": 41522,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41507,
+                                "src": "1672:1:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41524,
+                            "nodeType": "ExpressionStatement",
+                            "src": "1670:3:50"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41511,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41509,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41507,
+                      "src": "1571:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "id": 41510,
+                      "name": "len",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41491,
+                      "src": "1575:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1571:7:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41527,
+                  "initializationExpression": {
+                    "assignments": [
+                      41507
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 41507,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "1568:1:50",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 41527,
+                        "src": "1560:9:50",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 41506,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1560:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 41508,
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "1560:9:50"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "1555:143:50"
+                },
+                {
+                  "expression": {
+                    "id": 41534,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 41528,
+                        "name": "res",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41488,
+                        "src": "1707:3:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        }
+                      },
+                      "id": 41530,
+                      "indexExpression": {
+                        "id": 41529,
+                        "name": "len",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41491,
+                        "src": "1711:3:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1707:8:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                        "typeString": "struct MultiCall memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 41532,
+                          "name": "newCall",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41483,
+                          "src": "1732:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        ],
+                        "id": 41531,
+                        "name": "copyMulticall",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41357,
+                        "src": "1718:13:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                          "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                        }
+                      },
+                      "id": 41533,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1718:22:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                        "typeString": "struct MultiCall memory"
+                      }
+                    },
+                    "src": "1707:33:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                      "typeString": "struct MultiCall memory"
+                    }
+                  },
+                  "id": 41535,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1707:33:50"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "append",
+            "nameLocation": "1335:6:50",
+            "parameters": {
+              "id": 41484,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41480,
+                  "mutability": "mutable",
+                  "name": "calls",
+                  "nameLocation": "1361:5:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41537,
+                  "src": "1342:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41478,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41477,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "1342:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "1342:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41479,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1342:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41483,
+                  "mutability": "mutable",
+                  "name": "newCall",
+                  "nameLocation": "1385:7:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41537,
+                  "src": "1368:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                    "typeString": "struct MultiCall"
+                  },
+                  "typeName": {
+                    "id": 41482,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41481,
+                      "name": "MultiCall",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41340,
+                      "src": "1368:9:50"
+                    },
+                    "referencedDeclaration": 41340,
+                    "src": "1368:9:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                      "typeString": "struct MultiCall"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1341:52:50"
+            },
+            "returnParameters": {
+              "id": 41489,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41488,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "1460:3:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41537,
+                  "src": "1441:22:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41486,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41485,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "1441:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "1441:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41487,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1441:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1440:24:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41601,
+            "nodeType": "FunctionDefinition",
+            "src": "1753:429:50",
+            "body": {
+              "id": 41600,
+              "nodeType": "Block",
+              "src": "1897:285:50",
+              "statements": [
+                {
+                  "assignments": [
+                    41552
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 41552,
+                      "mutability": "mutable",
+                      "name": "len",
+                      "nameLocation": "1915:3:50",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 41600,
+                      "src": "1907:11:50",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 41551,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1907:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 41555,
+                  "initialValue": {
+                    "expression": {
+                      "id": 41553,
+                      "name": "calls",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41541,
+                      "src": "1921:5:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "id": 41554,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "length",
+                    "nodeType": "MemberAccess",
+                    "src": "1921:12:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1907:26:50"
+                },
+                {
+                  "expression": {
+                    "id": 41565,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 41556,
+                      "name": "res",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41549,
+                      "src": "1943:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "commonType": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          "id": 41563,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftExpression": {
+                            "id": 41561,
+                            "name": "len",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 41552,
+                            "src": "1965:3:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          },
+                          "nodeType": "BinaryOperation",
+                          "operator": "+",
+                          "rightExpression": {
+                            "hexValue": "31",
+                            "id": 41562,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "number",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "1971:1:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_rational_1_by_1",
+                              "typeString": "int_const 1"
+                            },
+                            "value": "1"
+                          },
+                          "src": "1965:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41560,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "NewExpression",
+                        "src": "1949:15:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (uint256) pure returns (struct MultiCall memory[] memory)"
+                        },
+                        "typeName": {
+                          "baseType": {
+                            "id": 41558,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                              "id": 41557,
+                              "name": "MultiCall",
+                              "nodeType": "IdentifierPath",
+                              "referencedDeclaration": 41340,
+                              "src": "1953:9:50"
+                            },
+                            "referencedDeclaration": 41340,
+                            "src": "1953:9:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                              "typeString": "struct MultiCall"
+                            }
+                          },
+                          "id": 41559,
+                          "nodeType": "ArrayTypeName",
+                          "src": "1953:11:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                            "typeString": "struct MultiCall[]"
+                          }
+                        }
+                      },
+                      "id": 41564,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1949:24:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "src": "1943:30:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct MultiCall memory[] memory"
+                    }
+                  },
+                  "id": 41566,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1943:30:50"
+                },
+                {
+                  "expression": {
+                    "id": 41573,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 41567,
+                        "name": "res",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41549,
+                        "src": "1983:3:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        }
+                      },
+                      "id": 41569,
+                      "indexExpression": {
+                        "hexValue": "30",
+                        "id": 41568,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1987:1:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1983:6:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                        "typeString": "struct MultiCall memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 41571,
+                          "name": "newCall",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41544,
+                          "src": "2006:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        ],
+                        "id": 41570,
+                        "name": "copyMulticall",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41357,
+                        "src": "1992:13:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                          "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                        }
+                      },
+                      "id": 41572,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1992:22:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                        "typeString": "struct MultiCall memory"
+                      }
+                    },
+                    "src": "1983:31:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                      "typeString": "struct MultiCall memory"
+                    }
+                  },
+                  "id": 41574,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1983:31:50"
+                },
+                {
+                  "body": {
+                    "id": 41598,
+                    "nodeType": "Block",
+                    "src": "2060:116:50",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 41592,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "id": 41584,
+                              "name": "res",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41549,
+                              "src": "2074:3:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct MultiCall memory[] memory"
+                              }
+                            },
+                            "id": 41586,
+                            "indexExpression": {
+                              "id": 41585,
+                              "name": "i",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41576,
+                              "src": "2078:1:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "2074:6:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "arguments": [
+                              {
+                                "baseExpression": {
+                                  "id": 41588,
+                                  "name": "calls",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41541,
+                                  "src": "2097:5:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                    "typeString": "struct MultiCall memory[] memory"
+                                  }
+                                },
+                                "id": 41590,
+                                "indexExpression": {
+                                  "id": 41589,
+                                  "name": "i",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 41576,
+                                  "src": "2103:1:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                  }
+                                },
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "nodeType": "IndexAccess",
+                                "src": "2097:8:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                  "typeString": "struct MultiCall memory"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                  "typeString": "struct MultiCall memory"
+                                }
+                              ],
+                              "id": 41587,
+                              "name": "copyMulticall",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41357,
+                              "src": "2083:13:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                                "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                              }
+                            },
+                            "id": 41591,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "functionCall",
+                            "lValueRequested": false,
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "2083:23:50",
+                            "tryCall": false,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "src": "2074:32:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        },
+                        "id": 41593,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2074:32:50"
+                      },
+                      {
+                        "id": 41597,
+                        "nodeType": "UncheckedBlock",
+                        "src": "2120:46:50",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41595,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "2148:3:50",
+                              "subExpression": {
+                                "id": 41594,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41576,
+                                "src": "2150:1:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41596,
+                            "nodeType": "ExpressionStatement",
+                            "src": "2148:3:50"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41583,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41579,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41576,
+                      "src": "2045:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "commonType": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "id": 41582,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "id": 41580,
+                        "name": "len",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41552,
+                        "src": "2049:3:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": "+",
+                      "rightExpression": {
+                        "hexValue": "31",
+                        "id": 41581,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "2055:1:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_1_by_1",
+                          "typeString": "int_const 1"
+                        },
+                        "value": "1"
+                      },
+                      "src": "2049:7:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2045:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41599,
+                  "initializationExpression": {
+                    "assignments": [
+                      41576
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 41576,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "2038:1:50",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 41599,
+                        "src": "2030:9:50",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 41575,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "2030:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 41578,
+                    "initialValue": {
+                      "hexValue": "31",
+                      "id": 41577,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "2042:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_1_by_1",
+                        "typeString": "int_const 1"
+                      },
+                      "value": "1"
+                    },
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "2030:13:50"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "2025:151:50"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "prepend",
+            "nameLocation": "1762:7:50",
+            "parameters": {
+              "id": 41545,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41541,
+                  "mutability": "mutable",
+                  "name": "calls",
+                  "nameLocation": "1789:5:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41601,
+                  "src": "1770:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41539,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41538,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "1770:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "1770:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41540,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1770:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41544,
+                  "mutability": "mutable",
+                  "name": "newCall",
+                  "nameLocation": "1813:7:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41601,
+                  "src": "1796:24:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                    "typeString": "struct MultiCall"
+                  },
+                  "typeName": {
+                    "id": 41543,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 41542,
+                      "name": "MultiCall",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 41340,
+                      "src": "1796:9:50"
+                    },
+                    "referencedDeclaration": 41340,
+                    "src": "1796:9:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                      "typeString": "struct MultiCall"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1769:52:50"
+            },
+            "returnParameters": {
+              "id": 41550,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41549,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "1888:3:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41601,
+                  "src": "1869:22:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41547,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41546,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "1869:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "1869:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41548,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1869:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1868:24:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 41690,
+            "nodeType": "FunctionDefinition",
+            "src": "2188:642:50",
+            "body": {
+              "id": 41689,
+              "nodeType": "Block",
+              "src": "2333:497:50",
+              "statements": [
+                {
+                  "assignments": [
+                    41617
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 41617,
+                      "mutability": "mutable",
+                      "name": "len1",
+                      "nameLocation": "2351:4:50",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 41689,
+                      "src": "2343:12:50",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 41616,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "2343:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 41620,
+                  "initialValue": {
+                    "expression": {
+                      "id": 41618,
+                      "name": "calls1",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41605,
+                      "src": "2358:6:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "id": 41619,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "length",
+                    "nodeType": "MemberAccess",
+                    "src": "2358:13:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "2343:28:50"
+                },
+                {
+                  "assignments": [
+                    41622
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 41622,
+                      "mutability": "mutable",
+                      "name": "lenTotal",
+                      "nameLocation": "2389:8:50",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 41689,
+                      "src": "2381:16:50",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 41621,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "2381:7:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 41627,
+                  "initialValue": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41626,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41623,
+                      "name": "len1",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41617,
+                      "src": "2400:4:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "+",
+                    "rightExpression": {
+                      "expression": {
+                        "id": 41624,
+                        "name": "calls2",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41609,
+                        "src": "2407:6:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        }
+                      },
+                      "id": 41625,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "src": "2407:13:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2400:20:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "2381:39:50"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41631,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41628,
+                      "name": "lenTotal",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41622,
+                      "src": "2435:8:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "expression": {
+                        "id": 41629,
+                        "name": "calls1",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41605,
+                        "src": "2447:6:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        }
+                      },
+                      "id": 41630,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "src": "2447:13:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2435:25:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41636,
+                  "nodeType": "IfStatement",
+                  "src": "2431:51:50",
+                  "trueBody": {
+                    "expression": {
+                      "arguments": [
+                        {
+                          "id": 41633,
+                          "name": "calls1",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41605,
+                          "src": "2475:6:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        ],
+                        "id": 41632,
+                        "name": "clone",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41476,
+                        "src": "2469:5:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (struct MultiCall memory[] memory) pure returns (struct MultiCall memory[] memory)"
+                        }
+                      },
+                      "id": 41634,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "2469:13:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "functionReturnParameters": 41615,
+                    "id": 41635,
+                    "nodeType": "Return",
+                    "src": "2462:20:50"
+                  }
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41640,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41637,
+                      "name": "lenTotal",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41622,
+                      "src": "2496:8:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "expression": {
+                        "id": 41638,
+                        "name": "calls2",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41609,
+                        "src": "2508:6:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct MultiCall memory[] memory"
+                        }
+                      },
+                      "id": 41639,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "src": "2508:13:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2496:25:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41645,
+                  "nodeType": "IfStatement",
+                  "src": "2492:51:50",
+                  "trueBody": {
+                    "expression": {
+                      "arguments": [
+                        {
+                          "id": 41642,
+                          "name": "calls2",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41609,
+                          "src": "2536:6:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                            "typeString": "struct MultiCall memory[] memory"
+                          }
+                        ],
+                        "id": 41641,
+                        "name": "clone",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 41476,
+                        "src": "2530:5:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (struct MultiCall memory[] memory) pure returns (struct MultiCall memory[] memory)"
+                        }
+                      },
+                      "id": 41643,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "2530:13:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "functionReturnParameters": 41615,
+                    "id": 41644,
+                    "nodeType": "Return",
+                    "src": "2523:20:50"
+                  }
+                },
+                {
+                  "expression": {
+                    "id": 41653,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 41646,
+                      "name": "res",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41614,
+                      "src": "2554:3:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 41651,
+                          "name": "lenTotal",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 41622,
+                          "src": "2576:8:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 41650,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "NewExpression",
+                        "src": "2560:15:50",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function (uint256) pure returns (struct MultiCall memory[] memory)"
+                        },
+                        "typeName": {
+                          "baseType": {
+                            "id": 41648,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                              "id": 41647,
+                              "name": "MultiCall",
+                              "nodeType": "IdentifierPath",
+                              "referencedDeclaration": 41340,
+                              "src": "2564:9:50"
+                            },
+                            "referencedDeclaration": 41340,
+                            "src": "2564:9:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                              "typeString": "struct MultiCall"
+                            }
+                          },
+                          "id": 41649,
+                          "nodeType": "ArrayTypeName",
+                          "src": "2564:11:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                            "typeString": "struct MultiCall[]"
+                          }
+                        }
+                      },
+                      "id": 41652,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "2560:25:50",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct MultiCall memory[] memory"
+                      }
+                    },
+                    "src": "2554:31:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct MultiCall memory[] memory"
+                    }
+                  },
+                  "id": 41654,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2554:31:50"
+                },
+                {
+                  "body": {
+                    "id": 41687,
+                    "nodeType": "Block",
+                    "src": "2628:196:50",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 41681,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "id": 41661,
+                              "name": "res",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41614,
+                              "src": "2642:3:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                "typeString": "struct MultiCall memory[] memory"
+                              }
+                            },
+                            "id": 41663,
+                            "indexExpression": {
+                              "id": 41662,
+                              "name": "i",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 41656,
+                              "src": "2646:1:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "2642:6:50",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "condition": {
+                              "components": [
+                                {
+                                  "commonType": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                  },
+                                  "id": 41666,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "leftExpression": {
+                                    "id": 41664,
+                                    "name": "i",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 41656,
+                                    "src": "2652:1:50",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  },
+                                  "nodeType": "BinaryOperation",
+                                  "operator": "<",
+                                  "rightExpression": {
+                                    "id": 41665,
+                                    "name": "len1",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 41617,
+                                    "src": "2656:4:50",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  },
+                                  "src": "2652:8:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_bool",
+                                    "typeString": "bool"
+                                  }
+                                }
+                              ],
+                              "id": 41667,
+                              "isConstant": false,
+                              "isInlineArray": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "TupleExpression",
+                              "src": "2651:10:50",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                              }
+                            },
+                            "falseExpression": {
+                              "arguments": [
+                                {
+                                  "baseExpression": {
+                                    "id": 41674,
+                                    "name": "calls2",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 41609,
+                                    "src": "2737:6:50",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                      "typeString": "struct MultiCall memory[] memory"
+                                    }
+                                  },
+                                  "id": 41678,
+                                  "indexExpression": {
+                                    "commonType": {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    },
+                                    "id": 41677,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftExpression": {
+                                      "id": 41675,
+                                      "name": "i",
+                                      "nodeType": "Identifier",
+                                      "overloadedDeclarations": [],
+                                      "referencedDeclaration": 41656,
+                                      "src": "2744:1:50",
+                                      "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                      }
+                                    },
+                                    "nodeType": "BinaryOperation",
+                                    "operator": "-",
+                                    "rightExpression": {
+                                      "id": 41676,
+                                      "name": "len1",
+                                      "nodeType": "Identifier",
+                                      "overloadedDeclarations": [],
+                                      "referencedDeclaration": 41617,
+                                      "src": "2748:4:50",
+                                      "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                      }
+                                    },
+                                    "src": "2744:8:50",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  },
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "nodeType": "IndexAccess",
+                                  "src": "2737:16:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                    "typeString": "struct MultiCall memory"
+                                  }
+                                }
+                              ],
+                              "expression": {
+                                "argumentTypes": [
+                                  {
+                                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                    "typeString": "struct MultiCall memory"
+                                  }
+                                ],
+                                "id": 41673,
+                                "name": "copyMulticall",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41357,
+                                "src": "2723:13:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                                  "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                                }
+                              },
+                              "id": 41679,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "kind": "functionCall",
+                              "lValueRequested": false,
+                              "names": [],
+                              "nodeType": "FunctionCall",
+                              "src": "2723:31:50",
+                              "tryCall": false,
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                "typeString": "struct MultiCall memory"
+                              }
+                            },
+                            "id": 41680,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "nodeType": "Conditional",
+                            "src": "2651:103:50",
+                            "trueExpression": {
+                              "arguments": [
+                                {
+                                  "baseExpression": {
+                                    "id": 41669,
+                                    "name": "calls1",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 41605,
+                                    "src": "2694:6:50",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                                      "typeString": "struct MultiCall memory[] memory"
+                                    }
+                                  },
+                                  "id": 41671,
+                                  "indexExpression": {
+                                    "id": 41670,
+                                    "name": "i",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 41656,
+                                    "src": "2701:1:50",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  },
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "nodeType": "IndexAccess",
+                                  "src": "2694:9:50",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                    "typeString": "struct MultiCall memory"
+                                  }
+                                }
+                              ],
+                              "expression": {
+                                "argumentTypes": [
+                                  {
+                                    "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                    "typeString": "struct MultiCall memory"
+                                  }
+                                ],
+                                "id": 41668,
+                                "name": "copyMulticall",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41357,
+                                "src": "2680:13:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_function_internal_pure$_t_struct$_MultiCall_$41340_memory_ptr_$returns$_t_struct$_MultiCall_$41340_memory_ptr_$",
+                                  "typeString": "function (struct MultiCall memory) pure returns (struct MultiCall memory)"
+                                }
+                              },
+                              "id": 41672,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "kind": "functionCall",
+                              "lValueRequested": false,
+                              "names": [],
+                              "nodeType": "FunctionCall",
+                              "src": "2680:24:50",
+                              "tryCall": false,
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                                "typeString": "struct MultiCall memory"
+                              }
+                            },
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                              "typeString": "struct MultiCall memory"
+                            }
+                          },
+                          "src": "2642:112:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MultiCall_$41340_memory_ptr",
+                            "typeString": "struct MultiCall memory"
+                          }
+                        },
+                        "id": 41682,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2642:112:50"
+                      },
+                      {
+                        "id": 41686,
+                        "nodeType": "UncheckedBlock",
+                        "src": "2768:46:50",
+                        "statements": [
+                          {
+                            "expression": {
+                              "id": 41684,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "++",
+                              "prefix": true,
+                              "src": "2796:3:50",
+                              "subExpression": {
+                                "id": 41683,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 41656,
+                                "src": "2798:1:50",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 41685,
+                            "nodeType": "ExpressionStatement",
+                            "src": "2796:3:50"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 41660,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 41658,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41656,
+                      "src": "2612:1:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "id": 41659,
+                      "name": "lenTotal",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 41622,
+                      "src": "2616:8:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2612:12:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 41688,
+                  "initializationExpression": {
+                    "assignments": [
+                      41656
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 41656,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "2609:1:50",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 41688,
+                        "src": "2601:9:50",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 41655,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "2601:7:50",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 41657,
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "2601:9:50"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "2596:228:50"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "concat",
+            "nameLocation": "2197:6:50",
+            "parameters": {
+              "id": 41610,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41605,
+                  "mutability": "mutable",
+                  "name": "calls1",
+                  "nameLocation": "2223:6:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41690,
+                  "src": "2204:25:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41603,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41602,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "2204:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "2204:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41604,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2204:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 41609,
+                  "mutability": "mutable",
+                  "name": "calls2",
+                  "nameLocation": "2250:6:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41690,
+                  "src": "2231:25:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41607,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41606,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "2231:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "2231:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41608,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2231:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2203:54:50"
+            },
+            "returnParameters": {
+              "id": 41615,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 41614,
+                  "mutability": "mutable",
+                  "name": "res",
+                  "nameLocation": "2324:3:50",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 41690,
+                  "src": "2305:22:50",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct MultiCall[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 41612,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 41611,
+                        "name": "MultiCall",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 41340,
+                        "src": "2305:9:50"
+                      },
+                      "referencedDeclaration": 41340,
+                      "src": "2305:9:50",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MultiCall_$41340_storage_ptr",
+                        "typeString": "struct MultiCall"
+                      }
+                    },
+                    "id": 41613,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2305:11:50",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_MultiCall_$41340_storage_$dyn_storage_ptr",
+                      "typeString": "struct MultiCall[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2304:24:50"
+            },
+            "scope": 41691,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "MultiCallOps",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          41691
+        ],
+        "name": "MultiCallOps",
+        "nameLocation": "132:12:50",
+        "scope": 41692,
+        "usedErrors": []
+      }
+    ],
+    "license": "BUSL-1.1"
+  },
+  "id": 50
+}

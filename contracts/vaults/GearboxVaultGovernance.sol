@@ -16,9 +16,10 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         VaultGovernance(internalParams_)
     {
         require(delayedProtocolParams_.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
-        require(delayedProtocolParams_.crvEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.cvxEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.wethAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.minSlippageD <= DENOMINATOR, ExceptionsLibrary.INVARIANT);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -42,9 +43,10 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                 DelayedProtocolParams({
                     withdrawDelay: 0,
                     referralCode: 0,
-                    crvEthPool: address(0),
-                    cvxEthPool: address(0),
-                    wethAddress: address(0)
+                    univ3Adapter: address(0),
+                    crv: address(0),
+                    cvx: address(0),
+                    minSlippageD: 0
                 });
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
@@ -95,9 +97,10 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     /// @inheritdoc IGearboxVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
         require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
-        require(params.crvEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.cvxEthPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.wethAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.minSlippageD <= DENOMINATOR, ExceptionsLibrary.INVARIANT);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }

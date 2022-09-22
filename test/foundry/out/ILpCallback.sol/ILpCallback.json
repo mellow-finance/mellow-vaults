@@ -1,0 +1,214 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "depositCallback",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawCallback",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "depositCallback()": "e521826f",
+    "withdrawCallback()": "b4559f3e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"depositCallback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"withdrawCallback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"depositCallback()\":{\"notice\":\"Function, that ERC20RootVault calling after deposit\"},\"withdrawCallback()\":{\"notice\":\"Function, that ERC20RootVault calling after withdraw\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/utils/ILpCallback.sol\":\"ILpCallback\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/interfaces/utils/ILpCallback.sol\":{\"keccak256\":\"0xa8c24e70ae284dbe0bc845c10a8efbcb0836504ea9c66dec3a8b816c5a5ab31a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ff9d22182c2e01120d54d3b89bafba919a04525f9cb1d7e24a6cf2c43fb2b29b\",\"dweb:/ipfs/QmYMAkXfY2ioabPdANXT42fshKzQMYGknicp81mZzAskL9\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "depositCallback"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawCallback"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "depositCallback()": {
+            "notice": "Function, that ERC20RootVault calling after deposit"
+          },
+          "withdrawCallback()": {
+            "notice": "Function, that ERC20RootVault calling after withdraw"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/utils/ILpCallback.sol": "ILpCallback"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/utils/ILpCallback.sol": {
+        "keccak256": "0xa8c24e70ae284dbe0bc845c10a8efbcb0836504ea9c66dec3a8b816c5a5ab31a",
+        "urls": [
+          "bzz-raw://ff9d22182c2e01120d54d3b89bafba919a04525f9cb1d7e24a6cf2c43fb2b29b",
+          "dweb:/ipfs/QmYMAkXfY2ioabPdANXT42fshKzQMYGknicp81mZzAskL9"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/utils/ILpCallback.sol",
+    "id": 12555,
+    "exportedSymbols": {
+      "ILpCallback": [
+        12554
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:271:56",
+    "nodes": [
+      {
+        "id": 12545,
+        "nodeType": "PragmaDirective",
+        "src": "32:22:56",
+        "literals": [
+          "solidity",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 12554,
+        "nodeType": "ContractDefinition",
+        "src": "56:246:56",
+        "nodes": [
+          {
+            "id": 12549,
+            "nodeType": "FunctionDefinition",
+            "src": "152:36:56",
+            "documentation": {
+              "id": 12546,
+              "nodeType": "StructuredDocumentation",
+              "src": "84:63:56",
+              "text": "@notice Function, that ERC20RootVault calling after deposit"
+            },
+            "functionSelector": "e521826f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "depositCallback",
+            "nameLocation": "161:15:56",
+            "parameters": {
+              "id": 12547,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "176:2:56"
+            },
+            "returnParameters": {
+              "id": 12548,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "187:0:56"
+            },
+            "scope": 12554,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12553,
+            "nodeType": "FunctionDefinition",
+            "src": "263:37:56",
+            "documentation": {
+              "id": 12550,
+              "nodeType": "StructuredDocumentation",
+              "src": "194:64:56",
+              "text": "@notice Function, that ERC20RootVault calling after withdraw"
+            },
+            "functionSelector": "b4559f3e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawCallback",
+            "nameLocation": "272:16:56",
+            "parameters": {
+              "id": 12551,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "288:2:56"
+            },
+            "returnParameters": {
+              "id": 12552,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "299:0:56"
+            },
+            "scope": 12554,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "ILpCallback",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          12554
+        ],
+        "name": "ILpCallback",
+        "nameLocation": "66:11:56",
+        "scope": 12555,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 56
+}

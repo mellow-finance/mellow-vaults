@@ -1,0 +1,4021 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "MAX_MANAGEMENT_FEE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_PERFORMANCE_FEE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_PROTOCOL_FEE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "commitDelayedProtocolParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "commitDelayedProtocolPerVaultParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "commitDelayedStrategyParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "commitInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "strategy_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "subvaultNfts_",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        }
+      ],
+      "name": "createVault",
+      "outputs": [
+        {
+          "internalType": "contract IERC20RootVault",
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "managementFeeChargeDelay",
+              "type": "uint256"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "protocolFee",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "strategyTreasury",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "strategyPerformanceTreasury",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "privateVault",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "performanceFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "depositCallbackAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "withdrawCallbackAddress",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedStrategyParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "operatorParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bool",
+              "name": "disableDeposit",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.OperatorParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bool",
+              "name": "disableDeposit",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.OperatorParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "setOperatorParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenLimitPerAddress",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenLimit",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.StrategyParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "setStrategyParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "managementFeeChargeDelay",
+              "type": "uint256"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageDelayedProtocolParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "protocolFee",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageDelayedProtocolPerVaultParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "strategyTreasury",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "strategyPerformanceTreasury",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "privateVault",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "performanceFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "depositCallbackAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "withdrawCallbackAddress",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedStrategyParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageDelayedStrategyParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedDelayedProtocolParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "managementFeeChargeDelay",
+              "type": "uint256"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "stagedDelayedProtocolPerVaultParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "protocolFee",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "stagedDelayedStrategyParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "strategyTreasury",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "strategyPerformanceTreasury",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "privateVault",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "performanceFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "depositCallbackAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "withdrawCallbackAddress",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.DelayedStrategyParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedInternalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "strategyParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenLimitPerAddress",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenLimit",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IERC20RootVaultGovernance.StrategyParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "MAX_MANAGEMENT_FEE()": "9908840c",
+    "MAX_PERFORMANCE_FEE()": "bdca9165",
+    "MAX_PROTOCOL_FEE()": "b8ca3b83",
+    "commitDelayedProtocolParams()": "98347a5d",
+    "commitDelayedProtocolPerVaultParams(uint256)": "ee2d59f4",
+    "commitDelayedStrategyParams(uint256)": "0bdedd56",
+    "commitInternalParams()": "d4a07d34",
+    "createVault(address[],address,uint256[],address)": "f699a607",
+    "delayedProtocolParams()": "d34cc380",
+    "delayedProtocolParamsTimestamp()": "e4af6e79",
+    "delayedProtocolPerVaultParams(uint256)": "dbb1c35f",
+    "delayedProtocolPerVaultParamsTimestamp(uint256)": "511ce798",
+    "delayedStrategyParams(uint256)": "8860d248",
+    "delayedStrategyParamsTimestamp(uint256)": "6707acee",
+    "internalParams()": "7ac46fbb",
+    "internalParamsTimestamp()": "1c7f4c73",
+    "operatorParams()": "db2030aa",
+    "setOperatorParams((bool))": "c8e8a766",
+    "setStrategyParams(uint256,(uint256,uint256))": "afd2c7e9",
+    "stageDelayedProtocolParams((uint256,address))": "3d8c08b9",
+    "stageDelayedProtocolPerVaultParams(uint256,(uint256))": "59331d78",
+    "stageDelayedStrategyParams(uint256,(address,address,bool,uint256,uint256,address,address))": "221cc263",
+    "stageInternalParams((address,address,address))": "09946538",
+    "stagedDelayedProtocolParams()": "c2cbdc67",
+    "stagedDelayedProtocolPerVaultParams(uint256)": "8e207dda",
+    "stagedDelayedStrategyParams(uint256)": "59f3dae7",
+    "stagedInternalParams()": "86c6be3e",
+    "strategyParams(uint256)": "12466b68"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"MAX_MANAGEMENT_FEE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MAX_PERFORMANCE_FEE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MAX_PROTOCOL_FEE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"commitDelayedProtocolParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"commitDelayedProtocolPerVaultParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"commitDelayedStrategyParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"commitInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"strategy_\",\"type\":\"address\"},{\"internalType\":\"uint256[]\",\"name\":\"subvaultNfts_\",\"type\":\"uint256[]\"},{\"internalType\":\"address\",\"name\":\"owner_\",\"type\":\"address\"}],\"name\":\"createVault\",\"outputs\":[{\"internalType\":\"contract IERC20RootVault\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"managementFeeChargeDelay\",\"type\":\"uint256\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedProtocolParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"protocolFee\",\"type\":\"uint256\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParams\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"strategyTreasury\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"strategyPerformanceTreasury\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"privateVault\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"managementFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"performanceFee\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"depositCallbackAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"withdrawCallbackAddress\",\"type\":\"address\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedStrategyParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"operatorParams\",\"outputs\":[{\"components\":[{\"internalType\":\"bool\",\"name\":\"disableDeposit\",\"type\":\"bool\"}],\"internalType\":\"struct IERC20RootVaultGovernance.OperatorParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bool\",\"name\":\"disableDeposit\",\"type\":\"bool\"}],\"internalType\":\"struct IERC20RootVaultGovernance.OperatorParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"setOperatorParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenLimitPerAddress\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tokenLimit\",\"type\":\"uint256\"}],\"internalType\":\"struct IERC20RootVaultGovernance.StrategyParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"setStrategyParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"managementFeeChargeDelay\",\"type\":\"uint256\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedProtocolParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"stageDelayedProtocolParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"protocolFee\",\"type\":\"uint256\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"stageDelayedProtocolPerVaultParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"strategyTreasury\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"strategyPerformanceTreasury\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"privateVault\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"managementFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"performanceFee\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"depositCallbackAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"withdrawCallbackAddress\",\"type\":\"address\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedStrategyParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"stageDelayedStrategyParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedDelayedProtocolParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"managementFeeChargeDelay\",\"type\":\"uint256\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedProtocolParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"stagedDelayedProtocolPerVaultParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"protocolFee\",\"type\":\"uint256\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"stagedDelayedStrategyParams\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"strategyTreasury\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"strategyPerformanceTreasury\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"privateVault\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"managementFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"performanceFee\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"depositCallbackAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"withdrawCallbackAddress\",\"type\":\"address\"}],\"internalType\":\"struct IERC20RootVaultGovernance.DelayedStrategyParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedInternalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"strategyParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenLimitPerAddress\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tokenLimit\",\"type\":\"uint256\"}],\"internalType\":\"struct IERC20RootVaultGovernance.StrategyParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"commitDelayedProtocolPerVaultParams(uint256)\":{\"details\":\"Can only be called after delayedProtocolPerVaultParamsTimestamp\",\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"commitDelayedStrategyParams(uint256)\":{\"details\":\"Can only be called after delayedStrategyParamsTimestamp\",\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"createVault(address[],address,uint256[],address)\":{\"params\":{\"owner_\":\"Owner of the vault NFT\",\"strategy_\":\"The address that will have approvals for subvaultNfts\",\"subvaultNfts_\":\"The NFTs of the subvaults that will be aggregated by this ERC20RootVault\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"delayedProtocolPerVaultParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"delayedStrategyParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"delayedStrategyParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"setOperatorParams((bool))\":{\"params\":{\"params\":\"New params\"}},\"setStrategyParams(uint256,(uint256,uint256))\":{\"params\":{\"nft\":\"Nft of the vault\",\"params\":\"New params\"}},\"stageDelayedProtocolParams((uint256,address))\":{\"details\":\"Can only be called after delayedProtocolParamsTimestamp.\",\"params\":{\"params\":\"New params\"}},\"stageDelayedProtocolPerVaultParams(uint256,(uint256))\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\",\"params\":\"New params\"}},\"stageDelayedStrategyParams(uint256,(address,address,bool,uint256,uint256,address,address))\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\",\"params\":\"New params\"}},\"stageInternalParams((address,address,address))\":{\"params\":{\"newParams\":\"New Internal Params\"}},\"stagedDelayedProtocolPerVaultParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"stagedDelayedStrategyParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"stagedInternalParams()\":{\"details\":\"The Internal Params could be committed after internalParamsTimestamp\"},\"strategyParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"MAX_MANAGEMENT_FEE()\":{\"notice\":\"Number of maximum management fee\"},\"MAX_PERFORMANCE_FEE()\":{\"notice\":\"Number of maximum performance fee\"},\"MAX_PROTOCOL_FEE()\":{\"notice\":\"Number of maximum protocol fee\"},\"commitDelayedProtocolParams()\":{\"notice\":\"Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"commitDelayedProtocolPerVaultParams(uint256)\":{\"notice\":\"Commit Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"commitDelayedStrategyParams(uint256)\":{\"notice\":\"Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\"},\"commitInternalParams()\":{\"notice\":\"Commit staged Internal Params.\"},\"createVault(address[],address,uint256[],address)\":{\"notice\":\"Deploys a new vault.\"},\"delayedProtocolParams()\":{\"notice\":\"Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"delayedProtocolParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.\"},\"delayedProtocolPerVaultParams(uint256)\":{\"notice\":\"Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\"},\"delayedStrategyParams(uint256)\":{\"notice\":\"Delayed Strategy Params\"},\"delayedStrategyParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\"},\"internalParams()\":{\"notice\":\"Internal Params of the contract.\"},\"internalParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Internal Params could be committed.\"},\"operatorParams()\":{\"notice\":\"Operator Params.\"},\"setOperatorParams((bool))\":{\"notice\":\"Set Operator params, i.e. Params that could be changed by Operator or Protocol Governance immediately.\"},\"setStrategyParams(uint256,(uint256,uint256))\":{\"notice\":\"Set Strategy params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.\"},\"stageDelayedProtocolParams((uint256,address))\":{\"notice\":\"Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"stageDelayedProtocolPerVaultParams(uint256,(uint256))\":{\"notice\":\"Stage Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"stageDelayedStrategyParams(uint256,(address,address,bool,uint256,uint256,address,address))\":{\"notice\":\"Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\"},\"stageInternalParams((address,address,address))\":{\"notice\":\"Stage new Internal Params.\"},\"stagedDelayedProtocolParams()\":{\"notice\":\"Delayed Protocol Params staged for commit after delay.\"},\"stagedDelayedProtocolPerVaultParams(uint256)\":{\"notice\":\"Delayed Protocol Per Vault Params staged for commit after delay.\"},\"stagedDelayedStrategyParams(uint256)\":{\"notice\":\"Delayed Strategy Params staged for commit after delay.\"},\"stagedInternalParams()\":{\"notice\":\"Staged new Internal Params.\"},\"strategyParams(uint256)\":{\"notice\":\"Strategy Params.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IERC20RootVaultGovernance.sol\":\"IERC20RootVaultGovernance\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34\",\"dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x086fbe904291497e1532ef340f1bd589078f49e3d4d0bbfd88f5e02fb89261eb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0df1e3e965b78a0d98dda2d1d6a6acde88f515b1d3a9ad02f505e93fa7babeda\",\"dweb:/ipfs/QmW4cSbGriRAj7XRZu6zSaqspe4eyYWkF7WfJbj3rmmLbk\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x04ea2514f49503cc66574a08382b57f266d23dee04046b479e0cf64c9a0db270\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://87d8ca060d5ee11bc12b697c580e43267c45ab0d3a690f02b1388cf244eff7d7\",\"dweb:/ipfs/QmXW4jwheCFMtCjNu4bCxvc4XLr2DJyhKLq9DkqQhNU9rp\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x861ae02ad4ba132b8e03ceb19faf915dc800fed8a6f877c344ea2ebd83feb29c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c68568570ed80f1c5516bccf2554c4d228ff479b4bc5da473fff7b789b36abab\",\"dweb:/ipfs/Qmc1geu9fQwe166SY5dKLq3QGGovkCmfk36ZYd3eYp9pUM\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0x6c30a6796998d981b6614e57c857c74b38565df25606756635a29388257de21c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://60e248f1bf4749beb11979798ef0c7eb0f603ea49de2edcada8a503946bed962\",\"dweb:/ipfs/QmRCgnzokSjV3AKwHETNFm1yjgxgAJ9XrWueeyPBqS3EgD\"]},\"src/interfaces/oracles/IOracle.sol\":{\"keccak256\":\"0x64a04c20495bc7e46040acb0df28c866cfd2d4fd8eced03bc3595d817619dc19\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b2d2956b7c712ec6e1ac5580a0d96a47ae6527165128888c4681a0da21f1c60c\",\"dweb:/ipfs/QmP4aL5YTZ3NTCD1gjCN17nNwzeabLHkaK8rEtsdnnZ12R\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf4198613cc054350ce3ad3399fee584b363c27082f2a86645c58a2aab543862d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://71a66b3f5794aa7ff48a123a2927f5d588518638c65f6308d92f28b6205ef473\",\"dweb:/ipfs/QmVpCZwQcz8CDHKJL1DSbvmjJTRex3RyQHsAhFCX85GHBj\"]},\"src/interfaces/utils/IERC20RootVaultHelper.sol\":{\"keccak256\":\"0x83d7bc6139b7654637cb4c131756e04c1821196b02881b2889e69b77f0c2d607\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9c92ae78998d63a6017895e4ad5e9a72e1b38538c593a57dacb02b422b102e22\",\"dweb:/ipfs/QmYg9mPcgyfPH3yn15GqtiYdD7BYogey3HoMpFAbm55VV8\"]},\"src/interfaces/vaults/IAggregateVault.sol\":{\"keccak256\":\"0xc9809c6efcca7b5d622cacbf713a1aed349f29813d60e4ac8a739c7a28b1e4e1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9f052c4211c1935e468a26b08ed188a40612c85d0a04a1b8d68ff381096dd109\",\"dweb:/ipfs/QmdfkxEVXP1L1dDVJMTMVz4hkFZJknS6SHAb3HW2oGuUyM\"]},\"src/interfaces/vaults/IERC20RootVault.sol\":{\"keccak256\":\"0xcea0f93bd5b938f36718344f46094eef76a0486b4ad2202766e96bf9ed482405\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://e61a03e89d75a4639a0e1c7a4b10c1ec61582d7d90d9eb21320e481ac9a5b515\",\"dweb:/ipfs/QmPLBscvsfichUENL523wetDJtwe7wLAVNMuw8HQx9qaxw\"]},\"src/interfaces/vaults/IERC20RootVaultGovernance.sol\":{\"keccak256\":\"0xfe8264aac355d6aa1fdc5fb2e9ebad4a3958f893d4cd6a92828aef8375aaa0f3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://823c0bddb87e5a4c45a6a8e274efa542a4691c28a1a0557cc9c1ac5035847603\",\"dweb:/ipfs/QmQ1HnVwzGAsUF3ZTGobAQHDYgpj6pvmC8TjzqPUa273vZ\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x60d0972c0324d048aac990cef2830b8e4f4f76dc78f2490f1b3f448be325ec1e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b54d5934557e99e65b4736d5a5f9c88d235e1f8337c0c8c84cb3143de43bf90c\",\"dweb:/ipfs/QmXUGxGiEr6RxZtzcGUYqWvfvjqeH25Y2yWmZZ4dTc25yj\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0x316819e93c849dc1abe39baec0451c414e5998f51ec256c59c3fdc1ef5c22113\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be0b88b4099826d3a601f015edf91d601a8d2a7b910a84191d2d0044e4c92900\",\"dweb:/ipfs/QmNzsZ9RS9crmgxRdZMbRW2N6UvydjhAyWiVY8mL1uK6eS\"]},\"src/interfaces/vaults/IVaultRoot.sol\":{\"keccak256\":\"0x6f98973ef2b3281d35cd8f2e7c990a08b5fbedb94f68747afe47a65a69247c5f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://26201babaf4aa5412c3cc2a9554bf6d9e19668a2ae71c37e77bfe1d6f4a9d8c5\",\"dweb:/ipfs/QmQD9WA11iK6VaXd7m4eLx8gPrbmrb6LU5HXuphhiYm3hQ\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "MAX_MANAGEMENT_FEE",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "MAX_PERFORMANCE_FEE",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "MAX_PROTOCOL_FEE",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitDelayedProtocolParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitDelayedProtocolPerVaultParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitDelayedStrategyParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitInternalParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "strategy_",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "subvaultNfts_",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "address",
+              "name": "owner_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "createVault",
+          "outputs": [
+            {
+              "internalType": "contract IERC20RootVault",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "managementFeeChargeDelay",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "protocolFee",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedStrategyParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "strategyTreasury",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "strategyPerformanceTreasury",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "privateVault",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "managementFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "performanceFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "depositCallbackAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "withdrawCallbackAddress",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "operatorParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.OperatorParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "bool",
+                  "name": "disableDeposit",
+                  "type": "bool"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.OperatorParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "bool",
+                  "name": "disableDeposit",
+                  "type": "bool"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setOperatorParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "struct IERC20RootVaultGovernance.StrategyParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "tokenLimitPerAddress",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokenLimit",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setStrategyParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "managementFeeChargeDelay",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageDelayedProtocolParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "protocolFee",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageDelayedProtocolPerVaultParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedStrategyParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "strategyTreasury",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "strategyPerformanceTreasury",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "privateVault",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "managementFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "performanceFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "depositCallbackAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "withdrawCallbackAddress",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageDelayedStrategyParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedDelayedProtocolParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "managementFeeChargeDelay",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedDelayedProtocolPerVaultParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "protocolFee",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedDelayedStrategyParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.DelayedStrategyParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "strategyTreasury",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "strategyPerformanceTreasury",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "privateVault",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "managementFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "performanceFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "depositCallbackAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "withdrawCallbackAddress",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedInternalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "strategyParams",
+          "outputs": [
+            {
+              "internalType": "struct IERC20RootVaultGovernance.StrategyParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "tokenLimitPerAddress",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokenLimit",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "commitDelayedProtocolPerVaultParams(uint256)": {
+            "details": "Can only be called after delayedProtocolPerVaultParamsTimestamp",
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "commitDelayedStrategyParams(uint256)": {
+            "details": "Can only be called after delayedStrategyParamsTimestamp",
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "createVault(address[],address,uint256[],address)": {
+            "params": {
+              "owner_": "Owner of the vault NFT",
+              "strategy_": "The address that will have approvals for subvaultNfts",
+              "subvaultNfts_": "The NFTs of the subvaults that will be aggregated by this ERC20RootVault",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "delayedProtocolPerVaultParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "delayedStrategyParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "setOperatorParams((bool))": {
+            "params": {
+              "params": "New params"
+            }
+          },
+          "setStrategyParams(uint256,(uint256,uint256))": {
+            "params": {
+              "nft": "Nft of the vault",
+              "params": "New params"
+            }
+          },
+          "stageDelayedProtocolParams((uint256,address))": {
+            "details": "Can only be called after delayedProtocolParamsTimestamp.",
+            "params": {
+              "params": "New params"
+            }
+          },
+          "stageDelayedProtocolPerVaultParams(uint256,(uint256))": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault",
+              "params": "New params"
+            }
+          },
+          "stageDelayedStrategyParams(uint256,(address,address,bool,uint256,uint256,address,address))": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault",
+              "params": "New params"
+            }
+          },
+          "stageInternalParams((address,address,address))": {
+            "params": {
+              "newParams": "New Internal Params"
+            }
+          },
+          "stagedDelayedProtocolPerVaultParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "stagedDelayedStrategyParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "stagedInternalParams()": {
+            "details": "The Internal Params could be committed after internalParamsTimestamp"
+          },
+          "strategyParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "MAX_MANAGEMENT_FEE()": {
+            "notice": "Number of maximum management fee"
+          },
+          "MAX_PERFORMANCE_FEE()": {
+            "notice": "Number of maximum performance fee"
+          },
+          "MAX_PROTOCOL_FEE()": {
+            "notice": "Number of maximum protocol fee"
+          },
+          "commitDelayedProtocolParams()": {
+            "notice": "Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "commitDelayedProtocolPerVaultParams(uint256)": {
+            "notice": "Commit Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "commitDelayedStrategyParams(uint256)": {
+            "notice": "Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay."
+          },
+          "commitInternalParams()": {
+            "notice": "Commit staged Internal Params."
+          },
+          "createVault(address[],address,uint256[],address)": {
+            "notice": "Deploys a new vault."
+          },
+          "delayedProtocolParams()": {
+            "notice": "Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "delayedProtocolParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+          },
+          "delayedProtocolPerVaultParams(uint256)": {
+            "notice": "Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed."
+          },
+          "delayedStrategyParams(uint256)": {
+            "notice": "Delayed Strategy Params"
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed."
+          },
+          "internalParams()": {
+            "notice": "Internal Params of the contract."
+          },
+          "internalParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Internal Params could be committed."
+          },
+          "operatorParams()": {
+            "notice": "Operator Params."
+          },
+          "setOperatorParams((bool))": {
+            "notice": "Set Operator params, i.e. Params that could be changed by Operator or Protocol Governance immediately."
+          },
+          "setStrategyParams(uint256,(uint256,uint256))": {
+            "notice": "Set Strategy params, i.e. Params that could be changed by Strategy or Protocol Governance immediately."
+          },
+          "stageDelayedProtocolParams((uint256,address))": {
+            "notice": "Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "stageDelayedProtocolPerVaultParams(uint256,(uint256))": {
+            "notice": "Stage Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "stageDelayedStrategyParams(uint256,(address,address,bool,uint256,uint256,address,address))": {
+            "notice": "Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay."
+          },
+          "stageInternalParams((address,address,address))": {
+            "notice": "Stage new Internal Params."
+          },
+          "stagedDelayedProtocolParams()": {
+            "notice": "Delayed Protocol Params staged for commit after delay."
+          },
+          "stagedDelayedProtocolPerVaultParams(uint256)": {
+            "notice": "Delayed Protocol Per Vault Params staged for commit after delay."
+          },
+          "stagedDelayedStrategyParams(uint256)": {
+            "notice": "Delayed Strategy Params staged for commit after delay."
+          },
+          "stagedInternalParams()": {
+            "notice": "Staged new Internal Params."
+          },
+          "strategyParams(uint256)": {
+            "notice": "Strategy Params."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IERC20RootVaultGovernance.sol": "IERC20RootVaultGovernance"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+        "keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
+        "urls": [
+          "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
+          "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x086fbe904291497e1532ef340f1bd589078f49e3d4d0bbfd88f5e02fb89261eb",
+        "urls": [
+          "bzz-raw://0df1e3e965b78a0d98dda2d1d6a6acde88f515b1d3a9ad02f505e93fa7babeda",
+          "dweb:/ipfs/QmW4cSbGriRAj7XRZu6zSaqspe4eyYWkF7WfJbj3rmmLbk"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x04ea2514f49503cc66574a08382b57f266d23dee04046b479e0cf64c9a0db270",
+        "urls": [
+          "bzz-raw://87d8ca060d5ee11bc12b697c580e43267c45ab0d3a690f02b1388cf244eff7d7",
+          "dweb:/ipfs/QmXW4jwheCFMtCjNu4bCxvc4XLr2DJyhKLq9DkqQhNU9rp"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x861ae02ad4ba132b8e03ceb19faf915dc800fed8a6f877c344ea2ebd83feb29c",
+        "urls": [
+          "bzz-raw://c68568570ed80f1c5516bccf2554c4d228ff479b4bc5da473fff7b789b36abab",
+          "dweb:/ipfs/Qmc1geu9fQwe166SY5dKLq3QGGovkCmfk36ZYd3eYp9pUM"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0x6c30a6796998d981b6614e57c857c74b38565df25606756635a29388257de21c",
+        "urls": [
+          "bzz-raw://60e248f1bf4749beb11979798ef0c7eb0f603ea49de2edcada8a503946bed962",
+          "dweb:/ipfs/QmRCgnzokSjV3AKwHETNFm1yjgxgAJ9XrWueeyPBqS3EgD"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/oracles/IOracle.sol": {
+        "keccak256": "0x64a04c20495bc7e46040acb0df28c866cfd2d4fd8eced03bc3595d817619dc19",
+        "urls": [
+          "bzz-raw://b2d2956b7c712ec6e1ac5580a0d96a47ae6527165128888c4681a0da21f1c60c",
+          "dweb:/ipfs/QmP4aL5YTZ3NTCD1gjCN17nNwzeabLHkaK8rEtsdnnZ12R"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf4198613cc054350ce3ad3399fee584b363c27082f2a86645c58a2aab543862d",
+        "urls": [
+          "bzz-raw://71a66b3f5794aa7ff48a123a2927f5d588518638c65f6308d92f28b6205ef473",
+          "dweb:/ipfs/QmVpCZwQcz8CDHKJL1DSbvmjJTRex3RyQHsAhFCX85GHBj"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IERC20RootVaultHelper.sol": {
+        "keccak256": "0x83d7bc6139b7654637cb4c131756e04c1821196b02881b2889e69b77f0c2d607",
+        "urls": [
+          "bzz-raw://9c92ae78998d63a6017895e4ad5e9a72e1b38538c593a57dacb02b422b102e22",
+          "dweb:/ipfs/QmYg9mPcgyfPH3yn15GqtiYdD7BYogey3HoMpFAbm55VV8"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IAggregateVault.sol": {
+        "keccak256": "0xc9809c6efcca7b5d622cacbf713a1aed349f29813d60e4ac8a739c7a28b1e4e1",
+        "urls": [
+          "bzz-raw://9f052c4211c1935e468a26b08ed188a40612c85d0a04a1b8d68ff381096dd109",
+          "dweb:/ipfs/QmdfkxEVXP1L1dDVJMTMVz4hkFZJknS6SHAb3HW2oGuUyM"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IERC20RootVault.sol": {
+        "keccak256": "0xcea0f93bd5b938f36718344f46094eef76a0486b4ad2202766e96bf9ed482405",
+        "urls": [
+          "bzz-raw://e61a03e89d75a4639a0e1c7a4b10c1ec61582d7d90d9eb21320e481ac9a5b515",
+          "dweb:/ipfs/QmPLBscvsfichUENL523wetDJtwe7wLAVNMuw8HQx9qaxw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IERC20RootVaultGovernance.sol": {
+        "keccak256": "0xfe8264aac355d6aa1fdc5fb2e9ebad4a3958f893d4cd6a92828aef8375aaa0f3",
+        "urls": [
+          "bzz-raw://823c0bddb87e5a4c45a6a8e274efa542a4691c28a1a0557cc9c1ac5035847603",
+          "dweb:/ipfs/QmQ1HnVwzGAsUF3ZTGobAQHDYgpj6pvmC8TjzqPUa273vZ"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x60d0972c0324d048aac990cef2830b8e4f4f76dc78f2490f1b3f448be325ec1e",
+        "urls": [
+          "bzz-raw://b54d5934557e99e65b4736d5a5f9c88d235e1f8337c0c8c84cb3143de43bf90c",
+          "dweb:/ipfs/QmXUGxGiEr6RxZtzcGUYqWvfvjqeH25Y2yWmZZ4dTc25yj"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0x316819e93c849dc1abe39baec0451c414e5998f51ec256c59c3fdc1ef5c22113",
+        "urls": [
+          "bzz-raw://be0b88b4099826d3a601f015edf91d601a8d2a7b910a84191d2d0044e4c92900",
+          "dweb:/ipfs/QmNzsZ9RS9crmgxRdZMbRW2N6UvydjhAyWiVY8mL1uK6eS"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultRoot.sol": {
+        "keccak256": "0x6f98973ef2b3281d35cd8f2e7c990a08b5fbedb94f68747afe47a65a69247c5f",
+        "urls": [
+          "bzz-raw://26201babaf4aa5412c3cc2a9554bf6d9e19668a2ae71c37e77bfe1d6f4a9d8c5",
+          "dweb:/ipfs/QmQD9WA11iK6VaXd7m4eLx8gPrbmrb6LU5HXuphhiYm3hQ"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IERC20RootVaultGovernance.sol",
+    "id": 12931,
+    "exportedSymbols": {
+      "IAccessControl": [
+        6209
+      ],
+      "IAccessControlEnumerable": [
+        6234
+      ],
+      "IAggregateVault": [
+        12624
+      ],
+      "IDefaultAccessControl": [
+        12525
+      ],
+      "IERC165": [
+        8445
+      ],
+      "IERC20": [
+        22974
+      ],
+      "IERC20RootVault": [
+        12729
+      ],
+      "IERC20RootVaultGovernance": [
+        12930
+      ],
+      "IERC20RootVaultHelper": [
+        12543
+      ],
+      "IERC721": [
+        7782
+      ],
+      "IOracle": [
+        12480
+      ],
+      "IProtocolGovernance": [
+        12304
+      ],
+      "IUnitPricesGovernance": [
+        12357
+      ],
+      "IVault": [
+        13353
+      ],
+      "IVaultGovernance": [
+        13422
+      ],
+      "IVaultRegistry": [
+        12448
+      ],
+      "IVaultRoot": [
+        13456
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:7360:61",
+    "nodes": [
+      {
+        "id": 12731,
+        "nodeType": "PragmaDirective",
+        "src": "32:22:61",
+        "literals": [
+          "solidity",
+          "0.8",
+          ".9"
+        ]
+      },
+      {
+        "id": 12732,
+        "nodeType": "ImportDirective",
+        "src": "56:32:61",
+        "absolutePath": "src/interfaces/oracles/IOracle.sol",
+        "file": "../oracles/IOracle.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 12931,
+        "sourceUnit": 12481,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 12733,
+        "nodeType": "ImportDirective",
+        "src": "89:31:61",
+        "absolutePath": "src/interfaces/vaults/IERC20RootVault.sol",
+        "file": "./IERC20RootVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 12931,
+        "sourceUnit": 12730,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 12734,
+        "nodeType": "ImportDirective",
+        "src": "121:32:61",
+        "absolutePath": "src/interfaces/vaults/IVaultGovernance.sol",
+        "file": "./IVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 12931,
+        "sourceUnit": 13423,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 12735,
+        "nodeType": "ImportDirective",
+        "src": "154:44:61",
+        "absolutePath": "src/interfaces/utils/IERC20RootVaultHelper.sol",
+        "file": "../utils/IERC20RootVaultHelper.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 12931,
+        "sourceUnit": 12544,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 12930,
+        "nodeType": "ContractDefinition",
+        "src": "200:7191:61",
+        "nodes": [
+          {
+            "id": 12752,
+            "nodeType": "StructDefinition",
+            "src": "999:286:61",
+            "canonicalName": "IERC20RootVaultGovernance.DelayedStrategyParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 12739,
+                "mutability": "mutable",
+                "name": "strategyTreasury",
+                "nameLocation": "1046:16:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1038:24:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 12738,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1038:7:61",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12741,
+                "mutability": "mutable",
+                "name": "strategyPerformanceTreasury",
+                "nameLocation": "1080:27:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1072:35:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 12740,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1072:7:61",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12743,
+                "mutability": "mutable",
+                "name": "privateVault",
+                "nameLocation": "1122:12:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1117:17:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bool",
+                  "typeString": "bool"
+                },
+                "typeName": {
+                  "id": 12742,
+                  "name": "bool",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1117:4:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12745,
+                "mutability": "mutable",
+                "name": "managementFee",
+                "nameLocation": "1152:13:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1144:21:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 12744,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1144:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12747,
+                "mutability": "mutable",
+                "name": "performanceFee",
+                "nameLocation": "1183:14:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1175:22:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 12746,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1175:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12749,
+                "mutability": "mutable",
+                "name": "depositCallbackAddress",
+                "nameLocation": "1215:22:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1207:30:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 12748,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1207:7:61",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12751,
+                "mutability": "mutable",
+                "name": "withdrawCallbackAddress",
+                "nameLocation": "1255:23:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12752,
+                "src": "1247:31:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 12750,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1247:7:61",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelayedStrategyParams",
+            "nameLocation": "1006:21:61",
+            "scope": 12930,
+            "visibility": "public"
+          },
+          {
+            "id": 12758,
+            "nodeType": "StructDefinition",
+            "src": "1537:102:61",
+            "canonicalName": "IERC20RootVaultGovernance.DelayedProtocolParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 12754,
+                "mutability": "mutable",
+                "name": "managementFeeChargeDelay",
+                "nameLocation": "1584:24:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12758,
+                "src": "1576:32:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 12753,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1576:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12757,
+                "mutability": "mutable",
+                "name": "oracle",
+                "nameLocation": "1626:6:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12758,
+                "src": "1618:14:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IOracle_$12480",
+                  "typeString": "contract IOracle"
+                },
+                "typeName": {
+                  "id": 12756,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 12755,
+                    "name": "IOracle",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 12480,
+                    "src": "1618:7:61"
+                  },
+                  "referencedDeclaration": 12480,
+                  "src": "1618:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IOracle_$12480",
+                    "typeString": "contract IOracle"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelayedProtocolParams",
+            "nameLocation": "1544:21:61",
+            "scope": 12930,
+            "visibility": "public"
+          },
+          {
+            "id": 12763,
+            "nodeType": "StructDefinition",
+            "src": "1846:95:61",
+            "canonicalName": "IERC20RootVaultGovernance.StrategyParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 12760,
+                "mutability": "mutable",
+                "name": "tokenLimitPerAddress",
+                "nameLocation": "1886:20:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12763,
+                "src": "1878:28:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 12759,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1878:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 12762,
+                "mutability": "mutable",
+                "name": "tokenLimit",
+                "nameLocation": "1924:10:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12763,
+                "src": "1916:18:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 12761,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1916:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "StrategyParams",
+            "nameLocation": "1853:14:61",
+            "scope": 12930,
+            "visibility": "public"
+          },
+          {
+            "id": 12766,
+            "nodeType": "StructDefinition",
+            "src": "2125:73:61",
+            "canonicalName": "IERC20RootVaultGovernance.DelayedProtocolPerVaultParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 12765,
+                "mutability": "mutable",
+                "name": "protocolFee",
+                "nameLocation": "2180:11:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12766,
+                "src": "2172:19:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 12764,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "2172:7:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelayedProtocolPerVaultParams",
+            "nameLocation": "2132:29:61",
+            "scope": 12930,
+            "visibility": "public"
+          },
+          {
+            "id": 12769,
+            "nodeType": "StructDefinition",
+            "src": "2357:58:61",
+            "canonicalName": "IERC20RootVaultGovernance.OperatorParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 12768,
+                "mutability": "mutable",
+                "name": "disableDeposit",
+                "nameLocation": "2394:14:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 12769,
+                "src": "2389:19:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bool",
+                  "typeString": "bool"
+                },
+                "typeName": {
+                  "id": 12767,
+                  "name": "bool",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "2389:4:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "OperatorParams",
+            "nameLocation": "2364:14:61",
+            "scope": 12930,
+            "visibility": "public"
+          },
+          {
+            "id": 12775,
+            "nodeType": "FunctionDefinition",
+            "src": "2468:60:61",
+            "documentation": {
+              "id": 12770,
+              "nodeType": "StructuredDocumentation",
+              "src": "2421:42:61",
+              "text": "@notice Number of maximum protocol fee"
+            },
+            "functionSelector": "b8ca3b83",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "MAX_PROTOCOL_FEE",
+            "nameLocation": "2477:16:61",
+            "parameters": {
+              "id": 12771,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2493:2:61"
+            },
+            "returnParameters": {
+              "id": 12774,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12773,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12775,
+                  "src": "2519:7:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12772,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2519:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2518:9:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12781,
+            "nodeType": "FunctionDefinition",
+            "src": "2583:62:61",
+            "documentation": {
+              "id": 12776,
+              "nodeType": "StructuredDocumentation",
+              "src": "2534:44:61",
+              "text": "@notice Number of maximum management fee"
+            },
+            "functionSelector": "9908840c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "MAX_MANAGEMENT_FEE",
+            "nameLocation": "2592:18:61",
+            "parameters": {
+              "id": 12777,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2610:2:61"
+            },
+            "returnParameters": {
+              "id": 12780,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12779,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12781,
+                  "src": "2636:7:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12778,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2636:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2635:9:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12787,
+            "nodeType": "FunctionDefinition",
+            "src": "2701:63:61",
+            "documentation": {
+              "id": 12782,
+              "nodeType": "StructuredDocumentation",
+              "src": "2651:45:61",
+              "text": "@notice Number of maximum performance fee"
+            },
+            "functionSelector": "bdca9165",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "MAX_PERFORMANCE_FEE",
+            "nameLocation": "2710:19:61",
+            "parameters": {
+              "id": 12783,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2729:2:61"
+            },
+            "returnParameters": {
+              "id": 12786,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12785,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12787,
+                  "src": "2755:7:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12784,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2755:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2754:9:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12794,
+            "nodeType": "FunctionDefinition",
+            "src": "2900:86:61",
+            "documentation": {
+              "id": 12788,
+              "nodeType": "StructuredDocumentation",
+              "src": "2770:125:61",
+              "text": "@notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+            },
+            "functionSelector": "d34cc380",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedProtocolParams",
+            "nameLocation": "2909:21:61",
+            "parameters": {
+              "id": 12789,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2930:2:61"
+            },
+            "returnParameters": {
+              "id": 12793,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12792,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12794,
+                  "src": "2956:28:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$12758_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 12791,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12790,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12758,
+                      "src": "2956:21:61"
+                    },
+                    "referencedDeclaration": 12758,
+                    "src": "2956:21:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$12758_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2955:30:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12801,
+            "nodeType": "FunctionDefinition",
+            "src": "3063:92:61",
+            "documentation": {
+              "id": 12795,
+              "nodeType": "StructuredDocumentation",
+              "src": "2992:66:61",
+              "text": "@notice Delayed Protocol Params staged for commit after delay."
+            },
+            "functionSelector": "c2cbdc67",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedDelayedProtocolParams",
+            "nameLocation": "3072:27:61",
+            "parameters": {
+              "id": 12796,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3099:2:61"
+            },
+            "returnParameters": {
+              "id": 12800,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12799,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12801,
+                  "src": "3125:28:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$12758_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 12798,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12797,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12758,
+                      "src": "3125:21:61"
+                    },
+                    "referencedDeclaration": 12758,
+                    "src": "3125:21:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$12758_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3124:30:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12810,
+            "nodeType": "FunctionDefinition",
+            "src": "3351:113:61",
+            "documentation": {
+              "id": 12802,
+              "nodeType": "StructuredDocumentation",
+              "src": "3161:185:61",
+              "text": "@notice Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "dbb1c35f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedProtocolPerVaultParams",
+            "nameLocation": "3360:29:61",
+            "parameters": {
+              "id": 12805,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12804,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "3398:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12810,
+                  "src": "3390:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12803,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3390:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3389:13:61"
+            },
+            "returnParameters": {
+              "id": 12809,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12808,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12810,
+                  "src": "3426:36:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolPerVaultParams_$12766_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams"
+                  },
+                  "typeName": {
+                    "id": 12807,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12806,
+                      "name": "DelayedProtocolPerVaultParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12766,
+                      "src": "3426:29:61"
+                    },
+                    "referencedDeclaration": 12766,
+                    "src": "3426:29:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolPerVaultParams_$12766_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3425:38:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12819,
+            "nodeType": "FunctionDefinition",
+            "src": "3601:143:61",
+            "documentation": {
+              "id": 12811,
+              "nodeType": "StructuredDocumentation",
+              "src": "3470:126:61",
+              "text": "@notice Delayed Protocol Per Vault Params staged for commit after delay.\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "8e207dda",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedDelayedProtocolPerVaultParams",
+            "nameLocation": "3610:35:61",
+            "parameters": {
+              "id": 12814,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12813,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "3654:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12819,
+                  "src": "3646:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12812,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3646:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3645:13:61"
+            },
+            "returnParameters": {
+              "id": 12818,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12817,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12819,
+                  "src": "3706:36:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolPerVaultParams_$12766_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams"
+                  },
+                  "typeName": {
+                    "id": 12816,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12815,
+                      "name": "DelayedProtocolPerVaultParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12766,
+                      "src": "3706:29:61"
+                    },
+                    "referencedDeclaration": 12766,
+                    "src": "3706:29:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolPerVaultParams_$12766_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3705:38:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12828,
+            "nodeType": "FunctionDefinition",
+            "src": "3833:83:61",
+            "documentation": {
+              "id": 12820,
+              "nodeType": "StructuredDocumentation",
+              "src": "3750:78:61",
+              "text": "@notice Strategy Params.\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "12466b68",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "strategyParams",
+            "nameLocation": "3842:14:61",
+            "parameters": {
+              "id": 12823,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12822,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "3865:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12828,
+                  "src": "3857:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12821,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3857:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3856:13:61"
+            },
+            "returnParameters": {
+              "id": 12827,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12826,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12828,
+                  "src": "3893:21:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_StrategyParams_$12763_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.StrategyParams"
+                  },
+                  "typeName": {
+                    "id": 12825,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12824,
+                      "name": "StrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12763,
+                      "src": "3893:14:61"
+                    },
+                    "referencedDeclaration": 12763,
+                    "src": "3893:14:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_StrategyParams_$12763_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.StrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3892:23:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12835,
+            "nodeType": "FunctionDefinition",
+            "src": "3955:72:61",
+            "documentation": {
+              "id": 12829,
+              "nodeType": "StructuredDocumentation",
+              "src": "3922:28:61",
+              "text": "@notice Operator Params."
+            },
+            "functionSelector": "db2030aa",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "operatorParams",
+            "nameLocation": "3964:14:61",
+            "parameters": {
+              "id": 12830,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3978:2:61"
+            },
+            "returnParameters": {
+              "id": 12834,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12833,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12835,
+                  "src": "4004:21:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_OperatorParams_$12769_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.OperatorParams"
+                  },
+                  "typeName": {
+                    "id": 12832,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12831,
+                      "name": "OperatorParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12769,
+                      "src": "4004:14:61"
+                    },
+                    "referencedDeclaration": 12769,
+                    "src": "4004:14:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_OperatorParams_$12769_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.OperatorParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4003:23:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12844,
+            "nodeType": "FunctionDefinition",
+            "src": "4123:97:61",
+            "documentation": {
+              "id": 12836,
+              "nodeType": "StructuredDocumentation",
+              "src": "4033:85:61",
+              "text": "@notice Delayed Strategy Params\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "8860d248",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedStrategyParams",
+            "nameLocation": "4132:21:61",
+            "parameters": {
+              "id": 12839,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12838,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "4162:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12844,
+                  "src": "4154:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12837,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4154:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4153:13:61"
+            },
+            "returnParameters": {
+              "id": 12843,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12842,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12844,
+                  "src": "4190:28:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedStrategyParams_$12752_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedStrategyParams"
+                  },
+                  "typeName": {
+                    "id": 12841,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12840,
+                      "name": "DelayedStrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12752,
+                      "src": "4190:21:61"
+                    },
+                    "referencedDeclaration": 12752,
+                    "src": "4190:21:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedStrategyParams_$12752_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedStrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4189:30:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12853,
+            "nodeType": "FunctionDefinition",
+            "src": "4347:103:61",
+            "documentation": {
+              "id": 12845,
+              "nodeType": "StructuredDocumentation",
+              "src": "4226:116:61",
+              "text": "@notice Delayed Strategy Params staged for commit after delay.\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "59f3dae7",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedDelayedStrategyParams",
+            "nameLocation": "4356:27:61",
+            "parameters": {
+              "id": 12848,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12847,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "4392:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12853,
+                  "src": "4384:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12846,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4384:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4383:13:61"
+            },
+            "returnParameters": {
+              "id": 12852,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12851,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12853,
+                  "src": "4420:28:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedStrategyParams_$12752_memory_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedStrategyParams"
+                  },
+                  "typeName": {
+                    "id": 12850,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12849,
+                      "name": "DelayedStrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12752,
+                      "src": "4420:21:61"
+                    },
+                    "referencedDeclaration": 12752,
+                    "src": "4420:21:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedStrategyParams_$12752_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedStrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4419:30:61"
+            },
+            "scope": 12930,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12862,
+            "nodeType": "FunctionDefinition",
+            "src": "4644:81:61",
+            "documentation": {
+              "id": 12854,
+              "nodeType": "StructuredDocumentation",
+              "src": "4456:183:61",
+              "text": "@notice Set Strategy params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.\n @param nft Nft of the vault\n @param params New params"
+            },
+            "functionSelector": "afd2c7e9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setStrategyParams",
+            "nameLocation": "4653:17:61",
+            "parameters": {
+              "id": 12860,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12856,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "4679:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12862,
+                  "src": "4671:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12855,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4671:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12859,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "4708:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12862,
+                  "src": "4684:30:61",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_StrategyParams_$12763_calldata_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.StrategyParams"
+                  },
+                  "typeName": {
+                    "id": 12858,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12857,
+                      "name": "StrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12763,
+                      "src": "4684:14:61"
+                    },
+                    "referencedDeclaration": 12763,
+                    "src": "4684:14:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_StrategyParams_$12763_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.StrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4670:45:61"
+            },
+            "returnParameters": {
+              "id": 12861,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4724:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12869,
+            "nodeType": "FunctionDefinition",
+            "src": "4883:68:61",
+            "documentation": {
+              "id": 12863,
+              "nodeType": "StructuredDocumentation",
+              "src": "4731:147:61",
+              "text": "@notice Set Operator params, i.e. Params that could be changed by Operator or Protocol Governance immediately.\n @param params New params"
+            },
+            "functionSelector": "c8e8a766",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setOperatorParams",
+            "nameLocation": "4892:17:61",
+            "parameters": {
+              "id": 12867,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12866,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "4934:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12869,
+                  "src": "4910:30:61",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_OperatorParams_$12769_calldata_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.OperatorParams"
+                  },
+                  "typeName": {
+                    "id": 12865,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12864,
+                      "name": "OperatorParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12769,
+                      "src": "4910:14:61"
+                    },
+                    "referencedDeclaration": 12769,
+                    "src": "4910:14:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_OperatorParams_$12769_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.OperatorParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4909:32:61"
+            },
+            "returnParameters": {
+              "id": 12868,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4950:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12878,
+            "nodeType": "FunctionDefinition",
+            "src": "5186:113:61",
+            "documentation": {
+              "id": 12870,
+              "nodeType": "StructuredDocumentation",
+              "src": "4957:224:61",
+              "text": "@notice Stage Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\n @param nft VaultRegistry NFT of the vault\n @param params New params"
+            },
+            "functionSelector": "59331d78",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageDelayedProtocolPerVaultParams",
+            "nameLocation": "5195:34:61",
+            "parameters": {
+              "id": 12876,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12872,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "5238:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12878,
+                  "src": "5230:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12871,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5230:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12875,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "5282:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12878,
+                  "src": "5243:45:61",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolPerVaultParams_$12766_calldata_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams"
+                  },
+                  "typeName": {
+                    "id": 12874,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12873,
+                      "name": "DelayedProtocolPerVaultParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12766,
+                      "src": "5243:29:61"
+                    },
+                    "referencedDeclaration": 12766,
+                    "src": "5243:29:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolPerVaultParams_$12766_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolPerVaultParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5229:60:61"
+            },
+            "returnParameters": {
+              "id": 12877,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5298:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12884,
+            "nodeType": "FunctionDefinition",
+            "src": "5579:67:61",
+            "documentation": {
+              "id": 12879,
+              "nodeType": "StructuredDocumentation",
+              "src": "5305:269:61",
+              "text": "@notice Commit Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\n @dev Can only be called after delayedProtocolPerVaultParamsTimestamp\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "ee2d59f4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitDelayedProtocolPerVaultParams",
+            "nameLocation": "5588:35:61",
+            "parameters": {
+              "id": 12882,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12881,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "5632:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12884,
+                  "src": "5624:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12880,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5624:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5623:13:61"
+            },
+            "returnParameters": {
+              "id": 12883,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5645:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12893,
+            "nodeType": "FunctionDefinition",
+            "src": "5883:97:61",
+            "documentation": {
+              "id": 12885,
+              "nodeType": "StructuredDocumentation",
+              "src": "5652:226:61",
+              "text": "@notice Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\n @param nft VaultRegistry NFT of the vault\n @param params New params"
+            },
+            "functionSelector": "221cc263",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageDelayedStrategyParams",
+            "nameLocation": "5892:26:61",
+            "parameters": {
+              "id": 12891,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12887,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "5927:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12893,
+                  "src": "5919:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12886,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5919:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12890,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "5963:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12893,
+                  "src": "5932:37:61",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedStrategyParams_$12752_calldata_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedStrategyParams"
+                  },
+                  "typeName": {
+                    "id": 12889,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12888,
+                      "name": "DelayedStrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12752,
+                      "src": "5932:21:61"
+                    },
+                    "referencedDeclaration": 12752,
+                    "src": "5932:21:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedStrategyParams_$12752_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedStrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5918:52:61"
+            },
+            "returnParameters": {
+              "id": 12892,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5979:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12899,
+            "nodeType": "FunctionDefinition",
+            "src": "6254:59:61",
+            "documentation": {
+              "id": 12894,
+              "nodeType": "StructuredDocumentation",
+              "src": "5986:263:61",
+              "text": "@notice Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\n @dev Can only be called after delayedStrategyParamsTimestamp\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "0bdedd56",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitDelayedStrategyParams",
+            "nameLocation": "6263:27:61",
+            "parameters": {
+              "id": 12897,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12896,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "6299:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12899,
+                  "src": "6291:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12895,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "6291:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "6290:13:61"
+            },
+            "returnParameters": {
+              "id": 12898,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6312:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12906,
+            "nodeType": "FunctionDefinition",
+            "src": "6558:84:61",
+            "documentation": {
+              "id": 12900,
+              "nodeType": "StructuredDocumentation",
+              "src": "6319:234:61",
+              "text": "@notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\n @dev Can only be called after delayedProtocolParamsTimestamp.\n @param params New params"
+            },
+            "functionSelector": "3d8c08b9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageDelayedProtocolParams",
+            "nameLocation": "6567:26:61",
+            "parameters": {
+              "id": 12904,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12903,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "6625:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12906,
+                  "src": "6594:37:61",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$12758_calldata_ptr",
+                    "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 12902,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12901,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12758,
+                      "src": "6594:21:61"
+                    },
+                    "referencedDeclaration": 12758,
+                    "src": "6594:21:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$12758_storage_ptr",
+                      "typeString": "struct IERC20RootVaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "6593:39:61"
+            },
+            "returnParameters": {
+              "id": 12905,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6641:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12910,
+            "nodeType": "FunctionDefinition",
+            "src": "6785:48:61",
+            "documentation": {
+              "id": 12907,
+              "nodeType": "StructuredDocumentation",
+              "src": "6648:132:61",
+              "text": "@notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+            },
+            "functionSelector": "98347a5d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitDelayedProtocolParams",
+            "nameLocation": "6794:27:61",
+            "parameters": {
+              "id": 12908,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6821:2:61"
+            },
+            "returnParameters": {
+              "id": 12909,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6832:0:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 12929,
+            "nodeType": "FunctionDefinition",
+            "src": "7178:211:61",
+            "documentation": {
+              "id": 12911,
+              "nodeType": "StructuredDocumentation",
+              "src": "6839:334:61",
+              "text": "@notice Deploys a new vault.\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault\n @param strategy_ The address that will have approvals for subvaultNfts\n @param subvaultNfts_ The NFTs of the subvaults that will be aggregated by this ERC20RootVault\n @param owner_ Owner of the vault NFT"
+            },
+            "functionSelector": "f699a607",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createVault",
+            "nameLocation": "7187:11:61",
+            "parameters": {
+              "id": 12922,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12914,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "7225:12:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12929,
+                  "src": "7208:29:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 12912,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "7208:7:61",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 12913,
+                    "nodeType": "ArrayTypeName",
+                    "src": "7208:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12916,
+                  "mutability": "mutable",
+                  "name": "strategy_",
+                  "nameLocation": "7255:9:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12929,
+                  "src": "7247:17:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 12915,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "7247:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12919,
+                  "mutability": "mutable",
+                  "name": "subvaultNfts_",
+                  "nameLocation": "7291:13:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12929,
+                  "src": "7274:30:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 12917,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "7274:7:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 12918,
+                    "nodeType": "ArrayTypeName",
+                    "src": "7274:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12921,
+                  "mutability": "mutable",
+                  "name": "owner_",
+                  "nameLocation": "7322:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12929,
+                  "src": "7314:14:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 12920,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "7314:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "7198:136:61"
+            },
+            "returnParameters": {
+              "id": 12928,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 12925,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "7369:5:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12929,
+                  "src": "7353:21:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20RootVault_$12729",
+                    "typeString": "contract IERC20RootVault"
+                  },
+                  "typeName": {
+                    "id": 12924,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 12923,
+                      "name": "IERC20RootVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 12729,
+                      "src": "7353:15:61"
+                    },
+                    "referencedDeclaration": 12729,
+                    "src": "7353:15:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20RootVault_$12729",
+                      "typeString": "contract IERC20RootVault"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 12927,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "7384:3:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 12929,
+                  "src": "7376:11:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 12926,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "7376:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "7352:36:61"
+            },
+            "scope": 12930,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 12736,
+              "name": "IVaultGovernance",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 13422,
+              "src": "239:16:61"
+            },
+            "id": 12737,
+            "nodeType": "InheritanceSpecifier",
+            "src": "239:16:61"
+          }
+        ],
+        "canonicalName": "IERC20RootVaultGovernance",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          12930,
+          13422
+        ],
+        "name": "IERC20RootVaultGovernance",
+        "nameLocation": "210:25:61",
+        "scope": 12931,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 61
+}
