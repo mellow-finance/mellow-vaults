@@ -157,16 +157,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             }
         }
 
-        if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback() {} catch Error(
-                string memory reason
-            ) {
-                emit DepositCallbackLog(reason);
-            } catch {
-                emit DepositCallbackLog("callback failed without reason");
-            }
-        }
-
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
@@ -189,12 +179,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested) {
         uint256 existingRequests = 0;
 
-        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.DISABLED);
+        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.INVARIANT);
 
         if (_lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp) {
             existingRequests = _withdrawalRequests[msg.sender];
-        } else if (_lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp) {
-            require(_withdrawalRequests[msg.sender] == 0, ExceptionsLibrary.FORBIDDEN);
         }
 
         uint256 balance = balanceOf[msg.sender];
@@ -232,7 +220,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 withdrawDelay = governance.delayedProtocolParams().withdrawDelay;
 
         require(_lastWithdrawalsExecutionTimestamp + withdrawDelay <= block.timestamp, ExceptionsLibrary.INVARIANT);
-        _beforeLastWithdrawalsExecutionTimestamp = block.timestamp;
+        _beforeLastWithdrawalsExecutionTimestamp = _lastWithdrawalsExecutionTimestamp;
         _lastWithdrawalsExecutionTimestamp = block.timestamp;
 
         (uint256[] memory minTokenAmounts, ) = IAggregateVault(address(this)).tvl();
@@ -250,7 +238,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             address[] memory tokens = _vaultTokens;
             uint256[] memory amounts = new uint256[](1);
             amounts[0] = totalAmount - currentErc20Amount;
-            zeroVault.pull(address(gearboxVault), tokens, amounts, "");
+            gearboxVault.pull(address(zeroVault), tokens, amounts, "");
             totalAmount = IERC20(_vaultTokens[0]).balanceOf(address(zeroVault));
         }
 
@@ -279,7 +267,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             uint256 availableLpTokens = 0;
             if (
                 _lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp &&
-                _lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp
+                _lastRequestTimestamp[msg.sender] <= _lastWithdrawalsExecutionTimestamp
             ) {
                 availableLpTokens = _withdrawalRequests[msg.sender];
             }
@@ -290,6 +278,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             if (lpTokenAmount > availableLpTokens) {
                 lpTokenAmount = availableLpTokens;
             }
+        }
+
+        if (lpTokenAmount == 0) {
+            actualTokenAmounts = new uint256[](1);
+            return actualTokenAmounts;
         }
 
         _withdrawalRequests[msg.sender] -= lpTokenAmount;
@@ -313,21 +306,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             _burn(msg.sender, lpTokenAmount);
         } else {
             _burn(msg.sender, balance);
-        }
-
-        uint256 thisNft = _nft;
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedStrategyParams(thisNft);
-
-        if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
-                string memory reason
-            ) {
-                emit WithdrawCallbackLog(reason);
-            } catch {
-                emit WithdrawCallbackLog("callback failed without reason");
-            }
         }
 
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
