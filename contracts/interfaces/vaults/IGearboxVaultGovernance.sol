@@ -20,10 +20,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         address curveAdapter;
         address convexAdapter;
         address facade;
-        uint256 convexPoolId;
         uint256 initialMarginalValue;
-        address ethToPrimaryTokenPool;
-        address depositToPrimaryTokenPool;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------

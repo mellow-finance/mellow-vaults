@@ -6,6 +6,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
+import "../interfaces/external/gearbox/ICreditFacade.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
@@ -65,10 +66,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     curveAdapter: address(0),
                     convexAdapter: address(0),
                     facade: address(0),
-                    convexPoolId: 0,
-                    initialMarginalValue: 0,
-                    ethToPrimaryTokenPool: address(0),
-                    depositToPrimaryTokenPool: address(0)
+                    initialMarginalValue: 0
                 });
         }
         return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
@@ -83,10 +81,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     curveAdapter: address(0),
                     convexAdapter: address(0),
                     facade: address(0),
-                    convexPoolId: 0,
-                    initialMarginalValue: 0,
-                    ethToPrimaryTokenPool: address(0),
-                    depositToPrimaryTokenPool: address(0)
+                    initialMarginalValue: 0
                 });
         }
         return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
@@ -120,8 +115,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.curveAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.convexAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.ethToPrimaryTokenPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.depositToPrimaryTokenPool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.initialMarginalValue >= DENOMINATOR, ExceptionsLibrary.INVALID_VALUE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
@@ -152,16 +145,20 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
+
         DelayedProtocolPerVaultParams memory params = abi.decode(
             _delayedProtocolPerVaultParams[nft],
             (DelayedProtocolPerVaultParams)
         );
+
+        ICreditFacade facade = ICreditFacade(params.facade);
         IERC20Metadata token = IERC20Metadata(params.primaryToken);
 
+        (uint256 minBorrow, ) = facade.limits();
+
         {
-            uint256 pullExistential = 10**(token.decimals() / 2);
-            require(token.balanceOf(address(this)) >= pullExistential, ExceptionsLibrary.LIMIT_UNDERFLOW);
-            token.transfer(vaddr, pullExistential);
+            require(token.balanceOf(address(this)) >= minBorrow, ExceptionsLibrary.LIMIT_UNDERFLOW);
+            token.transfer(vaddr, minBorrow);
         }
 
         gearboxVault.initialize(nft, vaultTokens_);
