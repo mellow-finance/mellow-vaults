@@ -90,7 +90,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // int24 _tickUpper = _currentPosition.tickUpper;
 
         // 2. Get current tick
-        // int24 _currentTick = _periphery.getCurrentTick(_periphery.address());
+        // int24 _currentTick = _periphery.getCurrentTick(_marginEngine.address());
 
         // 3. Compare current fixed rate to lower and upper bounds
         if (
