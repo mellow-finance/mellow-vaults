@@ -10,7 +10,6 @@ import "../interfaces/external/gearbox/helpers/convex/IBaseRewardPool.sol";
 import "../interfaces/external/gearbox/ICurveV1Adapter.sol";
 import "../interfaces/external/gearbox/IUniversalAdapter.sol";
 import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
-import "../interfaces/external/gearbox/IConvexV1BoosterAdapter.sol";
 import "../interfaces/external/gearbox/IConvexV1BaseRewardPoolAdapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
@@ -76,7 +75,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         depositToken = vaultTokens_[0];
         curveAdapter = params.curveAdapter;
         convexAdapter = params.convexAdapter;
-        poolId = params.convexPoolId;
         marginalFactorD = params.initialMarginalValue;
 
         ICreditFacade creditFacade = ICreditFacade(params.facade);
@@ -85,11 +83,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         _creditFacade = creditFacade;
         _creditManager = creditManager;
 
-        _verifyInstances(poolId, depositToken, primaryToken);
-        uint256 amount = _pullExistentials[0];
+        _verifyInstances(primaryToken);
+        (uint256 amount, ) = creditFacade.limits();
 
-        creditFacade.openCreditAccount(amount, address(this), 0, protocolParams.referralCode);
+        IERC20(primaryToken).safeIncreaseAllowance(address(_creditManager), amount);
+        creditFacade.openCreditAccount(amount, address(this), 100, protocolParams.referralCode);
+        IERC20(primaryToken).approve(address(_creditManager), amount);
+
         creditAccount = creditManager.getCreditAccountOrRevert(address(this));
+        creditFacade.enableToken(depositToken);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
@@ -131,24 +133,29 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         uint256 amount = tokenAmounts[0];
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
-        ).delayedProtocolPerVaultParams(_nft);
+        ).delayedProtocolParams();
 
         (uint256 realValue, , uint256 previousTotal) = _calculateDesiredTotalValue();
 
         _adjustPosition(realValue, previousTotal, true);
         if (primaryToken != depositToken) {
+
             MultiCall[] memory calls = new MultiCall[](1);
 
-            calls[0] = MultiCall({ // swap deposit to primary token
-                target: params.depositToPrimaryTokenPool,
-                callData: abi.encodeWithSelector(
-                    IUniswapV3Adapter.exactAllInputSingle.selector,
-                    abi.encode(primaryToken, 500, depositToken),
-                    block.timestamp + 900,
-                    0
-                )
+            uint256 amountToSwap = IERC20(primaryToken).balanceOf(creditAccount);
+            uint256 rateMinRAY = _calcMinRateRAY(amountToSwap, primaryToken, depositToken);
+
+            IUniswapV3Adapter.ExactAllInputParams memory uniParams = IUniswapV3Adapter.ExactAllInputParams({
+                path: abi.encode(primaryToken, 500, depositToken),
+                deadline: block.timestamp + 900,
+                rateMinRAY: rateMinRAY
+            });
+
+            calls[0] = MultiCall({
+                target: protocolParams.univ3Adapter,
+                callData: abi.encodeWithSelector(IUniswapV3Adapter.exactAllInput.selector, uniParams)
             });
 
             _creditFacade.multicall(calls);
@@ -169,16 +176,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     function _verifyInstances(
-        uint256 convexPoolId,
-        address depositToken_,
         address primaryToken_
     ) internal {
         ICreditFacade creditFacade = _creditFacade;
         ICurveV1Adapter curveAdapter_ = ICurveV1Adapter(curveAdapter);
-        IConvexV1BoosterAdapter convexAdapter_ = IConvexV1BoosterAdapter(convexAdapter);
+        IConvexV1BaseRewardPoolAdapter convexAdapter_ = IConvexV1BaseRewardPoolAdapter(convexAdapter);
+
+        poolId = convexAdapter_.pid();
 
         require(creditFacade.isTokenAllowed(primaryToken_), ExceptionsLibrary.INVALID_TOKEN);
-        creditFacade.enableToken(depositToken_);
 
         bool havePrimaryTokenInCurve = false;
 
@@ -193,9 +199,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(havePrimaryTokenInCurve, ExceptionsLibrary.INVALID_TOKEN);
 
         address lpToken = curveAdapter_.lp_token();
-        IBooster.PoolInfo memory poolInfo = convexAdapter_.poolInfo(convexPoolId);
-        convexOutputToken = poolInfo.token;
-        require(lpToken == poolInfo.lptoken, ExceptionsLibrary.INVALID_TARGET);
+        convexOutputToken = address(convexAdapter_.stakingToken());
+        require(lpToken == convexAdapter_.curveLPtoken(), ExceptionsLibrary.INVALID_TARGET);
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
@@ -338,16 +343,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
     }
 
-    function _createUniswapMulticall(address tokenFrom, address tokenTo, uint256 fee, uint256 minSlippageD, address adapter) internal view returns (MultiCall memory) {
-        IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
+    function _createUniswapMulticall(address tokenFrom, address tokenTo, uint256 fee, address adapter) internal view returns (MultiCall memory) {
 
         uint256 amount = IERC20(tokenFrom).balanceOf(creditAccount);
-
-        uint256 usdAmount = oracle.convertToUSD(amount, tokenFrom);
-        uint256 finalAmount = oracle.convertFromUSD(usdAmount, tokenTo); 
-
-        uint256 priceD27 = FullMath.mulDiv(finalAmount, D27, usdAmount);
-        uint256 rateMinRAY = FullMath.mulDiv(priceD27, DENOMINATOR - minSlippageD, DENOMINATOR);
+        uint256 rateMinRAY = _calcMinRateRAY(amount, tokenFrom, tokenTo);
 
         IUniswapV3Adapter.ExactAllInputParams memory params = IUniswapV3Adapter.ExactAllInputParams({
             path: abi.encode(tokenFrom, fee, tokenTo),
@@ -355,7 +354,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             rateMinRAY: rateMinRAY
         });
 
-        return MultiCall({ // taking crv and cvx
+        return MultiCall({
             target: adapter,
             callData: abi.encodeWithSelector(IUniswapV3Adapter.exactAllInput.selector, params)
         });
@@ -372,15 +371,30 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address weth = _creditManager.wethAddress();
 
         calls[0] = MultiCall({ // taking crv and cvx
-            target: IConvexV1BoosterAdapter(convexAdapter).stakerRewards(),
+            target: convexAdapter,
             callData: abi.encodeWithSelector(GET_REWARD_SELECTOR, creditAccount, false)
         });
 
-        calls[1] = _createUniswapMulticall(protocolParams.crv, weth, 10000, protocolParams.minSlippageD, protocolParams.univ3Adapter);
-        calls[2] = _createUniswapMulticall(protocolParams.cvx, weth, 10000, protocolParams.minSlippageD, protocolParams.univ3Adapter);
-        calls[3] = _createUniswapMulticall(weth, primaryToken, 500, protocolParams.minSlippageD, protocolParams.univ3Adapter);
+        calls[1] = _createUniswapMulticall(protocolParams.crv, weth, 10000, protocolParams.univ3Adapter);
+        calls[2] = _createUniswapMulticall(protocolParams.cvx, weth, 10000, protocolParams.univ3Adapter);
+        calls[3] = _createUniswapMulticall(weth, primaryToken, 500, protocolParams.univ3Adapter);
 
         _creditFacade.multicall(calls);
+    }
+
+    function _calcMinRateRAY(uint256 amount, address tokenFrom, address tokenTo) internal view returns (uint256) {
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolParams();
+        IPriceOracleV2 oracle = IPriceOracleV2(_creditManager.priceOracle());
+
+        uint256 usdAmount = oracle.convertToUSD(amount, tokenFrom);
+        uint256 finalAmount = oracle.convertFromUSD(usdAmount, tokenTo); 
+
+        uint256 priceD27 = FullMath.mulDiv(finalAmount, D27, usdAmount);
+        uint256 rateMinRAY = FullMath.mulDiv(priceD27, DENOMINATOR - protocolParams.minSlippageD, DENOMINATOR);
+
+        return rateMinRAY;
     }
 
     function _calculateDesiredTotalValue()
