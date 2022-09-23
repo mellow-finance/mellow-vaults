@@ -36,9 +36,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     uint256 _lastSignal;
     uint256 _lastLeverage;
-    uint256 _sigmaWad; // y (standard deviation parameter in wad 10^18)
-    uint256 _max_possible_lower_bound_wad; // should be in fixed rate
     uint256 _k_unwind_parameter; // parameter for k*leverage (for unwinding so this needs to be sent to the contract vault but not used in the strategy vault)
+    int256 _sigmaWad; // y (standard deviation parameter in wad 10^18)
+    int256 _max_possible_lower_bound_wad; // should be in fixed rate
 
     int24 _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
     int24 _currentTick;
@@ -66,7 +66,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     event Rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
 
-    function setConstants(int24 logProx, uint256 sigmaWad, uint256 max_possible_lower_bound_wad, int24 tickSpacing) public {
+    function setConstants(int24 logProx, int256 sigmaWad, int256 max_possible_lower_bound_wad, int24 tickSpacing) public {
         _requireAtLeastOperator();
         _logProximity = logProx;
         _sigmaWad = sigmaWad;
@@ -107,7 +107,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Get the nearest tick multiple given a tick and tick spacing
-    function nearestTickMultiple(int24 newTick, int24 tickSpacing) public returns (int24) {
+    function nearestTickMultiple(int24 newTick, int24 tickSpacing) public pure returns (int24) {
      return (newTick / tickSpacing + (newTick % tickSpacing >= tickSpacing/2 ? int24(1) : int24(0)) ) * tickSpacing;
     }
 
@@ -121,10 +121,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             // int24 _tickSpacing = _vamm.tickSpacing(_vamm.address());
 
             // 1. Get the new tick lower
-            // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound_wad);
-            uint256 deltaWad = uint256(currentFixedRateWad) - _sigmaWad;
-            console.log(deltaWad);
-            uint256 _newFixedLowerWad =  0;
+            int256 deltaWad = currentFixedRateWad - _sigmaWad;
+            console.logInt(deltaWad);
+            int256 _newFixedLowerWad =  0;
             if (deltaWad > 0) {
                 // delta is greater than 0 => choose delta
                 if (deltaWad < _max_possible_lower_bound_wad) {
@@ -141,9 +140,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
                 }
             }
             // 2. Get the new tick upper
-            console.log(_newFixedLowerWad);
-            uint256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
-            console.log(_newFixedUpperWad);
+            console.logInt(_newFixedLowerWad);
+            int256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
+            console.logInt(_newFixedUpperWad);
             // 3. Convert new fixed lower rate back to tick
             int256 _newTickLowerWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedUpperWad)), 
                                                         PRBMathSD59x18.log2(1000100000000000000)
