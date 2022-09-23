@@ -64,7 +64,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _pullExistentials = vault_.pullExistentials();
     }
 
-    event rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
+    event Rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
 
     function setConstants(int24 logProx, uint256 sigmaWad, uint256 max_possible_lower_bound, int24 tickSpacing) public {
         _requireAtLeastOperator();
@@ -174,7 +174,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             console.logInt(_newTickLowerMul);
             console.logInt(_newTickUpperMul);
 
-            emit rebalanced(_newTickLowerMul, _newTickUpperMul);
+            emit Rebalanced(_newTickLowerMul, _newTickUpperMul);
             return (_newTickLowerMul, _newTickUpperMul);
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
