@@ -271,8 +271,34 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad); // without callStatic this only returns the contract receipt
             expect(newTicks[0]).to.be.equal(-900);
             expect(newTicks[1]).to.be.equal(1080);
-        }
-            )
+        })
+    })
+
+    describe("NearestTickMultiple Function Logic", async () => {
+        it("Testing nearestTickMultiple function for newTick < 0 and |newTick| < tickSpacing", async () => {
+            const newTick = -10;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(0);
+        })
+        it("Testing nearestTickMultiple function for newTick < 0 and |newTick| > tickSpacing", async () => {
+            const newTick = -100;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(-60);
+        })
+        it("Testing nearestTickMultiple function for newTick > 0 and newTick < tickSpacing", async () => {
+            const newTick = 10;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(0);
+        })
+        it("Testing nearestTickMultiple function for newTick > 0 and newTick > tickSpacing", async () => {
+            const newTick = 100;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(120);
+        })
     })
 
     describe("one signal", async () => {

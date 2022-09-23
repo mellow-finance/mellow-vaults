@@ -37,7 +37,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     uint256 _lastSignal;
     uint256 _lastLeverage;
     uint256 _sigmaWad; // y (standard deviation parameter in wad 10^18)
-    uint256 _max_possible_lower_bound; // should be in fixed rate
+    uint256 _max_possible_lower_bound_wad; // should be in fixed rate
     uint256 _k_unwind_parameter; // parameter for k*leverage (for unwinding so this needs to be sent to the contract vault but not used in the strategy vault)
 
     int24 _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
@@ -66,11 +66,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     event Rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
 
-    function setConstants(int24 logProx, uint256 sigmaWad, uint256 max_possible_lower_bound, int24 tickSpacing) public {
+    function setConstants(int24 logProx, uint256 sigmaWad, uint256 max_possible_lower_bound_wad, int24 tickSpacing) public {
         _requireAtLeastOperator();
         _logProximity = logProx;
         _sigmaWad = sigmaWad;
-        _max_possible_lower_bound = max_possible_lower_bound;
+        _max_possible_lower_bound_wad = max_possible_lower_bound_wad;
         _tickSpacing = tickSpacing;
     }
 
@@ -107,44 +107,37 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Get the nearest tick multiple given a tick and tick spacing
-    function nearestTickMultiple(int24 newTick, int24 tickSpacing) internal pure returns (int24) {
+    function nearestTickMultiple(int24 newTick, int24 tickSpacing) public returns (int24) {
      return (newTick / tickSpacing + (newTick % tickSpacing >= tickSpacing/2 ? int24(1) : int24(0)) ) * tickSpacing;
     }
 
     /// @notice Set new optimimal tick range based on current tick
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
-    function rebalance (int256 currentFixedRateWad) public returns (int256 newTickLower, int256 newTickUpper) {
+    function rebalance (int256 currentFixedRateWad) public returns (int24 _newTickLowerMul, int24 _newTickUpperMul) {
         _requireAtLeastOperator();
-
-        // console.log('my console logs start here:');
-        // console.logInt(PRBMathSD59x18.log2(currentFixedRateWad));
-        // console.logInt(PRBMathSD59x18.log2(1000100000000000000));
-        // console.logInt(-PRBMathSD59x18.div(PRBMathSD59x18.log2(currentFixedRateWad), PRBMathSD59x18.log2(1000100000000000000)));
-        // console.log(PRBMathUD60x18.mul(_sigmaWad, 2000000000000000000));
-        // console.logInt(nearestTickMultiple(_newTickLower, _tickSpacing));
 
         if (rebalanceCheck()) {
             // 0. Get tickspacing from vamm
             // int24 _tickSpacing = _vamm.tickSpacing(_vamm.address());
 
             // 1. Get the new tick lower
-            // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound);
+            // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound_wad);
             uint256 deltaWad = uint256(currentFixedRateWad) - _sigmaWad;
             console.log(deltaWad);
             uint256 _newFixedLowerWad =  0;
             if (deltaWad > 0) {
                 // delta is greater than 0 => choose delta
-                if (deltaWad < _max_possible_lower_bound) {
+                if (deltaWad < _max_possible_lower_bound_wad) {
                     _newFixedLowerWad = deltaWad;
                 } else {
-                    _newFixedLowerWad = _max_possible_lower_bound;
+                    _newFixedLowerWad = _max_possible_lower_bound_wad;
                 }
             } else {
                 // delta is less than 0 => choose 0
-                if (_max_possible_lower_bound > 0) {
+                if (_max_possible_lower_bound_wad > 0) {
                     _newFixedLowerWad = 0;
                 } else {
-                    _newFixedLowerWad = _max_possible_lower_bound;
+                    _newFixedLowerWad = _max_possible_lower_bound_wad;
                 }
             }
             // 2. Get the new tick upper
@@ -168,8 +161,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             console.logInt(_newTickLower);
             console.logInt(_newTickUpper);
 
-            int24 _newTickLowerMul = nearestTickMultiple(int24(_newTickLower), _tickSpacing);
-            int24 _newTickUpperMul = nearestTickMultiple(int24(_newTickUpper), _tickSpacing);
+            _newTickLowerMul = nearestTickMultiple(int24(_newTickLower), _tickSpacing);
+            _newTickUpperMul = nearestTickMultiple(int24(_newTickUpper), _tickSpacing);
 
             console.logInt(_newTickLowerMul);
             console.logInt(_newTickUpperMul);
