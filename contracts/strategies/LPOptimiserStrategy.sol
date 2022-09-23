@@ -121,6 +121,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             // int24 _tickSpacing = _vamm.tickSpacing(_vamm.address());
 
             // 1. Get the new tick lower
+            // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound_wad);
             int256 deltaWad = currentFixedRateWad - _sigmaWad;
             console.logInt(deltaWad);
             int256 _newFixedLowerWad =  0;
@@ -132,12 +133,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
                     _newFixedLowerWad = _max_possible_lower_bound_wad;
                 }
             } else {
-                // delta is less than 0 => choose 0
-                if (_max_possible_lower_bound_wad > 0) {
-                    _newFixedLowerWad = 0;
-                } else {
-                    _newFixedLowerWad = _max_possible_lower_bound_wad;
-                }
+                // delta is less than or equal to 0 => choose 0
+                _newFixedLowerWad = 0;
             }
             // 2. Get the new tick upper
             console.logInt(_newFixedLowerWad);
