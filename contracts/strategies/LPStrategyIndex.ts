@@ -27,9 +27,7 @@ async function main(
     // 3. Call the rebalance function
     const rebalanceTx = await lpStrategy.rebalance();
     await rebalanceTx.wait();
-
     
-
 } // Ending of the main function
 
 // ------------------ DO NOT MODIFY ANYTHING BELOW THIS LINE ------------------

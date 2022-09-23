@@ -258,13 +258,21 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
             await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).to.be.revertedWith("RNN");
         })
-        it("Rebalance the position and return new ticks", async () => {
+        it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad); // without callStatic this only returns the contract receipt
             expect(newTicks[0]).to.be.equal(-5280);
             expect(newTicks[1]).to.be.equal(-4020);
         })
+        it.only("Rebalance the position and return new ticks (max_poss_lower_bound > delta)", async () => {
+            const currentFixedRateWad = BigNumber.from("1000000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad); // without callStatic this only returns the contract receipt
+            expect(newTicks[0]).to.be.equal(-900);
+            expect(newTicks[1]).to.be.equal(1080);
+        }
+            )
     })
 
     describe("one signal", async () => {
