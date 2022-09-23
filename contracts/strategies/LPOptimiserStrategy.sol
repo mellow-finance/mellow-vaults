@@ -123,7 +123,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             // 1. Get the new tick lower
             // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound_wad);
             int256 deltaWad = currentFixedRateWad - _sigmaWad;
-            console.logInt(deltaWad);
             int256 _newFixedLowerWad =  0;
             if (deltaWad > 0) {
                 // delta is greater than 0 => choose delta
@@ -137,31 +136,23 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
                 _newFixedLowerWad = 0;
             }
             // 2. Get the new tick upper
-            console.logInt(_newFixedLowerWad);
             int256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
-            console.logInt(_newFixedUpperWad);
+
             // 3. Convert new fixed lower rate back to tick
             int256 _newTickLowerWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedUpperWad)), 
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            console.logInt(_newTickLowerWad);
+
             // 4. Convert new fixed upper rate back to tick
             int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
-            console.logInt(_newTickUpperWad);
 
             int256 _newTickLower = _newTickLowerWad/1e18;
             int256 _newTickUpper = _newTickUpperWad/1e18;
 
-            console.logInt(_newTickLower);
-            console.logInt(_newTickUpper);
-
             _newTickLowerMul = nearestTickMultiple(int24(_newTickLower), _tickSpacing);
             _newTickUpperMul = nearestTickMultiple(int24(_newTickUpper), _tickSpacing);
-
-            console.logInt(_newTickLowerMul);
-            console.logInt(_newTickUpperMul);
 
             emit Rebalanced(_newTickLowerMul, _newTickUpperMul);
             return (_newTickLowerMul, _newTickUpperMul);
