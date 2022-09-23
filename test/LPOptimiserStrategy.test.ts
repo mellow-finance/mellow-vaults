@@ -261,14 +261,14 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad); // without callStatic this only returns the contract receipt
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(-5280);
             expect(newTicks[1]).to.be.equal(-4020);
         })
         it("Rebalance the position and return new ticks (max_poss_lower_bound > delta)", async () => {
             const currentFixedRateWad = BigNumber.from("1000000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad); // without callStatic this only returns the contract receipt
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(-900);
             expect(newTicks[1]).to.be.equal(1080);
         })
@@ -298,6 +298,37 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const tickSpacing = 60;
             const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
             expect(result).to.be.equal(120);
+        })
+    })
+
+    describe("deltaWad Calculation Logic", async () => {
+        it("deltaWad = 0.001", async () => {
+            const currentFixedRateWad = BigNumber.from("101000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(16020);
+            expect(newTicks[1]).to.be.equal(69060);
+        })
+        it("deltaWad < 0.001", async () => {
+            const currentFixedRateWad = BigNumber.from("100500000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(16080);
+            expect(newTicks[1]).to.be.equal(76020);
+        })
+        it("deltaWad = 1000", async () => {
+            const currentFixedRateWad = BigNumber.from("1000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(-5280);
+            expect(newTicks[1]).to.be.equal(-4020);
+        })
+        it.only("deltaWad > 1000", async () => {
+            const currentFixedRateWad = BigNumber.from("2000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(-5280);
+            expect(newTicks[1]).to.be.equal(-4020);
         })
     })
 
