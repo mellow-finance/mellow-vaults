@@ -8,7 +8,6 @@ import "../interfaces/vaults/IVoltzVault.sol";
 import "../interfaces/external/voltz/IMarginEngine.sol";
 import "../interfaces/external/voltz/IPeriphery.sol";
 import "../interfaces/external/voltz/IVAMM.sol";
-import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -16,7 +15,7 @@ import "../utils/DefaultAccessControl.sol";
 import "@prb/math/contracts/PRBMathSD59x18.sol";
 import "hardhat/console.sol";
 
-contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
+contract LPOptimiserStrategy is DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -66,6 +65,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     event Rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
 
+
+    // not sure what this event is supposed to do... discuss with Costin
+    // event StrategyInception(bool lpStrategyDeployed); 
+    // emit StrategyInception(true);
+
     function setConstants(int24 logProx, int256 sigmaWad, int256 max_possible_lower_bound_wad, int24 tickSpacing) public {
         _requireAtLeastOperator();
         _logProximity = logProx;
@@ -99,10 +103,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             
             ) {
             // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
-            return (false);
+            return false;
         } else {
             // 4.2. If current fixed rate is outside bounds, return true (do rebalance)
-            return (true);
+            return true;
         }
     }
 
@@ -154,140 +158,17 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             newTickLowerMul = nearestTickMultiple(int24(newTickLower), _tickSpacing);
             newTickUpperMul = nearestTickMultiple(int24(newTickUpper), _tickSpacing);
 
+            // Update the global upper and lower tick variables
+            _tickLower = newTickLowerMul;
+            _tickUpper = newTickUpperMul;
+
+            // Call to VoltzVault contract to update the position lower and upper ticks
+            // _vault.updatePosition(_tickLower, _tickUpper);
+
             emit Rebalanced(newTickLowerMul, newTickUpperMul);
             return (newTickLowerMul, newTickUpperMul);
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
           }
         }
-
-
-//--------------------// Don't need the below functions // ---------------------//
-
-    /// @notice Get new signal and act according to it
-    /// @param signal New signal (1 - short/fixed, 2 - long/variable, 3 - exit)
-    /// @param leverage Leverage you take for this trade (in wad)
-    /// @param marginUpdate This flags that this update is triggered by deposit/withdrawal
-    function update(
-        uint256 signal, 
-        uint256 leverage,
-        bool marginUpdate
-    ) public {
-        _requireAtLeastOperator();
-
-        require (signal == 1 || signal == 2 || signal == 3, ExceptionsLibrary.INVALID_VALUE);
-        require (leverage > 0, ExceptionsLibrary.INVALID_VALUE);
-
-        if (!marginUpdate && signal == _lastSignal && _lastLeverage == leverage) {
-            return;
-        }
-
-        Position.Info memory position = _marginEngine.getPosition(
-            address(_vault), 
-            _currentPosition.low, 
-            _currentPosition.high
-        );
-
-        uint256[] memory tokenAmounts = new uint256[](1);
-
-        {
-            bytes memory options = abi.encode(
-                0,
-                 position.variableTokenBalance,
-                0,
-                false,
-                0,
-                0,
-                false,
-                0
-            );
-
-            _vault.pull(
-                address(_erc20Vault),
-                _tokens,
-                tokenAmounts,
-                options
-            );
-        }
-
-        if (signal == 1) {
-            int256 notional = FullMath.mulDivSigned(position.margin, leverage, CommonLibrary.D18);
-
-            bytes memory options = abi.encode(
-                0,
-                notional,
-                0,
-                false,
-                0,
-                0,
-                false,
-                0
-            );
-
-            _vault.push(
-                _tokens,
-                tokenAmounts,
-                options
-            );
-        }
-
-        if (signal == 2) {
-            int256 notional = FullMath.mulDivSigned(position.margin, leverage, CommonLibrary.D18);
-
-            bytes memory options = abi.encode(
-                0,
-                -notional,
-                0,
-                false,
-                0,
-                0,
-                false,
-                0
-            );
-
-            _vault.push(
-                _tokens,
-                tokenAmounts,
-                options
-            );
-        }
-
-        _lastSignal = signal;
-        _lastLeverage = leverage;
-    }
-
-    function settle() public {
-        _requireAtLeastOperator();
-
-        uint256[] memory tokenAmounts = new uint256[](1);
-        tokenAmounts[0] = type(uint256).max;
-
-        bytes memory options = abi.encode(
-                0,
-                0,
-                0,
-                false,
-                0,
-                0,
-                true,
-                1
-            );
-
-        _vault.pull(
-            address(_erc20Vault),
-            _tokens,
-            tokenAmounts,
-            options
-        );
-    }
-
-    /// @notice Callback function called after for ERC20RootVault::deposit
-    function depositCallback() external {
-        update(_lastSignal, _lastLeverage, true);
-    }
-
-    /// @notice Callback function called after for ERC20RootVault::withdraw
-    function withdrawCallback() external {
-        update(_lastSignal, _lastLeverage, true);
-    }
 }
