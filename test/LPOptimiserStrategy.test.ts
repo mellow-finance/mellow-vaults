@@ -323,7 +323,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             expect(newTicks[0]).to.be.equal(-5280);
             expect(newTicks[1]).to.be.equal(-4020);
         })
-        it.only("deltaWad > 1000", async () => {
+        it("deltaWad > 1000", async () => {
             const currentFixedRateWad = BigNumber.from("2000100000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);

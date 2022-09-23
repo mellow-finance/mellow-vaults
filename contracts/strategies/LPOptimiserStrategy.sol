@@ -113,49 +113,49 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Set new optimimal tick range based on current tick
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
-    function rebalance (int256 currentFixedRateWad) public returns (int24 _newTickLowerMul, int24 _newTickUpperMul) {
+    function rebalance (int256 currentFixedRateWad) public returns (int24 newTickLowerMul, int24 newTickUpperMul) {
         _requireAtLeastOperator();
 
         if (rebalanceCheck()) {
             // 0. Get tickspacing from vamm
-            // int24 _tickSpacing = _vamm.tickSpacing(_vamm.address());
+            // _tickSpacing = _vamm.tickSpacing(_vamm.address());
 
             // 1. Get the new tick lower
             // uint256 _newFixedLowerWad = Math.min(Math.max(0, uint256(currentFixedRateWad) - _sigmaWad), _max_possible_lower_bound_wad);
             int256 deltaWad = currentFixedRateWad - _sigmaWad;
-            int256 _newFixedLowerWad =  0;
+            int256 newFixedLowerWad =  0;
             if (deltaWad > 0) {
                 // delta is greater than 0 => choose delta
                 if (deltaWad < _max_possible_lower_bound_wad) {
-                    _newFixedLowerWad = deltaWad;
+                    newFixedLowerWad = deltaWad;
                 } else {
-                    _newFixedLowerWad = _max_possible_lower_bound_wad;
+                    newFixedLowerWad = _max_possible_lower_bound_wad;
                 }
             } else {
                 // delta is less than or equal to 0 => choose 0
-                _newFixedLowerWad = 0;
+                newFixedLowerWad = 0;
             }
             // 2. Get the new tick upper
-            int256 _newFixedUpperWad = _newFixedLowerWad + 2 * _sigmaWad;
+            int256 newFixedUpperWad = newFixedLowerWad + 2 * _sigmaWad;
 
             // 3. Convert new fixed lower rate back to tick
-            int256 _newTickLowerWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedUpperWad)), 
+            int256 newTickLowerWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(newFixedUpperWad)), 
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
 
             // 4. Convert new fixed upper rate back to tick
-            int256 _newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(_newFixedLowerWad)),
+            int256 newTickUpperWad = -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(newFixedLowerWad)),
                                                         PRBMathSD59x18.log2(1000100000000000000)
                                                         );
 
-            int256 _newTickLower = _newTickLowerWad/1e18;
-            int256 _newTickUpper = _newTickUpperWad/1e18;
+            int256 newTickLower = newTickLowerWad/1e18;
+            int256 newTickUpper = newTickUpperWad/1e18;
 
-            _newTickLowerMul = nearestTickMultiple(int24(_newTickLower), _tickSpacing);
-            _newTickUpperMul = nearestTickMultiple(int24(_newTickUpper), _tickSpacing);
+            newTickLowerMul = nearestTickMultiple(int24(newTickLower), _tickSpacing);
+            newTickUpperMul = nearestTickMultiple(int24(newTickUpper), _tickSpacing);
 
-            emit Rebalanced(_newTickLowerMul, _newTickUpperMul);
-            return (_newTickLowerMul, _newTickUpperMul);
+            emit Rebalanced(newTickLowerMul, newTickUpperMul);
+            return (newTickLowerMul, newTickUpperMul);
         } else {
             revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
           }
