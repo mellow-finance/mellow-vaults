@@ -93,7 +93,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         // 1. Get current position, lower, and upper ticks
         // _currentPosition = _vault.currentPosition();
         // _tickLower = _currentPosition.tickLower;
-        // _tickUpper = _currentPosition.tickUpper();
+        // _tickUpper = _currentPosition.tickUpper;
 
         // 2. Get current tick
         // _currentTick = _periphery.getCurrentTick(_marginEngine);
