@@ -146,21 +146,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
 
-        DelayedProtocolPerVaultParams memory params = abi.decode(
-            _delayedProtocolPerVaultParams[nft],
-            (DelayedProtocolPerVaultParams)
-        );
-
-        ICreditFacade facade = ICreditFacade(params.facade);
-        IERC20Metadata token = IERC20Metadata(params.primaryToken);
-
-        (uint256 minBorrow, ) = facade.limits();
-
-        {
-            require(token.balanceOf(address(this)) >= minBorrow, ExceptionsLibrary.LIMIT_UNDERFLOW);
-            token.transfer(vaddr, minBorrow);
-        }
-
         gearboxVault.initialize(nft, vaultTokens_);
         vault = IGearboxVault(vaddr);
     }
