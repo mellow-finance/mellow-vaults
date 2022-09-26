@@ -8,6 +8,7 @@ import {
     Relayer,
     RelayerModel,
 } from "defender-relay-client/lib/relayer";
+import { KeyValueStoreClient } from "defender-kvstore-client"
 
 async function main(
     signer: DefenderRelaySigner,
@@ -24,15 +25,23 @@ async function main(
         signer
     );
 
-    // 3. Call the rebalance function
-    const rebalanceTx = await lpStrategy.rebalance();
-    await rebalanceTx.wait();
-    
+    // 3. Call the rebalanceCheck function
+    const rebalanceCheckTx = await lpStrategy.rebalanceCheck();
+    await rebalanceCheckTx.wait();
+
+    // 4. Call the rebalance function if the rebalanceCheck function returns true
+    if (rebalanceCheckTx) {
+        const rebalanceTx = await lpStrategy.rebalance();
+        await rebalanceTx.wait();
+    } else {
+        console.log('No rebalance required');
+    }
+
 } // Ending of the main function
 
 // ------------------ DO NOT MODIFY ANYTHING BELOW THIS LINE ------------------
 // Entrypoint for the Autotask
-export async function handler(credentials: RelayerParams) {
+export async function handler(credentials: RelayerParams, event) { // the type of event is any but might need to change that
     const provider = new DefenderRelayProvider(credentials);
     const signer = new DefenderRelaySigner(credentials, provider, {
         speed: "safeLow",
@@ -40,6 +49,9 @@ export async function handler(credentials: RelayerParams) {
     const relayer = new Relayer(credentials);
     const info: RelayerModel = await relayer.getRelayer();
     console.log(`Relayer address is ${info.address}`);
+
+    const store = new KeyValueStoreClient(event);
+    // await store.put('twFr', instantaneousFixedRate.toString());
 
     await main(signer, provider);
 }

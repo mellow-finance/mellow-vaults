@@ -122,7 +122,6 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     function rebalance (uint256 currentFixedRateWad) public returns (int24 newTickLowerMul, int24 newTickUpperMul) {
         _requireAtLeastOperator();
 
-        if (rebalanceCheck()) {
             // 0. Get tickspacing from vamm
             // _tickSpacing = _vamm.tickSpacing(_vamm);
 
@@ -168,8 +167,5 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
             emit Rebalanced(newTickLowerMul, newTickUpperMul);
             return (newTickLowerMul, newTickUpperMul);
-        } else {
-            revert(ExceptionsLibrary.REBALANCE_NOT_NEEDED);
-          }
         }
 }

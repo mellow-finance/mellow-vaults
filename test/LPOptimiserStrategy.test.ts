@@ -253,11 +253,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const result = await this.subject.rebalanceCheck();
             expect(result).to.be.equal(true);
         })
-        it("No need to rebalance position", async () => {
-            const currentFixedRateWad = BigNumber.from("2000000000000000000");
-            await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
-            await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).to.be.revertedWith("RNN");
-        })
+        // it("No need to rebalance position", async () => {
+        //     const currentFixedRateWad = BigNumber.from("2000000000000000000");
+        //     await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
+        //     await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).to.be.revertedWith("RNN");
+        // })
         it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
