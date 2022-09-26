@@ -262,7 +262,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(-5280);
+            expect(newTicks[0]).to.be.equal(-5220);
             expect(newTicks[1]).to.be.equal(-4020);
         })
         it("Rebalance the position and return new ticks (max_poss_lower_bound > delta)", async () => {
@@ -279,7 +279,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const newTick = -10;
             const tickSpacing = 60;
             const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
-            expect(result).to.be.equal(0);
+            expect(result).to.be.equal(60);
         })
         it("Testing nearestTickMultiple function for newTick < 0 and |newTick| > tickSpacing", async () => {
             const newTick = -100;
@@ -320,14 +320,14 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const currentFixedRateWad = BigNumber.from("1000100000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(-5280);
+            expect(newTicks[0]).to.be.equal(-5220);
             expect(newTicks[1]).to.be.equal(-4020);
         })
         it("deltaWad > 1000", async () => {
             const currentFixedRateWad = BigNumber.from("2000100000000000000000");
             await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(-5280);
+            expect(newTicks[0]).to.be.equal(-5220);
             expect(newTicks[1]).to.be.equal(-4020);
         })
     })
@@ -342,8 +342,16 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
                     ([k, v]: any) => v.name === "Rebalanced"
                 )
             ).to.be.equal(true);
-            expect(newTicks[0]).to.be.equal(-5280);
-            expect(newTicks[1]).to.be.equal(-4020);
+        })
+        it("StrategyDeployment event was emitted after successful deployment of strategy", async () => {
+            const currentFixedRateWad = BigNumber.from("2000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(
+                Object.entries(this.lPOptimiserStrategy.interface.events).some(
+                    ([k, v]: any) => v.name === "StrategyDeployment"
+                )
+            ).to.be.equal(true);
         })
     })
 });
