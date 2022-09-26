@@ -36,7 +36,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
     int256 internal _max_possible_lower_bound_wad; // should be in fixed rate
 
-    int24 _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
+    int24 internal _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
     int24 internal _currentTick;
     int24 internal _tickLower;
     int24 internal _tickUpper;
