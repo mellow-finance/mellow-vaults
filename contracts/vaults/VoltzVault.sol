@@ -95,11 +95,17 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         // this makes sure that we do not use our own liquidity to unwind ourselves
         _updateLiquidity(-_currentPositionLiquidity.toInt256());
         _unwindAndExitCurrentPosition();
+        TickRange memory oldPosition = _currentPosition;
 
         _updateCurrentPosition(ticks);
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
         _updateMargin(vaultBalance.toInt256());
         _updateLiquidity((vaultBalance * _k).toInt256());
+
+        emit PositionRebalance(
+            oldPosition,
+            _currentPosition
+        );
     }
 
     /// @inheritdoc IVoltzVault
@@ -128,6 +134,12 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _historicalAPYDeltaPercentageWad = 0;
 
         _updateCurrentPosition(TickRange(initialTickLower, initialTickUpper));
+
+        emit VaultInitialized(
+            marginEngine_,
+            initialTickLower,
+            initialTickUpper
+        );
     }
 
     function updateTvl() external {
@@ -191,6 +203,12 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         }
 
         _lastTvlUpdateTimestamp = block.timestamp;
+
+        emit TvlUpdate(
+            _minTVL,
+            _maxTVL,
+            _lastTvlUpdateTimestamp
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -238,6 +256,11 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         actualTokenAmounts[0] = tokenAmounts[0];
         _updateMargin(tokenAmounts[0].toInt256());
         _updateLiquidity(tokenAmounts[0].toInt256() * _leverage.toInt256());
+
+        emit PushDeposit(
+            tokenAmounts[0],
+            tokenAmounts[0] * _leverage
+        );
     }
 
     function _pull(
@@ -277,6 +300,11 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
         IERC20(_vaultTokens[0]).safeTransfer(to, amountToWithdraw);
         actualTokenAmounts[0] = amountToWithdraw;
+
+        emit PullWithdraw(
+            tokenAmounts[0],
+            actualTokenAmounts[0]
+        );
     }
 
     function _updateMargin(int256 marginDelta) internal {

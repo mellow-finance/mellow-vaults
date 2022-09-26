@@ -67,4 +67,10 @@ interface IVoltzVault is IIntegrationVault {
         uint256 indexed amountRequestedToWithdraw,
         uint256 indexed amountWithdrawn
     );
+
+    event TvlUpdate(
+        int256 minTvl,
+        int256 maxTvl,
+        uint256 tvlUpdateTimestamp
+    );
 }
