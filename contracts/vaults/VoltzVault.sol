@@ -26,9 +26,17 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     using PRBMathUD60x18 for uint256;
 
     IMarginEngine public _marginEngine;
+    IRateOracle public _rateOracle;
     int24 _tickSpacing;
     uint256 _leverage;
     uint256 _k;
+    uint256 _lookbackWindowInSeconds;
+    uint256 _historicalAPYDeltaPercentageWad;
+
+    /// tvl needs to be updated before use
+    int256 _minTVL;
+    int256 _maxTVL;
+    uint256 _lastTvlUpdateTimestamp;
 
     TickRange _currentPosition;
     uint256 _currentPositionLiquidity;
@@ -43,6 +51,14 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         minTokenAmounts = new uint256[](1);
         maxTokenAmounts = new uint256[](1);
+
+        if (_minTVL > 0) {
+            minTokenAmounts[0] = _minTVL.toUint256();
+        }
+
+        if (_maxTVL > 0) {
+            maxTokenAmounts[0] = _maxTVL.toUint256();
+        }
     }
 
     /// @inheritdoc IntegrationVault
@@ -62,6 +78,11 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     /// @inheritdoc IVoltzVault
     function vamm() external view override returns (IVAMM) {
         return _marginEngine.vamm();
+    }
+
+    /// @inheritdoc IVoltzVault
+    function rateOracle() external view override returns (IRateOracle) {
+        return _rateOracle;
     }
 
     function currentPosition() external view returns (TickRange memory) {
@@ -92,6 +113,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_VALUE);
 
         _marginEngine = IMarginEngine(marginEngine_);
+        _rateOracle = _marginEngine.rateOracle();
 
         address underlyingToken = address(_marginEngine.underlyingToken());
         require(vaultTokens_[0] == underlyingToken, ExceptionsLibrary.INVALID_VALUE);
@@ -102,8 +124,73 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _tickSpacing = vamm_.tickSpacing();
         _leverage = 10;
         _k = 2;
+        _lookbackWindowInSeconds = 1209600;
+        _historicalAPYDeltaPercentageWad = 0;
 
         _updateCurrentPosition(TickRange(initialTickLower, initialTickUpper));
+    }
+
+    function updateTvl() external {
+        uint256 timeInSecondsWad;
+
+        uint256 termStartTimestampWad = _marginEngine.termStartTimestampWad();
+        uint256 termEndTimestampWad = _marginEngine.termEndTimestampWad();
+        uint256 termCurrentTimestampWad = Time.blockTimestampScaled();
+
+        // Calculcate fixed factor
+        timeInSecondsWad = termEndTimestampWad - termStartTimestampWad;
+        uint256 fixedFactorValueWad = _accrualFact(timeInSecondsWad).div(ONE_HUNDRED_IN_WAD);
+
+        // Calculate estimated variable factor between start and end
+        uint256 variableFactorStartCurrentWad = _rateOracle.variableFactorNoCache(
+            termStartTimestampWad, 
+            termCurrentTimestampWad
+        );
+        uint256 lookbackWindowInSecondsWad = _lookbackWindowInSeconds.fromUint();
+        uint256 historicalAPYWad = _rateOracle.getApyFromTo(
+            (termCurrentTimestampWad - lookbackWindowInSecondsWad).toUint(), 
+            termCurrentTimestampWad.toUint()
+        );
+        timeInSecondsWad = termEndTimestampWad - termCurrentTimestampWad;
+        uint256 estimatedVariableFactorCurrentEndWad = historicalAPYWad.mul(_accrualFact(timeInSecondsWad));
+        uint256 estimatedVariableFactorStartEndLowerWad = 
+            variableFactorStartCurrentWad + 
+                estimatedVariableFactorCurrentEndWad.mul(
+                    PRBMathUD60x18.fromUint(1) - _historicalAPYDeltaPercentageWad
+                );
+        uint256 estimatedVariableFactorStartEndUpperWad = 
+            variableFactorStartCurrentWad + 
+                estimatedVariableFactorCurrentEndWad.mul(
+                    PRBMathUD60x18.fromUint(1) + _historicalAPYDeltaPercentageWad
+                );
+
+        // Aggregate estimated settlement cashflows into TVL
+        _minTVL = _estimateSettlementCashflow(
+            _currentPosition,
+            fixedFactorValueWad,
+            estimatedVariableFactorStartEndLowerWad
+        );
+        _maxTVL = _estimateSettlementCashflow(
+            _currentPosition,
+            fixedFactorValueWad,
+            estimatedVariableFactorStartEndUpperWad
+        );
+        
+        for (uint256 i = 0; i < trackedPositions.length; i++) {
+            _minTVL += _estimateSettlementCashflow(
+                trackedPositions[i],
+                fixedFactorValueWad,
+                estimatedVariableFactorStartEndLowerWad
+            );
+
+            _maxTVL += _estimateSettlementCashflow(
+                trackedPositions[i],
+                fixedFactorValueWad,
+                estimatedVariableFactorStartEndUpperWad
+            );
+        }
+
+        _lastTvlUpdateTimestamp = block.timestamp;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -114,6 +201,30 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     function _isReclaimForbidden(address) internal pure override returns (bool) {
         return false;
+    }
+
+    function _estimateSettlementCashflow(
+        TickRange memory position,
+        uint256 fixedFactorValueWad,
+        uint256 estimatedVariableFactorStartEndWad
+    ) internal returns (int256) {
+        Position.Info memory positionInfo = _marginEngine.getPosition(
+            address(this),
+            position.tickLower,
+            position.tickUpper
+        );
+
+        // Fixed Cashflow
+        int256 fixedTokenBalanceWad = positionInfo.fixedTokenBalance.fromInt();
+        int256 fixedCashflowBalanceWad = fixedTokenBalanceWad.mul(int256(fixedFactorValueWad));
+        int256 fixedCashflowBalance = fixedCashflowBalanceWad.toInt();
+ 
+        // Variable Cashflow
+        int256 variableTokenBalanceWad = positionInfo.variableTokenBalance.fromInt();
+        int256 variableCashflowBalanceWad = variableTokenBalanceWad.mul(int256(estimatedVariableFactorStartEndWad));
+        int256 variableCashflowBalance = variableCashflowBalanceWad.toInt();
+
+        return fixedCashflowBalance + variableCashflowBalance + positionInfo.margin;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
