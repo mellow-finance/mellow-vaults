@@ -97,15 +97,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         );
         address[] memory tokens = _vaultTokens;
         uint256 supply = totalSupply;
-        if (supply == 0) {
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                require(tokenAmounts[i] >= 10 * _pullExistentials[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-                require(
-                    tokenAmounts[i] <= _pullExistentials[i] * _pullExistentials[i],
-                    ExceptionsLibrary.LIMIT_OVERFLOW
-                );
-            }
-        }
+
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         _chargeFees(thisNft, minTvl, supply, tokens);
@@ -144,12 +136,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
-        // lock tokens on first deposit
-        if (supply == 0) {
-            _mint(address(0), lpAmount);
-        } else {
-            _mint(msg.sender, lpAmount);
-        }
+        
+        _mint(msg.sender, lpAmount);
 
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             if (normalizedAmounts[i] > actualTokenAmounts[i]) {
@@ -169,7 +157,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IGearboxRootVault
     function currentWithdrawalRequested(address addr) external view returns (uint256 totalAmountRequested) {
-        if (_lastWithdrawalsExecutionTimestamp <= _lastRequestTimestamp[addr]) {
+        if (_lastRequestTimestamp[addr] <= _lastWithdrawalsExecutionTimestamp) {
             return 0;
         }
         return _withdrawalRequests[addr];
