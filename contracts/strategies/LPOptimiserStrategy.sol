@@ -92,11 +92,11 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         
         // 1. Get current position, lower, and upper ticks
         // _currentPosition = _vault.currentPosition();
-        // int24 _tickLower = _currentPosition.tickLower();
-        // int24 _tickUpper = _currentPosition.tickUpper();
+        // _tickLower = _currentPosition.tickLower;
+        // _tickUpper = _currentPosition.tickUpper();
 
         // 2. Get current tick
-        // int24 _currentTick = _periphery.getCurrentTick(_marginEngine.address());
+        // _currentTick = _periphery.getCurrentTick(_marginEngine);
 
         // 3. Compare current fixed rate to lower and upper bounds
         if (
@@ -124,7 +124,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
         if (rebalanceCheck()) {
             // 0. Get tickspacing from vamm
-            // _tickSpacing = _vamm.tickSpacing(_vamm.address());
+            // _tickSpacing = _vamm.tickSpacing(_vamm);
 
             // 1. Get the new tick lower
             int256 deltaWad = int256(currentFixedRateWad - _sigmaWad);
@@ -163,7 +163,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
             _tickLower = newTickLowerMul;
             _tickUpper = newTickUpperMul;
 
-            // Call to VoltzVault contract to update the position lower and upper ticks (discuss with Costin how this would be done)
+            // Call to VoltzVault contract to update the position lower and upper ticks
             // _vault.rebalance(IVoltzVault.TickRange(_tickLower, _tickUpper));
 
             emit Rebalanced(newTickLowerMul, newTickUpperMul);
