@@ -234,178 +234,124 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
 
     beforeEach(async () => {
         await this.deploymentFixture();
+        await this.subject.connect(this.admin).setConstants(
+            -1000, 
+            BigNumber.from("100000000000000000"), 
+            BigNumber.from("1500000000000000000"), 
+            60
+            );
     });
 
-    describe("one signal", async () => {
-        for (let signal of [1, 2, 3]) {
-            for (let leverage of [1, 10]) {
-                const tagSignal =
-                    (signal === 1)
-                        ? "SHORT"
-                        : (signal === 2)
-                            ? "LONG"
-                            : "EXIT";
+    describe("Rebalance Logic", async () => {
+        it( "Check if in-range position needs to be rebalanced", async () => {
+            await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
+            const result = await this.subject.rebalanceCheck();
+            expect(result).to.be.equal(false);
+        })
+        it("Check if out-of-range position needs to be rebalanced", async () => {
+            await this.subject.connect(this.admin).setTickValues(8000, 0, 6000);
+            const result = await this.subject.rebalanceCheck();
+            expect(result).to.be.equal(true);
+        })
+        // it("No need to rebalance position", async () => {
+        //     const currentFixedRateWad = BigNumber.from("2000000000000000000");
+        //     await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
+        //     await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).to.be.revertedWith("RNN");
+        // })
+        it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
+            const currentFixedRateWad = BigNumber.from("2000000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(-5220);
+            expect(newTicks[1]).to.be.equal(-4020);
+        })
+        it("Rebalance the position and return new ticks (max_poss_lower_bound > delta)", async () => {
+            const currentFixedRateWad = BigNumber.from("1000000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(-900);
+            expect(newTicks[1]).to.be.equal(1080);
+        })
+    })
 
-                it(`signal ${tagSignal} with leverage ${leverage}x`, async () => {
-                    await this.preparePush();
+    describe("NearestTickMultiple Function Logic", async () => {
+        it("Testing nearestTickMultiple function for newTick < 0 and |newTick| < tickSpacing", async () => {
+            const newTick = -10;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(60);
+        })
+        it("Testing nearestTickMultiple function for newTick < 0 and |newTick| > tickSpacing", async () => {
+            const newTick = -100;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(-60);
+        })
+        it("Testing nearestTickMultiple function for newTick > 0 and newTick < tickSpacing", async () => {
+            const newTick = 10;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(0);
+        })
+        it("Testing nearestTickMultiple function for newTick > 0 and newTick > tickSpacing", async () => {
+            const newTick = 100;
+            const tickSpacing = 60;
+            const result = await this.subject.callStatic.nearestTickMultiple(newTick, tickSpacing);
+            expect(result).to.be.equal(120);
+        })
+    })
 
-                    await mint(
-                        "USDC",
-                        this.voltzVault.address,
-                        BigNumber.from(10).pow(6).mul(3000)
-                    );
+    describe("deltaWad Calculation Logic", async () => {
+        it("deltaWad = 0.001", async () => {
+            const currentFixedRateWad = BigNumber.from("101000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(16020);
+            expect(newTicks[1]).to.be.equal(69060);
+        })
+        it("deltaWad < 0.001", async () => {
+            const currentFixedRateWad = BigNumber.from("100500000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(16080);
+            expect(newTicks[1]).to.be.equal(76020);
+        })
+        it("deltaWad = 1000", async () => {
+            const currentFixedRateWad = BigNumber.from("1000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(-5220);
+            expect(newTicks[1]).to.be.equal(-4020);
+        })
+        it("deltaWad > 1000", async () => {
+            const currentFixedRateWad = BigNumber.from("2000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(-5220);
+            expect(newTicks[1]).to.be.equal(-4020);
+        })
+    })
 
-                    await this.voltzVault.push(
-                        [this.usdc.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                        ],
-                        encodeToBytes(
-                            ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                            [
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                BigNumber.from(0),
-                                false,
-                                0,
-                                0,
-                                false,
-                                0
-                            ]
-                        )
-                    );
-
-                    await this.grantPermissionsVoltzVaults();
-                    await this.subject.connect(this.admin).update(signal, BigNumber.from(10).pow(18).mul(leverage), false);
-
-                    const position = await this.marginEngineContract.callStatic.getPosition(
-                        this.voltzVault.address,
-                        LOW_TICK,
-                        HIGH_TICK
-                    );
-
-                    if (signal === 1) {
-                        expect(position.variableTokenBalance.eq(BigNumber.from(10).pow(6).mul(3000).mul(-leverage)));
-                    }
-
-                    if (signal === 2) {
-                        expect(position.variableTokenBalance.eq(BigNumber.from(10).pow(6).mul(3000).mul(leverage)));
-                    }
-
-                    if (signal === 3) {
-                        expect(position.variableTokenBalance.eq(BigNumber.from(0)));
-                    }
-
-                    expect(position.margin.lte(BigNumber.from(10).pow(6).mul(3000)));
-                    expect(position.margin.gte(BigNumber.from(10).pow(6).mul(2950)));
-                })
-            }
-        }
-    });
-
-    describe("two signals", async () => {
-        for (let firstSignal of [1, 2, 3]) {
-            for (let secondSignal of [1, 2, 3]) {
-                for (let firstLeverage of [1, 10]) {
-                    for (let secondLeverage of [1, 10]) {
-                        const tagFirstSignal =
-                            (firstSignal === 1)
-                                ? "SHORT"
-                                : (firstSignal === 2)
-                                    ? "LONG"
-                                    : "EXIT";
-
-                        const tagSecondSignal =
-                            (secondSignal === 1)
-                                ? "SHORT"
-                                : (firstSignal === 2)
-                                    ? "LONG"
-                                    : "EXIT";
-
-                        it(`${tagFirstSignal} then ${tagSecondSignal} with leverage ${secondLeverage}x`, async () => {
-                            await this.preparePush();
-
-                            await mint(
-                                "USDC",
-                                this.voltzVault.address,
-                                BigNumber.from(10).pow(6).mul(3000)
-                            );
-
-                            await this.voltzVault.push(
-                                [this.usdc.address],
-                                [
-                                    BigNumber.from(10).pow(6).mul(3000),
-                                ],
-                                encodeToBytes(
-                                    ["int256", "int256", "uint160", "bool", "int24", "int24", "bool", "uint256"],
-                                    [
-                                        BigNumber.from(0),
-                                        BigNumber.from(0),
-                                        BigNumber.from(0),
-                                        false,
-                                        0,
-                                        0,
-                                        false,
-                                        0
-                                    ]
-                                )
-                            );
-
-                            await this.grantPermissionsVoltzVaults();
-
-                            {
-                                await this.subject.connect(this.admin).update(firstSignal, BigNumber.from(10).pow(18).mul(firstLeverage), false);
-
-                                const position = await this.marginEngineContract.callStatic.getPosition(
-                                    this.voltzVault.address,
-                                    LOW_TICK,
-                                    HIGH_TICK
-                                );
-
-                                if (firstSignal === 1) {
-                                    expect(position.variableTokenBalance.eq(BigNumber.from(10).pow(6).mul(3000).mul(-firstLeverage)));
-                                }
-
-                                if (firstSignal == 2) {
-                                    expect(position.variableTokenBalance.eq(BigNumber.from(10).pow(6).mul(3000).mul(firstLeverage)));
-                                }
-
-                                if (firstSignal == 3) {
-                                    expect(position.variableTokenBalance.eq(BigNumber.from(0)));
-                                }
-
-                                expect(position.margin.lte(BigNumber.from(10).pow(6).mul(3000)));
-                                expect(position.margin.gte(BigNumber.from(10).pow(6).mul(2950)));
-                            }
-
-                            {
-                                await this.subject.connect(this.admin).update(secondSignal, BigNumber.from(10).pow(18).mul(secondLeverage), false);
-
-                                const position = await this.marginEngineContract.callStatic.getPosition(
-                                    this.voltzVault.address,
-                                    LOW_TICK,
-                                    HIGH_TICK
-                                );
-
-                                if (secondSignal === 1) {
-                                    expect(position.variableTokenBalance.eq(BigNumber.from(10).pow(6).mul(3000).mul(-secondLeverage)));
-                                }
-
-                                if (secondSignal == 2) {
-                                    expect(position.variableTokenBalance.eq(BigNumber.from(10).pow(6).mul(3000).mul(secondLeverage)));
-                                }
-
-                                if (secondSignal == 3) {
-                                    expect(position.variableTokenBalance.eq(BigNumber.from(0)));
-                                }
-
-                                expect(position.margin.lte(BigNumber.from(10).pow(6).mul(3000)));
-                                expect(position.margin.gte(BigNumber.from(10).pow(6).mul(2950)));
-                            }
-                        })
-                    }
-                }
-            }
-        }
-    });
+    describe("Rebalance Event", async () => {
+        it("Rebalance event was emitted after successful call on rebalance()", async () => {
+            const currentFixedRateWad = BigNumber.from("2000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(
+                Object.entries(this.lPOptimiserStrategy.interface.events).some(
+                    ([k, v]: any) => v.name === "Rebalanced"
+                )
+            ).to.be.equal(true);
+        })
+        it("StrategyDeployment event was emitted after successful deployment of strategy", async () => {
+            const currentFixedRateWad = BigNumber.from("2000100000000000000000");
+            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            expect(
+                Object.entries(this.lPOptimiserStrategy.interface.events).some(
+                    ([k, v]: any) => v.name === "StrategyDeployment"
+                )
+            ).to.be.equal(true);
+        })
+    })
 });

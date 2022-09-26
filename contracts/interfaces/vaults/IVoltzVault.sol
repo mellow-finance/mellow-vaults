@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IIntegrationVault.sol";
 import "../external/voltz/IMarginEngine.sol";
+import "../external/voltz/IPeriphery.sol";
 import "../external/voltz/IVAMM.sol";
 import "../external/voltz/IPeriphery.sol";
 import "../external/voltz/rate_oracles/IRateOracle.sol";
@@ -15,6 +16,9 @@ interface IVoltzVault is IIntegrationVault {
 
     /// @notice Reference to IMarginEngine of Voltz Protocol.
     function marginEngine() external view returns (IMarginEngine);
+
+    /// @notice Reference to IPeriphery of Voltz Protocol.
+    function periphery() external view returns (IPeriphery);
 
     /// @notice Reference to IVAMM of Voltz Protocol.
     function vamm() external view returns (IVAMM);
