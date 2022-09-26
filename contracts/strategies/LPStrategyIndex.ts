@@ -14,6 +14,52 @@ async function main(
     signer: DefenderRelaySigner,
     provider: DefenderRelayProvider
 ) {
+
+    // Fetch instantaneousFixedRate (no need for alchemy as the defender provider does the job for us)
+    async function getFixedApr(): Promise < number > {
+        const peripheryAddress = '';
+        const peripheryABI = '';
+
+        // define these
+        const lpOptimiserStrategyAddress = '';
+        const lpOptimiserABI = '';
+
+
+        // get the margin engine address from the stategy contract
+
+        const LPOptimiserStrategyContract = new ethers.Contract(
+            lpOptimiserStrategyAddress,
+            lpOptimiserABI,
+            provider
+        );
+
+        const marginEngineAddress = await LPOptimiserStrategyContract.marginEngine();
+
+        const peripheryContract = new ethers.Contract(
+            peripheryAddress,
+            peripheryABI,
+            provider
+         );
+
+        const currentTick: number = await peripheryContract.getCurrentTick(marginEngineAddress);
+        const apr = 1.0001 ** -currentTick;
+        return apr; // f_c
+    }
+
+
+
+
+
+    // 0. Store the instantaneous fixed rate to the twFr
+    exports.handler = async function(event) {
+
+        // Creates an instance of the key-value store client
+        const store = new KeyValueStoreClient(event);
+
+        // Associates twFr to inst fixed rate
+        await store.put('twFr', getFixedApr.toString());
+    }
+    
     // 1. Instantiate the address and abi for the strategy contract
     const lpStrategyAddress = '';
     const lpStrategyABI = '';
@@ -49,9 +95,6 @@ export async function handler(credentials: RelayerParams, event) { // the type o
     const relayer = new Relayer(credentials);
     const info: RelayerModel = await relayer.getRelayer();
     console.log(`Relayer address is ${info.address}`);
-
-    const store = new KeyValueStoreClient(event);
-    // await store.put('twFr', instantaneousFixedRate.toString());
 
     await main(signer, provider);
 }
