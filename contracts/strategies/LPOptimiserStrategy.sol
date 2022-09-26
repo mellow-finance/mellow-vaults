@@ -33,23 +33,50 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
     // MUTABLE PARAMS
 
-    uint256 _lastSignal;
-    uint256 _lastLeverage;
-    uint256 _k_unwind_parameter; // parameter for k*leverage (for unwinding so this needs to be sent to the contract vault but not used in the strategy vault)
-    uint256 _sigmaWad; // y (standard deviation parameter in wad 10^18)
-    int256 _max_possible_lower_bound_wad; // should be in fixed rate
+    uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
+    int256 internal _max_possible_lower_bound_wad; // should be in fixed rate
 
-    int24 _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
-    int24 _currentTick;
-    int24 _tickLower;
-    int24 _tickUpper;
-    int24 _tickSpacing;
+    int24 internal _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
+    int24 internal _currentTick;
+    int24 internal _tickLower;
+    int24 internal _tickUpper;
+    int24 internal _tickSpacing;
+
+    // GETTERS AND SETTERS
+
+    function setSigmaWad(uint256 sigmaWad) public {
+        _requireAtLeastOperator();
+        _sigmaWad = sigmaWad;
+    }
+
+    // refactor max_possible_lower_bound_wad into camelCase
+    function setMaxPossibleLowerBound(int256 max_possible_lower_bound_wad) public {
+        _requireAtLeastOperator();
+        _max_possible_lower_bound_wad = max_possible_lower_bound_wad;
+    }
+
+    function setLogProx(int24 logProx) public {
+        _requireAtLeastOperator();
+        _logProximity = logProx;
+    }
+
+    function getSigmaWad() public view returns (uint256) {
+        return _sigmaWad;
+    }
+
+    function getMaxPossibleLowerBound() public view returns (int256) {
+        return _max_possible_lower_bound_wad;
+    }
+
+    function getLogProx() public view returns (int24) {
+        return _logProximity;
+    }
 
     // EVENTS
 
     event Rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
 
-    // allows you to keep track of the smart contract activity in subgraph
+    // Allows you to keep track of the smart contract activity in subgraph
     event StrategyDeployment(IERC20Vault erc20vault_, IVoltzVault vault_, address admin_);
 
     /// @notice Constructor for a new contract
@@ -134,7 +161,8 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         // _tickSpacing = _vamm.tickSpacing(_vamm);
 
         // 1. Get the new tick lower
-        int256 deltaWad = int256(currentFixedRateWad - _sigmaWad);
+        // write UTs to check for underflow
+        int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
         int256 newFixedLowerWad = 0;
         if (deltaWad > 0) {
             // delta is greater than 0 => choose delta
