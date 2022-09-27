@@ -18,6 +18,8 @@ import "../src/vaults/GearboxVaultGovernance.sol";
 import "../src/vaults/ERC20VaultGovernance.sol";
 import "../src/vaults/ERC20RootVaultGovernance.sol";
 
+import "../src/external/ConvexBaseRewardPool.sol";
+
 
 contract GearboxTest is Test {
 
@@ -345,29 +347,66 @@ contract GearboxTest is Test {
         assertTrue(isClose(tvl(), 500 * 10**6, 100));
     }
 
-    function testAdjustingPositionAfterChangeInMarginalFactor() public {
+    function testSeveralAdjustingPositionAfterChangeInMarginalFactor() public {
         deposit(500);
-        uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+        creditAccount = gearboxVault.creditAccount();
         gearboxVault.adjustPosition();
-        gearboxVault.updateTargetMarginalFactor(2000000000);
+        uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+        gearboxVault.updateTargetMarginalFactor(2500000000);
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        assertTrue(isClose(convexFantomBalanceBefore * 3, convexFantomBalanceAfter * 2, 100));
+        assertTrue(isClose(convexFantomBalanceBefore * 5, convexFantomBalanceAfter * 6, 100));
         assertTrue(isClose(tvl(), 500 * 10**6, 100));
+
+        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
+        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
+        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
+        assertTrue(usdcBalance <= 1); // gearbox count value = 1 as some analogue of 0
+        assertTrue(curveLpBalance <= 1);
+        assertTrue(convexLpBalance <= 1);
+
+        gearboxVault.updateTargetMarginalFactor(2700000000);
+        assertTrue(isClose(tvl(), 500 * 10**6, 100));
+        uint256 convexFantomBalanceFinal = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+        assertTrue(isClose(convexFantomBalanceFinal * 25, convexFantomBalanceAfter * 27, 100));
     }
 
-    /*
+    function testEarnedRewards() public {
+        deposit(500);
+        creditAccount = gearboxVault.creditAccount();
+        gearboxVault.adjustPosition();
 
-    function testDepositIsOkay() public {
-        uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        deal(usdc, address(this), 10 ** 8);
+        uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 10 ** 8;
+        ICreditManagerV2 manager = gearboxVault.creditManager();
+        address cont = manager.adapterToContract(gearboxVault.convexAdapter());
 
-        rootVault.deposit(amounts, 0, "");
+        BaseRewardPool rewardsPool = BaseRewardPool(cont);
+        
+        vm.startPrank(rewardsPool.rewardManager());
+        rewardsPool.sync(
+            rewardsPool.periodFinish(),
+            rewardsPool.rewardRate(),
+            rewardsPool.lastUpdateTime(),
+            5 * rewardsPool.rewardPerTokenStored(),
+            rewardsPool.queuedRewards(),
+            rewardsPool.currentRewards(),
+            rewardsPool.historicalRewards()
+        ); // + 76 USD OF REWARDS
+
+        vm.stopPrank();
+
+        assertTrue(isClose(tvl(), 576 * 10**6, 100));
+        
+        gearboxVault.adjustPosition();
+        assertTrue(isClose(tvl(), 576 * 10**6, 100));
+
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        assertTrue(isClose(convexFantomBalance * 6, convexFantomBalanceAfter * 5, 100));
+
+        assertTrue(isClose(convexFantomBalanceBefore * 576, convexFantomBalanceAfter * 500, 50));
+
     }
 
-    */
+
+
+
 }
