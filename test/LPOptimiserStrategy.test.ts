@@ -611,6 +611,26 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             } else {
                 throw new Error("Position does not need to be rebalanced");
             }
+        });
+
+        it("Rebalance with currentFixedRate > max allowable i.e. 1001%", async () => {
+            const currentFixedRateWad = BigNumber.from("1001000000000000000000"); // 1001%
+
+            if (await this.subject.rebalanceCheck()) {
+                await this.subject.connect(this.admin).rebalanceTicks(currentFixedRateWad);
+                const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+
+                expect(newTicks.newTickLowerMul).to.be.equal(-5220);
+                expect(newTicks.newTickUpperMul).to.be.equal(-4020);
+
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+
+                console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+
+            } else {
+                throw new Error("Position does not need to be rebalanced");
+            }
         })
     })
 });
