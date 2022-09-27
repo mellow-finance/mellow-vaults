@@ -29,18 +29,14 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     IMarginEngine internal _marginEngine;
     IPeriphery internal _periphery;
     IVAMM internal _vamm;
-    IVoltzVault.TickRange internal _currentPosition;
+    // IVoltzVault.TickRange internal _currentPosition;
 
     // MUTABLE PARAMS
 
     uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
-    int256 internal _max_possible_lower_bound_wad; // should be in fixed rate
-
+    int256 internal _maxPossibleLowerBoundWad; // should be in fixed rate
     int24 internal _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
-    int24 internal _currentTick;
-    int24 internal _tickLower;
-    int24 internal _tickUpper;
-    int24 internal _tickSpacing;
+
 
     // GETTERS AND SETTERS
 
@@ -49,10 +45,9 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         _sigmaWad = sigmaWad;
     }
 
-    // refactor max_possible_lower_bound_wad into camelCase
-    function setMaxPossibleLowerBound(int256 max_possible_lower_bound_wad) public {
+    function setMaxPossibleLowerBound(int256 maxPossibleLowerBoundWad) public {
         _requireAtLeastOperator();
-        _max_possible_lower_bound_wad = max_possible_lower_bound_wad;
+        _maxPossibleLowerBoundWad = maxPossibleLowerBoundWad;
     }
 
     function setLogProx(int24 logProx) public {
@@ -65,7 +60,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     }
 
     function getMaxPossibleLowerBound() public view returns (int256) {
-        return _max_possible_lower_bound_wad;
+        return _maxPossibleLowerBoundWad;
     }
 
     function getLogProx() public view returns (int24) {
@@ -73,10 +68,8 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     }
 
     // EVENTS
+    event RebalancedTicks(int24 newTickLowerMul, int24 newTickUpperMul);
 
-    event Rebalanced(int24 newTickLowerMul, int24 newTickUpperMul);
-
-    // Allows you to keep track of the smart contract activity in subgraph
     event StrategyDeployment(IERC20Vault erc20vault_, IVoltzVault vault_, address admin_);
 
     /// @notice Constructor for a new contract
@@ -92,46 +85,21 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         _marginEngine = IMarginEngine(vault_.marginEngine());
         _periphery = IPeriphery(vault_.periphery());
         _vamm = IVAMM(vault_.vamm());
-        _currentPosition = vault_.currentPosition();
         _tokens = vault_.vaultTokens();
         _pullExistentials = vault_.pullExistentials();
 
         emit StrategyDeployment(erc20vault_, vault_, admin_);
     }
 
-    function setConstants(
-        int24 logProx,
-        uint256 sigmaWad,
-        int256 max_possible_lower_bound_wad,
-        int24 tickSpacing
-    ) public {
-        _requireAtLeastOperator();
-        _logProximity = logProx;
-        _sigmaWad = sigmaWad;
-        _max_possible_lower_bound_wad = max_possible_lower_bound_wad;
-        _tickSpacing = tickSpacing;
-    }
-
-    function setTickValues(
-        int24 currentTick,
-        int24 tickLower,
-        int24 tickUpper
-    ) public {
-        _requireAtLeastOperator();
-        _currentTick = currentTick;
-        _tickLower = tickLower;
-        _tickUpper = tickUpper;
-    }
-
     /// @notice Get the current tick and position ticks and decide whether to rebalance
-    function rebalanceCheck() public view returns (bool) {
+    function rebalanceCheck() public view returns (bool) { 
         // 1. Get current position, lower, and upper ticks
-        // _currentPosition = _vault.currentPosition();
-        // _tickLower = _currentPosition.tickLower;
-        // _tickUpper = _currentPosition.tickUpper;
+        IVoltzVault.TickRange memory _currentPosition = _vault.currentPosition(); // ask costin about this
+        int24 _tickLower = _currentPosition.tickLower;
+        int24 _tickUpper = _currentPosition.tickUpper;
 
         // 2. Get current tick
-        // _currentTick = _periphery.getCurrentTick(_marginEngine);
+        int24 _currentTick = _periphery.getCurrentTick(_marginEngine);
 
         // 3. Compare current fixed rate to lower and upper bounds
         if (_tickLower - _logProximity <= _currentTick && _currentTick <= _tickUpper + _logProximity) {
@@ -154,22 +122,22 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
     /// @notice Set new optimimal tick range based on current tick
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
-    function rebalance(uint256 currentFixedRateWad) public returns (int24 newTickLowerMul, int24 newTickUpperMul) {
+    function rebalanceTicks(uint256 currentFixedRateWad) public returns (int24 newTickLowerMul, int24 newTickUpperMul) {
         _requireAtLeastOperator();
 
         // 0. Get tickspacing from vamm
-        // _tickSpacing = _vamm.tickSpacing(_vamm);
+        int24 _tickSpacing = _vamm.tickSpacing();
 
         // 1. Get the new tick lower
         // write UTs to check for underflow
         int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
-        int256 newFixedLowerWad = 0;
+        int256 newFixedLowerWad; // should I intialise this at the top of the contract or inside the function? 
         if (deltaWad > 0) {
             // delta is greater than 0 => choose delta
-            if (deltaWad < _max_possible_lower_bound_wad) {
+            if (deltaWad < _maxPossibleLowerBoundWad) {
                 newFixedLowerWad = deltaWad;
             } else {
-                newFixedLowerWad = _max_possible_lower_bound_wad;
+                newFixedLowerWad = _maxPossibleLowerBoundWad;
             }
         } else {
             // delta is less than or equal to 0 => choose 0
@@ -196,14 +164,10 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         newTickLowerMul = nearestTickMultiple(int24(newTickLower), _tickSpacing);
         newTickUpperMul = nearestTickMultiple(int24(newTickUpper), _tickSpacing);
 
-        // Update the global upper and lower tick variables
-        _tickLower = newTickLowerMul;
-        _tickUpper = newTickUpperMul;
-
         // Call to VoltzVault contract to update the position lower and upper ticks
-        // _vault.rebalance(IVoltzVault.TickRange(_tickLower, _tickUpper));
+        _vault.rebalance(IVoltzVault.TickRange(newTickLowerMul, newTickUpperMul));
 
-        emit Rebalanced(newTickLowerMul, newTickUpperMul);
+        emit RebalancedTicks(newTickLowerMul, newTickUpperMul);
         return (newTickLowerMul, newTickUpperMul);
     }
 }

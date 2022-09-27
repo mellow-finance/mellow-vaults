@@ -234,41 +234,31 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
 
     beforeEach(async () => {
         await this.deploymentFixture();
-        await this.subject.connect(this.admin).setConstants(
-            -1000, 
-            BigNumber.from("100000000000000000"), 
-            BigNumber.from("1500000000000000000"), 
-            60
-            );
+
+        await this.subject.connect(this.admin).setLogProx(-1000);
+        await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("100000000000000000"));
+        await this.subject.connect(this.admin).setMaxPossibleLowerBound(BigNumber.from("1500000000000000000"));
     });
 
     describe("Rebalance Logic", async () => {
-        it( "Check if in-range position needs to be rebalanced", async () => {
-            await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
-            const result = await this.subject.rebalanceCheck();
-            expect(result).to.be.equal(false);
-        })
+        // it( "Check if in-range position needs to be rebalanced", async () => {
+        //     // await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
+        //     const result = await this.subject.callStatic.rebalanceCheck();
+        //     expect(result).to.be.equal(false);
+        // })
         it("Check if out-of-range position needs to be rebalanced", async () => {
-            await this.subject.connect(this.admin).setTickValues(8000, 0, 6000);
-            const result = await this.subject.rebalanceCheck();
+            const result = await this.subject.callStatic.rebalanceCheck();
             expect(result).to.be.equal(true);
         })
-        // it("No need to rebalance position", async () => {
-        //     const currentFixedRateWad = BigNumber.from("2000000000000000000");
-        //     await this.subject.connect(this.admin).setTickValues(3000, 0, 6000);
-        //     await expect(this.subject.connect(this.admin).rebalance(currentFixedRateWad)).to.be.revertedWith("RNN");
-        // })
         it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(-5220);
             expect(newTicks[1]).to.be.equal(-4020);
         })
         it("Rebalance the position and return new ticks (max_poss_lower_bound > delta)", async () => {
             const currentFixedRateWad = BigNumber.from("1000000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(-900);
             expect(newTicks[1]).to.be.equal(1080);
         })
@@ -304,29 +294,26 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
     describe("deltaWad Calculation Logic", async () => {
         it("deltaWad = 0.001", async () => {
             const currentFixedRateWad = BigNumber.from("101000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(16020);
             expect(newTicks[1]).to.be.equal(69060);
         })
-        it("deltaWad < 0.001", async () => {
-            const currentFixedRateWad = BigNumber.from("100500000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(16080);
-            expect(newTicks[1]).to.be.equal(76020);
-        })
+        // it("deltaWad < 0.001", async () => { // exceeds the MAX_TICK value of 69100
+        //     const currentFixedRateWad = BigNumber.from("100500000000000000");
+        //     // await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+        //     const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+        //     expect(newTicks[0]).to.be.equal(16080);
+        //     expect(newTicks[1]).to.be.equal(76020); 
+        // })
         it("deltaWad = 1000", async () => {
             const currentFixedRateWad = BigNumber.from("1000100000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(-5220);
             expect(newTicks[1]).to.be.equal(-4020);
         })
         it("deltaWad > 1000", async () => {
             const currentFixedRateWad = BigNumber.from("2000100000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(-5220);
             expect(newTicks[1]).to.be.equal(-4020);
         })
@@ -335,18 +322,18 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
     describe("Rebalance Event", async () => {
         it("Rebalance event was emitted after successful call on rebalance()", async () => {
             const currentFixedRateWad = BigNumber.from("2000100000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            // await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(
                 Object.entries(this.lPOptimiserStrategy.interface.events).some(
-                    ([k, v]: any) => v.name === "Rebalanced"
+                    ([k, v]: any) => v.name === "RebalancedTicks"
                 )
             ).to.be.equal(true);
         })
         it("StrategyDeployment event was emitted after successful deployment of strategy", async () => {
             const currentFixedRateWad = BigNumber.from("2000100000000000000000");
-            await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-            const newTicks = await this.subject.connect(this.admin).callStatic.rebalance(currentFixedRateWad);
+            // await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(
                 Object.entries(this.lPOptimiserStrategy.interface.events).some(
                     ([k, v]: any) => v.name === "StrategyDeployment"
@@ -354,4 +341,16 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             ).to.be.equal(true);
         })
     })
+
+    // describe("Check for underflow of deltaWad calculation", async () => {
+    //     // can prb math have inputs which are too small? what to do in this case?
+    //     it("_sigmaWad > currentFixedRateWad", async () => {
+    //         const currentFixedRateWad = BigNumber.from("100000000000000000");
+    //         await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("200000000000000000"));
+    //         const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+    //         expect(newTicks[0]).to.be.equal(-5220);
+    //         expect(newTicks[1]).to.be.equal(-4020);
+
+    //     })
+    // })
 });
