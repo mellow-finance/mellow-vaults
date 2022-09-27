@@ -298,13 +298,13 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             expect(newTicks[0]).to.be.equal(16020);
             expect(newTicks[1]).to.be.equal(69060);
         })
-        // it("deltaWad < 0.001", async () => { // exceeds the MAX_TICK value of 69100
-        //     const currentFixedRateWad = BigNumber.from("100500000000000000");
-        //     // await this.subject.connect(this.admin).setTickValues(7000, 0, 6000);
-        //     const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
-        //     expect(newTicks[0]).to.be.equal(16080);
-        //     expect(newTicks[1]).to.be.equal(76020); 
-        // })
+        it("0 < deltaWad < 0.001", async () => { // exceeds the MAX_TICK value of 69100
+            const currentFixedRateWad = BigNumber.from("100010000000000000"); // 0.10001
+            await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("100000000000000000")); // 0.1
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(16020);
+            expect(newTicks[1]).to.be.equal(69060); 
+        })
         it("deltaWad = 1000", async () => {
             const currentFixedRateWad = BigNumber.from("1000100000000000000000");
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
@@ -342,15 +342,14 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         })
     })
 
-    // describe("Check for underflow of deltaWad calculation", async () => {
-    //     // can prb math have inputs which are too small? what to do in this case?
-    //     it("_sigmaWad > currentFixedRateWad", async () => {
-    //         const currentFixedRateWad = BigNumber.from("100000000000000000");
-    //         await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("200000000000000000"));
-    //         const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
-    //         expect(newTicks[0]).to.be.equal(-5220);
-    //         expect(newTicks[1]).to.be.equal(-4020);
+    describe("Check for underflow of deltaWad calculation", async () => {
+        it("_sigmaWad > currentFixedRateWad s.t. deltaWad < 0", async () => {
+            const currentFixedRateWad = BigNumber.from("100000000000000000"); // 0.1
+            await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("200000000000000000")); // 0.2
+            const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+            expect(newTicks[0]).to.be.equal(9120);
+            expect(newTicks[1]).to.be.equal(69060);
 
-    //     })
-    // })
+        })
+    })
 });

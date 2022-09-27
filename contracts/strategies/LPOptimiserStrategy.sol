@@ -93,7 +93,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     function rebalanceCheck() public view returns (bool) { 
-        // 1. Get current position, lower, and upper ticks
+        // 1. Get current position, lower, and upper ticks form VoltzVault.sol
         IVoltzVault.TickRange memory _currentPosition = _vault.currentPosition(); // ask costin about this
         int24 _tickLower = _currentPosition.tickLower;
         int24 _tickUpper = _currentPosition.tickUpper;
@@ -129,19 +129,18 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         int24 _tickSpacing = _vamm.tickSpacing();
 
         // 1. Get the new tick lower
-        // write UTs to check for underflow
         int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
         int256 newFixedLowerWad; // should I intialise this at the top of the contract or inside the function? 
-        if (deltaWad > 0) {
-            // delta is greater than 0 => choose delta
+        if (deltaWad > 1e15) {
+            // delta is greater than 1e15 (0.001) => choose delta
             if (deltaWad < _maxPossibleLowerBoundWad) {
                 newFixedLowerWad = deltaWad;
             } else {
                 newFixedLowerWad = _maxPossibleLowerBoundWad;
             }
         } else {
-            // delta is less than or equal to 0 => choose 0
-            newFixedLowerWad = 0;
+            // delta is less than or equal to 1e15 (0.001) => choose 1e15 (0.001)
+            newFixedLowerWad = 1e15;
         }
         // 2. Get the new tick upper
         int256 newFixedUpperWad = newFixedLowerWad + 2 * int256(_sigmaWad);
@@ -157,7 +156,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
             PRBMathSD59x18.log2(int256(newFixedLowerWad)),
             PRBMathSD59x18.log2(1000100000000000000)
         );
-
+ 
         int256 newTickLower = newTickLowerWad / 1e18;
         int256 newTickUpper = newTickUpperWad / 1e18;
 
