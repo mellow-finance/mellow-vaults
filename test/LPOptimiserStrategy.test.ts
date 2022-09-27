@@ -5,7 +5,7 @@ import { contract } from "./library/setup";
 import { ERC20Vault, IMarginEngine, IVAMM, LPOptimiserStrategy, VoltzVault } from "./types";
 import hre from "hardhat";
 import { BigNumber } from "ethers";
-import { expect } from "chai";
+import { expect, util } from "chai";
 
 type CustomContext = {
     voltzVault: VoltzVault;
@@ -22,7 +22,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
     this.timeout(200000);
 
     const LOW_TICK = 0;
-    const HIGH_TICK = 60;
+    const HIGH_TICK = 6000;
 
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
@@ -349,7 +349,49 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(9120);
             expect(newTicks[1]).to.be.equal(69060);
+        })
+    })
 
+    describe("Check if the VoltzVault updated ticks to the new ones from the strategy", async () => {
+        it("Confirm the ticks are updated when rebalance is triggered", async () => {
+            const currentFixedRateWad = BigNumber.from("1000000000000000000");
+            console.log("Print current ticks: ", await this.voltzVault.currentPosition());
+
+            if (await this.subject.rebalanceCheck()) {
+                await this.subject.connect(this.admin).rebalanceTicks(currentFixedRateWad);
+                const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+
+                const position = await this.voltzVault.currentPosition();
+
+                expect(position.tickLower).to.be.equal(newTicks.newTickLowerMul);
+                expect(position.tickUpper).to.be.equal(newTicks.newTickUpperMul);
+            } else {
+                console.log("Rebalance not needed");
+            }
+        })
+    })
+
+    describe("Rebalance into a shorter range", async () => {
+        it("_sigmaWad = 0.05", async () => {
+            const currentFixedRateWad = BigNumber.from("1500000000000000000");
+            await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("50000000000000000")); // 0.05
+            console.log("Print sigmaWad: ", await this.subject.getSigmaWad());
+
+            if (await this.subject.rebalanceCheck()) {
+                await this.subject.connect(this.admin).rebalanceTicks(currentFixedRateWad);
+                const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+
+                expect(newTicks.newTickLowerMul).to.be.equal(-4320);
+                expect(newTicks.newTickUpperMul).to.be.equal(-3660);
+                
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+
+                console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+
+            } else {
+                console.log("Rebalance not needed");
+            }
         })
     })
 });
