@@ -40,10 +40,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     uint256 marginalFactorD;
 
-    mapping(address => uint256) public lpTokensToWithdrawOrder;
-    mapping(address => uint256) public lastOrderTimestamp;
-    uint256 lastWithdrawResetTimestamp;
-
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         uint256 valueUnderlying = _calculateClaimableRewards();
 
@@ -61,8 +57,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         minTokenAmounts = new uint256[](1);
 
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
-        uint256 valueUsd = oracle.convertToUSD(valueUnderlying, primaryToken);
-        uint256 valueDeposit = oracle.convertFromUSD(valueUsd, depositToken) +
+        uint256 valueDeposit = oracle.convert(valueUnderlying, primaryToken, depositToken) +
             IERC20(depositToken).balanceOf(address(this));
 
         minTokenAmounts[0] = valueDeposit;
@@ -76,7 +71,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory params = IGearboxVaultGovernance(
             address(_vaultGovernance)
         ).delayedProtocolPerVaultParams(nft_);
-
         primaryToken = params.primaryToken;
         depositToken = vaultTokens_[0];
         curveAdapter = params.curveAdapter;
@@ -87,6 +81,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
         _verifyInstances(primaryToken);
+    }
+
+    function openCreditAccount() external {
+        _openCreditAccount();
     }
 
     function adjustPosition() external {
@@ -104,7 +102,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         ICreditFacade creditFacade_ = creditFacade;
 
         if (creditAccount == address(0)) {
-            _openCreditAccount(creditFacade_);
+            return tokenAmounts;
         }
 
         address token = depositToken;
@@ -176,7 +174,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         actualTokenAmounts[0] = amount;
     }
 
-    function _openCreditAccount(ICreditFacade creditFacade_) internal {
+    function _openCreditAccount() internal {
+
+        ICreditFacade creditFacade_ = creditFacade;
+
         (uint256 minLimit, ) = creditFacade_.limits();
         uint256 balance = IERC20(primaryToken).balanceOf(address(this));
 
@@ -345,8 +346,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         uint256 amount = IERC20(depositToken).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
-        uint256 valueDepositTokenToUsd = oracle.convertToUSD(amount, depositToken);
-        uint256 valueDepositTokenToUnderlying = oracle.convertFromUSD(valueDepositTokenToUsd, primaryToken);
+
+        uint256 valueDepositTokenToUnderlying = oracle.convert(amount, depositToken, primaryToken);
 
         if (valueDepositTokenToUnderlying > underlyingWant) {
             uint256 toSwap = FullMath.mulDiv(
@@ -356,8 +357,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             );
             MultiCall[] memory calls = new MultiCall[](0);
 
-            uint256 usdAmount = oracle.convertToUSD(toSwap, depositToken);
-            uint256 finalAmount = oracle.convertFromUSD(usdAmount, primaryToken);
+            uint256 finalAmount = oracle.convert(toSwap, depositToken, primaryToken);
 
             ISwapRouter.ExactInputParams memory inputParams = ISwapRouter.ExactInputParams({
                 path: abi.encodePacked(depositToken, uint24(500), primaryToken),
@@ -428,8 +428,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         ).delayedProtocolParams();
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
 
-        uint256 usdAmount = oracle.convertToUSD(D18, tokenFrom);
-        uint256 finalAmount = oracle.convertFromUSD(usdAmount, tokenTo);
+        uint256 finalAmount = oracle.convert(D18, tokenFrom, tokenTo);
 
         uint256 priceD27 = FullMath.mulDiv(finalAmount, D27, D18);
         uint256 rateMinRAY = FullMath.mulDiv(priceD27, DENOMINATOR - protocolParams.minSlippageD, DENOMINATOR);
@@ -460,8 +459,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
-        uint256 valueConvexToUsd = oracle.convertToUSD(amount, convexOutputToken);
-        uint256 valueConvexToUnderlying = oracle.convertFromUSD(valueConvexToUsd, primaryToken);
+        uint256 valueConvexToUnderlying = oracle.convert(amount, convexOutputToken, primaryToken);
 
         if (underlyingAmount >= valueConvexToUnderlying) {
             return amount;

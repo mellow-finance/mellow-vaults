@@ -9,4 +9,8 @@ interface IGearboxVault is IIntegrationVault {
 
     function updateTargetMarginalFactor(uint256 marginalFactorD_) external;
 
+    function adjustPosition() external;
+
+    function openCreditAccount() external;
+
 }
