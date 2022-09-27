@@ -48,6 +48,30 @@ contract GearboxTest is Test {
         return this.onERC721Received.selector;
     }
 
+    bytes32 internal nextUser = keccak256(abi.encodePacked("user address"));
+
+    function getNextUserAddress() public returns (address payable) {
+        //bytes32 to address conversion
+        address payable user = payable(address(uint160(uint256(nextUser))));
+        nextUser = keccak256(abi.encodePacked(nextUser));
+        return user;
+    }
+
+    function checkNotNonExpectedBalance() public returns (bool) {
+
+        address creditAccount = gearboxVault.creditAccount();
+
+        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
+        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
+        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
+
+        if (usdcBalance > 1 || curveLpBalance > 1 || convexLpBalance > 1) {
+            return false;
+        }
+
+        return true;
+    }
+
     function setUp() public {
         governance = new ProtocolGovernance(address(this));
         registry = new VaultRegistry("Mellow LP", "MLP", governance);
@@ -321,14 +345,8 @@ contract GearboxTest is Test {
 
         creditAccount = gearboxVault.creditAccount();
 
-        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
-        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
-        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
+        assertTrue(checkNotNonExpectedBalance());
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-
-        assertTrue(usdcBalance == 0);
-        assertTrue(curveLpBalance == 0);
-        assertTrue(convexLpBalance == 0);
         assertTrue(convexFantomBalance > 0);
 
         deposit(100);
@@ -347,6 +365,13 @@ contract GearboxTest is Test {
         assertTrue(isClose(tvl(), 500 * 10**6, 100));
     }
 
+    function testFailAdjustingPositionFromSomeAddress() public {
+        address addr = getNextUserAddress();
+        deposit(500);
+        vm.prank(addr);
+        gearboxVault.adjustPosition();
+    }
+
     function testSeveralAdjustingPositionAfterChangeInMarginalFactor() public {
         deposit(500);
         creditAccount = gearboxVault.creditAccount();
@@ -357,12 +382,7 @@ contract GearboxTest is Test {
         assertTrue(isClose(convexFantomBalanceBefore * 5, convexFantomBalanceAfter * 6, 100));
         assertTrue(isClose(tvl(), 500 * 10**6, 100));
 
-        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
-        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
-        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
-        assertTrue(usdcBalance <= 1); // gearbox count value = 1 as some analogue of 0
-        assertTrue(curveLpBalance <= 1);
-        assertTrue(convexLpBalance <= 1);
+        assertTrue(checkNotNonExpectedBalance());
 
         gearboxVault.updateTargetMarginalFactor(2700000000);
         assertTrue(isClose(tvl(), 500 * 10**6, 100));
@@ -404,9 +424,90 @@ contract GearboxTest is Test {
 
         assertTrue(isClose(convexFantomBalanceBefore * 576, convexFantomBalanceAfter * 500, 50));
 
+        vm.startPrank(rewardsPool.rewardManager());
+        rewardsPool.sync(
+            rewardsPool.periodFinish(),
+            rewardsPool.rewardRate(),
+            rewardsPool.lastUpdateTime(),
+            12 * rewardsPool.rewardPerTokenStored() / 10,
+            rewardsPool.queuedRewards(),
+            rewardsPool.currentRewards(),
+            rewardsPool.historicalRewards()
+        ); // + 19 USD OF REWARDS
+        vm.stopPrank();
+
+        assertTrue(isClose(tvl(), 595 * 10**6, 100));
+        
+        gearboxVault.adjustPosition();
+        assertTrue(isClose(tvl(), 595 * 10**6, 100));
     }
 
+    function testMultipleDepositsAndRewardsAndAdjustmentsTvlCorrectness() public {
+        deposit(500);
+        gearboxVault.adjustPosition();
+        ICreditManagerV2 manager = gearboxVault.creditManager();
+        address cont = manager.adapterToContract(gearboxVault.convexAdapter());
 
+        BaseRewardPool rewardsPool = BaseRewardPool(cont);
+        
+        vm.startPrank(rewardsPool.rewardManager());
+        rewardsPool.sync(
+            rewardsPool.periodFinish(),
+            rewardsPool.rewardRate(),
+            rewardsPool.lastUpdateTime(),
+            2 * rewardsPool.rewardPerTokenStored(),
+            rewardsPool.queuedRewards(),
+            rewardsPool.currentRewards(),
+            rewardsPool.historicalRewards()
+        ); // + 19 USD OF REWARDS
+        vm.stopPrank();
+
+        assertTrue(isClose(tvl(), 519 * 10**6, 100));
+        deposit(100);
+        assertTrue(isClose(tvl(), 619 * 10**6, 100));
+        deposit(30);
+        assertTrue(isClose(tvl(), 649 * 10**6, 100));
+        gearboxVault.adjustPosition();
+        assertTrue(isClose(tvl(), 649 * 10**6, 100));
+        gearboxVault.updateTargetMarginalFactor(2000000000);
+        assertTrue(isClose(tvl(), 649 * 10**6, 100));
+        deposit(16);
+        assertTrue(isClose(tvl(), 665 * 10**6, 100));
+        gearboxVault.updateTargetMarginalFactor(2222222222);
+        assertTrue(isClose(tvl(), 665 * 10**6, 100));
+    }
+
+    function testWithValueFallingAndRewardsCovering() public {
+        deposit(500);
+        gearboxVault.adjustPosition();
+
+        uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+
+        ICreditManagerV2 manager = gearboxVault.creditManager();
+        address cont = manager.adapterToContract(gearboxVault.convexAdapter());
+
+        BaseRewardPool rewardsPool = BaseRewardPool(cont);
+        
+        vm.startPrank(rewardsPool.rewardManager());
+        rewardsPool.sync(
+            rewardsPool.periodFinish(),
+            rewardsPool.rewardRate(),
+            rewardsPool.lastUpdateTime(),
+            10 * rewardsPool.rewardPerTokenStored(),
+            rewardsPool.queuedRewards(),
+            rewardsPool.currentRewards(),
+            rewardsPool.historicalRewards()
+        ); // + 171 USD OF REWARDS, 1671 USD OF VALUE NOW
+        vm.stopPrank();
+
+        gearboxVault.updateTargetMarginalFactor(2900000000);
+        assertTrue(isClose(tvl(), 671 * 10**6, 100));
+
+        uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+
+        assertTrue(checkNotNonExpectedBalance());
+        assertTrue(isClose(convexFantomBalanceAfter*500, convexFantomBalanceBefore*671, 100));
+    }
 
 
 }
