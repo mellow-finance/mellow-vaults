@@ -1161,8 +1161,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                             (apyStartNow * (currentTimestamp - termStartTimestamp) / YEAR_IN_SECONDS + 
                             apyHistoricalLookback * (1+estimatedAPYUnitDelta) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
                 }
-
-                
+ 
                 const groundTruthTvlLower = margins.add(Math.floor(fixedCashflow + variableCashflowLower));
                 const groundTruthTvlUpper = margins.add(Math.floor(fixedCashflow + variableCashflowUpper));
                 

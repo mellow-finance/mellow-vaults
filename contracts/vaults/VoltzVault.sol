@@ -42,6 +42,9 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     int256 _minTVL;
     int256 _maxTVL;
     uint256 _lastTvlUpdateTimestamp;
+    int256 _aggregatedFixedTokenBalance;     // excludes current position
+    int256 _aggregatedVariableTokenBalance;  // excludes current position
+    int256 _aggregatedMargin;                // excludes current position
 
     /// information about LP positions of Vault
     TickRange[] trackedPositions;
@@ -49,6 +52,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     uint256 _currentPositionLiquidity;
     mapping (bytes => uint256) tickRangeToIndexPlusOne;
     uint256 settledPositionsCount;
+    
 
     uint256 public constant SECONDS_IN_YEAR_IN_WAD = 31536000e18;
     uint256 public constant ONE_HUNDRED_IN_WAD = 100e18;
@@ -155,11 +159,14 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     /// @inheritdoc IVoltzVault
     function rebalance(TickRange memory ticks) external override {
         // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        
+        TickRange memory oldPosition = trackedPositions[_currentPositionIndex];
+
+        require(oldPosition.tickLower != ticks.tickLower, ExceptionsLibrary.FORBIDDEN);
+        require(oldPosition.tickUpper != ticks.tickUpper, ExceptionsLibrary.FORBIDDEN);
 
         // burn liquidity first, then unwind and exit existing position
         // this makes sure that we do not use our own liquidity to unwind ourselves
-        TickRange memory oldPosition = trackedPositions[_currentPositionIndex];
-
         _updateLiquidity(-_currentPositionLiquidity.toInt256());
         _unwindAndExitCurrentPosition();
 
@@ -248,21 +255,31 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 );
 
         // Aggregate estimated settlement cashflows into TVL
-        _minTVL = 0;
-        _maxTVL = 0;
-        for (uint256 i = 0; i < trackedPositions.length; i++) {
-            _minTVL += _estimateSettlementCashflow(
-                trackedPositions[i],
-                fixedFactorValueWad,
-                estimatedVariableFactorStartEndLowerWad
-            );
+        Position.Info memory currentPositionInfo_ = _marginEngine.getPosition(
+            address(this),
+            trackedPositions[_currentPositionIndex].tickLower,
+            trackedPositions[_currentPositionIndex].tickUpper
+        );
 
-            _maxTVL += _estimateSettlementCashflow(
-                trackedPositions[i],
-                fixedFactorValueWad,
-                estimatedVariableFactorStartEndUpperWad
-            );
-        }
+        uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
+        _minTVL = vaultBalance.toInt256();
+        _maxTVL = vaultBalance.toInt256();
+
+        _minTVL += _estimateSettlementCashflow(
+            _aggregatedFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
+            fixedFactorValueWad,
+            _aggregatedVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
+            estimatedVariableFactorStartEndLowerWad,
+            _aggregatedMargin + currentPositionInfo_.margin
+        );
+
+        _maxTVL += _estimateSettlementCashflow(
+            _aggregatedFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
+            fixedFactorValueWad,
+            _aggregatedVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
+            estimatedVariableFactorStartEndUpperWad,
+            _aggregatedMargin + currentPositionInfo_.margin
+        );
 
         _lastTvlUpdateTimestamp = block.timestamp;
 
@@ -342,27 +359,23 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     }
 
     function _estimateSettlementCashflow(
-        TickRange memory position,
+        int256 aggregatedFixedTokenBalance,
         uint256 fixedFactorValueWad,
-        uint256 estimatedVariableFactorStartEndWad
+        int256 aggregatedVariableTokenBalance,
+        uint256 estimatedVariableFactorStartEndWad,
+        int256 aggregatedMargin
     ) internal returns (int256) {
-        Position.Info memory positionInfo = _marginEngine.getPosition(
-            address(this),
-            position.tickLower,
-            position.tickUpper
-        );
-
         // Fixed Cashflow
-        int256 fixedTokenBalanceWad = positionInfo.fixedTokenBalance.fromInt();
+        int256 fixedTokenBalanceWad = aggregatedFixedTokenBalance.fromInt();
         int256 fixedCashflowBalanceWad = fixedTokenBalanceWad.mul(int256(fixedFactorValueWad));
         int256 fixedCashflowBalance = fixedCashflowBalanceWad.toInt();
  
         // Variable Cashflow
-        int256 variableTokenBalanceWad = positionInfo.variableTokenBalance.fromInt();
+        int256 variableTokenBalanceWad = aggregatedVariableTokenBalance.fromInt();
         int256 variableCashflowBalanceWad = variableTokenBalanceWad.mul(int256(estimatedVariableFactorStartEndWad));
         int256 variableCashflowBalance = variableCashflowBalanceWad.toInt();
 
-        return fixedCashflowBalance + variableCashflowBalance + positionInfo.margin;
+        return fixedCashflowBalance + variableCashflowBalance + aggregatedMargin;
     }
 
     /// @notice Divide a given time in seconds by the number of seconds in a year
@@ -499,25 +512,35 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             _currentPositionIndex = trackedPositions.length - 1;
             tickRangeToIndexPlusOne[encodedTicks] = trackedPositions.length;
         } else {
+            // we rebalance to some previous position
+            // so we need to update the aggregate variables
             _currentPositionIndex = tickRangeToIndexPlusOne[encodedTicks] - 1;
+            Position.Info memory currentPositionInfo_ = _marginEngine.getPosition(
+                address(this),
+                trackedPositions[_currentPositionIndex].tickLower,
+                trackedPositions[_currentPositionIndex].tickUpper
+            );
+            _aggregatedFixedTokenBalance -= currentPositionInfo_.fixedTokenBalance;
+            _aggregatedVariableTokenBalance -= currentPositionInfo_.variableTokenBalance;
+            _aggregatedMargin -= currentPositionInfo_.margin;
         }
 
         _currentPositionLiquidity = 0;
     }
     
     function _unwindAndExitCurrentPosition() internal {
-        Position.Info memory _currentPositionInfo = _marginEngine.getPosition(
+        Position.Info memory currentPositionInfo_ = _marginEngine.getPosition(
             address(this),
             trackedPositions[_currentPositionIndex].tickLower,
             trackedPositions[_currentPositionIndex].tickUpper
         );
 
-        if (_currentPositionInfo.variableTokenBalance != 0) {
-            bool _isFT = _currentPositionInfo.variableTokenBalance < 0;
+        if (currentPositionInfo_.variableTokenBalance != 0) {
+            bool _isFT = currentPositionInfo_.variableTokenBalance < 0;
 
             IVAMM.SwapParams memory _params = IVAMM.SwapParams({
                 recipient: address(this),
-                amountSpecified: _currentPositionInfo.variableTokenBalance,
+                amountSpecified: currentPositionInfo_.variableTokenBalance,
                 sqrtPriceLimitX96: _isFT
                     ? TickMath.MIN_SQRT_RATIO + 1
                     : TickMath.MAX_SQRT_RATIO - 1,
@@ -533,16 +556,16 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
             ) = _vamm.swap(_params);
 
-            _currentPositionInfo.fixedTokenBalance += _fixedTokenDelta;
-            _currentPositionInfo.variableTokenBalance += _variableTokenDelta;
-            _currentPositionInfo.margin -= _cumulativeFeeIncurred.toInt256();
+            currentPositionInfo_.fixedTokenBalance += _fixedTokenDelta;
+            currentPositionInfo_.variableTokenBalance += _variableTokenDelta;
+            currentPositionInfo_.margin -= _cumulativeFeeIncurred.toInt256();
         } 
 
         uint256 positionMarginRequirementInitial;
 
         bool trackPosition = false;
         uint256 marginToKeep = 0;
-        if (_currentPositionInfo.variableTokenBalance != 0) {
+        if (currentPositionInfo_.variableTokenBalance != 0) {
             // keep k * initial margin requirement, withdraw the rest
             // need to track to redeem the rest at maturity
             positionMarginRequirementInitial = _marginEngine.getPositionMarginRequirement(
@@ -557,7 +580,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 ).toUint());
             trackPosition = true;
         } else {
-            if (_currentPositionInfo.fixedTokenBalance > 0) {
+            if (currentPositionInfo_.fixedTokenBalance > 0) {
                 // withdraw all margin
                 // need to track to redeem ft cashflow at maturity
                 positionMarginRequirementInitial = 0;
@@ -569,7 +592,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 // since vt = 0, margin requirement initial is equal to fixed cashflow
                 uint256 fixedFactorValueWad = _fixedFactor(_termStartTimestampWad, _termEndTimestampWad);
                 positionMarginRequirementInitial = 
-                    (-_currentPositionInfo.fixedTokenBalance).toUint256().fromUint().mul(
+                    (-currentPositionInfo_.fixedTokenBalance).toUint256().fromUint().mul(
                         fixedFactorValueWad
                     ).toUint();
                 marginToKeep = positionMarginRequirementInitial + 1;
@@ -580,25 +603,37 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             marginToKeep = positionMarginRequirementInitial + 1;
         }
         
-        if (_currentPositionInfo.margin > 0) {
-            if (marginToKeep > _currentPositionInfo.margin.toUint256()) {
-                marginToKeep = _currentPositionInfo.margin.toUint256();
+        if (currentPositionInfo_.margin > 0) {
+            if (marginToKeep > currentPositionInfo_.margin.toUint256()) {
+                marginToKeep = currentPositionInfo_.margin.toUint256();
             }
 
-            _updateMargin(-(_currentPositionInfo.margin - marginToKeep.toInt256()));
+            _updateMargin(-(currentPositionInfo_.margin - marginToKeep.toInt256()));
+            currentPositionInfo_.margin = marginToKeep.toInt256();
         }
         
-
-        // no need to track it, so we remove it from the array
         if (!trackPosition) {
-            tickRangeToIndexPlusOne[abi.encode(trackedPositions[_currentPositionIndex])] = 0;
-            if (_currentPositionIndex != trackedPositions.length - 1) {
-                delete trackedPositions[_currentPositionIndex];
-                trackedPositions[_currentPositionIndex] = trackedPositions[trackedPositions.length - 1];
-                tickRangeToIndexPlusOne[abi.encode(trackedPositions[_currentPositionIndex])] = _currentPositionIndex + 1;
-            }
-            
-            trackedPositions.pop();
+            // no need to track it, so we remove it from the array
+            _removePositionFromTrackedPositions(_currentPositionIndex);
+        } else {
+            // otherwise, the position is now a past tracked position
+            // so we update the aggregated variables
+            _aggregatedFixedTokenBalance += currentPositionInfo_.fixedTokenBalance;
+            _aggregatedVariableTokenBalance += currentPositionInfo_.variableTokenBalance;
+            _aggregatedMargin += currentPositionInfo_.margin;
         }
+    }
+
+    function _removePositionFromTrackedPositions(uint256 positionIndex) internal {
+        require (Time.blockTimestampScaled() <= _termEndTimestampWad, ExceptionsLibrary.FORBIDDEN);
+
+        tickRangeToIndexPlusOne[abi.encode(trackedPositions[positionIndex])] = 0;
+        if (positionIndex != trackedPositions.length - 1) {
+            delete trackedPositions[positionIndex];
+            trackedPositions[positionIndex] = trackedPositions[trackedPositions.length - 1];
+            tickRangeToIndexPlusOne[abi.encode(trackedPositions[positionIndex])] = positionIndex + 1;
+        }
+        
+        trackedPositions.pop();
     }
 }
