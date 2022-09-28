@@ -665,6 +665,13 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             expect(await this.subject.connect(this.admin).getMaxPossibleLowerBound()).to.be.equal(BigNumber.from("400000000000000000"));
         })
 
+        it("Get the tickSpacing from the vamm", async () => {
+            const tickSpacing = await this.vammContract.tickSpacing();
+
+            // Currently VAMM sets tickSpacing to 60
+            expect(tickSpacing).to.be.equal(60);
+        })
+
 
     })
 });
