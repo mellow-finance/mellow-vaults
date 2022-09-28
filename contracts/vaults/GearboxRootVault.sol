@@ -136,7 +136,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
-        
+
         _mint(msg.sender, lpAmount);
 
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
@@ -232,10 +232,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         if (_totalLpWitdrawalRequests > 0) {
-
             _priceForLpTokenD18 = FullMath.mulDiv(totalAmount, D18, _totalLpWitdrawalRequests);
             _totalLpWitdrawalRequests = 0;
-
         }
     }
 
