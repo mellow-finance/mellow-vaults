@@ -32,7 +32,6 @@ interface IVoltzVaultGovernance is IVaultGovernance {
         address[] memory vaultTokens_,
         address owner_,
         address marginEngine_,
-        int24 initialTickLow,
-        int24 initialTickHigh
+        IVoltzVault.InitializeParams memory initializeParams
     ) external returns (IVoltzVault vault, uint256 nft);
 }

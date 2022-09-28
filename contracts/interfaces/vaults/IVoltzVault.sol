@@ -13,14 +13,16 @@ interface IVoltzVault is IIntegrationVault {
         int24 tickUpper;
     }
 
-    /// @notice Reference to IMarginEngine of Voltz Protocol.
-    function marginEngine() external view returns (IMarginEngine);
+    struct InitializeParams {
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 leverageWad;
+        uint256 marginMultiplierPostUnwindWad;
+        uint256 lookbackWindowInSeconds;
+        uint256 estimatedAPYUnitDeltaWad;
+    }
 
-    /// @notice Reference to IVAMM of Voltz Protocol.
-    function vamm() external view returns (IVAMM);
-
-    /// @notice Reference to IRateOracle of Voltz Protocol.
-    function rateOracle() external view returns (IRateOracle);
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice tvl() is view so we need to update the position before getting it
     function updateTvl() external;
@@ -34,8 +36,7 @@ interface IVoltzVault is IIntegrationVault {
         uint256 nft_,
         address[] memory vaultTokens_,
         address marginEngine_,
-        int24 initialTickLower,
-        int24 intitialTickUpper
+        InitializeParams memory initializeParams
     ) external;
 
     /// @notice Updates ticks of current active position
@@ -44,7 +45,40 @@ interface IVoltzVault is IIntegrationVault {
     /// @param ticks The lower and upper ticks of the new position
     function rebalance(TickRange memory ticks) external;
 
-    /// @notice tick range of current position
+    /// @notice Settles tracked positions and withdraws all funds
+    /// to the vault balance (up to batchSize). Should be called only after maturity. 
+    /// @param batchSize Limits the number of positions settled (settles all
+    /// positions if 0).
+    /// @return settledBatchSize Number of positions which were settled and withdrawn from.
+    function settleVault(uint256 batchSize) external returns (uint256 settledBatchSize);
+
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @notice Returns the current leverage
+    function leverage() external view returns (uint256);
+
+    /// @notice Returns the current initialMarginMultiplierPostUnwind
+    function marginMultiplierPostUnwind() external view returns (uint256);
+
+    /// @notice Returns the current lookbackWindow
+    function lookbackWindow() external view returns (uint256);
+
+    /// @notice Returns the current estimatedAPYMultiplier
+    function estimatedAPYUnitDelta() external view returns (uint256);
+
+    /// @notice Reference to IMarginEngine of Voltz Protocol.
+    function marginEngine() external view returns (IMarginEngine);
+
+    /// @notice Reference to IVAMM of Voltz Protocol.
+    function vamm() external view returns (IVAMM);
+
+    /// @notice Reference to IRateOracle of Voltz Protocol.
+    function rateOracle() external view returns (IRateOracle);
+
+    /// @notice Reference to IPeriphery of Voltz Protocol.
+    function periphery() external view returns (IPeriphery);
+
+    /// @notice Returns the tick range of the current position
     function currentPosition() external view returns (TickRange memory);
 
     event PositionRebalance(

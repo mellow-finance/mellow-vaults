@@ -67,14 +67,13 @@ contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGover
         address[] memory vaultTokens_,
         address owner_,
         address marginEngine_,
-        int24 initialTickLow,
-        int24 initialTickHigh
-    ) external returns (IVoltzVault vault, uint256 nft) {
+        IVoltzVault.InitializeParams memory initializeParams
+    ) external override returns (IVoltzVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = IVoltzVault(vaddr);
-        vault.initialize(nft, vaultTokens_, marginEngine_, initialTickLow, initialTickHigh);
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(marginEngine_, initialTickLow, initialTickHigh), owner_, vaddr, nft);
+        vault.initialize(nft, vaultTokens_, marginEngine_, initializeParams);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(marginEngine_, initializeParams), owner_, vaddr, nft);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

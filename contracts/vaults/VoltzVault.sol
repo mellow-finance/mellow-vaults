@@ -25,27 +25,87 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     using PRBMathSD59x18 for int256;
     using PRBMathUD60x18 for uint256;
 
+    IPeriphery public _periphery;
     IMarginEngine public _marginEngine;
+    IVAMM public _vamm;
     IRateOracle public _rateOracle;
     int24 _tickSpacing;
-    uint256 _leverage;
-    uint256 _k;
+    uint256 _termStartTimestampWad;
+    uint256 _termEndTimestampWad;
+
+    uint256 _leverageWad;
+    uint256 _marginMultiplierPostUnwindWad;
     uint256 _lookbackWindowInSeconds;
-    uint256 _historicalAPYDeltaPercentageWad;
+    uint256 _estimatedAPYUnitDeltaWad;
 
     /// tvl needs to be updated before use
     int256 _minTVL;
     int256 _maxTVL;
     uint256 _lastTvlUpdateTimestamp;
 
-    TickRange _currentPosition;
-    uint256 _currentPositionLiquidity;
+    /// information about LP positions of Vault
     TickRange[] trackedPositions;
+    uint256 _currentPositionIndex;
+    uint256 _currentPositionLiquidity;
+    mapping (bytes => uint256) tickRangeToIndexPlusOne;
+    uint256 settledPositionsCount;
 
     uint256 public constant SECONDS_IN_YEAR_IN_WAD = 31536000e18;
     uint256 public constant ONE_HUNDRED_IN_WAD = 100e18;
 
+
+    // -------------------  PUBLIC, MUTATING  -------------------
+
+    /// @notice Sets the leverage used for minting liquidity
+    function setLeverage(uint256 leverageWad) public {
+        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _leverageWad = leverageWad;
+    }
+
+    /// @notice Sets the multipler used to decide how 
+    /// much margin must be left in an unwound position
+    function setMarginMultiplierPostUnwind(uint256 marginMultiplierPostUnwindWad) public {
+        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _marginMultiplierPostUnwindWad = marginMultiplierPostUnwindWad;
+    }
+
+    /// @notice Sets the lookback window used to estimate
+    /// the APY between now and end of the pool: the APY
+    /// between now and end is estimated to be the APY 
+    /// in the past lookback window seconds
+    function setLookbackWindow(uint256 lookbackWindowInSeconds) public {
+        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _lookbackWindowInSeconds = lookbackWindowInSeconds;
+    }
+
+    /// @notice Sets the delta multiplier used to create lower
+    /// and upper bounds on the estimated APY
+    function setEstimatedAPYUnitDelta(uint256 estimatedAPYUnitDeltaWad) public {
+        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _estimatedAPYUnitDeltaWad = estimatedAPYUnitDeltaWad;
+    }
+
     // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IVoltzVault
+    function leverage() external view override returns (uint256) {
+        return _leverageWad;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function marginMultiplierPostUnwind() external view override returns (uint256) {
+        return _marginMultiplierPostUnwindWad;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function lookbackWindow() external view override returns (uint256) {
+        return _lookbackWindowInSeconds;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function estimatedAPYUnitDelta() external view override returns (uint256) {
+        return _estimatedAPYUnitDeltaWad;
+    }
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
@@ -59,15 +119,6 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         if (_maxTVL > 0) {
             maxTokenAmounts[0] = _maxTVL.toUint256();
         }
-    }
-
-    /// @inheritdoc IntegrationVault
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IVoltzVault).interfaceId);
-    }
-
-    function periphery() public view returns (IPeriphery) {
-        return IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
     }
 
     /// @inheritdoc IVoltzVault
@@ -85,26 +136,42 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         return _rateOracle;
     }
 
+    /// @inheritdoc IVoltzVault
+    function periphery() external view override returns (IPeriphery) {
+        return IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
+    }
+
     function currentPosition() external view returns (TickRange memory) {
-        return _currentPosition;
+        return trackedPositions[_currentPositionIndex];
+    }
+
+    /// @inheritdoc IntegrationVault
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IVoltzVault).interfaceId);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IVoltzVault
     function rebalance(TickRange memory ticks) external override {
+        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+
         // burn liquidity first, then unwind and exit existing position
         // this makes sure that we do not use our own liquidity to unwind ourselves
+        TickRange memory oldPosition = trackedPositions[_currentPositionIndex];
+
         _updateLiquidity(-_currentPositionLiquidity.toInt256());
         _unwindAndExitCurrentPosition();
-        TickRange memory oldPosition = _currentPosition;
 
         _updateCurrentPosition(ticks);
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
         _updateMargin(vaultBalance.toInt256());
-        _updateLiquidity((vaultBalance * _k).toInt256());
+        uint256 liquidityToMint = vaultBalance.fromUint().mul(_leverageWad).toUint();
+        _updateLiquidity(liquidityToMint.toInt256());
 
         emit PositionRebalance(
             oldPosition,
-            _currentPosition
+            trackedPositions[_currentPositionIndex]
         );
     }
 
@@ -113,49 +180,53 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         uint256 nft_,
         address[] memory vaultTokens_,
         address marginEngine_,
-        int24 initialTickLower,
-        int24 initialTickUpper
+        InitializeParams memory initializeParams
     ) external {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_VALUE);
 
         _marginEngine = IMarginEngine(marginEngine_);
-        _rateOracle = _marginEngine.rateOracle();
-
+        
         address underlyingToken = address(_marginEngine.underlyingToken());
         require(vaultTokens_[0] == underlyingToken, ExceptionsLibrary.INVALID_VALUE);
 
         _initialize(vaultTokens_, nft_);
 
-        IVAMM vamm_ = _marginEngine.vamm();
-        _tickSpacing = vamm_.tickSpacing();
-        _leverage = 10;
-        _k = 2;
-        _lookbackWindowInSeconds = 1209600;
-        _historicalAPYDeltaPercentageWad = 0;
+        _periphery = IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
+        _vamm = _marginEngine.vamm();
+        _rateOracle = _marginEngine.rateOracle();
+        _tickSpacing = _vamm.tickSpacing();
+        _termStartTimestampWad = _marginEngine.termStartTimestampWad();
+        _termEndTimestampWad = _marginEngine.termEndTimestampWad();
 
-        _updateCurrentPosition(TickRange(initialTickLower, initialTickUpper));
+        setLeverage(initializeParams.leverageWad);
+        setMarginMultiplierPostUnwind(initializeParams.marginMultiplierPostUnwindWad);
+        setLookbackWindow(initializeParams.lookbackWindowInSeconds);
+        setEstimatedAPYUnitDelta(initializeParams.estimatedAPYUnitDeltaWad);
+        _updateCurrentPosition(
+            TickRange(
+                initializeParams.tickLower, 
+                initializeParams.tickUpper
+            )
+        );
 
         emit VaultInitialized(
             marginEngine_,
-            initialTickLower,
-            initialTickUpper
+            initializeParams.tickLower,
+            initializeParams.tickUpper
         );
     }
 
     function updateTvl() external {
         uint256 timeInSecondsWad;
 
-        uint256 termStartTimestampWad = _marginEngine.termStartTimestampWad();
-        uint256 termEndTimestampWad = _marginEngine.termEndTimestampWad();
         uint256 termCurrentTimestampWad = Time.blockTimestampScaled();
 
         // Calculcate fixed factor
-        timeInSecondsWad = termEndTimestampWad - termStartTimestampWad;
-        uint256 fixedFactorValueWad = _accrualFact(timeInSecondsWad).div(ONE_HUNDRED_IN_WAD);
+        uint256 fixedFactorValueWad = _fixedFactor(_termStartTimestampWad, _termEndTimestampWad);
 
         // Calculate estimated variable factor between start and end
         uint256 variableFactorStartCurrentWad = _rateOracle.variableFactorNoCache(
-            termStartTimestampWad, 
+            _termStartTimestampWad, 
             termCurrentTimestampWad
         );
         uint256 lookbackWindowInSecondsWad = _lookbackWindowInSeconds.fromUint();
@@ -163,31 +234,22 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             (termCurrentTimestampWad - lookbackWindowInSecondsWad).toUint(), 
             termCurrentTimestampWad.toUint()
         );
-        timeInSecondsWad = termEndTimestampWad - termCurrentTimestampWad;
+        timeInSecondsWad = _termEndTimestampWad - termCurrentTimestampWad;
         uint256 estimatedVariableFactorCurrentEndWad = historicalAPYWad.mul(_accrualFact(timeInSecondsWad));
         uint256 estimatedVariableFactorStartEndLowerWad = 
             variableFactorStartCurrentWad + 
                 estimatedVariableFactorCurrentEndWad.mul(
-                    PRBMathUD60x18.fromUint(1) - _historicalAPYDeltaPercentageWad
+                    PRBMathUD60x18.fromUint(1) - _estimatedAPYUnitDeltaWad
                 );
         uint256 estimatedVariableFactorStartEndUpperWad = 
             variableFactorStartCurrentWad + 
                 estimatedVariableFactorCurrentEndWad.mul(
-                    PRBMathUD60x18.fromUint(1) + _historicalAPYDeltaPercentageWad
+                    PRBMathUD60x18.fromUint(1) + _estimatedAPYUnitDeltaWad
                 );
 
         // Aggregate estimated settlement cashflows into TVL
-        _minTVL = _estimateSettlementCashflow(
-            _currentPosition,
-            fixedFactorValueWad,
-            estimatedVariableFactorStartEndLowerWad
-        );
-        _maxTVL = _estimateSettlementCashflow(
-            _currentPosition,
-            fixedFactorValueWad,
-            estimatedVariableFactorStartEndUpperWad
-        );
-        
+        _minTVL = 0;
+        _maxTVL = 0;
         for (uint256 i = 0; i < trackedPositions.length; i++) {
             _minTVL += _estimateSettlementCashflow(
                 trackedPositions[i],
@@ -209,6 +271,64 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             _maxTVL,
             _lastTvlUpdateTimestamp
         );
+    }
+
+    /// @notice Function that settles the position (if not settled already) 
+    /// @notice and withdraws margin.
+    function settleVaultPositionAndWithdrawMargin(TickRange memory position) public {
+        Position.Info memory positionInfo = _marginEngine.getPosition(
+            address(this),
+            position.tickLower,
+            position.tickUpper
+        );
+
+        if (!positionInfo.isSettled) {
+            _marginEngine.settlePosition(
+                address(this), 
+                position.tickLower, 
+                position.tickUpper
+            );
+        }
+
+        positionInfo = _marginEngine.getPosition(
+            address(this),
+            position.tickLower,
+            position.tickUpper
+        );
+
+        if (positionInfo.margin > 0) {
+            _marginEngine.updatePositionMargin(
+                address(this),
+                position.tickLower, 
+                position.tickUpper,
+                -positionInfo.margin
+            );
+        }
+    }
+
+    /// @inheritdoc IVoltzVault
+    function settleVault(uint256 batchSize) external override returns (uint256 settledBatchSize) {
+        if (batchSize == 0) {
+            batchSize = trackedPositions.length - settledPositionsCount;
+        }
+
+        uint256 from = settledPositionsCount;
+        uint256 to = from + batchSize;
+        if (trackedPositions.length < to) {
+            to = trackedPositions.length;
+        }
+
+        for (uint256 i = from; i < to; i++) {
+            _periphery.settlePositionAndWithdrawMargin(
+                _marginEngine, 
+                address(this), 
+                trackedPositions[i].tickLower, 
+                trackedPositions[i].tickUpper
+            );
+        }
+
+        settledBatchSize = to - from;
+        settledPositionsCount += settledBatchSize;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -245,9 +365,30 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         return fixedCashflowBalance + variableCashflowBalance + positionInfo.margin;
     }
 
+    /// @notice Divide a given time in seconds by the number of seconds in a year
+    /// @param timeInSecondsAsWad A time in seconds in Wad (i.e. scaled up by 10^18)
+    /// @return timeInYearsWad An annualised factor of timeInSeconds, also in Wad
+    function _accrualFact(uint256 timeInSecondsAsWad)
+        internal
+        pure
+        returns (uint256 timeInYearsWad)
+    {
+        timeInYearsWad = timeInSecondsAsWad.div(SECONDS_IN_YEAR_IN_WAD);
+    }
+
+    function _fixedFactor(uint256 termStartTimestampWad, uint256 termEndTimestampWad)
+        internal
+        pure
+        returns (uint256 fixedFactorWad)
+    {
+        require (termStartTimestampWad <= termEndTimestampWad, ExceptionsLibrary.TIMESTAMP);
+        uint256 timeInSecondsWad = termEndTimestampWad - termStartTimestampWad;
+        fixedFactorWad = _accrualFact(timeInSecondsWad).div(ONE_HUNDRED_IN_WAD);
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
+    function _push(uint256[] memory tokenAmounts, bytes memory )
         internal
         override
         returns (uint256[] memory actualTokenAmounts)
@@ -255,47 +396,32 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         actualTokenAmounts = new uint256[](1);
         actualTokenAmounts[0] = tokenAmounts[0];
         _updateMargin(tokenAmounts[0].toInt256());
-        _updateLiquidity(tokenAmounts[0].toInt256() * _leverage.toInt256());
+
+        uint256 liquidityToMint = tokenAmounts[0].fromUint().mul(_leverageWad).toUint();
+        _updateLiquidity(liquidityToMint.toInt256());
 
         emit PushDeposit(
             tokenAmounts[0],
-            tokenAmounts[0] * _leverage
+            liquidityToMint
         );
     }
 
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory options
+        bytes memory 
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](1);
-        uint256 termEndTimestampWad = _marginEngine.termEndTimestampWad();
-         if (termEndTimestampWad > Time.blockTimestampScaled()) {
-            return actualTokenAmounts;
-        }
-
-        IPeriphery periphery = periphery();
-        periphery.settlePositionAndWithdrawMargin(
-            _marginEngine, 
-            address(this), 
-            _currentPosition.tickLower, 
-            _currentPosition.tickUpper
-        );
-
-        for (uint256 i = 0; i < trackedPositions.length; i++) {
-            periphery.settlePositionAndWithdrawMargin(
-                _marginEngine, 
-                address(this), 
-                trackedPositions[i].tickLower, 
-                trackedPositions[i].tickUpper
-            );
-        }
 
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
 
         uint256 amountToWithdraw = tokenAmounts[0];
         if (vaultBalance < amountToWithdraw) {
             amountToWithdraw = vaultBalance;
+        }
+
+        if (amountToWithdraw == 0) {
+            return actualTokenAmounts;
         }
 
         IERC20(_vaultTokens[0]).safeTransfer(to, amountToWithdraw);
@@ -312,35 +438,32 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             return;
         }
 
-        IPeriphery periphery = periphery();
-
         if (marginDelta > 0) {
-            IERC20(_vaultTokens[0]).safeIncreaseAllowance(address(periphery), marginDelta.toUint256());
+            IERC20(_vaultTokens[0]).safeIncreaseAllowance(address(_periphery), marginDelta.toUint256());
         }
 
-        periphery.updatePositionMargin(
+        _periphery.updatePositionMargin(
             _marginEngine,
-            _currentPosition.tickLower,
-            _currentPosition.tickUpper,
+            trackedPositions[_currentPositionIndex].tickLower,
+            trackedPositions[_currentPositionIndex].tickUpper,
             marginDelta,
             false
         );
 
         if (marginDelta > 0) {
-            IERC20(_vaultTokens[0]).safeApprove(address(periphery), 0);
+            IERC20(_vaultTokens[0]).safeApprove(address(_periphery), 0);
         }
     }
 
     function _updateLiquidity(int256 liquidityDelta) internal {
-         IPeriphery periphery = periphery();
         if (liquidityDelta != 0) {
             IPeriphery.MintOrBurnParams memory params;
             // burn liquidity
             if (liquidityDelta < 0) {
                 params = IPeriphery.MintOrBurnParams({
                     marginEngine: _marginEngine, 
-                    tickLower: _currentPosition.tickLower, 
-                    tickUpper: _currentPosition.tickUpper, 
+                    tickLower: trackedPositions[_currentPositionIndex].tickLower,
+                    tickUpper: trackedPositions[_currentPositionIndex].tickUpper,
                     notional: (-liquidityDelta).toUint256(),
                     isMint: false,
                     marginDelta: 0
@@ -350,43 +473,43 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             else {
                 params = IPeriphery.MintOrBurnParams({
                     marginEngine: _marginEngine, 
-                    tickLower: _currentPosition.tickLower, 
-                    tickUpper: _currentPosition.tickUpper, 
+                    tickLower: trackedPositions[_currentPositionIndex].tickLower,
+                    tickUpper: trackedPositions[_currentPositionIndex].tickUpper,
                     notional: liquidityDelta.toUint256(),
                     isMint: true,
                     marginDelta: 0
                 });
             }
 
-            periphery.mintOrBurn(params);
+            _periphery.mintOrBurn(params);
             _currentPositionLiquidity = (_currentPositionLiquidity.toInt256() + liquidityDelta).toUint256();
         }
     }
 
     function _updateCurrentPosition(TickRange memory ticks) internal {
+        require (Time.blockTimestampScaled() <= _termEndTimestampWad, ExceptionsLibrary.FORBIDDEN);
+
         Tick.checkTicks(ticks.tickLower, ticks.tickUpper);
         require(ticks.tickLower % _tickSpacing == 0, ExceptionsLibrary.INVALID_VALUE);
         require(ticks.tickUpper % _tickSpacing == 0, ExceptionsLibrary.INVALID_VALUE);
 
-        _currentPosition = ticks;
-    }
+        bytes memory encodedTicks = abi.encode(ticks);
+        if (tickRangeToIndexPlusOne[encodedTicks] == 0) {
+            trackedPositions.push(ticks);
+            _currentPositionIndex = trackedPositions.length - 1;
+            tickRangeToIndexPlusOne[encodedTicks] = trackedPositions.length;
+        } else {
+            _currentPositionIndex = tickRangeToIndexPlusOne[encodedTicks] - 1;
+        }
 
-    /// @notice Divide a given time in seconds by the number of seconds in a year
-    /// @param timeInSecondsAsWad A time in seconds in Wad (i.e. scaled up by 10^18)
-    /// @return timeInYearsWad An annualised factor of timeInSeconds, also in Wad
-    function _accrualFact(uint256 timeInSecondsAsWad)
-        internal
-        pure
-        returns (uint256 timeInYearsWad)
-    {
-        timeInYearsWad = timeInSecondsAsWad.div(SECONDS_IN_YEAR_IN_WAD);
+        _currentPositionLiquidity = 0;
     }
     
     function _unwindAndExitCurrentPosition() internal {
         Position.Info memory _currentPositionInfo = _marginEngine.getPosition(
             address(this),
-            _currentPosition.tickLower,
-            _currentPosition.tickUpper
+            trackedPositions[_currentPositionIndex].tickLower,
+            trackedPositions[_currentPositionIndex].tickUpper
         );
 
         if (_currentPositionInfo.variableTokenBalance != 0) {
@@ -398,66 +521,84 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 sqrtPriceLimitX96: _isFT
                     ? TickMath.MIN_SQRT_RATIO + 1
                     : TickMath.MAX_SQRT_RATIO - 1,
-                tickLower: _currentPosition.tickLower,
-                tickUpper: _currentPosition.tickUpper
+                tickLower: trackedPositions[_currentPositionIndex].tickLower,
+                tickUpper: trackedPositions[_currentPositionIndex].tickUpper
             });
 
-            IVAMM _vamm = _marginEngine.vamm();
+            (
+                int256 _fixedTokenDelta,
+                int256 _variableTokenDelta,
+                uint256 _cumulativeFeeIncurred,
+                ,
 
-            _vamm.swap(_params);
+            ) = _vamm.swap(_params);
+
+            _currentPositionInfo.fixedTokenBalance += _fixedTokenDelta;
+            _currentPositionInfo.variableTokenBalance += _variableTokenDelta;
+            _currentPositionInfo.margin -= _cumulativeFeeIncurred.toInt256();
         } 
 
-        _currentPositionInfo = _marginEngine.getPosition(
-            address(this),
-            _currentPosition.tickLower,
-            _currentPosition.tickUpper
-        );
+        uint256 positionMarginRequirementInitial;
 
-        uint256 positionMarginRequirementInitial = _marginEngine.getPositionMarginRequirement(
-            address(this),
-            _currentPosition.tickLower,
-            _currentPosition.tickUpper,
-            false
-        );
-
-        int256 marginToWithdraw;
+        bool trackPosition = false;
+        uint256 marginToKeep = 0;
         if (_currentPositionInfo.variableTokenBalance != 0) {
             // keep k * initial margin requirement, withdraw the rest
             // need to track to redeem the rest at maturity
-            marginToWithdraw = _currentPositionInfo.margin - (_k * positionMarginRequirementInitial).toInt256();
-            trackedPositions.push(_currentPosition);
-        } else if (_currentPositionInfo.fixedTokenBalance > 0) {
-            // withdraw all margin
-            // need to track to redeem ft cashflow at maturity
-            marginToWithdraw = _currentPositionInfo.margin;
-            trackedPositions.push(_currentPosition);
-        } else if (_currentPositionInfo.fixedTokenBalance < 0) {
-            // withdraw everything up to amount that covers negative ft
-            // no need to track for later settlement
-            // int256 fixedTokenBalanceWad = _currentPositionInfo.fixedTokenBalance.fromInt();
-            // uint256 timeInSecondsWad = _marginEngine.termEndTimestampWad() - _marginEngine.termStartTimestampWad();
-            // uint256 fixedFactorValueWad = _accrualFact(timeInSecondsWad).div(ONE_HUNDRED_IN_WAD);
-
-            // fixed cashflow is negative
-            // int256 fixedCashflowBalanceWad = fixedTokenBalanceWad.mul(int256(fixedFactorValueWad));
-            // int256 fixedCashflowBalance = fixedCashflowBalanceWad.toInt();
-
-            // marginToWithdraw = _currentPositionInfo.margin + fixedCashflowBalance;
-
-            // since vt = 0, margin requirement initial is equal to fixed cashflow
-            marginToWithdraw = _currentPositionInfo.margin - positionMarginRequirementInitial.toInt256() - 1;
+            positionMarginRequirementInitial = _marginEngine.getPositionMarginRequirement(
+                address(this),
+                trackedPositions[_currentPositionIndex].tickLower,
+                trackedPositions[_currentPositionIndex].tickUpper,
+                false
+            );
+            marginToKeep = 
+                (_marginMultiplierPostUnwindWad.mul(
+                    positionMarginRequirementInitial.fromUint()
+                ).toUint());
+            trackPosition = true;
+        } else {
+            if (_currentPositionInfo.fixedTokenBalance > 0) {
+                // withdraw all margin
+                // need to track to redeem ft cashflow at maturity
+                positionMarginRequirementInitial = 0;
+                marginToKeep = 0;
+                trackPosition = true;
+            } else {
+                // withdraw everything up to amount that covers negative ft
+                // no need to track for later settlement
+                // since vt = 0, margin requirement initial is equal to fixed cashflow
+                uint256 fixedFactorValueWad = _fixedFactor(_termStartTimestampWad, _termEndTimestampWad);
+                positionMarginRequirementInitial = 
+                    (-_currentPositionInfo.fixedTokenBalance).toUint256().fromUint().mul(
+                        fixedFactorValueWad
+                    ).toUint();
+                marginToKeep = positionMarginRequirementInitial + 1;
+            }
         }
 
-        if (_currentPositionInfo.margin - marginToWithdraw <= positionMarginRequirementInitial.toInt256()) {
-            marginToWithdraw = _currentPositionInfo.margin - positionMarginRequirementInitial.toInt256() - 1;
+        if (marginToKeep <= positionMarginRequirementInitial) {
+            marginToKeep = positionMarginRequirementInitial + 1;
         }
+        
+        if (_currentPositionInfo.margin > 0) {
+            if (marginToKeep > _currentPositionInfo.margin.toUint256()) {
+                marginToKeep = _currentPositionInfo.margin.toUint256();
+            }
 
-        if (marginToWithdraw > _currentPositionInfo.margin) {
-            marginToWithdraw = _currentPositionInfo.margin;
+            _updateMargin(-(_currentPositionInfo.margin - marginToKeep.toInt256()));
         }
+        
 
-        if (marginToWithdraw > 0) {
-            _updateMargin(-marginToWithdraw);
+        // no need to track it, so we remove it from the array
+        if (!trackPosition) {
+            tickRangeToIndexPlusOne[abi.encode(trackedPositions[_currentPositionIndex])] = 0;
+            if (_currentPositionIndex != trackedPositions.length - 1) {
+                delete trackedPositions[_currentPositionIndex];
+                trackedPositions[_currentPositionIndex] = trackedPositions[trackedPositions.length - 1];
+                tickRangeToIndexPlusOne[abi.encode(trackedPositions[_currentPositionIndex])] = _currentPositionIndex + 1;
+            }
+            
+            trackedPositions.pop();
         }
     }
 }

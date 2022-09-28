@@ -7,6 +7,7 @@ import {
     MAIN_NETWORKS,
     setupVault,
 } from "./0000_utils";
+import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -27,7 +28,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let erc20VaultNft = startNft + 1;
 
     await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
-        createVaultArgs: [tokens, deployer, marginEngine, 0, 60],
+        createVaultArgs: [tokens, deployer, marginEngine, {
+            tickLower: 0,
+            tickUpper: 60,
+            leverageWad: BigNumber.from("10000000000000000000"), // 10
+            marginMultiplierPostUnwindWad: BigNumber.from("2000000000000000000"), // 2
+            lookbackWindowInSeconds: 1209600, // 14 days
+            estimatedAPYUnitDeltaWad: BigNumber.from("0")
+        }],
     });
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
         createVaultArgs: [tokens, deployer],

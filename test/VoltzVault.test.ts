@@ -32,9 +32,9 @@ type DeployOptions = {};
 contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
     this.timeout(200000);
     const leverage = 10;
-    const k = 2;
+    const marginMultiplierPostUnwind = 2;
     const lookbackWindow = 1209600; // 14 days
-    const historicalAPYDeltaPerc = 0;
+    const estimatedAPYUnitDelta = 0;
 
     const MIN_SQRT_RATIO = BigNumber.from("2503036416286949174936592462");
     const MAX_SQRT_RATIO = BigNumber.from("2507794810551837817144115957740");
@@ -100,8 +100,20 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         tokens,
                         this.deployer.address,
                         marginEngine,
-                        this.initialTickLow,
-                        this.initialTickHigh
+                        {
+                            tickLower: this.initialTickLow,
+                            tickUpper: this.initialTickHigh,
+                            leverageWad: utils.parseEther(leverage.toString()), // 10
+                            marginMultiplierPostUnwindWad:
+                                utils.parseEther(
+                                    marginMultiplierPostUnwind.toString()
+                                ), // 2
+                            lookbackWindowInSeconds: lookbackWindow, // 14 days
+                            estimatedAPYUnitDeltaWad: 
+                                utils.parseEther(
+                                    estimatedAPYUnitDelta.toString()
+                                )
+                        }
                     ],
                 });
 
@@ -341,6 +353,8 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             // advance time by 60 days to reach maturity
             await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
             await network.provider.send("evm_mine", []);
+            
+            await this.subject.settleVault(0);
 
             {
                 const actualTokenAmounts = await this.subject.callStatic.pull(
@@ -358,6 +372,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             }
 
             const erc20VaultFundsBeforePull = await this.usdc.balanceOf(this.erc20Vault.address);
+        
             await this.subject.pull(
                 this.erc20Vault.address,
                 [this.usdc.address],
@@ -655,7 +670,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             expect(lpNewPositionInfo.margin).to.be.equal(BigNumber.from(0));
         });
 
-        it("rebalance #4: vt < 0, leave k*req behind", async () => {
+        it("rebalance #4: vt < 0, leave initial + buffer behind", async () => {
             // Push 1000
             await mint(
                 "USDC",
@@ -725,7 +740,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     false,  
                 );
             
-            expect(lpInitialPositionInfo.margin).to.be.equal(positionRequirementInitial.mul(k));
+            expect(lpInitialPositionInfo.margin).to.be.equal(positionRequirementInitial.mul(marginMultiplierPostUnwind));
             
             // must check the following on the new position
             // margin is 1000000000 - lpInitialPositionInfo.margin - fees + rewards
@@ -747,6 +762,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             const sumOfMargins = lpInitialPositionInfo.margin.add(lpNewPositionInfo.margin);
 
             // pull 0 to triger settle
+            await this.subject.settleVault(0);
             await this.subject.pull(
                 this.erc20Vault.address,
                 [this.usdc.address],
@@ -783,6 +799,71 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 sumOfMargins.add(cashflowFirstPosition),
                 sumOfMargins.add(cashflowFirstPosition).div(1000)
             );
+        });
+
+        it("rebalance #5: check leverage", async () => {
+            // Push 1000
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address],
+                [
+                    BigNumber.from(10).pow(6).mul(1000),
+                ],
+                encodeToBytes(
+                    [],
+                    []
+                )
+            );
+
+            {
+                const ticks = await this.subject.currentPosition();
+                const currentVoltzPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    ticks.tickLower,
+                    ticks.tickUpper
+                );
+
+                const sqrtPriceLower = BigNumber.from(TickMath.getSqrtRatioAtTick(ticks.tickLower).toString());
+                const sqrtPriceUpper = BigNumber.from(TickMath.getSqrtRatioAtTick(ticks.tickUpper).toString());
+                const liquidityNotional = 
+                    currentVoltzPositionInfo._liquidity.mul(sqrtPriceUpper.sub(sqrtPriceLower)).div(BigNumber.from(2).pow(96));
+                        
+                expect(liquidityNotional).to.be.closeTo(
+                    BigNumber.from(10).pow(6).mul(1000).mul(leverage), 
+                    BigNumber.from(10).pow(6).mul(1000).mul(leverage).div(1000).toNumber());
+            }
+
+            await this.subject.rebalance({
+                tickLower: 60,
+                tickUpper: 600
+            });
+
+
+            {
+                const ticks = await this.subject.currentPosition();
+                expect(ticks.tickLower).to.be.equal(60);
+                expect(ticks.tickUpper).to.be.equal(600);
+                const currentVoltzPositionInfo = await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    ticks.tickLower,
+                    ticks.tickUpper
+                );
+
+                const sqrtPriceLower = BigNumber.from(TickMath.getSqrtRatioAtTick(ticks.tickLower).toString());
+                const sqrtPriceUpper = BigNumber.from(TickMath.getSqrtRatioAtTick(ticks.tickUpper).toString());
+                const liquidityNotional = 
+                    currentVoltzPositionInfo._liquidity.mul(sqrtPriceUpper.sub(sqrtPriceLower)).div(BigNumber.from(2).pow(96));
+                        
+                expect(liquidityNotional).to.be.closeTo(
+                    BigNumber.from(10).pow(6).mul(1000).mul(leverage), 
+                    BigNumber.from(10).pow(6).mul(1000).mul(leverage).div(1000).toNumber());
+            }
         });
     });
 
@@ -917,12 +998,12 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 const variableCashflowLower = 
                     currentVoltzPositionInfo.variableTokenBalance * 
                         (apyStartNow * (currentTimestamp - termStartTimestamp) / YEAR_IN_SECONDS + 
-                         apyHistoricalLookback * (1-historicalAPYDeltaPerc) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
+                         apyHistoricalLookback * (1-estimatedAPYUnitDelta) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
                 
                 const variableCashflowUpper = 
                     currentVoltzPositionInfo.variableTokenBalance * 
                         (apyStartNow * (currentTimestamp - termStartTimestamp) / YEAR_IN_SECONDS + 
-                        apyHistoricalLookback * (1+historicalAPYDeltaPerc) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
+                        apyHistoricalLookback * (1+estimatedAPYUnitDelta) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
 
                 
                 const groundTruthTvlLower = currentVoltzPositionInfo.margin.add(Math.floor(fixedCashflow + variableCashflowLower));
@@ -1073,12 +1154,12 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     variableCashflowLower += 
                         positionInfo.variableTokenBalance * 
                             (apyStartNow * (currentTimestamp - termStartTimestamp) / YEAR_IN_SECONDS + 
-                            apyHistoricalLookback * (1-historicalAPYDeltaPerc) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
+                            apyHistoricalLookback * (1-estimatedAPYUnitDelta) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
                 
                     variableCashflowUpper += 
                         positionInfo.variableTokenBalance * 
                             (apyStartNow * (currentTimestamp - termStartTimestamp) / YEAR_IN_SECONDS + 
-                            apyHistoricalLookback * (1+historicalAPYDeltaPerc) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
+                            apyHistoricalLookback * (1+estimatedAPYUnitDelta) * (termEndTimestamp - currentTimestamp) / YEAR_IN_SECONDS);
                 }
 
                 
