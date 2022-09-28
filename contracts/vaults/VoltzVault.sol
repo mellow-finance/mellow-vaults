@@ -176,6 +176,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         uint256 liquidityToMint = vaultBalance.fromUint().mul(_leverageWad).toUint();
         _updateLiquidity(liquidityToMint.toInt256());
 
+        updateTvl();
+
         emit PositionRebalance(
             oldPosition,
             trackedPositions[_currentPositionIndex]
@@ -413,6 +415,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         uint256 liquidityToMint = tokenAmounts[0].fromUint().mul(_leverageWad).toUint();
         _updateLiquidity(liquidityToMint.toInt256());
 
+        updateTvl();
+
         emit PushDeposit(
             tokenAmounts[0],
             liquidityToMint
@@ -439,6 +443,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
         IERC20(_vaultTokens[0]).safeTransfer(to, amountToWithdraw);
         actualTokenAmounts[0] = amountToWithdraw;
+
+        updateTvl();
 
         emit PullWithdraw(
             tokenAmounts[0],
