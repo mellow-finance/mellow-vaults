@@ -370,6 +370,10 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             to = trackedPositions.length;
         }
 
+        if (to <= from) {
+            return 0;
+        }
+
         for (uint256 i = from; i < to; i++) {
             _periphery.settlePositionAndWithdrawMargin(
                 _marginEngine, 
