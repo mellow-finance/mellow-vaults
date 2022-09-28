@@ -1,0 +1,5 @@
+yarn run v1.22.11
+$ forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000
+Compiling 1 files with 0.8.9
+Solc 0.8.9 finished in 257.03ms
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
