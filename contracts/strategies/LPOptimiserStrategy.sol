@@ -89,7 +89,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     function rebalanceCheck() public view returns (bool) {
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
-        IVoltzVault.TickRange memory _currentPosition = _vault.currentPosition(); // ask costin about this
+        IVoltzVault.TickRange memory _currentPosition = _vault.currentPosition();
         int24 _tickLower = _currentPosition.tickLower;
         int24 _tickUpper = _currentPosition.tickUpper;
 
@@ -125,7 +125,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
         // 1. Get the new tick lower
         int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
-        int256 newFixedLowerWad; // should I intialise this at the top of the contract or inside the function?
+        int256 newFixedLowerWad;
         if (deltaWad > 1e15) {
             // delta is greater than 1e15 (0.001) => choose delta
             if (deltaWad < _maxPossibleLowerBoundWad) {
