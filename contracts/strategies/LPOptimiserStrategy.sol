@@ -107,6 +107,9 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     }
 
     /// @notice Get the nearest tick multiple given a tick and tick spacing
+    /// @param newTick The tick to be rounded to the closest multiple of tickSpacing
+    /// @param tickSpacing The tick spacing of the vamm being used for this strategy
+    /// @return int24 The nearest tick multiple for newTick
     function nearestTickMultiple(int24 newTick, int24 tickSpacing) public pure returns (int24) {
         return
             (newTick /
@@ -117,6 +120,8 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
     /// @notice Set new optimimal tick range based on current tick
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
+    /// @return newTickLowerMul The new lower tick for the rebalanced position
+    /// @return newTickUpperMul The new upper tick for the rebalanced position
     function rebalanceTicks(uint256 currentFixedRateWad) public returns (int24 newTickLowerMul, int24 newTickUpperMul) {
         _requireAtLeastOperator();
 
