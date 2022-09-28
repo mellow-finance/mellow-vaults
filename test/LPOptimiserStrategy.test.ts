@@ -633,4 +633,38 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             }
         })
     })
+
+    describe("Setters and Getters", async () => {
+        it("Set logProx", async () => {
+            // Initially logProx is set to -1000 before each test, get this
+            const logProx = await this.subject.connect(this.admin).getLogProx();
+            expect(logProx).to.be.equal(-1000);
+
+            // Set logProx to be -2000
+            await this.subject.connect(this.admin).setLogProx(-2000);
+            expect(await this.subject.connect(this.admin).getLogProx()).to.be.equal(-2000);
+        })
+
+        it("Set sigmaWad", async () => {
+            // Initially sigmaWad is set to 0.1 before each test, get this
+            const sigmaWad = await this.subject.connect(this.admin).getSigmaWad();
+            expect(sigmaWad).to.be.equal(BigNumber.from("100000000000000000"));
+
+            // Set sigmaWad to be 0.2
+            await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("200000000000000000"));
+            expect(await this.subject.connect(this.admin).getSigmaWad()).to.be.equal(BigNumber.from("200000000000000000"));
+        })
+
+        it("Set MaxPossibleLowerBound", async () => {
+            // Initially MaxPossibleLowerBound is set
+            const maxPoss = await this.subject.connect(this.admin).getMaxPossibleLowerBound();
+            expect(maxPoss).to.be.equal(BigNumber.from("1500000000000000000"));
+
+            // Set MaxPossibleLowerBound 
+            await this.subject.connect(this.admin).setMaxPossibleLowerBound(BigNumber.from("400000000000000000"));
+            expect(await this.subject.connect(this.admin).getMaxPossibleLowerBound()).to.be.equal(BigNumber.from("400000000000000000"));
+        })
+
+
+    })
 });
