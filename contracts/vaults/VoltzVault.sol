@@ -235,7 +235,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     /// @inheritdoc IVoltzVault
     function vamm() external view override returns (IVAMM) {
-        return _marginEngine.vamm();
+        return _vamm;
     }
 
     /// @inheritdoc IVoltzVault
@@ -245,7 +245,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     /// @inheritdoc IVoltzVault
     function periphery() external view override returns (IPeriphery) {
-        return IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
+        return _periphery;
     }
 
     function currentPosition() external view override returns (TickRange memory) {
