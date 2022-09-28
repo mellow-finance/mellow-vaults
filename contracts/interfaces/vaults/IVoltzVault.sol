@@ -42,12 +42,39 @@ interface IVoltzVault is IIntegrationVault {
     /// @param ticks The lower and upper ticks of the new position
     function rebalance(TickRange memory ticks) external;
 
+    /// @notice Function that settles the position (if not settled already) 
+    /// and withdraws margin.
+    function settleVaultPositionAndWithdrawMargin(TickRange memory position) external;
+
     /// @notice Settles tracked positions and withdraws all funds
     /// to the vault balance (up to batchSize). Should be called only after maturity. 
     /// @param batchSize Limits the number of positions settled (settles all
     /// positions if 0).
     /// @return settledBatchSize Number of positions which were settled and withdrawn from.
     function settleVault(uint256 batchSize) external returns (uint256 settledBatchSize);
+
+    /// @notice Updates estimated tvl values.
+    function updateTvl() external returns (
+        uint256[] memory minTokenAmounts, 
+        uint256[] memory maxTokenAmounts
+    ); 
+
+    /// @notice Sets the leverage used for minting liquidity
+    function setLeverage(uint256 leverageWad) external;
+
+    /// @notice Sets the multipler used to decide how 
+    /// much margin must be left in an unwound position
+    function setMarginMultiplierPostUnwind(uint256 marginMultiplierPostUnwindWad) external;
+
+    /// @notice Sets the lookback window used to estimate
+    /// the APY between now and end of the pool: the APY
+    /// between now and end is estimated to be the APY 
+    /// in the past lookback window seconds
+    function setLookbackWindow(uint256 lookbackWindowInSeconds) external;
+
+    /// @notice Sets the delta multiplier used to create lower
+    /// and upper bounds on the estimated APY
+    function setEstimatedAPYUnitDelta(uint256 estimatedAPYUnitDeltaWad) external;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -81,14 +108,14 @@ interface IVoltzVault is IIntegrationVault {
     event PositionRebalance(
         TickRange oldPosition,
         int256 marginLeftInOldPosition,
-        TickRange indexed newPosition,
+        TickRange newPosition,
         uint256 marginDepositedInNewPosition
     );
 
     event VaultInitialized(
         address indexed marginEngine,
-        int24 indexed tickLower,
-        int24 indexed tickUpper,
+        int24 tickLower,
+        int24 tickUpper,
         uint256 leverageWad,
         uint256 marginMultiplierPostUnwindWad,
         uint256 lookbackWindowInSeconds,
@@ -96,14 +123,14 @@ interface IVoltzVault is IIntegrationVault {
     );
 
     event PushDeposit(
-        uint256 indexed amountDeposited,
-        uint256 indexed liquidityMinted
+        uint256 amountDeposited,
+        uint256 liquidityMinted
     );
 
     event PullWithdraw(
-        address indexed to,
-        uint256 indexed amountRequestedToWithdraw,
-        uint256 indexed amountWithdrawn
+        address to,
+        uint256 amountRequestedToWithdraw,
+        uint256 amountWithdrawn
     );
 
     event TvlUpdate(
@@ -113,13 +140,13 @@ interface IVoltzVault is IIntegrationVault {
     );
 
     event PositionSettledAndMarginWithdrawn(
-        int24 indexed tickLower,
-        int24 indexed tickUpper
+        int24 tickLower,
+        int24 tickUpper
     );
 
     event VaultSettle(
-        uint256 indexed batchSizeRequested,
-        uint256 indexed fromIndex,
+        uint256 batchSizeRequested,
+        uint256 fromIndex,
         uint256 toIndex
     );
 }

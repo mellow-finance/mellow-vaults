@@ -47,49 +47,23 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     int256 _aggregatedMargin;                // excludes current position
 
     /// information about LP positions of Vault
-    TickRange[] trackedPositions;
+    TickRange[] public trackedPositions;
     uint256 _currentPositionIndex;
     uint256 _currentPositionLiquidity;
     mapping (bytes => uint256) tickRangeToIndexPlusOne;
     uint256 settledPositionsCount;
     
-
     uint256 public constant SECONDS_IN_YEAR_IN_WAD = 31536000e18;
     uint256 public constant ONE_HUNDRED_IN_WAD = 100e18;
 
 
     // -------------------  PUBLIC, MUTATING  -------------------
 
-    /// @notice Sets the leverage used for minting liquidity
-    function setLeverage(uint256 leverageWad) public {
-        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _leverageWad = leverageWad;
-    }
-
-    /// @notice Sets the multipler used to decide how 
-    /// much margin must be left in an unwound position
-    function setMarginMultiplierPostUnwind(uint256 marginMultiplierPostUnwindWad) public {
-        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _marginMultiplierPostUnwindWad = marginMultiplierPostUnwindWad;
-    }
-
-    /// @notice Sets the lookback window used to estimate
-    /// the APY between now and end of the pool: the APY
-    /// between now and end is estimated to be the APY 
-    /// in the past lookback window seconds
-    function setLookbackWindow(uint256 lookbackWindowInSeconds) public {
-        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _lookbackWindowInSeconds = lookbackWindowInSeconds;
-    }
-
-    /// @notice Sets the delta multiplier used to create lower
-    /// and upper bounds on the estimated APY
-    function setEstimatedAPYUnitDelta(uint256 estimatedAPYUnitDeltaWad) public {
-        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _estimatedAPYUnitDeltaWad = estimatedAPYUnitDeltaWad;
-    }
-
-    function updateTvl() public {
+    /// @inheritdoc IVoltzVault
+    function updateTvl() public override returns (
+        uint256[] memory minTokenAmounts, 
+        uint256[] memory maxTokenAmounts
+    ) {
         uint256 timeInSecondsWad;
 
         uint256 termCurrentTimestampWad = Time.blockTimestampScaled();
@@ -165,11 +139,21 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             _maxTVL,
             _lastTvlUpdateTimestamp
         );
+
+        minTokenAmounts = new uint256[](1);
+        maxTokenAmounts = new uint256[](1);
+
+        if (_minTVL > 0) {
+            minTokenAmounts[0] = _minTVL.toUint256();
+        }
+
+        if (_maxTVL > 0) {
+            maxTokenAmounts[0] = _maxTVL.toUint256();
+        }
     }
 
-    /// @notice Function that settles the position (if not settled already) 
-    /// and withdraws margin.
-    function settleVaultPositionAndWithdrawMargin(TickRange memory position) public {
+    /// @inheritdoc IVoltzVault
+    function settleVaultPositionAndWithdrawMargin(TickRange memory position) public override {
         Position.Info memory positionInfo = _marginEngine.getPosition(
             address(this),
             position.tickLower,
@@ -276,8 +260,32 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IVoltzVault
+    function setLeverage(uint256 leverageWad) external override {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _leverageWad = leverageWad;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function setMarginMultiplierPostUnwind(uint256 marginMultiplierPostUnwindWad) external override {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _marginMultiplierPostUnwindWad = marginMultiplierPostUnwindWad;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function setLookbackWindow(uint256 lookbackWindowInSeconds) external override {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _lookbackWindowInSeconds = lookbackWindowInSeconds;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function setEstimatedAPYUnitDelta(uint256 estimatedAPYUnitDeltaWad) external override {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _estimatedAPYUnitDeltaWad = estimatedAPYUnitDeltaWad;
+    }
+
+    /// @inheritdoc IVoltzVault
     function rebalance(TickRange memory ticks) external override {
-        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         
         TickRange memory oldPosition = trackedPositions[_currentPositionIndex];
 
@@ -328,10 +336,10 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _termStartTimestampWad = _marginEngine.termStartTimestampWad();
         _termEndTimestampWad = _marginEngine.termEndTimestampWad();
 
-        setLeverage(initializeParams.leverageWad);
-        setMarginMultiplierPostUnwind(initializeParams.marginMultiplierPostUnwindWad);
-        setLookbackWindow(initializeParams.lookbackWindowInSeconds);
-        setEstimatedAPYUnitDelta(initializeParams.estimatedAPYUnitDeltaWad);
+        _leverageWad = initializeParams.leverageWad;
+        _marginMultiplierPostUnwindWad = initializeParams.marginMultiplierPostUnwindWad;
+        _lookbackWindowInSeconds = initializeParams.lookbackWindowInSeconds;
+        _estimatedAPYUnitDeltaWad = initializeParams.estimatedAPYUnitDeltaWad;
         _updateCurrentPosition(
             TickRange(
                 initializeParams.tickLower, 
@@ -397,7 +405,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         int256 aggregatedVariableTokenBalance,
         uint256 estimatedVariableFactorStartEndWad,
         int256 aggregatedMargin
-    ) internal returns (int256) {
+    ) internal pure returns (int256) {
         // Fixed Cashflow
         int256 fixedTokenBalanceWad = aggregatedFixedTokenBalance.fromInt();
         int256 fixedCashflowBalanceWad = fixedTokenBalanceWad.mul(int256(fixedFactorValueWad));
