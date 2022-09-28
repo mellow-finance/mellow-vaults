@@ -14,6 +14,7 @@ import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
+import "forge-std/console2.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -211,7 +212,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         _beforeLastWithdrawalsExecutionTimestamp = _lastWithdrawalsExecutionTimestamp;
         _lastWithdrawalsExecutionTimestamp = block.timestamp;
 
-        (uint256[] memory minTokenAmounts, ) = IAggregateVault(address(this)).tvl();
+        (uint256[] memory minTokenAmounts, ) = tvl();
+        _chargeFees(_nft, minTokenAmounts, totalSupply, _vaultTokens);
 
         uint256 totalAmount = FullMath.mulDiv(_totalLpWitdrawalRequests, minTokenAmounts[0], totalSupply);
 
@@ -230,8 +232,12 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             totalAmount = IERC20(_vaultTokens[0]).balanceOf(address(zeroVault));
         }
 
-        _priceForLpTokenD18 = FullMath.mulDiv(totalAmount, D18, totalSupply);
-        _totalLpWitdrawalRequests = 0;
+        if (_totalLpWitdrawalRequests > 0) {
+
+            _priceForLpTokenD18 = FullMath.mulDiv(totalAmount, D18, _totalLpWitdrawalRequests);
+            _totalLpWitdrawalRequests = 0;
+
+        }
     }
 
     /// @inheritdoc IGearboxRootVault
