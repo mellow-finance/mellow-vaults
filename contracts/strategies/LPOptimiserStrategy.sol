@@ -23,23 +23,18 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     IERC20Vault public immutable _erc20Vault;
 
     // INTERNAL STATE
-
     IVoltzVault internal _vault;
     uint256[] internal _pullExistentials;
     IMarginEngine internal _marginEngine;
     IPeriphery internal _periphery;
     IVAMM internal _vamm;
-    // IVoltzVault.TickRange internal _currentPosition;
 
     // MUTABLE PARAMS
-
     uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
     int256 internal _maxPossibleLowerBoundWad; // should be in fixed rate
     int24 internal _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
 
-
     // GETTERS AND SETTERS
-
     function setSigmaWad(uint256 sigmaWad) public {
         _requireAtLeastOperator();
         _sigmaWad = sigmaWad;
@@ -92,7 +87,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     }
 
     /// @notice Get the current tick and position ticks and decide whether to rebalance
-    function rebalanceCheck() public view returns (bool) { 
+    function rebalanceCheck() public view returns (bool) {
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
         IVoltzVault.TickRange memory _currentPosition = _vault.currentPosition(); // ask costin about this
         int24 _tickLower = _currentPosition.tickLower;
@@ -130,7 +125,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
         // 1. Get the new tick lower
         int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
-        int256 newFixedLowerWad; // should I intialise this at the top of the contract or inside the function? 
+        int256 newFixedLowerWad; // should I intialise this at the top of the contract or inside the function?
         if (deltaWad > 1e15) {
             // delta is greater than 1e15 (0.001) => choose delta
             if (deltaWad < _maxPossibleLowerBoundWad) {
@@ -156,7 +151,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
             PRBMathSD59x18.log2(int256(newFixedLowerWad)),
             PRBMathSD59x18.log2(1000100000000000000)
         );
- 
+
         int256 newTickLower = newTickLowerWad / 1e18;
         int256 newTickUpper = newTickUpperWad / 1e18;
 
