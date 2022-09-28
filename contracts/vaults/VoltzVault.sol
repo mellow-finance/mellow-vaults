@@ -89,146 +89,13 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _estimatedAPYUnitDeltaWad = estimatedAPYUnitDeltaWad;
     }
 
-    // -------------------  EXTERNAL, VIEW  -------------------
-
-    /// @inheritdoc IVoltzVault
-    function leverage() external view override returns (uint256) {
-        return _leverageWad;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function marginMultiplierPostUnwind() external view override returns (uint256) {
-        return _marginMultiplierPostUnwindWad;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function lookbackWindow() external view override returns (uint256) {
-        return _lookbackWindowInSeconds;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function estimatedAPYUnitDelta() external view override returns (uint256) {
-        return _estimatedAPYUnitDeltaWad;
-    }
-
-    /// @inheritdoc IVault
-    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        minTokenAmounts = new uint256[](1);
-        maxTokenAmounts = new uint256[](1);
-
-        if (_minTVL > 0) {
-            minTokenAmounts[0] = _minTVL.toUint256();
-        }
-
-        if (_maxTVL > 0) {
-            maxTokenAmounts[0] = _maxTVL.toUint256();
-        }
-    }
-
-    /// @inheritdoc IVoltzVault
-    function marginEngine() external view override returns (IMarginEngine) {
-        return _marginEngine;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function vamm() external view override returns (IVAMM) {
-        return _marginEngine.vamm();
-    }
-
-    /// @inheritdoc IVoltzVault
-    function rateOracle() external view override returns (IRateOracle) {
-        return _rateOracle;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function periphery() external view override returns (IPeriphery) {
-        return IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
-    }
-
-    function currentPosition() external view returns (TickRange memory) {
-        return trackedPositions[_currentPositionIndex];
-    }
-
-    /// @inheritdoc IntegrationVault
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IVoltzVault).interfaceId);
-    }
-
-    // -------------------  EXTERNAL, MUTATING  -------------------
-
-    /// @inheritdoc IVoltzVault
-    function rebalance(TickRange memory ticks) external override {
-        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        
-        TickRange memory oldPosition = trackedPositions[_currentPositionIndex];
-
-        require(oldPosition.tickLower != ticks.tickLower, ExceptionsLibrary.FORBIDDEN);
-        require(oldPosition.tickUpper != ticks.tickUpper, ExceptionsLibrary.FORBIDDEN);
-
-        // burn liquidity first, then unwind and exit existing position
-        // this makes sure that we do not use our own liquidity to unwind ourselves
-        _updateLiquidity(-_currentPositionLiquidity.toInt256());
-        _unwindAndExitCurrentPosition();
-
-        _updateCurrentPosition(ticks);
-        uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
-        _updateMargin(vaultBalance.toInt256());
-        uint256 liquidityToMint = vaultBalance.fromUint().mul(_leverageWad).toUint();
-        _updateLiquidity(liquidityToMint.toInt256());
-
-        updateTvl();
-
-        emit PositionRebalance(
-            oldPosition,
-            trackedPositions[_currentPositionIndex]
-        );
-    }
-
-    /// @inheritdoc IVoltzVault
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        address marginEngine_,
-        InitializeParams memory initializeParams
-    ) external {
-        require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_VALUE);
-
-        _marginEngine = IMarginEngine(marginEngine_);
-        
-        address underlyingToken = address(_marginEngine.underlyingToken());
-        require(vaultTokens_[0] == underlyingToken, ExceptionsLibrary.INVALID_VALUE);
-
-        _initialize(vaultTokens_, nft_);
-
-        _periphery = IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
-        _vamm = _marginEngine.vamm();
-        _rateOracle = _marginEngine.rateOracle();
-        _tickSpacing = _vamm.tickSpacing();
-        _termStartTimestampWad = _marginEngine.termStartTimestampWad();
-        _termEndTimestampWad = _marginEngine.termEndTimestampWad();
-
-        setLeverage(initializeParams.leverageWad);
-        setMarginMultiplierPostUnwind(initializeParams.marginMultiplierPostUnwindWad);
-        setLookbackWindow(initializeParams.lookbackWindowInSeconds);
-        setEstimatedAPYUnitDelta(initializeParams.estimatedAPYUnitDeltaWad);
-        _updateCurrentPosition(
-            TickRange(
-                initializeParams.tickLower, 
-                initializeParams.tickUpper
-            )
-        );
-
-        emit VaultInitialized(
-            marginEngine_,
-            initializeParams.tickLower,
-            initializeParams.tickUpper
-        );
-    }
-
-    function updateTvl() external {
+    function updateTvl() public {
         uint256 timeInSecondsWad;
 
         uint256 termCurrentTimestampWad = Time.blockTimestampScaled();
+        if (termCurrentTimestampWad > _termEndTimestampWad) {
+            termCurrentTimestampWad = _termEndTimestampWad;
+        }
 
         // Calculcate fixed factor
         uint256 fixedFactorValueWad = _fixedFactor(_termStartTimestampWad, _termEndTimestampWad);
@@ -301,7 +168,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     }
 
     /// @notice Function that settles the position (if not settled already) 
-    /// @notice and withdraws margin.
+    /// and withdraws margin.
     function settleVaultPositionAndWithdrawMargin(TickRange memory position) public {
         Position.Info memory positionInfo = _marginEngine.getPosition(
             address(this),
@@ -331,6 +198,156 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 -positionInfo.margin
             );
         }
+        
+        emit PositionSettledAndMarginWithdrawn(
+            position.tickLower,
+            position.tickUpper
+        );
+    }
+
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IVoltzVault
+    function leverage() external view override returns (uint256) {
+        return _leverageWad;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function marginMultiplierPostUnwind() external view override returns (uint256) {
+        return _marginMultiplierPostUnwindWad;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function lookbackWindow() external view override returns (uint256) {
+        return _lookbackWindowInSeconds;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function estimatedAPYUnitDelta() external view override returns (uint256) {
+        return _estimatedAPYUnitDeltaWad;
+    }
+
+    /// @inheritdoc IVault
+    function tvl() public view override returns (
+        uint256[] memory minTokenAmounts, 
+        uint256[] memory maxTokenAmounts
+    ) {
+        minTokenAmounts = new uint256[](1);
+        maxTokenAmounts = new uint256[](1);
+
+        if (_minTVL > 0) {
+            minTokenAmounts[0] = _minTVL.toUint256();
+        }
+
+        if (_maxTVL > 0) {
+            maxTokenAmounts[0] = _maxTVL.toUint256();
+        }
+    }
+
+    /// @inheritdoc IVoltzVault
+    function marginEngine() external view override returns (IMarginEngine) {
+        return _marginEngine;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function vamm() external view override returns (IVAMM) {
+        return _marginEngine.vamm();
+    }
+
+    /// @inheritdoc IVoltzVault
+    function rateOracle() external view override returns (IRateOracle) {
+        return _rateOracle;
+    }
+
+    /// @inheritdoc IVoltzVault
+    function periphery() external view override returns (IPeriphery) {
+        return IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
+    }
+
+    function currentPosition() external view override returns (TickRange memory) {
+        return trackedPositions[_currentPositionIndex];
+    }
+
+    /// @inheritdoc IntegrationVault
+    function supportsInterface(bytes4 interfaceId) public view override (IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IVoltzVault).interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IVoltzVault
+    function rebalance(TickRange memory ticks) external override {
+        // require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        
+        TickRange memory oldPosition = trackedPositions[_currentPositionIndex];
+
+        require(oldPosition.tickLower != ticks.tickLower, ExceptionsLibrary.FORBIDDEN);
+        require(oldPosition.tickUpper != ticks.tickUpper, ExceptionsLibrary.FORBIDDEN);
+
+        // burn liquidity first, then unwind and exit existing position
+        // this makes sure that we do not use our own liquidity to unwind ourselves
+        _updateLiquidity(-_currentPositionLiquidity.toInt256());
+        int256 marginLeftInOldPosition = _unwindAndExitCurrentPosition();
+
+        _updateCurrentPosition(ticks);
+        uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
+        _updateMargin(vaultBalance.toInt256());
+        uint256 liquidityToMint = vaultBalance.fromUint().mul(_leverageWad).toUint();
+        _updateLiquidity(liquidityToMint.toInt256());
+
+        updateTvl();
+
+        emit PositionRebalance(
+            oldPosition,
+            marginLeftInOldPosition,
+            trackedPositions[_currentPositionIndex],
+            vaultBalance
+        );
+    }
+
+    /// @inheritdoc IVoltzVault
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        address marginEngine_,
+        InitializeParams memory initializeParams
+    ) external override {
+        require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_VALUE);
+
+        _marginEngine = IMarginEngine(marginEngine_);
+        
+        address underlyingToken = address(_marginEngine.underlyingToken());
+        require(vaultTokens_[0] == underlyingToken, ExceptionsLibrary.INVALID_VALUE);
+
+        _initialize(vaultTokens_, nft_);
+
+        _periphery = IVoltzVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().periphery;
+        _vamm = _marginEngine.vamm();
+        _rateOracle = _marginEngine.rateOracle();
+        _tickSpacing = _vamm.tickSpacing();
+        _termStartTimestampWad = _marginEngine.termStartTimestampWad();
+        _termEndTimestampWad = _marginEngine.termEndTimestampWad();
+
+        setLeverage(initializeParams.leverageWad);
+        setMarginMultiplierPostUnwind(initializeParams.marginMultiplierPostUnwindWad);
+        setLookbackWindow(initializeParams.lookbackWindowInSeconds);
+        setEstimatedAPYUnitDelta(initializeParams.estimatedAPYUnitDeltaWad);
+        _updateCurrentPosition(
+            TickRange(
+                initializeParams.tickLower, 
+                initializeParams.tickUpper
+            )
+        );
+
+        emit VaultInitialized(
+            marginEngine_,
+            initializeParams.tickLower,
+            initializeParams.tickUpper,
+            initializeParams.leverageWad,
+            initializeParams.marginMultiplierPostUnwindWad,
+            initializeParams.lookbackWindowInSeconds,
+            initializeParams.estimatedAPYUnitDeltaWad
+        );
     }
 
     /// @inheritdoc IVoltzVault
@@ -356,6 +373,12 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
         settledBatchSize = to - from;
         settledPositionsCount += settledBatchSize;
+
+        emit VaultSettle(
+            batchSize,
+            from,
+            to
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -455,6 +478,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         updateTvl();
 
         emit PullWithdraw(
+            to,
             tokenAmounts[0],
             actualTokenAmounts[0]
         );
@@ -542,7 +566,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _currentPositionLiquidity = 0;
     }
     
-    function _unwindAndExitCurrentPosition() internal {
+    function _unwindAndExitCurrentPosition() internal returns (int256 marginLeftInOldPosition) {
         Position.Info memory currentPositionInfo_ = _marginEngine.getPosition(
             address(this),
             trackedPositions[_currentPositionIndex].tickLower,
@@ -635,6 +659,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             _aggregatedVariableTokenBalance += currentPositionInfo_.variableTokenBalance;
             _aggregatedMargin += currentPositionInfo_.margin;
         }
+
+        return currentPositionInfo_.margin;
     }
 
     function _removePositionFromTrackedPositions(uint256 positionIndex) internal {

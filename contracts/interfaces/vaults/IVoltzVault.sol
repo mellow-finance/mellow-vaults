@@ -24,9 +24,6 @@ interface IVoltzVault is IIntegrationVault {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    /// @notice tvl() is view so we need to update the position before getting it
-    function updateTvl() external;
-
     /// @notice Initializes a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
@@ -83,13 +80,19 @@ interface IVoltzVault is IIntegrationVault {
 
     event PositionRebalance(
         TickRange oldPosition,
-        TickRange indexed newPosition
+        int256 marginLeftInOldPosition,
+        TickRange indexed newPosition,
+        uint256 marginDepositedInNewPosition
     );
 
     event VaultInitialized(
         address indexed marginEngine,
-        int24 indexed initialTickLower,
-        int24 indexed initialTickUpper
+        int24 indexed tickLower,
+        int24 indexed tickUpper,
+        uint256 leverageWad,
+        uint256 marginMultiplierPostUnwindWad,
+        uint256 lookbackWindowInSeconds,
+        uint256 estimatedAPYUnitDeltaWad
     );
 
     event PushDeposit(
@@ -98,6 +101,7 @@ interface IVoltzVault is IIntegrationVault {
     );
 
     event PullWithdraw(
+        address indexed to,
         uint256 indexed amountRequestedToWithdraw,
         uint256 indexed amountWithdrawn
     );
@@ -106,5 +110,16 @@ interface IVoltzVault is IIntegrationVault {
         int256 minTvl,
         int256 maxTvl,
         uint256 tvlUpdateTimestamp
+    );
+
+    event PositionSettledAndMarginWithdrawn(
+        int24 indexed tickLower,
+        int24 indexed tickUpper
+    );
+
+    event VaultSettle(
+        uint256 indexed batchSizeRequested,
+        uint256 indexed fromIndex,
+        uint256 toIndex
     );
 }
