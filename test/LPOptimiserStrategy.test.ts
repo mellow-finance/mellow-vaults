@@ -597,7 +597,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             console.log("Print sigmaWad: ", sigmaWad.toString());
 
             if (await this.subject.rebalanceCheck()) {
-                await this.subject.connect(this.admin).rebalanceTicks(currentFixedRateWad);
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
 
                 expect(newTicks.newTickLowerMul).to.be.equal(-4320);
@@ -617,11 +616,35 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             const currentFixedRateWad = BigNumber.from("1001000000000000000000"); // 1001%
 
             if (await this.subject.rebalanceCheck()) {
-                await this.subject.connect(this.admin).rebalanceTicks(currentFixedRateWad);
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
 
                 expect(newTicks.newTickLowerMul).to.be.equal(-5220);
                 expect(newTicks.newTickUpperMul).to.be.equal(-4020);
+
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+
+                console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+
+            } else {
+                throw new Error("Position does not need to be rebalanced");
+            }
+        })
+    })
+
+    describe("Rebalance with small value of proximity", async () => {
+        it("proximity = 0.1 => logProx ~ -23040", async () => {
+            const currentFixedRateWad = BigNumber.from("1000000000000000000");
+            await this.subject.connect(this.admin).setLogProx(-23040); // 0.1
+            const proximity = await this.subject.getLogProx();
+            console.log("Print proximity: ", proximity.toString());
+
+            if (await this.subject.rebalanceCheck()) {
+                await this.subject.connect(this.admin).rebalanceTicks(currentFixedRateWad);
+                const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
+
+                expect(newTicks.newTickLowerMul).to.be.equal(-900);
+                expect(newTicks.newTickUpperMul).to.be.equal(1080);
 
                 const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
                 const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
