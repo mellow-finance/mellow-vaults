@@ -245,11 +245,19 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         );
         timeInSecondsWad = _termEndTimestampWad - termCurrentTimestampWad;
         uint256 estimatedVariableFactorCurrentEndWad = historicalAPYWad.mul(_accrualFact(timeInSecondsWad));
+        
+        // Estimated Lower APY
+        uint256 estimatedAPYMultiplierLower = 0;
+        if (_estimatedAPYUnitDeltaWad <= PRBMathUD60x18.fromUint(1)) {
+            estimatedAPYMultiplierLower = PRBMathUD60x18.fromUint(1) - _estimatedAPYUnitDeltaWad;
+        }
         uint256 estimatedVariableFactorStartEndLowerWad = 
             variableFactorStartCurrentWad + 
                 estimatedVariableFactorCurrentEndWad.mul(
-                    PRBMathUD60x18.fromUint(1) - _estimatedAPYUnitDeltaWad
+                    estimatedAPYMultiplierLower
                 );
+
+        // Estimated Upper APY
         uint256 estimatedVariableFactorStartEndUpperWad = 
             variableFactorStartCurrentWad + 
                 estimatedVariableFactorCurrentEndWad.mul(
@@ -567,46 +575,45 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             currentPositionInfo_.margin -= _cumulativeFeeIncurred.toInt256();
         } 
 
-        uint256 positionMarginRequirementInitial;
-
         bool trackPosition = false;
         uint256 marginToKeep = 0;
         if (currentPositionInfo_.variableTokenBalance != 0) {
             // keep k * initial margin requirement, withdraw the rest
             // need to track to redeem the rest at maturity
-            positionMarginRequirementInitial = _marginEngine.getPositionMarginRequirement(
+            uint256 positionMarginRequirementInitial = _marginEngine.getPositionMarginRequirement(
                 address(this),
                 trackedPositions[_currentPositionIndex].tickLower,
                 trackedPositions[_currentPositionIndex].tickUpper,
                 false
             );
+
             marginToKeep = 
                 (_marginMultiplierPostUnwindWad.mul(
                     positionMarginRequirementInitial.fromUint()
                 ).toUint());
+
+            if (marginToKeep <= positionMarginRequirementInitial) {
+                marginToKeep = positionMarginRequirementInitial + 1;
+            }
+
             trackPosition = true;
         } else {
             if (currentPositionInfo_.fixedTokenBalance > 0) {
                 // withdraw all margin
                 // need to track to redeem ft cashflow at maturity
-                positionMarginRequirementInitial = 0;
-                marginToKeep = 0;
+                marginToKeep = 1;
                 trackPosition = true;
             } else {
                 // withdraw everything up to amount that covers negative ft
                 // no need to track for later settlement
                 // since vt = 0, margin requirement initial is equal to fixed cashflow
                 uint256 fixedFactorValueWad = _fixedFactor(_termStartTimestampWad, _termEndTimestampWad);
-                positionMarginRequirementInitial = 
+                uint256 positionMarginRequirementInitial = 
                     (-currentPositionInfo_.fixedTokenBalance).toUint256().fromUint().mul(
                         fixedFactorValueWad
                     ).toUint();
                 marginToKeep = positionMarginRequirementInitial + 1;
             }
-        }
-
-        if (marginToKeep <= positionMarginRequirementInitial) {
-            marginToKeep = positionMarginRequirementInitial + 1;
         }
         
         if (currentPositionInfo_.margin > 0) {
