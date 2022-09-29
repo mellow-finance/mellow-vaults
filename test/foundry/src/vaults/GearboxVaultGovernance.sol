@@ -10,7 +10,7 @@ import "../interfaces/external/gearbox/ICreditFacade.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
-    uint256 public constant DENOMINATOR = 10**9;
+    uint256 public constant D9 = 10**9;
 
     /// @notice Creates a new contract
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
@@ -20,7 +20,8 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(delayedProtocolParams_.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.minSlippageD <= DENOMINATOR, ExceptionsLibrary.INVARIANT);
+        require(delayedProtocolParams_.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.minSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -47,7 +48,8 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     univ3Adapter: address(0),
                     crv: address(0),
                     cvx: address(0),
-                    minSlippageD: 0
+                    minSlippageD9: 0,
+                    uniswapRouter: address(0)
                 });
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
@@ -66,7 +68,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     curveAdapter: address(0),
                     convexAdapter: address(0),
                     facade: address(0),
-                    initialMarginalValue: 0
+                    initialMarginalValueD9: 0
                 });
         }
         return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
@@ -81,7 +83,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     curveAdapter: address(0),
                     convexAdapter: address(0),
                     facade: address(0),
-                    initialMarginalValue: 0
+                    initialMarginalValueD9: 0
                 });
         }
         return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
@@ -95,7 +97,8 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.minSlippageD <= DENOMINATOR, ExceptionsLibrary.INVARIANT);
+        require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.minSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
@@ -115,7 +118,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.curveAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.convexAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.initialMarginalValue >= DENOMINATOR, ExceptionsLibrary.INVALID_VALUE);
+        require(params.initialMarginalValueD9 >= D9, ExceptionsLibrary.INVALID_VALUE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
             tx.origin,

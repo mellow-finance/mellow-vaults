@@ -12,7 +12,8 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         address univ3Adapter;
         address crv;
         address cvx;
-        uint256 minSlippageD;
+        uint256 minSlippageD9;
+        address uniswapRouter;
     }
 
     struct DelayedProtocolPerVaultParams {
@@ -20,7 +21,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         address curveAdapter;
         address convexAdapter;
         address facade;
-        uint256 initialMarginalValue;
+        uint256 initialMarginalValueD9;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
