@@ -31,9 +31,7 @@ contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGover
     /// @inheritdoc IVoltzVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({
-                periphery: IPeriphery(address(0))
-            });
+            return DelayedProtocolParams({periphery: IPeriphery(address(0))});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -73,7 +71,15 @@ contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGover
         (vaddr, nft) = _createVault(owner_);
         vault = IVoltzVault(vaddr);
         vault.initialize(nft, vaultTokens_, marginEngine_, initializeParams);
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(marginEngine_, initializeParams), owner_, vaddr, nft);
+        emit DeployedVault(
+            tx.origin,
+            msg.sender,
+            vaultTokens_,
+            abi.encode(marginEngine_, initializeParams),
+            owner_,
+            vaddr,
+            nft
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

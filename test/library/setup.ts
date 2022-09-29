@@ -151,7 +151,9 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.uniV3VaultSingleton = await ethers.getContract("UniV3Vault");
 
-    this.voltzVaultGovernance = await ethers.getContract("VoltzVaultGovernance");
+    this.voltzVaultGovernance = await ethers.getContract(
+        "VoltzVaultGovernance"
+    );
     this.voltzVaultSingleton = await ethers.getContract("VoltzVault");
 
     this.erc20RootVaultGovernance = await ethers.getContract(

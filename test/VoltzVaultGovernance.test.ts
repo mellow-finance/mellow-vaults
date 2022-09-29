@@ -17,9 +17,7 @@ import { contract } from "./library/setup";
 import { Arbitrary, integer } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
-import {
-    InternalParamsStruct,
-} from "./types/IVaultGovernance";
+import { InternalParamsStruct } from "./types/IVaultGovernance";
 import { BigNumber, Signer } from "ethers";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 import { randomBytes } from "crypto";
@@ -41,12 +39,11 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
     "VoltzVaultGovernance",
     function () {
         before(async () => {
-            const marginEngineAddress = (await getNamedAccounts())
-                .marginEngine;
-            
+            const marginEngineAddress = (await getNamedAccounts()).marginEngine;
+
             const voltzPeripheryAddress = (await getNamedAccounts())
-                .voltzPeriphery;   
-            
+                .voltzPeriphery;
+
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeploymentOptions) => {
                     await deployments.fixture();
@@ -68,11 +65,12 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
                                 internalParams,
                                 {
                                     periphery: voltzPeripheryAddress,
-                                }],
+                                },
+                            ],
                             autoMine: true,
                         }
                     );
-                    
+
                     this.subject = await ethers.getContractAt(
                         "VoltzVaultGovernance",
                         address
@@ -96,7 +94,7 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
                             ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"], // USDC
                             this.ownerSigner.address,
                             marginEngine,
-                            0, 
+                            0,
                             60
                         );
 
@@ -120,7 +118,7 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
 
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
             address.map((periphery) => ({
-                periphery
+                periphery,
             }));
 
         describe("#constructor", () => {
@@ -155,14 +153,16 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
 
         vaultGovernanceBehavior.call(this, {
             delayedProtocolParams,
-            defaultCreateVault: async (
-                deployer: Signer,
-                _,
-                owner: string
-            ) => {
+            defaultCreateVault: async (deployer: Signer, _, owner: string) => {
                 await this.subject
                     .connect(deployer)
-                    .createVault(["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"], owner, this.marginEngine, 0, 60);
+                    .createVault(
+                        ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"],
+                        owner,
+                        this.marginEngine,
+                        0,
+                        60
+                    );
             },
             ...this,
         });
