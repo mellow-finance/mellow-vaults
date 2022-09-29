@@ -47,6 +47,8 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
     function setLogProx(int24 logProx) public {
         _requireAtLeastOperator();
+        require(logProx <= 0, ExceptionsLibrary.INVALID_VALUE);
+
         _logProximity = logProx;
     }
 
@@ -89,17 +91,14 @@ contract LPOptimiserStrategy is DefaultAccessControl {
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck() public view returns (bool) {
-        require(_logProximity < 0, ExceptionsLibrary.INVALID_VALUE);
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
-        IVoltzVault.TickRange memory _currentPosition = _vault.currentPosition();
-        int24 _tickLower = _currentPosition.tickLower;
-        int24 _tickUpper = _currentPosition.tickUpper;
+        IVoltzVault.TickRange memory currentPosition = _vault.currentPosition();
 
         // 2. Get current tick
-        int24 _currentTick = _periphery.getCurrentTick(_marginEngine);
+        int24 currentTick = _periphery.getCurrentTick(_marginEngine);
 
         // 3. Compare current fixed rate to lower and upper bounds
-        if (_tickLower - _logProximity <= _currentTick && _currentTick <= _tickUpper + _logProximity) {
+        if (currentPosition.tickLower - _logProximity <= currentTick && currentTick <= currentPosition.tickUpper + _logProximity) {
             // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
             return false;
         } else {
@@ -128,7 +127,7 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         _requireAtLeastOperator();
 
         // 0. Get tickspacing from vamm
-        int24 _tickSpacing = _vamm.tickSpacing();
+        int24 tickSpacing = _vamm.tickSpacing();
 
         // 1. Get the new tick lower
         int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
@@ -159,11 +158,14 @@ contract LPOptimiserStrategy is DefaultAccessControl {
             PRBMathSD59x18.log2(1000100000000000000)
         );
 
+        // 5. Scale ticks from wad
         int256 newTickLower = newTickLowerWad / 1e18;
         int256 newTickUpper = newTickUpperWad / 1e18;
 
-        newTickLowerMul = nearestTickMultiple(int24(newTickLower), _tickSpacing);
-        newTickUpperMul = nearestTickMultiple(int24(newTickUpper), _tickSpacing);
+        // 6. The underlying Voltz VAMM accepts only ticks multiple of tickSpacing
+        // Hence, we get the nearest usable tick
+        newTickLowerMul = nearestTickMultiple(int24(newTickLower), tickSpacing);
+        newTickUpperMul = nearestTickMultiple(int24(newTickUpper), tickSpacing);
 
         // Call to VoltzVault contract to update the position lower and upper ticks
         _vault.rebalance(IVoltzVault.TickRange(newTickLowerMul, newTickUpperMul));
