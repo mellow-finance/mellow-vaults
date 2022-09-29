@@ -301,6 +301,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     args: [
                         uniswapV3PositionManager,
                         cowswapDeployParams.address,
+                        cowswapDeployParams.address,
                         this.erc20Vault.address,
                         this.uniV3LowerVault.address,
                         this.uniV3UpperVault.address,
