@@ -13,9 +13,9 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../utils/DefaultAccessControl.sol";
 import "@prb/math/contracts/PRBMathSD59x18.sol";
-import "hardhat/console.sol";
+import "../interfaces/utils/ILpCallback.sol";
 
-contract LPOptimiserStrategy is DefaultAccessControl {
+contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -175,5 +175,20 @@ contract LPOptimiserStrategy is DefaultAccessControl {
 
         emit RebalancedTicks(newTickLowerMul, newTickUpperMul);
         return (newTickLowerMul, newTickUpperMul);
+    }
+
+    /// @notice Callback function called after for ERC20RootVault::deposit
+    function depositCallback() external override {
+        // 1. Get balance of erc20 vault
+        uint256[] memory balances = new uint256[](1);
+        balances[0] = IERC20(_tokens[0]).balanceOf(address(_erc20Vault));
+
+        // 2. Pull balance from erc20 vault into voltz vault
+        _erc20Vault.pull(address(_vault), _tokens, balances, "");
+    }
+
+    /// @notice Callback function called after for ERC20RootVault::withdraw
+    function withdrawCallback() external override {
+        // Do nothing on withdraw
     }
 }
