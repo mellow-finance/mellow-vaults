@@ -36,6 +36,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     // CONSTANTS
     uint256 internal constant MINIMUM_FIXED_RATE = 1e16;
+    uint256 internal constant LOG_BASE = 1000100000000000000;
 
     // GETTERS AND SETTERS
     function setSigmaWad(uint256 sigmaWad) public {
@@ -125,6 +126,17 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             tickSpacing;
     }
 
+    /// @notice Convert a fixed rate to a tick in wad
+    /// @param fixedRateWad The fixed rate to be converted to a tick in wad
+    /// @return int256 The tick in wad
+    function convertFixedRateToTick(int256 fixedRateWad) public view returns (int256) {
+        _requireAtLeastOperator();
+        return -PRBMathSD59x18.div(
+            PRBMathSD59x18.log2(int256(fixedRateWad)),
+            PRBMathSD59x18.log2(int256(LOG_BASE))
+        );
+    }
+
     /// @notice Set new optimal tick range based on current twap tick given that we are using the offchain moving average of the fixed rate in the current iteration
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
     /// @return newTickLower The new lower tick for the rebalanced position
@@ -153,16 +165,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         int256 newFixedUpperWad = newFixedLowerWad + 2 * int256(_sigmaWad);
 
         // 3. Convert new fixed lower rate back to tick
-        int256 newTickLowerWad = -PRBMathSD59x18.div(
-            PRBMathSD59x18.log2(int256(newFixedUpperWad)),
-            PRBMathSD59x18.log2(1000100000000000000)
-        );
+        int256 newTickLowerWad = convertFixedRateToTick(newFixedUpperWad);
 
         // 4. Convert new fixed upper rate back to tick
-        int256 newTickUpperWad = -PRBMathSD59x18.div(
-            PRBMathSD59x18.log2(int256(newFixedLowerWad)),
-            PRBMathSD59x18.log2(1000100000000000000)
-        );
+        int256 newTickUpperWad = convertFixedRateToTick(newFixedLowerWad);
 
         // 5. Scale ticks from wad
         int256 newTickLowerExact = newTickLowerWad / 1e18;

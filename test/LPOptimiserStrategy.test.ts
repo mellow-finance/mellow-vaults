@@ -735,8 +735,33 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             // Currently VAMM sets tickSpacing to 60
             expect(tickSpacing).to.be.equal(60);
         })
+    })
 
+    describe("Fixed rate to tick conversion function", async () => {
+        it("Fixed rate = 1% => tick = 0", async () => {
+            const fixedRate = BigNumber.from("1000000000000000000"); // 1
+            const tick = await this.subject.connect(this.admin).callStatic.convertFixedRateToTick(fixedRate);
 
+            expect(tick).to.be.equal(0);
+        })
+        it("Fixed rate = 0.01% => tick", async () => {
+            const fixedRate = BigNumber.from("100000000000000000"); // 0.1
+            const tick = await this.subject.connect(this.admin).callStatic.convertFixedRateToTick(fixedRate);
+
+            expect(tick).to.be.equal(BigNumber.from("23027002203301009434868"));
+        })
+        it("Fixed rate = 0.001% => tick", async () => {
+            const fixedRate = BigNumber.from("10000000000000000"); // 0.01
+            const tick = await this.subject.connect(this.admin).callStatic.convertFixedRateToTick(fixedRate);
+
+            expect(tick).to.be.equal(BigNumber.from("46054004406602018966781"));
+        })
+        it("Fixed rate = 10% => tick", async () => {
+            const fixedRate = BigNumber.from("10000000000000000"); // 0.01
+            const tick = await this.subject.connect(this.admin).callStatic.convertFixedRateToTick(fixedRate);
+
+            expect(tick).to.be.equal(BigNumber.from("46054004406602018966781"));
+        })
     })
 
 });
