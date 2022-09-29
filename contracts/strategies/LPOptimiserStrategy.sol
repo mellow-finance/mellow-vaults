@@ -98,7 +98,10 @@ contract LPOptimiserStrategy is DefaultAccessControl {
         int24 currentTick = _periphery.getCurrentTick(_marginEngine);
 
         // 3. Compare current fixed rate to lower and upper bounds
-        if (currentPosition.tickLower - _logProximity <= currentTick && currentTick <= currentPosition.tickUpper + _logProximity) {
+        if (
+            currentPosition.tickLower - _logProximity <= currentTick &&
+            currentTick <= currentPosition.tickUpper + _logProximity
+        ) {
             // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
             return false;
         } else {
