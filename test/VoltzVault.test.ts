@@ -103,13 +103,13 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         {
                             tickLower: this.initialTickLow,
                             tickUpper: this.initialTickHigh,
-                            leverageWad: utils.parseEther(leverage.toString()), // 10
+                            leverageWad: utils.parseEther(leverage.toString()),
                             marginMultiplierPostUnwindWad:
                                 utils.parseEther(
                                     marginMultiplierPostUnwind.toString()
-                                ), // 2
-                            lookbackWindowInSeconds: lookbackWindow, // 14 days
-                            estimatedAPYUnitDeltaWad: 
+                                ),
+                            lookbackWindowInSeconds: lookbackWindow,
+                            estimatedAPYDecimalDeltaWad: 
                                 utils.parseEther(
                                     estimatedAPYUnitDelta.toString()
                                 )

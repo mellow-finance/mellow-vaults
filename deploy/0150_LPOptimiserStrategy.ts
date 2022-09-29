@@ -34,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             leverageWad: BigNumber.from("10000000000000000000"), // 10
             marginMultiplierPostUnwindWad: BigNumber.from("2000000000000000000"), // 2
             lookbackWindowInSeconds: 1209600, // 14 days
-            estimatedAPYUnitDeltaWad: BigNumber.from("0")
+            estimatedAPYDecimalDeltaWad: BigNumber.from("0")
         }],
     });
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
