@@ -300,7 +300,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _updateCurrentPosition(ticks);
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
         _updateMargin(vaultBalance.toInt256());
-        uint256 liquidityToMint = vaultBalance.fromUint().mul(_leverageWad).toUint();
+        uint256 liquidityToMint = (vaultBalance * _leverageWad).toUint();
         _updateLiquidity(liquidityToMint.toInt256());
 
         updateTvl();
@@ -455,7 +455,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         actualTokenAmounts[0] = tokenAmounts[0];
         _updateMargin(tokenAmounts[0].toInt256());
 
-        uint256 liquidityToMint = tokenAmounts[0].fromUint().mul(_leverageWad).toUint();
+        uint256 liquidityToMint = (tokenAmounts[0] * _leverageWad).toUint();
         _updateLiquidity(liquidityToMint.toInt256());
 
         updateTvl();
@@ -624,9 +624,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             );
 
             marginToKeep = 
-                (_marginMultiplierPostUnwindWad.mul(
-                    positionMarginRequirementInitial.fromUint()
-                ).toUint());
+                (_marginMultiplierPostUnwindWad * positionMarginRequirementInitial).toUint();
 
             if (marginToKeep <= positionMarginRequirementInitial) {
                 marginToKeep = positionMarginRequirementInitial + 1;
@@ -645,9 +643,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 // since vt = 0, margin requirement initial is equal to fixed cashflow
                 uint256 fixedFactorValueWad = _fixedFactor(_termStartTimestampWad, _termEndTimestampWad);
                 uint256 positionMarginRequirementInitial = 
-                    (-currentPositionInfo_.fixedTokenBalance).toUint256().fromUint().mul(
-                        fixedFactorValueWad
-                    ).toUint();
+                    ((-currentPositionInfo_.fixedTokenBalance).toUint256() * fixedFactorValueWad).toUint();
                 marginToKeep = positionMarginRequirementInitial + 1;
             }
         }
