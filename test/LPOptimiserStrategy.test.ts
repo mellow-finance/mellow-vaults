@@ -452,7 +452,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
     });
 
     describe("Rebalance Logic", async () => {
-        it( "Check if in-range position needs to be rebalanced", async () => {
+        it("Check if in-range position needs to be rebalanced", async () => {
             // New deployment fixture
             await this.deploymentFixtureTwo();
 
@@ -467,7 +467,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
             const currentFixedRateWad = BigNumber.from("2000000000000000000");
 
-            if(await this.subject.callStatic.rebalanceCheck()) {
+            if (await this.subject.callStatic.rebalanceCheck()) {
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
                 expect(newTicks[0]).to.be.equal(-5220);
                 expect(newTicks[1]).to.be.equal(-4020);
@@ -523,7 +523,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("100000000000000000")); // 0.1
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
             expect(newTicks[0]).to.be.equal(16020);
-            expect(newTicks[1]).to.be.equal(69060); 
+            expect(newTicks[1]).to.be.equal(69060);
         })
         it("deltaWad = 1000", async () => {
             const currentFixedRateWad = BigNumber.from("1000100000000000000000");
@@ -604,7 +604,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
 
                 expect(newTicks.newTickLowerMul).to.be.equal(-4320);
                 expect(newTicks.newTickUpperMul).to.be.equal(-3660);
-                
+
                 const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
                 const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
 
@@ -666,8 +666,8 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         })
 
         it("logProximity > 0 case (sad path)", async () => {
-            await this.subject.connect(this.admin).setLogProx(100);
-            await expect(this.subject.callStatic.rebalanceCheck()).to.be.revertedWith('INV');
+            console.log("Print logProximity: ", (await this.subject.getLogProx()).toString());
+            await expect(this.subject.connect(this.admin).setLogProx(100)).to.be.revertedWith('INV');
         })
 
         it("maxPossibleLowerBound = 1e15 i.e. effectively 0", async () => {
