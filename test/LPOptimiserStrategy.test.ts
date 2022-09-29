@@ -515,15 +515,15 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
         it("deltaWad = 0.001", async () => {
             const currentFixedRateWad = BigNumber.from("101000000000000000");
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(16020);
-            expect(newTicks[1]).to.be.equal(69060);
+            expect(newTicks[0]).to.be.equal(15600);
+            expect(newTicks[1]).to.be.equal(46080);
         })
         it("0 < deltaWad < 0.001", async () => {
             const currentFixedRateWad = BigNumber.from("100010000000000000"); // 0.10001
             await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("100000000000000000")); // 0.1
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(16020);
-            expect(newTicks[1]).to.be.equal(69060);
+            expect(newTicks[0]).to.be.equal(15600);
+            expect(newTicks[1]).to.be.equal(46080);
         })
         it("deltaWad = 1000", async () => {
             const currentFixedRateWad = BigNumber.from("1000100000000000000000");
@@ -568,8 +568,8 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             console.log("Print sigmaWad: ", sigmaWad.toString());
 
             const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
-            expect(newTicks[0]).to.be.equal(9120);
-            expect(newTicks[1]).to.be.equal(69060);
+            expect(newTicks[0]).to.be.equal(8940);
+            expect(newTicks[1]).to.be.equal(46080);
         })
     })
 
@@ -584,8 +584,8 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
 
                 const position = await this.voltzVault.currentPosition();
 
-                expect(position.tickLower).to.be.equal(newTicks.newTickLowerMul);
-                expect(position.tickUpper).to.be.equal(newTicks.newTickUpperMul);
+                expect(position.tickLower).to.be.equal(newTicks.newTickLower);
+                expect(position.tickUpper).to.be.equal(newTicks.newTickUpper);
             } else {
                 throw new Error("Position does not need to be rebalanced");
             }
@@ -602,11 +602,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             if (await this.subject.rebalanceCheck()) {
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
 
-                expect(newTicks.newTickLowerMul).to.be.equal(-4320);
-                expect(newTicks.newTickUpperMul).to.be.equal(-3660);
+                expect(newTicks.newTickLower).to.be.equal(-4320);
+                expect(newTicks.newTickUpper).to.be.equal(-3660);
 
-                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
-                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLower);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpper);
 
                 console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
 
@@ -621,11 +621,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             if (await this.subject.rebalanceCheck()) {
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
 
-                expect(newTicks.newTickLowerMul).to.be.equal(-5220);
-                expect(newTicks.newTickUpperMul).to.be.equal(-4020);
+                expect(newTicks.newTickLower).to.be.equal(-5220);
+                expect(newTicks.newTickUpper).to.be.equal(-4020);
 
-                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
-                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLower);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpper);
 
                 console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
 
@@ -645,11 +645,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             if (await this.subject.rebalanceCheck()) {
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
 
-                expect(newTicks.newTickLowerMul).to.be.equal(-900);
-                expect(newTicks.newTickUpperMul).to.be.equal(1080);
+                expect(newTicks.newTickLower).to.be.equal(-900);
+                expect(newTicks.newTickUpper).to.be.equal(1080);
 
-                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
-                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLower);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpper);
 
                 console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
 
@@ -670,10 +670,10 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             await expect(this.subject.connect(this.admin).setLogProx(100)).to.be.revertedWith('INV');
         })
 
-        it("maxPossibleLowerBound = 1e15 i.e. effectively 0", async () => {
-            // Test if values of deltaWad below 1e15 are allowed
+        it("maxPossibleLowerBound = 1e16 i.e. effectively 0", async () => {
+            // Test if values of deltaWad below 1e16 are allowed
             const currentFixedRateWad = BigNumber.from("1000000000000000000"); // 1
-            await this.subject.connect(this.admin).setMaxPossibleLowerBound(BigNumber.from("1000000000000000")); // 1e15
+            await this.subject.connect(this.admin).setMaxPossibleLowerBound(BigNumber.from("10000000000000000")); // 1e16
             await this.subject.connect(this.admin).setSigmaWad(BigNumber.from("999900000000000000")); // 0.9999
             const maxPossibleLowerBound = await this.subject.getMaxPossibleLowerBound();
             const sigmWad = await this.subject.getSigmaWad();
@@ -684,11 +684,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>("LPOptimiserStrategy
             if (await this.subject.rebalanceCheck()) {
                 const newTicks = await this.subject.connect(this.admin).callStatic.rebalanceTicks(currentFixedRateWad);
 
-                expect(newTicks.newTickLowerMul).to.be.equal(-6900);
-                expect(newTicks.newTickUpperMul).to.be.equal(69060);
+                expect(newTicks.newTickLower).to.be.equal(-6900);
+                expect(newTicks.newTickUpper).to.be.equal(46080);
 
-                const newFixedUpper = 1.0001 ** (-newTicks.newTickLowerMul);
-                const newFixedLower = 1.0001 ** (-newTicks.newTickUpperMul);
+                const newFixedUpper = 1.0001 ** (-newTicks.newTickLower);
+                const newFixedLower = 1.0001 ** (-newTicks.newTickUpper);
 
                 console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
 

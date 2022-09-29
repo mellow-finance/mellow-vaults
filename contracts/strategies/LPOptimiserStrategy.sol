@@ -31,8 +31,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     // MUTABLE PARAMS
     uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
-    int256 internal _maxPossibleLowerBoundWad; // should be in fixed rate
+    int256 internal _maxPossibleLowerBoundWad; // Maximum Possible Fixed Rate Lower bounds when initiating a rebalance
     int24 internal _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
+
+    // CONSTANTS
+    uint256 internal constant MINIMUM_FIXED_RATE = 1e16;
 
     // GETTERS AND SETTERS
     function setSigmaWad(uint256 sigmaWad) public {
@@ -65,7 +68,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     // EVENTS
-    event RebalancedTicks(int24 newTickLowerMul, int24 newTickUpperMul);
+    event RebalancedTicks(int24 newTickLower, int24 newTickUpper);
 
     event StrategyDeployment(IERC20Vault erc20vault_, IVoltzVault vault_, address admin_);
 
@@ -122,11 +125,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             tickSpacing;
     }
 
-    /// @notice Set new optimimal tick range based on current tick
+    /// @notice Set new optimal tick range based on current twap tick given that we are using the offchain moving average of the fixed rate in the current iteration
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
-    /// @return newTickLowerMul The new lower tick for the rebalanced position
-    /// @return newTickUpperMul The new upper tick for the rebalanced position
-    function rebalanceTicks(uint256 currentFixedRateWad) public returns (int24 newTickLowerMul, int24 newTickUpperMul) {
+    /// @return newTickLower The new lower tick for the rebalanced position
+    /// @return newTickUpper The new upper tick for the rebalanced position
+    function rebalanceTicks(uint256 currentFixedRateWad) public returns (int24 newTickLower, int24 newTickUpper) {
         _requireAtLeastOperator();
 
         // 0. Get tickspacing from vamm
@@ -135,16 +138,16 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // 1. Get the new tick lower
         int256 deltaWad = int256(currentFixedRateWad) - int256(_sigmaWad);
         int256 newFixedLowerWad;
-        if (deltaWad > 1e15) {
-            // delta is greater than 1e15 (0.001) => choose delta
+        if (deltaWad > int256(MINIMUM_FIXED_RATE)) {
+            // delta is greater than MINIMUM_FIXED_RATE (0.01) => choose delta
             if (deltaWad < _maxPossibleLowerBoundWad) {
                 newFixedLowerWad = deltaWad;
             } else {
                 newFixedLowerWad = _maxPossibleLowerBoundWad;
             }
         } else {
-            // delta is less than or equal to 1e15 (0.001) => choose 1e15 (0.001)
-            newFixedLowerWad = 1e15;
+            // delta is less than or equal to MINIMUM_FIXED_RATE (0.01) => choose MINIMUM_FIXED_RATE (0.01)
+            newFixedLowerWad = int256(MINIMUM_FIXED_RATE);
         }
         // 2. Get the new tick upper
         int256 newFixedUpperWad = newFixedLowerWad + 2 * int256(_sigmaWad);
@@ -162,19 +165,19 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         );
 
         // 5. Scale ticks from wad
-        int256 newTickLower = newTickLowerWad / 1e18;
-        int256 newTickUpper = newTickUpperWad / 1e18;
+        int256 newTickLowerExact = newTickLowerWad / 1e18;
+        int256 newTickUpperExact = newTickUpperWad / 1e18;
 
         // 6. The underlying Voltz VAMM accepts only ticks multiple of tickSpacing
         // Hence, we get the nearest usable tick
-        newTickLowerMul = nearestTickMultiple(int24(newTickLower), tickSpacing);
-        newTickUpperMul = nearestTickMultiple(int24(newTickUpper), tickSpacing);
+        newTickLower = nearestTickMultiple(int24(newTickLowerExact), tickSpacing);
+        newTickUpper = nearestTickMultiple(int24(newTickUpperExact), tickSpacing);
 
         // Call to VoltzVault contract to update the position lower and upper ticks
-        _vault.rebalance(IVoltzVault.TickRange(newTickLowerMul, newTickUpperMul));
+        _vault.rebalance(IVoltzVault.TickRange(newTickLower, newTickUpper));
 
-        emit RebalancedTicks(newTickLowerMul, newTickUpperMul);
-        return (newTickLowerMul, newTickUpperMul);
+        emit RebalancedTicks(newTickLower, newTickUpper);
+        return (newTickLower, newTickUpper);
     }
 
     /// @notice Callback function called after for ERC20RootVault::deposit
