@@ -5,7 +5,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
-import "hardhat-gas-reporter"
+// import "hardhat-gas-reporter"
 import "@typechain/hardhat";
 import "./plugins/contracts";
 import defaultConfig from "./hardhat.config";
@@ -65,11 +65,11 @@ const config: HardhatUserConfig = {
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
     },
-    gasReporter: {
-        enabled: true,
-        currency: "ETH",
-        coinmarketcap: process.env.COINMARKETCAP_API_KEY,
-    },
+    // gasReporter: {
+    //     enabled: process.env.REPORT_GAS ? true : false,
+    //     currency: "ETH",
+    //     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+    // },
     mocha: {
         timeout: 800000,
         reporter: process.env["REPORTER"],

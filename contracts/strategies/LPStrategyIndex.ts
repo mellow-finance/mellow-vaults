@@ -8,57 +8,62 @@ import {
     Relayer,
     RelayerModel,
 } from "defender-relay-client/lib/relayer";
-import { KeyValueStoreClient } from "defender-kvstore-client"
+
+// Import a dependency not present in the autotask environment which will be included in the js bundle
+import { GraphQLClient, gql } from "graphql-request";
 
 async function main(
     signer: DefenderRelaySigner,
     provider: DefenderRelayProvider
 ) {
 
-    // Fetch instantaneousFixedRate (no need for alchemy as the defender provider does the job for us)
-    async function getFixedApr(): Promise < number > {
-        const peripheryAddress = '';
-        const peripheryABI = '';
+    const fixedRateQueryString = `
+    {
+        VAMMPriceChange(first: 7, orderBy: timestamp, orderDirection: desc) {
+            id,
+            timestamp,
+            tick
+        }
+    }`;
 
-        // define these
-        const lpOptimiserStrategyAddress = '';
-        const lpOptimiserABI = '';
+    function convertTickToRate(tick: number) {
+        // rate = -log_1.0001(tick)
+        const rate = -Math.log(tick) / Math.log(1.0001);
+        return rate
+    }
 
+    // Fetch the last 7 days worth of fixed rates from the subgraph
+    async function getHistoricalTicks(): Promise<number[]> {
+        const endpoint =
+            "https://api.thegraph.com/subgraphs/name/voltzprotocol/mainnet-v1";
+        const graphQLClient = new GraphQLClient(endpoint);
 
-        // get the margin engine address from the stategy contract
+        const data = await graphQLClient.request(fixedRateQueryString);
 
-        const LPOptimiserStrategyContract = new ethers.Contract(
-            lpOptimiserStrategyAddress,
-            lpOptimiserABI,
-            provider
-        );
+        const tickJSON = JSON.parse(JSON.stringify(data, undefined, 2));
 
-        const marginEngineAddress = await LPOptimiserStrategyContract.marginEngine();
+        const tickList = [];
+        for (let i = 0; i < tickJSON.length; i++) {
+            tickList.push(tickJSON.VAMMPriceChange[i].tick);
+        }
 
-        const peripheryContract = new ethers.Contract(
-            peripheryAddress,
-            peripheryABI,
-            provider
-         );
+        return tickList;
+    }
 
-        const currentTick: number = await peripheryContract.getCurrentTick(marginEngineAddress);
-        const apr = 1.0001 ** -currentTick;
-        return apr; // f_c
+    // Calculate the average APR over the last 7 days
+    async function calculateAverageAPR() {
+        const historicalTicks = await getHistoricalTicks();
+
+        // Calculate the average tick
+        const averageTick = historicalTicks.reduce((partialSum, b) => partialSum + b, 0) / historicalTicks.length;
+
+        // Convert average tick to average APR
+        const averageAPR = convertTickToRate(averageTick);
+
+        return averageAPR;
     }
 
 
-
-
-
-    // 0. Store the instantaneous fixed rate to the twFr
-    exports.handler = async function(event) {
-
-        // Creates an instance of the key-value store client
-        const store = new KeyValueStoreClient(event);
-
-        // Associates twFr to inst fixed rate
-        await store.put('twFr', getFixedApr.toString());
-    }
     
     // 1. Instantiate the address and abi for the strategy contract
     const lpStrategyAddress = '';
