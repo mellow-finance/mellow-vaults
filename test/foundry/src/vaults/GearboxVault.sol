@@ -42,7 +42,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 marginalFactorD9;
 
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        uint256 valueUnderlying = _calculateClaimableRewards() + IERC20(primaryToken).balanceOf(address(this));
+        uint256 valueUnderlying = _calculateClaimableRewards();
+        
+        if (primaryToken != depositToken) {
+            valueUnderlying += IERC20(primaryToken).balanceOf(address(this));
+        }
 
         if (creditAccount != address(0)) {
             (uint256 total, ) = creditFacade.calcTotalValue(creditAccount);
@@ -130,21 +134,26 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         _claimRewards();
         _withdrawFromConvex(IERC20(convexOutputToken).balanceOf(creditAccount));
 
-        (uint256 debtAmount, ,) = creditManager.calcCreditAccountAccruedInterest(creditAccount);
+        (, , uint256 debtAmount) = creditManager.calcCreditAccountAccruedInterest(creditAccount);
         uint256 underlyingBalance = IERC20(primaryToken).balanceOf(creditAccount);
         if (underlyingBalance < debtAmount + 1) {
-            _swapExactOutput(depositToken, primaryToken, debtAmount + 1 - underlyingBalance);
+            _swapExactOutput(depositToken, primaryToken, debtAmount + 1 - underlyingBalance, 0);
+        }
+
+        uint256 depositBalance = IERC20(depositToken).balanceOf(creditAccount);
+        if (depositBalance < amount && primaryToken != depositToken) {
+            _swapExactOutput(primaryToken, depositToken, amount - depositBalance, debtAmount + 1);
         }
 
         MultiCall[] memory noCalls = new MultiCall[](0);
         creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
 
-        creditAccount = address(0);
-
-        uint256 balance = IERC20(depositToken).balanceOf(address(this));
-        if (amount > balance) {
-            amount = balance;
+        uint256 finalDepositBalance = IERC20(depositToken).balanceOf(address(this));
+        if (finalDepositBalance < amount) {
+            amount = finalDepositBalance;
         }
+
+        creditAccount = address(0);
 
         IERC20(depositToken).safeTransfer(to, amount);
         actualTokenAmounts = new uint256[](1);
@@ -249,20 +258,35 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         return false;
     }
 
-    function _swapExactOutput(address fromToken, address toToken, uint256 amount) internal {
+    function _swapExactOutput(address fromToken, address toToken, uint256 amount, uint256 untouchableSum) internal {
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
         ).delayedProtocolParams();
 
-        MultiCall[] memory calls = new MultiCall[](1);
+        uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
+        uint256 amountInMaximum = _calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9);
+
+        if (amountInMaximum > allowedToUse) {
+            amount = FullMath.mulDiv(amount, allowedToUse, amountInMaximum);
+            amountInMaximum = allowedToUse;
+        }
+
         ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
             path: abi.encodePacked(fromToken, uint24(500), toToken),
             recipient: creditAccount,
             deadline: block.timestamp + 900,
             amountOut: amount,
-            amountInMaximum: _calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9)
+            amountInMaximum: amountInMaximum
         });
+
+        { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
+            ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
+            router.exactOutput(uniParams);
+            return;
+        }
+
+        MultiCall[] memory calls = new MultiCall[](1);
 
         calls[0] = MultiCall({
             target: protocolParams.univ3Adapter,
@@ -309,10 +333,17 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256 underlyingWant,
         uint256 underlyingCurrent    
     ) internal {
+
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolParams();
         ICreditFacade creditFacade_ = creditFacade;
 
         _checkDepositExchange(underlyingWant);
         uint256 currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
+
+        address lp_token = ICurveV1Adapter(curveAdapter).lp_token();
+        uint256 rateRAY = _calcRateRAY(primaryToken, lp_token);
 
         if (underlyingWant >= underlyingCurrent) {
             uint256 delta = underlyingWant - underlyingCurrent;
@@ -325,10 +356,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             calls[1] = MultiCall({
                 target: curveAdapter,
                 callData: abi.encodeWithSelector(
-                    ICurveV1Adapter.add_liquidity_one_coin.selector,
-                    delta + currentAmount,
+                    ICurveV1Adapter.add_all_liquidity_one_coin.selector,
                     primaryIndex,
-                    0
+                    FullMath.mulDiv(rateRAY, D9 - protocolParams.minCurveSlippageD9, D9)
                 )
             });
 
@@ -377,6 +407,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         if (amount == 0) {
             return;
         }
+
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolParams();
+
+        address lp_token = ICurveV1Adapter(curveAdapter).lp_token();
+        uint256 rateRAY = _calcRateRAY(lp_token, primaryToken);
+
         MultiCall[] memory calls = new MultiCall[](3);
 
         calls[0] = MultiCall({
@@ -394,7 +432,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             callData: abi.encodeWithSelector(
                 ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
                 primaryIndex,
-                0
+                FullMath.mulDiv(rateRAY, D9 - protocolParams.minCurveSlippageD9, D9)
             )
         });
 

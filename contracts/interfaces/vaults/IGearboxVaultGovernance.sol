@@ -13,6 +13,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         address crv;
         address cvx;
         uint256 minSlippageD9;
+        uint256 minCurveSlippageD9;
         address uniswapRouter;
     }
 

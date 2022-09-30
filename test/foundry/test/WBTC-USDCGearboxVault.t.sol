@@ -78,6 +78,7 @@ contract GearboxWBTCTest is Test {
     }
 
     function setUp() public {
+
         governance = new ProtocolGovernance(address(this));
         registry = new VaultRegistry("Mellow LP", "MLP", governance);
 
@@ -93,6 +94,8 @@ contract GearboxWBTCTest is Test {
         governance.commitParams();
         governance.stageUnitPrice(usdc, 1);
         governance.commitUnitPrice(usdc);
+        governance.stageUnitPrice(wbtc, 1);
+        governance.commitUnitPrice(wbtc);
 
         {
             uint8[] memory args = new uint8[](1);
@@ -140,6 +143,7 @@ contract GearboxWBTCTest is Test {
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
             minSlippageD9: 1000000,
+            minCurveSlippageD9: 50000000,
             uniswapRouter: address(router)
         });
 
@@ -249,7 +253,7 @@ contract GearboxWBTCTest is Test {
 
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount * satoshiOfUsdc;
-        IERC20(usdc).approve(address(rootVault), type(uint256).max);
+        IERC20(wbtc).approve(address(rootVault), type(uint256).max);
 
         rootVault.deposit(amounts, 0, "");
         if (gearboxVault.creditAccount() == address(0)) {
@@ -640,10 +644,7 @@ contract GearboxWBTCTest is Test {
         assertTrue(checkIfSimpleCloseIsOkay());
     }
 
-        /*
-
-    function testCloseVaultWithOneOrder() public {
-        deposit(500, address(this));
+    function testCloseVaultWithOneOrderWBTC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -653,31 +654,76 @@ contract GearboxWBTCTest is Test {
         vm.warp(block.timestamp + YEAR / 12); // to impose root vault fees
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault)) + IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc;
+        uint256 wentForWithdrawal = IERC20(wbtc).balanceOf(address(erc20Vault)) * 10**6 / satoshiOfUsdc;
 
         assertTrue(leftOnGearbox * 995 > wentForWithdrawal * 1000); // the result of fees
 
         deposit(300, address(this));
         gearboxVault.adjustPosition();
 
-        assertTrue(isClose(tvl(), 552 * 10**6, 100));
+        assertTrue(isClose(tvl(), 552 * satoshiOfUsdc, 100));
 
         address recipient = getNextUserAddress();
 
         uint256 oldSupply = rootVault.totalSupply();
 
         claimMoney(recipient, lpTokens / 2);
-
-        console2.log(IERC20(usdc).balanceOf(recipient));
-
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 248 * 10**6, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 248 * satoshiOfUsdc, 100));
         uint256 newSupply = rootVault.totalSupply();
         
         assertTrue(oldSupply - lpTokens / 2 == newSupply);
     }
 
-    function testCloseVaultWithSeveralDepositsAndPartialWithdrawals() public {
+    function testCloseVaultWithOneLargerOrderWBTC() public {
+        deposit(500, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+
+        rootVault.registerWithdrawal(lpTokens * 3 / 4); // 375 USD
+        invokeExecution();
+
+        deposit(400, address(this));
+        gearboxVault.adjustPosition();
+
+        assertTrue(isClose(tvl(), 525 * satoshiOfUsdc, 100));
+
+        address recipient = getNextUserAddress();
+
+        uint256 oldSupply = rootVault.totalSupply();
+
+        claimMoney(recipient, lpTokens * 3 / 4);
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 375 * satoshiOfUsdc, 100));
+        uint256 newSupply = rootVault.totalSupply();
+        
+        assertTrue(oldSupply - lpTokens * 3 / 4 == newSupply);
+    }
+
+    function testCloseVaultWithOneFullWBTC() public {
+        deposit(500, address(this));
+        deposit(300, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+
+        rootVault.registerWithdrawal(lpTokens); // 800 USD
+        invokeExecution();
+
+        assertTrue(tvl() < satoshiOfUsdc);
+
+        address recipient = getNextUserAddress();
+
+        claimMoney(recipient, lpTokens);
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 800 * satoshiOfUsdc, 100));
+        uint256 newSupply = rootVault.totalSupply();
+
+        
+        assertTrue(newSupply < 10000);
+    }
+
+
+    function testCloseVaultWithSeveralDepositsAndPartialWithdrawalsWBTC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -694,29 +740,29 @@ contract GearboxWBTCTest is Test {
         vm.stopPrank();
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault)) + IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc;
+        uint256 wentForWithdrawal = IERC20(wbtc).balanceOf(address(erc20Vault)) * 10**6 / satoshiOfUsdc;
         assertTrue(isClose(leftOnGearbox, 325 * 10**6, 100));
         assertTrue(isClose(wentForWithdrawal, 275 * 10**6, 100));
 
 
         address recipient = getNextUserAddress();
         claimMoney(recipient, lpTokens / 4);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 125 * 10**6, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 125 * satoshiOfUsdc, 100));
 
         claimMoney(recipient, lpTokens / 8);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1875 * 10**5, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 1875 * satoshiOfUsdc / 10, 100));
 
         vm.startPrank(secondUser);
         claimMoney(recipient, secondUserLpTokens / 8);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2000 * 10**5, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 2000 * satoshiOfUsdc / 10, 100));
         vm.stopPrank();
 
         claimMoney(recipient, lpTokens / 8);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2625 * 10**5, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 2625 * satoshiOfUsdc / 10, 100));
     }
 
-    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsMore() public {
+    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsMoreWBTC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -731,10 +777,10 @@ contract GearboxWBTCTest is Test {
         rootVault.registerWithdrawal(lpTokens * 2 / 3); // ~333 USD
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        assertTrue(isClose(leftOnGearbox, 666 * 10**6, 100));
-        assertTrue(isClose(wentForWithdrawal, 333 * 10**6, 100));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault)) + IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc;
+        uint256 wentForWithdrawal = IERC20(wbtc).balanceOf(address(erc20Vault)) * 10**6 / satoshiOfUsdc;
+        assertTrue(isClose(leftOnGearbox, 666 * 10**6, 40));
+        assertTrue(isClose(wentForWithdrawal, 333 * 10**6, 40));
     }
 
     function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsLess() public {
@@ -752,12 +798,13 @@ contract GearboxWBTCTest is Test {
         rootVault.registerWithdrawal(lpTokens / 3); // ~166 USD
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        assertTrue(isClose(tvl(), 833*10**6, 100));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault)) + IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc;
+        uint256 wentForWithdrawal = IERC20(wbtc).balanceOf(address(erc20Vault)) * 10**6 / satoshiOfUsdc;
+        assertTrue(isClose(tvl(), 833*satoshiOfUsdc, 100));
         assertTrue(isClose(leftOnGearbox, 0, 100));
         assertTrue(isClose(wentForWithdrawal, 166 * 10**6, 100));
     }
+
 
     function testSeveralInvocationsWhenFirstPartiallyClaimedAndNewSumIsMore() public {
         deposit(500, address(this));
@@ -777,14 +824,14 @@ contract GearboxWBTCTest is Test {
         rootVault.registerWithdrawal(lpTokens / 3); // ~166 USD more taken
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault)) + IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc;
+        uint256 wentForWithdrawal = IERC20(wbtc).balanceOf(address(erc20Vault)) * 10**6 / satoshiOfUsdc;
         assertTrue(isClose(leftOnGearbox, 709 * 10**6, 100));
         assertTrue(isClose(wentForWithdrawal, 166 * 10**6, 100));
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 1250 * satoshiOfUsdc / 10, 100));
     }
 
-    function testSeveralInvocationsWhenFirstPartiallyClaimedAndNewSumIsLess() public {
+    function testSeveralInvocationsWhenFirstPartiallyClaimedAndNewSumIsLessWBTC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -802,12 +849,12 @@ contract GearboxWBTCTest is Test {
         rootVault.registerWithdrawal(lpTokens / 5); // ~100 USD more taken
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        assertTrue(isClose(tvl(), 775*10**6, 100));
-        assertTrue(isClose(leftOnGearbox, 0, 100));
-        assertTrue(isClose(wentForWithdrawal, 100 * 10**6, 100));
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault)) + IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc;
+        uint256 wentForWithdrawal = IERC20(wbtc).balanceOf(address(erc20Vault)) * 10**6 / satoshiOfUsdc;
+        assertTrue(isClose(tvl(), 775*satoshiOfUsdc, 50));
+        assertTrue(isClose(leftOnGearbox, 0, 50));
+        assertTrue(isClose(wentForWithdrawal, 100 * 10**6, 50));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 1250 * satoshiOfUsdc / 10, 50));
     }
 
     function testCancelWithdrawalIsOkay() public {
@@ -822,10 +869,10 @@ contract GearboxWBTCTest is Test {
         address recipient = getNextUserAddress();
         claimMoney(recipient, lpTokens / 2);
 
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100)); // anyway only 125 usd claimed
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 1250 * satoshiOfUsdc / 10, 50)); // anyway only 125 usd claimed
     }
 
-    function valueIncreasesAfterWithdrawal() public {
+    function testValueIncreasesAfterWithdrawalWBTC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -838,26 +885,28 @@ contract GearboxWBTCTest is Test {
         vm.startPrank(secondUser);
         deposit(500, secondUser);
         vm.stopPrank();
+
+        gearboxVault.adjustPosition();
         
-        setNewRewardInRewardPool(10, 1); // + 171 USD => 921 USD in pool
+        setNewRewardInRewardPool(10, 1); // + 250 USD => 1000 USD in pool
         address recipient = getNextUserAddress();
         claimMoney(recipient, lpTokens / 2); // 250 USD claimed
 
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2500 * 10**5, 100)); // anyway only 250 usd claimed
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 250 * satoshiOfUsdc, 50)); // anyway only 250 usd claimed
         vm.startPrank(secondUser);
-        rootVault.registerWithdrawal(lpTokens / 2); // the same lp amount as previous but already 307 usd
+        rootVault.registerWithdrawal(lpTokens / 2); // the same lp amount as previous but already 353 usd
         vm.stopPrank();
 
         vm.warp(block.timestamp + 86400 * 10);
         invokeExecution();
 
         vm.startPrank(secondUser);
-        claimMoney(recipient, lpTokens / 2); // 307 usd claimed
+        claimMoney(recipient, lpTokens / 2); // 333 usd claimed
         vm.stopPrank();
 
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 5570 * 10**5, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 583 * satoshiOfUsdc, 20));
         claimMoney(recipient, lpTokens / 2); // try to claim by the first user
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 5570 * 10**5, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 583 * satoshiOfUsdc, 20));
     }
 
     function testWitdrawalOrderCancelsAfterTime() public {
@@ -875,7 +924,7 @@ contract GearboxWBTCTest is Test {
         address recipient = getNextUserAddress();
         claimMoney(recipient, lpTokens / 2); // claim money on a dead order
 
-        assertTrue(IERC20(usdc).balanceOf(recipient) == 0);
+        assertTrue(IERC20(wbtc).balanceOf(recipient) == 0);
     }
 
     function testFailTwoInvocationsInShortTime() public {
@@ -888,6 +937,4 @@ contract GearboxWBTCTest is Test {
         invokeExecution();
     }
     
-    */
-
 }

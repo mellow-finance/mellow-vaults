@@ -56,13 +56,15 @@ contract MockSwapRouter is ISwapRouter, Test {
         uint256 amountOut = params.amountOut;
         uint256 amountInMaximum = params.amountInMaximum;
 
+        address recipient = params.recipient;
+
         (address tokenFrom, address tokenTo, ) = decodeFirstPool(params.path);
 
-        uint256 balanceA = IERC20(tokenFrom).balanceOf(msg.sender);
-        uint256 balanceB = IERC20(tokenTo).balanceOf(msg.sender);
+        uint256 balanceA = IERC20(tokenFrom).balanceOf(recipient);
+        uint256 balanceB = IERC20(tokenTo).balanceOf(recipient);
 
-        deal(tokenFrom, msg.sender, balanceA - amountInMaximum);
-        deal(tokenTo, msg.sender, balanceB + amountOut);
+        deal(tokenFrom, recipient, balanceA - amountInMaximum);
+        deal(tokenTo, recipient, balanceB + amountOut);
     }
 
     function exactInput(ExactInputParams calldata params)
