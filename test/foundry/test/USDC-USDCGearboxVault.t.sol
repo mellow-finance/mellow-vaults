@@ -131,6 +131,7 @@ contract GearboxUSDCTest is Test {
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
             minSlippageD9: 100000000,
+            minCurveSlippageD9: 500000000,
             uniswapRouter: 0xE592427A0AEce92De3Edee1F18E0157C05861564
         });
 
@@ -689,7 +690,7 @@ contract GearboxUSDCTest is Test {
         assertTrue(isClose(wentForWithdrawal, 333 * 10**6, 100));
     }
 
-    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsLess() public {
+    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsLessUSDC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -706,6 +707,9 @@ contract GearboxUSDCTest is Test {
 
         uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
         uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        console2.log(tvl());
+        console2.log(leftOnGearbox);
+        console2.log(wentForWithdrawal);
         assertTrue(isClose(tvl(), 833*10**6, 100));
         assertTrue(isClose(leftOnGearbox, 0, 100));
         assertTrue(isClose(wentForWithdrawal, 166 * 10**6, 100));
