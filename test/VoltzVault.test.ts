@@ -355,13 +355,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             );
 
             {
-                const actualTokenAmounts = await this.subject.callStatic.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [BigNumber.from(10).pow(6).mul(1000)],
-                    encodeToBytes([], [])
-                );
-                expect(actualTokenAmounts[0]).to.be.equal(BigNumber.from(0));
+                await expect(
+                    this.subject.callStatic.pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address],
+                        [BigNumber.from(10).pow(6).mul(1000)],
+                        encodeToBytes([], [])
+                    )
+                ).to.be.revertedWith("FRB");
             }
 
             // advance time by 60 days to reach maturity

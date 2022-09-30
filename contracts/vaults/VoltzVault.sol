@@ -16,6 +16,8 @@ import "../interfaces/external/voltz/utils/Time.sol";
 import "../interfaces/external/voltz/utils/TickMath.sol";
 import "../interfaces/external/voltz/utils/Position.sol";
 
+import "hardhat/console.sol";
+
 /// @notice Vault that interfaces Voltz protocol in the integration layer on the liquidity provider (LP) side.
 contract VoltzVault is IVoltzVault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -62,7 +64,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     TickRange[] public trackedPositions;
     /// @dev Index into the trackedPositions array of the currently active LP position of the Vault
     uint256 _currentPositionIndex;
-    /// @dev The amount of liquidity minted in teh currently active LP position of the Vault
+    /// @dev The amount of liquidity minted in the currently active LP position of the Vault
     uint256 _currentPositionLiquidity;
     /// @dev Maps a given Voltz position to its index into the trackedPositions array,
     /// @dev which is artifically 1-indexed by the mapping.
@@ -73,13 +75,13 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     /// @dev Sum of fixed token balances of all positions in the trackedPositions
     /// @dev array, apart from the balance of the currently active position
-    int256 _aggregatedFixedTokenBalance;
+    int256 _aggregatedInactiveFixedTokenBalance;
     /// @dev Sum of variable token balances of all positions in the trackedPositions
     /// @dev array, apart from the balance of the currently active position
-    int256 _aggregatedVariableTokenBalance;
+    int256 _aggregatedInactiveVariableTokenBalance;
     /// @dev Sum of margins of all positions in the trackedPositions array,
     /// @dev apart from the margin of the currently active position
-    int256 _aggregatedMargin;
+    int256 _aggregatedInactiveMargin;
 
     uint256 public constant SECONDS_IN_YEAR_IN_WAD = 31536000e18;
     uint256 public constant ONE_HUNDRED_IN_WAD = 100e18;
@@ -136,23 +138,27 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         // Aggregate estimated settlement cashflows into TVL
         _minTVL +=
             _calculateSettlementCashflow(
-                _aggregatedFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
+                _aggregatedInactiveFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
                 fixedFactorValueWad,
-                _aggregatedVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
+                _aggregatedInactiveVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
                 estimatedVariableFactorStartEndLowerWad
             ) +
-            _aggregatedMargin +
+            _aggregatedInactiveMargin +
             currentPositionInfo_.margin;
 
         _maxTVL +=
             _calculateSettlementCashflow(
-                _aggregatedFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
+                _aggregatedInactiveFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
                 fixedFactorValueWad,
-                _aggregatedVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
+                _aggregatedInactiveVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
                 estimatedVariableFactorStartEndUpperWad
             ) +
-            _aggregatedMargin +
+            _aggregatedInactiveMargin +
             currentPositionInfo_.margin;
+
+        if (_minTVL > _maxTVL) {
+            (_minTVL, _maxTVL) = (_maxTVL, _minTVL);
+        }
 
         _lastTvlUpdateTimestamp = block.timestamp;
 
@@ -305,8 +311,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _updateCurrentPosition(position);
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
         _updateMargin(vaultBalance.toInt256());
-        uint256 liquidityToMint = (vaultBalance * _leverageWad).toUint();
-        _updateLiquidity(liquidityToMint.toInt256());
+        uint256 notionalLiquidityToMint = vaultBalance.mul(_leverageWad);
+        _updateLiquidity(notionalLiquidityToMint.toInt256());
 
         updateTvl();
 
@@ -314,7 +320,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             oldPosition,
             marginLeftInOldPosition,
             trackedPositions[_currentPositionIndex],
-            vaultBalance
+            vaultBalance,
+            notionalLiquidityToMint
         );
     }
 
@@ -455,12 +462,12 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         actualTokenAmounts[0] = tokenAmounts[0];
         _updateMargin(tokenAmounts[0].toInt256());
 
-        uint256 liquidityToMint = (tokenAmounts[0] * _leverageWad).toUint();
-        _updateLiquidity(liquidityToMint.toInt256());
+        uint256 notionalLiquidityToMint = tokenAmounts[0].mul(_leverageWad);
+        _updateLiquidity(notionalLiquidityToMint.toInt256());
 
         updateTvl();
 
-        emit PushDeposit(tokenAmounts[0], liquidityToMint);
+        emit PushDeposit(tokenAmounts[0], notionalLiquidityToMint);
     }
 
     /// @inheritdoc IntegrationVault
@@ -469,6 +476,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        require(Time.blockTimestampScaled() > _termEndTimestampWad, ExceptionsLibrary.FORBIDDEN);
+
         actualTokenAmounts = new uint256[](1);
 
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
@@ -573,9 +582,9 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 trackedPositions[_currentPositionIndex].tickLower,
                 trackedPositions[_currentPositionIndex].tickUpper
             );
-            _aggregatedFixedTokenBalance -= currentPositionInfo_.fixedTokenBalance;
-            _aggregatedVariableTokenBalance -= currentPositionInfo_.variableTokenBalance;
-            _aggregatedMargin -= currentPositionInfo_.margin;
+            _aggregatedInactiveFixedTokenBalance -= currentPositionInfo_.fixedTokenBalance;
+            _aggregatedInactiveVariableTokenBalance -= currentPositionInfo_.variableTokenBalance;
+            _aggregatedInactiveMargin -= currentPositionInfo_.margin;
         }
 
         _currentPositionLiquidity = 0;
@@ -627,7 +636,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 false
             );
 
-            marginToKeep = (_marginMultiplierPostUnwindWad * positionMarginRequirementInitial).toUint();
+            marginToKeep = _marginMultiplierPostUnwindWad.mul(positionMarginRequirementInitial);
 
             if (marginToKeep <= positionMarginRequirementInitial) {
                 marginToKeep = positionMarginRequirementInitial + 1;
@@ -666,9 +675,9 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         } else {
             // otherwise, the position is now a past tracked position
             // so we update the aggregated variables
-            _aggregatedFixedTokenBalance += currentPositionInfo_.fixedTokenBalance;
-            _aggregatedVariableTokenBalance += currentPositionInfo_.variableTokenBalance;
-            _aggregatedMargin += currentPositionInfo_.margin;
+            _aggregatedInactiveFixedTokenBalance += currentPositionInfo_.fixedTokenBalance;
+            _aggregatedInactiveVariableTokenBalance += currentPositionInfo_.variableTokenBalance;
+            _aggregatedInactiveMargin += currentPositionInfo_.margin;
         }
 
         return currentPositionInfo_.margin;

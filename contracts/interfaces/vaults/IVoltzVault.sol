@@ -48,16 +48,16 @@ interface IVoltzVault is IIntegrationVault {
     /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
     function estimatedAPYDecimalDeltaWad() external view returns (uint256);
 
-    /// @notice Reference to IMarginEngine of Voltz Protocol
+    /// @notice Reference to the margin engine of Voltz Protocol
     function marginEngine() external view returns (IMarginEngine);
 
-    /// @notice Reference to IVAMM of Voltz Protocol
+    /// @notice Reference to the vamm of Voltz Protocol
     function vamm() external view returns (IVAMM);
 
-    /// @notice Reference to IRateOracle of Voltz Protocol
+    /// @notice Reference to the rate oracle of Voltz Protocol
     function rateOracle() external view returns (IRateOracle);
 
-    /// @notice Reference to IPeriphery of Voltz Protocol
+    /// @notice Reference to the periphery of Voltz Protocol
     function periphery() external view returns (IPeriphery);
 
     /// @notice Returns the currently active LP position of the Vault
@@ -65,7 +65,7 @@ interface IVoltzVault is IIntegrationVault {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    /// @notice Initializes a new contract
+    /// @notice Initializes a new vault
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
@@ -125,11 +125,13 @@ interface IVoltzVault is IIntegrationVault {
     /// @param marginLeftInOldPosition margin left in previous unwound position
     /// @param newPosition the new active position
     /// @param marginDepositedInNewPosition margin deposited in the new active position
+    /// @param notionalLiquidityMintedInNewPosition the amount of notional that was minted as liquidity in the new position
     event PositionRebalance(
         TickRange oldPosition,
         int256 marginLeftInOldPosition,
         TickRange newPosition,
-        uint256 marginDepositedInNewPosition
+        uint256 marginDepositedInNewPosition,
+        uint256 notionalLiquidityMintedInNewPosition
     );
 
     /// @notice Emitted when Vault is initialised
@@ -152,10 +154,10 @@ interface IVoltzVault is IIntegrationVault {
 
     /// @notice Emitted when tokens are deposited into the Vault
     /// @param amountDeposited The amount depositied
-    /// @param liquidityMinted The amount of liquidity minted on deposit
+    /// @param notionalLiquidityMinted The amount of liquidity minted on deposit
     event PushDeposit(
         uint256 amountDeposited,
-        uint256 liquidityMinted
+        uint256 notionalLiquidityMinted
     );
 
     /// @notice Emitted when tokens are withdrawn from the Vault
