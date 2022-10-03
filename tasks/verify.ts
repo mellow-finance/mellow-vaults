@@ -20,6 +20,7 @@ async function verifyVault(hre: HardhatRuntimeEnvironment, nft: number) {
     const governanceNames = [
         "AaveVaultGovernance",
         "UniV3VaultGovernance",
+        "VoltzVaultGovernance",
         "ERC20VaultGovernance",
         "ERC20RootGovernance",
     ];

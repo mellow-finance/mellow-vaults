@@ -25,6 +25,7 @@ import {
     ERC20Token,
     ISwapRouter,
     ERC20RootVault,
+    IMarginEngine,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -34,6 +35,7 @@ import {
 } from "../types/ERC20RootVaultGovernance";
 import { Arbitrary, Random } from "fast-check";
 import { mersenne } from "pure-rand";
+import { TickRangeStructOutput } from "../types/IVoltzVault";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -675,3 +677,55 @@ export async function mintUniV3Position_WBTC_WETH(options: {
     await positionManagerContract.mint(mintParams);
     return result;
 }
+
+export async function mintUSDCForVoltz(usdcAmount: BigNumberish): Promise<any> {
+    const { usdc, deployer, voltzPeriphery } = await getNamedAccounts();
+
+    const usdcContract = await ethers.getContractAt("ERC20Token", usdc);
+
+    await mint("USDC", deployer, usdcAmount);
+
+    if (
+        (await usdcContract.allowance(deployer, voltzPeriphery)).eq(
+            BigNumber.from(0)
+        )
+    ) {
+        await usdcContract.approve(voltzPeriphery, ethers.constants.MaxUint256);
+    }
+}
+
+export const checkStateOfVoltzOpenedPositions = async (
+    marginEngineContract: IMarginEngine,
+    subject: string,
+    openedPositions: TickRangeStructOutput[]
+) => {
+    console.log("----------------------------------------------------");
+    console.log("");
+    console.log("number of opened positions:", openedPositions.length);
+    for (let i = 0; i < openedPositions.length; i++) {
+        console.log(
+            "low:",
+            openedPositions[i].tickLower.toString(),
+            "; high",
+            openedPositions[i].tickUpper.toString()
+        );
+        console.log();
+        const position = await (
+            marginEngineContract as IMarginEngine
+        ).callStatic.getPosition(
+            subject,
+            openedPositions[i].tickLower,
+            openedPositions[i].tickUpper
+        );
+
+        console.log("margin:", position.margin.toString());
+        console.log("liquidity:", position._liquidity.toString());
+        console.log("settled:", position.isSettled.toString());
+        console.log(
+            "variable tokens:",
+            position.variableTokenBalance.toString()
+        );
+        console.log("fixed tokens:", position.fixedTokenBalance.toString());
+        console.log();
+    }
+};
