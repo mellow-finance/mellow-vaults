@@ -283,9 +283,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     )
                 );
                 txs.push(
-                    this.subject.interface.encodeFunctionData("updateSwapFees", [
-                        3000,
-                    ])
+                    this.subject.interface.encodeFunctionData(
+                        "updateSwapFees",
+                        [3000]
+                    )
                 );
                 await this.subject
                     .connect(this.mStrategyAdmin)
