@@ -468,7 +468,7 @@ contract GearboxUSDCTest is Test {
         assertTrue(isClose(convexFantomBalanceFinal * 25, convexFantomBalanceAfter * 27, 100));
     }
 
-    function testEarnedRewards() public {
+    function testEarnedRewardsUSDC() public {
         deposit(500, address(this));
         creditAccount = gearboxVault.creditAccount();
         gearboxVault.adjustPosition();
@@ -482,12 +482,15 @@ contract GearboxUSDCTest is Test {
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
+        console2.log(convexFantomBalanceBefore * 576);
+        console2.log(convexFantomBalanceAfter * 500);
+
         assertTrue(isClose(convexFantomBalanceBefore * 576, convexFantomBalanceAfter * 500, 50));
 
-        setNewRewardInRewardPool(12, 10); // + 19 USD
-        assertTrue(isClose(tvl(), 595 * 10**6, 100));
+        setNewRewardInRewardPool(12, 10); // + 23 USD
+        assertTrue(isClose(tvl(), 599 * 10**6, 100));
         gearboxVault.adjustPosition();
-        assertTrue(isClose(tvl(), 595 * 10**6, 100));
+        assertTrue(isClose(tvl(), 599 * 10**6, 100));
     }
 
     function testMultipleDepositsAndRewardsAndAdjustmentsTvlCorrectness() public {

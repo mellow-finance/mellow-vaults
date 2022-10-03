@@ -261,24 +261,23 @@ contract GearboxWBTCTest is Test {
         }
     }
 
-    function invokeExecution() public {
-
+    function changeSlippage(uint256 x) public {
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = governanceC.delayedProtocolParams();
-        delayedParams.minSlippageD9 = 10**7;
+        delayedParams.minSlippageD9 = x;
 
         governanceC.stageDelayedProtocolParams(delayedParams);
         vm.warp(block.timestamp + governance.governanceDelay());
         governanceC.commitDelayedProtocolParams();
+    }
+
+    function invokeExecution() public {
+
+        changeSlippage(10**7);
 
         vm.roll(block.number + 1);
         rootVault.invokeExecution();
 
-        delayedParams = governanceC.delayedProtocolParams();
-        delayedParams.minSlippageD9 = 10**6;
-
-        governanceC.stageDelayedProtocolParams(delayedParams);
-        vm.warp(block.timestamp + governance.governanceDelay());
-        governanceC.commitDelayedProtocolParams();
+        changeSlippage(10**6);
     }
 
     function claimMoney(address recipient, uint256 lpAmount) public {
@@ -505,9 +504,11 @@ contract GearboxWBTCTest is Test {
         assertTrue(isClose(convexFantomBalanceFinal * 155, convexFantomBalanceAfter * 169, 100));
     }
 
-    function testEarnedRewards() public {
+    function testEarnedRewardsWBTC() public {
         deposit(500, address(this));
         deposit(200, address(this)); // 1900 USD in staking
+
+        changeSlippage(10**7);
         creditAccount = gearboxVault.creditAccount();
         gearboxVault.adjustPosition();
 
@@ -552,6 +553,7 @@ contract GearboxWBTCTest is Test {
     function testWithValueFallingAndRewardsCovering() public {
         deposit(500, address(this));
         deposit(200, address(this));
+        changeSlippage(10**7);
         gearboxVault.adjustPosition();
 
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
@@ -857,7 +859,7 @@ contract GearboxWBTCTest is Test {
         assertTrue(isClose(IERC20(wbtc).balanceOf(recipient), 1250 * satoshiOfUsdc / 10, 50));
     }
 
-    function testCancelWithdrawalIsOkay() public {
+    function testCancelWithdrawalIsOkayWBTC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 

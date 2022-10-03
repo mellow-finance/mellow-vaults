@@ -323,6 +323,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     function _adjustPosition(uint256 underlyingWant, uint256 underlyingCurrent) internal {
+
+        _claimRewards();
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
         ).delayedProtocolParams();
@@ -359,11 +362,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             creditFacade.multicall(calls);
         } else {
             uint256 delta = underlyingCurrent - underlyingWant;
-
-            if (currentAmount < delta) {
-                _claimRewards();
-                currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
-            }
 
             if (currentAmount >= delta) {
                 MultiCall[] memory calls = new MultiCall[](1);
@@ -529,8 +527,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         )
     {
         (allAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
+        allAssetsValue += _calculateClaimableRewards();
+
         (, , uint256 borrowAmountWithInterestAndFees) = creditManager.calcCreditAccountAccruedInterest(creditAccount);
-        realValue = allAssetsValue - borrowAmountWithInterestAndFees + _calculateClaimableRewards();
+        realValue = allAssetsValue - borrowAmountWithInterestAndFees;
         realValueWithMargin = FullMath.mulDiv(realValue, marginalFactorD9, D9);
     }
 
