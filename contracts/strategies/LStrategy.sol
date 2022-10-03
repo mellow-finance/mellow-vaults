@@ -27,7 +27,8 @@ contract LStrategy is DefaultAccessControl {
     INonfungiblePositionManager public immutable positionManager;
     ILStrategyHelper public immutable orderHelper;
     uint24 public immutable poolFee;
-    address public immutable cowswap;
+    address public immutable cowswapSettlement;
+    address public immutable cowswapVaultRelayer;
     uint16 public immutable intervalWidthInTicks;
 
     // INTERNAL STATE
@@ -89,7 +90,8 @@ contract LStrategy is DefaultAccessControl {
     // @param vault2_ Reference to Uniswap V3 Vault 2
     constructor(
         INonfungiblePositionManager positionManager_,
-        address cowswap_,
+        address cowswapSettlement_,
+        address cowswapVaultRelayer_,
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,
         IUniV3Vault vault2_,
@@ -103,7 +105,8 @@ contract LStrategy is DefaultAccessControl {
                 (address(vault1_) != address(0)) &&
                 (address(vault2_) != address(0)) &&
                 (address(erc20vault_) != address(0)) &&
-                (cowswap_ != address(0)),
+                (cowswapVaultRelayer_ != address(0)) &&
+                (cowswapSettlement_ != address(0)),
             ExceptionsLibrary.ADDRESS_ZERO
         );
 
@@ -116,7 +119,8 @@ contract LStrategy is DefaultAccessControl {
         tokens = vault1_.vaultTokens();
         poolFee = vault1_.pool().fee();
         _pullExistentials = vault1_.pullExistentials();
-        cowswap = cowswap_;
+        cowswapSettlement = cowswapSettlement_;
+        cowswapVaultRelayer = cowswapVaultRelayer_;
         orderHelper = orderHelper_;
         intervalWidthInTicks = intervalWidthInTicks_;
     }
@@ -445,14 +449,14 @@ contract LStrategy is DefaultAccessControl {
             erc20Vault.externalCall(
                 address(order.sellToken),
                 APPROVE_SELECTOR,
-                abi.encode(cowswap, order.sellAmount + order.feeAmount)
+                abi.encode(cowswapVaultRelayer, order.sellAmount + order.feeAmount)
             );
-            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
+            erc20Vault.externalCall(cowswapSettlement, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
             orderDeadline = order.validTo;
             delete preOrder;
             emit OrderSigned(tx.origin, msg.sender, uuid, order, preOrder, signed);
         } else {
-            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, false));
+            erc20Vault.externalCall(cowswapSettlement, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, false));
         }
     }
 
@@ -460,7 +464,7 @@ contract LStrategy is DefaultAccessControl {
     /// @param tokenNumber The number of token in LStrategy
     function resetCowswapAllowance(uint8 tokenNumber) external {
         _requireAtLeastOperator();
-        bytes memory approveData = abi.encode(cowswap, uint256(0));
+        bytes memory approveData = abi.encode(cowswapVaultRelayer, uint256(0));
         erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, approveData);
         emit CowswapAllowanceReset(tx.origin, msg.sender);
     }
