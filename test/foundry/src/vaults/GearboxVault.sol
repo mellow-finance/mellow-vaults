@@ -15,7 +15,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../external/Cvx.sol";
-import "forge-std/console2.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -43,7 +42,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         uint256 valueUnderlying = _calculateClaimableRewards();
-        
+
         if (primaryToken != depositToken) {
             valueUnderlying += IERC20(primaryToken).balanceOf(address(this));
         }
@@ -98,11 +97,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         _adjustPosition(total, previousTotal);
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory)
-        internal
-        override
-        returns (uint256[] memory)
-    {
+    function _push(uint256[] memory tokenAmounts, bytes memory) internal override returns (uint256[] memory) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
         if (creditAccount == address(0)) {
@@ -124,12 +119,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         require(creditAccount != address(0), ExceptionsLibrary.INVARIANT);
         uint256 amount = tokenAmounts[0];
-
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedProtocolParams();
-
-        (uint256 realValue, , uint256 previousTotal) = _calculateDesiredTotalValue();
 
         _claimRewards();
         _withdrawFromConvex(IERC20(convexOutputToken).balanceOf(creditAccount));
@@ -159,11 +148,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         actualTokenAmounts = new uint256[](1);
 
         actualTokenAmounts[0] = amount;
-        
     }
 
     function _openCreditAccount() internal {
-
         require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 
         ICreditFacade creditFacade_ = creditFacade;
@@ -177,7 +164,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         if (depositToken != primaryToken && balance < minLimit) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
-            uint256 amountInMaximum = _calculateAmountInMaximum(depositToken, primaryToken, minLimit - balance, protocolParams.minSlippageD9);
+            uint256 amountInMaximum = _calculateAmountInMaximum(
+                depositToken,
+                primaryToken,
+                minLimit - balance,
+                protocolParams.minSlippageD9
+            );
             require(IERC20(depositToken).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
 
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
@@ -205,7 +197,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         creditAccount = creditManager.getCreditAccountOrRevert(address(this));
         creditFacade_.enableToken(depositToken);
-        
+
         address[] memory newCollaterals = new address[](2);
         newCollaterals[0] = depositToken;
         newCollaterals[1] = primaryToken;
@@ -258,8 +250,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         return false;
     }
 
-    function _swapExactOutput(address fromToken, address toToken, uint256 amount, uint256 untouchableSum) internal {
-
+    function _swapExactOutput(
+        address fromToken,
+        address toToken,
+        uint256 amount,
+        uint256 untouchableSum
+    ) internal {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
         ).delayedProtocolParams();
@@ -296,20 +292,23 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditFacade.multicall(calls);
     }
 
-    function _calculateAmountInMaximum(address fromToken, address toToken, uint256 amount, uint256 minSlippageD9) internal returns (uint256) {
+    function _calculateAmountInMaximum(
+        address fromToken,
+        address toToken,
+        uint256 amount,
+        uint256 minSlippageD9
+    ) internal view returns (uint256) {
         uint256 rateRAY = _calcRateRAY(toToken, fromToken);
         uint256 amountInExpected = FullMath.mulDiv(amount, rateRAY, D27);
         return FullMath.mulDiv(amountInExpected, D9 + minSlippageD9, D9);
     }
 
     function _addAllTokensAsCollateral(address[] memory tokens) internal {
-
         ICreditFacade creditFacade_ = creditFacade;
         MultiCall[] memory calls = new MultiCall[](tokens.length);
         address creditManagerAddress = address(creditManager);
 
         for (uint256 i = 0; i < tokens.length; ++i) {
-
             address token = tokens[i];
             uint256 amount = IERC20(token).balanceOf(address(this));
 
@@ -329,10 +328,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
     }
 
-    function _adjustPosition(
-        uint256 underlyingWant,
-        uint256 underlyingCurrent    
-    ) internal {
+    function _adjustPosition(uint256 underlyingWant, uint256 underlyingCurrent) internal {
+
+        _claimRewards();
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
@@ -371,11 +369,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         } else {
             uint256 delta = underlyingCurrent - underlyingWant;
 
-            if (currentAmount < delta) {
-                _claimRewards();
-                currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
-            }
-
             if (currentAmount >= delta) {
                 MultiCall[] memory calls = new MultiCall[](1);
                 calls[0] = MultiCall({
@@ -386,7 +379,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             } else {
                 uint256 convexToOutput = _calcConvexTokensToOutput(delta - currentAmount);
                 _withdrawFromConvex(convexToOutput);
-                
+
                 uint256 currentBalance = IERC20(primaryToken).balanceOf(creditAccount);
                 if (currentBalance < delta) {
                     delta = currentBalance;
@@ -454,11 +447,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256 valueDepositTokenToUnderlying = oracle.convert(amount, depositToken, primaryToken);
 
         if (valueDepositTokenToUnderlying >= underlyingWant) {
-            uint256 toSwap = FullMath.mulDiv(
-                amount,
-                underlyingWant,
-                valueDepositTokenToUnderlying
-            );
+            uint256 toSwap = FullMath.mulDiv(amount, underlyingWant, valueDepositTokenToUnderlying);
             MultiCall[] memory calls = new MultiCall[](0);
 
             uint256 finalAmount = oracle.convert(toSwap, depositToken, primaryToken);
@@ -544,8 +533,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         )
     {
         (allAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
+        allAssetsValue += _calculateClaimableRewards();
+        
         (, , uint256 borrowAmountWithInterestAndFees) = creditManager.calcCreditAccountAccruedInterest(creditAccount);
-        realValue = allAssetsValue - borrowAmountWithInterestAndFees + _calculateClaimableRewards();
+        realValue = allAssetsValue - borrowAmountWithInterestAndFees;
         realValueWithMargin = FullMath.mulDiv(realValue, marginalFactorD9, D9);
     }
 
