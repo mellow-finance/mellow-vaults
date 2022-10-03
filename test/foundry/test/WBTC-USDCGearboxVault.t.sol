@@ -143,6 +143,7 @@ contract GearboxWBTCTest is Test {
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
             minSlippageD9: 1000000,
+            minSmallPoolsSlippageD9: 20000000,
             minCurveSlippageD9: 50000000,
             uniswapRouter: address(router)
         });
@@ -508,7 +509,6 @@ contract GearboxWBTCTest is Test {
         deposit(500, address(this));
         deposit(200, address(this)); // 1900 USD in staking
 
-        changeSlippage(10**7);
         creditAccount = gearboxVault.creditAccount();
         gearboxVault.adjustPosition();
 
@@ -553,7 +553,6 @@ contract GearboxWBTCTest is Test {
     function testWithValueFallingAndRewardsCovering() public {
         deposit(500, address(this));
         deposit(200, address(this));
-        changeSlippage(10**7);
         gearboxVault.adjustPosition();
 
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);

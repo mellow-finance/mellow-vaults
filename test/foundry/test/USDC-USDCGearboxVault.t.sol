@@ -131,6 +131,7 @@ contract GearboxUSDCTest is Test {
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
             minSlippageD9: 100000000,
+            minSmallPoolsSlippageD9: 20000000,
             minCurveSlippageD9: 500000000,
             uniswapRouter: 0xE592427A0AEce92De3Edee1F18E0157C05861564
         });

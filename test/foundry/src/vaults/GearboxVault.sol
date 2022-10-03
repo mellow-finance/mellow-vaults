@@ -299,8 +299,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256 minSlippageD9
     ) internal view returns (uint256) {
         uint256 rateRAY = _calcRateRAY(toToken, fromToken);
-        uint256 amountInExpected = FullMath.mulDiv(amount, rateRAY, D27);
-        return FullMath.mulDiv(amountInExpected, D9 + minSlippageD9, D9);
+        uint256 amountInExpected = FullMath.mulDiv(amount, rateRAY, D27) + 1;
+        return FullMath.mulDiv(amountInExpected, D9 + minSlippageD9, D9) + 1;
     }
 
     function _addAllTokensAsCollateral(address[] memory tokens) internal {
@@ -473,17 +473,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address tokenFrom,
         address tokenTo,
         uint256 fee,
-        address adapter
+        address adapter,
+        uint256 slippage
     ) internal view returns (MultiCall memory) {
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedProtocolParams();
         uint256 rateRAY = _calcRateRAY(tokenFrom, tokenTo);
 
         IUniswapV3Adapter.ExactAllInputParams memory params = IUniswapV3Adapter.ExactAllInputParams({
             path: abi.encodePacked(tokenFrom, uint24(fee), tokenTo),
             deadline: block.timestamp + 900,
-            rateMinRAY: FullMath.mulDiv(rateRAY, D9 - protocolParams.minSlippageD9, D9)
+            rateMinRAY: FullMath.mulDiv(rateRAY, D9 - slippage, D9)
         });
 
         return
@@ -511,9 +509,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         calls = new MultiCall[](3);
 
-        calls[0] = _createUniswapMulticall(protocolParams.crv, weth, 10000, protocolParams.univ3Adapter);
-        calls[1] = _createUniswapMulticall(protocolParams.cvx, weth, 10000, protocolParams.univ3Adapter);
-        calls[2] = _createUniswapMulticall(weth, primaryToken, 500, protocolParams.univ3Adapter);
+        calls[0] = _createUniswapMulticall(protocolParams.crv, weth, 10000, protocolParams.univ3Adapter, protocolParams.minSmallPoolsSlippageD9);
+        calls[1] = _createUniswapMulticall(protocolParams.cvx, weth, 10000, protocolParams.univ3Adapter, protocolParams.minSmallPoolsSlippageD9);
+        calls[2] = _createUniswapMulticall(weth, primaryToken, 500, protocolParams.univ3Adapter, protocolParams.minSlippageD9);
 
         creditFacade.multicall(calls);
     }
@@ -534,7 +532,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     {
         (allAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
         allAssetsValue += _calculateClaimableRewards();
-        
+
         (, , uint256 borrowAmountWithInterestAndFees) = creditManager.calcCreditAccountAccruedInterest(creditAccount);
         realValue = allAssetsValue - borrowAmountWithInterestAndFees;
         realValueWithMargin = FullMath.mulDiv(realValue, marginalFactorD9, D9);
