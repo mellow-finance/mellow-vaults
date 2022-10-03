@@ -22,6 +22,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.minSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(delayedProtocolParams_.minSmallPoolsSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         require(delayedProtocolParams_.minCurveSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
@@ -50,6 +51,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     crv: address(0),
                     cvx: address(0),
                     minSlippageD9: 0,
+                    minSmallPoolsSlippageD9: 0,
                     minCurveSlippageD9: 0,
                     uniswapRouter: address(0)
                 });
@@ -101,6 +103,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.minSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(params.minSmallPoolsSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         require(params.minCurveSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
