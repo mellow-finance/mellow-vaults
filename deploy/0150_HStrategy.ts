@@ -175,6 +175,11 @@ const setupStrategy = async (
         `Minting Params:`,
         map((x) => x.toString(), mintingParams)
     );
+
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("updateSwapFees", [500])
+    );
+    log(`Swap fees:`, "500");
     log("Transferring ownership to mStrategyAdmin");
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");

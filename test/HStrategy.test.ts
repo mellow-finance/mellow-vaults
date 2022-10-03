@@ -282,6 +282,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         [mintingParams]
                     )
                 );
+                txs.push(
+                    this.subject.interface.encodeFunctionData("updateSwapFees", [
+                        3000,
+                    ])
+                );
                 await this.subject
                     .connect(this.mStrategyAdmin)
                     .functions["multicall"](txs);

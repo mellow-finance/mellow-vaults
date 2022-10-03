@@ -35,6 +35,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     INonfungiblePositionManager private immutable _positionManager;
     IUniswapV3Pool public pool;
+    uint24 public swapFees;
     UniV3Helper private immutable _uniV3Helper;
     HStrategyHelper private immutable _hStrategyHelper;
     Interval private shortInterval;
@@ -325,6 +326,16 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         );
         ratioParams = newRatioParams;
         emit UpdateRatioParams(tx.origin, msg.sender, newRatioParams);
+    }
+
+    /// @notice updates swap fees for uniswapV3Pool swaps
+    /// @param newSwapFees the new parameters
+    function updateSwapFees(uint24 newSwapFees) external {
+        _requireAdmin();
+        address poolForSwaps = IUniswapV3Factory(_positionManager.factory()).getPool(tokens[0], tokens[1], newSwapFees);
+        require(poolForSwaps != address(0), ExceptionsLibrary.INVARIANT);
+        swapFees = newSwapFees;
+        emit UpdateSwapFees(tx.origin, msg.sender, newSwapFees);
     }
 
     /// @notice manual pulling tokens from vault. Can be called only by admin
@@ -719,7 +730,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokens_[tokenInIndex],
                 tokenOut: tokens_[tokenInIndex ^ 1],
-                fee: pool.fee(),
+                fee: swapFees,
                 recipient: address(erc20Vault_),
                 deadline: restrictions.deadline,
                 amountIn: amountIn,
@@ -820,4 +831,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param sender Sender of the call (msg.sender)
     /// @param ratioParams Updated ratioParams
     event UpdateRatioParams(address indexed origin, address indexed sender, RatioParams ratioParams);
+
+    /// @notice Emitted when new swap fees for UniV3Pool swaps are set.
+    /// @param newSwapFees new swap fee
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event UpdateSwapFees(address indexed origin, address indexed sender, uint24 newSwapFees);
 }

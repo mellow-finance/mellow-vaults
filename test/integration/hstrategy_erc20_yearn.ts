@@ -289,6 +289,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             [mintingParams]
                         )
                     );
+                    txs.push(
+                        this.subject.interface.encodeFunctionData(
+                            "updateSwapFees",
+                            [3000]
+                        )
+                    );
                     await this.subject
                         .connect(this.mStrategyAdmin)
                         .functions["multicall"](txs);
@@ -415,16 +421,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
             return result;
         };
 
-        const getSpotPriceX96 = async () => {
-            let { sqrtPriceX96 } = await this.pool.slot0();
-            return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
-        };
-
         describe("#rebalance", () => {
-            const intervals = [
-                [600, "small"],
-                [60000, "wide"],
-            ];
+            const intervals = [[600, "small"]];
             intervals.forEach((data) => {
                 it(`works correctly for ${data[1]} interval`, async () => {
                     const centralTick = await getAverageTick();
@@ -525,7 +523,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         const val = x.sub(y).abs();
                         const deltaX = x.mul(delta).div(100);
                         const deltaY = y.mul(delta).div(100);
-                        const maxDelta = deltaX.lt(deltaY) ? deltaY : deltaX;
+                        let maxDelta = deltaX.lt(deltaY) ? deltaY : deltaX;
+                        maxDelta = maxDelta.add(1000);
                         expect(val.lte(maxDelta)).to.be.true;
                     };
 
@@ -625,14 +624,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             .sub(uniV3Capital)
                             .sub(erc20Capital);
 
-                        const expectedErc20Token0Amount = erc20Capital
-                            .mul(wxD)
-                            .div(wxD.add(wyD));
-                        const expectedErc20Token1Amount = erc20Capital
-                            .mul(wyD)
-                            .div(wxD.add(wyD))
-                            .mul(spotPriceX96)
-                            .div(Q96);
+                        const currentUniV3Capital = uniV3Tvl[0].add(
+                            uniV3Tvl[1].mul(Q96).div(spotPriceX96)
+                        );
                         const expectedMoneyToken0Amount = moneyCapital
                             .mul(wxD)
                             .div(wxD.add(wyD));
@@ -641,8 +635,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             .div(wxD.add(wyD))
                             .mul(spotPriceX96)
                             .div(Q96);
-                        compare(expectedErc20Token0Amount, erc20Tvl[0], 20);
-                        compare(expectedErc20Token1Amount, erc20Tvl[1], 1);
+
+                        compare(uniV3Capital, currentUniV3Capital, 3);
                         compare(expectedMoneyToken0Amount, moneyTvl[0], 1);
                         compare(expectedMoneyToken1Amount, moneyTvl[1], 1);
                     };
@@ -651,7 +645,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     for (var i = 0; i < interationsNumber; i++) {
                         var doFullRebalance = i % 2 == 0;
                         if (doFullRebalance) {
-                            if (Math.random() < 0.5) {
+                            if (i & 2) {
                                 const initialTick = await getSpotTick();
                                 var currentTick = initialTick;
                                 while (currentTick - initialTick >= -100) {
@@ -675,7 +669,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                                 }
                             }
                         } else {
-                            if (Math.random() < 0.5) {
+                            if (i & 2) {
                                 await push(
                                     BigNumber.from(10).pow(11).mul(5),
                                     "USDC"
