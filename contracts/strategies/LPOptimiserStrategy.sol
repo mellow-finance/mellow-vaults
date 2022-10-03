@@ -131,10 +131,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @return int256 The tick in wad
     function convertFixedRateToTick(int256 fixedRateWad) public view returns (int256) {
         _requireAtLeastOperator();
-        return -PRBMathSD59x18.div(
-            PRBMathSD59x18.log2(int256(fixedRateWad)),
-            PRBMathSD59x18.log2(int256(LOG_BASE))
-        );
+        return -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(fixedRateWad)), PRBMathSD59x18.log2(int256(LOG_BASE)));
     }
 
     /// @notice Set new optimal tick range based on current twap tick given that we are using the offchain moving average of the fixed rate in the current iteration
