@@ -937,5 +937,29 @@ contract GearboxWBTCTest is Test {
         vm.warp(block.timestamp + 86400 * 3); // only 3 days
         invokeExecution();
     }
+
+    function testDepositExchange() public {
+        gearboxVault.updateTargetMarginalFactor(2000000000);
+        deposit(500, address(this));
+        deposit(600, address(this));
+        uint256 amountPrev = tvl();
+        gearboxVault.adjustPosition();
+
+        creditAccount = gearboxVault.creditAccount();
+
+        uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+
+        vm.warp(block.timestamp + 7200 * YEAR);
+        console.log(tvl());
+        assertTrue(tvl() < 600 * satoshiOfUsdc && tvl() > 500 * satoshiOfUsdc);
+
+        uint256 amount = tvl();
+
+        gearboxVault.adjustPosition();
+        assertTrue(isClose(IERC20(wbtc).balanceOf(creditAccount), amount, 20));
+
+        uint256 convexFantomAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+        assertTrue(isClose(convexFantomBalance, convexFantomAfter * 3, 20)); // roughly in convex 1600 -> 550 usd
+    }
     
 }

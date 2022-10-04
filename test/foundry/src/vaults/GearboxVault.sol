@@ -15,6 +15,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../external/Cvx.sol";
+import "forge-std/console2.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -239,6 +240,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(_isApprovedOrOwner(msg.sender));
         require(marginalFactorD9_ >= D9, ExceptionsLibrary.INVALID_VALUE);
 
+        if (creditAccount == address(0)) {
+            marginalFactorD9 = marginalFactorD9_;
+            return;
+        }
+
         (, , uint256 allAssetsValue) = _calculateDesiredTotalValue();
         marginalFactorD9 = marginalFactorD9_;
         (, uint256 realValueWithMargin, ) = _calculateDesiredTotalValue();
@@ -448,7 +454,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         if (valueDepositTokenToUnderlying > underlyingWant) {
             uint256 toSwap = FullMath.mulDiv(amount, valueDepositTokenToUnderlying - underlyingWant, valueDepositTokenToUnderlying);
-            MultiCall[] memory calls = new MultiCall[](0);
+            MultiCall[] memory calls = new MultiCall[](1);
 
             uint256 finalAmount = oracle.convert(toSwap, depositToken, primaryToken);
 
@@ -462,8 +468,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
             calls[0] = MultiCall({ // swap deposit to primary token
                 target: protocolParams.univ3Adapter,
-                callData: abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector, inputParams)
+                callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
             });
+
+            { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
+                ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
+                router.exactInput(inputParams);
+                return;
+            }
 
             creditFacade.multicall(calls);
         }
