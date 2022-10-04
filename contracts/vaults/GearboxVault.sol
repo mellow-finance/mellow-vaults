@@ -239,6 +239,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(_isApprovedOrOwner(msg.sender));
         require(marginalFactorD9_ >= D9, ExceptionsLibrary.INVALID_VALUE);
 
+        if (creditAccount == address(0)) {
+            marginalFactorD9 = marginalFactorD9_;
+            return;
+        }
+
         (, , uint256 allAssetsValue) = _calculateDesiredTotalValue();
         marginalFactorD9 = marginalFactorD9_;
         (, uint256 realValueWithMargin, ) = _calculateDesiredTotalValue();
@@ -440,8 +445,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256 valueDepositTokenToUnderlying = oracle.convert(amount, depositToken, primaryToken);
 
         if (valueDepositTokenToUnderlying > underlyingWant) {
-            uint256 toSwap = FullMath.mulDiv(amount, valueDepositTokenToUnderlying - underlyingWant, valueDepositTokenToUnderlying);
-            MultiCall[] memory calls = new MultiCall[](0);
+            uint256 toSwap = FullMath.mulDiv(
+                amount,
+                valueDepositTokenToUnderlying - underlyingWant,
+                valueDepositTokenToUnderlying
+            );
+            MultiCall[] memory calls = new MultiCall[](1);
 
             uint256 finalAmount = oracle.convert(toSwap, depositToken, primaryToken);
 
@@ -455,7 +464,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
             calls[0] = MultiCall({ // swap deposit to primary token
                 target: protocolParams.univ3Adapter,
-                callData: abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector, inputParams)
+                callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
             });
 
             creditFacade.multicall(calls);
