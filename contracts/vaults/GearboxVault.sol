@@ -330,7 +330,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         ).delayedProtocolParams();
         ICreditFacade creditFacade_ = creditFacade;
 
-        _checkDepositExchange(underlyingWant);
+        _checkDepositExchange(FullMath.mulDiv(underlyingWant, D9, marginalFactorD9));
         uint256 currentAmount = IERC20(primaryToken).balanceOf(creditAccount);
 
         address lp_token = ICurveV1Adapter(curveAdapter).lp_token();
@@ -439,8 +439,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         uint256 valueDepositTokenToUnderlying = oracle.convert(amount, depositToken, primaryToken);
 
-        if (valueDepositTokenToUnderlying >= underlyingWant) {
-            uint256 toSwap = FullMath.mulDiv(amount, underlyingWant, valueDepositTokenToUnderlying);
+        if (valueDepositTokenToUnderlying > underlyingWant) {
+            uint256 toSwap = FullMath.mulDiv(amount, valueDepositTokenToUnderlying - underlyingWant, valueDepositTokenToUnderlying);
             MultiCall[] memory calls = new MultiCall[](0);
 
             uint256 finalAmount = oracle.convert(toSwap, depositToken, primaryToken);
