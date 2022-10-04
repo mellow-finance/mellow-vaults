@@ -7,7 +7,7 @@ import {
     setupVault,
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "ethers";
 import { map } from "ramda";
 
 type MoneyVault = "Aave" | "Yearn";
@@ -88,7 +88,9 @@ const setupStrategy = async (
     tokens: string[],
     deploymentName: string,
     mintingParamToken0: BigNumber,
-    mintingParamToken1: BigNumber
+    mintingParamToken1: BigNumber,
+    domainLowerTick: BigNumber,
+    domainUpperTick: BigNumber
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
@@ -105,7 +107,18 @@ const setupStrategy = async (
     await setupCardinality(hre, tokens, fee);
     const params = [tokens, erc20Vault, moneyVault, uniV3Vault, fee, deployer];
     const address = await hStrategy.callStatic.createStrategy(...params);
-    await hStrategy.createStrategy(...params);
+    await execute(
+        hStrategyName,
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        },
+        "createStrategy",
+        ...params
+    );
+
     await deployments.save(deploymentName, {
         abi: (await deployments.get(hStrategyName)).abi,
         address,
@@ -119,8 +132,8 @@ const setupStrategy = async (
     const strategyParams = {
         halfOfShortInterval: 900,
         tickNeighborhood: 100,
-        domainLowerTick: 23400,
-        domainUpperTick: 29700,
+        domainLowerTick: domainLowerTick.toNumber(),
+        domainUpperTick: domainUpperTick.toNumber(),
     };
     const txs: string[] = [];
     txs.push(
@@ -183,29 +196,77 @@ const setupStrategy = async (
     log("Transferring ownership to mStrategyAdmin");
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    const adminDelegateRole = await read(
+        "ProtocolGovernance",
+        "ADMIN_DELEGATE_ROLE"
+    );
+    const operatorRole = await read("ProtocolGovernance", "OPERATOR");
+
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            adminDelegateRole,
+            deployer,
+        ])
+    );
+
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
             adminRole,
             mStrategyAdmin,
         ])
     );
+
+    const hStrategyOperator = "";
+    if (hStrategyOperator != "") {
+        txs.push(
+            hStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+                operatorRole,
+                hStrategyOperator,
+            ])
+        );
+    }
+
+    // renounce roles
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
+            operatorRole,
+            deployer,
+        ])
+    );
+
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
+            adminDelegateRole,
+            deployer,
+        ])
+    );
+
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
             adminRole,
             deployer,
         ])
     );
-    await execute(
-        deploymentName,
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
-            ...TRANSACTION_GAS_LIMITS,
-        },
-        "multicall",
-        txs
-    );
+
+    while (true) {
+        try {
+            await execute(
+                deploymentName,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS,
+                },
+                "multicall",
+                txs
+            );
+            break;
+        } catch {
+            log("trying to do multicall again");
+            continue;
+        }
+    }
 };
 
 const buildHStrategy = async (
@@ -214,10 +275,12 @@ const buildHStrategy = async (
     tokens: any,
     deploymentName: any,
     mintingParamToken0: BigNumber,
-    mintingParamToken1: BigNumber
+    mintingParamToken1: BigNumber,
+    domainLowerTick: BigNumber,
+    domainUpperTick: BigNumber
 ) => {
     const { deployments, getNamedAccounts } = hre;
-    const { read, get } = deployments;
+    const { log, read, execute, get } = deployments;
     const { deployer, mStrategyTreasury } = await getNamedAccounts();
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
@@ -232,9 +295,6 @@ const buildHStrategy = async (
 
     const { address: uniV3Helper } = await hre.ethers.getContract(
         "UniV3Helper"
-    );
-    const { address: hStrategyHelper } = await hre.ethers.getContract(
-        "HStrategyHelper"
     );
 
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
@@ -273,8 +333,27 @@ const buildHStrategy = async (
         tokens,
         deploymentName,
         mintingParamToken0,
-        mintingParamToken1
+        mintingParamToken1,
+        domainLowerTick,
+        domainUpperTick
     );
+
+    const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
+    for (let nft of [erc20VaultNft, yearnVaultNft, uniV3VaultNft]) {
+        log("Approve nft for vault registry: " + nft.toString());
+        await execute(
+            "VaultRegistry",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+                ...TRANSACTION_GAS_LIMITS,
+            },
+            "approve",
+            erc20RootVaultGovernance.address,
+            nft
+        );
+    }
 
     const strategy = await get(deploymentName);
 
@@ -298,18 +377,24 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
             deploymentName,
             mintingParamToken0,
             mintingParamToken1,
+            domainLowerTick,
+            domainUpperTick,
         ] of [
             [
                 [weth, usdc],
                 `HStrategy${kind}_WETH_USDC`,
-                BigNumber.from(10).pow(9),
-                BigNumber.from(1000),
+                BigNumber.from("1000000000"),
+                BigNumber.from("10000"),
+                BigNumber.from(189000),
+                BigNumber.from(212400),
             ],
             [
                 [weth, wbtc],
                 `HStrategy${kind}_WETH_WBTC`,
-                BigNumber.from(10).pow(9),
-                BigNumber.from(1000),
+                BigNumber.from("1000000000"),
+                BigNumber.from("50000"),
+                BigNumber.from(252900),
+                BigNumber.from(257400),
             ],
         ]) {
             await buildHStrategy(
@@ -318,7 +403,9 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
                 tokens,
                 deploymentName,
                 mintingParamToken0 as BigNumber,
-                mintingParamToken1 as BigNumber
+                mintingParamToken1 as BigNumber,
+                domainLowerTick as BigNumber,
+                domainUpperTick as BigNumber
             );
         }
     };
