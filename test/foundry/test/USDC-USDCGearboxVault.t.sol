@@ -37,6 +37,9 @@ contract GearboxUSDCTest is Test {
     ICurveV1Adapter curveAdapter;
     IConvexV1BaseRewardPoolAdapter convexAdapter;
 
+    ERC20RootVaultGovernance governanceA;
+    uint256 nftStart;
+
     uint256 YEAR = 365 * 24 * 60 * 60;
 
     function onERC721Received(
@@ -144,7 +147,7 @@ contract GearboxUSDCTest is Test {
             oracle: IOracle(oracle)
         });
         
-        ERC20RootVaultGovernance governanceA = new ERC20RootVaultGovernance(internalParamsA, delayedParamsA, IERC20RootVaultHelper(helper));
+        governanceA = new ERC20RootVaultGovernance(internalParamsA, delayedParamsA, IERC20RootVaultHelper(helper));
         ERC20VaultGovernance governanceB = new ERC20VaultGovernance(internalParamsB);
         GearboxVaultGovernance governanceC = new GearboxVaultGovernance(internalParamsC, delayedParams);
         
@@ -176,7 +179,7 @@ contract GearboxUSDCTest is Test {
             withdrawCallbackAddress: address(0)
         });
 
-        uint256 nftStart = registry.vaultsCount() + 1;
+        nftStart = registry.vaultsCount() + 1;
 
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
             primaryToken: usdc,
