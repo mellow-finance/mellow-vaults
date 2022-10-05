@@ -124,6 +124,10 @@ contract VoltzHelper {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
+    /// @notice Initializes the contract
+    /// @dev It requires the vault to be already initialized. Can
+    /// @dev only be called by the Voltz Vault Governance
+    /// @param vault_ The Voltz Vault that this contract is linked to
     function initialize(address vault_) external onlyGovernance {
         _vault = VoltzVault(vault_);
 
@@ -141,18 +145,33 @@ contract VoltzHelper {
         _estimatedAPYDecimalDeltaWad = _vault.estimatedAPYDecimalDeltaWad();
     }
 
+    /// @notice Sets the multiplier used to decide how much margin is
+    /// @notice left in partially unwound positions on Voltz (in wad)
     function setMarginMultiplierPostUnwindWad(uint256 marginMultiplierPostUnwindWad_) external onlyVault {
         _marginMultiplierPostUnwindWad = marginMultiplierPostUnwindWad_;
     }
 
+    /// @notice Sets the lookback window used to compute the historical APY that
+    /// @notice estimates the APY from current to the end of Voltz pool (in seconds)
     function setLookbackWindow(uint256 lookbackWindowInSeconds_) external onlyVault {
         _lookbackWindowInSeconds = lookbackWindowInSeconds_;
     }
 
+    /// @notice Sets the decimal delta used to compute lower and upper limits of
+    /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
     function setEstimatedAPYDecimalDeltaWad(uint256 estimatedAPYDecimalDeltaWad_) external onlyVault {
         _estimatedAPYDecimalDeltaWad = estimatedAPYDecimalDeltaWad_;
     }
 
+    /// @notice Calculates the TVL values
+    /// @param aggregatedInactiveFixedTokenBalance Sum of fixed token balances of all
+    /// positions in the trackedPositions array, apart from the balance of the currently
+    /// active position
+    /// @param aggregatedInactiveVariableTokenBalance Sum of variable token balances of all
+    /// positions in the trackedPositions array, apart from the balance of the currently
+    /// active position
+    /// @param aggregatedInactiveMargin Sum of margins of all positions in the trackedPositions
+    /// array apart from the margin of the currently active position
     function calculateTVL(
         int256 aggregatedInactiveFixedTokenBalance,
         int256 aggregatedInactiveVariableTokenBalance,
@@ -203,6 +222,11 @@ contract VoltzHelper {
         }
     }
 
+    /// @notice Calculates the margin that must be kept in the
+    /// @notice current position of the Vault
+    /// @param currentPositionInfo_ The Info of the current position
+    /// @return trackPosition Whether the current position must be tracked or not
+    /// @return marginToKeep Margin that must be kept in the current position
     function getMarginToKeep(Position.Info memory currentPositionInfo_)
         external
         returns (bool trackPosition, uint256 marginToKeep)
@@ -243,12 +267,15 @@ contract VoltzHelper {
         }
     }
 
+    /// @notice Returns Position.Info of current position
     function getVaultPosition(VoltzVault.TickRange memory position) external returns (Position.Info memory) {
         return _marginEngine.getPosition(address(_vault), position.tickLower, position.tickUpper);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
 
+    /// @notice Estimates the lower and upper variable factors from the start
+    /// @notice to the end of the pool
     function _estimateVariableFactorLowerUpper()
         internal
         view
