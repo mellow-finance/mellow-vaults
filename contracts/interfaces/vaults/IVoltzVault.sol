@@ -5,7 +5,6 @@ import "./IIntegrationVault.sol";
 import "../external/voltz/IMarginEngine.sol";
 import "../external/voltz/IPeriphery.sol";
 import "../external/voltz/IVAMM.sol";
-import "../external/voltz/IPeriphery.sol";
 import "../external/voltz/rate_oracles/IRateOracle.sol";
 
 interface IVoltzVault is IIntegrationVault {
@@ -76,6 +75,8 @@ interface IVoltzVault is IIntegrationVault {
         uint256 nft_,
         address[] memory vaultTokens_,
         address marginEngine_,
+        address periphery_,
+        address voltzHelper_,
         InitializeParams memory initializeParams
     ) external;
 

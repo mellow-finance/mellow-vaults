@@ -27,8 +27,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let voltzVaultNft = startNft;
     let erc20VaultNft = startNft + 1;
 
+    const voltzHelper = (await ethers.getContract("VoltzHelper")).address;
+
     await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
-        createVaultArgs: [tokens, deployer, marginEngine, {
+        createVaultArgs: [tokens, deployer, marginEngine, voltzHelper, {
             tickLower: 0,
             tickUpper: 60,
             leverageWad: BigNumber.from("10000000000000000000"), // 10
