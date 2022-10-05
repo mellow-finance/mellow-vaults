@@ -101,10 +101,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     let voltzVaultNft = startNft;
                     let erc20VaultNft = startNft + 1;
 
-                    const voltzHelper = (
-                        await ethers.getContract("VoltzHelper")
-                    ).address;
-
                     await setupVault(
                         hre,
                         voltzVaultNft,
@@ -114,7 +110,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                                 tokens,
                                 this.deployer.address,
                                 this.marginEngine,
-                                voltzHelper,
                                 {
                                     tickLower: LOW_TICK,
                                     tickUpper: HIGH_TICK,

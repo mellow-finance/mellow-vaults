@@ -111,15 +111,11 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 this.initialTickLow = currentTick - (currentTick % 60) - 600;
                 this.initialTickHigh = currentTick - (currentTick % 60) + 600;
 
-                const voltzHelper = (await ethers.getContract("VoltzHelper"))
-                    .address;
-
                 await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
                     createVaultArgs: [
                         tokens,
                         this.deployer.address,
                         marginEngine,
-                        voltzHelper,
                         {
                             tickLower: this.initialTickLow,
                             tickUpper: this.initialTickHigh,
