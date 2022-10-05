@@ -383,16 +383,16 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
             [
                 [weth, usdc],
                 `HStrategy${kind}_WETH_USDC`,
-                BigNumber.from("1000000000"),
-                BigNumber.from("10000"),
+                BigNumber.from("10000"), // usdc
+                BigNumber.from("1000000000"), // weth
                 BigNumber.from(189000),
                 BigNumber.from(212400),
             ],
             [
                 [weth, wbtc],
                 `HStrategy${kind}_WETH_WBTC`,
-                BigNumber.from("1000000000"),
-                BigNumber.from("50000"),
+                BigNumber.from("50000"), // wbtc
+                BigNumber.from("1000000000"), // weth
                 BigNumber.from(252900),
                 BigNumber.from(257400),
             ],
