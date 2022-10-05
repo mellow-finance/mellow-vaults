@@ -9,7 +9,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, voltzPeriphery } = await getNamedAccounts();
+    const { deployer, voltzPeriphery, marginEngine } = await getNamedAccounts();
     const { address: singleton } = await deploy("VoltzVault", {
         from: deployer,
         args: [],
@@ -18,7 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ...TRANSACTION_GAS_LIMITS,
     });
 
-    await deploy("VoltzVaultGovernance", {
+    const { address: voltzVaultGovernance } = await deploy("VoltzVaultGovernance", {
         from: deployer,
         args: [
             {
@@ -30,6 +30,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 periphery: voltzPeriphery,
             },
         ],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
+
+    await deploy("VoltzHelper", {
+        from: deployer,
+        contract: "VoltzHelper",
+        args: [voltzVaultGovernance],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
