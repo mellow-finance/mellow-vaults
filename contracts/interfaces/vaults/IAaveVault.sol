@@ -8,6 +8,9 @@ interface IAaveVault is IIntegrationVault {
     /// @notice Reference to Aave protocol lending pool.
     function lendingPool() external view returns (ILendingPool);
 
+    /// @notice Update all tvls to current aToken balances.
+    function updateTvls() external;
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
