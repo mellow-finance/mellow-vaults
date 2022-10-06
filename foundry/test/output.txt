@@ -1,0 +1,85 @@
+yarn run v1.22.18
+$ forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15550000 --match-contract=HBacktest
+Compiling 3 files with 0.8.9
+Solc 0.8.9 finished in 9.15s
+Compiler run successful (with warnings)
+[33mwarning[5667]: [0m[33mWarning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/helpers/utils/UniV3Helper.sol:157:9:
+    |
+157 |         int24 tick,
+    |         ^^^^^^^^^^
+
+[0m
+
+[33mwarning[5667]: [0m[33mWarning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/helpers/utils/UniV3Helper.sol:158:9:
+    |
+158 |         address pool_,
+    |         ^^^^^^^^^^^^^
+
+[0m
+
+[33mwarning[5667]: [0m[33mWarning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/helpers/utils/UniV3Helper.sol:159:9:
+    |
+159 |         uint32 secondsAgo
+    |         ^^^^^^^^^^^^^^^^^
+
+[0m
+
+[33mwarning[2072]: [0m[33mWarning: Unused local variable.
+   --> test/HStrategyBacktest.t.sol:206:9:
+    |
+206 |         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[0m
+
+[33mwarning[2072]: [0m[33mWarning: Unused local variable.
+   --> test/HStrategyBacktest.t.sol:316:9:
+    |
+316 |         uint256 balance = IERC20(tokenIn).balanceOf(sender);
+    |         ^^^^^^^^^^^^^^^
+
+[0m
+
+[33mwarning[2018]: [0m[33mWarning: Function state mutability can be restricted to pure
+   --> test/helpers/utils/UniV3Helper.sol:156:5:
+    |
+156 |     function getTickDeviationForTimeSpan(
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+[0m
+
+[33mwarning[2018]: [0m[33mWarning: Function state mutability can be restricted to view
+  --> test/HStrategyBacktest.t.sol:61:5:
+   |
+61 |     function tvl() public returns (uint256 tvlA, uint256 tvlB) {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+[0m
+
+[33mwarning[2018]: [0m[33mWarning: Function state mutability can be restricted to pure
+  --> test/HStrategyBacktest.t.sol:72:5:
+   |
+72 |     function ethToUsd(uint256 amount, uint256 price) public returns (uint256) {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+[0m
+
+[33mwarning[2018]: [0m[33mWarning: Function state mutability can be restricted to view
+   --> test/HStrategyBacktest.t.sol:355:5:
+    |
+355 |     function getTick() public returns (int24) {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+[0m
+
+[33mwarning[2018]: [0m[33mWarning: Function state mutability can be restricted to view
+   --> test/HStrategyBacktest.t.sol:361:5:
+    |
+361 |     function getPool() public returns (IUniswapV3Pool) {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+[0m
+

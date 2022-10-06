@@ -61,6 +61,8 @@ interface IIntegrationVault is IVault {
     /// @return actualTokenAmounts Amounts reclaimed
     function reclaimTokens(address[] memory tokens) external returns (uint256[] memory actualTokenAmounts);
 
+    function supportsInterface(bytes4) external returns (bool);
+
     /// @notice Execute one of whitelisted calls.
     /// @dev Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
     /// Strategy is approved address for the vault NFT.
