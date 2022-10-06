@@ -1,7 +1,7 @@
 yarn run v1.22.18
 $ forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15550000 --match-contract=HBacktest
 Compiling 3 files with 0.8.9
-Solc 0.8.9 finished in 9.15s
+Solc 0.8.9 finished in 8.21s
 Compiler run successful (with warnings)
 [33mwarning[5667]: [0m[33mWarning: Unused function parameter. Remove or comment out the variable name to silence this warning.
    --> test/helpers/utils/UniV3Helper.sol:157:9:
