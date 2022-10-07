@@ -192,7 +192,9 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         if (_withdrawalRequests[msg.sender] > lpTokenAmount) {
             _withdrawalRequests[msg.sender] -= lpTokenAmount;
+            _totalLpWitdrawalRequests -= lpTokenAmount;
         } else {
+            _totalLpWitdrawalRequests -= _withdrawalRequests[msg.sender];
             _withdrawalRequests[msg.sender] = 0;
         }
 
