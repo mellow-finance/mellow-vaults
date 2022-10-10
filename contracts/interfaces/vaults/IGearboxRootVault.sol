@@ -16,19 +16,11 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
         uint256 nft_,
         address[] memory vaultTokens_,
         address strategy_,
-        uint256[] memory subvaultNfts_,
-        IERC20RootVaultHelper helper_
+        uint256[] memory subvaultNfts_
     ) external;
 
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
-
-    /// @notice The timestamp of last updating totalWithdrawnAmounts array
-    function totalWithdrawnAmountsTimestamp() external view returns (uint64);
-
-    /// @notice Returns value from totalWithdrawnAmounts array by _index
-    /// @param _index The index at which the value will be returned
-    function totalWithdrawnAmounts(uint256 _index) external view returns (uint256);
 
     /// @notice LP parameter that controls the charge in performance fees
     function lpPriceHighWaterMarkD18() external view returns (uint256);
@@ -59,18 +51,12 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
 
     /// @notice The function of withdrawing the amount of tokens in exchange
     /// @param to Address to which the withdrawal will be sent
-    /// @param lpTokenAmount LP token amount, that requested for withdraw
-    /// @param minTokenAmounts Array of minmal remining wtoken amounts after withdrawal
     /// @param vaultsOptions Options of vaults
     /// @return actualTokenAmounts Arrays of actual token amounts after withdrawal
     function withdraw(
         address to,
-        uint256 lpTokenAmount,
-        uint256[] memory minTokenAmounts,
         bytes[] memory vaultsOptions
     ) external returns (uint256[] memory actualTokenAmounts);
-
-    function currentWithdrawalRequested(address addr) external view returns (uint256 totalAmountRequested);
 
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested);
 

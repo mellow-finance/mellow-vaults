@@ -25,13 +25,13 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @inheritdoc IGearboxRootVault
     uint64 public lastFeeCharge;
     /// @inheritdoc IGearboxRootVault
-    uint64 public totalWithdrawnAmountsTimestamp;
-    /// @inheritdoc IGearboxRootVault
-    uint256[] public totalWithdrawnAmounts;
-    /// @inheritdoc IGearboxRootVault
     uint256 public lpPriceHighWaterMarkD18;
+
     EnumerableSet.AddressSet private _depositorsAllowlist;
-    IERC20RootVaultHelper public helper;
+
+    IIntegrationVault public gearboxVault;
+    IIntegrationVault public erc20Vault;
+    address public primaryToken;
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IGearboxRootVault
@@ -72,16 +72,16 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 nft_,
         address[] memory vaultTokens_,
         address strategy_,
-        uint256[] memory subvaultNfts_,
-        IERC20RootVaultHelper helper_
+        uint256[] memory subvaultNfts_
     ) external {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         _initialize(vaultTokens_, nft_, strategy_, subvaultNfts_);
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
-        uint256 len = vaultTokens_.length;
-        totalWithdrawnAmounts = new uint256[](len);
+
+        erc20Vault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(0));
+        gearboxVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(1));
+
         lastFeeCharge = uint64(block.timestamp);
-        helper = helper_;
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -95,13 +95,9 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
-        address[] memory tokens = _vaultTokens;
-        uint256 supply = totalSupply;
 
-        (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
-        _chargeFees(thisNft, minTvl, supply, tokens);
-        supply = totalSupply;
+
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
@@ -109,27 +105,14 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
-        uint256 preLpAmount;
-        uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
-        {
-            bool isSignificantTvl;
-            (preLpAmount, isSignificantTvl) = _getLpAmount(maxTvl, tokenAmounts, supply);
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                normalizedAmounts[i] = _getNormalizedAmount(
-                    maxTvl[i],
-                    tokenAmounts[i],
-                    preLpAmount,
-                    supply,
-                    isSignificantTvl,
-                    _pullExistentials[i]
-                );
-                IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
-            }
-        }
 
-        actualTokenAmounts = _pushIntoGearbox(normalizedAmounts, vaultOptions);
+        (uint256[] memory minTvl, ) = tvl();
+        _chargeFees(thisNft, minTvl[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
-        (uint256 lpAmount, ) = _getLpAmount(maxTvl, actualTokenAmounts, supply);
+        uint256 supply = totalSupply - totalLpTokensWaitingWithdrawal;
+
+        uint256 lpAmount = FullMath.mulDiv(minTvl[0], tokenAmounts[0], supply);
+
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
@@ -137,241 +120,128 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
 
+        actualTokenAmounts = _pushIntoGearbox(tokenAmounts[0], vaultOptions);
         _mint(msg.sender, lpAmount);
-
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            if (normalizedAmounts[i] > actualTokenAmounts[i]) {
-                IERC20(_vaultTokens[i]).safeTransfer(msg.sender, normalizedAmounts[i] - actualTokenAmounts[i]);
-            }
-        }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
-    mapping(address => uint256) private _withdrawalRequests;
-    mapping(address => uint256) private _lastRequestTimestamp;
-    uint256 private _beforeLastWithdrawalsExecutionTimestamp;
-    uint256 private _lastWithdrawalsExecutionTimestamp;
-    uint256 private _totalLpWitdrawalRequests;
-    uint256 private _priceForLpTokenD18;
+    uint256 currentEpoch = 1;
+
+    mapping(address => uint256) public primaryTokensToWithdraw;
+    mapping(address => uint256) public lpTokensToWithdraw;
+    mapping(address => uint256) public withdrawalRequests;
+    mapping(address => uint256) public latestRequestEpoch;
+
+    mapping(uint256 => uint256) public epochToPriceForLpTokenD18;
+
+    uint256 totalCurrentEpochLpWitdrawalRequests;
+    uint256 totalLpTokensWaitingWithdrawal;
+    uint256 lastEpochChangeTimestamp;
 
     /// @inheritdoc IGearboxRootVault
-    function currentWithdrawalRequested(address addr) external view returns (uint256 totalAmountRequested) {
-        if (_lastRequestTimestamp[addr] <= _lastWithdrawalsExecutionTimestamp) {
-            return 0;
+    function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRegistered) {
+
+        uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
+
+        if (currentEpoch == userLatestRequestEpoch || userLatestRequestEpoch == 0) {
+            uint256 senderBalance = balanceOf[msg.sender] - lpTokensToWithdraw[msg.sender] - withdrawalRequests[msg.sender];
+            if (lpTokenAmount > senderBalance) {
+                lpTokenAmount = senderBalance;
+            }
+
+            withdrawalRequests[msg.sender] += lpTokenAmount;
+            latestRequestEpoch[msg.sender] = currentEpoch;
         }
-        return _withdrawalRequests[addr];
+        else {
+
+            _processHangingWithdrawal(msg.sender, false);
+
+            uint256 senderBalance = balanceOf[msg.sender] - lpTokensToWithdraw[msg.sender];
+            if (lpTokenAmount > senderBalance) {
+                lpTokenAmount = senderBalance;
+            }
+
+            withdrawalRequests[msg.sender] = lpTokenAmount;
+            latestRequestEpoch[msg.sender] = currentEpoch;
+        }
+
+        totalCurrentEpochLpWitdrawalRequests += lpTokenAmount;
+        emit WithdrawalRegistered(msg.sender, lpTokenAmount);
+        return lpTokenAmount;
     }
 
     /// @inheritdoc IGearboxRootVault
-    function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested) {
-        uint256 existingRequests = 0;
+    function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRemained) {
+        require(latestRequestEpoch[msg.sender] == currentEpoch, ExceptionsLibrary.DISABLED);
 
-        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.INVARIANT);
-
-        if (_lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp) {
-            existingRequests = _withdrawalRequests[msg.sender];
-        }
-
-        uint256 balance = balanceOf[msg.sender];
-        if (lpTokenAmount > balance - existingRequests) {
-            lpTokenAmount = balance - existingRequests;
-        }
-
-        _withdrawalRequests[msg.sender] = existingRequests + lpTokenAmount;
-        _lastRequestTimestamp[msg.sender] = block.timestamp;
-        _totalLpWitdrawalRequests += lpTokenAmount;
-
-        return _withdrawalRequests[msg.sender];
-    }
-
-    /// @inheritdoc IGearboxRootVault
-    function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested) {
-        require(block.timestamp > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.DISABLED);
-        require(_lastRequestTimestamp[msg.sender] > _lastWithdrawalsExecutionTimestamp, ExceptionsLibrary.VALUE_ZERO);
-
-        if (_withdrawalRequests[msg.sender] > lpTokenAmount) {
-            _withdrawalRequests[msg.sender] -= lpTokenAmount;
-            _totalLpWitdrawalRequests -= lpTokenAmount;
+        if (withdrawalRequests[msg.sender] > lpTokenAmount) {
+            withdrawalRequests[msg.sender] -= lpTokenAmount;
+            totalCurrentEpochLpWitdrawalRequests -= lpTokenAmount;
+            emit WithdrawalCancelled(msg.sender, lpTokenAmount);
         } else {
-            _totalLpWitdrawalRequests -= _withdrawalRequests[msg.sender];
-            _withdrawalRequests[msg.sender] = 0;
+            totalCurrentEpochLpWitdrawalRequests -= withdrawalRequests[msg.sender];
+            emit WithdrawalCancelled(msg.sender, withdrawalRequests[msg.sender]);
+            withdrawalRequests[msg.sender] = 0;
         }
 
-        return _withdrawalRequests[msg.sender];
+        return withdrawalRequests[msg.sender];
     }
 
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() external {
-        IIntegrationVault zeroVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(0));
-        IIntegrationVault gearboxVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(1));
 
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault).vaultGovernance()));
         uint256 withdrawDelay = governance.delayedProtocolParams().withdrawDelay;
 
-        require(_lastWithdrawalsExecutionTimestamp + withdrawDelay <= block.timestamp, ExceptionsLibrary.INVARIANT);
-        _beforeLastWithdrawalsExecutionTimestamp = _lastWithdrawalsExecutionTimestamp;
-        _lastWithdrawalsExecutionTimestamp = block.timestamp;
+        require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp, ExceptionsLibrary.INVARIANT);
+        lastEpochChangeTimestamp = block.timestamp;
+        currentEpoch += 1;
 
         (uint256[] memory minTokenAmounts, ) = tvl();
-        _chargeFees(_nft, minTokenAmounts, totalSupply, _vaultTokens);
+        _chargeFees(_nft, minTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
-        uint256 totalAmount = FullMath.mulDiv(_totalLpWitdrawalRequests, minTokenAmounts[0], totalSupply);
+        uint256 totalAmount = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, minTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
-        uint256 currentErc20Amount = IERC20(_vaultTokens[0]).balanceOf(address(zeroVault));
+        uint256[] memory tokenAmounts = new uint256[](1);
+        tokenAmounts[0] = totalAmount;
+        uint256[] memory pulledAmounts = gearboxVault.pull(address(erc20Vault), _vaultTokens, tokenAmounts, "");
+        totalAmount = pulledAmounts[0];
 
-        if (currentErc20Amount > totalAmount) {
-            address[] memory tokens = _vaultTokens;
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = currentErc20Amount - totalAmount;
-            zeroVault.pull(address(gearboxVault), tokens, amounts, "");
-        } else {
-            address[] memory tokens = _vaultTokens;
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = totalAmount - currentErc20Amount;
-            gearboxVault.pull(address(zeroVault), tokens, amounts, "");
-            totalAmount = IERC20(_vaultTokens[0]).balanceOf(address(zeroVault));
+        if (totalCurrentEpochLpWitdrawalRequests > 0) {
+            totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests;
+            epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(totalAmount, D18, totalCurrentEpochLpWitdrawalRequests);
+            totalCurrentEpochLpWitdrawalRequests = 0;
         }
 
-        if (_totalLpWitdrawalRequests > 0) {
-            _priceForLpTokenD18 = FullMath.mulDiv(totalAmount, D18, _totalLpWitdrawalRequests);
-            _totalLpWitdrawalRequests = 0;
-        }
+        currentEpoch += 1;
     }
 
     /// @inheritdoc IGearboxRootVault
-    function withdraw(
-        address to,
-        uint256 lpTokenAmount,
-        uint256[] memory minTokenAmounts,
-        bytes[] memory vaultsOptions
-    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        require(minTokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
-        uint256 supply = totalSupply;
-        require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
-        address[] memory tokens = _vaultTokens;
-        uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
-        (uint256[] memory minTvl, ) = tvl();
-        _chargeFees(_nft, minTvl, supply, tokens);
+    function withdraw(address to, bytes[] memory vaultsOptions) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
 
-        uint256 balance;
-
-        {
-            uint256 availableLpTokens = 0;
-            if (
-                _lastRequestTimestamp[msg.sender] > _beforeLastWithdrawalsExecutionTimestamp &&
-                _lastRequestTimestamp[msg.sender] <= _lastWithdrawalsExecutionTimestamp
-            ) {
-                availableLpTokens = _withdrawalRequests[msg.sender];
-            }
-
-            supply = totalSupply;
-            balance = balanceOf[msg.sender];
-
-            if (lpTokenAmount > availableLpTokens) {
-                lpTokenAmount = availableLpTokens;
-            }
+        uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
+        if (currentEpoch != userLatestRequestEpoch && userLatestRequestEpoch != 0) {
+            _processHangingWithdrawal(msg.sender, true);
         }
 
-        if (lpTokenAmount == 0) {
-            actualTokenAmounts = new uint256[](1);
-            return actualTokenAmounts;
-        }
+        uint256 lpTokensToBurn = lpTokensToWithdraw[msg.sender];
+        uint256 primaryTokensToPull = primaryTokensToWithdraw[msg.sender];
 
-        _withdrawalRequests[msg.sender] -= lpTokenAmount;
-        tokenAmounts[0] = FullMath.mulDiv(lpTokenAmount, _priceForLpTokenD18, D18);
+        uint256[] memory tokenAmounts = new uint256[](1);
+        tokenAmounts[0] = primaryTokensToPull;
 
+        _burn(msg.sender, lpTokensToBurn);
         actualTokenAmounts = _pull(address(this), tokenAmounts, vaultsOptions);
-        // we are draining balance
-        // if no sufficent amounts rest
-        bool sufficientAmountRest = false;
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            require(actualTokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-            if (FullMath.mulDiv(balance, minTvl[i], supply) >= _pullExistentials[i] + actualTokenAmounts[i]) {
-                sufficientAmountRest = true;
-            }
-            if (actualTokenAmounts[i] != 0) {
-                IERC20(tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
-            }
-        }
-        _updateWithdrawnAmounts(actualTokenAmounts);
-        if (sufficientAmountRest) {
-            _burn(msg.sender, lpTokenAmount);
-        } else {
-            _burn(msg.sender, balance);
-        }
+        lpTokensToWithdraw[msg.sender] = 0;
+        primaryTokensToWithdraw[msg.sender] = 0;
 
-        emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
+        IERC20(primaryToken).safeTransfer(to, actualTokenAmounts[0]);
+
+        emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokensToBurn);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
-
-    function _getLpAmount(
-        uint256[] memory tvl_,
-        uint256[] memory amounts,
-        uint256 supply
-    ) internal view returns (uint256 lpAmount, bool isSignificantTvl) {
-        if (supply == 0) {
-            // On init lpToken = max(tokenAmounts)
-            for (uint256 i = 0; i < tvl_.length; ++i) {
-                if (amounts[i] > lpAmount) {
-                    lpAmount = amounts[i];
-                }
-            }
-            return (lpAmount, false);
-        }
-        uint256 tvlsLength = tvl_.length;
-        bool isLpAmountUpdated = false;
-        uint256[] memory pullExistentials = _pullExistentials;
-        for (uint256 i = 0; i < tvlsLength; ++i) {
-            if (tvl_[i] < pullExistentials[i]) {
-                continue;
-            }
-
-            uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
-            // take min of meaningful tokenLp amounts
-            if ((tokenLpAmount < lpAmount) || (isLpAmountUpdated == false)) {
-                isLpAmountUpdated = true;
-                lpAmount = tokenLpAmount;
-            }
-        }
-        isSignificantTvl = isLpAmountUpdated;
-        // in case of almost zero tvl for all tokens -> do the same with supply == 0
-        if (!isSignificantTvl) {
-            for (uint256 i = 0; i < tvl_.length; ++i) {
-                if (amounts[i] > lpAmount) {
-                    lpAmount = amounts[i];
-                }
-            }
-        }
-    }
-
-    function _getNormalizedAmount(
-        uint256 tvl_,
-        uint256 amount,
-        uint256 lpAmount,
-        uint256 supply,
-        bool isSignificantTvl,
-        uint256 existentialsAmount
-    ) internal pure returns (uint256) {
-        if (supply == 0 || !isSignificantTvl) {
-            // skip normalization on init
-            return amount;
-        }
-
-        if (tvl_ < existentialsAmount) {
-            // use zero-normalization when all tvls are dust-like
-            return 0;
-        }
-
-        // normalize amount
-        uint256 res = FullMath.mulDiv(tvl_, lpAmount, supply);
-        if (res > amount) {
-            res = amount;
-        }
-
-        return res;
-    }
 
     function _requireAtLeastStrategy() internal view {
         uint256 nft_ = _nft;
@@ -395,9 +265,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// fees are charged before the tokens transfer and change the balance of the lp tokens
     function _chargeFees(
         uint256 thisNft,
-        uint256[] memory tvls,
-        uint256 supply,
-        address[] memory tokens
+        uint256 tvl,
+        uint256 supply
     ) internal {
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
@@ -405,27 +274,12 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
             return;
         }
+
         lastFeeCharge = uint64(block.timestamp);
-        // don't charge on initial deposit
-        if (supply == 0) {
-            return;
-        }
-        {
-            bool needSkip = true;
-            uint256[] memory pullExistentials = _pullExistentials;
-            for (uint256 i = 0; i < pullExistentials.length; ++i) {
-                if (tvls[i] >= pullExistentials[i]) {
-                    needSkip = false;
-                    break;
-                }
-            }
-            if (needSkip) {
-                return;
-            }
-        }
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
+
         _chargeManagementFees(
             strategyParams.managementFee,
             protocolFee,
@@ -437,11 +291,9 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         _chargePerformanceFees(
             supply,
-            tvls,
+            tvl,
             strategyParams.performanceFee,
-            strategyParams.strategyPerformanceTreasury,
-            tokens,
-            delayedProtocolParams.oracle
+            strategyParams.strategyPerformanceTreasury
         );
     }
 
@@ -475,71 +327,57 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     function _chargePerformanceFees(
         uint256 baseSupply,
-        uint256[] memory baseTvls,
+        uint256 tvl,
         uint256 performanceFee,
-        address treasury,
-        address[] memory tokens,
-        IOracle oracle
+        address treasury
     ) internal {
         if ((performanceFee == 0) || (baseSupply == 0)) {
             return;
         }
-        uint256 tvlToken0 = helper.getTvlToken0(baseTvls, tokens, oracle);
-        uint256 lpPriceD18 = FullMath.mulDiv(tvlToken0, CommonLibrary.D18, baseSupply);
+
+        uint256 lpPriceD18 = FullMath.mulDiv(tvl, CommonLibrary.D18, baseSupply);
         uint256 hwmsD18 = lpPriceHighWaterMarkD18;
         if (lpPriceD18 <= hwmsD18) {
             return;
         }
+
         uint256 toMint;
         if (hwmsD18 > 0) {
             toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
             _mint(treasury, toMint);
         }
+
         lpPriceHighWaterMarkD18 = lpPriceD18;
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
 
-    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
-        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
-        uint64 timestamp = uint64(block.timestamp);
-        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        if (timestamp != totalWithdrawnAmountsTimestamp) {
-            totalWithdrawnAmountsTimestamp = timestamp;
-        } else {
-            for (uint256 i = 0; i < tokenAmounts.length; i++) {
-                withdrawn[i] = totalWithdrawnAmounts[i];
-            }
+    function _processHangingWithdrawal(address addr, bool nullifyRequest) internal {
+        uint256 pendingRequest = withdrawalRequests[addr];
+        uint256 userLatestRequestEpoch = latestRequestEpoch[addr];
+        uint256 tokenAmount = FullMath.mulDiv(pendingRequest, epochToPriceForLpTokenD18[userLatestRequestEpoch], D18);
+        primaryTokensToWithdraw[addr] += tokenAmount;
+        lpTokensToWithdraw[addr] += pendingRequest;
+
+        if (nullifyRequest) {
+            withdrawalRequests[addr] = 0;
+            latestRequestEpoch[addr] = 0;
         }
-        for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            withdrawn[i] += tokenAmounts[i];
-            require(
-                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
-            totalWithdrawnAmounts[i] = withdrawn[i];
-        }
+
     }
 
-    function _pushIntoGearbox(uint256[] memory tokenAmounts, bytes memory vaultOptions)
+    function _pushIntoGearbox(uint256 amount, bytes memory vaultOptions)
         internal
         returns (uint256[] memory actualTokenAmounts)
     {
         require(_nft != 0, ExceptionsLibrary.INIT);
-        IIntegrationVault gearboxVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(1));
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            if (tokenAmounts[i] > 0) {
-                IERC20(_vaultTokens[i]).safeIncreaseAllowance(address(gearboxVault), tokenAmounts[i]);
-            }
-        }
 
+        uint256[] memory tokenAmounts = new uint256[](1);
+        tokenAmounts[0] = amount;
+
+        IERC20(primaryToken).safeIncreaseAllowance(address(gearboxVault), amount);
         actualTokenAmounts = gearboxVault.transferAndPush(address(this), _vaultTokens, tokenAmounts, vaultOptions);
-
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            if (tokenAmounts[i] > 0) {
-                IERC20(_vaultTokens[i]).safeApprove(address(gearboxVault), 0);
-            }
-        }
+        IERC20(primaryToken).safeApprove(address(gearboxVault), 0);
     }
 
     // --------------------------  EVENTS  --------------------------
@@ -549,6 +387,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param feeRate Fee percent applied denominated in 10 ** 9
     /// @param amount Amount of lp token minted
     event ManagementFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
+
+    event WithdrawalRegistered(address indexed addr, uint256 lpAmountRegistered);
+
+    event WithdrawalCancelled(address indexed addr, uint256 lpAmountCancelled);
 
     /// @notice Emitted when protocol fees are charged
     /// @param treasury Treasury receiver of the fee
