@@ -68,7 +68,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         maxTokenAmounts = minTokenAmounts;
     }
 
-    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external {
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        address helper_
+    ) external {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
         _initialize(vaultTokens_, nft_);
@@ -97,7 +101,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     function adjustPosition() external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(creditAccount, address(_vaultGovernance), marginalFactorD9);
+        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
+            creditAccount,
+            address(_vaultGovernance),
+            marginalFactorD9
+        );
         _adjustPosition(expectedAllAssetsValue, currentAllAssetsValue);
     }
 
@@ -216,9 +224,17 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        (, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(creditAccount, address(_vaultGovernance), marginalFactorD9);
+        (, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
+            creditAccount,
+            address(_vaultGovernance),
+            marginalFactorD9
+        );
         marginalFactorD9 = marginalFactorD9_;
-        (uint256 expectedAllAssetsValue, ) = _helper.calculateDesiredTotalValue(creditAccount, address(_vaultGovernance), marginalFactorD9);
+        (uint256 expectedAllAssetsValue, ) = _helper.calculateDesiredTotalValue(
+            creditAccount,
+            address(_vaultGovernance),
+            marginalFactorD9
+        );
 
         _adjustPosition(expectedAllAssetsValue, currentAllAssetsValue);
     }
@@ -238,7 +254,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         ).delayedProtocolParams();
 
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
-        uint256 amountInMaximum = _helper.calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9);
+        uint256 amountInMaximum = _helper.calculateAmountInMaximum(
+            fromToken,
+            toToken,
+            amount,
+            protocolParams.minSlippageD9
+        );
 
         if (amountInMaximum > allowedToUse) {
             amount = FullMath.mulDiv(amount, allowedToUse, amountInMaximum);
@@ -330,7 +351,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 });
                 creditFacade.multicall(calls);
             } else {
-                uint256 convexAmountToWithdraw = _helper.calcConvexTokensToWithdraw(delta - currentPrimaryTokenAmount, creditAccount, convexOutputToken);
+                uint256 convexAmountToWithdraw = _helper.calcConvexTokensToWithdraw(
+                    delta - currentPrimaryTokenAmount,
+                    creditAccount,
+                    convexOutputToken
+                );
                 _withdrawFromConvex(convexAmountToWithdraw);
 
                 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount);
@@ -433,7 +458,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedProtocolParams();
 
         uint256 currentDepositTokenAmount = IERC20(depositToken).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
