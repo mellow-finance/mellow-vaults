@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.9;
+
+library Constants {{
+    uint256 constant width = {width};
+    uint256 constant wethAmount = {weth_amount};
+    uint256 constant wstethAmount = {wsteth_amount};
+    uint256 constant poolScale = {pool_scale};
+    uint256 constant len = {length};
+    int24 constant minDeviation = {min_deviation};
+}}

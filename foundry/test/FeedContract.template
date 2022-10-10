@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.9;
+import "../lib/forge-std/src/console2.sol";
+import "./Constants.sol";
+
+contract Feed {{
+    function parseFile()
+        public
+        returns (
+            uint256[] memory a0,
+            uint256[] memory a1,
+            uint256[] memory a2,
+            uint256[] memory a3,
+            uint256[] memory a4,
+            uint256[] memory a5
+        )
+    {{
+        string[] memory a = new string[](6);
+
+
+        uint256 len = Constants.len;
+
+        a0 = new uint256[](len);
+        a1 = new uint256[](len);
+        a2 = new uint256[](len);
+        a3 = new uint256[](len);
+        a4 = new uint256[](len);
+        a5 = new uint256[](len);
+
+        a[0] = "{block_number}";
+        a[1] = "{wsteth_eth}";
+        a[2] = "{steth_amount}";
+        a[3] = "{eth_amount}";
+        a[4] = "{steth_per_token}";
+        a[5] = "{ratios}";
+
+        for (uint256 i = 0; i < 6; ++i) {{
+            uint256 pointer = 0;
+            uint256 current = 0;
+            bytes memory b = bytes(a[i]);
+            for (uint256 j = 0; j < b.length; ++j) {{
+                uint8 symbol = uint8(b[j]);
+                if (symbol >= 48 && symbol <= 57) {{
+                    current = current * 10 + uint256(symbol) - 48;
+                }} else if (symbol == 46) {{
+                    continue;
+                }} else {{
+                    if (i == 0) {{
+                        a0[pointer] = current;
+                    }}
+                    if (i == 1) {{
+                        a1[pointer] = current;
+                    }}
+                    if (i == 2) {{
+                        a2[pointer] = current;
+                    }}
+                    if (i == 3) {{
+                        a3[pointer] = current;
+                    }}
+                    if (i == 4) {{
+                        a4[pointer] = current;
+                    }}
+                    if (i == 5) {{
+                        a5[pointer] = current;
+                    }}
+                    pointer += 1;
+                    current = 0;
+                }}
+            }}
+        }}
+    }}
+}}

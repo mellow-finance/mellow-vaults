@@ -13,7 +13,7 @@
     "scripts": {
       "prettier": "prettier --write **.sol",
       "prettier:check": "prettier --check **.sol",
-      "test": "forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 > ../backtest_log.txt",
+      "test": "forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 --",
       "test:better": "forge test -vvvv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2)",
       "size": "forge build --sizes --force --via-ir",
       "compile": "forge build"
