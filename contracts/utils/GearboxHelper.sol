@@ -14,7 +14,6 @@ import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
 
 contract GearboxHelper {
-
     using SafeERC20 for IERC20;
 
     uint256 public constant D9 = 10**9;
@@ -28,7 +27,14 @@ contract GearboxHelper {
     address primaryToken;
     address depositToken;
 
-    function setParameters(ICreditFacade creditFacade_, ICreditManagerV2 creditManager_, address curveAdapter_, address convexAdapter_, address primaryToken_, address depositToken_) external {
+    function setParameters(
+        ICreditFacade creditFacade_,
+        ICreditManagerV2 creditManager_,
+        address curveAdapter_,
+        address convexAdapter_,
+        address primaryToken_,
+        address depositToken_
+    ) external {
         creditFacade = creditFacade_;
         creditManager = creditManager_;
         curveAdapter = curveAdapter_;
@@ -37,7 +43,15 @@ contract GearboxHelper {
         depositToken = depositToken_;
     }
 
-    function verifyInstances() external view returns (int128 primaryIndex, address convexOutputToken, uint256 poolId) {
+    function verifyInstances()
+        external
+        view
+        returns (
+            int128 primaryIndex,
+            address convexOutputToken,
+            uint256 poolId
+        )
+    {
         ICurveV1Adapter curveAdapter_ = ICurveV1Adapter(curveAdapter);
         IConvexV1BaseRewardPoolAdapter convexAdapter_ = IConvexV1BaseRewardPoolAdapter(convexAdapter);
 
@@ -104,7 +118,8 @@ contract GearboxHelper {
         uint256 earnedCrvAmount = IConvexV1BaseRewardPoolAdapter(convexAdapter).earned(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance).delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
 
         uint256 valueCrvToUsd = oracle.convertToUSD(earnedCrvAmount, protocolParams.crv);
         uint256 valueCvxToUsd = oracle.convertToUSD(
@@ -115,11 +130,11 @@ contract GearboxHelper {
         return oracle.convertFromUSD(valueCrvToUsd + valueCvxToUsd, primaryToken);
     }
 
-    function calculateDesiredTotalValue(address creditAccount, address vaultGovernance, uint256 marginalFactorD9)
-        external
-        view
-        returns (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue)
-    {
+    function calculateDesiredTotalValue(
+        address creditAccount,
+        address vaultGovernance,
+        uint256 marginalFactorD9
+    ) external view returns (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) {
         (currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
         currentAllAssetsValue += calculateClaimableRewards(creditAccount, vaultGovernance);
 
@@ -129,7 +144,11 @@ contract GearboxHelper {
         expectedAllAssetsValue = FullMath.mulDiv(currentTvl, marginalFactorD9, D9);
     }
 
-    function calcConvexTokensToWithdraw(uint256 desiredValueNominatedUnderlying, address creditAccount, address convexOutputToken) external view returns (uint256) {
+    function calcConvexTokensToWithdraw(
+        uint256 desiredValueNominatedUnderlying,
+        address creditAccount,
+        address convexOutputToken
+    ) external view returns (uint256) {
         uint256 currentConvexTokensAmount = IERC20(convexOutputToken).balanceOf(creditAccount);
 
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());

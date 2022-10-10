@@ -141,20 +141,19 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IGearboxRootVault
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRegistered) {
-
         uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
 
         if (currentEpoch == userLatestRequestEpoch || userLatestRequestEpoch == 0) {
-            uint256 senderBalance = balanceOf[msg.sender] - lpTokensToWithdraw[msg.sender] - withdrawalRequests[msg.sender];
+            uint256 senderBalance = balanceOf[msg.sender] -
+                lpTokensToWithdraw[msg.sender] -
+                withdrawalRequests[msg.sender];
             if (lpTokenAmount > senderBalance) {
                 lpTokenAmount = senderBalance;
             }
 
             withdrawalRequests[msg.sender] += lpTokenAmount;
             latestRequestEpoch[msg.sender] = currentEpoch;
-        }
-        else {
-
+        } else {
             _processHangingWithdrawal(msg.sender, false);
 
             uint256 senderBalance = balanceOf[msg.sender] - lpTokensToWithdraw[msg.sender];
@@ -190,7 +189,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() external {
-
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault).vaultGovernance()));
         uint256 withdrawDelay = governance.delayedProtocolParams().withdrawDelay;
 
@@ -201,7 +199,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         (uint256[] memory minTokenAmounts, ) = tvl();
         _chargeFees(_nft, minTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
-        uint256 totalAmount = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, minTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
+        uint256 totalAmount = FullMath.mulDiv(
+            totalCurrentEpochLpWitdrawalRequests,
+            minTokenAmounts[0],
+            totalSupply - totalLpTokensWaitingWithdrawal
+        );
 
         uint256[] memory tokenAmounts = new uint256[](1);
         tokenAmounts[0] = totalAmount;
@@ -210,7 +212,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         if (totalCurrentEpochLpWitdrawalRequests > 0) {
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests;
-            epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(totalAmount, D18, totalCurrentEpochLpWitdrawalRequests);
+            epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(
+                totalAmount,
+                D18,
+                totalCurrentEpochLpWitdrawalRequests
+            );
             totalCurrentEpochLpWitdrawalRequests = 0;
         }
 
@@ -218,8 +224,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     /// @inheritdoc IGearboxRootVault
-    function withdraw(address to, bytes[] memory vaultsOptions) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-
+    function withdraw(address to, bytes[] memory vaultsOptions)
+        external
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
         uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
         if (currentEpoch != userLatestRequestEpoch && userLatestRequestEpoch != 0) {
             _processHangingWithdrawal(msg.sender, true);
@@ -289,12 +298,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             supply
         );
 
-        _chargePerformanceFees(
-            supply,
-            tvl,
-            strategyParams.performanceFee,
-            strategyParams.strategyPerformanceTreasury
-        );
+        _chargePerformanceFees(supply, tvl, strategyParams.performanceFee, strategyParams.strategyPerformanceTreasury);
     }
 
     function _chargeManagementFees(
@@ -363,7 +367,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             withdrawalRequests[addr] = 0;
             latestRequestEpoch[addr] = 0;
         }
-
     }
 
     function _pushIntoGearbox(uint256 amount, bytes memory vaultOptions)
