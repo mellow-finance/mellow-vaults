@@ -27,6 +27,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     uint256[] public totalWithdrawnAmounts;
     /// @inheritdoc IERC20RootVault
     uint256 public lpPriceHighWaterMarkD18;
+    
     EnumerableSet.AddressSet private _depositorsAllowlist;
     IERC20RootVaultHelper public helper;
 

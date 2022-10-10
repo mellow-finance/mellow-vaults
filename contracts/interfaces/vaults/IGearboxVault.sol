@@ -5,7 +5,7 @@ import "./IIntegrationVault.sol";
 
 interface IGearboxVault is IIntegrationVault {
     
-    function initialize(uint256 nft_, address[] memory vaultTokens_) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
 
     function updateTargetMarginalFactor(uint256 marginalFactorD_) external;
 
