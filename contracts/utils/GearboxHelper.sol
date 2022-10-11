@@ -409,4 +409,41 @@ contract GearboxHelper {
 
         admin.multicall(calls);
     }
+
+    function pullFromAddress(uint256 amount, address vaultGovernance) external returns (uint256[] memory actualAmounts) {
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
+
+        uint256 depositBalance = IERC20(depositToken).balanceOf(address(admin));
+        uint256 primaryBalance = IERC20(primaryToken).balanceOf(address(admin));
+
+        if (depositBalance < amount && depositToken != primaryToken && primaryBalance > 0) {
+            uint256 amountInMaximum = calculateAmountInMaximum(primaryToken, depositToken, amount - depositBalance, protocolParams.minSlippageD9);
+            uint256 outputWant = amount - depositBalance;
+
+            if (amountInMaximum > primaryBalance) {
+                outputWant = FullMath.mulDiv(outputWant, primaryBalance, amountInMaximum);
+                amountInMaximum = primaryBalance;
+            }
+
+            ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
+            ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
+                path: abi.encodePacked(primaryToken, uint24(500), depositToken),
+                recipient: address(admin),
+                deadline: block.timestamp + 900,
+                amountOut: outputWant,
+                amountInMaximum: amountInMaximum
+            });
+            admin.swap(router, uniParams);
+        }
+
+        depositBalance = IERC20(depositToken).balanceOf(address(admin));
+        if (amount > depositBalance) {
+            amount = depositBalance;
+        }
+
+        actualAmounts = new uint256[](1);
+        actualAmounts[0] = amount;
+        
+    }
 }
