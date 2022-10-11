@@ -56,7 +56,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     function commitDelayedProtocolPerVaultParams(uint256 nft) external;
 
 
-    function createVault(address[] memory vaultTokens_, address owner_)
+    function createVault(address[] memory vaultTokens_, address owner_, address helper_)
         external
         returns (IGearboxVault vault, uint256 nft);
 }

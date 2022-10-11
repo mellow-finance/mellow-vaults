@@ -18,6 +18,8 @@ import "../src/vaults/GearboxVaultGovernance.sol";
 import "../src/vaults/ERC20VaultGovernance.sol";
 import "../src/vaults/ERC20RootVaultGovernance.sol";
 
+import "../src/utils/GearboxHelper.sol";
+
 import "../src/external/ConvexBaseRewardPool.sol";
 
 
@@ -200,8 +202,10 @@ contract GearboxUSDCTest is Test {
 
         deal(usdc, address(governanceC), 5*10**8);
 
+        GearboxHelper helper2 = new GearboxHelper();
+
         governanceB.createVault(tokens, address(this));
-        governanceC.createVault(tokens, address(this));
+        governanceC.createVault(tokens, address(this), address(helper2));
 
         uint256[] memory nfts = new uint256[](2);
 
@@ -241,7 +245,22 @@ contract GearboxUSDCTest is Test {
         return false;
     }
 
+    function firstDeposit() public {
+
+        deal(usdc, address(this), 10**4);
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 10**4;
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
+
+        rootVault.deposit(amounts, 0, "");
+    }
+
     function deposit(uint256 amount, address user) public {
+
+        if (!rootVault.wasDeposit()) {
+            firstDeposit();
+        }
 
         deal(usdc, user, amount * 10**6);
 
@@ -260,10 +279,10 @@ contract GearboxUSDCTest is Test {
         rootVault.invokeExecution();
     }
 
-    function claimMoney(address recipient, uint256 lpAmount) public {
+    function claimMoney(address recipient) public {
         uint256[] memory minTokenAmounts = new uint256[](1);
         bytes[] memory vaultOptions = new bytes[](2);
-        rootVault.withdraw(recipient, lpAmount, minTokenAmounts, vaultOptions);
+        rootVault.withdraw(recipient, vaultOptions);
     }
 
     function setNewRewardInRewardPool(uint256 nominator, uint256 denominator) public {
@@ -307,7 +326,7 @@ contract GearboxUSDCTest is Test {
         vm.stopPrank();
     }
 
-    function testSimpleDeposit() public {
+    function testSimpleDepositUSDC() public {
 
         deposit(500, address(this));
 
@@ -318,13 +337,13 @@ contract GearboxUSDCTest is Test {
         uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(usdcBalance == 15 * 10 ** 8);
+        assertTrue(usdcBalance == 15 * 10 ** 8 + 3 * 10**4);
         assertTrue(curveLpBalance == 0);
         assertTrue(convexLpBalance == 0);
         assertTrue(convexFantomBalance == 0);
     }
 
-    function testTwoDeposits() public {
+    function testTwoDepositsUSDC() public {
         
         deposit(500, address(this));
         uint256 lpAmountBefore = rootVault.balanceOf(address(this));
@@ -339,7 +358,7 @@ contract GearboxUSDCTest is Test {
         uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(usdcBalance == 16 * 10 ** 8);
+        assertTrue(usdcBalance == 16 * 10 ** 8 + 3*10**4);
         assertTrue(curveLpBalance == 0);
         assertTrue(convexLpBalance == 0);
         assertTrue(convexFantomBalance == 0);
@@ -355,9 +374,9 @@ contract GearboxUSDCTest is Test {
         assertTrue(tvl() == 0);
     }
 
-    function testTvlAfterSingleDeposit() public {
+    function testTvlAfterSingleDepositUSDC() public {
         deposit(500, address(this));
-        assertTrue(tvl() == 5 * 10**8);
+        assertTrue(tvl() == 5 * 10**8 + 10**4 - 1);
     }
 
     function testFailOpenCreditAccountTwice() public {
@@ -372,15 +391,14 @@ contract GearboxUSDCTest is Test {
     function testTvlAfterTimePasses() public {
         deposit(500, address(this));
         vm.warp(block.timestamp + YEAR);
-        console2.log(tvl());
         assertTrue(tvl() < 49999 * 10**4); // some fees accrued
     }
 
-    function testTvlAfterMultipleDeposits() public {
+    function testTvlAfterMultipleDepositsUSDC() public {
         deposit(500, address(this));
         deposit(100, address(this));
         deposit(50, address(this));
-        assertTrue(tvl() == 65 * 10**7);
+        assertTrue(tvl() == 65 * 10**7 + 10**4 - 1);
     }
 
     function testWithdrawalOrders() public {
@@ -388,9 +406,9 @@ contract GearboxUSDCTest is Test {
         uint256 lpTokens = rootVault.balanceOf(address(this));
         rootVault.registerWithdrawal(lpTokens / 2);
 
-        assertTrue(rootVault.currentWithdrawalRequested(address(this)) == lpTokens / 2);
+        assertTrue(rootVault.withdrawalRequests(address(this)) == lpTokens / 2);
         rootVault.cancelWithdrawal(lpTokens / 4);
-        assertTrue(rootVault.currentWithdrawalRequested(address(this)) == lpTokens / 2 - lpTokens / 4);
+        assertTrue(rootVault.withdrawalRequests(address(this)) == lpTokens / 2 - lpTokens / 4);
     }
 
     function testWithdrawalOrderCancelTooMuch() public {
@@ -398,14 +416,14 @@ contract GearboxUSDCTest is Test {
         uint256 lpTokens = rootVault.balanceOf(address(this));
         rootVault.registerWithdrawal(lpTokens / 2);
         rootVault.cancelWithdrawal(lpTokens);
-        assertTrue(rootVault.currentWithdrawalRequested(address(this)) == 0);
+        assertTrue(rootVault.withdrawalRequests(address(this)) == 0);
     }
 
     function testTooBigWithdrawalOrder() public {
         deposit(500, address(this));
         uint256 lpTokens = rootVault.balanceOf(address(this));
         rootVault.registerWithdrawal(2 * lpTokens);
-        assertTrue(rootVault.currentWithdrawalRequested(address(this)) == lpTokens);
+        assertTrue(rootVault.withdrawalRequests(address(this)) == lpTokens);
     }
 
     function testSimpleAdjustingPosition() public {
@@ -421,9 +439,6 @@ contract GearboxUSDCTest is Test {
         deposit(100, address(this));
         gearboxVault.adjustPosition();
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-
-        console2.log(convexFantomBalance);
-        console2.log(convexFantomBalanceAfter);
 
         assertTrue(isClose(convexFantomBalance * 6, convexFantomBalanceAfter * 5, 100));
     }
@@ -485,9 +500,6 @@ contract GearboxUSDCTest is Test {
         assertTrue(isClose(tvl(), 576 * 10**6, 100));
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-
-        console2.log(convexFantomBalanceBefore * 576);
-        console2.log(convexFantomBalanceAfter * 500);
 
         assertTrue(isClose(convexFantomBalanceBefore * 576, convexFantomBalanceAfter * 500, 50));
 
@@ -627,9 +639,7 @@ contract GearboxUSDCTest is Test {
 
         uint256 oldSupply = rootVault.totalSupply();
 
-        claimMoney(recipient, lpTokens / 2);
-
-        console2.log(IERC20(usdc).balanceOf(recipient));
+        claimMoney(recipient);
 
         assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 248 * 10**6, 100));
         uint256 newSupply = rootVault.totalSupply();
@@ -637,7 +647,7 @@ contract GearboxUSDCTest is Test {
         assertTrue(oldSupply - lpTokens / 2 == newSupply);
     }
 
-    function testCloseVaultWithSeveralDepositsAndPartialWithdrawals() public {
+    function testCloseVaultWithSeveralDepositsAndPartialWithdrawalsUSDC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -661,19 +671,16 @@ contract GearboxUSDCTest is Test {
 
 
         address recipient = getNextUserAddress();
-        claimMoney(recipient, lpTokens / 4);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 125 * 10**6, 100));
-
-        claimMoney(recipient, lpTokens / 8);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1875 * 10**5, 100));
+        claimMoney(recipient);
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 250 * 10**6, 100));
 
         vm.startPrank(secondUser);
-        claimMoney(recipient, secondUserLpTokens / 8);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2000 * 10**5, 100));
+        claimMoney(recipient);
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2750 * 10**5, 100));
         vm.stopPrank();
 
-        claimMoney(recipient, lpTokens / 8);
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2625 * 10**5, 100));
+        claimMoney(recipient);
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2750 * 10**5, 100));
     }
 
     function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsMore() public {
@@ -693,8 +700,8 @@ contract GearboxUSDCTest is Test {
 
         uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
         uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        assertTrue(isClose(leftOnGearbox, 666 * 10**6, 100));
-        assertTrue(isClose(wentForWithdrawal, 333 * 10**6, 100));
+        assertTrue(isClose(leftOnGearbox, 417 * 10**6, 100));
+        assertTrue(isClose(wentForWithdrawal, 583 * 10**6, 100));
     }
 
     function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsLessUSDC() public {
@@ -714,66 +721,12 @@ contract GearboxUSDCTest is Test {
 
         uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
         uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        console2.log(tvl());
-        console2.log(leftOnGearbox);
-        console2.log(wentForWithdrawal);
-        assertTrue(isClose(tvl(), 833*10**6, 100));
-        assertTrue(isClose(leftOnGearbox, 0, 100));
-        assertTrue(isClose(wentForWithdrawal, 166 * 10**6, 100));
+        assertTrue(isClose(tvl(), 584*10**6, 100));
+        assertTrue(isClose(leftOnGearbox, 584*10**6, 100));
+        assertTrue(isClose(wentForWithdrawal, 416 * 10**6, 100));
     }
 
-    function testSeveralInvocationsWhenFirstPartiallyClaimedAndNewSumIsMore() public {
-        deposit(500, address(this));
-        gearboxVault.adjustPosition();
-
-        uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
-
-        invokeExecution();
-
-        vm.warp(block.timestamp + 86400 * 10);
-
-        deposit(500, address(this));
-        address recipient = getNextUserAddress();
-        claimMoney(recipient, lpTokens / 4);//125 USD claimed
-
-        rootVault.registerWithdrawal(lpTokens / 3); // ~166 USD more taken
-        invokeExecution();
-
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        assertTrue(isClose(leftOnGearbox, 709 * 10**6, 100));
-        assertTrue(isClose(wentForWithdrawal, 166 * 10**6, 100));
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100));
-    }
-
-    function testSeveralInvocationsWhenFirstPartiallyClaimedAndNewSumIsLess() public {
-        deposit(500, address(this));
-        gearboxVault.adjustPosition();
-
-        uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
-
-        invokeExecution();
-
-        vm.warp(block.timestamp + 86400 * 10);
-
-        deposit(500, address(this));
-        address recipient = getNextUserAddress();
-        claimMoney(recipient, lpTokens / 4); //125 USD claimed
-
-        rootVault.registerWithdrawal(lpTokens / 5); // ~100 USD more taken
-        invokeExecution();
-
-        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
-        assertTrue(isClose(tvl(), 775*10**6, 100));
-        assertTrue(isClose(leftOnGearbox, 0, 100));
-        assertTrue(isClose(wentForWithdrawal, 100 * 10**6, 100));
-        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100));
-    }
-
-    function testCancelWithdrawalIsOkay() public {
+    function testCancelWithdrawalIsOkayUSDC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -783,7 +736,7 @@ contract GearboxUSDCTest is Test {
 
         invokeExecution();
         address recipient = getNextUserAddress();
-        claimMoney(recipient, lpTokens / 2);
+        claimMoney(recipient);
 
         assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100)); // anyway only 125 usd claimed
     }
@@ -804,7 +757,7 @@ contract GearboxUSDCTest is Test {
         
         setNewRewardInRewardPool(10, 1); // + 171 USD => 921 USD in pool
         address recipient = getNextUserAddress();
-        claimMoney(recipient, lpTokens / 2); // 250 USD claimed
+        claimMoney(recipient); // 250 USD claimed
 
         assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2500 * 10**5, 100)); // anyway only 250 usd claimed
         vm.startPrank(secondUser);
@@ -815,11 +768,11 @@ contract GearboxUSDCTest is Test {
         invokeExecution();
 
         vm.startPrank(secondUser);
-        claimMoney(recipient, lpTokens / 2); // 307 usd claimed
+        claimMoney(recipient); // 307 usd claimed
         vm.stopPrank();
 
         assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 5570 * 10**5, 100));
-        claimMoney(recipient, lpTokens / 2); // try to claim by the first user
+        claimMoney(recipient); // try to claim by the first user
         assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 5570 * 10**5, 100));
     }
 
@@ -836,9 +789,9 @@ contract GearboxUSDCTest is Test {
         invokeExecution();
 
         address recipient = getNextUserAddress();
-        claimMoney(recipient, lpTokens / 2); // claim money on a dead order
+        claimMoney(recipient); 
 
-        assertTrue(IERC20(usdc).balanceOf(recipient) == 0);
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 250 * 10**6, 100)); // successfully claimed
     }
 
     function testFailTwoInvocationsInShortTime() public {

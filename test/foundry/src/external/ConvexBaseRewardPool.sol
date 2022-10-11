@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "forge-std/console2.sol";
 
 library MathUtil {
   function min(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -224,11 +223,9 @@ contract BaseRewardPool {
     returns (bool)
   {
     uint256 reward = earned(_account);
-    console2.log(reward);
     if (reward > 0) {
       rewards[_account] = 0;
       rewardToken.safeTransfer(_account, reward);
-      console2.log(operator);
       IDeposit(operator).rewardClaimed(pid, _account, reward);
       emit RewardPaid(_account, reward);
     }

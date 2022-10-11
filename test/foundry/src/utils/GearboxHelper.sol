@@ -213,17 +213,14 @@ contract GearboxHelper {
             });
     }
 
-    function checkNecessaryDepositExchange(
-        uint256 expectedMaximalDepositTokenValueNominatedUnderlying,
-        address vaultGovernance,
-        address creditAccount
-    ) external {
+    function checkNecessaryDepositExchange(uint256 expectedMaximalDepositTokenValueNominatedUnderlying, address vaultGovernance, address creditAccount) external {
         if (depositToken == primaryToken) {
             return;
         }
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolParams();
 
         uint256 currentDepositTokenAmount = IERC20(depositToken).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
@@ -257,13 +254,20 @@ contract GearboxHelper {
                 callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
             });
 
+            { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
+                ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
+                router.exactInput(inputParams);
+                return;
+            }
+
             admin.multicall(calls);
         }
     }
 
     function claimRewards(address vaultGovernance, address creditAccount) external {
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolParams();
 
         MultiCall[] memory calls = new MultiCall[](1);
 
@@ -303,18 +307,14 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function withdrawFromConvex(
-        uint256 amount,
-        address vaultGovernance,
-        uint256 poolId,
-        int128 primaryIndex
-    ) external {
+    function withdrawFromConvex(uint256 amount, address vaultGovernance, uint256 poolId, int128 primaryIndex) external {
         if (amount == 0) {
             return;
         }
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolParams();
 
         address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
         uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
@@ -343,12 +343,7 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function depositToConvex(
-        MultiCall memory debtManagementCall,
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams,
-        uint256 poolId,
-        int128 primaryIndex
-    ) external {
+    function depositToConvex(MultiCall memory debtManagementCall, IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams, uint256 poolId, int128 primaryIndex) external {
         MultiCall[] memory calls = new MultiCall[](3);
 
         address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
@@ -381,11 +376,17 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolParams();
 
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
-        uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9);
+        uint256 amountInMaximum = calculateAmountInMaximum(
+            fromToken,
+            toToken,
+            amount,
+            protocolParams.minSlippageD9
+        );
 
         if (amountInMaximum > allowedToUse) {
             amount = FullMath.mulDiv(amount, allowedToUse, amountInMaximum);
@@ -399,6 +400,12 @@ contract GearboxHelper {
             amountOut: amount,
             amountInMaximum: amountInMaximum
         });
+
+        { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
+            ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
+            router.exactOutput(uniParams);
+            return;
+        }
 
         MultiCall[] memory calls = new MultiCall[](1);
 
