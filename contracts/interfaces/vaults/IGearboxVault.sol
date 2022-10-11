@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./IIntegrationVault.sol";
+import "../external/gearbox/ICreditFacade.sol";
 
 interface IGearboxVault is IIntegrationVault {
     
@@ -12,5 +13,7 @@ interface IGearboxVault is IIntegrationVault {
     function adjustPosition() external;
 
     function openCreditAccount() external;
+
+    function multicall(MultiCall[] memory calls) external;
 
 }

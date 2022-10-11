@@ -16,7 +16,8 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
         uint256 nft_,
         address[] memory vaultTokens_,
         address strategy_,
-        uint256[] memory subvaultNfts_
+        uint256[] memory subvaultNfts_,
+        address
     ) external;
 
     /// @notice The timestamp of last charging of fees
