@@ -123,7 +123,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
-        if (creditAccount != address(0)) {
+        if (creditAccount == address(0)) {
             actualTokenAmounts = _helper.pullFromAddress(tokenAmounts[0], address(_vaultGovernance));
             IERC20(depositToken).safeTransfer(to, actualTokenAmounts[0]);
             return actualTokenAmounts;

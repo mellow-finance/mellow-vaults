@@ -410,7 +410,10 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function pullFromAddress(uint256 amount, address vaultGovernance) external returns (uint256[] memory actualAmounts) {
+    function pullFromAddress(uint256 amount, address vaultGovernance)
+        external
+        returns (uint256[] memory actualAmounts)
+    {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
@@ -418,7 +421,12 @@ contract GearboxHelper {
         uint256 primaryBalance = IERC20(primaryToken).balanceOf(address(admin));
 
         if (depositBalance < amount && depositToken != primaryToken && primaryBalance > 0) {
-            uint256 amountInMaximum = calculateAmountInMaximum(primaryToken, depositToken, amount - depositBalance, protocolParams.minSlippageD9);
+            uint256 amountInMaximum = calculateAmountInMaximum(
+                primaryToken,
+                depositToken,
+                amount - depositBalance,
+                protocolParams.minSlippageD9
+            );
             uint256 outputWant = amount - depositBalance;
 
             if (amountInMaximum > primaryBalance) {
@@ -444,6 +452,5 @@ contract GearboxHelper {
 
         actualAmounts = new uint256[](1);
         actualAmounts[0] = amount;
-        
     }
 }
