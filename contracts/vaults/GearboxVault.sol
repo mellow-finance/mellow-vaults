@@ -30,7 +30,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 public marginalFactorD9;
 
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-
         address creditAccount = getCreditAccount();
 
         address depositToken_ = depositToken;
@@ -89,7 +88,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
         _helper = GearboxHelper(helper_);
-        _helper.setParameters(creditFacade, creditManager, params.curveAdapter, params.convexAdapter, primaryToken, depositToken);
+        _helper.setParameters(
+            creditFacade,
+            creditManager,
+            params.curveAdapter,
+            params.convexAdapter,
+            primaryToken,
+            depositToken
+        );
 
         (primaryIndex, convexOutputToken, poolId) = _helper.verifyInstances();
     }
@@ -313,7 +319,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     function _adjustPosition(uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) internal {
-
         GearboxHelper helper_ = _helper;
         address creditAccount_ = getCreditAccount();
         helper_.claimRewards(address(_vaultGovernance), creditAccount_);
@@ -378,7 +383,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditFacade.multicall(calls);
     }
 
-    function swap(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams, address token, uint256 amount) external {
+    function swap(
+        ISwapRouter router,
+        ISwapRouter.ExactOutputParams memory uniParams,
+        address token,
+        uint256 amount
+    ) external {
         require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
         IERC20(token).safeIncreaseAllowance(address(router), amount);
         router.exactOutput(uniParams);

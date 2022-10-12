@@ -218,7 +218,6 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
-
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
 
@@ -429,7 +428,7 @@ contract GearboxHelper {
     {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
-        
+
         IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
             .operatorParams();
 
