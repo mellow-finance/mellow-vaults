@@ -108,10 +108,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         if (!wasDeposit) {
             require(tokenAmounts[0] >= 10 * _pullExistentials[0], ExceptionsLibrary.LIMIT_UNDERFLOW);
-            require(
-                tokenAmounts[0] <= _pullExistentials[0] * _pullExistentials[0],
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
+            require(tokenAmounts[0] <= _pullExistentials[0] * _pullExistentials[0], ExceptionsLibrary.LIMIT_OVERFLOW);
         }
 
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
@@ -130,9 +127,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         if (!wasDeposit) {
             lpAmount = tokenAmounts[0];
-        }
-
-        else {
+        } else {
             lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], minTvl[0]);
         }
 
