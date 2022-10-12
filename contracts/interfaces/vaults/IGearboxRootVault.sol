@@ -64,4 +64,8 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested);
 
     function invokeExecution() external;
+
+    function shutdown() external;
+
+    function reopen() external;
 }
