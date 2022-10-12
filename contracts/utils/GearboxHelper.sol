@@ -382,12 +382,20 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function adjustPosition(uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue, address vaultGovernance, uint256 marginalFactorD9, int128 primaryIndex, uint256 poolId, address convexOutputToken) external {
-
+    function adjustPosition(
+        uint256 expectedAllAssetsValue,
+        uint256 currentAllAssetsValue,
+        address vaultGovernance,
+        uint256 marginalFactorD9,
+        int128 primaryIndex,
+        uint256 poolId,
+        address convexOutputToken
+    ) external {
         address creditAccount_ = getCreditAccount();
         claimRewards(vaultGovernance, creditAccount_);
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance).delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
         ICreditFacade creditFacade_ = creditFacade;
 
         checkNecessaryDepositExchange(

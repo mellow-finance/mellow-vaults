@@ -122,7 +122,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             address(_vaultGovernance),
             marginalFactorD9
         );
-        _helper.adjustPosition(expectedAllAssetsValue, currentAllAssetsValue, address(_vaultGovernance), marginalFactorD9, primaryIndex, poolId, convexOutputToken);
+        _helper.adjustPosition(
+            expectedAllAssetsValue,
+            currentAllAssetsValue,
+            address(_vaultGovernance),
+            marginalFactorD9,
+            primaryIndex,
+            poolId,
+            convexOutputToken
+        );
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory) internal override returns (uint256[] memory) {
@@ -294,7 +302,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             marginalFactorD9
         );
 
-        _helper.adjustPosition(expectedAllAssetsValue, currentAllAssetsValue, address(_vaultGovernance), marginalFactorD9, primaryIndex, poolId, convexOutputToken);
+        _helper.adjustPosition(
+            expectedAllAssetsValue,
+            currentAllAssetsValue,
+            address(_vaultGovernance),
+            marginalFactorD9,
+            primaryIndex,
+            poolId,
+            convexOutputToken
+        );
         emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
     }
 
@@ -341,5 +357,4 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     event TargetMarginalFactorUpdated(address indexed origin, address indexed sender, uint256 newMarginalFactorD9);
 
     event CreditAccountOpened(address indexed origin, address indexed sender, address creditAccount);
-
 }
