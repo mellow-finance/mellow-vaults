@@ -153,7 +153,7 @@ contract GearboxHelper {
         uint256 desiredValueNominatedUnderlying,
         address creditAccount,
         address convexOutputToken
-    ) external view returns (uint256) {
+    ) public view returns (uint256) {
         uint256 currentConvexTokensAmount = IERC20(convexOutputToken).balanceOf(creditAccount);
 
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
@@ -217,8 +217,7 @@ contract GearboxHelper {
         uint256 expectedMaximalDepositTokenValueNominatedUnderlying,
         address vaultGovernance,
         address creditAccount
-    ) external {
-
+    ) public {
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
 
@@ -274,7 +273,7 @@ contract GearboxHelper {
         }
     }
 
-    function claimRewards(address vaultGovernance, address creditAccount) external {
+    function claimRewards(address vaultGovernance, address creditAccount) public {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
@@ -324,7 +323,7 @@ contract GearboxHelper {
         address vaultGovernance,
         uint256 poolId,
         int128 primaryIndex
-    ) external {
+    ) public {
         if (amount == 0) {
             return;
         }
@@ -364,7 +363,7 @@ contract GearboxHelper {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams,
         uint256 poolId,
         int128 primaryIndex
-    ) external {
+    ) public {
         MultiCall[] memory calls = new MultiCall[](3);
 
         address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
@@ -387,6 +386,71 @@ contract GearboxHelper {
         });
 
         admin.multicall(calls);
+    }
+
+    function adjustPosition(uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue, address vaultGovernance, uint256 marginalFactorD9, int128 primaryIndex, uint256 poolId, address convexOutputToken) external {
+
+        address creditAccount_ = getCreditAccount();
+        claimRewards(vaultGovernance, creditAccount_);
+
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance).delayedProtocolParams();
+        ICreditFacade creditFacade_ = creditFacade;
+
+        checkNecessaryDepositExchange(
+            FullMath.mulDiv(expectedAllAssetsValue, D9, marginalFactorD9),
+            vaultGovernance,
+            creditAccount_
+        );
+
+        uint256 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
+
+        if (expectedAllAssetsValue >= currentAllAssetsValue) {
+            uint256 delta = expectedAllAssetsValue - currentAllAssetsValue;
+
+            MultiCall memory increaseDebtCall = MultiCall({
+                target: address(creditFacade_),
+                callData: abi.encodeWithSelector(ICreditFacade.increaseDebt.selector, delta)
+            });
+
+            depositToConvex(increaseDebtCall, protocolParams, poolId, primaryIndex);
+        } else {
+            uint256 delta = currentAllAssetsValue - expectedAllAssetsValue;
+
+            if (currentPrimaryTokenAmount >= delta) {
+                MultiCall memory decreaseDebtCall = MultiCall({
+                    target: address(creditFacade_),
+                    callData: abi.encodeWithSelector(ICreditFacade.decreaseDebt.selector, delta)
+                });
+
+                depositToConvex(decreaseDebtCall, protocolParams, poolId, primaryIndex);
+            } else {
+                uint256 convexAmountToWithdraw = calcConvexTokensToWithdraw(
+                    delta - currentPrimaryTokenAmount,
+                    creditAccount_,
+                    convexOutputToken
+                );
+                withdrawFromConvex(convexAmountToWithdraw, vaultGovernance, poolId, primaryIndex);
+
+                currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
+                if (currentPrimaryTokenAmount < delta) {
+                    delta = currentPrimaryTokenAmount;
+                }
+
+                MultiCall[] memory decreaseCall = new MultiCall[](1);
+                decreaseCall[0] = MultiCall({
+                    target: address(creditFacade_),
+                    callData: abi.encodeWithSelector(ICreditFacade.decreaseDebt.selector, delta)
+                });
+
+                admin.multicall(decreaseCall);
+            }
+        }
+
+        emit PositionAdjusted(tx.origin, msg.sender, expectedAllAssetsValue);
+    }
+
+    function getCreditAccount() public view returns (address) {
+        return creditManager.creditAccounts(address(admin));
     }
 
     function swapExactOutput(
@@ -418,7 +482,7 @@ contract GearboxHelper {
             amountOut: amount,
             amountInMaximum: amountInMaximum
         });
-        
+
         { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             router.exactOutput(uniParams);
@@ -441,7 +505,7 @@ contract GearboxHelper {
     {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
-        
+
         IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
             .operatorParams();
 
@@ -485,4 +549,6 @@ contract GearboxHelper {
         actualAmounts = new uint256[](1);
         actualAmounts[0] = amount;
     }
+
+    event PositionAdjusted(address indexed origin, address indexed sender, uint256 newTotalAssetsValue);
 }

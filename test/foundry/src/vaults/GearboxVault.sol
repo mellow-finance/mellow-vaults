@@ -30,7 +30,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 public marginalFactorD9;
 
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-
         address creditAccount = getCreditAccount();
 
         address depositToken_ = depositToken;
@@ -89,7 +88,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
         _helper = GearboxHelper(helper_);
-        _helper.setParameters(creditFacade, creditManager, params.curveAdapter, params.convexAdapter, primaryToken, depositToken);
+        _helper.setParameters(
+            creditFacade,
+            creditManager,
+            params.curveAdapter,
+            params.convexAdapter,
+            primaryToken,
+            depositToken
+        );
 
         (primaryIndex, convexOutputToken, poolId) = _helper.verifyInstances();
     }
@@ -116,7 +122,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             address(_vaultGovernance),
             marginalFactorD9
         );
-        _adjustPosition(expectedAllAssetsValue, currentAllAssetsValue);
+        _helper.adjustPosition(expectedAllAssetsValue, currentAllAssetsValue, address(_vaultGovernance), marginalFactorD9, primaryIndex, poolId, convexOutputToken);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory) internal override returns (uint256[] memory) {
@@ -257,6 +263,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             creditFacade_.enableToken(depositToken);
             _addDepositTokenAsCollateral();
         }
+
+        emit CreditAccountOpened(tx.origin, msg.sender, getCreditAccount());
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
@@ -286,7 +294,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             marginalFactorD9
         );
 
-        _adjustPosition(expectedAllAssetsValue, currentAllAssetsValue);
+        _helper.adjustPosition(expectedAllAssetsValue, currentAllAssetsValue, address(_vaultGovernance), marginalFactorD9, primaryIndex, poolId, convexOutputToken);
+        emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
     }
 
     function _isReclaimForbidden(address) internal pure override returns (bool) {
@@ -312,76 +321,25 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         IERC20(token).approve(creditManagerAddress, 0);
     }
 
-    function _adjustPosition(uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) internal {
-
-        GearboxHelper helper_ = _helper;
-        address creditAccount_ = getCreditAccount();
-        helper_.claimRewards(address(_vaultGovernance), creditAccount_);
-
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedProtocolParams();
-        ICreditFacade creditFacade_ = creditFacade;
-
-        helper_.checkNecessaryDepositExchange(
-            FullMath.mulDiv(expectedAllAssetsValue, D9, marginalFactorD9),
-            address(_vaultGovernance),
-            creditAccount_
-        );
-        uint256 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
-
-        if (expectedAllAssetsValue >= currentAllAssetsValue) {
-            uint256 delta = expectedAllAssetsValue - currentAllAssetsValue;
-
-            MultiCall memory increaseDebtCall = MultiCall({
-                target: address(creditFacade_),
-                callData: abi.encodeWithSelector(ICreditFacade.increaseDebt.selector, delta)
-            });
-
-            helper_.depositToConvex(increaseDebtCall, protocolParams, poolId, primaryIndex);
-        } else {
-            uint256 delta = currentAllAssetsValue - expectedAllAssetsValue;
-
-            if (currentPrimaryTokenAmount >= delta) {
-                MultiCall memory decreaseDebtCall = MultiCall({
-                    target: address(creditFacade_),
-                    callData: abi.encodeWithSelector(ICreditFacade.decreaseDebt.selector, delta)
-                });
-
-                helper_.depositToConvex(decreaseDebtCall, protocolParams, poolId, primaryIndex);
-            } else {
-                uint256 convexAmountToWithdraw = helper_.calcConvexTokensToWithdraw(
-                    delta - currentPrimaryTokenAmount,
-                    creditAccount_,
-                    convexOutputToken
-                );
-                helper_.withdrawFromConvex(convexAmountToWithdraw, address(_vaultGovernance), poolId, primaryIndex);
-
-                currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
-                if (currentPrimaryTokenAmount < delta) {
-                    delta = currentPrimaryTokenAmount;
-                }
-
-                MultiCall[] memory decreaseCall = new MultiCall[](1);
-                decreaseCall[0] = MultiCall({
-                    target: address(creditFacade_),
-                    callData: abi.encodeWithSelector(ICreditFacade.decreaseDebt.selector, delta)
-                });
-
-                creditFacade_.multicall(decreaseCall);
-            }
-        }
-    }
-
     function multicall(MultiCall[] memory calls) external {
         require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
         creditFacade.multicall(calls);
     }
 
-    function swap(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams, address token, uint256 amount) external {
+    function swap(
+        ISwapRouter router,
+        ISwapRouter.ExactOutputParams memory uniParams,
+        address token,
+        uint256 amount
+    ) external {
         require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
         IERC20(token).safeIncreaseAllowance(address(router), amount);
         router.exactOutput(uniParams);
         IERC20(token).approve(address(router), 0);
     }
+
+    event TargetMarginalFactorUpdated(address indexed origin, address indexed sender, uint256 newMarginalFactorD9);
+
+    event CreditAccountOpened(address indexed origin, address indexed sender, address creditAccount);
+
 }

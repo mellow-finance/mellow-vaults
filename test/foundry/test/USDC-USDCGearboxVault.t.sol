@@ -25,6 +25,8 @@ import "../src/external/ConvexBaseRewardPool.sol";
 
 contract GearboxUSDCTest is Test {
 
+    event CreditAccountOpened(address indexed origin, address indexed sender, address indexed creditAccount);
+
     ProtocolGovernance governance;
     VaultRegistry registry;
 
@@ -994,7 +996,6 @@ contract GearboxUSDCTest is Test {
         claimMoney(recipient); 
         assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 480 * 10**6, 100)); 
     }
-    
 
 
 }
