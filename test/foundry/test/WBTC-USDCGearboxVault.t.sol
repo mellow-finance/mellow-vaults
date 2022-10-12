@@ -67,7 +67,7 @@ contract GearboxWBTCTest is Test {
 
     function checkNotNonExpectedBalance() public returns (bool) {
 
-        address creditAccount = gearboxVault.creditAccount();
+        address creditAccount = gearboxVault.getCreditAccount();
 
         uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
         uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
@@ -201,8 +201,13 @@ contract GearboxWBTCTest is Test {
             initialMarginalValueD9: 3000000000
         });
 
+        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance.OperatorParams({
+            largePoolFeeUsed: 500
+        });
+
         governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
         governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1, delayedVaultParams);
+        governanceC.setOperatorParams(operatorParams);
         vm.warp(block.timestamp + governance.governanceDelay());
         governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1);
         governanceA.commitDelayedStrategyParams(nftStart + 2);
@@ -230,8 +235,8 @@ contract GearboxWBTCTest is Test {
 
         gearboxVault = GearboxVault(registry.vaultForNft(nftStart + 1));
 
-        curveAdapter = ICurveV1Adapter(gearboxVault.curveAdapter());
-        convexAdapter = IConvexV1BaseRewardPoolAdapter(gearboxVault.convexAdapter());
+        curveAdapter = ICurveV1Adapter(0x6f3A4EFe549c2Fa397ed40FD4DE9FEB922C0FE31);
+        convexAdapter = IConvexV1BaseRewardPoolAdapter(0xb26586F4a9F157117651Da1A6DFa5b310790dd8A);
         
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
         IERC20(wbtc).approve(address(rootVault), type(uint256).max);
@@ -289,7 +294,7 @@ contract GearboxWBTCTest is Test {
         IERC20(wbtc).approve(address(rootVault), type(uint256).max);
 
         rootVault.deposit(amounts, 0, "");
-        if (gearboxVault.creditAccount() == address(0)) {
+        if (gearboxVault.getCreditAccount() == address(0)) {
             gearboxVault.openCreditAccount();
         }
     }
@@ -321,7 +326,7 @@ contract GearboxWBTCTest is Test {
 
     function setNewRewardInRewardPool(uint256 nominator, uint256 denominator) public {
         ICreditManagerV2 manager = gearboxVault.creditManager();
-        address cont = manager.adapterToContract(gearboxVault.convexAdapter());
+        address cont = manager.adapterToContract(address(convexAdapter));
 
         BaseRewardPool rewardsPool = BaseRewardPool(cont);
         
@@ -366,7 +371,7 @@ contract GearboxWBTCTest is Test {
 
         deposit(500, address(this));
 
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
 
         uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
         uint256 wbtcBalance = IERC20(wbtc).balanceOf(creditAccount);
@@ -390,7 +395,7 @@ contract GearboxWBTCTest is Test {
         deposit(100, address(this));
         uint256 lpAmountAfter = rootVault.balanceOf(address(this));
 
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
 
         uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
         uint256 wbtcBalance = IERC20(wbtc).balanceOf(creditAccount);
@@ -472,7 +477,7 @@ contract GearboxWBTCTest is Test {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
 
         assertTrue(checkNotNonExpectedBalance());
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
@@ -515,7 +520,7 @@ contract GearboxWBTCTest is Test {
     function testSeveralAdjustingPositionAfterChangeInMarginalFactor() public {
         deposit(500, address(this));
         deposit(200, address(this)); // 1900 USDC in staking
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
         gearboxVault.adjustPosition();
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         gearboxVault.updateTargetMarginalFactor(2500000000); // 1550 USDC in staking
@@ -535,7 +540,7 @@ contract GearboxWBTCTest is Test {
         deposit(500, address(this));
         deposit(200, address(this)); // 1900 USD in staking
 
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
         gearboxVault.adjustPosition();
 
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
@@ -604,7 +609,7 @@ contract GearboxWBTCTest is Test {
         assertTrue(IERC20(usdc).balanceOf(address(erc20Vault)) == 0);
         assertTrue(IERC20(usdc).balanceOf(address(rootVault)) == 0);
 
-        assertTrue(gearboxVault.creditAccount() == address(0));
+        assertTrue(gearboxVault.getCreditAccount() == address(0));
     }
 
     function checkIfSimpleCloseIsOkay() public returns (bool) {
@@ -615,7 +620,7 @@ contract GearboxWBTCTest is Test {
             return false;
         }
 
-        if (gearboxVault.creditAccount() != address(0)) {
+        if (gearboxVault.getCreditAccount() != address(0)) {
             return false;
         }
         return true;
@@ -912,7 +917,7 @@ contract GearboxWBTCTest is Test {
         uint256 amountPrev = tvl();
         gearboxVault.adjustPosition();
 
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
 
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
@@ -936,7 +941,7 @@ contract GearboxWBTCTest is Test {
         deposit(600, address(this));
 
         gearboxVault.adjustPosition();
-        creditAccount = gearboxVault.creditAccount();
+        creditAccount = gearboxVault.getCreditAccount();
         vm.warp(block.timestamp + 7200 * YEAR);
 
         uint256 lpTokens = rootVault.balanceOf(address(this));

@@ -71,7 +71,7 @@ contract GearboxHelper {
 
         bool havePrimaryTokenInCurve = false;
 
-        for (uint256 i = 0; i < 4; ++i) {
+        for (uint256 i = 0; i < curveAdapter_.nCoins(); ++i) {
             address tokenI = curveAdapter_.coins(i);
             if (tokenI == primaryToken) {
                 primaryIndex = int128(int256(i));
@@ -101,23 +101,18 @@ contract GearboxHelper {
 
             if (cliff < totalCliffs) {
                 uint256 reduction = totalCliffs - cliff;
-                crvAmount = FullMath.mulDiv(crvAmount, reduction, totalCliffs);
+                uint256 cvxAmount = FullMath.mulDiv(crvAmount, reduction, totalCliffs);
 
                 uint256 amtTillMax = cvxToken.maxSupply() - supply;
-                if (crvAmount > amtTillMax) {
-                    crvAmount = amtTillMax;
+                if (cvxAmount > amtTillMax) {
+                    cvxAmount = amtTillMax;
                 }
 
-                return crvAmount;
+                return cvxAmount;
             }
 
             return 0;
         }
-    }
-
-    function calcRateRAY(address tokenFrom, address tokenTo) public view returns (uint256) {
-        IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
-        return oracle.convert(D27, tokenFrom, tokenTo);
     }
 
     function calculateClaimableRewards(address creditAccount, address vaultGovernance) public view returns (uint256) {
@@ -180,6 +175,11 @@ contract GearboxHelper {
             );
     }
 
+    function calcRateRAY(address tokenFrom, address tokenTo) public view returns (uint256) {
+        IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
+        return oracle.convert(D27, tokenFrom, tokenTo);
+    }
+
     function calculateAmountInMaximum(
         address fromToken,
         address toToken,
@@ -218,20 +218,27 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
-        if (depositToken == primaryToken) {
+
+        address depositToken_ = depositToken;
+        address primaryToken_ = primaryToken;
+
+        if (depositToken_ == primaryToken_) {
             return;
         }
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        uint256 currentDepositTokenAmount = IERC20(depositToken).balanceOf(creditAccount);
+        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
+            .operatorParams();
+
+        uint256 currentDepositTokenAmount = IERC20(depositToken_).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
 
         uint256 currentValueDepositTokenNominatedUnderlying = oracle.convert(
             currentDepositTokenAmount,
-            depositToken,
-            primaryToken
+            depositToken_,
+            primaryToken_
         );
 
         if (currentValueDepositTokenNominatedUnderlying > expectedMaximalDepositTokenValueNominatedUnderlying) {
@@ -242,10 +249,10 @@ contract GearboxHelper {
             );
             MultiCall[] memory calls = new MultiCall[](1);
 
-            uint256 expectedOutput = oracle.convert(toSwap, depositToken, primaryToken);
+            uint256 expectedOutput = oracle.convert(toSwap, depositToken_, primaryToken_);
 
             ISwapRouter.ExactInputParams memory inputParams = ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(depositToken, uint24(500), primaryToken),
+                path: abi.encodePacked(depositToken_, operatorParams.largePoolFeeUsed, primaryToken_),
                 recipient: creditAccount,
                 deadline: block.timestamp + 900,
                 amountIn: toSwap,
@@ -264,6 +271,9 @@ contract GearboxHelper {
     function claimRewards(address vaultGovernance, address creditAccount) external {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
+
+        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
+            .operatorParams();
 
         MultiCall[] memory calls = new MultiCall[](1);
 
@@ -295,7 +305,7 @@ contract GearboxHelper {
         calls[2] = createUniswapMulticall(
             weth,
             primaryToken,
-            500,
+            operatorParams.largePoolFeeUsed,
             protocolParams.univ3Adapter,
             protocolParams.minSlippageD9
         );
@@ -384,6 +394,9 @@ contract GearboxHelper {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
+        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
+            .operatorParams();
+
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
         uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9);
 
@@ -393,7 +406,7 @@ contract GearboxHelper {
         }
 
         ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-            path: abi.encodePacked(fromToken, uint24(500), toToken),
+            path: abi.encodePacked(fromToken, operatorParams.largePoolFeeUsed, toToken),
             recipient: creditAccount,
             deadline: block.timestamp + 900,
             amountOut: amount,
@@ -416,17 +429,24 @@ contract GearboxHelper {
     {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
+        
+        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
+            .operatorParams();
 
-        uint256 depositBalance = IERC20(depositToken).balanceOf(address(admin));
-        uint256 primaryBalance = IERC20(primaryToken).balanceOf(address(admin));
+        address depositToken_ = depositToken;
+        address primaryToken_ = primaryToken;
 
-        if (depositBalance < amount && depositToken != primaryToken && primaryBalance > 0) {
+        uint256 depositBalance = IERC20(depositToken_).balanceOf(address(admin));
+        uint256 primaryBalance = IERC20(primaryToken_).balanceOf(address(admin));
+
+        if (depositBalance < amount && depositToken_ != primaryToken_ && primaryBalance > 0) {
             uint256 amountInMaximum = calculateAmountInMaximum(
-                primaryToken,
-                depositToken,
+                primaryToken_,
+                depositToken_,
                 amount - depositBalance,
                 protocolParams.minSlippageD9
             );
+
             uint256 outputWant = amount - depositBalance;
 
             if (amountInMaximum > primaryBalance) {
@@ -436,16 +456,16 @@ contract GearboxHelper {
 
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(primaryToken, uint24(500), depositToken),
+                path: abi.encodePacked(primaryToken_, operatorParams.largePoolFeeUsed, depositToken_),
                 recipient: address(admin),
                 deadline: block.timestamp + 900,
                 amountOut: outputWant,
                 amountInMaximum: amountInMaximum
             });
-            admin.swap(router, uniParams);
+            admin.swap(router, uniParams, primaryToken_, amountInMaximum);
         }
 
-        depositBalance = IERC20(depositToken).balanceOf(address(admin));
+        depositBalance = IERC20(depositToken_).balanceOf(address(admin));
         if (amount > depositBalance) {
             amount = depositBalance;
         }

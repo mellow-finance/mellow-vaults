@@ -79,6 +79,14 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     }
 
     /// @inheritdoc IGearboxVaultGovernance
+    function operatorParams() external view returns (OperatorParams memory) {
+        if (_operatorParams.length == 0) {
+            return OperatorParams({largePoolFeeUsed: 500});
+        }
+        return abi.decode(_operatorParams, (OperatorParams));
+    }
+
+    /// @inheritdoc IGearboxVaultGovernance
     function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
         if (_delayedProtocolPerVaultParams[nft].length == 0) {
             return
@@ -147,6 +155,13 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     }
 
     /// @inheritdoc IGearboxVaultGovernance
+    function setOperatorParams(OperatorParams calldata params) external {
+        require(params.largePoolFeeUsed == 500 || params.largePoolFeeUsed == 3000, ExceptionsLibrary.FORBIDDEN);
+        _setOperatorParams(abi.encode(params));
+        emit SetOperatorParams(tx.origin, msg.sender, params);
+    }
+
+    /// @inheritdoc IGearboxVaultGovernance
     function createVault(
         address[] memory vaultTokens_,
         address owner_,
@@ -209,6 +224,12 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         DelayedProtocolParams params,
         uint256 when
     );
+
+    /// @notice Emitted when new OperatorParams are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params New params that are set
+    event SetOperatorParams(address indexed origin, address indexed sender, OperatorParams params);
 
     /// @notice Emitted when new DelayedProtocolParams are committed
     /// @param origin Origin of the transaction (tx.origin)

@@ -32,7 +32,9 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     IIntegrationVault public gearboxVault;
     IIntegrationVault public erc20Vault;
     address public primaryToken;
+
     bool public wasDeposit;
+    bool public isClosed;
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IGearboxRootVault
@@ -100,6 +102,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
+        require(!isClosed, ExceptionsLibrary.FORBIDDEN);
 
         uint256 thisNft = _nft;
 
@@ -216,11 +219,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     /// @inheritdoc IGearboxRootVault
-    function invokeExecution() external {
+    function invokeExecution() public {
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault).vaultGovernance()));
         uint256 withdrawDelay = governance.delayedProtocolParams().withdrawDelay;
 
-        require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp, ExceptionsLibrary.INVARIANT);
+        require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
         lastEpochChangeTimestamp = block.timestamp;
 
         (uint256[] memory minTokenAmounts, ) = gearboxVault.tvl();
@@ -277,6 +280,18 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         IERC20(primaryToken).safeTransfer(to, actualTokenAmounts[0]);
 
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokensToBurn);
+    }
+
+    function shutdown() external {
+        _requireAtLeastStrategy();
+        require(!isClosed, ExceptionsLibrary.DUPLICATE);
+        isClosed = true;
+        invokeExecution();
+    }
+
+    function reopen() external {
+        _requireAtLeastStrategy();
+        isClosed = false;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

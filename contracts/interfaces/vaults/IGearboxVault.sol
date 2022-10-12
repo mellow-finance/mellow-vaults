@@ -17,6 +17,8 @@ interface IGearboxVault is IIntegrationVault {
 
     function multicall(MultiCall[] memory calls) external;
 
-    function swap(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams) external;
+    function swap(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams, address token, uint256 amount) external;
+
+    function getCreditAccount() external view returns (address);
 
 }
