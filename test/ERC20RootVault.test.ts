@@ -51,7 +51,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     await deployments.fixture();
-                    const { deploy, read } = deployments;
+                    const { read } = deployments;
 
                     const { uniswapV3PositionManager, curveRouter } =
                         await getNamedAccounts();
@@ -194,7 +194,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ethers.constants.MaxUint256
                     );
 
-                    t;
                     return this.subject;
                 }
             );
@@ -202,24 +201,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         beforeEach(async () => {
             await this.deploymentFixture();
-        });
-
-        describe.only("Depositors gas usage", () => {
-            it("works", async () => {
-                let totalGasUsed = BigNumber.from(0);
-                for (let _ = 0; _ < 20; ++_) {
-                    let addresses: string[] = [];
-                    for (let i = 0; i < 500; ++i) {
-                        addresses.push(randomAddress());
-                    }
-                    const tx = await this.subject
-                        .connect(this.admin)
-                        .addDepositorsToAllowlist(addresses);
-                    const receipt = await tx.wait();
-                    totalGasUsed = totalGasUsed.add(receipt.gasUsed);
-                }
-                console.log("Gas used: ", totalGasUsed.toString());
-            });
         });
 
         describe("#depositorsAllowlist", () => {
