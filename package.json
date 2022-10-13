@@ -77,7 +77,11 @@
     "@uniswap/v3-sdk": "^3.8.1",
     "csv-parse": "^5.1.0",
     "dotenv": "^10.0.0",
+    "ethereumjs-util": "^7.1.5",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.2.32",
     "solc": "0.8.9",
-    "solidity-docgen": "^0.5.16"
+    "solidity-docgen": "^0.5.16",
+    "typescript-solidity-merkle-tree": "^0.3.0"
   }
 }
