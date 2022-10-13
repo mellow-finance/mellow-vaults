@@ -923,7 +923,6 @@ contract GearboxWBTCTest is Test {
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
         vm.warp(block.timestamp + 7200 * YEAR); // mock time rolling to call large fees
-        console.log(tvl());
         assertTrue(tvl() < 600 * satoshiOfUsdc && tvl() > 500 * satoshiOfUsdc);
 
         uint256 amount = tvl();

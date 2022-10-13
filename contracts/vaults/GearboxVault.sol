@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
 import "./IntegrationVault.sol";
@@ -17,18 +17,30 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     GearboxHelper internal _helper;
 
+    /// @inheritdoc IGearboxVault
     ICreditFacade public creditFacade;
+
+    /// @inheritdoc IGearboxVault
     ICreditManagerV2 public creditManager;
 
+    /// @inheritdoc IGearboxVault
     address public primaryToken;
+    /// @inheritdoc IGearboxVault
     address public depositToken;
 
+    /// @inheritdoc IGearboxVault
     int128 public primaryIndex;
+    /// @inheritdoc IGearboxVault
     uint256 public poolId;
+    /// @inheritdoc IGearboxVault
     address public convexOutputToken;
 
+    /// @inheritdoc IGearboxVault
     uint256 public marginalFactorD9;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address creditAccount = getCreditAccount();
 
@@ -68,6 +80,19 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         maxTokenAmounts = minTokenAmounts;
     }
 
+    /// @inheritdoc IntegrationVault
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IGearboxVault).interfaceId;
+    }
+
+    /// @inheritdoc IGearboxVault
+    function getCreditAccount() public view returns (address) {
+        return creditManager.creditAccounts(address(this));
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IGearboxVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -100,15 +125,13 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         (primaryIndex, convexOutputToken, poolId) = _helper.verifyInstances();
     }
 
+    /// @inheritdoc IGearboxVault
     function openCreditAccount() external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _openCreditAccount();
     }
 
-    function getCreditAccount() public view returns (address) {
-        return creditManager.creditAccounts(address(this));
-    }
-
+    /// @inheritdoc IGearboxVault
     function adjustPosition() external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
@@ -132,6 +155,69 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             convexOutputToken
         );
     }
+
+    /// @inheritdoc IGearboxVault
+    function updateTargetMarginalFactor(uint256 marginalFactorD9_) external {
+        require(_isApprovedOrOwner(msg.sender));
+        require(marginalFactorD9_ >= D9, ExceptionsLibrary.INVALID_VALUE);
+
+        address creditAccount_ = getCreditAccount();
+
+        if (creditAccount_ == address(0)) {
+            marginalFactorD9 = marginalFactorD9_;
+            return;
+        }
+
+        (, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
+            creditAccount_,
+            address(_vaultGovernance),
+            marginalFactorD9
+        );
+        marginalFactorD9 = marginalFactorD9_;
+        (uint256 expectedAllAssetsValue, ) = _helper.calculateDesiredTotalValue(
+            creditAccount_,
+            address(_vaultGovernance),
+            marginalFactorD9
+        );
+
+        _helper.adjustPosition(
+            expectedAllAssetsValue,
+            currentAllAssetsValue,
+            address(_vaultGovernance),
+            marginalFactorD9,
+            primaryIndex,
+            poolId,
+            convexOutputToken
+        );
+        emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
+    }
+
+    /// @inheritdoc IGearboxVault
+    function multicall(MultiCall[] memory calls) external {
+        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
+        creditFacade.multicall(calls);
+    }
+
+    /// @inheritdoc IGearboxVault
+    function swap(
+        ISwapRouter router,
+        ISwapRouter.ExactOutputParams memory uniParams,
+        address token,
+        uint256 amount
+    ) external {
+        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
+        IERC20(token).safeIncreaseAllowance(address(router), amount);
+        router.exactOutput(uniParams);
+        IERC20(token).approve(address(router), 0);
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _isReclaimForbidden(address) internal pure override returns (bool) {
+        return false;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory) internal override returns (uint256[] memory) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
@@ -275,49 +361,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         emit CreditAccountOpened(tx.origin, msg.sender, getCreditAccount());
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IGearboxVault).interfaceId;
-    }
-
-    function updateTargetMarginalFactor(uint256 marginalFactorD9_) external {
-        require(_isApprovedOrOwner(msg.sender));
-        require(marginalFactorD9_ >= D9, ExceptionsLibrary.INVALID_VALUE);
-
-        address creditAccount_ = getCreditAccount();
-
-        if (creditAccount_ == address(0)) {
-            marginalFactorD9 = marginalFactorD9_;
-            return;
-        }
-
-        (, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
-            creditAccount_,
-            address(_vaultGovernance),
-            marginalFactorD9
-        );
-        marginalFactorD9 = marginalFactorD9_;
-        (uint256 expectedAllAssetsValue, ) = _helper.calculateDesiredTotalValue(
-            creditAccount_,
-            address(_vaultGovernance),
-            marginalFactorD9
-        );
-
-        _helper.adjustPosition(
-            expectedAllAssetsValue,
-            currentAllAssetsValue,
-            address(_vaultGovernance),
-            marginalFactorD9,
-            primaryIndex,
-            poolId,
-            convexOutputToken
-        );
-        emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
-    }
-
-    function _isReclaimForbidden(address) internal pure override returns (bool) {
-        return false;
-    }
-
+    /// @notice Deposits all deposit tokens which are on the address of the vault into the credit account
     function _addDepositTokenAsCollateral() internal {
         ICreditFacade creditFacade_ = creditFacade;
         MultiCall[] memory calls = new MultiCall[](1);
@@ -337,24 +381,17 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         IERC20(token).approve(creditManagerAddress, 0);
     }
 
-    function multicall(MultiCall[] memory calls) external {
-        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
-        creditFacade.multicall(calls);
-    }
+    // --------------------------  EVENTS  --------------------------
 
-    function swap(
-        ISwapRouter router,
-        ISwapRouter.ExactOutputParams memory uniParams,
-        address token,
-        uint256 amount
-    ) external {
-        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
-        IERC20(token).safeIncreaseAllowance(address(router), amount);
-        router.exactOutput(uniParams);
-        IERC20(token).approve(address(router), 0);
-    }
-
+    /// @notice Emitted when target marginal factor is updated
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param newMarginalFactorD9 New marginal factor
     event TargetMarginalFactorUpdated(address indexed origin, address indexed sender, uint256 newMarginalFactorD9);
 
+    /// @notice Emitted when a credit account linked to this vault is opened in Gearbox
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param creditAccount Address of the opened credit account
     event CreditAccountOpened(address indexed origin, address indexed sender, address creditAccount);
 }

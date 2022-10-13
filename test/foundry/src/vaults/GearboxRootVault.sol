@@ -251,6 +251,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         currentEpoch += 1;
+        emit ExecutionInvoked(msg.sender, totalAmount);
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -435,9 +436,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param amount Amount of lp token minted
     event ManagementFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
 
-    event WithdrawalRegistered(address indexed addr, uint256 lpAmountRegistered);
+    event WithdrawalRegistered(address indexed sender, uint256 lpAmountRegistered);
 
-    event WithdrawalCancelled(address indexed addr, uint256 lpAmountCancelled);
+    event WithdrawalCancelled(address indexed sender, uint256 lpAmountCancelled);
+
+    event ExecutionInvoked(address indexed sender, uint256 amountWithdrawnToERC20);
 
     /// @notice Emitted when protocol fees are charged
     /// @param treasury Treasury receiver of the fee

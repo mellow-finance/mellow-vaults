@@ -29,12 +29,39 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     EnumerableSet.AddressSet private _depositorsAllowlist;
 
+    /// @inheritdoc IGearboxRootVault
     IIntegrationVault public gearboxVault;
+    /// @inheritdoc IGearboxRootVault
     IIntegrationVault public erc20Vault;
+    /// @inheritdoc IGearboxRootVault
     address public primaryToken;
 
+    /// @inheritdoc IGearboxRootVault
     bool public wasDeposit;
+    /// @inheritdoc IGearboxRootVault
     bool public isClosed;
+
+    /// @inheritdoc IGearboxRootVault
+    uint256 public currentEpoch;
+
+    /// @inheritdoc IGearboxRootVault
+    mapping(address => uint256) public primaryTokensToWithdraw;
+    /// @inheritdoc IGearboxRootVault
+    mapping(address => uint256) public lpTokensToWithdraw;
+    /// @inheritdoc IGearboxRootVault
+    mapping(address => uint256) public withdrawalRequests;
+    /// @inheritdoc IGearboxRootVault
+    mapping(address => uint256) public latestRequestEpoch;
+
+    /// @inheritdoc IGearboxRootVault
+    mapping(uint256 => uint256) public epochToPriceForLpTokenD18;
+
+    /// @inheritdoc IGearboxRootVault
+    uint256 public totalCurrentEpochLpWitdrawalRequests;
+    /// @inheritdoc IGearboxRootVault
+    uint256 public totalLpTokensWaitingWithdrawal;
+    /// @inheritdoc IGearboxRootVault
+    uint256 public lastEpochChangeTimestamp;
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IGearboxRootVault
@@ -152,19 +179,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
-    uint256 currentEpoch;
-
-    mapping(address => uint256) public primaryTokensToWithdraw;
-    mapping(address => uint256) public lpTokensToWithdraw;
-    mapping(address => uint256) public withdrawalRequests;
-    mapping(address => uint256) public latestRequestEpoch;
-
-    mapping(uint256 => uint256) public epochToPriceForLpTokenD18;
-
-    uint256 totalCurrentEpochLpWitdrawalRequests;
-    uint256 totalLpTokensWaitingWithdrawal;
-    uint256 lastEpochChangeTimestamp;
-
     /// @inheritdoc IGearboxRootVault
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRegistered) {
         uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
@@ -246,6 +260,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         currentEpoch += 1;
+        emit ExecutionInvoked(msg.sender, totalAmount);
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -277,6 +292,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokensToBurn);
     }
 
+    /// @inheritdoc IGearboxRootVault
     function shutdown() external {
         _requireAtLeastStrategy();
         require(!isClosed, ExceptionsLibrary.DUPLICATE);
@@ -284,6 +300,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         invokeExecution();
     }
 
+    /// @inheritdoc IGearboxRootVault
     function reopen() external {
         _requireAtLeastStrategy();
         isClosed = false;
@@ -430,9 +447,20 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param amount Amount of lp token minted
     event ManagementFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
 
-    event WithdrawalRegistered(address indexed addr, uint256 lpAmountRegistered);
+    /// @notice Emitted when a witdrawal request registered
+    /// @param sender Sender of the call (msg.sender)
+    /// @param lpAmountRegistered Amount of lp tokens registered for the withdrawal
+    event WithdrawalRegistered(address indexed sender, uint256 lpAmountRegistered);
 
-    event WithdrawalCancelled(address indexed addr, uint256 lpAmountCancelled);
+    /// @notice Emitted when some piece of the witdrawal request cancelled
+    /// @param sender Sender of the call (msg.sender)
+    /// @param lpAmountCancelled Amount of lp tokens for which the withdrawal is cancelled
+    event WithdrawalCancelled(address indexed sender, uint256 lpAmountCancelled);
+
+    /// @notice Emitted when the withdrawal orderd execution completed
+    /// @param sender Sender of the call (msg.sender)
+    /// @param amountWithdrawnToERC20 Amount of vault tokens withdrawn from Gearbox to the ERC20 vault
+    event ExecutionInvoked(address indexed sender, uint256 amountWithdrawnToERC20);
 
     /// @notice Emitted when protocol fees are charged
     /// @param treasury Treasury receiver of the fee
