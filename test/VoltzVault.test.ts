@@ -23,6 +23,7 @@ import {
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { VOLTZ_VAULT_INTERFACE_ID } from "./library/Constants";
 import { TickMath } from "@uniswap/v3-sdk";
+import { TickRangeStruct } from "./types/IVoltzVault";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -38,12 +39,30 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
     const leverage = 10;
     const marginMultiplierPostUnwind = 2;
     const lookbackWindow = 1209600; // 14 days
-    const estimatedAPYUnitDelta = 0;
+    const estimatedAPYDecimalDelta = 0;
 
     const MIN_SQRT_RATIO = BigNumber.from("2503036416286949174936592462");
     const MAX_SQRT_RATIO = BigNumber.from("2507794810551837817144115957740");
 
     const YEAR_IN_SECONDS = 31536000;
+
+    const getTrackedPositions = async () => {
+        let err = undefined;
+        let trackedPositions = [];
+        while (err === undefined) {
+            try {
+                const trackedPosition: TickRangeStruct =
+                    await this.subject.trackedPositions(
+                        trackedPositions.length
+                    );
+                trackedPositions.push(trackedPosition);
+            } catch (e) {
+                err = e as Error;
+            }
+        }
+
+        return trackedPositions;
+    };
 
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
@@ -65,9 +84,11 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     "IMarginEngine",
                     this.marginEngine
                 )) as IMarginEngine;
+
+                this.vamm = await this.marginEngineContract.vamm();
                 this.vammContract = (await ethers.getContractAt(
                     "IVAMM",
-                    await this.marginEngineContract.vamm()
+                    this.vamm
                 )) as IVAMM;
 
                 this.rateOracle = await this.marginEngineContract.rateOracle();
@@ -111,15 +132,16 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 this.initialTickLow = currentTick - (currentTick % 60) - 600;
                 this.initialTickHigh = currentTick - (currentTick % 60) + 600;
 
-                const voltzHelper = (await ethers.getContract("VoltzHelper"))
-                    .address;
+                this.voltzVaultHelperSingleton = (
+                    await ethers.getContract("VoltzVaultHelper")
+                ).address;
 
                 await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
                     createVaultArgs: [
                         tokens,
                         this.deployer.address,
                         marginEngine,
-                        voltzHelper,
+                        this.voltzVaultHelperSingleton,
                         {
                             tickLower: this.initialTickLow,
                             tickUpper: this.initialTickHigh,
@@ -129,7 +151,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                             ),
                             lookbackWindowInSeconds: lookbackWindow,
                             estimatedAPYDecimalDeltaWad: utils.parseEther(
-                                estimatedAPYUnitDelta.toString()
+                                estimatedAPYDecimalDelta.toString()
                             ),
                         },
                     ],
@@ -179,6 +201,11 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     erc20RootVault
                 );
 
+                this.voltzVaultHelperContract = await ethers.getContractAt(
+                    "VoltzVaultHelper",
+                    await this.subject._voltzVaultHelper()
+                );
+
                 for (let address of [
                     this.deployer.address,
                     this.subject.address,
@@ -223,7 +250,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             });
         });
 
-        it("push #1", async () => {
+        it("push #1: check position margin and leverage", async () => {
             await mint(
                 "USDC",
                 this.subject.address,
@@ -269,9 +296,32 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     .toNumber()
             );
         });
+
+        it("push #1: after maturity", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            await this.preparePush();
+            await expect(
+                this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000)],
+                    encodeToBytes([], [])
+                )
+            ).to.be.revertedWith("closeToOrBeyondMaturity");
+        });
     });
 
-    describe("Test Current Position Getter", () => {
+    describe("Initialisation, Getters, Setters", () => {
         beforeEach(async () => {
             await withSigner(this.subject.address, async (signer) => {
                 await this.usdc
@@ -290,7 +340,41 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             });
         });
 
-        it("currentPosition #1", async () => {
+        it("check vault can be initialised only once", async () => {
+            const tokens = [this.usdc.address]
+                .map((t) => t.toLowerCase())
+                .sort();
+
+            await expect(
+                this.subject.initialize(
+                    0x01,
+                    tokens,
+                    this.marginEngine,
+                    this.periphery,
+                    this.voltzVaultHelperSingleton,
+                    {
+                        tickLower: this.initialTickLow,
+                        tickUpper: this.initialTickHigh,
+                        leverageWad: utils.parseEther(leverage.toString()),
+                        marginMultiplierPostUnwindWad: utils.parseEther(
+                            marginMultiplierPostUnwind.toString()
+                        ),
+                        lookbackWindowInSeconds: lookbackWindow,
+                        estimatedAPYDecimalDeltaWad: utils.parseEther(
+                            estimatedAPYDecimalDelta.toString()
+                        ),
+                    }
+                )
+            ).to.be.revertedWith("INIT");
+        });
+
+        it("check helper can be initialised only once", async () => {
+            await expect(
+                this.voltzVaultHelperContract.initialize()
+            ).to.be.revertedWith("INIT");
+        });
+
+        it("check current position getter", async () => {
             const initialPosition = await this.subject.currentPosition();
 
             await mint(
@@ -318,6 +402,206 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 newPosition.tickLower,
                 newPosition.tickUpper,
             ]);
+        });
+
+        it("check vault params getters & setters", async () => {
+            // check init params
+            expect(await this.subject.leverageWad()).to.be.equal(
+                utils.parseEther(leverage.toString())
+            );
+            expect(
+                await this.subject.marginMultiplierPostUnwindWad()
+            ).to.be.equal(
+                utils.parseEther(marginMultiplierPostUnwind.toString())
+            );
+            expect(await this.subject.lookbackWindow()).to.be.equal(
+                lookbackWindow.toString()
+            );
+            expect(
+                await this.subject.estimatedAPYDecimalDeltaWad()
+            ).to.be.equal(
+                utils.parseEther(estimatedAPYDecimalDelta.toString())
+            );
+
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            // check someone else cannot set params
+            await expect(
+                this.subject.connect(testSigner).setLeverageWad(leverage + 1)
+            ).to.be.revertedWith("FRB");
+            await expect(
+                this.subject
+                    .connect(testSigner)
+                    .setMarginMultiplierPostUnwindWad(
+                        marginMultiplierPostUnwind + 1
+                    )
+            ).to.be.revertedWith("FRB");
+            await expect(
+                this.subject
+                    .connect(testSigner)
+                    .setLookbackWindow(lookbackWindow + 1)
+            ).to.be.revertedWith("FRB");
+            await expect(
+                this.subject
+                    .connect(testSigner)
+                    .setEstimatedAPYDecimalDeltaWad(
+                        estimatedAPYDecimalDelta + 1
+                    )
+            ).to.be.revertedWith("FRB");
+
+            // check someone else can see params
+            expect(
+                await this.subject.connect(testSigner).leverageWad()
+            ).to.be.equal(utils.parseEther(leverage.toString()));
+            expect(
+                await this.subject
+                    .connect(testSigner)
+                    .marginMultiplierPostUnwindWad()
+            ).to.be.equal(
+                utils.parseEther(marginMultiplierPostUnwind.toString())
+            );
+            expect(
+                await this.subject.connect(testSigner).lookbackWindow()
+            ).to.be.equal(lookbackWindow.toString());
+            expect(
+                await this.subject
+                    .connect(testSigner)
+                    .estimatedAPYDecimalDeltaWad()
+            ).to.be.equal(
+                utils.parseEther(estimatedAPYDecimalDelta.toString())
+            );
+
+            // check we can re-set params
+            await this.subject.setLeverageWad(
+                utils.parseEther((leverage + 1).toString())
+            );
+            await this.subject.setMarginMultiplierPostUnwindWad(
+                utils.parseEther((marginMultiplierPostUnwind + 1).toString())
+            );
+            await this.subject.setLookbackWindow(lookbackWindow + 1);
+            await this.subject.setEstimatedAPYDecimalDeltaWad(
+                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
+            );
+
+            // check re-set params
+            expect(await this.subject.leverageWad()).to.be.equal(
+                utils.parseEther((leverage + 1).toString())
+            );
+            expect(
+                await this.subject.marginMultiplierPostUnwindWad()
+            ).to.be.equal(
+                utils.parseEther((marginMultiplierPostUnwind + 1).toString())
+            );
+            expect(await this.subject.lookbackWindow()).to.be.equal(
+                (lookbackWindow + 1).toString()
+            );
+            expect(
+                await this.subject.estimatedAPYDecimalDeltaWad()
+            ).to.be.equal(
+                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
+            );
+        });
+
+        it("check helper params getters & setters", async () => {
+            // check init params
+            expect(
+                await this.voltzVaultHelperContract._marginMultiplierPostUnwindWad()
+            ).to.be.equal(
+                utils.parseEther(marginMultiplierPostUnwind.toString())
+            );
+            expect(
+                await this.voltzVaultHelperContract._lookbackWindowInSeconds()
+            ).to.be.equal(lookbackWindow.toString());
+            expect(
+                await this.voltzVaultHelperContract._estimatedAPYDecimalDeltaWad()
+            ).to.be.equal(
+                utils.parseEther(estimatedAPYDecimalDelta.toString())
+            );
+
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            // check someone else cannot set params
+            await expect(
+                this.voltzVaultHelperContract
+                    .connect(testSigner)
+                    .setMarginMultiplierPostUnwindWad(
+                        marginMultiplierPostUnwind + 1
+                    )
+            ).to.be.revertedWith("Only Vault");
+            await expect(
+                this.voltzVaultHelperContract
+                    .connect(testSigner)
+                    .setLookbackWindow(lookbackWindow + 1)
+            ).to.be.revertedWith("Only Vault");
+            await expect(
+                this.voltzVaultHelperContract
+                    .connect(testSigner)
+                    .setEstimatedAPYDecimalDeltaWad(
+                        estimatedAPYDecimalDelta + 1
+                    )
+            ).to.be.revertedWith("Only Vault");
+
+            // check we cannot re-set params
+            await expect(
+                this.voltzVaultHelperContract.setMarginMultiplierPostUnwindWad(
+                    marginMultiplierPostUnwind + 1
+                )
+            ).to.be.revertedWith("Only Vault");
+            await expect(
+                this.voltzVaultHelperContract.setLookbackWindow(
+                    lookbackWindow + 1
+                )
+            ).to.be.revertedWith("Only Vault");
+            await expect(
+                this.voltzVaultHelperContract.setEstimatedAPYDecimalDeltaWad(
+                    estimatedAPYDecimalDelta + 1
+                )
+            ).to.be.revertedWith("Only Vault");
+
+            // check vault can update helper params
+            await this.subject.setMarginMultiplierPostUnwindWad(
+                utils.parseEther((marginMultiplierPostUnwind + 1).toString())
+            );
+            expect(
+                await this.voltzVaultHelperContract._marginMultiplierPostUnwindWad()
+            ).to.be.equal(
+                utils.parseEther((marginMultiplierPostUnwind + 1).toString())
+            );
+            await this.subject.setLookbackWindow(lookbackWindow + 1);
+            expect(
+                await this.voltzVaultHelperContract._lookbackWindowInSeconds()
+            ).to.be.equal((lookbackWindow + 1).toString());
+            await this.subject.setEstimatedAPYDecimalDeltaWad(
+                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
+            );
+            expect(
+                await this.voltzVaultHelperContract._estimatedAPYDecimalDeltaWad()
+            ).to.be.equal(
+                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
+            );
+        });
+
+        it("check vault & helper pool info getters", async () => {
+            expect(await this.subject.marginEngine()).to.be.equal(
+                this.marginEngine
+            );
+            expect(await this.subject.rateOracle()).to.be.equal(
+                this.rateOracle
+            );
+            expect(await this.subject.periphery()).to.be.equal(this.periphery);
+            expect(await this.subject.vamm()).to.be.equal(this.vamm);
+
+            expect(
+                await this.voltzVaultHelperContract._marginEngine()
+            ).to.be.equal(this.marginEngine);
+            expect(
+                await this.voltzVaultHelperContract._rateOracle()
+            ).to.be.equal(this.rateOracle);
+            expect(
+                await this.voltzVaultHelperContract._periphery()
+            ).to.be.equal(this.periphery);
         });
     });
 
@@ -711,7 +995,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         });
 
         it("rebalance #4: vt < 0, leave initial + buffer behind", async () => {
-            // Push 1000
+            // Push 1000000000
             await mint(
                 "USDC",
                 this.subject.address,
@@ -1079,7 +1363,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     ((apyStartNow * (currentTimestamp - termStartTimestamp)) /
                         YEAR_IN_SECONDS +
                         (apyHistoricalLookback *
-                            (1 - estimatedAPYUnitDelta) *
+                            (1 - estimatedAPYDecimalDelta) *
                             (termEndTimestamp - currentTimestamp)) /
                             YEAR_IN_SECONDS);
 
@@ -1088,7 +1372,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     ((apyStartNow * (currentTimestamp - termStartTimestamp)) /
                         YEAR_IN_SECONDS +
                         (apyHistoricalLookback *
-                            (1 + estimatedAPYUnitDelta) *
+                            (1 + estimatedAPYDecimalDelta) *
                             (termEndTimestamp - currentTimestamp)) /
                             YEAR_IN_SECONDS);
 
@@ -1260,7 +1544,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                             (currentTimestamp - termStartTimestamp)) /
                             YEAR_IN_SECONDS +
                             (apyHistoricalLookback *
-                                (1 - estimatedAPYUnitDelta) *
+                                (1 - estimatedAPYDecimalDelta) *
                                 (termEndTimestamp - currentTimestamp)) /
                                 YEAR_IN_SECONDS);
 
@@ -1270,7 +1554,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                             (currentTimestamp - termStartTimestamp)) /
                             YEAR_IN_SECONDS +
                             (apyHistoricalLookback *
-                                (1 + estimatedAPYUnitDelta) *
+                                (1 + estimatedAPYDecimalDelta) *
                                 (termEndTimestamp - currentTimestamp)) /
                                 YEAR_IN_SECONDS);
                 }
@@ -1298,6 +1582,123 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 await network.provider.send("evm_increaseTime", [24 * 60 * 60]);
                 await network.provider.send("evm_mine", []);
                 currentTimestamp += 24 * 60 * 60;
+            }
+        });
+    });
+
+    describe("Chained operations", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+            });
+        });
+
+        it("rebalance to prev tracked pos + settle", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            for (let i = 0; i < 10; i++) {
+                await mint(
+                    "USDC",
+                    this.subject.address,
+                    BigNumber.from(10).pow(6).mul(1000000000)
+                );
+
+                await this.preparePush();
+                await this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000000000)],
+                    encodeToBytes([], [])
+                );
+
+                await mint(
+                    "USDC",
+                    testSigner.address,
+                    BigNumber.from(10).pow(6).mul(100000000)
+                );
+
+                await this.peripheryContract.connect(testSigner).swap({
+                    marginEngine: this.marginEngine,
+                    isFT: i % 2,
+                    notional: BigNumber.from(10).pow(6).mul(100000000),
+                    sqrtPriceLimitX96:
+                        i % 2 ? MAX_SQRT_RATIO.sub(1) : MIN_SQRT_RATIO.add(1),
+                    tickLower: -60,
+                    tickUpper: 60,
+                    marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                });
+
+                const currentTick = (await this.vammContract.vammVars()).tick;
+
+                const newPosition = {
+                    tickLower: currentTick - (currentTick % 60) - 600,
+                    tickUpper: currentTick - (currentTick % 60) + 600,
+                };
+                await this.subject.rebalance(newPosition);
+
+                const currentPosition = await this.subject.currentPosition();
+                expect(currentPosition.tickLower).to.be.equal(
+                    newPosition.tickLower
+                );
+                expect(currentPosition.tickUpper).to.be.equal(
+                    newPosition.tickUpper
+                );
+            }
+
+            let trackedPositions = await getTrackedPositions();
+            expect(trackedPositions.length).to.be.eq(8);
+
+            // rebalance to fourth position
+            await this.subject.rebalance(trackedPositions[4]);
+
+            trackedPositions = await getTrackedPositions();
+            expect(trackedPositions.length).to.be.eq(7);
+            const currentPosition = await this.subject.currentPosition();
+            expect(currentPosition.tickLower).to.be.equal(
+                trackedPositions[4].tickLower
+            );
+            expect(currentPosition.tickUpper).to.be.equal(
+                trackedPositions[4].tickUpper
+            );
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            const batch_size = 3;
+            for (let i = 0; i < trackedPositions.length; i += 3) {
+                await this.subject.settleVault(batch_size);
+                for (
+                    let j = i;
+                    j < i + batch_size && j < trackedPositions.length;
+                    j++
+                ) {
+                    const positionInfo =
+                        await this.marginEngineContract.callStatic.getPosition(
+                            this.subject.address,
+                            trackedPositions[j].tickLower,
+                            trackedPositions[j].tickUpper
+                        );
+
+                    expect(positionInfo.isSettled).to.be.eq(true);
+                }
             }
         });
     });

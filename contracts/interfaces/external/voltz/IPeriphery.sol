@@ -81,4 +81,10 @@ interface IPeriphery is CustomErrors {
         int24 _tickLower,
         int24 _tickUpper
     ) external;
+    
+    function getLiquidityForNotional(
+        uint160 sqrtRatioAX96,
+        uint160 sqrtRatioBX96,
+        uint256 notionalAmount
+    ) external pure returns (uint128 liquidity);
 }

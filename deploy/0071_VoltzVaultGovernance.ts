@@ -18,7 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ...TRANSACTION_GAS_LIMITS,
     });
 
-    const { address: voltzVaultGovernance } = await deploy("VoltzVaultGovernance", {
+    await deploy("VoltzVaultGovernance", {
         from: deployer,
         args: [
             {
@@ -35,10 +35,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ...TRANSACTION_GAS_LIMITS,
     });
 
-    await deploy("VoltzHelper", {
+    await deploy("VoltzVaultHelper", {
         from: deployer,
-        contract: "VoltzHelper",
-        args: [voltzVaultGovernance],
+        contract: "VoltzVaultHelper",
+        args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,

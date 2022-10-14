@@ -20,7 +20,9 @@ import "../interfaces/external/voltz/utils/Position.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract VoltzHelper {
+import "hardhat/console.sol";
+
+contract VoltzVaultHelper {
     using SafeERC20 for IERC20;
     using SafeCastUni for uint128;
     using SafeCastUni for int128;
@@ -29,8 +31,6 @@ contract VoltzHelper {
     using PRBMathSD59x18 for int256;
     using PRBMathUD60x18 for uint256;
 
-    /// @dev The Voltz Vault Governance on Mellow
-    VoltzVaultGovernance public _governance;
     /// @dev The Voltz Vault on Mellow
     VoltzVault public _vault;
 
@@ -50,27 +50,18 @@ contract VoltzHelper {
     uint256 _termEndTimestampWad;
 
     /// @dev The multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
-    uint256 _marginMultiplierPostUnwindWad;
+    uint256 public _marginMultiplierPostUnwindWad;
     /// @dev The lookback window used to compute the historical APY that estimates the APY from current to the end of Voltz pool (in seconds)
-    uint256 _lookbackWindowInSeconds;
+    uint256 public _lookbackWindowInSeconds;
     /// @dev The decimal delta used to compute lower and upper limits of estimated APY: (1 +/- delta) * estimatedAPY (in wad)
-    uint256 _estimatedAPYDecimalDeltaWad;
+    uint256 public _estimatedAPYDecimalDeltaWad;
 
     uint256 public constant SECONDS_IN_YEAR_IN_WAD = 31536000e18;
     uint256 public constant ONE_HUNDRED_IN_WAD = 100e18;
 
-    modifier onlyGovernance() {
-        require(msg.sender == address(_governance), "Only Governance");
-        _;
-    }
-
     modifier onlyVault() {
         require(msg.sender == address(_vault), "Only Vault");
         _;
-    }
-
-    constructor(address governance_) {
-        _governance = VoltzVaultGovernance(governance_);
     }
 
     // -------------------  PUBLIC, PURE  -------------------
@@ -127,9 +118,9 @@ contract VoltzHelper {
     /// @notice Initializes the contract
     /// @dev It requires the vault to be already initialized. Can
     /// @dev only be called by the Voltz Vault Governance
-    /// @param vault_ The Voltz Vault that this contract is linked to
-    function initialize(address vault_) external onlyGovernance {
-        _vault = VoltzVault(vault_);
+    function initialize() external {
+        require(address(_vault) == address(0), ExceptionsLibrary.INIT);
+        _vault = VoltzVault(msg.sender);
 
         _marginEngine = _vault.marginEngine();
         _rateOracle = _vault.rateOracle();
@@ -290,6 +281,8 @@ contract VoltzHelper {
             _termStartTimestampWad,
             termCurrentTimestampWad
         );
+
+        // TO DO: call historical apy on margin engine
         uint256 historicalAPYWad = _rateOracle.getApyFromTo(
             termCurrentTimestampWad.toUint() - _lookbackWindowInSeconds,
             termCurrentTimestampWad.toUint()

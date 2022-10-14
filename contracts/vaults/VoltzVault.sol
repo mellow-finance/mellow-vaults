@@ -6,7 +6,7 @@ import "./IntegrationVault.sol";
 
 import "../interfaces/vaults/IVoltzVault.sol";
 
-import "../utils/VoltzHelper.sol";
+import "../utils/VoltzVaultHelper.sol";
 
 import "../interfaces/external/voltz/utils/Time.sol";
 import "../interfaces/external/voltz/utils/Position.sol";
@@ -23,7 +23,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     using PRBMathUD60x18 for uint256;
 
     /// @dev The helper Voltz contract
-    VoltzHelper private _voltzHelper;
+    VoltzVaultHelper public _voltzVaultHelper;
 
     /// @dev The margin engine of Voltz Protocol
     IMarginEngine public _marginEngine;
@@ -62,7 +62,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     /// @dev Index into the trackedPositions array of the currently active LP position of the Vault
     uint256 _currentPositionIndex;
     /// @dev The amount of liquidity minted in the currently active LP position of the Vault
-    uint256 _currentPositionLiquidity;
+    uint128 _currentPositionLiquidity;
     /// @dev Maps a given Voltz position to its index into the trackedPositions array,
     /// @dev which is artifically 1-indexed by the mapping.
     mapping(bytes => uint256) positionToIndexPlusOne;
@@ -84,7 +84,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     /// @inheritdoc IVoltzVault
     function updateTvl() public override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        (_minTVL, _maxTVL) = _voltzHelper.calculateTVL(
+        (_minTVL, _maxTVL) = _voltzVaultHelper.calculateTVL(
             _aggregatedInactiveFixedTokenBalance,
             _aggregatedInactiveVariableTokenBalance,
             _aggregatedInactiveMargin
@@ -107,13 +107,13 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     /// @inheritdoc IVoltzVault
     function settleVaultPositionAndWithdrawMargin(TickRange memory position) public override {
-        Position.Info memory positionInfo = _voltzHelper.getVaultPosition(position);
+        Position.Info memory positionInfo = _voltzVaultHelper.getVaultPosition(position);
 
         if (!positionInfo.isSettled) {
             _marginEngine.settlePosition(address(this), position.tickLower, position.tickUpper);
         }
 
-        positionInfo = _voltzHelper.getVaultPosition(position);
+        positionInfo = _voltzVaultHelper.getVaultPosition(position);
 
         if (positionInfo.margin > 0) {
             _marginEngine.updatePositionMargin(
@@ -205,21 +205,21 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     function setMarginMultiplierPostUnwindWad(uint256 marginMultiplierPostUnwindWad_) external override {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _marginMultiplierPostUnwindWad = marginMultiplierPostUnwindWad_;
-        _voltzHelper.setMarginMultiplierPostUnwindWad(marginMultiplierPostUnwindWad_);
+        _voltzVaultHelper.setMarginMultiplierPostUnwindWad(marginMultiplierPostUnwindWad_);
     }
 
     /// @inheritdoc IVoltzVault
     function setLookbackWindow(uint256 lookbackWindowInSeconds_) external override {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _lookbackWindowInSeconds = lookbackWindowInSeconds_;
-        _voltzHelper.setLookbackWindow(lookbackWindowInSeconds_);
+        _voltzVaultHelper.setLookbackWindow(lookbackWindowInSeconds_);
     }
 
     /// @inheritdoc IVoltzVault
     function setEstimatedAPYDecimalDeltaWad(uint256 estimatedAPYDecimalDeltaWad_) external override {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _estimatedAPYDecimalDeltaWad = estimatedAPYDecimalDeltaWad_;
-        _voltzHelper.setEstimatedAPYDecimalDeltaWad(estimatedAPYDecimalDeltaWad_);
+        _voltzVaultHelper.setEstimatedAPYDecimalDeltaWad(estimatedAPYDecimalDeltaWad_);
     }
 
     /// @inheritdoc IVoltzVault
@@ -230,14 +230,14 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
         // burn liquidity first, then unwind and exit existing position
         // this makes sure that we do not use our own liquidity to unwind ourselves
-        _updateLiquidity(-_currentPositionLiquidity.toInt256());
+        _mintOrBurnLiquidity(_currentPositionLiquidity, false);
         int256 marginLeftInOldPosition = _unwindAndExitCurrentPosition();
 
         _updateCurrentPosition(position);
         uint256 vaultBalance = IERC20(_vaultTokens[0]).balanceOf(address(this));
         _updateMargin(vaultBalance.toInt256());
         uint256 notionalLiquidityToMint = vaultBalance.mul(_leverageWad);
-        _updateLiquidity(notionalLiquidityToMint.toInt256());
+        _mintOrBurnLiquidityNotional(notionalLiquidityToMint.toInt256());
 
         updateTvl();
 
@@ -256,7 +256,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         address[] memory vaultTokens_,
         address marginEngine_,
         address periphery_,
-        address voltzHelper_,
+        address voltzVaultHelper_,
         InitializeParams memory initializeParams
     ) external override {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_VALUE);
@@ -281,7 +281,8 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _estimatedAPYDecimalDeltaWad = initializeParams.estimatedAPYDecimalDeltaWad;
         _updateCurrentPosition(TickRange(initializeParams.tickLower, initializeParams.tickUpper));
 
-        _voltzHelper = VoltzHelper(voltzHelper_);
+        _voltzVaultHelper = VoltzVaultHelper(voltzVaultHelper_);
+        _voltzVaultHelper.initialize();
 
         emit VaultInitialized(
             marginEngine_,
@@ -349,7 +350,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         _updateMargin(tokenAmounts[0].toInt256());
 
         uint256 notionalLiquidityToMint = tokenAmounts[0].mul(_leverageWad);
-        _updateLiquidity(notionalLiquidityToMint.toInt256());
+        _mintOrBurnLiquidityNotional(notionalLiquidityToMint.toInt256());
 
         updateTvl();
 
@@ -409,21 +410,39 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
         }
     }
 
-    /// @notice Updates the liquidity of the currently active LP position
-    /// @param liquidityDelta The change in pool liquidity as a result of the position update
-    function _updateLiquidity(int256 liquidityDelta) internal {
-        if (liquidityDelta != 0) {
-            _periphery.mintOrBurn(
-                IPeriphery.MintOrBurnParams({
-                    marginEngine: _marginEngine,
-                    tickLower: trackedPositions[_currentPositionIndex].tickLower,
-                    tickUpper: trackedPositions[_currentPositionIndex].tickUpper,
-                    notional: (liquidityDelta < 0) ? (-liquidityDelta).toUint256() : liquidityDelta.toUint256(),
-                    isMint: (liquidityDelta >= 0),
-                    marginDelta: 0
-                })
+    /// @notice Mints or burns liquidity notional in the currently active LP position
+    /// @param liquidityNotionalDelta The change in pool liquidity notional as a result of the position update
+    function _mintOrBurnLiquidityNotional(int256 liquidityNotionalDelta) internal {
+        if (liquidityNotionalDelta != 0) {
+            TickRange memory currentPosition = trackedPositions[_currentPositionIndex];
+            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(currentPosition.tickLower);
+            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(currentPosition.tickUpper);
+
+            uint128 liquidity = _periphery.getLiquidityForNotional(
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                (liquidityNotionalDelta < 0)
+                    ? (-liquidityNotionalDelta).toUint256()
+                    : liquidityNotionalDelta.toUint256()
             );
-            _currentPositionLiquidity = (_currentPositionLiquidity.toInt256() + liquidityDelta).toUint256();
+
+            _mintOrBurnLiquidity(liquidity, (liquidityNotionalDelta >= 0));
+        }
+    }
+
+    /// @notice Mints or burns liquidity in the currently active LP position
+    /// @param liquidity The change in pool liquidity as a result of the position update
+    /// @param isMint true if mint, false if burn
+    function _mintOrBurnLiquidity(uint128 liquidity, bool isMint) internal {
+        if (liquidity > 0) {
+            TickRange memory currentPosition = trackedPositions[_currentPositionIndex];
+            if (isMint) {
+                _vamm.mint(address(this), currentPosition.tickLower, currentPosition.tickUpper, liquidity);
+                _currentPositionLiquidity += liquidity;
+            } else {
+                _vamm.burn(address(this), currentPosition.tickLower, currentPosition.tickUpper, liquidity);
+                _currentPositionLiquidity -= liquidity;
+            }
         }
     }
 
@@ -448,7 +467,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             // we rebalance to some previous position
             // so we need to update the aggregate variables
             _currentPositionIndex = positionToIndexPlusOne[encodedPosition] - 1;
-            Position.Info memory currentPositionInfo_ = _voltzHelper.getVaultPosition(
+            Position.Info memory currentPositionInfo_ = _voltzVaultHelper.getVaultPosition(
                 trackedPositions[_currentPositionIndex]
             );
             _aggregatedInactiveFixedTokenBalance -= currentPositionInfo_.fixedTokenBalance;
@@ -467,7 +486,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     /// @dev The unwound position is tracked only in cases 1 and 2
     /// @return marginLeftInOldPosition The margin left in the unwound position
     function _unwindAndExitCurrentPosition() internal returns (int256 marginLeftInOldPosition) {
-        Position.Info memory currentPositionInfo_ = _voltzHelper.getVaultPosition(
+        Position.Info memory currentPositionInfo_ = _voltzVaultHelper.getVaultPosition(
             trackedPositions[_currentPositionIndex]
         );
 
@@ -493,7 +512,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
         bool trackPosition;
         uint256 marginToKeep;
-        (trackPosition, marginToKeep) = _voltzHelper.getMarginToKeep(currentPositionInfo_);
+        (trackPosition, marginToKeep) = _voltzVaultHelper.getMarginToKeep(currentPositionInfo_);
 
         if (currentPositionInfo_.margin > 0) {
             if (marginToKeep > currentPositionInfo_.margin.toUint256()) {
