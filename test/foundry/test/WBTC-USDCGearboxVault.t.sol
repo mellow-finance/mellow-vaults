@@ -201,13 +201,13 @@ contract GearboxWBTCTest is Test {
             initialMarginalValueD9: 3000000000
         });
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance.OperatorParams({
+        IGearboxVaultGovernance.StrategyParams memory strategyParamsB = IGearboxVaultGovernance.StrategyParams({
             largePoolFeeUsed: 500
         });
 
         governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
         governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1, delayedVaultParams);
-        governanceC.setOperatorParams(operatorParams);
+        governanceC.setStrategyParams(nftStart + 1, strategyParamsB);
         vm.warp(block.timestamp + governance.governanceDelay());
         governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1);
         governanceA.commitDelayedStrategyParams(nftStart + 2);
@@ -282,7 +282,7 @@ contract GearboxWBTCTest is Test {
 
         uint256 subtract = 0;
 
-        if (!rootVault.wasDeposit()) {
+        if (rootVault.totalSupply() == 0) {
             firstDeposit();
             subtract = 10**5;
         }

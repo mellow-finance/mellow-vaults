@@ -33,9 +33,6 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice The only token that the vault accepts for deposits/withdrawals
     function primaryToken() external view returns (address);
 
-    /// @notice The flag of whether at least one deposit was completed through the vault
-    function wasDeposit() external view returns (bool);
-
     /// @notice The flag of whether the vault is closed for deposits
     function isClosed() external view returns (bool);
 
@@ -80,11 +77,11 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
 
     /// @notice Total value of vault tokens awaiting on the ERC20 vault to be claimed for a specific address
     /// @param addr Address for which the request is made
-    function primaryTokensToWithdraw(address addr) external view returns (uint256);
+    function primaryTokensToClaim(address addr) external view returns (uint256);
 
     /// @notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed for a specific address
     /// @param addr Address for which the request is made
-    function lpTokensToWithdraw(address addr) external view returns (uint256);
+    function lpTokensWaitingForClaim(address addr) external view returns (uint256);
 
     /// @notice Total value of lp tokens withdrawal requests during the current epoch for a specific address
     /// @param addr Address for which the request is made

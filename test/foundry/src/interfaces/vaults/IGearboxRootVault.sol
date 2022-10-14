@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
+import "./IIntegrationVault.sol";
 import "../utils/IERC20RootVaultHelper.sol";
 
 interface IGearboxRootVault is IAggregateVault, IERC20 {
@@ -22,6 +23,18 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
 
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
+
+    /// @notice Gearbox vault that is the second subvault of the system
+    function gearboxVault() external view returns (IIntegrationVault);
+
+    /// @notice ERC20 vault that is the first subvault of the system
+    function erc20Vault() external view returns (IIntegrationVault);
+
+    /// @notice The only token that the vault accepts for deposits/withdrawals
+    function primaryToken() external view returns (address);
+
+    /// @notice The flag of whether the vault is closed for deposits
+    function isClosed() external view returns (bool);
 
     /// @notice LP parameter that controls the charge in performance fees
     function lpPriceHighWaterMarkD18() external view returns (uint256);
@@ -50,6 +63,38 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
         bytes memory vaultOptions
     ) external returns (uint256[] memory actualTokenAmounts);
 
+    /// @notice Current epoch, where the epoch means the number of completed withdrawal executions plus 1
+    function currentEpoch() external view returns (uint256);
+
+    /// @notice Total value of lp tokens withdrawal requests during the current epoch
+    function totalCurrentEpochLpWitdrawalRequests() external view returns (uint256);
+
+    /// @notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed 
+    function totalLpTokensWaitingWithdrawal() external view returns (uint256);
+
+    /// @notice Timestamp of the latest epoch change 
+    function lastEpochChangeTimestamp() external view returns (uint256);
+
+    /// @notice Total value of vault tokens awaiting on the ERC20 vault to be claimed for a specific address
+    /// @param addr Address for which the request is made
+    function primaryTokensToClaim(address addr) external view returns (uint256);
+
+    /// @notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed for a specific address
+    /// @param addr Address for which the request is made
+    function lpTokensWaitingForClaim(address addr) external view returns (uint256);
+
+    /// @notice Total value of lp tokens withdrawal requests during the current epoch for a specific address
+    /// @param addr Address for which the request is made
+    function withdrawalRequests(address addr) external view returns (uint256);
+
+    /// @notice The latest epoch in which a request was made for a specific address
+    /// @param addr Address for which the request is made
+    function latestRequestEpoch(address addr) external view returns (uint256);
+
+    /// @notice The lp token price for a specific epoch end
+    /// @param epoch Epoch for which the request is made
+    function epochToPriceForLpTokenD18(uint256 epoch) external view returns (uint256);
+
     /// @notice The function of withdrawing the amount of tokens in exchange
     /// @param to Address to which the withdrawal will be sent
     /// @param vaultsOptions Options of vaults
@@ -59,13 +104,22 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
         bytes[] memory vaultsOptions
     ) external returns (uint256[] memory actualTokenAmounts);
 
-    function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested);
+    /// @notice The function of registering withdrawal of lp tokens amount
+    /// @param lpTokenAmount Amount the sender wants to withdraw 
+    /// @return amountRegistered Amount which was actually registered
+    function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRegistered);
 
-    function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 totalAmountRequested);
+    /// @notice The function of cancelling withdrawal of lp tokens amount
+    /// @param lpTokenAmount Amount the sender wants to cancel 
+    /// @return amountRemained Amount for which the withdrawal request remains
+    function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRemained);
 
+    /// @notice The function of invoking the execution of withdrawal orders and transfers corresponding funds to ERC20 vault
     function invokeExecution() external;
 
+    /// @notice The function of invoking the emergency execution of withdrawal orders, transfers corresponding funds to ERC20 vault and stops deposits
     function shutdown() external;
 
+    /// @notice The function of opening deposits back in case of a previous shutdown
     function reopen() external;
 }

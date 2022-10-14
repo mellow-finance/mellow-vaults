@@ -26,7 +26,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
         uint256 initialMarginalValueD9;
     }
 
-    struct OperatorParams {
+    struct StrategyParams {
         uint24 largePoolFeeUsed;
     }
 
@@ -45,8 +45,8 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory);
 
-    /// @notice Operator Params.
-    function operatorParams() external view returns (OperatorParams memory);
+    /// @notice Strategy Params.
+    function strategyParams(uint256 nft) external view returns (StrategyParams memory);
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
@@ -62,9 +62,9 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     function commitDelayedProtocolPerVaultParams(uint256 nft) external;
 
-    /// @notice Set Operator params, i.e. Params that could be changed by Operator or Protocol Governance immediately.
+    /// @notice Set Strategy params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.
     /// @param params New params
-    function setOperatorParams(OperatorParams calldata params) external;
+    function setStrategyParams(uint256 nft, StrategyParams calldata params) external;
 
     function createVault(address[] memory vaultTokens_, address owner_, address helper_)
         external

@@ -119,7 +119,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             params.curveAdapter,
             params.convexAdapter,
             primaryToken,
-            depositToken
+            depositToken,
+            _nft
         );
 
         (primaryIndex, convexOutputToken, poolId) = _helper.verifyInstances();
@@ -152,7 +153,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             marginalFactorD9,
             primaryIndex,
             poolId,
-            convexOutputToken
+            convexOutputToken,
+            creditAccount
         );
     }
 
@@ -168,26 +170,22 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        (, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
-            creditAccount_,
-            address(_vaultGovernance),
-            marginalFactorD9
-        );
         marginalFactorD9 = marginalFactorD9_;
-        (uint256 expectedAllAssetsValue, ) = _helper.calculateDesiredTotalValue(
+        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
             creditAccount_,
             address(_vaultGovernance),
-            marginalFactorD9
+            marginalFactorD9_
         );
 
         _helper.adjustPosition(
             expectedAllAssetsValue,
             currentAllAssetsValue,
             address(_vaultGovernance),
-            marginalFactorD9,
+            marginalFactorD9_,
             primaryIndex,
             poolId,
-            convexOutputToken
+            convexOutputToken,
+            creditAccount_
         );
         emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
     }
@@ -311,9 +309,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             address(_vaultGovernance)
         ).delayedProtocolParams();
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
-        ).operatorParams();
+        ).strategyParams(_nft);
 
         if (depositToken != primaryToken && currentPrimaryTokenAmount < minBorrowingLimit) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
@@ -326,9 +324,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             require(IERC20(depositToken).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
 
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(depositToken, operatorParams.largePoolFeeUsed, primaryToken),
+                path: abi.encodePacked(depositToken, strategyParams.largePoolFeeUsed, primaryToken),
                 recipient: address(this),
-                deadline: block.timestamp + 900,
+                deadline: block.timestamp + 1,
                 amountOut: minBorrowingLimit - currentPrimaryTokenAmount,
                 amountInMaximum: amountInMaximum
             });

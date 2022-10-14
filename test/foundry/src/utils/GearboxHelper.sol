@@ -33,13 +33,16 @@ contract GearboxHelper {
     bool public parametersSet;
     IGearboxVault public admin;
 
+    uint256 public vaultNft;
+
     function setParameters(
         ICreditFacade creditFacade_,
         ICreditManagerV2 creditManager_,
         address curveAdapter_,
         address convexAdapter_,
         address primaryToken_,
-        address depositToken_
+        address depositToken_,
+        uint256 nft_
     ) external {
         require(!parametersSet, ExceptionsLibrary.FORBIDDEN);
         creditFacade = creditFacade_;
@@ -48,6 +51,7 @@ contract GearboxHelper {
         convexAdapter = convexAdapter_;
         primaryToken = primaryToken_;
         depositToken = depositToken_;
+        vaultNft = nft_;
 
         parametersSet = true;
         admin = IGearboxVault(msg.sender);
@@ -202,7 +206,7 @@ contract GearboxHelper {
 
         IUniswapV3Adapter.ExactAllInputParams memory params = IUniswapV3Adapter.ExactAllInputParams({
             path: abi.encodePacked(tokenFrom, uint24(fee), tokenTo),
-            deadline: block.timestamp + 900,
+            deadline: block.timestamp + 1,
             rateMinRAY: FullMath.mulDiv(rateRAY, D9 - slippage, D9)
         });
 
@@ -228,8 +232,8 @@ contract GearboxHelper {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
-            .operatorParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
+            .strategyParams(vaultNft);
 
         uint256 currentDepositTokenAmount = IERC20(depositToken_).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
@@ -251,9 +255,9 @@ contract GearboxHelper {
             uint256 expectedOutput = oracle.convert(toSwap, depositToken_, primaryToken_);
 
             ISwapRouter.ExactInputParams memory inputParams = ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(depositToken_, operatorParams.largePoolFeeUsed, primaryToken_),
+                path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken_),
                 recipient: creditAccount,
-                deadline: block.timestamp + 900,
+                deadline: block.timestamp + 1,
                 amountIn: toSwap,
                 amountOutMinimum: FullMath.mulDiv(expectedOutput, D9 - protocolParams.minSlippageD9, D9)
             });
@@ -277,8 +281,8 @@ contract GearboxHelper {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
-            .operatorParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
+            .strategyParams(vaultNft);
 
         MultiCall[] memory calls = new MultiCall[](1);
 
@@ -310,7 +314,7 @@ contract GearboxHelper {
         calls[2] = createUniswapMulticall(
             weth,
             primaryToken,
-            operatorParams.largePoolFeeUsed,
+            strategyParams.largePoolFeeUsed,
             protocolParams.univ3Adapter,
             protocolParams.minSlippageD9
         );
@@ -388,12 +392,20 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function adjustPosition(uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue, address vaultGovernance, uint256 marginalFactorD9, int128 primaryIndex, uint256 poolId, address convexOutputToken) external {
-
-        address creditAccount_ = getCreditAccount();
+    function adjustPosition(
+        uint256 expectedAllAssetsValue,
+        uint256 currentAllAssetsValue,
+        address vaultGovernance,
+        uint256 marginalFactorD9,
+        int128 primaryIndex,
+        uint256 poolId,
+        address convexOutputToken,
+        address creditAccount_
+    ) external {
         claimRewards(vaultGovernance, creditAccount_);
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance).delayedProtocolParams();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
         ICreditFacade creditFacade_ = creditFacade;
 
         checkNecessaryDepositExchange(
@@ -401,8 +413,6 @@ contract GearboxHelper {
             vaultGovernance,
             creditAccount_
         );
-
-        uint256 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
 
         if (expectedAllAssetsValue >= currentAllAssetsValue) {
             uint256 delta = expectedAllAssetsValue - currentAllAssetsValue;
@@ -415,6 +425,8 @@ contract GearboxHelper {
             depositToConvex(increaseDebtCall, protocolParams, poolId, primaryIndex);
         } else {
             uint256 delta = currentAllAssetsValue - expectedAllAssetsValue;
+
+            uint256 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
 
             if (currentPrimaryTokenAmount >= delta) {
                 MultiCall memory decreaseDebtCall = MultiCall({
@@ -449,10 +461,6 @@ contract GearboxHelper {
         emit PositionAdjusted(tx.origin, msg.sender, expectedAllAssetsValue);
     }
 
-    function getCreditAccount() public view returns (address) {
-        return creditManager.creditAccounts(address(admin));
-    }
-
     function swapExactOutput(
         address fromToken,
         address toToken,
@@ -464,8 +472,8 @@ contract GearboxHelper {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
-            .operatorParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
+            .strategyParams(vaultNft);
 
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
         uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9);
@@ -476,9 +484,9 @@ contract GearboxHelper {
         }
 
         ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-            path: abi.encodePacked(fromToken, operatorParams.largePoolFeeUsed, toToken),
+            path: abi.encodePacked(fromToken, strategyParams.largePoolFeeUsed, toToken),
             recipient: creditAccount,
-            deadline: block.timestamp + 900,
+            deadline: block.timestamp + 1,
             amountOut: amount,
             amountInMaximum: amountInMaximum
         });
@@ -506,8 +514,8 @@ contract GearboxHelper {
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance(vaultGovernance)
-            .operatorParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
+            .strategyParams(vaultNft);
 
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
@@ -532,9 +540,9 @@ contract GearboxHelper {
 
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(primaryToken_, operatorParams.largePoolFeeUsed, depositToken_),
+                path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_),
                 recipient: address(admin),
-                deadline: block.timestamp + 900,
+                deadline: block.timestamp + 1,
                 amountOut: outputWant,
                 amountInMaximum: amountInMaximum
             });

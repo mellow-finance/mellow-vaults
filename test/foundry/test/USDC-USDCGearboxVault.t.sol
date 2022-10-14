@@ -200,13 +200,13 @@ contract GearboxUSDCTest is Test {
             initialMarginalValueD9: 3000000000
         });
 
-        IGearboxVaultGovernance.OperatorParams memory operatorParams = IGearboxVaultGovernance.OperatorParams({
+        IGearboxVaultGovernance.StrategyParams memory strategyParamsB = IGearboxVaultGovernance.StrategyParams({
             largePoolFeeUsed: 500
         });
 
         governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
         governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1, delayedVaultParams);
-        governanceC.setOperatorParams(operatorParams);
+        governanceC.setStrategyParams(nftStart + 1, strategyParamsB);
         vm.warp(block.timestamp + governance.governanceDelay());
         governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1);
         governanceA.commitDelayedStrategyParams(nftStart + 2);
@@ -272,7 +272,7 @@ contract GearboxUSDCTest is Test {
 
     function deposit(uint256 amount, address user) public {
 
-        if (!rootVault.wasDeposit()) {
+        if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
 
@@ -375,7 +375,7 @@ contract GearboxUSDCTest is Test {
         uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(usdcBalance == 16 * 10 ** 8 + 3*10**4);
+        assertTrue(usdcBalance >= 16 * 10 ** 8 + 2*10**4 && usdcBalance <= 16 * 10 ** 8 + 4*10**4);
         assertTrue(curveLpBalance == 0);
         assertTrue(convexLpBalance == 0);
         assertTrue(convexFantomBalance == 0);
@@ -415,7 +415,7 @@ contract GearboxUSDCTest is Test {
         deposit(500, address(this));
         deposit(100, address(this));
         deposit(50, address(this));
-        assertTrue(tvl() == 65 * 10**7 + 10**4 - 1);
+        assertTrue(tvl() >= 65 * 10**7 + 5*10**3 && tvl() <= 65 * 10**7 + 15*10**3);
     }
 
     function testWithdrawalOrders() public {
