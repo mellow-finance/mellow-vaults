@@ -79,11 +79,11 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     }
 
     /// @inheritdoc IGearboxVaultGovernance
-    function operatorParams() external view returns (OperatorParams memory) {
-        if (_operatorParams.length == 0) {
-            return OperatorParams({largePoolFeeUsed: 500});
+    function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
+        if (_strategyParams[nft].length == 0) {
+            return StrategyParams({largePoolFeeUsed: 500});
         }
-        return abi.decode(_operatorParams, (OperatorParams));
+        return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
     /// @inheritdoc IGearboxVaultGovernance
@@ -155,10 +155,16 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     }
 
     /// @inheritdoc IGearboxVaultGovernance
-    function setOperatorParams(OperatorParams calldata params) external {
-        require(params.largePoolFeeUsed == 500 || params.largePoolFeeUsed == 3000, ExceptionsLibrary.FORBIDDEN);
-        _setOperatorParams(abi.encode(params));
-        emit SetOperatorParams(tx.origin, msg.sender, params);
+    function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
+        require(
+            params.largePoolFeeUsed == 100 ||
+                params.largePoolFeeUsed == 500 ||
+                params.largePoolFeeUsed == 3000 ||
+                params.largePoolFeeUsed == 10000,
+            ExceptionsLibrary.FORBIDDEN
+        );
+        _setStrategyParams(nft, abi.encode(params));
+        emit SetStrategyParams(tx.origin, msg.sender, params);
     }
 
     /// @inheritdoc IGearboxVaultGovernance
@@ -225,11 +231,11 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         uint256 when
     );
 
-    /// @notice Emitted when new OperatorParams are set.
+    /// @notice Emitted when new StrategyParams are set.
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are set
-    event SetOperatorParams(address indexed origin, address indexed sender, OperatorParams params);
+    event SetStrategyParams(address indexed origin, address indexed sender, StrategyParams params);
 
     /// @notice Emitted when new DelayedProtocolParams are committed
     /// @param origin Origin of the transaction (tx.origin)
