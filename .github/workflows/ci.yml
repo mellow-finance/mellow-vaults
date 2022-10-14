@@ -11,6 +11,7 @@ jobs:
       cancel-in-progress: true
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
+      GOERLI_RPC: ${{ secrets.goerli_rpc }}
     steps:
       - uses: actions/checkout@v1
 
@@ -52,6 +53,9 @@ jobs:
 
       - name: Check size
         run: yarn size
+
+      - name: Run foundry tests
+        run: yarn test-foundry
 
       - name: Run coverage
         run: yarn coverage:fast
