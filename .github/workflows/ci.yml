@@ -60,7 +60,7 @@ jobs:
         run: yarn size
 
       - name: Run foundry tests
-        run: cd test/foundry && && forge build --sizes && forge test -vv --fork-url=${{secrets.GOERLI_RPC}} --fork-block-number=7630000 && cd .. && cd ..
+        run: cd test/foundry && forge build --sizes && forge test -vv --fork-url=${{secrets.GOERLI_RPC}} --fork-block-number=7630000 && cd .. && cd ..
         id: test
 
       - name: Run coverage
