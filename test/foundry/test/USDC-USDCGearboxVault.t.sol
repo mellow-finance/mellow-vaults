@@ -84,6 +84,7 @@ contract GearboxUSDCTest is Test {
     }
 
     function setUp() public {
+        console2.log(block.number);
         governance = new ProtocolGovernance(address(this));
         registry = new VaultRegistry("Mellow LP", "MLP", governance);
 
