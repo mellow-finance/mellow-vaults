@@ -13,7 +13,6 @@ jobs:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       GOERLI_RPC: ${{ secrets.goerli_rpc }}
     steps:
-      - uses: actions/checkout@v1
 
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
@@ -60,7 +59,7 @@ jobs:
         run: yarn size
 
       - name: Run foundry tests
-        run: cd test/foundry && forge build --sizes && forge test -vv --fork-url=${{secrets.GOERLI_RPC}} --fork-block-number=7630000 && cd .. && cd ..
+        run: cd test/foundry && forge build --sizes && forge test -vvvv --fork-url=${{secrets.GOERLI_RPC}} --fork-block-number=7630000 && cd .. && cd ..
         id: test
 
       - name: Run coverage
