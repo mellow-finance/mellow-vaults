@@ -13,6 +13,7 @@ jobs:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       GOERLI_RPC: ${{ secrets.goerli_rpc }}
     steps:
+      - uses: actions/checkout@v1
 
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
