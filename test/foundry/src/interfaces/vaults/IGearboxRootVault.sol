@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
 import "./IIntegrationVault.sol";
-import "../utils/IERC20RootVaultHelper.sol";
 
 interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.

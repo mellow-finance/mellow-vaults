@@ -2,17 +2,12 @@
 pragma solidity 0.8.9;
 
 import "./IntegrationVault.sol";
-import "../interfaces/external/gearbox/helpers/convex/IBaseRewardPool.sol";
-import "../interfaces/external/gearbox/IUniversalAdapter.sol";
-import "../interfaces/vaults/IGearboxVault.sol";
 import "../utils/GearboxHelper.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     uint256 public constant D9 = 10**9;
-    uint256 public constant D27 = 10**27;
-    uint256 public constant D18 = 10**18;
     uint256 public constant D7 = 10**7;
 
     GearboxHelper internal _helper;
@@ -118,8 +113,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             creditManager,
             params.curveAdapter,
             params.convexAdapter,
-            primaryToken,
-            depositToken,
+            params.primaryToken,
+            vaultTokens_[0],
             _nft
         );
 
@@ -141,16 +136,19 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
+        uint256 marginalFactorD9_ = marginalFactorD9;
+        GearboxHelper helper_ = _helper;
+
+        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = helper_.calculateDesiredTotalValue(
             creditAccount,
             address(_vaultGovernance),
-            marginalFactorD9
+            marginalFactorD9_
         );
-        _helper.adjustPosition(
+        helper_.adjustPosition(
             expectedAllAssetsValue,
             currentAllAssetsValue,
             address(_vaultGovernance),
-            marginalFactorD9,
+            marginalFactorD9_,
             primaryIndex,
             poolId,
             convexOutputToken,
@@ -164,6 +162,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(marginalFactorD9_ >= D9, ExceptionsLibrary.INVALID_VALUE);
 
         address creditAccount_ = getCreditAccount();
+        GearboxHelper helper_ = _helper;
 
         if (creditAccount_ == address(0)) {
             marginalFactorD9 = marginalFactorD9_;
@@ -171,13 +170,13 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         marginalFactorD9 = marginalFactorD9_;
-        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = _helper.calculateDesiredTotalValue(
+        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = helper_.calculateDesiredTotalValue(
             creditAccount_,
             address(_vaultGovernance),
             marginalFactorD9_
         );
 
-        _helper.adjustPosition(
+        helper_.adjustPosition(
             expectedAllAssetsValue,
             currentAllAssetsValue,
             address(_vaultGovernance),
@@ -301,9 +300,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         ICreditFacade creditFacade_ = creditFacade;
         ICreditManagerV2 creditManager_ = creditManager;
+        address primaryToken_ = primaryToken;
+        address depositToken_ = depositToken;
 
         (uint256 minBorrowingLimit, ) = creditFacade_.limits();
-        uint256 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(address(this));
+        uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
             address(_vaultGovernance)
@@ -313,46 +314,46 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             address(_vaultGovernance)
         ).strategyParams(_nft);
 
-        if (depositToken != primaryToken && currentPrimaryTokenAmount < minBorrowingLimit) {
+        if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minBorrowingLimit) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             uint256 amountInMaximum = _helper.calculateAmountInMaximum(
-                depositToken,
-                primaryToken,
+                depositToken_,
+                primaryToken_,
                 minBorrowingLimit - currentPrimaryTokenAmount,
-                protocolParams.minSlippageD9
+                protocolParams.maxSlippageD9
             );
-            require(IERC20(depositToken).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
+            require(IERC20(depositToken_).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
 
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(depositToken, strategyParams.largePoolFeeUsed, primaryToken),
+                path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken),
                 recipient: address(this),
                 deadline: block.timestamp + 1,
                 amountOut: minBorrowingLimit - currentPrimaryTokenAmount,
                 amountInMaximum: amountInMaximum
             });
 
-            IERC20(depositToken).safeIncreaseAllowance(address(router), amountInMaximum);
+            IERC20(depositToken_).safeIncreaseAllowance(address(router), amountInMaximum);
             router.exactOutput(uniParams);
-            IERC20(depositToken).approve(address(router), 0);
+            IERC20(depositToken_).approve(address(router), 0);
 
-            currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(address(this));
+            currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
         }
 
         require(currentPrimaryTokenAmount >= minBorrowingLimit, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
-        IERC20(primaryToken).safeIncreaseAllowance(address(creditManager_), currentPrimaryTokenAmount);
+        IERC20(primaryToken_).safeIncreaseAllowance(address(creditManager_), currentPrimaryTokenAmount);
         creditFacade_.openCreditAccount(
             currentPrimaryTokenAmount,
             address(this),
             uint16((marginalFactorD9 - D9) / D7),
             protocolParams.referralCode
         );
-        IERC20(primaryToken).approve(address(creditManager_), 0);
+        IERC20(primaryToken_).approve(address(creditManager_), 0);
 
         creditAccount = creditManager_.getCreditAccountOrRevert(address(this));
 
-        if (depositToken != primaryToken) {
-            creditFacade_.enableToken(depositToken);
+        if (depositToken_ != primaryToken_) {
+            creditFacade_.enableToken(depositToken_);
             _addDepositTokenAsCollateral();
         }
 

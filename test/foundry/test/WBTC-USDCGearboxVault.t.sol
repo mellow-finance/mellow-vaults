@@ -145,9 +145,9 @@ contract GearboxWBTCTest is Test {
             univ3Adapter: 0xA417851DdbB7095c76Ac69Df6152c86F01328C5f,
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
-            minSlippageD9: 1000000,
-            minSmallPoolsSlippageD9: 20000000,
-            minCurveSlippageD9: 50000000,
+            maxSlippageD9: 1000000,
+            maxSmallPoolsSlippageD9: 20000000,
+            maxCurveSlippageD9: 50000000,
             uniswapRouter: address(router)
         });
 
@@ -302,7 +302,7 @@ contract GearboxWBTCTest is Test {
 
     function changeSlippage(uint256 x) public {
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = governanceC.delayedProtocolParams();
-        delayedParams.minSlippageD9 = x;
+        delayedParams.maxSlippageD9 = x;
 
         governanceC.stageDelayedProtocolParams(delayedParams);
         vm.warp(block.timestamp + governance.governanceDelay());
