@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/external/convex/ICvx.sol";
-import "../interfaces/external/gearbox/helpers/ICreditManagerV2.sol";
 import "../interfaces/external/gearbox/helpers/IPriceOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/external/gearbox/ICreditFacade.sol";
@@ -11,8 +10,6 @@ import "../interfaces/external/gearbox/ICurveV1Adapter.sol";
 import "../interfaces/external/gearbox/IConvexV1BaseRewardPoolAdapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
-import "../interfaces/vaults/IGearboxVault.sol";
-import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
 
 contract GearboxHelper {
@@ -188,11 +185,11 @@ contract GearboxHelper {
         address fromToken,
         address toToken,
         uint256 amount,
-        uint256 minSlippageD9
+        uint256 maxSlippageD9
     ) public view returns (uint256) {
         uint256 rateRAY = calcRateRAY(toToken, fromToken);
         uint256 amountInExpected = FullMath.mulDiv(amount, rateRAY, D27) + 1;
-        return FullMath.mulDiv(amountInExpected, D9 + minSlippageD9, D9) + 1;
+        return FullMath.mulDiv(amountInExpected, D9 + maxSlippageD9, D9) + 1;
     }
 
     function createUniswapMulticall(
@@ -259,7 +256,7 @@ contract GearboxHelper {
                 recipient: creditAccount,
                 deadline: block.timestamp + 1,
                 amountIn: toSwap,
-                amountOutMinimum: FullMath.mulDiv(expectedOutput, D9 - protocolParams.minSlippageD9, D9)
+                amountOutMinimum: FullMath.mulDiv(expectedOutput, D9 - protocolParams.maxSlippageD9, D9)
             });
 
             { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
@@ -302,21 +299,21 @@ contract GearboxHelper {
             weth,
             10000,
             protocolParams.univ3Adapter,
-            protocolParams.minSmallPoolsSlippageD9
+            protocolParams.maxSmallPoolsSlippageD9
         );
         calls[1] = createUniswapMulticall(
             protocolParams.cvx,
             weth,
             10000,
             protocolParams.univ3Adapter,
-            protocolParams.minSmallPoolsSlippageD9
+            protocolParams.maxSmallPoolsSlippageD9
         );
         calls[2] = createUniswapMulticall(
             weth,
             primaryToken,
             strategyParams.largePoolFeeUsed,
             protocolParams.univ3Adapter,
-            protocolParams.minSlippageD9
+            protocolParams.maxSlippageD9
         );
 
         admin.multicall(calls);
@@ -332,10 +329,12 @@ contract GearboxHelper {
             return;
         }
 
+        address curveAdapter_ = curveAdapter;
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
+        address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
         uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
 
         MultiCall[] memory calls = new MultiCall[](3);
@@ -351,11 +350,11 @@ contract GearboxHelper {
         });
 
         calls[2] = MultiCall({
-            target: curveAdapter,
+            target: curveAdapter_,
             callData: abi.encodeWithSelector(
                 ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
                 primaryIndex,
-                FullMath.mulDiv(rateRAY, D9 - protocolParams.minCurveSlippageD9, D9)
+                FullMath.mulDiv(rateRAY, D9 - protocolParams.maxCurveSlippageD9, D9)
             )
         });
 
@@ -370,17 +369,19 @@ contract GearboxHelper {
     ) public {
         MultiCall[] memory calls = new MultiCall[](3);
 
-        address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
+        address curveAdapter_ = curveAdapter;
+
+        address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
         uint256 rateRAY = calcRateRAY(primaryToken, curveLpToken);
 
         calls[0] = debtManagementCall;
 
         calls[1] = MultiCall({
-            target: curveAdapter,
+            target: curveAdapter_,
             callData: abi.encodeWithSelector(
                 ICurveV1Adapter.add_all_liquidity_one_coin.selector,
                 primaryIndex,
-                FullMath.mulDiv(rateRAY, D9 - protocolParams.minCurveSlippageD9, D9)
+                FullMath.mulDiv(rateRAY, D9 - protocolParams.maxCurveSlippageD9, D9)
             )
         });
 
@@ -476,7 +477,7 @@ contract GearboxHelper {
             .strategyParams(vaultNft);
 
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
-        uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.minSlippageD9);
+        uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.maxSlippageD9);
 
         if (amountInMaximum > allowedToUse) {
             amount = FullMath.mulDiv(amount, allowedToUse, amountInMaximum);
@@ -520,15 +521,17 @@ contract GearboxHelper {
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
 
-        uint256 depositBalance = IERC20(depositToken_).balanceOf(address(admin));
-        uint256 primaryBalance = IERC20(primaryToken_).balanceOf(address(admin));
+        IGearboxVault admin_ = admin;
+
+        uint256 depositBalance = IERC20(depositToken_).balanceOf(address(admin_));
+        uint256 primaryBalance = IERC20(primaryToken_).balanceOf(address(admin_));
 
         if (depositBalance < amount && depositToken_ != primaryToken_ && primaryBalance > 0) {
             uint256 amountInMaximum = calculateAmountInMaximum(
                 primaryToken_,
                 depositToken_,
                 amount - depositBalance,
-                protocolParams.minSlippageD9
+                protocolParams.maxSlippageD9
             );
 
             uint256 outputWant = amount - depositBalance;
@@ -541,15 +544,15 @@ contract GearboxHelper {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
                 path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_),
-                recipient: address(admin),
+                recipient: address(admin_),
                 deadline: block.timestamp + 1,
                 amountOut: outputWant,
                 amountInMaximum: amountInMaximum
             });
-            admin.swap(router, uniParams, primaryToken_, amountInMaximum);
+            admin_.swap(router, uniParams, primaryToken_, amountInMaximum);
         }
 
-        depositBalance = IERC20(depositToken_).balanceOf(address(admin));
+        depositBalance = IERC20(depositToken_).balanceOf(address(admin_));
         if (amount > depositBalance) {
             amount = depositBalance;
         }

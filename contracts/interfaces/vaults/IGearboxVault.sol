@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "./IIntegrationVault.sol";
 import "../external/gearbox/ICreditFacade.sol";
 import "../external/gearbox/IUniswapV3Adapter.sol";
-import "../external/gearbox/helpers/ICreditManagerV2.sol";
 
 interface IGearboxVault is IIntegrationVault {
 

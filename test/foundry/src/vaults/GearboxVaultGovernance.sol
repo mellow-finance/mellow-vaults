@@ -3,11 +3,8 @@ pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
-import "../interfaces/external/gearbox/ICreditFacade.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
     uint256 public constant D9 = 10**9;
@@ -21,9 +18,9 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.minSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
-        require(delayedProtocolParams_.minSmallPoolsSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
-        require(delayedProtocolParams_.minCurveSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(delayedProtocolParams_.maxSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(delayedProtocolParams_.maxSmallPoolsSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(delayedProtocolParams_.maxCurveSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -50,9 +47,9 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     univ3Adapter: address(0),
                     crv: address(0),
                     cvx: address(0),
-                    minSlippageD9: 0,
-                    minSmallPoolsSlippageD9: 0,
-                    minCurveSlippageD9: 0,
+                    maxSlippageD9: 0,
+                    maxSmallPoolsSlippageD9: 0,
+                    maxCurveSlippageD9: 0,
                     uniswapRouter: address(0)
                 });
         }
@@ -110,9 +107,9 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.minSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
-        require(params.minSmallPoolsSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
-        require(params.minCurveSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(params.maxSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(params.maxSmallPoolsSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
+        require(params.maxCurveSlippageD9 <= D9, ExceptionsLibrary.INVARIANT);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
