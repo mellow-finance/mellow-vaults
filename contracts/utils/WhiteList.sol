@@ -6,12 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "./DefaultAccessControl.sol";
-import "hardhat/console.sol";
 
 contract WhiteList is DefaultAccessControl {
     using SafeERC20 for IERC20;
 
-    mapping(address => bytes32) public vaultToRoot;
+    bytes32 public root;
 
     constructor(address admin) DefaultAccessControl(admin) {}
 
@@ -25,7 +24,6 @@ contract WhiteList is DefaultAccessControl {
         bytes32[] calldata proof
     ) external returns (uint256[] memory actualTokenAmounts) {
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        bytes32 root = vaultToRoot[address(vault)];
         require(MerkleProof.verify(proof, root, leaf), ExceptionsLibrary.FORBIDDEN);
 
         address[] memory tokens = vault.vaultTokens();
@@ -36,14 +34,14 @@ contract WhiteList is DefaultAccessControl {
 
         actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            IERC20(tokens[i]).safeTransferFrom(address(this), msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+            IERC20(tokens[i]).safeTransferFrom(address(this), msg.sender, IERC20(tokens[i]).balanceOf(address(this)));
         }
 
         vault.transfer(msg.sender, vault.balanceOf(address(this)));
     }
 
-    function updateVault(address vault, bytes32 root) external {
+    function updateRoot(bytes32 root_) external {
         _requireAdmin();
-        vaultToRoot[vault] = root;
+        root = root_;
     }
 }
