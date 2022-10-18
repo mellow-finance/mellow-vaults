@@ -40,10 +40,6 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     uint256 private _leverageWad;
     /// @dev The multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
     uint256 private _marginMultiplierPostUnwindWad;
-    /// @dev The lookback window used to compute the historical APY that estimates the APY from current to the end of Voltz pool (in seconds)
-    uint256 private _lookbackWindowInSeconds;
-    /// @dev The decimal delta used to compute lower and upper limits of estimated APY: (1 +/- delta) * estimatedAPY (in wad)
-    uint256 private _estimatedAPYDecimalDeltaWad;
 
     /// @dev The minimum estimated TVL
     int256 private _minTVL;
@@ -77,11 +73,12 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
     /// @inheritdoc IVoltzVault
     function updateTvl() public override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        (_minTVL, _maxTVL) = _voltzVaultHelper.calculateTVL(
+        _minTVL = _voltzVaultHelper.calculateTVL(
             _aggregatedInactiveFixedTokenBalance,
             _aggregatedInactiveVariableTokenBalance,
             _aggregatedInactiveMargin
         );
+        _maxTVL = _minTVL;
 
         int256 minTVL = _minTVL;
         int256 maxTVL = _maxTVL;
@@ -135,16 +132,6 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     /// @inheritdoc IVoltzVault
     function marginMultiplierPostUnwindWad() external view override returns (uint256) {
         return _marginMultiplierPostUnwindWad;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function lookbackWindow() external view override returns (uint256) {
-        return _lookbackWindowInSeconds;
-    }
-
-    /// @inheritdoc IVoltzVault
-    function estimatedAPYDecimalDeltaWad() external view override returns (uint256) {
-        return _estimatedAPYDecimalDeltaWad;
     }
 
     /// @inheritdoc IVault
@@ -214,20 +201,6 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     }
 
     /// @inheritdoc IVoltzVault
-    function setLookbackWindow(uint256 lookbackWindowInSeconds_) external override {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _lookbackWindowInSeconds = lookbackWindowInSeconds_;
-        _voltzVaultHelper.setLookbackWindow(lookbackWindowInSeconds_);
-    }
-
-    /// @inheritdoc IVoltzVault
-    function setEstimatedAPYDecimalDeltaWad(uint256 estimatedAPYDecimalDeltaWad_) external override {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _estimatedAPYDecimalDeltaWad = estimatedAPYDecimalDeltaWad_;
-        _voltzVaultHelper.setEstimatedAPYDecimalDeltaWad(estimatedAPYDecimalDeltaWad_);
-    }
-
-    /// @inheritdoc IVoltzVault
     function rebalance(TickRange memory position) external override {
         require(_isApprovedOrOwner(msg.sender) || _isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
@@ -285,8 +258,6 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
 
         _leverageWad = initializeParams.leverageWad;
         _marginMultiplierPostUnwindWad = initializeParams.marginMultiplierPostUnwindWad;
-        _lookbackWindowInSeconds = initializeParams.lookbackWindowInSeconds;
-        _estimatedAPYDecimalDeltaWad = initializeParams.estimatedAPYDecimalDeltaWad;
         _updateCurrentPosition(TickRange(initializeParams.tickLower, initializeParams.tickUpper));
 
         _voltzVaultHelper = VoltzVaultHelper(voltzVaultHelper_);
@@ -297,9 +268,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
             initializeParams.tickLower,
             initializeParams.tickUpper,
             initializeParams.leverageWad,
-            initializeParams.marginMultiplierPostUnwindWad,
-            initializeParams.lookbackWindowInSeconds,
-            initializeParams.estimatedAPYDecimalDeltaWad
+            initializeParams.marginMultiplierPostUnwindWad
         );
     }
 
@@ -425,18 +394,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     /// @param liquidityNotionalDelta The change in pool liquidity notional as a result of the position update
     function _mintOrBurnLiquidityNotional(int256 liquidityNotionalDelta) internal {
         if (liquidityNotionalDelta != 0) {
-            TickRange memory currentPosition_ = trackedPositions[_currentPositionIndex];
-            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(currentPosition_.tickLower);
-            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(currentPosition_.tickUpper);
-
-            uint128 liquidity = _periphery.getLiquidityForNotional(
-                sqrtRatioAX96,
-                sqrtRatioBX96,
-                (liquidityNotionalDelta < 0)
-                    ? (-liquidityNotionalDelta).toUint256()
-                    : liquidityNotionalDelta.toUint256()
-            );
-
+            uint128 liquidity = _voltzVaultHelper.getLiquidityFromNotional(liquidityNotionalDelta);
             _mintOrBurnLiquidity(liquidity, (liquidityNotionalDelta >= 0));
         }
     }
@@ -501,9 +459,7 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
     function _unwindAndExitCurrentPosition() internal returns (int256 marginLeftInOldPosition) {
         VoltzVaultHelper voltzVaultHelper_ = _voltzVaultHelper;
         TickRange memory currentPosition_ = trackedPositions[_currentPositionIndex];
-        Position.Info memory currentPositionInfo_ = voltzVaultHelper_.getVaultPosition(
-            currentPosition_
-        );
+        Position.Info memory currentPositionInfo_ = voltzVaultHelper_.getVaultPosition(currentPosition_);
 
         if (currentPositionInfo_.variableTokenBalance != 0) {
             bool _isFT = currentPositionInfo_.variableTokenBalance < 0;

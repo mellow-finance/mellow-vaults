@@ -25,10 +25,6 @@ interface IVoltzVault is IIntegrationVault {
         uint256 leverageWad; 
         /// @dev Multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
         uint256 marginMultiplierPostUnwindWad;
-        /// @dev Lookback window used to compute the historical APY that estimates the APY from current to the end of Voltz pool (in seconds)
-        uint256 lookbackWindowInSeconds;
-        /// @dev Decimal delta used to compute lower and upper limits of estimated APY: (1 +/- delta) * estimatedAPY (in wad)
-        uint256 estimatedAPYDecimalDeltaWad;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -39,14 +35,6 @@ interface IVoltzVault is IIntegrationVault {
     /// @notice Returns the multiplier used to decide how much margin is 
     /// @notice left in partially unwound positions on Voltz (in wad)
     function marginMultiplierPostUnwindWad() external view returns (uint256);
-
-    /// @notice Returns the lookback window used to compute the historical APY that
-    /// @notice estimates the APY from current to the end of Voltz pool (in seconds)
-    function lookbackWindow() external view returns (uint256);
-
-    /// @notice Returns the decimal delta used to compute lower and upper limits of 
-    /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
-    function estimatedAPYDecimalDeltaWad() external view returns (uint256);
 
     /// @notice Reference to the margin engine of Voltz Protocol
     function marginEngine() external view returns (IMarginEngine);
@@ -115,14 +103,6 @@ interface IVoltzVault is IIntegrationVault {
     /// @notice left in partially unwound positions on Voltz (in wad)
     function setMarginMultiplierPostUnwindWad(uint256 marginMultiplierPostUnwindWad) external;
 
-    /// @notice Sets the lookback window used to compute the historical APY that
-    /// @notice estimates the APY from current to the end of Voltz pool (in seconds)
-    function setLookbackWindow(uint256 lookbackWindowInSeconds) external;
-
-    /// @notice Sets the decimal delta used to compute lower and upper limits of 
-    /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
-    function setEstimatedAPYDecimalDeltaWad(uint256 estimatedAPYDecimalDeltaWad) external;
-
     // -------------------  EVENTS  -------------------
 
     /// @notice Emitted when active LP position is changed
@@ -145,16 +125,12 @@ interface IVoltzVault is IIntegrationVault {
     /// @param tickUpper Upper tick of initial LP position on Voltz
     /// @param leverageWad Leverage used for LP positions on Voltz (in wad)
     /// @param marginMultiplierPostUnwindWad Multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
-    /// @param lookbackWindowInSeconds Lookback window used to compute the historical APY that estimates the APY from current to the end of Voltz pool (in seconds)
-    /// @param estimatedAPYDecimalDeltaWad Decimal delta used to compute lower and upper limits of estimated APY: (1 +/- delta) * estimatedAPY (in wad)
     event VaultInitialized(
         address indexed marginEngine,
         int24 tickLower,
         int24 tickUpper,
         uint256 leverageWad,
-        uint256 marginMultiplierPostUnwindWad,
-        uint256 lookbackWindowInSeconds,
-        uint256 estimatedAPYDecimalDeltaWad
+        uint256 marginMultiplierPostUnwindWad
     );
 
     /// @notice Emitted when tokens are deposited into the Vault

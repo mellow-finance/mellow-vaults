@@ -38,8 +38,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
     this.timeout(200000);
     const leverage = 10;
     const marginMultiplierPostUnwind = 2;
-    const lookbackWindow = 1209600; // 14 days
-    const estimatedAPYDecimalDelta = 0;
 
     const MIN_SQRT_RATIO = BigNumber.from("2503036416286949174936592462");
     const MAX_SQRT_RATIO = BigNumber.from("2507794810551837817144115957740");
@@ -148,10 +146,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                             leverageWad: utils.parseEther(leverage.toString()),
                             marginMultiplierPostUnwindWad: utils.parseEther(
                                 marginMultiplierPostUnwind.toString()
-                            ),
-                            lookbackWindowInSeconds: lookbackWindow,
-                            estimatedAPYDecimalDeltaWad: utils.parseEther(
-                                estimatedAPYDecimalDelta.toString()
                             ),
                         },
                     ],
@@ -359,10 +353,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         marginMultiplierPostUnwindWad: utils.parseEther(
                             marginMultiplierPostUnwind.toString()
                         ),
-                        lookbackWindowInSeconds: lookbackWindow,
-                        estimatedAPYDecimalDeltaWad: utils.parseEther(
-                            estimatedAPYDecimalDelta.toString()
-                        ),
                     }
                 )
             ).to.be.revertedWith("INIT");
@@ -414,14 +404,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             ).to.be.equal(
                 utils.parseEther(marginMultiplierPostUnwind.toString())
             );
-            expect(await this.subject.lookbackWindow()).to.be.equal(
-                lookbackWindow.toString()
-            );
-            expect(
-                await this.subject.estimatedAPYDecimalDeltaWad()
-            ).to.be.equal(
-                utils.parseEther(estimatedAPYDecimalDelta.toString())
-            );
 
             const { test } = await getNamedAccounts();
             const testSigner = await hre.ethers.getSigner(test);
@@ -437,18 +419,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         marginMultiplierPostUnwind + 1
                     )
             ).to.be.revertedWith("FRB");
-            await expect(
-                this.subject
-                    .connect(testSigner)
-                    .setLookbackWindow(lookbackWindow + 1)
-            ).to.be.revertedWith("FRB");
-            await expect(
-                this.subject
-                    .connect(testSigner)
-                    .setEstimatedAPYDecimalDeltaWad(
-                        estimatedAPYDecimalDelta + 1
-                    )
-            ).to.be.revertedWith("FRB");
 
             // check someone else can see params
             expect(
@@ -461,16 +431,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             ).to.be.equal(
                 utils.parseEther(marginMultiplierPostUnwind.toString())
             );
-            expect(
-                await this.subject.connect(testSigner).lookbackWindow()
-            ).to.be.equal(lookbackWindow.toString());
-            expect(
-                await this.subject
-                    .connect(testSigner)
-                    .estimatedAPYDecimalDeltaWad()
-            ).to.be.equal(
-                utils.parseEther(estimatedAPYDecimalDelta.toString())
-            );
 
             // check we can re-set params
             await this.subject.setLeverageWad(
@@ -478,10 +438,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             );
             await this.subject.setMarginMultiplierPostUnwindWad(
                 utils.parseEther((marginMultiplierPostUnwind + 1).toString())
-            );
-            await this.subject.setLookbackWindow(lookbackWindow + 1);
-            await this.subject.setEstimatedAPYDecimalDeltaWad(
-                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
             );
 
             // check re-set params
@@ -493,14 +449,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             ).to.be.equal(
                 utils.parseEther((marginMultiplierPostUnwind + 1).toString())
             );
-            expect(await this.subject.lookbackWindow()).to.be.equal(
-                (lookbackWindow + 1).toString()
-            );
-            expect(
-                await this.subject.estimatedAPYDecimalDeltaWad()
-            ).to.be.equal(
-                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
-            );
         });
 
         it("check helper params getters & setters", async () => {
@@ -509,14 +457,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 await this.voltzVaultHelperContract.marginMultiplierPostUnwindWad()
             ).to.be.equal(
                 utils.parseEther(marginMultiplierPostUnwind.toString())
-            );
-            expect(
-                await this.voltzVaultHelperContract.lookbackWindow()
-            ).to.be.equal(lookbackWindow.toString());
-            expect(
-                await this.voltzVaultHelperContract.estimatedAPYDecimalDeltaWad()
-            ).to.be.equal(
-                utils.parseEther(estimatedAPYDecimalDelta.toString())
             );
 
             const { test } = await getNamedAccounts();
@@ -530,33 +470,11 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         marginMultiplierPostUnwind + 1
                     )
             ).to.be.revertedWith("Only Vault");
-            await expect(
-                this.voltzVaultHelperContract
-                    .connect(testSigner)
-                    .setLookbackWindow(lookbackWindow + 1)
-            ).to.be.revertedWith("Only Vault");
-            await expect(
-                this.voltzVaultHelperContract
-                    .connect(testSigner)
-                    .setEstimatedAPYDecimalDeltaWad(
-                        estimatedAPYDecimalDelta + 1
-                    )
-            ).to.be.revertedWith("Only Vault");
 
             // check we cannot re-set params
             await expect(
                 this.voltzVaultHelperContract.setMarginMultiplierPostUnwindWad(
                     marginMultiplierPostUnwind + 1
-                )
-            ).to.be.revertedWith("Only Vault");
-            await expect(
-                this.voltzVaultHelperContract.setLookbackWindow(
-                    lookbackWindow + 1
-                )
-            ).to.be.revertedWith("Only Vault");
-            await expect(
-                this.voltzVaultHelperContract.setEstimatedAPYDecimalDeltaWad(
-                    estimatedAPYDecimalDelta + 1
                 )
             ).to.be.revertedWith("Only Vault");
 
@@ -568,18 +486,6 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 await this.voltzVaultHelperContract.marginMultiplierPostUnwindWad()
             ).to.be.equal(
                 utils.parseEther((marginMultiplierPostUnwind + 1).toString())
-            );
-            await this.subject.setLookbackWindow(lookbackWindow + 1);
-            expect(
-                await this.voltzVaultHelperContract.lookbackWindow()
-            ).to.be.equal((lookbackWindow + 1).toString());
-            await this.subject.setEstimatedAPYDecimalDeltaWad(
-                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
-            );
-            expect(
-                await this.voltzVaultHelperContract.estimatedAPYDecimalDeltaWad()
-            ).to.be.equal(
-                utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
             );
         });
 
@@ -593,7 +499,9 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             expect(await this.subject.periphery()).to.be.equal(this.periphery);
             expect(await this.subject.vamm()).to.be.equal(this.vamm);
 
-            expect(await this.voltzVaultHelperContract.callStatic.vault()).to.be.equal(this.subject.address);
+            expect(
+                await this.voltzVaultHelperContract.callStatic.vault()
+            ).to.be.equal(this.subject.address);
         });
     });
 
@@ -1343,48 +1251,32 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 );
                 const apyHistoricalLookback = Number(
                     ethers.utils.formatEther(
-                        await this.rateOracleContract.callStatic.getApyFromTo(
-                            currentTimestamp - lookbackWindow,
-                            currentTimestamp
-                        )
+                        await this.marginEngineContract.callStatic.getHistoricalApy()
                     )
                 );
 
-                const variableCashflowLower =
+                const variableCashflow =
                     currentVoltzPositionInfo.variableTokenBalance *
                     ((apyStartNow * (currentTimestamp - termStartTimestamp)) /
                         YEAR_IN_SECONDS +
                         (apyHistoricalLookback *
-                            (1 - estimatedAPYDecimalDelta) *
                             (termEndTimestamp - currentTimestamp)) /
                             YEAR_IN_SECONDS);
 
-                const variableCashflowUpper =
-                    currentVoltzPositionInfo.variableTokenBalance *
-                    ((apyStartNow * (currentTimestamp - termStartTimestamp)) /
-                        YEAR_IN_SECONDS +
-                        (apyHistoricalLookback *
-                            (1 + estimatedAPYDecimalDelta) *
-                            (termEndTimestamp - currentTimestamp)) /
-                            YEAR_IN_SECONDS);
-
-                const groundTruthTvlLower = currentVoltzPositionInfo.margin.add(
-                    Math.floor(fixedCashflow + variableCashflowLower)
-                );
-                const groundTruthTvlUpper = currentVoltzPositionInfo.margin.add(
-                    Math.floor(fixedCashflow + variableCashflowUpper)
+                const groundTruthTvl = currentVoltzPositionInfo.margin.add(
+                    Math.floor(fixedCashflow + variableCashflow)
                 );
 
                 await this.subject.updateTvl();
                 const tvl = await this.subject.tvl();
                 expect(tvl[0][0].toNumber()).to.be.closeTo(
-                    groundTruthTvlLower.toNumber(),
-                    groundTruthTvlLower.div(1000).toNumber()
+                    groundTruthTvl.toNumber(),
+                    groundTruthTvl.div(1000).toNumber()
                 );
 
                 expect(tvl[1][0].toNumber()).to.be.closeTo(
-                    groundTruthTvlUpper.toNumber(),
-                    groundTruthTvlUpper.div(1000).toNumber()
+                    groundTruthTvl.toNumber(),
+                    groundTruthTvl.div(1000).toNumber()
                 );
 
                 // advance time by 1 day
@@ -1519,55 +1411,37 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 );
                 const apyHistoricalLookback = Number(
                     ethers.utils.formatEther(
-                        await this.rateOracleContract.callStatic.getApyFromTo(
-                            currentTimestamp - lookbackWindow,
-                            currentTimestamp
-                        )
+                        await this.marginEngineContract.callStatic.getHistoricalApy()
                     )
                 );
 
-                let variableCashflowLower = 0;
-                let variableCashflowUpper = 0;
+                let variableCashflow = 0;
 
                 for (const positionInfo of positionInfos) {
-                    variableCashflowLower +=
+                    variableCashflow +=
                         positionInfo.variableTokenBalance *
                         ((apyStartNow *
                             (currentTimestamp - termStartTimestamp)) /
                             YEAR_IN_SECONDS +
                             (apyHistoricalLookback *
-                                (1 - estimatedAPYDecimalDelta) *
-                                (termEndTimestamp - currentTimestamp)) /
-                                YEAR_IN_SECONDS);
-
-                    variableCashflowUpper +=
-                        positionInfo.variableTokenBalance *
-                        ((apyStartNow *
-                            (currentTimestamp - termStartTimestamp)) /
-                            YEAR_IN_SECONDS +
-                            (apyHistoricalLookback *
-                                (1 + estimatedAPYDecimalDelta) *
                                 (termEndTimestamp - currentTimestamp)) /
                                 YEAR_IN_SECONDS);
                 }
 
-                const groundTruthTvlLower = margins.add(
-                    Math.floor(fixedCashflow + variableCashflowLower)
-                );
-                const groundTruthTvlUpper = margins.add(
-                    Math.floor(fixedCashflow + variableCashflowUpper)
+                const groundTruthTvl = margins.add(
+                    Math.floor(fixedCashflow + variableCashflow)
                 );
 
                 await this.subject.updateTvl();
                 const tvl = await this.subject.tvl();
                 expect(tvl[0][0].toNumber()).to.be.closeTo(
-                    groundTruthTvlLower.toNumber(),
-                    groundTruthTvlLower.div(1000).toNumber()
+                    groundTruthTvl.toNumber(),
+                    groundTruthTvl.div(1000).toNumber()
                 );
 
                 expect(tvl[1][0].toNumber()).to.be.closeTo(
-                    groundTruthTvlUpper.toNumber(),
-                    groundTruthTvlUpper.div(1000).toNumber()
+                    groundTruthTvl.toNumber(),
+                    groundTruthTvl.div(1000).toNumber()
                 );
 
                 // advance time by 1 day

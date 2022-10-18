@@ -41,8 +41,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
 
         const leverage = 10;
         const marginMultiplierPostUnwind = 2;
-        const lookbackWindow = 1209600; // 14 days
-        const estimatedAPYUnitDelta = 0;
 
         const ADMIN_ROLE =
             "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin")
@@ -124,11 +122,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                                     marginMultiplierPostUnwindWad:
                                         utils.parseEther(
                                             marginMultiplierPostUnwind.toString()
-                                        ),
-                                    lookbackWindowInSeconds: lookbackWindow,
-                                    estimatedAPYDecimalDeltaWad:
-                                        utils.parseEther(
-                                            estimatedAPYUnitDelta.toString()
                                         ),
                                 },
                             ],

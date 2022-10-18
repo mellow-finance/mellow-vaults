@@ -24,6 +24,8 @@ contract VoltzVaultHelper {
     IMarginEngine private _marginEngine;
     /// @dev The rate oracle of Voltz Protocol
     IRateOracle private _rateOracle;
+    /// @dev The periphery of Voltz Protocol
+    IPeriphery _periphery;
 
     /// @dev The underlying token of the Voltz pool
     address private _underlyingToken;
@@ -35,8 +37,6 @@ contract VoltzVaultHelper {
 
     /// @dev The multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
     uint256 private _marginMultiplierPostUnwindWad;
-    /// @dev The lookback window used to compute the historical APY that estimates the APY from current to the end of Voltz pool (in seconds)
-    uint256 private _lookbackWindowInSeconds;
     /// @dev The decimal delta used to compute lower and upper limits of estimated APY: (1 +/- delta) * estimatedAPY (in wad)
     uint256 private _estimatedAPYDecimalDeltaWad;
 
@@ -104,22 +104,37 @@ contract VoltzVaultHelper {
         return _vault;
     }
 
-    /// @notice Returns the multiplier used to decide how much margin is 
+    /// @notice Returns the multiplier used to decide how much margin is
     /// @notice left in partially unwound positions on Voltz (in wad)
     function marginMultiplierPostUnwindWad() external view returns (uint256) {
         return _marginMultiplierPostUnwindWad;
     }
 
-    /// @notice Returns the lookback window used to compute the historical APY that
-    /// @notice estimates the APY from current to the end of Voltz pool (in seconds)
-    function lookbackWindow() external view returns (uint256) {
-        return _lookbackWindowInSeconds;
-    }
-
-    /// @notice Returns the decimal delta used to compute lower and upper limits of 
+    /// @notice Returns the decimal delta used to compute lower and upper limits of
     /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
     function estimatedAPYDecimalDeltaWad() external view returns (uint256) {
         return _estimatedAPYDecimalDeltaWad;
+    }
+
+    /// @notice Computes liqudity value for a given liquidity notional
+    function getLiquidityFromNotional(int256 liquidityNotionalDelta) external view returns (uint128) {
+        if (liquidityNotionalDelta != 0) {
+            VoltzVault.TickRange memory currentPosition_ = _vault.currentPosition();
+            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(currentPosition_.tickLower);
+            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(currentPosition_.tickUpper);
+
+            uint128 liquidity = _periphery.getLiquidityForNotional(
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                (liquidityNotionalDelta < 0)
+                    ? (-liquidityNotionalDelta).toUint256()
+                    : liquidityNotionalDelta.toUint256()
+            );
+
+            return liquidity;
+        }
+
+        return 0;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -132,19 +147,18 @@ contract VoltzVaultHelper {
 
         VoltzVault vault_ = VoltzVault(msg.sender);
         _vault = vault_;
-        
+
         IMarginEngine marginEngine = vault_.marginEngine();
         _marginEngine = marginEngine;
 
         _rateOracle = vault_.rateOracle();
+        _periphery = vault_.periphery();
 
         _underlyingToken = address(marginEngine.underlyingToken());
         _termStartTimestampWad = marginEngine.termStartTimestampWad();
         _termEndTimestampWad = _marginEngine.termEndTimestampWad();
 
         _marginMultiplierPostUnwindWad = vault_.marginMultiplierPostUnwindWad();
-        _lookbackWindowInSeconds = vault_.lookbackWindow();
-        _estimatedAPYDecimalDeltaWad = vault_.estimatedAPYDecimalDeltaWad();
     }
 
     /// @notice Sets the multiplier used to decide how much margin is
@@ -153,19 +167,13 @@ contract VoltzVaultHelper {
         _marginMultiplierPostUnwindWad = marginMultiplierPostUnwindWad_;
     }
 
-    /// @notice Sets the lookback window used to compute the historical APY that
-    /// @notice estimates the APY from current to the end of Voltz pool (in seconds)
-    function setLookbackWindow(uint256 lookbackWindowInSeconds_) external onlyVault {
-        _lookbackWindowInSeconds = lookbackWindowInSeconds_;
-    }
-
     /// @notice Sets the decimal delta used to compute lower and upper limits of
     /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
     function setEstimatedAPYDecimalDeltaWad(uint256 estimatedAPYDecimalDeltaWad_) external onlyVault {
         _estimatedAPYDecimalDeltaWad = estimatedAPYDecimalDeltaWad_;
     }
 
-    /// @notice Calculates the TVL values
+    /// @notice Calculates the TVL value
     /// @param aggregatedInactiveFixedTokenBalance Sum of fixed token balances of all
     /// positions in the trackedPositions array, apart from the balance of the currently
     /// active position
@@ -178,17 +186,13 @@ contract VoltzVaultHelper {
         int256 aggregatedInactiveFixedTokenBalance,
         int256 aggregatedInactiveVariableTokenBalance,
         int256 aggregatedInactiveMargin
-    ) external returns (int256 minTVL, int256 maxTVL) {
+    ) external returns (int256 tvl) {
         VoltzVault vault_ = _vault;
         VoltzVault.TickRange memory currentPosition = vault_.currentPosition();
 
         // Calculate estimated variable factor between start and end
-        uint256 estimatedVariableFactorStartEndLowerWad;
-        uint256 estimatedVariableFactorStartEndUpperWad;
-        (
-            estimatedVariableFactorStartEndLowerWad,
-            estimatedVariableFactorStartEndUpperWad
-        ) = _estimateVariableFactorLowerUpper();
+        uint256 estimatedVariableFactorStartEndWad;
+        estimatedVariableFactorStartEndWad = _estimateVariableFactor();
 
         Position.Info memory currentPositionInfo_ = _marginEngine.getPosition(
             address(vault_),
@@ -196,33 +200,18 @@ contract VoltzVaultHelper {
             currentPosition.tickUpper
         );
 
-        minTVL = IERC20(_underlyingToken).balanceOf(address(vault_)).toInt256();
-        maxTVL = minTVL;
+        tvl = IERC20(_underlyingToken).balanceOf(address(vault_)).toInt256();
 
         // Aggregate estimated settlement cashflows into TVL
-        minTVL +=
+        tvl +=
             calculateSettlementCashflow(
                 aggregatedInactiveFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
                 fixedFactor(_termStartTimestampWad, _termEndTimestampWad),
                 aggregatedInactiveVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
-                estimatedVariableFactorStartEndLowerWad
+                estimatedVariableFactorStartEndWad
             ) +
             aggregatedInactiveMargin +
             currentPositionInfo_.margin;
-
-        maxTVL +=
-            calculateSettlementCashflow(
-                aggregatedInactiveFixedTokenBalance + currentPositionInfo_.fixedTokenBalance,
-                fixedFactor(_termStartTimestampWad, _termEndTimestampWad),
-                aggregatedInactiveVariableTokenBalance + currentPositionInfo_.variableTokenBalance,
-                estimatedVariableFactorStartEndUpperWad
-            ) +
-            aggregatedInactiveMargin +
-            currentPositionInfo_.margin;
-
-        if (minTVL > maxTVL) {
-            (minTVL, maxTVL) = (maxTVL, minTVL);
-        }
     }
 
     /// @notice Calculates the margin that must be kept in the
@@ -276,49 +265,28 @@ contract VoltzVaultHelper {
         return _marginEngine.getPosition(address(_vault), position.tickLower, position.tickUpper);
     }
 
-    // -------------------  INTERNAL, VIEW  -------------------
+    // -------------------  INTERNAL, MUTATING  -------------------
 
-    /// @notice Estimates the lower and upper variable factors from the start
+    /// @notice Estimates the variable factor from the start
     /// @notice to the end of the pool
-    function _estimateVariableFactorLowerUpper()
-        internal
-        view
-        returns (uint256 estimatedVariableFactorStartEndLowerWad, uint256 estimatedVariableFactorStartEndUpperWad)
-    {
+    function _estimateVariableFactor() internal returns (uint256 estimatedVariableFactorStartEndWad) {
         uint256 termCurrentTimestampWad = Time.blockTimestampScaled();
         uint256 termEndTimestampWad = _termEndTimestampWad;
         if (termCurrentTimestampWad > termEndTimestampWad) {
             termCurrentTimestampWad = termEndTimestampWad;
         }
 
-        IRateOracle rateOracle = _rateOracle;
-        uint256 variableFactorStartCurrentWad = rateOracle.variableFactorNoCache(
+        uint256 variableFactorStartCurrentWad = _rateOracle.variableFactorNoCache(
             _termStartTimestampWad,
             termCurrentTimestampWad
         );
 
-        // TO DO: call historical apy on margin engine
-        uint256 historicalAPYWad = rateOracle.getApyFromTo(
-            termCurrentTimestampWad.toUint() - _lookbackWindowInSeconds,
-            termCurrentTimestampWad.toUint()
-        );
+        uint256 historicalAPYWad = _marginEngine.getHistoricalApy();
         uint256 estimatedVariableFactorCurrentEndWad = historicalAPYWad.mul(
             accrualFact(termEndTimestampWad - termCurrentTimestampWad)
         );
 
-        // Estimated Lower APY
-        uint256 estimatedAPYDecimalDeltaWad_ = _estimatedAPYDecimalDeltaWad;
-        estimatedVariableFactorStartEndLowerWad =
-            variableFactorStartCurrentWad +
-            estimatedVariableFactorCurrentEndWad.mul(
-                (estimatedAPYDecimalDeltaWad_ <= PRBMathUD60x18.fromUint(1))
-                    ? PRBMathUD60x18.fromUint(1) - estimatedAPYDecimalDeltaWad_
-                    : 0
-            );
-
-        // Estimated Upper APY
-        estimatedVariableFactorStartEndUpperWad =
-            variableFactorStartCurrentWad +
-            estimatedVariableFactorCurrentEndWad.mul(PRBMathUD60x18.fromUint(1) + estimatedAPYDecimalDeltaWad_);
+        // Estimated Variable Factor
+        estimatedVariableFactorStartEndWad = variableFactorStartCurrentWad + estimatedVariableFactorCurrentEndWad;
     }
 }
