@@ -4,13 +4,7 @@ import {
     PermissionIdsLibrary,
     setupVault,
 } from "../deploy/0000_utils";
-import {
-    checkStateOfVoltzOpenedPositions,
-    encodeToBytes,
-    mint,
-    sleep,
-    withSigner,
-} from "./library/Helpers";
+import { mint, sleep, withSigner } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20Vault,
@@ -21,7 +15,7 @@ import {
 } from "./types";
 import hre from "hardhat";
 import { BigNumber, utils } from "ethers";
-import { expect, util } from "chai";
+import { expect } from "chai";
 
 type CustomContext = {
     voltzVault: VoltzVault;

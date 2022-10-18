@@ -3,13 +3,7 @@ import { utils } from "ethers";
 import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import {
-    encodeToBytes,
-    mint,
-    mintUSDCForVoltz,
-    randomAddress,
-    withSigner,
-} from "./library/Helpers";
+import { encodeToBytes, mint, withSigner } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
@@ -21,7 +15,6 @@ import {
     VoltzVault,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
-import { VOLTZ_VAULT_INTERFACE_ID } from "./library/Constants";
 import { TickMath } from "@uniswap/v3-sdk";
 import { TickRangeStruct } from "./types/IVoltzVault";
 
@@ -29,7 +22,7 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
     marginEngine: string;
-    preparePush: () => any;
+    preparePush: (value: number, signerAddress?: string) => any;
 };
 
 type DeployOptions = {};
@@ -95,26 +88,20 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     this.rateOracle
                 )) as IRateOracle;
 
-                this.preparePush = async () => {
-                    await withSigner(
-                        "0xb527e950fc7c4f581160768f48b3bfa66a7de1f0",
-                        async (s) => {
-                            await expect(
-                                this.marginEngineContract
-                                    .connect(s)
-                                    .setIsAlpha(false)
-                            ).to.not.be.reverted;
+                await withSigner(
+                    "0xb527e950fc7c4f581160768f48b3bfa66a7de1f0",
+                    async (s) => {
+                        await expect(
+                            this.marginEngineContract
+                                .connect(s)
+                                .setIsAlpha(false)
+                        ).to.not.be.reverted;
 
-                            await expect(
-                                this.vammContract.connect(s).setIsAlpha(false)
-                            ).to.not.be.reverted;
-                        }
-                    );
-
-                    await mintUSDCForVoltz(
-                        BigNumber.from(10).pow(6).mul(10000)
-                    );
-                };
+                        await expect(
+                            this.vammContract.connect(s).setIsAlpha(false)
+                        ).to.not.be.reverted;
+                    }
+                );
 
                 const tokens = [this.usdc.address]
                     .map((t) => t.toLowerCase())
@@ -216,6 +203,32 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     );
                 }
 
+                this.preparePush = async (
+                    value: number,
+                    signerAddress?: string
+                ) => {
+                    if (signerAddress === undefined) {
+                        signerAddress = this.deployer.address;
+                    }
+
+                    await mint(
+                        "USDC",
+                        signerAddress,
+                        BigNumber.from(10).pow(6).mul(value)
+                    );
+
+                    await this.usdc.approve(
+                        signerAddress,
+                        ethers.constants.MaxUint256
+                    );
+
+                    await this.usdc.transferFrom(
+                        signerAddress,
+                        this.subject.address,
+                        BigNumber.from(10).pow(6).mul(value)
+                    );
+                };
+
                 return this.subject;
             }
         );
@@ -245,13 +258,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         });
 
         it("push #1: check position margin and leverage", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            await this.preparePush();
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -292,19 +299,13 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         });
 
         it("push #1: after maturity", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
             // advance time by 60 days to reach maturity
             await network.provider.send("evm_increaseTime", [
                 60 * 24 * 60 * 60,
             ]);
             await network.provider.send("evm_mine", []);
 
-            await this.preparePush();
+            await this.preparePush(1000);
             await expect(
                 this.subject.push(
                     [this.usdc.address],
@@ -367,12 +368,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         it("check current position getter", async () => {
             const initialPosition = await this.subject.currentPosition();
 
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-            await this.preparePush();
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -524,14 +520,8 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             });
         });
 
-        it("pull #1", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            await this.preparePush();
+        it("pull #1: one deposit, no swaps", async () => {
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -590,6 +580,249 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)
             ).to.be.equal(BigNumber.from(10).pow(6).mul(1000));
         });
+
+        it("pull #2: one deposit, one swap", async () => {
+            await this.preparePush(1000);
+            await this.subject.push(
+                [this.usdc.address],
+                [BigNumber.from(10).pow(6).mul(1000)],
+                encodeToBytes([], [])
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(100000)
+            );
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(100000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(100000),
+            });
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            await this.subject.settleVault(0);
+
+            const currentVoltzPositionInfo =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh
+                );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            const fixedCashflow =
+                (currentVoltzPositionInfo.fixedTokenBalance *
+                    0.01 *
+                    (termEndTimestamp - termStartTimestamp)) /
+                YEAR_IN_SECONDS;
+
+            const apyStartEnd = Number(
+                ethers.utils.formatEther(
+                    await this.rateOracleContract.callStatic.getApyFromTo(
+                        termStartTimestamp,
+                        termEndTimestamp
+                    )
+                )
+            );
+
+            const variableCashflow =
+                (currentVoltzPositionInfo.variableTokenBalance *
+                    (apyStartEnd * (termEndTimestamp - termStartTimestamp))) /
+                YEAR_IN_SECONDS;
+
+            const groundTruthCashflow = currentVoltzPositionInfo.margin
+                .add(Math.floor(fixedCashflow + variableCashflow))
+                .add(currentVoltzPositionInfo.accumulatedFees);
+
+            const erc20VaultFundsBeforePull = await this.usdc.balanceOf(
+                this.erc20Vault.address
+            );
+
+            await this.subject.pull(
+                this.erc20Vault.address,
+                [this.usdc.address],
+                [groundTruthCashflow],
+                encodeToBytes([], [])
+            );
+            const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
+                this.erc20Vault.address
+            );
+            expect(
+                erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)
+            ).to.be.equal(groundTruthCashflow);
+        });
+    });
+
+    describe("Test Settle", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+            });
+        });
+
+        it("settle #1: settle by position", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            for (let i = 0; i < 10; i++) {
+                await this.preparePush(1000000000);
+                await this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000000000)],
+                    encodeToBytes([], [])
+                );
+
+                await mint(
+                    "USDC",
+                    testSigner.address,
+                    BigNumber.from(10).pow(6).mul(100000000)
+                );
+
+                await this.peripheryContract.connect(testSigner).swap({
+                    marginEngine: this.marginEngine,
+                    isFT: i % 2,
+                    notional: BigNumber.from(10).pow(6).mul(100000000),
+                    sqrtPriceLimitX96:
+                        i % 2 ? MAX_SQRT_RATIO.sub(1) : MIN_SQRT_RATIO.add(1),
+                    tickLower: -60,
+                    tickUpper: 60,
+                    marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                });
+
+                const currentTick = (await this.vammContract.vammVars()).tick;
+
+                const newPosition = {
+                    tickLower: currentTick - (currentTick % 60) + 60 - 600,
+                    tickUpper: currentTick - (currentTick % 60) + 60 + 600,
+                };
+                await this.subject.rebalance(newPosition);
+
+                const currentPosition = await this.subject.currentPosition();
+                expect(currentPosition.tickLower).to.be.equal(
+                    newPosition.tickLower
+                );
+                expect(currentPosition.tickUpper).to.be.equal(
+                    newPosition.tickUpper
+                );
+            }
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.equal(
+                BigNumber.from(0)
+            );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            let trackedPositions = await getTrackedPositions();
+            let cashflowAccumulated = BigNumber.from(0);
+            for (let trackedPosition of trackedPositions) {
+                const currentVoltzPositionInfo =
+                    await this.marginEngineContract.callStatic.getPosition(
+                        this.subject.address,
+                        trackedPosition.tickLower,
+                        trackedPosition.tickUpper
+                    );
+
+                const fixedCashflow =
+                    (currentVoltzPositionInfo.fixedTokenBalance *
+                        0.01 *
+                        (termEndTimestamp - termStartTimestamp)) /
+                    YEAR_IN_SECONDS;
+
+                const apyStartEnd = Number(
+                    ethers.utils.formatEther(
+                        await this.rateOracleContract.callStatic.getApyFromTo(
+                            termStartTimestamp,
+                            termEndTimestamp
+                        )
+                    )
+                );
+
+                const variableCashflow =
+                    (currentVoltzPositionInfo.variableTokenBalance *
+                        (apyStartEnd *
+                            (termEndTimestamp - termStartTimestamp))) /
+                    YEAR_IN_SECONDS;
+
+                const groundTruthCashflow = currentVoltzPositionInfo.margin
+                    .add(Math.floor(fixedCashflow + variableCashflow))
+                    .add(currentVoltzPositionInfo.accumulatedFees);
+
+                await this.subject.settleVaultPositionAndWithdrawMargin({
+                    tickLower: trackedPosition.tickLower,
+                    tickUpper: trackedPosition.tickUpper,
+                });
+
+                expect(
+                    await this.usdc.balanceOf(this.subject.address)
+                ).to.be.closeTo(
+                    cashflowAccumulated.add(groundTruthCashflow),
+                    cashflowAccumulated
+                        .add(groundTruthCashflow)
+                        .div(1000)
+                        .toNumber()
+                );
+
+                cashflowAccumulated =
+                    cashflowAccumulated.add(groundTruthCashflow);
+            }
+        });
     });
 
     describe("Test Rebalance", () => {
@@ -613,13 +846,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
 
         it("rebalance #1: vt = 0", async () => {
             // Push 1000
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            await this.preparePush();
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -705,14 +932,8 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         });
 
         it("rebalance #2: vt = 0", async () => {
-            // Push 1000
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000000000)
-            );
-
-            await this.preparePush();
+            // Push 1000000000
+            await this.preparePush(1000000000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000000000)],
@@ -805,14 +1026,8 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         });
 
         it("rebalance #3: vt < 0, all money blocked", async () => {
-            // Push 1000
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000000000)
-            );
-
-            await this.preparePush();
+            // Push 1000000000
+            await this.preparePush(1000000000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000000000)],
@@ -896,13 +1111,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
 
         it("rebalance #4: vt < 0, leave initial + buffer behind", async () => {
             // Push 1000000000
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000000000)
-            );
-
-            await this.preparePush();
+            await this.preparePush(1000000000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000000000)],
@@ -1040,13 +1249,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
 
         it("rebalance #5: check leverage", async () => {
             // Push 1000
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            await this.preparePush();
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -1150,13 +1353,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         });
 
         it("tvl #2: LP funds but not swaps", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            await this.preparePush();
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -1172,14 +1369,8 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             }
         });
 
-        it("tvl #3: one swap", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            await this.preparePush();
+        it("tvl #3: deposit, swap", async () => {
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
                 [BigNumber.from(10).pow(6).mul(1000)],
@@ -1286,17 +1477,11 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             }
         });
 
-        it("tvl #4: one rebalance, two swaps", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(6).mul(1000000000)
-            );
-
-            await this.preparePush();
+        it("tvl #4: deposit, swap, deposit", async () => {
+            await this.preparePush(1000);
             await this.subject.push(
                 [this.usdc.address],
-                [BigNumber.from(10).pow(6).mul(1000000000)],
+                [BigNumber.from(10).pow(6).mul(1000)],
                 encodeToBytes([], [])
             );
 
@@ -1307,7 +1492,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             await mint(
                 "USDC",
                 testSigner.address,
-                BigNumber.from(10).pow(6).mul(100000000)
+                BigNumber.from(10).pow(6).mul(1000)
             );
 
             await this.usdc
@@ -1317,53 +1502,19 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             await this.peripheryContract.connect(testSigner).swap({
                 marginEngine: this.marginEngine,
                 isFT: false,
-                notional: BigNumber.from(10).pow(6).mul(100000000),
+                notional: BigNumber.from(10).pow(6).mul(1000),
                 sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
                 tickLower: -60,
                 tickUpper: 60,
-                marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                marginDelta: BigNumber.from(10).pow(6).mul(1000),
             });
 
-            // one rebalance
-            await this.subject.rebalance({
-                tickLower: this.initialTickLow - 60,
-                tickUpper: this.initialTickHigh - 60,
-            });
-
-            // second swap, FT this time
-            await mint(
-                "USDC",
-                testSigner.address,
-                BigNumber.from(10).pow(6).mul(100000)
-            );
-
-            await this.peripheryContract.connect(testSigner).swap({
-                marginEngine: this.marginEngine,
-                isFT: true,
-                notional: BigNumber.from(10).pow(6).mul(100000),
-                sqrtPriceLimitX96: MAX_SQRT_RATIO.sub(1),
-                tickLower: -60,
-                tickUpper: 60,
-                marginDelta: BigNumber.from(10).pow(6).mul(100000),
-            });
-
-            const positions: {
-                tickLower: number;
-                tickUpper: number;
-            }[] = [
-                {
-                    tickLower: this.initialTickLow,
-                    tickUpper: this.initialTickHigh,
-                },
-                {
-                    tickLower: this.initialTickLow - 60,
-                    tickUpper: this.initialTickHigh - 60,
-                },
-            ];
-
-            let currentTimestamp = (
-                await hre.ethers.provider.getBlock("latest")
-            ).timestamp;
+            const currentVoltzPositionInfo =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh
+                );
 
             const termStartTimestamp = Number(
                 ethers.utils.formatEther(
@@ -1377,29 +1528,19 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 )
             );
 
-            let fixedCashflow = 0;
-            let margins = BigNumber.from(0);
-            const positionInfos = [];
-            for (const position of positions) {
-                positionInfos.push(
-                    await this.marginEngineContract.callStatic.getPosition(
-                        this.subject.address,
-                        position.tickLower,
-                        position.tickUpper
-                    )
-                );
+            const fixedCashflow =
+                (currentVoltzPositionInfo.fixedTokenBalance *
+                    0.01 *
+                    (termEndTimestamp - termStartTimestamp)) /
+                YEAR_IN_SECONDS;
 
-                fixedCashflow +=
-                    (positionInfos[positionInfos.length - 1].fixedTokenBalance *
-                        0.01 *
-                        (termEndTimestamp - termStartTimestamp)) /
-                    YEAR_IN_SECONDS;
-                margins = margins.add(
-                    positionInfos[positionInfos.length - 1].margin
-                );
-            }
+            let currentTimestamp = (
+                await hre.ethers.provider.getBlock("latest")
+            ).timestamp;
 
             // advance time and check tvl after each day
+            let secondDepositMargin = BigNumber.from(0);
+            let i = 0;
             while (currentTimestamp < termEndTimestamp) {
                 const apyStartNow = Number(
                     ethers.utils.formatEther(
@@ -1415,22 +1556,17 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     )
                 );
 
-                let variableCashflow = 0;
+                const variableCashflow =
+                    currentVoltzPositionInfo.variableTokenBalance *
+                    ((apyStartNow * (currentTimestamp - termStartTimestamp)) /
+                        YEAR_IN_SECONDS +
+                        (apyHistoricalLookback *
+                            (termEndTimestamp - currentTimestamp)) /
+                            YEAR_IN_SECONDS);
 
-                for (const positionInfo of positionInfos) {
-                    variableCashflow +=
-                        positionInfo.variableTokenBalance *
-                        ((apyStartNow *
-                            (currentTimestamp - termStartTimestamp)) /
-                            YEAR_IN_SECONDS +
-                            (apyHistoricalLookback *
-                                (termEndTimestamp - currentTimestamp)) /
-                                YEAR_IN_SECONDS);
-                }
-
-                const groundTruthTvl = margins.add(
-                    Math.floor(fixedCashflow + variableCashflow)
-                );
+                const groundTruthTvl = currentVoltzPositionInfo.margin
+                    .add(Math.floor(fixedCashflow + variableCashflow))
+                    .add(secondDepositMargin);
 
                 await this.subject.updateTvl();
                 const tvl = await this.subject.tvl();
@@ -1448,6 +1584,212 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 await network.provider.send("evm_increaseTime", [24 * 60 * 60]);
                 await network.provider.send("evm_mine", []);
                 currentTimestamp += 24 * 60 * 60;
+                i += 1;
+
+                if (i === 20) {
+                    // user 2 deposits
+                    await this.preparePush(512);
+                    await this.subject.push(
+                        [this.usdc.address],
+                        [BigNumber.from(10).pow(6).mul(512)],
+                        encodeToBytes([], [])
+                    );
+
+                    secondDepositMargin = BigNumber.from(10).pow(6).mul(512);
+                }
+            }
+        });
+
+        it("tvl #5: deposit, swap, deposit, swap", async () => {
+            await this.preparePush(1000);
+            await this.subject.push(
+                [this.usdc.address],
+                [BigNumber.from(10).pow(6).mul(1000)],
+                encodeToBytes([], [])
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(1000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(1000),
+            });
+
+            let currentVoltzPositionInfo =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh
+                );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            const fixedCashflow =
+                (currentVoltzPositionInfo.fixedTokenBalance *
+                    0.01 *
+                    (termEndTimestamp - termStartTimestamp)) /
+                YEAR_IN_SECONDS;
+
+            let currentTimestamp = (
+                await hre.ethers.provider.getBlock("latest")
+            ).timestamp;
+
+            // advance time and check tvl after each day
+            let i = 0;
+            while (currentTimestamp < termEndTimestamp) {
+                const apyStartNow = Number(
+                    ethers.utils.formatEther(
+                        await this.rateOracleContract.callStatic.getApyFromTo(
+                            termStartTimestamp,
+                            currentTimestamp
+                        )
+                    )
+                );
+                const apyHistoricalLookback = Number(
+                    ethers.utils.formatEther(
+                        await this.marginEngineContract.callStatic.getHistoricalApy()
+                    )
+                );
+
+                const variableCashflow =
+                    currentVoltzPositionInfo.variableTokenBalance *
+                    ((apyStartNow * (currentTimestamp - termStartTimestamp)) /
+                        YEAR_IN_SECONDS +
+                        (apyHistoricalLookback *
+                            (termEndTimestamp - currentTimestamp)) /
+                            YEAR_IN_SECONDS);
+
+                const groundTruthTvl = currentVoltzPositionInfo.margin.add(
+                    Math.floor(fixedCashflow + variableCashflow)
+                );
+
+                await this.subject.updateTvl();
+                const tvl = await this.subject.tvl();
+                expect(tvl[0][0].toNumber()).to.be.closeTo(
+                    groundTruthTvl.toNumber(),
+                    groundTruthTvl.div(1000).toNumber()
+                );
+
+                expect(tvl[1][0].toNumber()).to.be.closeTo(
+                    groundTruthTvl.toNumber(),
+                    groundTruthTvl.div(1000).toNumber()
+                );
+
+                // // advance time by 1 day
+                await network.provider.send("evm_increaseTime", [24 * 60 * 60]);
+                await network.provider.send("evm_mine", []);
+                currentTimestamp += 24 * 60 * 60;
+                i += 1;
+
+                if (i === 20) {
+                    // user 2 deposits
+                    await this.preparePush(512);
+                    await this.subject.push(
+                        [this.usdc.address],
+                        [BigNumber.from(10).pow(6).mul(512)],
+                        encodeToBytes([], [])
+                    );
+
+                    const _currentVoltzPositionInfo =
+                        await this.marginEngineContract.callStatic.getPosition(
+                            this.subject.address,
+                            this.initialTickLow,
+                            this.initialTickHigh
+                        );
+
+                    expect(
+                        currentVoltzPositionInfo.fixedTokenBalance
+                    ).to.be.closeTo(
+                        _currentVoltzPositionInfo.fixedTokenBalance,
+                        i * 3
+                    );
+                    expect(
+                        currentVoltzPositionInfo.variableTokenBalance
+                    ).to.be.closeTo(
+                        _currentVoltzPositionInfo.variableTokenBalance,
+                        i * 3
+                    );
+                    expect(
+                        currentVoltzPositionInfo.margin.sub(
+                            currentVoltzPositionInfo.accumulatedFees
+                        )
+                    ).to.be.eq(
+                        _currentVoltzPositionInfo.margin
+                            .sub(BigNumber.from(10).pow(6).mul(512))
+                            .sub(_currentVoltzPositionInfo.accumulatedFees)
+                    );
+
+                    currentVoltzPositionInfo = _currentVoltzPositionInfo;
+                }
+
+                if (i === 25) {
+                    // second swap
+                    await mint(
+                        "USDC",
+                        testSigner.address,
+                        BigNumber.from(10).pow(6).mul(1000)
+                    );
+
+                    await this.usdc
+                        .connect(testSigner)
+                        .approve(this.periphery, BigNumber.from(10).pow(27));
+
+                    await this.peripheryContract.connect(testSigner).swap({
+                        marginEngine: this.marginEngine,
+                        isFT: false,
+                        notional: BigNumber.from(10).pow(6).mul(1000),
+                        sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                        tickLower: -60,
+                        tickUpper: 60,
+                        marginDelta: BigNumber.from(10).pow(6).mul(1000),
+                    });
+
+                    const _currentVoltzPositionInfo =
+                        await this.marginEngineContract.callStatic.getPosition(
+                            this.subject.address,
+                            this.initialTickLow,
+                            this.initialTickHigh
+                        );
+
+                    expect(
+                        currentVoltzPositionInfo.margin.sub(
+                            currentVoltzPositionInfo.accumulatedFees
+                        )
+                    ).to.be.eq(
+                        _currentVoltzPositionInfo.margin.sub(
+                            _currentVoltzPositionInfo.accumulatedFees
+                        )
+                    );
+
+                    currentVoltzPositionInfo = _currentVoltzPositionInfo;
+                }
             }
         });
     });
@@ -1479,13 +1821,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 .approve(this.periphery, BigNumber.from(10).pow(27));
 
             for (let i = 0; i < 10; i++) {
-                await mint(
-                    "USDC",
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(1000000000)
-                );
-
-                await this.preparePush();
+                await this.preparePush(1000000000);
                 await this.subject.push(
                     [this.usdc.address],
                     [BigNumber.from(10).pow(6).mul(1000000000)],
@@ -1564,6 +1900,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         );
 
                     expect(positionInfo.isSettled).to.be.eq(true);
+                    expect(positionInfo.margin).to.be.eq(BigNumber.from(0));
                 }
             }
         });
