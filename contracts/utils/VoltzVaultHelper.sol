@@ -1,26 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import "@prb/math/contracts/PRBMathSD59x18.sol";
-import "@prb/math/contracts/PRBMathUD60x18.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
 
-import "../vaults/VoltzVaultGovernance.sol";
 import "../vaults/VoltzVault.sol";
-
-import "../interfaces/external/voltz/IMarginEngine.sol";
-import "../interfaces/external/voltz/rate_oracles/IRateOracle.sol";
-import "../interfaces/external/voltz/IPeriphery.sol";
-
-import "../interfaces/external/voltz/utils/Time.sol";
-import "../interfaces/external/voltz/utils/Position.sol";
-
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import "hardhat/console.sol";
 
 contract VoltzVaultHelper {
     using SafeERC20 for IERC20;
@@ -32,29 +18,27 @@ contract VoltzVaultHelper {
     using PRBMathUD60x18 for uint256;
 
     /// @dev The Voltz Vault on Mellow
-    VoltzVault public _vault;
+    VoltzVault private _vault;
 
     /// @dev The margin engine of Voltz Protocol
-    IMarginEngine public _marginEngine;
+    IMarginEngine private _marginEngine;
     /// @dev The rate oracle of Voltz Protocol
-    IRateOracle public _rateOracle;
-    /// @dev The periphery of Voltz Protocol
-    IPeriphery public _periphery;
+    IRateOracle private _rateOracle;
 
     /// @dev The underlying token of the Voltz pool
-    address public _underlyingToken;
+    address private _underlyingToken;
 
     /// @dev The unix termStartTimestamp of the MarginEngine in Wad
-    uint256 _termStartTimestampWad;
+    uint256 private _termStartTimestampWad;
     /// @dev The unix termEndTimestamp of the MarginEngine in Wad
-    uint256 _termEndTimestampWad;
+    uint256 private _termEndTimestampWad;
 
     /// @dev The multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
-    uint256 public _marginMultiplierPostUnwindWad;
+    uint256 private _marginMultiplierPostUnwindWad;
     /// @dev The lookback window used to compute the historical APY that estimates the APY from current to the end of Voltz pool (in seconds)
-    uint256 public _lookbackWindowInSeconds;
+    uint256 private _lookbackWindowInSeconds;
     /// @dev The decimal delta used to compute lower and upper limits of estimated APY: (1 +/- delta) * estimatedAPY (in wad)
-    uint256 public _estimatedAPYDecimalDeltaWad;
+    uint256 private _estimatedAPYDecimalDeltaWad;
 
     uint256 public constant SECONDS_IN_YEAR_IN_WAD = 31536000e18;
     uint256 public constant ONE_HUNDRED_IN_WAD = 100e18;
@@ -113,6 +97,31 @@ contract VoltzVaultHelper {
         fixedFactorWad = accrualFact(timeInSecondsWad).div(ONE_HUNDRED_IN_WAD);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @notice Returns the associated Voltz Vault contract
+    function vault() external view returns (IVoltzVault) {
+        return _vault;
+    }
+
+    /// @notice Returns the multiplier used to decide how much margin is 
+    /// @notice left in partially unwound positions on Voltz (in wad)
+    function marginMultiplierPostUnwindWad() external view returns (uint256) {
+        return _marginMultiplierPostUnwindWad;
+    }
+
+    /// @notice Returns the lookback window used to compute the historical APY that
+    /// @notice estimates the APY from current to the end of Voltz pool (in seconds)
+    function lookbackWindow() external view returns (uint256) {
+        return _lookbackWindowInSeconds;
+    }
+
+    /// @notice Returns the decimal delta used to compute lower and upper limits of 
+    /// @notice estimated APY: (1 +/- delta) * estimatedAPY (in wad)
+    function estimatedAPYDecimalDeltaWad() external view returns (uint256) {
+        return _estimatedAPYDecimalDeltaWad;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Initializes the contract
@@ -120,20 +129,22 @@ contract VoltzVaultHelper {
     /// @dev only be called by the Voltz Vault Governance
     function initialize() external {
         require(address(_vault) == address(0), ExceptionsLibrary.INIT);
-        _vault = VoltzVault(msg.sender);
 
-        _marginEngine = _vault.marginEngine();
-        _rateOracle = _vault.rateOracle();
-        _periphery = _vault.periphery();
+        VoltzVault vault_ = VoltzVault(msg.sender);
+        _vault = vault_;
+        
+        IMarginEngine marginEngine = vault_.marginEngine();
+        _marginEngine = marginEngine;
 
-        _underlyingToken = address(_marginEngine.underlyingToken());
+        _rateOracle = vault_.rateOracle();
 
-        _termStartTimestampWad = _marginEngine.termStartTimestampWad();
+        _underlyingToken = address(marginEngine.underlyingToken());
+        _termStartTimestampWad = marginEngine.termStartTimestampWad();
         _termEndTimestampWad = _marginEngine.termEndTimestampWad();
 
-        _marginMultiplierPostUnwindWad = _vault.marginMultiplierPostUnwindWad();
-        _lookbackWindowInSeconds = _vault.lookbackWindow();
-        _estimatedAPYDecimalDeltaWad = _vault.estimatedAPYDecimalDeltaWad();
+        _marginMultiplierPostUnwindWad = vault_.marginMultiplierPostUnwindWad();
+        _lookbackWindowInSeconds = vault_.lookbackWindow();
+        _estimatedAPYDecimalDeltaWad = vault_.estimatedAPYDecimalDeltaWad();
     }
 
     /// @notice Sets the multiplier used to decide how much margin is
@@ -168,7 +179,8 @@ contract VoltzVaultHelper {
         int256 aggregatedInactiveVariableTokenBalance,
         int256 aggregatedInactiveMargin
     ) external returns (int256 minTVL, int256 maxTVL) {
-        VoltzVault.TickRange memory currentPosition = _vault.currentPosition();
+        VoltzVault vault_ = _vault;
+        VoltzVault.TickRange memory currentPosition = vault_.currentPosition();
 
         // Calculate estimated variable factor between start and end
         uint256 estimatedVariableFactorStartEndLowerWad;
@@ -179,12 +191,12 @@ contract VoltzVaultHelper {
         ) = _estimateVariableFactorLowerUpper();
 
         Position.Info memory currentPositionInfo_ = _marginEngine.getPosition(
-            address(_vault),
+            address(vault_),
             currentPosition.tickLower,
             currentPosition.tickUpper
         );
 
-        minTVL = IERC20(_underlyingToken).balanceOf(address(_vault)).toInt256();
+        minTVL = IERC20(_underlyingToken).balanceOf(address(vault_)).toInt256();
         maxTVL = minTVL;
 
         // Aggregate estimated settlement cashflows into TVL
@@ -222,12 +234,13 @@ contract VoltzVaultHelper {
         external
         returns (bool trackPosition, uint256 marginToKeep)
     {
-        VoltzVault.TickRange memory currentPosition = _vault.currentPosition();
+        VoltzVault vault_ = _vault;
+        VoltzVault.TickRange memory currentPosition = vault_.currentPosition();
         if (currentPositionInfo_.variableTokenBalance != 0) {
             // keep k * initial margin requirement, withdraw the rest
             // need to track to redeem the rest at maturity
             uint256 positionMarginRequirementInitial = _marginEngine.getPositionMarginRequirement(
-                address(_vault),
+                address(vault_),
                 currentPosition.tickLower,
                 currentPosition.tickUpper,
                 false
@@ -273,36 +286,39 @@ contract VoltzVaultHelper {
         returns (uint256 estimatedVariableFactorStartEndLowerWad, uint256 estimatedVariableFactorStartEndUpperWad)
     {
         uint256 termCurrentTimestampWad = Time.blockTimestampScaled();
-        if (termCurrentTimestampWad > _termEndTimestampWad) {
-            termCurrentTimestampWad = _termEndTimestampWad;
+        uint256 termEndTimestampWad = _termEndTimestampWad;
+        if (termCurrentTimestampWad > termEndTimestampWad) {
+            termCurrentTimestampWad = termEndTimestampWad;
         }
 
-        uint256 variableFactorStartCurrentWad = _rateOracle.variableFactorNoCache(
+        IRateOracle rateOracle = _rateOracle;
+        uint256 variableFactorStartCurrentWad = rateOracle.variableFactorNoCache(
             _termStartTimestampWad,
             termCurrentTimestampWad
         );
 
         // TO DO: call historical apy on margin engine
-        uint256 historicalAPYWad = _rateOracle.getApyFromTo(
+        uint256 historicalAPYWad = rateOracle.getApyFromTo(
             termCurrentTimestampWad.toUint() - _lookbackWindowInSeconds,
             termCurrentTimestampWad.toUint()
         );
         uint256 estimatedVariableFactorCurrentEndWad = historicalAPYWad.mul(
-            accrualFact(_termEndTimestampWad - termCurrentTimestampWad)
+            accrualFact(termEndTimestampWad - termCurrentTimestampWad)
         );
 
         // Estimated Lower APY
+        uint256 estimatedAPYDecimalDeltaWad_ = _estimatedAPYDecimalDeltaWad;
         estimatedVariableFactorStartEndLowerWad =
             variableFactorStartCurrentWad +
             estimatedVariableFactorCurrentEndWad.mul(
-                (_estimatedAPYDecimalDeltaWad <= PRBMathUD60x18.fromUint(1))
-                    ? PRBMathUD60x18.fromUint(1) - _estimatedAPYDecimalDeltaWad
+                (estimatedAPYDecimalDeltaWad_ <= PRBMathUD60x18.fromUint(1))
+                    ? PRBMathUD60x18.fromUint(1) - estimatedAPYDecimalDeltaWad_
                     : 0
             );
 
         // Estimated Upper APY
         estimatedVariableFactorStartEndUpperWad =
             variableFactorStartCurrentWad +
-            estimatedVariableFactorCurrentEndWad.mul(PRBMathUD60x18.fromUint(1) + _estimatedAPYDecimalDeltaWad);
+            estimatedVariableFactorCurrentEndWad.mul(PRBMathUD60x18.fromUint(1) + estimatedAPYDecimalDeltaWad_);
     }
 }

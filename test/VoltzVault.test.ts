@@ -203,7 +203,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
 
                 this.voltzVaultHelperContract = await ethers.getContractAt(
                     "VoltzVaultHelper",
-                    await this.subject._voltzVaultHelper()
+                    await this.subject.voltzVaultHelper()
                 );
 
                 for (let address of [
@@ -506,15 +506,15 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         it("check helper params getters & setters", async () => {
             // check init params
             expect(
-                await this.voltzVaultHelperContract._marginMultiplierPostUnwindWad()
+                await this.voltzVaultHelperContract.marginMultiplierPostUnwindWad()
             ).to.be.equal(
                 utils.parseEther(marginMultiplierPostUnwind.toString())
             );
             expect(
-                await this.voltzVaultHelperContract._lookbackWindowInSeconds()
+                await this.voltzVaultHelperContract.lookbackWindow()
             ).to.be.equal(lookbackWindow.toString());
             expect(
-                await this.voltzVaultHelperContract._estimatedAPYDecimalDeltaWad()
+                await this.voltzVaultHelperContract.estimatedAPYDecimalDeltaWad()
             ).to.be.equal(
                 utils.parseEther(estimatedAPYDecimalDelta.toString())
             );
@@ -565,19 +565,19 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 utils.parseEther((marginMultiplierPostUnwind + 1).toString())
             );
             expect(
-                await this.voltzVaultHelperContract._marginMultiplierPostUnwindWad()
+                await this.voltzVaultHelperContract.marginMultiplierPostUnwindWad()
             ).to.be.equal(
                 utils.parseEther((marginMultiplierPostUnwind + 1).toString())
             );
             await this.subject.setLookbackWindow(lookbackWindow + 1);
             expect(
-                await this.voltzVaultHelperContract._lookbackWindowInSeconds()
+                await this.voltzVaultHelperContract.lookbackWindow()
             ).to.be.equal((lookbackWindow + 1).toString());
             await this.subject.setEstimatedAPYDecimalDeltaWad(
                 utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
             );
             expect(
-                await this.voltzVaultHelperContract._estimatedAPYDecimalDeltaWad()
+                await this.voltzVaultHelperContract.estimatedAPYDecimalDeltaWad()
             ).to.be.equal(
                 utils.parseEther((estimatedAPYDecimalDelta + 1).toString())
             );
@@ -593,15 +593,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             expect(await this.subject.periphery()).to.be.equal(this.periphery);
             expect(await this.subject.vamm()).to.be.equal(this.vamm);
 
-            expect(
-                await this.voltzVaultHelperContract._marginEngine()
-            ).to.be.equal(this.marginEngine);
-            expect(
-                await this.voltzVaultHelperContract._rateOracle()
-            ).to.be.equal(this.rateOracle);
-            expect(
-                await this.voltzVaultHelperContract._periphery()
-            ).to.be.equal(this.periphery);
+            expect(await this.voltzVaultHelperContract.callStatic.vault()).to.be.equal(this.subject.address);
         });
     });
 

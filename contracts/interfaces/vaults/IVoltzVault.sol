@@ -63,6 +63,9 @@ interface IVoltzVault is IIntegrationVault {
     /// @notice Returns the currently active LP position of the Vault
     function currentPosition() external view returns (TickRange memory);
 
+    /// @notice Returns the address of the associated Voltz Vault Helper
+    function voltzVaultHelper() external view returns (address);
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Initializes a new vault
@@ -175,11 +178,9 @@ interface IVoltzVault is IIntegrationVault {
     /// @notice Emitted when TVL is updated
     /// @param minTvl The minimum estimated TVL
     /// @param maxTvl the maximum estimated TVL
-    /// @param tvlUpdateTimestamp The unix timestamp of the tvl update
     event TvlUpdate(
         int256 minTvl,
-        int256 maxTvl,
-        uint256 tvlUpdateTimestamp
+        int256 maxTvl
     );
 
     /// @notice Emitted when a single Vault-owned position is settled and withdrawn from

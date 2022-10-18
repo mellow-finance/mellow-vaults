@@ -2,16 +2,11 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IVoltzVaultGovernance.sol";
-import "../interfaces/vaults/IVoltzVault.sol";
 
 import "../utils/VoltzVaultHelper.sol";
 import "../utils/ContractMeta.sol";
 
-import "../libraries/ExceptionsLibrary.sol";
-
 import "./VaultGovernance.sol";
-
-import "hardhat/console.sol";
 
 /// @notice Governance that manages all Voltz Vaults params and can deploy a new Voltz Vault.
 contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGovernance {
