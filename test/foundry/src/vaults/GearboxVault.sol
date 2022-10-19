@@ -85,6 +85,24 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         return creditManager.creditAccounts(address(this));
     }
 
+    /// @inheritdoc IGearboxVault
+    function getAllAssetsOnCreditAccountValue() external view returns (uint256 currentAllAssetsValue) {
+        address creditAccount = getCreditAccount();
+        if (creditAccount == address(0)) {
+            return 0;
+        }
+        (currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
+    }
+
+    /// @inheritdoc IGearboxVault
+    function getClaimableRewardsValue() external view returns (uint256) {
+        address creditAccount = getCreditAccount();
+        if (creditAccount == address(0)) {
+            return 0;
+        }
+        return _helper.calculateClaimableRewards(creditAccount, address(_vaultGovernance));
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IGearboxVault

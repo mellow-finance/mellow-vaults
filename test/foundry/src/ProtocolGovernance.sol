@@ -339,9 +339,6 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     }
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
-        require(newParams.maxTokensPerVault != 0 && newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
-        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(newParams.withdrawLimit >= MIN_WITHDRAW_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
