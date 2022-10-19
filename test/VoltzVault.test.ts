@@ -238,85 +238,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         await this.deploymentFixture();
     });
 
-    describe("Test Deposit (Push)", () => {
-        beforeEach(async () => {
-            await withSigner(this.subject.address, async (signer) => {
-                await this.usdc
-                    .connect(signer)
-                    .approve(
-                        this.deployer.address,
-                        ethers.constants.MaxUint256
-                    );
-
-                await this.usdc
-                    .connect(signer)
-                    .transfer(
-                        this.deployer.address,
-                        await this.usdc.balanceOf(this.subject.address)
-                    );
-            });
-        });
-
-        it("push #1: check position margin and leverage", async () => {
-            await this.preparePush(1000);
-            await this.subject.push(
-                [this.usdc.address],
-                [BigNumber.from(10).pow(6).mul(1000)],
-                encodeToBytes([], [])
-            );
-
-            const ticks = await this.subject.currentPosition();
-            const currentVoltzPositionInfo =
-                await this.marginEngineContract.callStatic.getPosition(
-                    this.subject.address,
-                    ticks.tickLower,
-                    ticks.tickUpper
-                );
-
-            expect(currentVoltzPositionInfo.margin).to.be.equal(
-                BigNumber.from(10).pow(6).mul(1000)
-            );
-
-            const sqrtPriceLower = BigNumber.from(
-                TickMath.getSqrtRatioAtTick(ticks.tickLower).toString()
-            );
-            const sqrtPriceUpper = BigNumber.from(
-                TickMath.getSqrtRatioAtTick(ticks.tickUpper).toString()
-            );
-            const liquidityNotional = currentVoltzPositionInfo._liquidity
-                .mul(sqrtPriceUpper.sub(sqrtPriceLower))
-                .div(BigNumber.from(2).pow(96));
-
-            expect(liquidityNotional).to.be.closeTo(
-                BigNumber.from(10).pow(6).mul(1000).mul(leverage),
-                BigNumber.from(10)
-                    .pow(6)
-                    .mul(1000)
-                    .mul(leverage)
-                    .div(1000)
-                    .toNumber()
-            );
-        });
-
-        it("push #1: after maturity", async () => {
-            // advance time by 60 days to reach maturity
-            await network.provider.send("evm_increaseTime", [
-                60 * 24 * 60 * 60,
-            ]);
-            await network.provider.send("evm_mine", []);
-
-            await this.preparePush(1000);
-            await expect(
-                this.subject.push(
-                    [this.usdc.address],
-                    [BigNumber.from(10).pow(6).mul(1000)],
-                    encodeToBytes([], [])
-                )
-            ).to.be.revertedWith("closeToOrBeyondMaturity");
-        });
-    });
-
-    describe("Initialisation, Getters, Setters", () => {
+    describe("Test Access Privileges", () => {
         beforeEach(async () => {
             await withSigner(this.subject.address, async (signer) => {
                 await this.usdc
@@ -499,6 +421,101 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 await this.voltzVaultHelperContract.callStatic.vault()
             ).to.be.equal(this.subject.address);
         });
+
+        it("check rebalance", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            // check someone else cannot rebalance
+            await expect(
+                this.subject.connect(testSigner).rebalance({
+                    tickLower: -300,
+                    tickUpper: 300,
+                })
+            ).to.be.revertedWith("FRB");
+
+            this.subject.rebalance({
+                tickLower: -300,
+                tickUpper: 300,
+            });
+        });
+    });
+
+    describe("Test Deposit (Push)", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+            });
+        });
+
+        it("push #1: check position margin and leverage", async () => {
+            await this.preparePush(1000);
+            await this.subject.push(
+                [this.usdc.address],
+                [BigNumber.from(10).pow(6).mul(1000)],
+                encodeToBytes([], [])
+            );
+
+            const ticks = await this.subject.currentPosition();
+            const currentVoltzPositionInfo =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    ticks.tickLower,
+                    ticks.tickUpper
+                );
+
+            expect(currentVoltzPositionInfo.margin).to.be.equal(
+                BigNumber.from(10).pow(6).mul(1000)
+            );
+
+            const sqrtPriceLower = BigNumber.from(
+                TickMath.getSqrtRatioAtTick(ticks.tickLower).toString()
+            );
+            const sqrtPriceUpper = BigNumber.from(
+                TickMath.getSqrtRatioAtTick(ticks.tickUpper).toString()
+            );
+            const liquidityNotional = currentVoltzPositionInfo._liquidity
+                .mul(sqrtPriceUpper.sub(sqrtPriceLower))
+                .div(BigNumber.from(2).pow(96));
+
+            expect(liquidityNotional).to.be.closeTo(
+                BigNumber.from(10).pow(6).mul(1000).mul(leverage),
+                BigNumber.from(10)
+                    .pow(6)
+                    .mul(1000)
+                    .mul(leverage)
+                    .div(1000)
+                    .toNumber()
+            );
+        });
+
+        it("push #1: after maturity", async () => {
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            await this.preparePush(1000);
+            await expect(
+                this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000)],
+                    encodeToBytes([], [])
+                )
+            ).to.be.revertedWith("closeToOrBeyondMaturity");
+        });
     });
 
     describe("Test Withdraw (Pull)", () => {
@@ -579,6 +596,10 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             expect(
                 erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)
             ).to.be.equal(BigNumber.from(10).pow(6).mul(1000));
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.lt(
+                100
+            );
         });
 
         it("pull #2: one deposit, one swap", async () => {
@@ -616,7 +637,105 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             ]);
             await network.provider.send("evm_mine", []);
 
+            const currentVoltzPositionInfo =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    this.initialTickLow,
+                    this.initialTickHigh
+                );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            const fixedCashflow =
+                (currentVoltzPositionInfo.fixedTokenBalance *
+                    0.01 *
+                    (termEndTimestamp - termStartTimestamp)) /
+                YEAR_IN_SECONDS;
+
+            const variableFactorStartEnd = Number(
+                ethers.utils.formatEther(
+                    await this.rateOracleContract.callStatic.variableFactor(
+                        utils.parseEther(termStartTimestamp.toString()),
+                        utils.parseEther(termEndTimestamp.toString())
+                    )
+                )
+            );
+
+            const variableCashflow =
+                currentVoltzPositionInfo.variableTokenBalance *
+                variableFactorStartEnd;
+
+            const groundTruthCashflow = currentVoltzPositionInfo.margin.add(
+                Math.floor(fixedCashflow + variableCashflow)
+            );
+
+            const erc20VaultFundsBeforePull = await this.usdc.balanceOf(
+                this.erc20Vault.address
+            );
+
             await this.subject.settleVault(0);
+            await this.subject.pull(
+                this.erc20Vault.address,
+                [this.usdc.address],
+                [groundTruthCashflow],
+                encodeToBytes([], [])
+            );
+            const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
+                this.erc20Vault.address
+            );
+            expect(
+                erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)
+            ).to.be.equal(groundTruthCashflow);
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.lt(
+                100
+            );
+        });
+
+        it("pull #3: one deposit, one swap, withdraw more", async () => {
+            await this.preparePush(1000);
+            await this.subject.push(
+                [this.usdc.address],
+                [BigNumber.from(10).pow(6).mul(1000)],
+                encodeToBytes([], [])
+            );
+
+            // trade VT with some other account
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await mint(
+                "USDC",
+                testSigner.address,
+                BigNumber.from(10).pow(6).mul(100000)
+            );
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+            await this.peripheryContract.connect(testSigner).swap({
+                marginEngine: this.marginEngine,
+                isFT: false,
+                notional: BigNumber.from(10).pow(6).mul(100000),
+                sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+                tickLower: -60,
+                tickUpper: 60,
+                marginDelta: BigNumber.from(10).pow(6).mul(100000),
+            });
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
 
             const currentVoltzPositionInfo =
                 await this.marginEngineContract.callStatic.getPosition(
@@ -643,32 +762,32 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     (termEndTimestamp - termStartTimestamp)) /
                 YEAR_IN_SECONDS;
 
-            const apyStartEnd = Number(
+            const variableFactorStartEnd = Number(
                 ethers.utils.formatEther(
-                    await this.rateOracleContract.callStatic.getApyFromTo(
-                        termStartTimestamp,
-                        termEndTimestamp
+                    await this.rateOracleContract.callStatic.variableFactor(
+                        utils.parseEther(termStartTimestamp.toString()),
+                        utils.parseEther(termEndTimestamp.toString())
                     )
                 )
             );
 
             const variableCashflow =
-                (currentVoltzPositionInfo.variableTokenBalance *
-                    (apyStartEnd * (termEndTimestamp - termStartTimestamp))) /
-                YEAR_IN_SECONDS;
+                currentVoltzPositionInfo.variableTokenBalance *
+                variableFactorStartEnd;
 
-            const groundTruthCashflow = currentVoltzPositionInfo.margin
-                .add(Math.floor(fixedCashflow + variableCashflow))
-                .add(currentVoltzPositionInfo.accumulatedFees);
+            const groundTruthCashflow = currentVoltzPositionInfo.margin.add(
+                Math.floor(fixedCashflow + variableCashflow)
+            );
 
             const erc20VaultFundsBeforePull = await this.usdc.balanceOf(
                 this.erc20Vault.address
             );
 
+            await this.subject.settleVault(0);
             await this.subject.pull(
                 this.erc20Vault.address,
                 [this.usdc.address],
-                [groundTruthCashflow],
+                [groundTruthCashflow.mul(2)],
                 encodeToBytes([], [])
             );
             const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
@@ -676,7 +795,164 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             );
             expect(
                 erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)
-            ).to.be.equal(groundTruthCashflow);
+            ).to.be.closeTo(
+                groundTruthCashflow,
+                groundTruthCashflow.div(1000).toNumber()
+            );
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.lt(
+                100
+            );
+        });
+
+        it("pull #4: withdraw before all pos settled", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            for (let i = 0; i < 10; i++) {
+                await this.preparePush(1000000000);
+                await this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000000000)],
+                    encodeToBytes([], [])
+                );
+
+                await mint(
+                    "USDC",
+                    testSigner.address,
+                    BigNumber.from(10).pow(6).mul(100000000)
+                );
+
+                await this.peripheryContract.connect(testSigner).swap({
+                    marginEngine: this.marginEngine,
+                    isFT: i % 2,
+                    notional: BigNumber.from(10).pow(6).mul(100000000),
+                    sqrtPriceLimitX96:
+                        i % 2 ? MAX_SQRT_RATIO.sub(1) : MIN_SQRT_RATIO.add(1),
+                    tickLower: -60,
+                    tickUpper: 60,
+                    marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                });
+
+                const currentTick = (await this.vammContract.vammVars()).tick;
+
+                const newPosition = {
+                    tickLower: currentTick - (currentTick % 60) + 60 - 600,
+                    tickUpper: currentTick - (currentTick % 60) + 60 + 600,
+                };
+                await this.subject.rebalance(newPosition);
+
+                const currentPosition = await this.subject.currentPosition();
+                expect(currentPosition.tickLower).to.be.equal(
+                    newPosition.tickLower
+                );
+                expect(currentPosition.tickUpper).to.be.equal(
+                    newPosition.tickUpper
+                );
+            }
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.equal(
+                BigNumber.from(0)
+            );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            let trackedPositions = await getTrackedPositions();
+            expect(trackedPositions.length).to.be.eq(9);
+
+            const batch_size = 4;
+            for (let i = 0; i < trackedPositions.length; i += batch_size) {
+                let groundTruthCashflowBatch = BigNumber.from(0);
+                for (
+                    let j = i;
+                    j < i + batch_size && j < trackedPositions.length;
+                    j += 1
+                ) {
+                    const currentVoltzPositionInfo =
+                        await this.marginEngineContract.callStatic.getPosition(
+                            this.subject.address,
+                            trackedPositions[j].tickLower,
+                            trackedPositions[j].tickUpper
+                        );
+
+                    const fixedCashflow =
+                        (currentVoltzPositionInfo.fixedTokenBalance *
+                            0.01 *
+                            (termEndTimestamp - termStartTimestamp)) /
+                        YEAR_IN_SECONDS;
+
+                    const variableFactorStartEnd = Number(
+                        ethers.utils.formatEther(
+                            await this.rateOracleContract.callStatic.variableFactor(
+                                utils.parseEther(termStartTimestamp.toString()),
+                                utils.parseEther(termEndTimestamp.toString())
+                            )
+                        )
+                    );
+
+                    const variableCashflow =
+                        currentVoltzPositionInfo.variableTokenBalance *
+                        variableFactorStartEnd;
+
+                    const groundTruthCashflow =
+                        currentVoltzPositionInfo.margin.add(
+                            Math.floor(fixedCashflow + variableCashflow + 0.5)
+                        );
+
+                    groundTruthCashflowBatch =
+                        groundTruthCashflowBatch.add(groundTruthCashflow);
+                }
+
+                const erc20VaultFundsBeforePull = await this.usdc.balanceOf(
+                    this.erc20Vault.address
+                );
+
+                const vaultBalanceBefore = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                await this.subject.settleVault(batch_size);
+                const vaultBalanceAfter = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+
+                await this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [groundTruthCashflowBatch],
+                    encodeToBytes([], [])
+                );
+                const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
+                    this.erc20Vault.address
+                );
+                expect(
+                    erc20VaultFundsAfterPull.sub(erc20VaultFundsBeforePull)
+                ).to.be.closeTo(
+                    groundTruthCashflowBatch,
+                    groundTruthCashflowBatch.div(1000).toNumber()
+                );
+            }
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.lt(
+                100
+            );
         });
     });
 
@@ -785,24 +1061,22 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         (termEndTimestamp - termStartTimestamp)) /
                     YEAR_IN_SECONDS;
 
-                const apyStartEnd = Number(
+                const variableFactorStartEnd = Number(
                     ethers.utils.formatEther(
-                        await this.rateOracleContract.callStatic.getApyFromTo(
-                            termStartTimestamp,
-                            termEndTimestamp
+                        await this.rateOracleContract.callStatic.variableFactor(
+                            utils.parseEther(termStartTimestamp.toString()),
+                            utils.parseEther(termEndTimestamp.toString())
                         )
                     )
                 );
 
                 const variableCashflow =
-                    (currentVoltzPositionInfo.variableTokenBalance *
-                        (apyStartEnd *
-                            (termEndTimestamp - termStartTimestamp))) /
-                    YEAR_IN_SECONDS;
+                    currentVoltzPositionInfo.variableTokenBalance *
+                    variableFactorStartEnd;
 
-                const groundTruthCashflow = currentVoltzPositionInfo.margin
-                    .add(Math.floor(fixedCashflow + variableCashflow))
-                    .add(currentVoltzPositionInfo.accumulatedFees);
+                const groundTruthCashflow = currentVoltzPositionInfo.margin.add(
+                    Math.floor(fixedCashflow + variableCashflow)
+                );
 
                 await this.subject.settleVaultPositionAndWithdrawMargin({
                     tickLower: trackedPosition.tickLower,
@@ -822,6 +1096,272 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 cashflowAccumulated =
                     cashflowAccumulated.add(groundTruthCashflow);
             }
+        });
+
+        it("settle #2: settle by batch", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            for (let i = 0; i < 10; i++) {
+                await this.preparePush(1000000000);
+                await this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000000000)],
+                    encodeToBytes([], [])
+                );
+
+                await mint(
+                    "USDC",
+                    testSigner.address,
+                    BigNumber.from(10).pow(6).mul(100000000)
+                );
+
+                await this.peripheryContract.connect(testSigner).swap({
+                    marginEngine: this.marginEngine,
+                    isFT: i % 2,
+                    notional: BigNumber.from(10).pow(6).mul(100000000),
+                    sqrtPriceLimitX96:
+                        i % 2 ? MAX_SQRT_RATIO.sub(1) : MIN_SQRT_RATIO.add(1),
+                    tickLower: -60,
+                    tickUpper: 60,
+                    marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                });
+
+                const currentTick = (await this.vammContract.vammVars()).tick;
+
+                const newPosition = {
+                    tickLower: currentTick - (currentTick % 60) + 60 - 600,
+                    tickUpper: currentTick - (currentTick % 60) + 60 + 600,
+                };
+                await this.subject.rebalance(newPosition);
+
+                const currentPosition = await this.subject.currentPosition();
+                expect(currentPosition.tickLower).to.be.equal(
+                    newPosition.tickLower
+                );
+                expect(currentPosition.tickUpper).to.be.equal(
+                    newPosition.tickUpper
+                );
+            }
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.equal(
+                BigNumber.from(0)
+            );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            let trackedPositions = await getTrackedPositions();
+            expect(trackedPositions.length).to.be.eq(9);
+
+            let cashflowAccumulated = BigNumber.from(0);
+            for (let i = 0; i < trackedPositions.length; i += 4) {
+                let groundTruthCashflowBatch = BigNumber.from(0);
+                for (
+                    let j = i;
+                    j < i + 4 && j < trackedPositions.length;
+                    j += 1
+                ) {
+                    const currentVoltzPositionInfo =
+                        await this.marginEngineContract.callStatic.getPosition(
+                            this.subject.address,
+                            trackedPositions[j].tickLower,
+                            trackedPositions[j].tickUpper
+                        );
+
+                    const fixedCashflow =
+                        (currentVoltzPositionInfo.fixedTokenBalance *
+                            0.01 *
+                            (termEndTimestamp - termStartTimestamp)) /
+                        YEAR_IN_SECONDS;
+
+                    const variableFactorStartEnd = Number(
+                        ethers.utils.formatEther(
+                            await this.rateOracleContract.callStatic.variableFactor(
+                                utils.parseEther(termStartTimestamp.toString()),
+                                utils.parseEther(termEndTimestamp.toString())
+                            )
+                        )
+                    );
+
+                    const variableCashflow =
+                        currentVoltzPositionInfo.variableTokenBalance *
+                        variableFactorStartEnd;
+
+                    const groundTruthCashflow =
+                        currentVoltzPositionInfo.margin.add(
+                            Math.floor(fixedCashflow + variableCashflow)
+                        );
+
+                    groundTruthCashflowBatch =
+                        groundTruthCashflowBatch.add(groundTruthCashflow);
+                }
+
+                await this.subject.settleVault(4);
+
+                expect(
+                    await this.usdc.balanceOf(this.subject.address)
+                ).to.be.gt(
+                    cashflowAccumulated
+                        .add(groundTruthCashflowBatch)
+                        .sub(
+                            cashflowAccumulated
+                                .add(groundTruthCashflowBatch)
+                                .div(1000)
+                        )
+                );
+
+                expect(
+                    await this.usdc.balanceOf(this.subject.address)
+                ).to.be.lt(
+                    cashflowAccumulated
+                        .add(groundTruthCashflowBatch)
+                        .add(
+                            cashflowAccumulated
+                                .add(groundTruthCashflowBatch)
+                                .div(1000)
+                        )
+                );
+
+                cashflowAccumulated = cashflowAccumulated.add(
+                    groundTruthCashflowBatch
+                );
+            }
+        });
+
+        it("settle #3: settle by batch (all)", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            for (let i = 0; i < 10; i++) {
+                await this.preparePush(1000000000);
+                await this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000000000)],
+                    encodeToBytes([], [])
+                );
+
+                await mint(
+                    "USDC",
+                    testSigner.address,
+                    BigNumber.from(10).pow(6).mul(100000000)
+                );
+
+                await this.peripheryContract.connect(testSigner).swap({
+                    marginEngine: this.marginEngine,
+                    isFT: i % 2,
+                    notional: BigNumber.from(10).pow(6).mul(100000000),
+                    sqrtPriceLimitX96:
+                        i % 2 ? MAX_SQRT_RATIO.sub(1) : MIN_SQRT_RATIO.add(1),
+                    tickLower: -60,
+                    tickUpper: 60,
+                    marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                });
+
+                const currentTick = (await this.vammContract.vammVars()).tick;
+
+                const newPosition = {
+                    tickLower: currentTick - (currentTick % 60) + 60 - 600,
+                    tickUpper: currentTick - (currentTick % 60) + 60 + 600,
+                };
+                await this.subject.rebalance(newPosition);
+
+                const currentPosition = await this.subject.currentPosition();
+                expect(currentPosition.tickLower).to.be.equal(
+                    newPosition.tickLower
+                );
+                expect(currentPosition.tickUpper).to.be.equal(
+                    newPosition.tickUpper
+                );
+            }
+
+            // advance time by 60 days to reach maturity
+            await network.provider.send("evm_increaseTime", [
+                60 * 24 * 60 * 60,
+            ]);
+            await network.provider.send("evm_mine", []);
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.equal(
+                BigNumber.from(0)
+            );
+
+            const termStartTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termStartTimestampWad()
+                )
+            );
+            const termEndTimestamp = Number(
+                ethers.utils.formatEther(
+                    await this.marginEngineContract.callStatic.termEndTimestampWad()
+                )
+            );
+
+            let trackedPositions = await getTrackedPositions();
+            let groundTruthCashflowBatch = BigNumber.from(0);
+            for (let i = 0; i < trackedPositions.length; i += 1) {
+                const currentVoltzPositionInfo =
+                    await this.marginEngineContract.callStatic.getPosition(
+                        this.subject.address,
+                        trackedPositions[i].tickLower,
+                        trackedPositions[i].tickUpper
+                    );
+
+                const fixedCashflow =
+                    (currentVoltzPositionInfo.fixedTokenBalance *
+                        0.01 *
+                        (termEndTimestamp - termStartTimestamp)) /
+                    YEAR_IN_SECONDS;
+
+                const variableFactorStartEnd = Number(
+                    ethers.utils.formatEther(
+                        await this.rateOracleContract.callStatic.variableFactor(
+                            utils.parseEther(termStartTimestamp.toString()),
+                            utils.parseEther(termEndTimestamp.toString())
+                        )
+                    )
+                );
+
+                const variableCashflow =
+                    currentVoltzPositionInfo.variableTokenBalance *
+                    variableFactorStartEnd;
+
+                const groundTruthCashflow = currentVoltzPositionInfo.margin.add(
+                    Math.floor(fixedCashflow + variableCashflow)
+                );
+
+                groundTruthCashflowBatch =
+                    groundTruthCashflowBatch.add(groundTruthCashflow);
+            }
+
+            await this.subject.settleVault(0);
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.gt(
+                groundTruthCashflowBatch.sub(groundTruthCashflowBatch.div(1000))
+            );
+
+            expect(await this.usdc.balanceOf(this.subject.address)).to.be.lt(
+                groundTruthCashflowBatch.add(groundTruthCashflowBatch)
+            );
         });
     });
 
@@ -1736,14 +2276,10 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                         _currentVoltzPositionInfo.variableTokenBalance,
                         i * 3
                     );
-                    expect(
-                        currentVoltzPositionInfo.margin.sub(
-                            currentVoltzPositionInfo.accumulatedFees
+                    expect(currentVoltzPositionInfo.margin).to.be.eq(
+                        _currentVoltzPositionInfo.margin.sub(
+                            BigNumber.from(10).pow(6).mul(512)
                         )
-                    ).to.be.eq(
-                        _currentVoltzPositionInfo.margin
-                            .sub(BigNumber.from(10).pow(6).mul(512))
-                            .sub(_currentVoltzPositionInfo.accumulatedFees)
                     );
 
                     currentVoltzPositionInfo = _currentVoltzPositionInfo;
