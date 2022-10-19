@@ -13,6 +13,9 @@
     "scripts": {
       "prettier": "prettier --write **.sol",
       "prettier:check": "prettier --check **.sol",
-      "test": "forge test -vvvv --fork-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --fork-block-number 7630000"
+      "test": "forge test -vvvv --rpc-url $(grep GOERLI_RPC_URL .env | cut -d '=' -f2) --fork-block-number 7630000",
+      "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+      "compile": "forge build",
+      "size": "forge build --sizes --force --via-ir"
     }
   }
