@@ -769,5 +769,67 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 );
             });
         });
+
+        describe("Privilege tests sad path", async () => {
+            it("Require at least operator privilege test for logProx setter", async () => {
+                await expect(
+                    this.subject.setLogProx(100)
+                ).to.be.revertedWith("FRB");
+            })
+            it("Require at least operator privilege test for sigmaWad setter", async () => {
+                await expect(
+                    this.subject.setSigmaWad(100)
+                ).to.be.revertedWith("FRB");
+            })
+            it("Require at least operator privilege test for MaxPossibleLowerBound setter", async () => {
+                await expect(
+                    this.subject.setMaxPossibleLowerBound(100)
+                ).to.be.revertedWith("FRB");
+            })
+            it("Require at least operator privilege test for convertFixedRateToTick", async () => {
+                await expect(
+                    this.subject.convertFixedRateToTick(BigNumber.from("1000000000000000000"))
+                ).to.be.revertedWith("FRB");
+            })
+            it("Require at least operator privilege test for rebalance ticks function", async () => {
+                const currentFixedRateWad = BigNumber.from(
+                    "1000000000000000000"
+                ); // 1%
+                await expect(
+                    this.subject.callStatic.rebalanceTicks(currentFixedRateWad)
+                ).to.be.revertedWith("FRB");
+            })
+        });
+
+        describe("Privilege tests happy path", async () => {
+            it("Require at least operator privilege test for logProx setter", async () => {
+                await expect(
+                    this.subject.connect(this.operator).callStatic.setLogProx(100)
+                ).to.not.be.reverted;
+            })
+            it("Require at least operator privilege test for sigmaWad setter", async () => {
+                await expect(
+                    this.subject.connect(this.operator).callStatic.setSigmaWad(BigNumber.from("100000000000000000"))
+                ).to.not.be.reverted;
+            })
+            it("Require at least operator privilege test for MaxPossibleLowerBound setter", async () => {
+                await expect(
+                    this.subject.connect(this.operator).callStatic.setMaxPossibleLowerBound(BigNumber.from("100000000000000000"))
+                ).to.not.be.reverted;
+            })
+            it("Require at least operator privilege test for convertFixedRateToTick", async () => {
+                await expect(
+                    this.subject.connect(this.operator).convertFixedRateToTick(BigNumber.from("1000000000000000000"))
+                ).to.not.be.reverted;
+            })
+            it("Require at least operator privilege test for rebalance ticks function", async () => {
+                const currentFixedRateWad = BigNumber.from(
+                    "1000000000000000000"
+                ); // 1%
+                await expect(
+                    this.subject.connect(this.operator).callStatic.rebalanceTicks(currentFixedRateWad)
+                ).to.not.be.reverted;
+            })
+        });
     }
 );
