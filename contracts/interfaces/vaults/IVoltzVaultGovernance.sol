@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "./IVaultGovernance.sol";
 import "./IVoltzVault.sol";
-import "../external/voltz/IPeriphery.sol";
 
 interface IVoltzVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.

@@ -2,16 +2,11 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IVoltzVaultGovernance.sol";
-import "../interfaces/vaults/IVoltzVault.sol";
 
-import "../utils/VoltzHelper.sol";
+import "../utils/VoltzVaultHelper.sol";
 import "../utils/ContractMeta.sol";
 
-import "../libraries/ExceptionsLibrary.sol";
-
 import "./VaultGovernance.sol";
-
-import "hardhat/console.sol";
 
 /// @notice Governance that manages all Voltz Vaults params and can deploy a new Voltz Vault.
 contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGovernance {
@@ -70,11 +65,12 @@ contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGover
         address[] memory vaultTokens_,
         address owner_,
         address marginEngine_,
-        address voltzHelper_,
+        address voltzVaultHelperSingleton_,
         IVoltzVault.InitializeParams memory initializeParams
     ) external override returns (IVoltzVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
+        address voltzVaultHelper_ = Clones.cloneDeterministic(address(voltzVaultHelperSingleton_), bytes32(nft));
 
         vault = IVoltzVault(vaddr);
         vault.initialize(
@@ -82,18 +78,15 @@ contract VoltzVaultGovernance is ContractMeta, IVoltzVaultGovernance, VaultGover
             vaultTokens_,
             marginEngine_,
             address(abi.decode(_delayedProtocolParams, (DelayedProtocolParams)).periphery),
-            voltzHelper_,
+            voltzVaultHelper_,
             initializeParams
         );
-
-        VoltzHelper voltzHelper = VoltzHelper(voltzHelper_); // must happen after vault initialization
-        voltzHelper.initialize(vaddr);
 
         emit DeployedVault(
             tx.origin,
             msg.sender,
             vaultTokens_,
-            abi.encode(marginEngine_, voltzHelper_, initializeParams),
+            abi.encode(marginEngine_, voltzVaultHelper_, initializeParams),
             owner_,
             vaddr,
             nft

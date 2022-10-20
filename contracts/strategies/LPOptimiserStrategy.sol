@@ -2,17 +2,9 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVoltzVault.sol";
-import "../interfaces/external/voltz/IMarginEngine.sol";
-import "../interfaces/external/voltz/IPeriphery.sol";
-import "../interfaces/external/voltz/IVAMM.sol";
-import "../libraries/ExceptionsLibrary.sol";
-import "../libraries/CommonLibrary.sol";
-import "../libraries/external/FullMath.sol";
 import "../utils/DefaultAccessControl.sol";
-import "@prb/math/contracts/PRBMathSD59x18.sol";
 import "../interfaces/utils/ILpCallback.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
@@ -103,6 +95,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         int24 currentTick = _periphery.getCurrentTick(_marginEngine);
 
         // 3. Compare current fixed rate to lower and upper bounds
+        int24 logProximity = _logProximity;
         if (
             currentPosition.tickLower - logProximity <= currentTick &&
             currentTick <= currentPosition.tickUpper + logProximity
@@ -142,16 +135,17 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     function rebalanceTicks(uint256 currentFixedRateWad) public returns (int24 newTickLower, int24 newTickUpper) {
         _requireAtLeastOperator();
 
-        // 0. Get tickspacing from vamm and set local variables
+        uint256 sigmaWad = _sigmaWad;
+
+        // 0. Get tickspacing from vamm
         int24 tickSpacing = _vamm.tickSpacing();
-        int256 sigmaWad = int256(_sigmaWad);
-        int256 maxPossibleLowerBoundWad = _maxPossibleLowerBoundWad;
 
         // 1. Get the new tick lower
-        int256 deltaWad = int256(currentFixedRateWad) - sigmaWad;
+        int256 deltaWad = int256(currentFixedRateWad) - int256(sigmaWad);
         int256 newFixedLowerWad;
         if (deltaWad > int256(MINIMUM_FIXED_RATE)) {
             // delta is greater than MINIMUM_FIXED_RATE (0.01) => choose delta
+            int256 maxPossibleLowerBoundWad = _maxPossibleLowerBoundWad;
             if (deltaWad < maxPossibleLowerBoundWad) {
                 newFixedLowerWad = deltaWad;
             } else {
@@ -162,7 +156,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             newFixedLowerWad = int256(MINIMUM_FIXED_RATE);
         }
         // 2. Get the new tick upper
-        int256 newFixedUpperWad = newFixedLowerWad + 2 * int256(_sigmaWad);
+        int256 newFixedUpperWad = newFixedLowerWad + 2 * int256(sigmaWad);
 
         // 3. Convert new fixed lower rate back to tick
         int256 newTickLowerWad = convertFixedRateToTick(newFixedUpperWad);
@@ -188,16 +182,15 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Callback function called after for ERC20RootVault::deposit
     function depositCallback() external override {
-        // 0. Set local variables
         address[] memory tokens = _tokens;
-        address erc20Vault = address(_erc20Vault);
+        IERC20Vault erc20Vault = _erc20Vault;
 
         // 1. Get balance of erc20 vault
         uint256[] memory balances = new uint256[](1);
-        balances[0] = IERC20(tokens[0]).balanceOf(erc20Vault);
+        balances[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
 
         // 2. Pull balance from erc20 vault into voltz vault
-        _erc20Vault.pull(address(_vault), _tokens, balances, "");
+        erc20Vault.pull(address(_vault), tokens, balances, "");
     }
 
     /// @notice Callback function called after for ERC20RootVault::withdraw

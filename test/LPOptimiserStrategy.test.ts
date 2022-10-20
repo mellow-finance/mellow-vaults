@@ -4,13 +4,7 @@ import {
     PermissionIdsLibrary,
     setupVault,
 } from "../deploy/0000_utils";
-import {
-    checkStateOfVoltzOpenedPositions,
-    encodeToBytes,
-    mint,
-    sleep,
-    withSigner,
-} from "./library/Helpers";
+import { mint, sleep, withSigner } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20Vault,
@@ -21,7 +15,7 @@ import {
 } from "./types";
 import hre from "hardhat";
 import { BigNumber, utils } from "ethers";
-import { expect, util } from "chai";
+import { expect } from "chai";
 
 type CustomContext = {
     voltzVault: VoltzVault;
@@ -41,8 +35,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
 
         const leverage = 10;
         const marginMultiplierPostUnwind = 2;
-        const lookbackWindow = 1209600; // 14 days
-        const estimatedAPYUnitDelta = 0;
 
         const ADMIN_ROLE =
             "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin")
@@ -101,8 +93,8 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     let voltzVaultNft = startNft;
                     let erc20VaultNft = startNft + 1;
 
-                    const voltzHelper = (
-                        await ethers.getContract("VoltzHelper")
+                    this.voltzVaultHelperSingleton = (
+                        await ethers.getContract("VoltzVaultHelper")
                     ).address;
 
                     await setupVault(
@@ -114,7 +106,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                                 tokens,
                                 this.deployer.address,
                                 this.marginEngine,
-                                voltzHelper,
+                                this.voltzVaultHelperSingleton,
                                 {
                                     tickLower: LOW_TICK,
                                     tickUpper: HIGH_TICK,
@@ -124,11 +116,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                                     marginMultiplierPostUnwindWad:
                                         utils.parseEther(
                                             marginMultiplierPostUnwind.toString()
-                                        ),
-                                    lookbackWindowInSeconds: lookbackWindow,
-                                    estimatedAPYDecimalDeltaWad:
-                                        utils.parseEther(
-                                            estimatedAPYUnitDelta.toString()
                                         ),
                                 },
                             ],
