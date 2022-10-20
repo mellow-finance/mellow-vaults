@@ -85,6 +85,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck() public view returns (bool) {
+        // 0. Set the local variables 
+        int24 logProximity = _logProximity;
+
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
         IVoltzVault.TickRange memory currentPosition = _vault.currentPosition();
 
