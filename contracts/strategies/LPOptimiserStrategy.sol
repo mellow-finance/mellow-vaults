@@ -179,7 +179,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Callback function called after for ERC20RootVault::deposit
     function depositCallback() external override {
-        address[] storage tokens = _tokens;
+        address[] memory tokens = _tokens;
         IERC20Vault erc20Vault = _erc20Vault;
 
         // 1. Get balance of erc20 vault

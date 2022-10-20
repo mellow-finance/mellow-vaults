@@ -25,7 +25,7 @@ contract VoltzVaultHelper {
     /// @dev The rate oracle of Voltz Protocol
     IRateOracle private _rateOracle;
     /// @dev The periphery of Voltz Protocol
-    IPeriphery _periphery;
+    IPeriphery private _periphery;
 
     /// @dev The underlying token of the Voltz pool
     address private _underlyingToken;
