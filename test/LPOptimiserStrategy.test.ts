@@ -297,7 +297,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
             await this.deploymentFixtureOne();
             await this.grantPermissionsVoltzVaults();
 
-            await this.subject.connect(this.admin).setLogProx(-1000);
+            await this.subject.connect(this.admin).setProximityWad("100000000000000000");
             await this.subject
                 .connect(this.admin)
                 .setSigmaWad(BigNumber.from("100000000000000000"));
@@ -316,7 +316,10 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                         tickUpper: 0,
                     });
                 });
-                await this.subject.connect(this.admin).setLogProx(-1000);
+
+                const tick = (await this.vammContract.vammVars()).tick;
+                console.log("Tick:", tick);
+                await this.subject.connect(this.admin).setProximityWad("100000000000000000");
                 const result = await this.subject.callStatic.rebalanceCheck();
                 expect(result).to.be.equal(false);
             });
@@ -574,8 +577,8 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 const currentFixedRateWad = BigNumber.from(
                     "1000000000000000000"
                 );
-                await this.subject.connect(this.admin).setLogProx(-23040); // 0.1
-                const proximity = await this.subject.getLogProx();
+                await this.subject.connect(this.admin).setProximityWad("100000000000000000"); // 0.1
+                const proximity = await this.subject.getProximityWad();
                 console.log("Print proximity: ", proximity.toString());
 
                 if (await this.subject.rebalanceCheck()) {
@@ -596,20 +599,10 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
             });
 
             it("logProximity < 0 case (happy path)", async () => {
-                await this.subject.connect(this.admin).setLogProx(-10);
+                await this.subject.connect(this.admin).setProximityWad("0");
 
                 const result = await this.subject.callStatic.rebalanceCheck();
                 expect(result).to.be.equal(true);
-            });
-
-            it("logProximity > 0 case (sad path)", async () => {
-                console.log(
-                    "Print logProximity: ",
-                    (await this.subject.getLogProx()).toString()
-                );
-                await expect(
-                    this.subject.connect(this.admin).setLogProx(100)
-                ).to.be.revertedWith("INV");
             });
 
             it("maxPossibleLowerBound = 1e16 i.e. effectively 0", async () => {
@@ -654,18 +647,16 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
         });
 
         describe("Setters and Getters", async () => {
-            it("Set logProx", async () => {
-                // Initially logProx is set to -1000 before each test, get this
-                const logProx = await this.subject
+            it("Set proximityWad", async () => {
+                const proxWad = await this.subject
                     .connect(this.admin)
-                    .getLogProx();
-                expect(logProx).to.be.equal(-1000);
+                    .getProximityWad();
+                expect(proxWad).to.be.equal("100000000000000000");
 
-                // Set logProx to be -2000
-                await this.subject.connect(this.admin).setLogProx(-2000);
+                await this.subject.connect(this.admin).setProximityWad("200000000000000000");
                 expect(
-                    await this.subject.connect(this.admin).getLogProx()
-                ).to.be.equal(-2000);
+                    await this.subject.connect(this.admin).getProximityWad()
+                ).to.be.equal("200000000000000000");
             });
 
             it("Set sigmaWad", async () => {
@@ -757,10 +748,45 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
             });
         });
 
+        describe("Tick to fixed rate conversion function", async () => {
+            it("tick = 0 => Fixed rate = 1%", async () => {
+                const tick = 0;
+                const fixedRate = await this.subject
+                    .connect(this.admin)
+                    .convertTickToFixedRate(tick);
+
+                expect(fixedRate).to.be.equal("1000000000000000000");
+            });
+            it("tick = 1200 => Fixed rate = 0.886%", async () => {
+                const tick = 1200;
+                const fixedRate = await this.subject
+                    .connect(this.admin)
+                    .convertTickToFixedRate(tick);
+
+                expect(fixedRate).to.be.equal("886925757900998720");
+            });
+            it("tick = -1200 => Fixed rate = 1.127%", async () => {
+                const tick = -1200;
+                const fixedRate = await this.subject
+                    .connect(this.admin)
+                    .convertTickToFixedRate(tick);
+
+                expect(fixedRate).to.be.equal("1127490087069523309");
+            });
+            it("tick = 42000 => Fixed rate = 0.015%", async () => {
+                const tick = 42000;
+                const fixedRate = await this.subject
+                    .connect(this.admin)
+                    .convertTickToFixedRate(tick);
+
+                expect(fixedRate).to.be.equal("14998726012319204");
+            });
+        });
+
         describe("Privilege tests sad path", async () => {
             it("Require at least operator privilege test for logProx setter", async () => {
                 await expect(
-                    this.subject.setLogProx(100)
+                    this.subject.setProximityWad("100000000000000000")
                 ).to.be.revertedWith("FRB");
             })
             it("Require at least operator privilege test for sigmaWad setter", async () => {
@@ -791,7 +817,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
         describe("Privilege tests happy path", async () => {
             it("Require at least operator privilege test for logProx setter", async () => {
                 await expect(
-                    this.subject.connect(this.operator).callStatic.setLogProx(100)
+                    this.subject.connect(this.operator).callStatic.setProximityWad("10000000000000000")
                 ).to.not.be.reverted;
             })
             it("Require at least operator privilege test for sigmaWad setter", async () => {

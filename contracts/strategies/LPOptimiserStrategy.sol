@@ -6,9 +6,12 @@ import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVoltzVault.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../interfaces/utils/ILpCallback.sol";
+import "../libraries/external/FixedPoint96.sol";
+import "hardhat/console.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
+    using PRBMathUD60x18 for uint256;
 
     // IMMUTABLES
     address[] public _tokens;
@@ -23,7 +26,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     // MUTABLE PARAMS
     uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
     int256 internal _maxPossibleLowerBoundWad; // Maximum Possible Fixed Rate Lower bounds when initiating a rebalance
-    int24 internal _logProximity; // x (closeness parameter in wad 10^18) in log base 1.0001
+    uint256 internal _proximityWad; // x (closeness parameter in wad 10^18) 
 
     // CONSTANTS
     uint256 internal constant MINIMUM_FIXED_RATE = 1e16;
@@ -40,11 +43,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _maxPossibleLowerBoundWad = maxPossibleLowerBoundWad;
     }
 
-    function setLogProx(int24 logProx) public {
+    function setProximityWad(uint256 proximityWad) public {
         _requireAtLeastOperator();
-        require(logProx <= 0, ExceptionsLibrary.INVALID_VALUE);
 
-        _logProximity = logProx;
+        _proximityWad = proximityWad;
     }
 
     function getSigmaWad() public view returns (uint256) {
@@ -55,8 +57,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return _maxPossibleLowerBoundWad;
     }
 
-    function getLogProx() public view returns (int24) {
-        return _logProximity;
+    function getProximityWad() public view returns (uint256) {
+        return _proximityWad;
     }
 
     // EVENTS
@@ -86,7 +88,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck() public view returns (bool) {
         // 0. Set the local variables 
-        int24 logProximity = _logProximity;
+        uint256 proximityWad = _proximityWad;
 
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
         IVoltzVault.TickRange memory currentPosition = _vault.currentPosition();
@@ -94,15 +96,18 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // 2. Get current tick
         int24 currentTick = _periphery.getCurrentTick(_marginEngine);
 
-        // 3. Compare current fixed rate to lower and upper bounds
-        int24 logProximity = _logProximity;
-        if (
-            currentPosition.tickLower - logProximity <= currentTick &&
-            currentTick <= currentPosition.tickUpper + logProximity
-        ) {
+        // 3. Convert the ticks into fixed rate
+        uint256 lowFixedRateWad = convertTickToFixedRate(currentPosition.tickUpper);
+        uint256 highFixedRateWad = convertTickToFixedRate(currentPosition.tickLower);
+        uint256 currentFixedRateWad = convertTickToFixedRate(currentTick);
+        console.log("info:", lowFixedRateWad, highFixedRateWad, currentFixedRateWad);
+
+        if (lowFixedRateWad + proximityWad <= currentFixedRateWad &&
+            currentFixedRateWad + proximityWad <= highFixedRateWad) {
             // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
             return false;
-        } else {
+        }
+        else {
             // 4.2. If current fixed rate is outside bounds, return true (do rebalance)
             return true;
         }
@@ -126,6 +131,19 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     function convertFixedRateToTick(int256 fixedRateWad) public view returns (int256) {
         _requireAtLeastOperator();
         return -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(fixedRateWad)), PRBMathSD59x18.log2(int256(LOG_BASE)));
+    }
+
+    function convertTickToFixedRate(int24 tick) public view returns (uint256) {
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+
+        uint256 sqrtRatioWad = FullMath.mulDiv(
+            1e18,
+            FixedPoint96.Q96,
+            sqrtPriceX96
+        );
+
+        uint256 fixedRateWad = sqrtRatioWad.mul(sqrtRatioWad);
+        return fixedRateWad;
     }
 
     /// @notice Set new optimal tick range based on current twap tick given that we are using the offchain moving average of the fixed rate in the current iteration
