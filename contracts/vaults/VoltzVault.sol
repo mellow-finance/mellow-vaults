@@ -472,13 +472,21 @@ contract VoltzVault is IVoltzVault, IntegrationVault {
                 tickUpper: currentPosition_.tickUpper
             });
 
-            (int256 _fixedTokenDelta, int256 _variableTokenDelta, uint256 _cumulativeFeeIncurred, , ) = _vamm.swap(
-                _params
-            );
-
-            currentPositionInfo_.fixedTokenBalance += _fixedTokenDelta;
-            currentPositionInfo_.variableTokenBalance += _variableTokenDelta;
-            currentPositionInfo_.margin -= _cumulativeFeeIncurred.toInt256();
+            try _vamm.swap(_params) returns (
+                int256 _fixedTokenDelta,
+                int256 _variableTokenDelta,
+                uint256 _cumulativeFeeIncurred,
+                int256 fixedTokenDeltaUnbalanced,
+                int256 marginRequirement
+            ) {
+                currentPositionInfo_.fixedTokenBalance += _fixedTokenDelta;
+                currentPositionInfo_.variableTokenBalance += _variableTokenDelta;
+                currentPositionInfo_.margin -= _cumulativeFeeIncurred.toInt256();
+            } catch Error(string memory reason) {
+                emit UnwindFail(reason);
+            } catch {
+                emit UnwindFail("Unwind failed without reason");
+            }
         }
 
         bool trackPosition;
