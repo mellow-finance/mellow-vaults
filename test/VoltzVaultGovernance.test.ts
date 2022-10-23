@@ -18,11 +18,12 @@ import { Arbitrary, integer } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IVaultGovernance";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber, Signer, utils } from "ethers";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 import { randomBytes } from "crypto";
 import { VOLTZ_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
 import { address } from "./library/property";
+import { IMarginEngine, IVAMM } from "./types";
 
 type CustomContext = {
     nft: number;
@@ -38,6 +39,9 @@ type DeploymentOptions = {
 contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
     "VoltzVaultGovernance",
     function () {
+        const leverage = 10;
+        const marginMultiplierPostUnwind = 2;
+
         before(async () => {
             const marginEngineAddress = (await getNamedAccounts()).marginEngine;
 
@@ -78,6 +82,28 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
                     this.ownerSigner = await addSigner(randomAddress());
                     this.strategySigner = await addSigner(randomAddress());
 
+                    this.marginEngineContract = (await ethers.getContractAt(
+                        "IMarginEngine",
+                        marginEngine
+                    )) as IMarginEngine;
+
+                    this.vamm = await this.marginEngineContract.vamm();
+                    this.vammContract = (await ethers.getContractAt(
+                        "IVAMM",
+                        this.vamm
+                    )) as IVAMM;
+
+                    this.voltzVaultHelperSingleton = (
+                        await ethers.getContract("VoltzVaultHelper")
+                    ).address;
+
+                    const currentTick = (await this.vammContract.vammVars())
+                        .tick;
+                    this.initialTickLow =
+                        currentTick - (currentTick % 60) - 600;
+                    this.initialTickHigh =
+                        currentTick - (currentTick % 60) + 600;
+
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
@@ -94,8 +120,17 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
                             ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"], // USDC
                             this.ownerSigner.address,
                             marginEngine,
-                            0,
-                            60
+                            this.voltzVaultHelperSingleton,
+                            {
+                                tickLower: this.initialTickLow,
+                                tickUpper: this.initialTickHigh,
+                                leverageWad: utils.parseEther(
+                                    leverage.toString()
+                                ),
+                                marginMultiplierPostUnwindWad: utils.parseEther(
+                                    marginMultiplierPostUnwind.toString()
+                                ),
+                            }
                         );
 
                         this.nft = (
@@ -160,8 +195,15 @@ contract<VoltzVaultGovernance, DeploymentOptions, CustomContext>(
                         ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"],
                         owner,
                         this.marginEngine,
-                        0,
-                        60
+                        this.voltzVaultHelperSingleton,
+                        {
+                            tickLower: this.initialTickLow,
+                            tickUpper: this.initialTickHigh,
+                            leverageWad: utils.parseEther(leverage.toString()),
+                            marginMultiplierPostUnwindWad: utils.parseEther(
+                                marginMultiplierPostUnwind.toString()
+                            ),
+                        }
                     );
             },
             ...this,
