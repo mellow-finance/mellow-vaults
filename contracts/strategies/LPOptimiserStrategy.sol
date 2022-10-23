@@ -95,7 +95,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         int24 currentTick = _periphery.getCurrentTick(_marginEngine);
 
         // 3. Compare current fixed rate to lower and upper bounds
-        int24 logProximity = _logProximity;
         if (
             currentPosition.tickLower - logProximity <= currentTick &&
             currentTick <= currentPosition.tickUpper + logProximity
