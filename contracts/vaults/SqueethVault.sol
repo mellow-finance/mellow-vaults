@@ -5,265 +5,232 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IUniswapV3FlashCallback} from '../interfaces/external/univ3/IUniswapV3FlashCallback.sol';
+import {PeripheryPayments} from '../utils/PeripheryPayments.sol';
+import {PeripheryImmutableState} from '../utils/PeripheryImmutableState.sol';
 
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
+import "../libraries/external/PoolAddress.sol";
+import "../libraries/external/CallbackValidation.sol";
 
 import "../interfaces/vaults/ISqueethVaultGovernance.sol";
 import "../interfaces/external/squeeth/IController.sol";
 import "../interfaces/external/squeeth/IShortPowerPerp.sol";
 import "../interfaces/external/squeeth/IWPowerPerp.sol";
 import "../interfaces/external/squeeth/IWETH9.sol";
-import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Opyn Squeeth protocol in the integration layer.
-contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault {
+contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault, IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments {
     using SafeERC20 for IERC20;
     uint256 public immutable DUST = 10**3;
 
-    bool private _isShortPosition;
 
-    ShortPositionInfo private _shortPositionInfo;
-    LongPositionInfo private _longPositionInfo;
+    IController public controller;
+    ISwapRouter public router;
 
-    IController private _controller;
-    ISwapRouter private _router;
-
-    address private _wPowerPerp;
-    address private _weth;
-    address private _shortPowerPerp;
+    address public wPowerPerp;
+    address public weth;
+    address public shortPowerPerp;
+    address public wPowerPerpPool;
 
     uint256 public immutable squeethMinCollateral = 69 * 10**17;
+    uint256 public shortVaultId;
+    uint256 private _totalCollateral;
+    uint256 private _wPowerPerpDebt;
+    
+    constructor(
+        address _factory,
+        address WETH9
+    ) PeripheryImmutableState(_factory, WETH9) {
 
-    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {}
+    }
+
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        minTokenAmounts[0] = IERC20(weth).balanceOf(address(this));
+        if (shortVaultId != 0) {
+            minTokenAmounts[0] += _totalCollateral;
+            uint256 currentDebt = _wPowerPerpDebt - IERC20(wPowerPerp).balanceOf(address(this));
+            minTokenAmounts[0] -= FullMath.mulDiv(currentDebt, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+        }
+        maxTokenAmounts = minTokenAmounts; //TODO: unvi3 logic
+    }
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(ISqueethVault).interfaceId;
     }
 
-    // // fix
-    // function write() external view returns (bytes4) {
-    //     return type(ISqueethVault).interfaceId;
-    // }
 
-    /// @inheritdoc ISqueethVault
     function initialize(
         uint256 nft_,
-        address[] memory vaultTokens_,
-        bool isShortPosition_
+        address[] memory vaultTokens_
     ) external {
-        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
+        require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         _initialize(vaultTokens_, nft_);
-        _controller = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().controller;
-        _router = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().router;
+        ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+        controller = protocolParams.controller;
+        router = protocolParams.router;
 
-        _wPowerPerp = _controller.wPowerPerp();
-        _weth = _controller.weth();
-        _shortPowerPerp = _controller.shortPowerPerp();
+        wPowerPerp = protocolParams.controller.wPowerPerp();
+        weth = protocolParams.controller.weth();
+        shortPowerPerp = protocolParams.controller.shortPowerPerp();
 
-        require(vaultTokens_[0] == _weth || vaultTokens_[0] == _wPowerPerp, ExceptionsLibrary.INVALID_TOKEN);
-        require(vaultTokens_[1] == _weth || vaultTokens_[1] == _wPowerPerp, ExceptionsLibrary.INVALID_TOKEN);
-        _isShortPosition = isShortPosition_;
+        shortVaultId = 0; // maybe delete later
+        require(vaultTokens_[0] == weth, ExceptionsLibrary.INVALID_TOKEN);
     }
 
     function takeShort(
-        uint256 wPowerPerpAmountExpected,
-        uint256 wethDebtAmount,
-        uint256 minWethAmountOut
-    ) external payable nonReentrant returns (uint256 wPowerPerpMintedAmount, uint256 wethAmountOut) {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        require(wethDebtAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
-        require(IWETH9(_weth).balanceOf(msg.sender) >= wethDebtAmount, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(IWETH9(_weth).allowance(msg.sender, address(this)) >= wethDebtAmount, ExceptionsLibrary.FORBIDDEN);
-        require(wethDebtAmount >= squeethMinCollateral, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        uint256 healthFactor
+    ) external nonReentrant {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); 
+        require(healthFactor > CommonLibrary.DENOMINATOR, ExceptionsLibrary.INVARIANT);
+        require(shortVaultId == 0, ExceptionsLibrary.INVALID_STATE);
+        uint256 wethAmount = IWETH9(weth).balanceOf(address(this));
+        require(wethAmount >= squeethMinCollateral, ExceptionsLibrary.LIMIT_UNDERFLOW); //TODO: doublecheck
 
-        IWETH9(_weth).transferFrom(msg.sender, address(this), wethDebtAmount);
-        IWETH9(_weth).withdraw(wethDebtAmount);
-
-        uint256 shortVaultId = _shortPositionInfo.vaultId;
-        if (shortVaultId != 0) {
-            // short position has already been taken
-            require(
-                IShortPowerPerp(_controller.shortPowerPerp()).ownerOf(shortVaultId) == address(this),
-                ExceptionsLibrary.FORBIDDEN
-            );
-        }
-
-        (uint256 vaultId, uint256 actualWPowerPerpAmount) = _controller.mintPowerPerpAmount{value: wethDebtAmount}(
-            shortVaultId,
+        IWETH9(weth).withdraw(wethAmount);
+        uint256 ethPrice = twapIndexPrice(); 
+        uint256 collateralFactor = FullMath.mulDiv(healthFactor, 3, 2);
+        uint256 ethPriceNormalized = FullMath.mulDiv(ethPrice, controller.getExpectedNormalizationFactor(), CommonLibrary.D18);
+        uint256 wPowerPerpAmountExpected = FullMath.mulDiv(wethAmount, collateralFactor, ethPriceNormalized);
+        (uint256 vaultId, uint256 actualWPowerPerpAmount) = controller.mintPowerPerpAmount{value: wethAmount}(
+            0,
             wPowerPerpAmountExpected,
             0
         );
 
-        wPowerPerpMintedAmount = actualWPowerPerpAmount;
+        shortVaultId = vaultId;
+        _totalCollateral += wethAmount;
+        _wPowerPerpDebt += actualWPowerPerpAmount;
 
-        ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: _wPowerPerp,
-            tokenOut: _weth,
-            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
-            recipient: address(this),
-            deadline: block.timestamp + 1,
-            amountIn: wPowerPerpMintedAmount,
-            amountOutMinimum: minWethAmountOut,
-            sqrtPriceLimitX96: 0
-        });
-
-        IERC20(_wPowerPerp).safeIncreaseAllowance(address(_router), wPowerPerpMintedAmount);
-        wethAmountOut = _router.exactInputSingle(exactInputParams);
-        IERC20(_wPowerPerp).safeApprove(address(_router), 0);
-
-        // there should not be any locked ether inside the contract
-        uint256 ethLockedAmount = address(this).balance;
-        IWETH9(_weth).deposit{value: ethLockedAmount}();
-        // transfer weth received after selling wPowerPerp back to msg.sender
-        IWETH9(_weth).transfer(msg.sender, ethLockedAmount);
-
-        _shortPositionInfo.vaultId = vaultId;
-        _shortPositionInfo.wPowerPerpAmount += wPowerPerpMintedAmount;
-        _shortPositionInfo.wethAmount += wethAmountOut;
-
-        emit ShortTaken(tx.origin, msg.sender, _shortPositionInfo);
+        emit ShortTaken(tx.origin, msg.sender); //TODO: add data
     }
 
-    function closeShort(
-        uint256 wPowerPerpBurnAmount,
-        uint256 ethAmountIn,
-        uint256 maxWethAmountIn
-    ) external payable nonReentrant returns (uint256 ethAmountReceived) {
+    function closeShort() external nonReentrant {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        require(wPowerPerpBurnAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
-        uint256 shortVaultId = _shortPositionInfo.vaultId;
         require(
-            IShortPowerPerp(_controller.shortPowerPerp()).ownerOf(shortVaultId) == msg.sender,
+            IShortPowerPerp(shortPowerPerp).ownerOf(shortVaultId) == msg.sender,
             ExceptionsLibrary.FORBIDDEN
         );
 
-        // wrap eth to _weth
-        IWETH9(_weth).deposit{value: ethAmountIn}();
-
-        ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
-            tokenIn: _weth,
-            tokenOut: _wPowerPerp,
-            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
-            recipient: msg.sender,
-            deadline: block.timestamp + 1,
-            amountOut: wPowerPerpBurnAmount,
-            amountInMaximum: maxWethAmountIn,
-            sqrtPriceLimitX96: 0
-        });
-
-        // pay _weth and get _wPowerPerp in return.
-        uint256 actualWethAmountIn = _router.exactOutputSingle(exactOutputParams);
-
-        // burn wPowerPerpBurnAmount and expect to receive actualWethAmountIn (the amount of eth, that we sent to UniV3 pool while buying _wPowerPerp back)
-        _controller.burnWPowerPerpAmount(shortVaultId, wPowerPerpBurnAmount, actualWethAmountIn);
-
-        // send back unused eth and withdrawn collateral
-        IWETH9(_weth).withdraw(ethAmountIn - actualWethAmountIn);
-
-        ethAmountReceived = address(this).balance;
-        payable(msg.sender).transfer(ethAmountReceived);
-
-        emit ShortClosed(tx.origin, msg.sender, _shortPositionInfo);
-    }
-
-    function takeLong(uint256 wethAmount, uint256 minWPowerPerpAmountOut)
-        external
-        nonReentrant
-        returns (uint256 wPowerPerpAmountOut)
-    {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        require(wethAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
-        require(IWETH9(_weth).balanceOf(msg.sender) >= wethAmount, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(IWETH9(_weth).allowance(msg.sender, address(this)) >= wethAmount, ExceptionsLibrary.FORBIDDEN);
-
-        IWETH9(_weth).transferFrom(msg.sender, address(this), wethAmount);
-
-        ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: _weth,
-            tokenOut: _wPowerPerp,
-            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
-            recipient: address(this),
-            deadline: block.timestamp + 1,
-            amountIn: wethAmount,
-            amountOutMinimum: minWPowerPerpAmountOut,
-            sqrtPriceLimitX96: 0
-        });
-
-        IERC20(_weth).safeIncreaseAllowance(address(_router), wethAmount);
-        wPowerPerpAmountOut = _router.exactInputSingle(exactInputParams);
-        IERC20(_weth).safeApprove(address(_router), 0);
-
-        _longPositionInfo.wPowerPerpAmount += wPowerPerpAmountOut;
-        emit LongTaken(tx.origin, msg.sender, _longPositionInfo);
-    }
-
-    function closeLong(uint256 wPowerPerpAmount, uint256 minWethAmountOut)
-        external
-        nonReentrant
-        returns (uint256 wethAmountOut)
-    {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        require(wPowerPerpAmount > DUST, ExceptionsLibrary.VALUE_ZERO);
-        require(
-            IWPowerPerp(_wPowerPerp).balanceOf(address(this)) >= wPowerPerpAmount,
-            ExceptionsLibrary.LIMIT_OVERFLOW
-        );
-
-        ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: _wPowerPerp,
-            tokenOut: _weth,
-            fee: IUniswapV3Pool(_controller.ethQuoteCurrencyPool()).fee(),
-            recipient: address(this),
-            deadline: block.timestamp + 1,
-            amountIn: wPowerPerpAmount,
-            amountOutMinimum: minWethAmountOut,
-            sqrtPriceLimitX96: 0
-        });
-
-        IERC20(_wPowerPerp).safeIncreaseAllowance(address(_router), wPowerPerpAmount);
-        wethAmountOut = _router.exactInputSingle(exactInputParams);
-        IERC20(_wPowerPerp).safeIncreaseAllowance(address(_router), 0);
-
-        IWETH9(_weth).transfer(msg.sender, wethAmountOut);
-
-        _longPositionInfo.wPowerPerpAmount -= wPowerPerpAmount;
-        emit LongClosed(tx.origin, msg.sender, _longPositionInfo);
+        uint256 wPowerPerpRemaining = _wPowerPerpDebt - IWETH9(wPowerPerp).balanceOf(address(this));
+        if (wPowerPerpRemaining > 0) {
+            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+            ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+            uint256 wethRemaining = FullMath.mulDiv(wethNeeded  - IWETH9(weth).balanceOf(address(this)), CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
+            _flashRepayDebt(wethRemaining, wPowerPerpRemaining);
+        } else {
+            _repayDebt(0);
+        }
+        emit ShortClosed(tx.origin, msg.sender); //TODO: add data
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
         override
         returns (uint256[] memory actualTokenAmounts)
-    {}
+    {
+        require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH); //TODO: is it necessary 
+        if (shortVaultId != 0) {
+            uint256 wPowerPerpToMint = FullMath.mulDiv(tokenAmounts[0], _wPowerPerpDebt, _totalCollateral);
+            
+            IWETH9(weth).withdraw(tokenAmounts[0]);
+            uint256 vaultId = controller.mintWPowerPerpAmount{value: tokenAmounts[0]}(
+                shortVaultId,
+                wPowerPerpToMint,
+                0
+            );
+            _totalCollateral += tokenAmounts[0];
+            _wPowerPerpDebt += wPowerPerpToMint;
+        }
+        actualTokenAmounts = tokenAmounts;
+    }
+
+    struct FlashCallbackData {
+        uint256 amountBorrowed;
+        uint256 amountToSwapTo;
+        PoolAddress.PoolKey poolKey;
+    }
+
+    function _flashRepayDebt(uint256 wethToBorrow, uint256 wPowerPerpToSwapTo) internal {
+        IUniswapV3Pool pool = IUniswapV3Pool(wPowerPerpPool);
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: weth, token1: wPowerPerp, fee: pool.fee()});
+        bool wethIsFirst = pool.token0() == weth;
+        uint256 amount0 = wethIsFirst ? wethToBorrow : 0;
+        uint256 amount1 = wethIsFirst ? 0 : wethToBorrow;
+        pool.flash(
+            address(this),
+            amount0,
+            amount1,
+            abi.encode(
+                FlashCallbackData({
+                    amountBorrowed: wethToBorrow,
+                    amountToSwapTo: wPowerPerpToSwapTo,
+                    poolKey: poolKey
+                })
+            )
+        );
+    }
+
+    function uniswapV3FlashCallback(
+        uint256 fee0,
+        uint256 fee1,
+        bytes calldata data
+    ) external override {
+        FlashCallbackData memory decoded = abi.decode(data, (FlashCallbackData));
+        CallbackValidation.verifyCallback(factory, decoded.poolKey);
+
+        ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
+            tokenIn: weth,
+            tokenOut: wPowerPerp,
+            fee: IUniswapV3Pool(wPowerPerpPool).fee(),
+            recipient: address(this),
+            deadline: block.timestamp + 1,
+            amountOut: decoded.amountToSwapTo,
+            amountInMaximum: decoded.amountBorrowed,
+            sqrtPriceLimitX96: 0
+        });
+
+        IERC20(weth).safeIncreaseAllowance(address(router), decoded.amountBorrowed);
+        router.exactOutputSingle(exactOutputParams);
+        IERC20(weth).safeApprove(address(router), 0);
+        _repayDebt(decoded.amountBorrowed);
+    }
+
+    function _repayDebt(uint256 amountBorrowed) internal {
+        // burn wPowerPerpBurnAmount and expect to receive actualWethAmountIn (the amount of eth, that we sent to UniV3 pool while buying wPowerPerp back)
+        controller.burnWPowerPerpAmount(shortVaultId, _wPowerPerpDebt, _totalCollateral);
+
+        // send back unused eth and withdrawn collateral
+        IWETH9(weth).deposit{value: _totalCollateral}();
+
+        if (amountBorrowed != 0) {
+            pay(weth, address(this), msg.sender, amountBorrowed);
+        }
+    }
 
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
         bytes memory
-    ) internal override returns (uint256[] memory actualTokenAmounts) {}
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
+        if (shortVaultId == 0) {
+            actualTokenAmounts = tokenAmounts;
+        }
+    }
 
     function _isReclaimForbidden(address token) internal view override returns (bool) {
-        if (token == address(_controller.weth()) || token == _controller.wPowerPerp()) {
+        if (token == weth || token == wPowerPerp) {
             return true;
         }
         return false;
-    }
-
-    receive() external payable {
-        // require(
-        //     msg.sender == _controller.weth() || msg.sender == address(_controller) || _isApprovedOrOwner(msg.sender),
-        //     ExceptionsLibrary.FORBIDDEN
-        // );
     }
 
     function onERC721Received(
@@ -275,58 +242,27 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         return this.onERC721Received.selector;
     }
 
-    function controller() external view returns (IController) {
-        return _controller;
+    function twapIndexPrice() public view returns (uint256 indexPrice) {
+        ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+        indexPrice = CommonLibrary.sqrt(controller.getUnscaledIndex(protocolParams.twapPeriod));
     }
 
-    function router() external view returns (ISwapRouter) {
-        return _router;
+    function twapMarkPrice() public view returns (uint256 markPrice) {
+        ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+        markPrice = controller.getDenormalizedMark(protocolParams.twapPeriod);
     }
 
-    function longPositionInfo() external view returns (LongPositionInfo memory) {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(!_isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        return _longPositionInfo;
-    }
-
-    function shortPositionInfo() external view returns (ShortPositionInfo memory) {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(_isShortPosition, ExceptionsLibrary.INVALID_STATE);
-        return _shortPositionInfo;
-    }
-
-    function getTwapIndexPrice(uint32 twapPeriod_) external view returns (uint256 twapIndexPrice) {
-        require(twapPeriod_ > 0, ExceptionsLibrary.VALUE_ZERO);
-        twapIndexPrice = _controller.getUnscaledIndex(twapPeriod_);
-    }
-
-    function getTwapMarkPrice(uint32 twapPeriod_) external view returns (uint256 twapMarkPrice) {
-        require(twapPeriod_ > 0, ExceptionsLibrary.VALUE_ZERO);
-        twapMarkPrice = _controller.getDenormalizedMark(twapPeriod_);
-    }
-
-    function getSpotSqrtPrice() external view returns (uint256 usdcWPowerPerpPriceX96) {
-        IUniswapV3Pool ethQuoteCurrencyPool = IUniswapV3Pool(_controller.ethQuoteCurrencyPool());
-        IUniswapV3Pool wPowerPerpPool = IUniswapV3Pool(_controller.wPowerPerpPool());
-
-        (uint160 usdcWethSqrtPriceX96, , , , , , ) = ethQuoteCurrencyPool.slot0();
-        (uint160 wethWPowerPerpSqrtPriceX96, , , , , , ) = wPowerPerpPool.slot0();
-
-        usdcWPowerPerpPriceX96 = FullMath.mulDiv(usdcWethSqrtPriceX96, wethWPowerPerpSqrtPriceX96, CommonLibrary.Q96);
-    }
-
-    function getSqrtIndexPrice() external view returns (uint256 usdcWethSqrtPriceX96) {
-        IUniswapV3Pool ethQuoteCurrencyPool = IUniswapV3Pool(_controller.ethQuoteCurrencyPool());
-        (usdcWethSqrtPriceX96, , , , , , ) = ethQuoteCurrencyPool.slot0();
+    function _grabPriceX96(address tokenIn, address pool) internal view returns (uint256 priceX96) {
+        (uint160 poolSqrtPriceX96, , , , , ,) = IUniswapV3Pool(pool).slot0();
+        priceX96 = FullMath.mulDiv(poolSqrtPriceX96, poolSqrtPriceX96, CommonLibrary.Q96); //TODO: check type convertion
+        if (tokenIn == IUniswapV3Pool(pool).token1()) {
+            priceX96 = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, priceX96);
+        }
     }
 
     // --------------------------  EVENTS  --------------------------
 
-    event LongTaken(address indexed origin, address indexed sender, LongPositionInfo longPositionInfo);
+    event ShortTaken(address indexed origin, address indexed sender);
 
-    event LongClosed(address indexed origin, address indexed sender, LongPositionInfo longPositionInfo);
-
-    event ShortTaken(address indexed origin, address indexed sender, ShortPositionInfo shortPositionInfo);
-
-    event ShortClosed(address indexed origin, address indexed sender, ShortPositionInfo shortPositionInfo);
+    event ShortClosed(address indexed origin, address indexed sender);
 }

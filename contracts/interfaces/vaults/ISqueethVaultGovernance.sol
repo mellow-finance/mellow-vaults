@@ -13,6 +13,8 @@ interface ISqueethVaultGovernance is IVaultGovernance {
     struct DelayedProtocolParams {
         IController controller;
         ISwapRouter router;
+        uint256 slippageD9;
+        uint32 twapPeriod;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
@@ -31,7 +33,7 @@ interface ISqueethVaultGovernance is IVaultGovernance {
 
     /// @notice Deploys a new vault.
     /// @param owner_ Owner of the vault NFT
-    function createVault(address owner_, bool isShortPosition)
+    function createVault(address owner_)
         external
         returns (ISqueethVault vault, uint256 nft);
 }
