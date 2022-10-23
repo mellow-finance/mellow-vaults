@@ -461,11 +461,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100059531613),
-            100
+            1000
         );
         expect(await this.usdc.balanceOf(this.user2.address)).to.be.closeTo(
             BigNumber.from(1000001404),
-            100
+            1000
         );
     });
 
@@ -574,11 +574,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100062735231),
-            100
+            1000
         );
         expect(await this.usdc.balanceOf(this.user2.address)).to.be.closeTo(
             BigNumber.from(1000033421),
-            100
+            1000
         );
     });
 
@@ -764,11 +764,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100059531613),
-            100
+            1000
         );
         expect(await this.usdc.balanceOf(this.user2.address)).to.be.closeTo(
             BigNumber.from(1000001404),
-            100
+            1000
         );
     });
 
@@ -870,11 +870,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(99987062685),
-            100
+            1000
         );
         expect(await this.usdc.balanceOf(this.user2.address)).to.be.closeTo(
             BigNumber.from(999999999),
-            100
+            1000
         );
     });
 
@@ -995,11 +995,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100019094304),
-            100
+            1000
         );
         expect(await this.usdc.balanceOf(this.user2.address)).to.be.closeTo(
             BigNumber.from(1000320357),
-            100
+            1000
         );
     });
 });
