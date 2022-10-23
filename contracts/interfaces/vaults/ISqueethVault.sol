@@ -17,6 +17,12 @@ interface ISqueethVault is IIntegrationVault {
     ) external ;
 
     function closeShort() external;
+    
+    function shortVaultId() external view returns (uint256);
+    
+    function totalCollateral() external view returns (uint256);
+    
+    function wPowerPerpDebtDenormalized() external view returns (uint256);
 
     function wPowerPerp() external view returns (address);
     

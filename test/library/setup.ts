@@ -161,11 +161,11 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     const mStrategy: MStrategy | null = await ethers.getContractOrNull(
         "MStrategyYearn"
     );
-    if (!mStrategy) {
-        this.mStrategy = await ethers.getContract("MStrategyAave");
-    } else {
-        this.mStrategy = mStrategy;
-    }
+    // if (!mStrategy) {
+    //     this.mStrategy = await ethers.getContract("MStrategyAave");
+    // } else {
+    //     this.mStrategy = mStrategy;
+    // }
     this.lStrategy = await ethers.getContract("LStrategy");
 
     const namedAccounts = await getNamedAccounts();

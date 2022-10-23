@@ -11,7 +11,7 @@ import '../libraries/external/TransferHelper.sol';
 import './PeripheryImmutableState.sol';
 
 abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableState {
-    receive() external payable {
+    receive() virtual external payable {
         require(msg.sender == WETH9, 'Not WETH9');
     }
 
