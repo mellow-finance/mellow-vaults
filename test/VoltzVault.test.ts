@@ -238,7 +238,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
         await this.deploymentFixture();
     });
 
-    describe("Test Access Privileges", () => {
+    describe("Test Access Privileges & Getters & Setters", () => {
         beforeEach(async () => {
             await withSigner(this.subject.address, async (signer) => {
                 await this.usdc
@@ -500,7 +500,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             );
         });
 
-        it("push #1: after maturity", async () => {
+        it("push #2: after maturity", async () => {
             // advance time by 60 days to reach maturity
             await network.provider.send("evm_increaseTime", [
                 60 * 24 * 60 * 60,
@@ -515,6 +515,87 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     encodeToBytes([], [])
                 )
             ).to.be.revertedWith("closeToOrBeyondMaturity");
+        });
+
+        it("push #3: push to prev tracked position", async () => {
+            const { test } = await getNamedAccounts();
+            const testSigner = await hre.ethers.getSigner(test);
+            await this.usdc
+                .connect(testSigner)
+                .approve(this.periphery, BigNumber.from(10).pow(27));
+
+            for (let i = 0; i < 10; i++) {
+                await this.preparePush(1000000000);
+                await this.subject.push(
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000000000)],
+                    encodeToBytes([], [])
+                );
+
+                await mint(
+                    "USDC",
+                    testSigner.address,
+                    BigNumber.from(10).pow(6).mul(100000000)
+                );
+
+                await this.peripheryContract.connect(testSigner).swap({
+                    marginEngine: this.marginEngine,
+                    isFT: i % 2,
+                    notional: BigNumber.from(10).pow(6).mul(100000000),
+                    sqrtPriceLimitX96:
+                        i % 2 ? MAX_SQRT_RATIO.sub(1) : MIN_SQRT_RATIO.add(1),
+                    tickLower: -60,
+                    tickUpper: 60,
+                    marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+                });
+
+                const currentTick = (await this.vammContract.vammVars()).tick;
+
+                const newPosition = {
+                    tickLower: currentTick - (currentTick % 60) - 600,
+                    tickUpper: currentTick - (currentTick % 60) + 600,
+                };
+                await this.subject.rebalance(newPosition);
+
+                const currentPosition = await this.subject.currentPosition();
+                expect(currentPosition.tickLower).to.be.equal(
+                    newPosition.tickLower
+                );
+                expect(currentPosition.tickUpper).to.be.equal(
+                    newPosition.tickUpper
+                );
+            }
+
+            let trackedPositions = await getTrackedPositions();
+            expect(trackedPositions.length).to.be.eq(8);
+
+            // rebalance to fourth position
+            await this.subject.rebalance(trackedPositions[4]);
+
+            const positionInfoBefore =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    trackedPositions[4].tickLower,
+                    trackedPositions[4].tickUpper
+                );
+
+            await this.preparePush(1000000000);
+            await this.subject.push(
+                [this.usdc.address],
+                [BigNumber.from(10).pow(6).mul(1000000000)],
+                encodeToBytes([], [])
+            );
+
+            const positionInfoAfter =
+                await this.marginEngineContract.callStatic.getPosition(
+                    this.subject.address,
+                    trackedPositions[4].tickLower,
+                    trackedPositions[4].tickUpper
+                );
+
+            expect(
+                positionInfoAfter.margin.sub(positionInfoBefore.margin)
+            ).to.be.eq(BigNumber.from(10).pow(6).mul(1000000000));
         });
     });
 
