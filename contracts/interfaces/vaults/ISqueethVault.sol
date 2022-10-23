@@ -6,46 +6,31 @@ import "../external/squeeth/IController.sol";
 import "../external/univ3/ISwapRouter.sol";
 
 interface ISqueethVault is IIntegrationVault {
-    struct ShortPositionInfo {
-        uint256 vaultId;
-        uint256 wPowerPerpAmount;
-        uint wethAmount;
-    }
-
-    struct LongPositionInfo {
-        uint256 wPowerPerpAmount;
-    }
 
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
-    function initialize(uint256 nft_, address[] memory vaultTokens_, bool isShortPosition_) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_) external;
 
     function takeShort(
-        uint256 wPowerPerpAmountExpected,
-        uint256 ethDebtAmount,
-        uint256 minWethAmountOut
-    ) external payable returns (uint256 wPowerPerpMintedAmount, uint256 wethAmountOut);
+        uint256 healthFactor
+    ) external ;
 
-    function closeShort(
-        uint256 wPowerPerpBurnAmount,
-        uint256 ethAmountIn,
-        uint256 maxWethAmountIn
-    ) external payable returns (uint256 ethAmountReceived);
+    function closeShort() external;
 
-    function takeLong(uint256 wethAmount, uint256 minWPowerPerpAmountOut)
-        external
-        returns (uint256 wPowerPerpAmountOut);
-
-    function closeLong(uint256 wPowerPerpAmount, uint256 minWethAmountOut) external returns (uint256 wethAmountOut);
-
-    receive() external payable;
+    function wPowerPerp() external view returns (address);
+    
+    function weth() external view returns (address);
+    
+    function shortPowerPerp() external view returns (address);
+    
+    function wPowerPerpPool() external view returns (address);
 
     function controller() external view returns (IController);
 
     function router() external view returns (ISwapRouter);
 
-    function longPositionInfo() external view returns(LongPositionInfo memory);
+    function twapIndexPrice() external view returns (uint256 indexPrice);
 
-    function shortPositionInfo() external view returns(ShortPositionInfo memory);
+    function twapMarkPrice() external view returns (uint256 markPrice);
 }

@@ -38,7 +38,7 @@ contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultG
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
             return
-                DelayedProtocolParams({controller: IController(payable(address(0))), router: ISwapRouter(address(0))});
+                DelayedProtocolParams({controller: IController(payable(address(0))), router: ISwapRouter(address(0)), slippageD9: 0, twapPeriod: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -64,17 +64,16 @@ contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultG
     }
 
     /// @inheritdoc ISqueethVaultGovernance
-    function createVault(address owner_, bool isShortPosition) external returns (ISqueethVault vault, uint256 nft) {
+    function createVault(address owner_) external returns (ISqueethVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = ISqueethVault(payable(vaddr));
         IController controller = (delayedProtocolParams()).controller;
 
-        address[] memory vaultTokens = new address[](2);
+        address[] memory vaultTokens = new address[](1);
         vaultTokens[0] = controller.weth();
-        vaultTokens[1] = controller.wPowerPerp();
 
-        vault.initialize(nft, vaultTokens, isShortPosition);
+        vault.initialize(nft, vaultTokens);
         emit DeployedVault(tx.origin, msg.sender, vaultTokens, "", owner_, vaddr, nft);
     }
 
