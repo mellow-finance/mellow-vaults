@@ -28,7 +28,6 @@ import { assert } from "console";
 type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
-    curveRouter: string;
     preparePush: () => any;
 };
 
@@ -43,8 +42,6 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     await deployments.fixture();
                     const { read } = deployments;
 
-                    const { curveRouter } = await getNamedAccounts();
-                    this.curveRouter = curveRouter;
                     this.preparePush = async () => {
                         await sleep(0);
                     };
@@ -75,7 +72,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         squeethVaultNft,
                         "SqueethVaultGovernance",
                         {
-                            createVaultArgs: [this.deployer.address, true],
+                            createVaultArgs: [this.deployer.address],
                         }
                     );
 
@@ -118,20 +115,20 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     );
 
                     for (let address of [
-                        this.deployer.address,
-                        this.subject.address,
-                        this.erc20Vault.address,
+                        this.subject.address
                     ]) {
                         await mint(
                             "WETH",
                             address,
-                            BigNumber.from(10).pow(18).mul(3000)
+                            BigNumber.from(10).pow(18).mul(10)
                         );
                         await this.weth.approve(
                             address,
                             ethers.constants.MaxUint256
                         );
                     }
+                    this.healthFactor = BigNumber.from(10).pow(9).mul(2);
+                    this.squeethVaultNft = squeethVaultNft;
 
                     return this.subject;
                 }
@@ -164,8 +161,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                                 .connect(signer)
                                 .initialize(
                                     this.nft,
-                                    [this.weth.address, this.squeeth.address],
-                                    true
+                                    [this.weth.address]
                                 )
                         ).to.emit(this.subject, "Initialized");
                     }
@@ -180,8 +176,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                                 .connect(signer)
                                 .initialize(
                                     this.nft,
-                                    [this.weth.address, this.squeeth.address],
-                                    true
+                                    [this.weth.address]
                                 )
                         ).to.not.be.reverted;
                     }
@@ -199,8 +194,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.initialize(
                                 this.nft,
-                                [this.weth.address, this.squeeth.address],
-                                true
+                                [this.weth.address]
                             )
                         ).to.be.revertedWith(Exceptions.INIT);
                     });
@@ -214,27 +208,14 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when tokens are not sorted", () => {
-                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                describe("when there are two tokens", () => {
+                    it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
                         await expect(
                             this.subject.initialize(
                                 this.nft,
-                                [this.squeeth.address, this.weth.address],
-                                true
+                                [this.weth.address, this.squeeth.address]
                             )
-                        ).to.be.revertedWith(Exceptions.INVARIANT);
-                    });
-                });
-
-                describe("when tokens are not unique", () => {
-                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
-                        await expect(
-                            this.subject.initialize(
-                                this.nft,
-                                [this.weth.address, this.weth.address],
-                                true
-                            )
-                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                        ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
                     });
                 });
 
@@ -243,47 +224,9 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.initialize(
                                 0,
-                                [this.weth.address, this.squeeth.address],
-                                true
+                                [this.weth.address]
                             )
                         ).to.be.revertedWith(Exceptions.VALUE_ZERO);
-                    });
-                });
-
-                describe("when setting tokens.length != 2", () => {
-                    it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
-                        await withSigner(
-                            this.squeethVaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(
-                                            this.nft,
-                                            [
-                                                this.weth.address,
-                                                this.squeeth.address,
-                                                this.usdc.address,
-                                            ],
-                                            true
-                                        )
-                                ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
-                            }
-                        );
-                        await withSigner(
-                            this.squeethVaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(
-                                            this.nft,
-                                            [this.weth.address],
-                                            true
-                                        )
-                                ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
-                            }
-                        );
                     });
                 });
 
@@ -295,7 +238,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                                 await expect(
                                     this.subject
                                         .connect(signer)
-                                        .initialize(this.nft, [], true)
+                                        .initialize(this.nft, [])
                                 ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
                             }
                         );
@@ -305,7 +248,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .revokePermissions(this.squeeth.address, [
+                            .revokePermissions(this.weth.address, [
                                 PermissionIdsLibrary.ERC20_VAULT_TOKEN,
                             ]);
                         await withSigner(
@@ -317,55 +260,23 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                                         .initialize(
                                             this.nft,
                                             [
-                                                this.weth.address,
-                                                this.squeeth.address,
-                                            ],
-                                            true
+                                                this.weth.address
+                                            ]
                                         )
                                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
                             }
                         );
                     });
                 });
-                describe("when tokens array is not equal to [weth, squeeth]", () => {
+                describe("when tokens array is not equal to [weth]", () => {
                     it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
-                        let tokens = [this.weth.address, this.usdc.address]
-                            .map((t) => t.toLowerCase())
-                            .sort();
-
                         await withSigner(
                             this.squeethVaultGovernance.address,
                             async (signer) => {
                                 await expect(
                                     this.subject
                                         .connect(signer)
-                                        .initialize(this.nft, tokens, true)
-                                ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                            }
-                        );
-                        tokens = [this.squeeth.address, this.usdc.address]
-                            .map((t) => t.toLowerCase())
-                            .sort();
-                        await withSigner(
-                            this.squeethVaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(this.nft, tokens, true)
-                                ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                            }
-                        );
-                        tokens = [this.dai.address, this.usdc.address]
-                            .map((t) => t.toLowerCase())
-                            .sort();
-                        await withSigner(
-                            this.squeethVaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(this.nft, tokens, true)
+                                        .initialize(this.nft, [this.usdc.address])
                                 ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
                             }
                         );
@@ -434,421 +345,6 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#takeLong", () => {
-            let one: BigNumber = BigNumber.from(10).pow(18);
-            let wethAmountIn = one.mul(64);
-            let minWPowerPerpAmountOut = 0;
-            beforeEach(async () => {
-                let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
-
-                await setupVault(hre, nft, "SqueethVaultGovernance", {
-                    createVaultArgs: [this.deployer.address, false],
-                });
-                const squeethVault = await this.vaultRegistry.vaultForNft(nft);
-                this.subject = await ethers.getContractAt(
-                    "SqueethVault",
-                    squeethVault
-                );
-
-                await this.weth.approve(this.subject.address, wethAmountIn);
-            });
-
-            it("gets squeeth wPowerPerp tokens from the oSQTH/WETH pool", async () => {
-                let { wPowerPerpAmount: initialAmount } =
-                    await this.subject.longPositionInfo();
-                assert(initialAmount.eq(0));
-
-                await expect(
-                    this.subject
-                        .connect(this.deployer)
-                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                ).to.not.be.reverted;
-
-                await this.weth.approve(this.subject.address, 0);
-
-                let { wPowerPerpAmount } =
-                    await this.subject.longPositionInfo();
-
-                expect(wPowerPerpAmount.gt(0)).to.be.true;
-
-                let usdcSqthSqrtPrice = await this.subject.getSpotSqrtPrice();
-                let usdcWethPow2SqrtPrice =
-                    await this.subject.getSqrtIndexPrice();
-                let Q192 = BigNumber.from(2).pow(192);
-
-                let usdcSqthPrice = usdcSqthSqrtPrice.pow(2).div(Q192);
-                let usdcWethPow2Price = usdcWethPow2SqrtPrice.pow(2).div(Q192);
-
-                // delta is less than or equal 5% wethAmountIn
-                let eps = BigNumber.from(5);
-                expect(
-                    await approxEqual(
-                        wethAmountIn,
-                        usdcSqthPrice
-                            .mul(wPowerPerpAmount)
-                            .div(usdcWethPow2Price),
-                        eps
-                    )
-                ).to.be.true;
-
-                let vaultSqthBalance = await this.squeeth.balanceOf(
-                    this.subject.address
-                );
-                expect(
-                    approxEqual(
-                        wPowerPerpAmount,
-                        vaultSqthBalance,
-                        BigNumber.from(1)
-                    )
-                );
-            });
-
-            it("multiple takeLong calls increse total wPowerPerp received amount", async () => {
-                let { wPowerPerpAmount: initialAmount } =
-                    await this.subject.longPositionInfo();
-                assert(initialAmount.eq(0));
-                const wPowerPerpAmountFirst = await this.subject
-                    .connect(this.deployer)
-                    .callStatic.takeLong(wethAmountIn, minWPowerPerpAmountOut);
-                await expect(
-                    this.subject
-                        .connect(this.deployer)
-                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                ).to.not.be.reverted;
-
-                await this.weth.approve(this.subject.address, wethAmountIn);
-                const wPowerPerpAmountSecond = await this.subject
-                    .connect(this.deployer)
-                    .callStatic.takeLong(wethAmountIn, minWPowerPerpAmountOut);
-                await expect(
-                    this.subject
-                        .connect(this.deployer)
-                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                ).to.not.be.reverted;
-
-                let { wPowerPerpAmount } =
-                    await this.subject.longPositionInfo();
-
-                expect(wPowerPerpAmount).to.be.eq(
-                    wPowerPerpAmountFirst.add(wPowerPerpAmountSecond)
-                );
-
-                let vaultSqthBalance = await this.squeeth.balanceOf(
-                    this.subject.address
-                );
-                expect(
-                    approxEqual(
-                        wPowerPerpAmount,
-                        vaultSqthBalance,
-                        BigNumber.from(1)
-                    )
-                );
-            });
-
-            it("emits LongTaken event", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.deployer)
-                        .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                ).to.emit(this.subject, "LongTaken");
-            });
-
-            describe("access control:", () => {
-                it("allowed: vault owner", async () => {
-                    await expect(
-                        this.subject
-                            .connect(this.deployer)
-                            .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                    ).to.not.be.reverted;
-                });
-                it("allowed: approved account", async () => {
-                    let account = randomAddress();
-                    let nft = Number(await this.vaultRegistry.vaultsCount());
-                    await this.vaultRegistry
-                        .connect(this.deployer)
-                        .approve(account, nft);
-                    await this.weth
-                        .connect(this.deployer)
-                        .transfer(account, wethAmountIn);
-                    await withSigner(account, async (s) => {
-                        await this.weth
-                            .connect(s)
-                            .approve(this.subject.address, wethAmountIn);
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                        ).to.not.be.reverted;
-                    });
-                });
-                it("denied: other address", async () => {
-                    await withSigner(randomAddress(), async (s) => {
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-            });
-
-            describe("edge cases:", () => {
-                describe("when position is short", () => {
-                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
-                        let nft =
-                            Number(await this.vaultRegistry.vaultsCount()) + 1;
-
-                        await setupVault(hre, nft, "SqueethVaultGovernance", {
-                            createVaultArgs: [this.deployer.address, true],
-                        });
-                        const squeethVault =
-                            await this.vaultRegistry.vaultForNft(nft);
-                        this.subject = await ethers.getContractAt(
-                            "SqueethVault",
-                            squeethVault
-                        );
-
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                        ).to.be.revertedWith(Exceptions.INVALID_STATE);
-                    });
-                });
-
-                describe("when wethAmountIn is less than or equal dust amount of squeeth vault", () => {
-                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
-                        let newWethAmountIn = (await this.subject.DUST()).sub(
-                            1
-                        );
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .takeLong(
-                                    newWethAmountIn,
-                                    minWPowerPerpAmountOut
-                                )
-                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
-                    });
-                });
-
-                describe("when wethAmountIn is greater than balance of msg.sender", () => {
-                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
-                        let newWethAmountIn = (
-                            await this.weth.balanceOf(this.deployer.address)
-                        ).add(1);
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .takeLong(
-                                    newWethAmountIn,
-                                    minWPowerPerpAmountOut
-                                )
-                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
-                    });
-                });
-
-                describe("when wethAmountIn is greater than allowance from msg.sender to squeethVault", () => {
-                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
-                        await this.weth.approve(
-                            this.subject.address,
-                            wethAmountIn.sub(1)
-                        );
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .takeLong(wethAmountIn, minWPowerPerpAmountOut)
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-            });
-        });
-
-        describe("#closeLong", () => {
-            let one: BigNumber = BigNumber.from(10).pow(18);
-            let minWethAmountOut = 0;
-            let dust: BigNumber;
-            beforeEach(async () => {
-                let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
-
-                await setupVault(hre, nft, "SqueethVaultGovernance", {
-                    createVaultArgs: [this.deployer.address, false],
-                });
-                const squeethVault = await this.vaultRegistry.vaultForNft(nft);
-                this.subject = await ethers.getContractAt(
-                    "SqueethVault",
-                    squeethVault
-                );
-
-                let wethAmountIn = one.mul(64);
-                let minWPowerPerpAmountOut = 0;
-
-                await this.weth.approve(this.subject.address, wethAmountIn);
-
-                await this.subject
-                    .connect(this.deployer)
-                    .takeLong(wethAmountIn, minWPowerPerpAmountOut);
-
-                await this.weth.approve(this.subject.address, 0);
-                dust = await this.subject.DUST();
-            });
-            it("sells squeeth wPowerPerp tokens back to the oSQTH/WETH pool", async () => {
-                let { wPowerPerpAmount: initialAmount } =
-                    await this.subject.longPositionInfo();
-                assert(initialAmount.gt(dust));
-                await this.subject.closeLong(initialAmount, minWethAmountOut);
-
-                let { wPowerPerpAmount: latestAmount } =
-                    await this.subject.longPositionInfo();
-                // 1% >= deviation
-                expect(
-                    approxEqual(
-                        latestAmount,
-                        BigNumber.from(0),
-                        BigNumber.from(1)
-                    )
-                );
-
-                let vaultSqthBalance = await this.squeeth.balanceOf(
-                    this.subject.address
-                );
-                expect(vaultSqthBalance.lte(dust));
-            });
-
-            it("multiple closeLong calls decrese total wPowerPerp amount aquired by the user", async () => {
-                let { wPowerPerpAmount: initialAmount } =
-                    await this.subject.longPositionInfo();
-                assert(initialAmount.gt(dust));
-
-                await this.subject.closeLong(
-                    initialAmount.div(2),
-                    minWethAmountOut
-                );
-                await this.subject.closeLong(
-                    initialAmount.div(2),
-                    minWethAmountOut
-                );
-
-                let { wPowerPerpAmount: latestAmount } =
-                    await this.subject.longPositionInfo();
-                // 1% >= deviation
-                expect(
-                    approxEqual(
-                        latestAmount,
-                        BigNumber.from(0),
-                        BigNumber.from(1)
-                    )
-                );
-
-                let vaultSqthBalance = await this.squeeth.balanceOf(
-                    this.subject.address
-                );
-                expect(vaultSqthBalance.lte(dust));
-            });
-
-            it("emits LongClosed event", async () => {
-                let { wPowerPerpAmount: initialAmount } =
-                    await this.subject.longPositionInfo();
-                assert(initialAmount.gt(dust));
-
-                await expect(
-                    this.subject
-                        .connect(this.deployer)
-                        .closeLong(initialAmount, minWethAmountOut)
-                ).to.emit(this.subject, "LongClosed");
-            });
-
-            describe("access control:", () => {
-                it("allowed: vault owner", async () => {
-                    await expect(
-                        this.subject
-                            .connect(this.deployer)
-                            .closeLong(dust.add(1), minWethAmountOut)
-                    ).to.not.be.reverted;
-                });
-                it("allowed: approved account", async () => {
-                    let account = randomAddress();
-                    let nft = Number(await this.vaultRegistry.vaultsCount());
-                    await this.vaultRegistry
-                        .connect(this.deployer)
-                        .approve(account, nft);
-                    await withSigner(account, async (s) => {
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .closeLong(dust.add(1), minWethAmountOut)
-                        ).to.not.be.reverted;
-                    });
-                });
-                it("denied: other address", async () => {
-                    await withSigner(randomAddress(), async (s) => {
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .closeLong(dust.add(1), minWethAmountOut)
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-            });
-
-            describe("edge cases:", () => {
-                describe("when position is short", () => {
-                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
-                        let nft =
-                            Number(await this.vaultRegistry.vaultsCount()) + 1;
-
-                        await setupVault(hre, nft, "SqueethVaultGovernance", {
-                            createVaultArgs: [this.deployer.address, true],
-                        });
-                        const squeethVault =
-                            await this.vaultRegistry.vaultForNft(nft);
-                        this.subject = await ethers.getContractAt(
-                            "SqueethVault",
-                            squeethVault
-                        );
-
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .closeLong(dust.add(1), minWethAmountOut)
-                        ).to.be.revertedWith(Exceptions.INVALID_STATE);
-                    });
-                });
-
-                describe("when wPowerPerpAmount is less than or equal dust amount of squeeth vault", () => {
-                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
-                        let newWPowerPerpAmount = (
-                            await this.subject.DUST()
-                        ).sub(1);
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .closeLong(
-                                    newWPowerPerpAmount,
-                                    minWethAmountOut
-                                )
-                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
-                    });
-                });
-
-                describe("when wPowerPerpAmount is greater than balance of squeeth vault", () => {
-                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
-                        let newWPowerPerpAmount = (
-                            await this.squeeth.balanceOf(this.subject.address)
-                        ).add(1);
-                        await expect(
-                            this.subject
-                                .connect(this.deployer)
-                                .closeLong(
-                                    newWPowerPerpAmount,
-                                    minWethAmountOut
-                                )
-                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
-                    });
-                });
-            });
-        });
-
         // describe.only("write", () => {
         //     it("", async () => {
         //         console.log(await this.subject.write());
@@ -856,150 +352,29 @@ contract<SqueethVault, DeployOptions, CustomContext>(
         // });
 
         describe("#takeShort", () => {
-            let one: BigNumber = BigNumber.from(10).pow(18);
-            let dust: BigNumber;
-            let wPowerPerpExpectedAmount = one.mul(1);
-            let wethDebtAmount = one.mul(10);
-            let minWethAmountOut = BigNumber.from(0);
-            beforeEach(async () => {
-                let nft = Number(await this.vaultRegistry.vaultsCount()) + 1;
-
-                await setupVault(hre, nft, "SqueethVaultGovernance", {
-                    createVaultArgs: [this.deployer.address, true],
-                });
-                const squeethVault = await this.vaultRegistry.vaultForNft(nft);
-                this.subject = await ethers.getContractAt(
-                    "SqueethVault",
-                    squeethVault
-                );
-
-                dust = await this.subject.DUST();
-                await this.weth.approve(this.subject.address, wethDebtAmount);
-            });
-
-            it("mints wPowerPerp using weth as a collateral, than immediately sells wPowerPerp to the oSQTH/WETH univ3 pool", async () => {
-                let {
-                    wPowerPerpAmount: initialWPowerPerpAmount,
-                    wethAmount: initialWethAmount,
-                    vaultId: id,
-                } = await this.subject.shortPositionInfo();
-                expect(initialWPowerPerpAmount.eq(0)).to.be.true;
-                expect(initialWethAmount.eq(0)).to.be.true;
-                expect(id.eq(0)).to.be.true;
-
-                let { wPowerPerpMintedAmount, wethAmountOut } =
-                    await this.subject.callStatic.takeShort(
-                        wPowerPerpExpectedAmount,
-                        wethDebtAmount,
-                        minWethAmountOut
-                    );
-                expect(wPowerPerpMintedAmount.gt(0)).to.be.true;
-                expect(wethAmountOut.gt(0)).to.be.true;
-
-                // sold all minted squeeth
+            it("mints wPowerPerp using entire weth supply as a collateral", async () => {
+                let wethBalance = await this.weth.balanceOf(this.subject.address);
+                expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
+                expect((await this.subject.wPowerPerpDebtDenormalized()).eq(0)).to.be.true;
+                expect(wethBalance.gt(0)).to.be.true;
                 expect(
-                    await this.squeeth.balanceOf(this.subject.address)
-                ).to.eq(BigNumber.from(0));
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)
+                ).to.be.true;
 
-                await this.subject.takeShort(
-                    wPowerPerpExpectedAmount,
-                    wethDebtAmount,
-                    minWethAmountOut
-                );
-
-                let { wPowerPerpAmount, wethAmount, vaultId } =
-                    await this.subject.shortPositionInfo();
-                expect(wPowerPerpAmount.gt(0)).to.be.true;
-                expect(wethAmount.gt(0)).to.be.true;
-                expect(vaultId.gt(0)).to.be.true;
-            });
-
-            it("multiple takeShort calls increase the total amount of minted wPowerPerp and increases the amount of weth, which comes from selling the minted wPowerPerp to a univ3 pool", async () => {
-                let newWethDebtAmount = wethDebtAmount.mul(2);
-                let {
-                    wPowerPerpAmount: initialWPowerPerpAmount,
-                    wethAmount: initialWethAmount,
-                    vaultId: id,
-                } = await this.subject.shortPositionInfo();
-                expect(initialWPowerPerpAmount.eq(0)).to.be.true;
-                expect(initialWethAmount.eq(0)).to.be.true;
-                expect(id.eq(0)).to.be.true;
-
-                await this.weth.approve(
-                    this.subject.address,
-                    newWethDebtAmount
-                );
-
-                let {
-                    wPowerPerpMintedAmount: firstSqthMinted,
-                    wethAmountOut: firstWethMinted,
-                } = await this.subject.callStatic.takeShort(
-                    wPowerPerpExpectedAmount.div(2),
-                    newWethDebtAmount.div(2),
-                    minWethAmountOut
-                );
-                await this.subject.takeShort(
-                    wPowerPerpExpectedAmount.div(2),
-                    newWethDebtAmount.div(2),
-                    minWethAmountOut
-                );
-
-                let {
-                    wPowerPerpMintedAmount: secondSqthMinted,
-                    wethAmountOut: secondWethMinted,
-                } = await this.subject.callStatic.takeShort(
-                    wPowerPerpExpectedAmount.div(2),
-                    newWethDebtAmount.div(2),
-                    minWethAmountOut
-                );
-                await this.subject.takeShort(
-                    wPowerPerpExpectedAmount.div(2),
-                    newWethDebtAmount.div(2),
-                    minWethAmountOut
-                );
-
-                let { wPowerPerpAmount, wethAmount, vaultId } =
-                    await this.subject.shortPositionInfo();
-                expect(wPowerPerpAmount.gt(0)).to.be.true;
-                expect(wethAmount.gt(0)).to.be.true;
-                expect(vaultId.gt(0)).to.be.true;
-
+                await this.subject.takeShort(this.healthFactor);
+                let mintedSqueeth = await this.squeeth.balanceOf(this.subject.address);
+                expect((await this.subject.shortVaultId()).gt(0)).to.be.true;
+                expect((await this.subject.totalCollateral()).eq(wethBalance)).to.be.true;
+                expect((await this.subject.wPowerPerpDebtDenormalized()).gt(mintedSqueeth)).to.be.true;
+                expect(mintedSqueeth.gt(0)).to.be.true;
                 expect(
-                    approxEqual(
-                        wPowerPerpAmount,
-                        firstSqthMinted.add(secondSqthMinted),
-                        BigNumber.from(1)
-                    )
-                );
-
-                // sold all minted squeeth
-                expect(
-                    await this.squeeth.balanceOf(this.subject.address)
-                ).to.eq(BigNumber.from(0));
-
-                let deployerWethBalance = BigNumber.from(10).pow(18).mul(3000);
-                let realWethDeployerBalance = await this.weth.balanceOf(
-                    this.deployer.address
-                );
-                let expectedWethDeployerBalance = deployerWethBalance
-                    .sub(newWethDebtAmount)
-                    .add(firstWethMinted)
-                    .add(secondWethMinted);
-                expect(
-                    approxEqual(
-                        realWethDeployerBalance,
-                        expectedWethDeployerBalance,
-                        BigNumber.from(1)
-                    )
-                );
+                    (await this.weth.balanceOf(this.subject.address)).eq(0)).to.be.true;
             });
 
             it("emits ShortTaken event", async () => {
                 await expect(
                     this.subject.takeShort(
-                        wPowerPerpExpectedAmount,
-                        wethDebtAmount,
-                        minWethAmountOut
+                        this.healthFactor
                     )
                 ).to.emit(this.subject, "ShortTaken");
             });
@@ -1010,33 +385,22 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         this.subject
                             .connect(this.deployer)
                             .takeShort(
-                                wPowerPerpExpectedAmount,
-                                wethDebtAmount,
-                                minWethAmountOut
+                                this.healthFactor
                             )
                     ).to.not.be.reverted;
                 });
 
                 it("allowed: approved account", async () => {
                     let account = randomAddress();
-                    let nft = Number(await this.vaultRegistry.vaultsCount());
                     await this.vaultRegistry
                         .connect(this.deployer)
-                        .approve(account, nft);
-                    await this.weth
-                        .connect(this.deployer)
-                        .transfer(account, wethDebtAmount);
+                        .approve(account, this.squeethVaultNft);
                     await withSigner(account, async (s) => {
-                        await this.weth
-                            .connect(s)
-                            .approve(this.subject.address, wethDebtAmount);
                         await expect(
                             this.subject
                                 .connect(s)
                                 .takeShort(
-                                    wPowerPerpExpectedAmount,
-                                    wethDebtAmount,
-                                    minWethAmountOut
+                                    this.healthFactor
                                 )
                         ).to.not.be.reverted;
                     });
@@ -1044,26 +408,122 @@ contract<SqueethVault, DeployOptions, CustomContext>(
 
                 it("denied: any other address", async () => {
                     await withSigner(randomAddress(), async (s) => {
-                        await this.weth.approve(
-                            this.subject.address,
-                            wethDebtAmount
-                        );
                         await expect(
                             this.subject
                                 .connect(s)
                                 .takeShort(
-                                    wPowerPerpExpectedAmount,
-                                    wethDebtAmount,
-                                    minWethAmountOut
+                                    this.healthFactor
                                 )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
 
+            describe("edge cases:", () => {
+                describe("when short is taken twice", () => {
+                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
+                        await this.subject.takeShort(this.healthFactor);
+                        await expect(this.subject.takeShort(this.healthFactor)).to.be.revertedWith(Exceptions.INVALID_STATE);;
+                    });
+                });
+            });
+        });
+
+
+        describe.only("#closeShort", () => {
+            it("closes position using oSQTH left on vault", async () => {
+                await this.subject.takeShort(this.healthFactor);
+
+                let squeethBalance = await this.squeeth.balanceOf(this.subject.address);
+                expect((await this.subject.wPowerPerpDebtDenormalized()).gte(squeethBalance)).to.be.true;
+                
+                await this.subject.closeShort();
+
+                expect((await this.subject.shortVaultId()).eq(0)).to.be.true;
+                expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
+                expect((await this.subject.wPowerPerpDebtDenormalized()).eq(0)).to.be.true;
+                expect(
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
+                expect(
+                    (await this.weth.balanceOf(this.subject.address)).gt(0)).to.be.true;
+            });
+
+            it("closes position using oSQTH from flash swap", async () => {
+                await this.subject.takeShort(this.healthFactor);
+                let squeethBalance = await this.squeeth.balanceOf(this.subject.address)
+                console.log(squeethBalance.toString());
+                await withSigner(this.subject.address, async (s) => {
+                    await this.squeeth
+                        .connect(s)
+                        .transfer(this.erc20Vault.address, squeethBalance)
+                });
+                console.log((await this.squeeth.balanceOf(this.subject.address)).toString());
+                expect(
+                    (await this.weth.balanceOf(this.subject.address)).eq(0)
+                ).to.be.true;
+                expect(
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)
+                ).to.be.true;
+
+                await this.subject.closeShort();
+
+                expect((await this.subject.wPowerPerpDebtDenormalized()).gte(squeethBalance)).to.be.true;
+            });
+
+            it("emits ShortClosed event", async () => {
+                await expect(
+                    this.subject.takeShort(
+                        this.healthFactor
+                    ))
+                await expect(
+                    this.subject.closeShort()
+                ).to.emit(this.subject, "ShortClosed");
+            });
+
+            // describe("access control:", () => {
+            //     it("allowed: vault owner", async () => {
+            //         await expect(
+            //             this.subject
+            //                 .connect(this.deployer)
+            //                 .takeShort(
+            //                     this.healthFactor
+            //                 )
+            //         ).to.not.be.reverted;
+            //     });
+
+            //     it("allowed: approved account", async () => {
+            //         let account = randomAddress();
+            //         let nft = Number(await this.vaultRegistry.vaultsCount());
+            //         await this.vaultRegistry
+            //             .connect(this.deployer)
+            //             .approve(account, nft);
+            //         await withSigner(account, async (s) => {
+            //             await expect(
+            //                 this.subject
+            //                     .connect(s)
+            //                     .takeShort(
+            //                         this.healthFactor
+            //                     )
+            //             ).to.not.be.reverted;
+            //         });
+            //     });
+
+            //     it("denied: any other address", async () => {
+            //         await withSigner(randomAddress(), async (s) => {
+            //             await expect(
+            //                 this.subject
+            //                     .connect(s)
+            //                     .takeShort(
+            //                         this.healthFactor
+            //                     )
+            //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            //         });
+            //     });
+            // });
+
             describe("edge cases:", () => {});
         });
 
-        //integrationVaultBehavior.call(this, {});
+        // integrationVaultBehavior.call(this, {});
     }
 );

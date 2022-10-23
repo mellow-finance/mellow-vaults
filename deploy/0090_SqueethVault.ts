@@ -12,10 +12,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, squeethController, uniswapV3Router } = await getNamedAccounts();
+    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth } = await getNamedAccounts();
     const { address: singleton } = await deploy("SqueethVault", {
         from: deployer,
-        args: [],
+        args: [uniswapV3Factory, weth],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
@@ -31,6 +31,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             {
                 controller: squeethController,
                 router: uniswapV3Router,
+                slippageD9: BigNumber.from(10).pow(7),
+                twapPeriod: BigNumber.from(420)
             },
         ],
         log: true,
