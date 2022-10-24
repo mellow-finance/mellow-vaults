@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth } = await getNamedAccounts();
+    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth, uniswapWethUsdcPool } = await getNamedAccounts();
     const { address: singleton } = await deploy("SqueethVault", {
         from: deployer,
         args: [uniswapV3Factory, weth],
@@ -32,7 +32,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 controller: squeethController,
                 router: uniswapV3Router,
                 slippageD9: BigNumber.from(10).pow(7),
-                twapPeriod: BigNumber.from(420)
+                twapPeriod: BigNumber.from(420),
+                wethBorrowPool: uniswapWethUsdcPool
             },
         ],
         log: true,

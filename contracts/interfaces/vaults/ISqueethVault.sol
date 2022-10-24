@@ -22,7 +22,7 @@ interface ISqueethVault is IIntegrationVault {
     
     function totalCollateral() external view returns (uint256);
     
-    function wPowerPerpDebtDenormalized() external view returns (uint256);
+    function wPowerPerpDebt() external view returns (uint256);
 
     function wPowerPerp() external view returns (address);
     

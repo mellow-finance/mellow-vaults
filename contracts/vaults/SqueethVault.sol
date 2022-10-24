@@ -23,7 +23,6 @@ import "../interfaces/external/squeeth/IWETH9.sol";
 import {IUniswapV3Pool as IUniV3Pool} from "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
 import "./IntegrationVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces Opyn Squeeth protocol in the integration layer.
 contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault, IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments {
@@ -40,10 +39,11 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     address public weth;
     address public shortPowerPerp;
     address public wPowerPerpPool;
+    address public wethBorrowPool;
 
     uint256 public shortVaultId;
     uint256 public totalCollateral;
-    uint256 public wPowerPerpDebtDenormalized;
+    uint256 public wPowerPerpDebt;
     
     constructor(
         address _factory,
@@ -59,7 +59,6 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         if (shortVaultId != 0) {
             minTokenAmounts[0] += totalCollateral;
             uint256 normalizationFactorD18 = controller.getExpectedNormalizationFactor();
-            uint256 wPowerPerpDebt = FullMath.mulDiv(wPowerPerpDebtDenormalized, normalizationFactorD18, D18);
             uint256 wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this)); 
             if (wPowerPerpDebt > wPowerPerpBalance) {
                 minTokenAmounts[0] -= FullMath.mulDiv(wPowerPerpDebt - wPowerPerpBalance, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
@@ -116,30 +115,38 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         );
 
         shortVaultId = vaultId;
-        totalCollateral += wethAmount;
-        wPowerPerpDebtDenormalized += FullMath.mulDiv(wPowerPerpAmountExpected, D18, controller.getExpectedNormalizationFactor());
-        console.log("take short weth balance:");
-        console.log(IERC20(weth).balanceOf(address(this)));
+        totalCollateral = wethAmount;
+        wPowerPerpDebt = wPowerPerpAmountExpected;
 
         emit ShortTaken(tx.origin, msg.sender); //TODO: add data
     }
 
     function closeShort() external nonReentrant {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(shortVaultId != 0, ExceptionsLibrary.INVALID_STATE);
 
-        console.log("close short weth balance:");
-        console.log(IERC20(weth).balanceOf(address(this)));
-        uint256 wPowerPerpDebt = FullMath.mulDiv(wPowerPerpDebtDenormalized, controller.getExpectedNormalizationFactor(), D18);
         uint256 wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this)); 
+        bool flashLoanNeeded = false;
+        uint256 wPowerPerpRemaining;
         if (wPowerPerpDebt > wPowerPerpBalance) {
-            _flashRepayDebt(wPowerPerpDebt - wPowerPerpBalance) ;
+            wPowerPerpRemaining = wPowerPerpDebt - wPowerPerpBalance;
+            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+            ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+            uint256 wethMax = FullMath.mulDiv(wethNeeded, CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
+            if (IERC20(weth).balanceOf(address(this)) < wethMax) {
+                flashLoanNeeded = true;
+                _flashRepayDebt(wethMax - IERC20(weth).balanceOf(address(this)), wPowerPerpRemaining) ;
+            }
         } else {
-            _repayDebt();
+            wPowerPerpRemaining = 0;
+        }
+        if (!flashLoanNeeded) {
+            _repayDebt(wPowerPerpRemaining);
         }
         
         shortVaultId = 0;
         totalCollateral = 0;
-        wPowerPerpDebtDenormalized = 0;
+        wPowerPerpDebt = 0;
         emit ShortClosed(tx.origin, msg.sender); //TODO: add data
     }
     
@@ -157,7 +164,6 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH); //TODO: is it necessary 
         if (shortVaultId != 0) {
-            uint wPowerPerpDebt = FullMath.mulDiv(wPowerPerpDebtDenormalized, controller.getExpectedNormalizationFactor(), D18);
             uint256 wPowerPerpToMint = FullMath.mulDiv(tokenAmounts[0], wPowerPerpDebt, totalCollateral);
             
             IWETH9(weth).withdraw(tokenAmounts[0]);
@@ -167,32 +173,31 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
                 0
             );
             totalCollateral += tokenAmounts[0];
-            wPowerPerpDebtDenormalized += FullMath.mulDiv(wPowerPerpToMint, D18, controller.getExpectedNormalizationFactor());
+            wPowerPerpDebt += FullMath.mulDiv(wPowerPerpToMint, D18, controller.getExpectedNormalizationFactor());
         }
         actualTokenAmounts = tokenAmounts;
     }
 
     struct FlashCallbackData {
         uint256 amountBorrowed;
+        uint256 amountToSwap;
         PoolAddress.PoolKey poolKey;
     }
 
-    function _flashRepayDebt(uint256 wPowerPerpToBorrow) internal {
-        IUniV3Pool pool = IUniV3Pool(wPowerPerpPool);
+    function _flashRepayDebt(uint256 wethToBorrow, uint256 wPowerPerpToSwap) internal {
+        ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+        IUniV3Pool pool = IUniV3Pool(protocolParams.wethBorrowPool);
         PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: weth, token1: wPowerPerp, fee: pool.fee()});
+            PoolAddress.PoolKey({token0: pool.token0(), token1: pool.token1(), fee: pool.fee()});
         bool wethIsFirst = pool.token0() == weth;
-        console.log(pool.token0());
-        console.log(pool.token1());
-        console.log(weth);
-        console.log(wethIsFirst);
         pool.flash(
             address(this),
-            wethIsFirst ? 0 : wPowerPerpToBorrow,
-            wethIsFirst ? wPowerPerpToBorrow : 0,
+            wethIsFirst ? wethToBorrow : 0,
+            wethIsFirst ? 0 : wethToBorrow,
             abi.encode(
                 FlashCallbackData({
-                    amountBorrowed: wPowerPerpToBorrow,
+                    amountBorrowed: wethToBorrow,
+                    amountToSwap: wPowerPerpToSwap,
                     poolKey: poolKey
                 })
             )
@@ -207,39 +212,36 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         FlashCallbackData memory decoded = abi.decode(data, (FlashCallbackData));
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
 
-        console.log("weth balance:");
-        console.log(IERC20(weth).balanceOf(address(this)));
-        console.log("sqth balance:");
-        console.log(IERC20(wPowerPerp).balanceOf(address(this)));
-        console.log("DEBT:");
-        console.log(wPowerPerpDebtDenormalized);
-        console.log("COLLATERAL:");
-        console.log(totalCollateral);
-        _repayDebt();
-        uint256 wethNeeded = FullMath.mulDiv(decoded.amountBorrowed, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+        _repayDebt(decoded.amountToSwap);
+
         ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
-        uint256 wethMax = FullMath.mulDiv(wethNeeded  - IERC20(weth).balanceOf(address(this)), CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
-            
-        ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
-            tokenIn: weth,
-            tokenOut: wPowerPerp,
-            fee: IUniV3Pool(wPowerPerpPool).fee(),
-            recipient: address(this),
-            deadline: block.timestamp + 1,
-            amountOut: decoded.amountBorrowed,
-            amountInMaximum: wethMax,
-            sqrtPriceLimitX96: 0
-        });
-
-        IERC20(weth).safeIncreaseAllowance(address(router), decoded.amountBorrowed);
-        router.exactOutputSingle(exactOutputParams);
-        IERC20(weth).safeApprove(address(router), 0);
-
-        pay(wPowerPerp, address(this), msg.sender, decoded.amountBorrowed);
+        uint256 borrowedPlusFees = FullMath.mulDiv(decoded.amountBorrowed, CommonLibrary.DENOMINATOR + protocolParams.slippageD9, CommonLibrary.DENOMINATOR);
+        pay(weth, address(this), msg.sender, borrowedPlusFees);
     }
 
-    function _repayDebt() internal {
-        controller.burnPowerPerpAmount(shortVaultId, wPowerPerpDebtDenormalized, totalCollateral);
+    function _repayDebt(uint256 wPowerPerpRemaining) internal {
+        if (wPowerPerpRemaining > 0) {
+            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+            ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+            uint256 wethMax = FullMath.mulDiv(wethNeeded, CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
+            
+            ISwapRouter.ExactOutputSingleParams memory exactOutputParams = ISwapRouter.ExactOutputSingleParams({
+                tokenIn: weth,
+                tokenOut: wPowerPerp,
+                fee: IUniV3Pool(wPowerPerpPool).fee(),
+                recipient: address(this),
+                deadline: block.timestamp + 1,
+                amountOut: wPowerPerpRemaining,
+                amountInMaximum: wethMax,
+                sqrtPriceLimitX96: 0
+            });
+
+            IERC20(weth).safeIncreaseAllowance(address(router), wethMax);
+            router.exactOutputSingle(exactOutputParams);
+            IERC20(weth).safeApprove(address(router), 0);
+        }
+
+        controller.burnWPowerPerpAmount(shortVaultId, wPowerPerpDebt, totalCollateral);
         IWETH9(weth).deposit{value: totalCollateral}();
     }
 
