@@ -7,7 +7,6 @@ import "../interfaces/vaults/IVoltzVault.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/external/FixedPoint96.sol";
-import "hardhat/console.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
@@ -100,7 +99,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         uint256 lowFixedRateWad = convertTickToFixedRate(currentPosition.tickUpper);
         uint256 highFixedRateWad = convertTickToFixedRate(currentPosition.tickLower);
         uint256 currentFixedRateWad = convertTickToFixedRate(currentTick);
-        console.log("info:", lowFixedRateWad, highFixedRateWad, currentFixedRateWad);
 
         if (lowFixedRateWad + proximityWad <= currentFixedRateWad &&
             currentFixedRateWad + proximityWad <= highFixedRateWad) {

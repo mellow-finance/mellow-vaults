@@ -176,4 +176,10 @@ interface IVoltzVault is IIntegrationVault {
         uint256 fromIndex,
         uint256 toIndex
     );
+
+    /// @notice Emitted when unwind fails
+    /// @param reason Reason of failure
+    event UnwindFail(
+        string reason
+    );
 }
