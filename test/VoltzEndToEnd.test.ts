@@ -335,7 +335,9 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             .connect(this.user2.signer)
             .approve(this.erc20RootVault.address, BigNumber.from(10).pow(27));
 
-        await this.strategy.connect(this.admin).setLogProx(-1000);
+        await this.strategy
+            .connect(this.admin)
+            .setProximityWad("100000000000000000");
         await this.strategy
             .connect(this.admin)
             .setSigmaWad(BigNumber.from("100000000000000000"));

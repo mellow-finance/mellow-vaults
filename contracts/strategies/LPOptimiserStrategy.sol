@@ -25,7 +25,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     // MUTABLE PARAMS
     uint256 internal _sigmaWad; // y (standard deviation parameter in wad 10^18)
     int256 internal _maxPossibleLowerBoundWad; // Maximum Possible Fixed Rate Lower bounds when initiating a rebalance
-    uint256 internal _proximityWad; // x (closeness parameter in wad 10^18) 
+    uint256 internal _proximityWad; // x (closeness parameter in wad 10^18)
 
     // CONSTANTS
     uint256 internal constant MINIMUM_FIXED_RATE = 1e16;
@@ -86,7 +86,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @notice Get the current tick and position ticks and decide whether to rebalance
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck() public view returns (bool) {
-        // 0. Set the local variables 
+        // 0. Set the local variables
         uint256 proximityWad = _proximityWad;
 
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
@@ -100,12 +100,13 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         uint256 highFixedRateWad = convertTickToFixedRate(currentPosition.tickLower);
         uint256 currentFixedRateWad = convertTickToFixedRate(currentTick);
 
-        if (lowFixedRateWad + proximityWad <= currentFixedRateWad &&
-            currentFixedRateWad + proximityWad <= highFixedRateWad) {
+        if (
+            lowFixedRateWad + proximityWad <= currentFixedRateWad &&
+            currentFixedRateWad + proximityWad <= highFixedRateWad
+        ) {
             // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
             return false;
-        }
-        else {
+        } else {
             // 4.2. If current fixed rate is outside bounds, return true (do rebalance)
             return true;
         }
@@ -131,14 +132,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(fixedRateWad)), PRBMathSD59x18.log2(int256(LOG_BASE)));
     }
 
-    function convertTickToFixedRate(int24 tick) public view returns (uint256) {
+    function convertTickToFixedRate(int24 tick) public pure returns (uint256) {
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
 
-        uint256 sqrtRatioWad = FullMath.mulDiv(
-            1e18,
-            FixedPoint96.Q96,
-            sqrtPriceX96
-        );
+        uint256 sqrtRatioWad = FullMath.mulDiv(1e18, FixedPoint96.Q96, sqrtPriceX96);
 
         uint256 fixedRateWad = sqrtRatioWad.mul(sqrtRatioWad);
         return fixedRateWad;
