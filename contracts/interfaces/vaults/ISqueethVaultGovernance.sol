@@ -15,6 +15,7 @@ interface ISqueethVaultGovernance is IVaultGovernance {
         ISwapRouter router;
         uint256 slippageD9;
         uint32 twapPeriod;
+        address wethBorrowPool;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

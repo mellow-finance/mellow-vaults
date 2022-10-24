@@ -307,6 +307,9 @@ const config: HardhatUserConfig = {
         },
         squeethShortPositionHelper: {
             default: "0x3b4095D5ff0e629972CAAa50bd3004B09a1632C5",
+        },
+        uniswapWethUsdcPool: {
+            default: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
         }
     },
 

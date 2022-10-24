@@ -28,6 +28,7 @@ import { assert } from "console";
 type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
+    curveRouter: string;
     preparePush: () => any;
 };
 
@@ -45,6 +46,11 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     this.preparePush = async () => {
                         await sleep(0);
                     };
+
+                    const {
+                        curveRouter
+                    } = await getNamedAccounts();
+                    this.curveRouter = curveRouter;
 
                     const tokens = [this.weth.address, this.squeeth.address]
                         .map((t) => t.toLowerCase())
@@ -355,7 +361,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             it("mints wPowerPerp using entire weth supply as a collateral", async () => {
                 let wethBalance = await this.weth.balanceOf(this.subject.address);
                 expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
-                expect((await this.subject.wPowerPerpDebtDenormalized()).eq(0)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).eq(0)).to.be.true;
                 expect(wethBalance.gt(0)).to.be.true;
                 expect(
                     (await this.squeeth.balanceOf(this.subject.address)).eq(0)
@@ -365,7 +371,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 let mintedSqueeth = await this.squeeth.balanceOf(this.subject.address);
                 expect((await this.subject.shortVaultId()).gt(0)).to.be.true;
                 expect((await this.subject.totalCollateral()).eq(wethBalance)).to.be.true;
-                expect((await this.subject.wPowerPerpDebtDenormalized()).gt(mintedSqueeth)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).eq(mintedSqueeth)).to.be.true;
                 expect(mintedSqueeth.gt(0)).to.be.true;
                 expect(
                     (await this.weth.balanceOf(this.subject.address)).eq(0)).to.be.true;
@@ -396,8 +402,8 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         .connect(this.deployer)
                         .approve(account, this.squeethVaultNft);
                     await withSigner(account, async (s) => {
-                        await expect(
-                            this.subject
+                        expect(
+                            await this.subject
                                 .connect(s)
                                 .takeShort(
                                     this.healthFactor
@@ -430,18 +436,18 @@ contract<SqueethVault, DeployOptions, CustomContext>(
         });
 
 
-        describe.only("#closeShort", () => {
+        describe("#closeShort", () => {
             it("closes position using oSQTH left on vault", async () => {
                 await this.subject.takeShort(this.healthFactor);
 
                 let squeethBalance = await this.squeeth.balanceOf(this.subject.address);
-                expect((await this.subject.wPowerPerpDebtDenormalized()).gte(squeethBalance)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).eq(squeethBalance)).to.be.true;
                 
                 await this.subject.closeShort();
 
                 expect((await this.subject.shortVaultId()).eq(0)).to.be.true;
                 expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
-                expect((await this.subject.wPowerPerpDebtDenormalized()).eq(0)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).eq(0)).to.be.true;
                 expect(
                     (await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
                 expect(
@@ -451,13 +457,11 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             it("closes position using oSQTH from flash swap", async () => {
                 await this.subject.takeShort(this.healthFactor);
                 let squeethBalance = await this.squeeth.balanceOf(this.subject.address)
-                console.log(squeethBalance.toString());
                 await withSigner(this.subject.address, async (s) => {
                     await this.squeeth
                         .connect(s)
                         .transfer(this.erc20Vault.address, squeethBalance)
                 });
-                console.log((await this.squeeth.balanceOf(this.subject.address)).toString());
                 expect(
                     (await this.weth.balanceOf(this.subject.address)).eq(0)
                 ).to.be.true;
@@ -467,7 +471,12 @@ contract<SqueethVault, DeployOptions, CustomContext>(
 
                 await this.subject.closeShort();
 
-                expect((await this.subject.wPowerPerpDebtDenormalized()).gte(squeethBalance)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).eq(0)).to.be.true;
+                expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
+                expect(
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
+                expect(
+                    (await this.weth.balanceOf(this.subject.address)).gt(0)).to.be.true;
             });
 
             it("emits ShortClosed event", async () => {
@@ -480,48 +489,59 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 ).to.emit(this.subject, "ShortClosed");
             });
 
-            // describe("access control:", () => {
-            //     it("allowed: vault owner", async () => {
-            //         await expect(
-            //             this.subject
-            //                 .connect(this.deployer)
-            //                 .takeShort(
-            //                     this.healthFactor
-            //                 )
-            //         ).to.not.be.reverted;
-            //     });
+            describe("access control:", () => {
+                it("allowed: vault owner", async () => {
+                    await this.subject.takeShort(this.healthFactor);
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .closeShort()
+                    ).to.not.be.reverted;
+                });
 
-            //     it("allowed: approved account", async () => {
-            //         let account = randomAddress();
-            //         let nft = Number(await this.vaultRegistry.vaultsCount());
-            //         await this.vaultRegistry
-            //             .connect(this.deployer)
-            //             .approve(account, nft);
-            //         await withSigner(account, async (s) => {
-            //             await expect(
-            //                 this.subject
-            //                     .connect(s)
-            //                     .takeShort(
-            //                         this.healthFactor
-            //                     )
-            //             ).to.not.be.reverted;
-            //         });
-            //     });
+                it("allowed: approved account", async () => {
+                    let account = randomAddress();
+                    let nft = Number(await this.vaultRegistry.vaultsCount());
+                    await this.vaultRegistry
+                        .connect(this.deployer)
+                        .approve(account, nft);
+                    await this.subject.takeShort(this.healthFactor);
 
-            //     it("denied: any other address", async () => {
-            //         await withSigner(randomAddress(), async (s) => {
-            //             await expect(
-            //                 this.subject
-            //                     .connect(s)
-            //                     .takeShort(
-            //                         this.healthFactor
-            //                     )
-            //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
-            //         });
-            //     });
-            // });
+                    await withSigner(account, async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .closeShort()
+                        ).to.not.be.reverted;
+                    });
+                });
 
-            describe("edge cases:", () => {});
+                it("denied: any other address", async () => {
+                    await this.subject.takeShort(this.healthFactor);
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .closeShort()
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            describe("edge cases:", () => {
+                describe("when short is closed twice", () => {
+                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
+                        await this.subject.takeShort(this.healthFactor);
+                        await this.subject.closeShort();
+                        await expect(this.subject.closeShort()).to.be.revertedWith(Exceptions.INVALID_STATE);;
+                    });
+                });
+                describe("when there is no short to close", () => {
+                    it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
+                        await expect(this.subject.closeShort()).to.be.revertedWith(Exceptions.INVALID_STATE);;
+                    });
+                });
+            });
         });
 
         // integrationVaultBehavior.call(this, {});
