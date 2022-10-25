@@ -264,7 +264,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
         uint256 amountToPull = tokenAmounts[0];
 
-        helper_.claimRewards(address(_vaultGovernance), creditAccount_);
+        helper_.claimRewards(address(_vaultGovernance), creditAccount_, convexOutputToken);
         helper_.withdrawFromConvex(
             IERC20(convexOutputToken).balanceOf(creditAccount_),
             address(_vaultGovernance),
