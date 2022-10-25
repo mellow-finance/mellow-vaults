@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
+import "forge-std/console2.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -264,7 +265,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
         uint256 amountToPull = tokenAmounts[0];
 
-        helper_.claimRewards(address(_vaultGovernance), creditAccount_);
+        helper_.claimRewards(address(_vaultGovernance), creditAccount_, convexOutputToken);
         helper_.withdrawFromConvex(
             IERC20(convexOutputToken).balanceOf(creditAccount_),
             address(_vaultGovernance),
