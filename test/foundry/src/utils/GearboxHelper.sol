@@ -274,7 +274,13 @@ contract GearboxHelper {
         }
     }
 
-    function claimRewards(address vaultGovernance, address creditAccount) public {
+    function claimRewards(address vaultGovernance, address creditAccount, address convexOutputToken) public {
+
+        uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
+        if (balance == 0) {
+            return;
+        }
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
@@ -292,7 +298,12 @@ contract GearboxHelper {
 
         admin.multicall(calls);
 
-        calls = new MultiCall[](3);
+        uint256 callsCount = 3;
+        if (weth == primaryToken) {
+            callsCount = 2;
+        }
+
+        calls = new MultiCall[](callsCount);
 
         calls[0] = createUniswapMulticall(
             protocolParams.crv,
@@ -301,6 +312,7 @@ contract GearboxHelper {
             protocolParams.univ3Adapter,
             protocolParams.maxSmallPoolsSlippageD9
         );
+
         calls[1] = createUniswapMulticall(
             protocolParams.cvx,
             weth,
@@ -308,13 +320,16 @@ contract GearboxHelper {
             protocolParams.univ3Adapter,
             protocolParams.maxSmallPoolsSlippageD9
         );
-        calls[2] = createUniswapMulticall(
-            weth,
-            primaryToken,
-            strategyParams.largePoolFeeUsed,
-            protocolParams.univ3Adapter,
-            protocolParams.maxSlippageD9
-        );
+
+        if (weth != primaryToken){
+            calls[2] = createUniswapMulticall(
+                weth,
+                primaryToken,
+                strategyParams.largePoolFeeUsed,
+                protocolParams.univ3Adapter,
+                protocolParams.maxSlippageD9
+            );
+        }
 
         admin.multicall(calls);
     }
@@ -403,7 +418,7 @@ contract GearboxHelper {
         address convexOutputToken,
         address creditAccount_
     ) external {
-        claimRewards(vaultGovernance, creditAccount_);
+        claimRewards(vaultGovernance, creditAccount_, convexOutputToken);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();

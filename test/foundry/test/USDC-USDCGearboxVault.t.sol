@@ -330,8 +330,9 @@ contract GearboxUSDCTest is Test {
     }
 
     function testSetup() public {
-        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
+        uint256 usdcBalance = IERC20(usdc).balanceOf(address(gearboxVault));
         assertTrue(usdcBalance == 0);
+        assertTrue(gearboxVault.getCreditAccount() == address(0));
     }
 
     function testFailOpenVaultWithoutFunds() public {
