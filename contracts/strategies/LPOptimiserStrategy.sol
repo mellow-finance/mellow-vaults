@@ -7,6 +7,7 @@ import "../interfaces/vaults/IVoltzVault.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/external/FixedPoint96.sol";
+import "hardhat/console.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
@@ -33,17 +34,17 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     // GETTERS AND SETTERS
     function setSigmaWad(uint256 sigmaWad) public {
-        _requireAtLeastOperator();
+        _requireAdmin();
         _sigmaWad = sigmaWad;
     }
 
     function setMaxPossibleLowerBound(int256 maxPossibleLowerBoundWad) public {
-        _requireAtLeastOperator();
+        _requireAdmin();
         _maxPossibleLowerBoundWad = maxPossibleLowerBoundWad;
     }
 
     function setProximityWad(uint256 proximityWad) public {
-        _requireAtLeastOperator();
+        _requireAdmin();
 
         _proximityWad = proximityWad;
     }
@@ -84,30 +85,27 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Get the current tick and position ticks and decide whether to rebalance
+    /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate
     /// @return bool True if rebalanceTicks should be called, false otherwise
-    function rebalanceCheck() public view returns (bool) {
+    function rebalanceCheck(uint256 currentFixedRateWad) public view returns (bool) {
         // 0. Set the local variables
         uint256 proximityWad = _proximityWad;
 
         // 1. Get current position, lower, and upper ticks form VoltzVault.sol
         IVoltzVault.TickRange memory currentPosition = _vault.currentPosition();
 
-        // 2. Get current tick
-        int24 currentTick = _periphery.getCurrentTick(_marginEngine);
-
-        // 3. Convert the ticks into fixed rate
+        // 2. Convert the ticks into fixed rate
         uint256 lowFixedRateWad = convertTickToFixedRate(currentPosition.tickUpper);
         uint256 highFixedRateWad = convertTickToFixedRate(currentPosition.tickLower);
-        uint256 currentFixedRateWad = convertTickToFixedRate(currentTick);
 
         if (
             lowFixedRateWad + proximityWad <= currentFixedRateWad &&
             currentFixedRateWad + proximityWad <= highFixedRateWad
         ) {
-            // 4.1. If current fixed rate is within bounds, return false (don't rebalance)
+            // 3.1. If current fixed rate is within bounds, return false (don't rebalance)
             return false;
         } else {
-            // 4.2. If current fixed rate is outside bounds, return true (do rebalance)
+            // 3.2. If current fixed rate is outside bounds, return true (do rebalance)
             return true;
         }
     }
@@ -128,7 +126,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @param fixedRateWad The fixed rate to be converted to a tick in wad
     /// @return int256 The tick in wad
     function convertFixedRateToTick(int256 fixedRateWad) public view returns (int256) {
-        _requireAtLeastOperator();
         return -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(fixedRateWad)), PRBMathSD59x18.log2(int256(LOG_BASE)));
     }
 
@@ -147,6 +144,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @return newTickUpper The new upper tick for the rebalanced position
     function rebalanceTicks(uint256 currentFixedRateWad) public returns (int24 newTickLower, int24 newTickUpper) {
         _requireAtLeastOperator();
+        require(rebalanceCheck(currentFixedRateWad), ExceptionsLibrary.REBALANCE_NOT_NEEDED);
 
         uint256 sigmaWad = _sigmaWad;
 
