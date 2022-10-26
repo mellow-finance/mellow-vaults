@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -302,6 +302,52 @@ def plot_earnings(all_earnings: List[Earnings]):
     plt.savefig('earnings.jpg', bbox_inches='tight', dpi=150)
 
 
+def plot_swaps(all_swaps: List[Fees]):
+    input_ts = [
+        datetime(2022, 2, 28, 11, 59, 58) +
+        15 * timedelta(seconds=x.block_number - 14297758)
+        for x in all_swaps
+    ]
+    weth_fees = np.array([x.weth_cowswap_fees + x.weth_swap_fees for x in all_swaps]) / 10 ** 18
+    wsteth_fees = np.array([x.wsteth_cowswap_fees + x.wsteth_swap_fees for x in all_swaps]) / 10 ** 18
+    weth_slippage = np.array([x.weth_slippage_fees for x in all_swaps]) / 10 ** 18
+    wsteth_slippage = np.array([x.wsteth_slippage_fees for x in all_swaps]) / 10 ** 18
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    plt.title('Swap fees')
+    ax.plot(input_ts, weth_fees.cumsum(), label='WETH', color='blue')
+    ax.plot(input_ts, wsteth_fees.cumsum(), label='WSTETH', color='orange')
+    ax.tick_params(axis='x', rotation=25)
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Amount of tokens')
+    ax.legend(loc=0)
+    ax.grid()
+    plt.savefig('fees.jpg', bbox_inches='tight', dpi=150)
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    plt.title('Slippage loss')
+    ax.plot(input_ts, weth_slippage.cumsum(), label='WETH', color='blue')
+    ax.plot(input_ts, wsteth_slippage.cumsum(), label='WSTETH', color='orange')
+    ax.tick_params(axis='x', rotation=25)
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Amount of tokens')
+    ax.legend(loc=0)
+    ax.grid()
+    plt.savefig('slippage.jpg', bbox_inches='tight', dpi=150)
+
+
+def get_total_swaps(all_swaps: List[Fees]) -> Tuple[float, float]:
+    weth_fees = np.array([x.weth_cowswap_fees + x.weth_swap_fees for x in all_swaps]) / 10 ** 18
+    wsteth_fees = np.array([x.wsteth_cowswap_fees + x.wsteth_swap_fees for x in all_swaps]) / 10 ** 18
+    return np.sum(weth_fees), np.sum(wsteth_fees)
+
+
+def get_total_rebalances(lines: List[str]) -> int:
+    for line in lines:
+        if line.startswith('  Total rebalances: '):
+            return int(line.strip().split()[-1])
+
+
 def plot_all(lines: List[str]):
     earnings = parse_earnings(lines)
     state = parse_state(lines)
@@ -310,3 +356,4 @@ def plot_all(lines: List[str]):
     plot_capital(state)
     plot_weth_wsteth(state)
     plot_earnings(earnings)
+    plot_swaps(parse_swaps(lines))

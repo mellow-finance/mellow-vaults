@@ -11,10 +11,10 @@ from backtest_analysis import plot_all
 
 
 INPUT_FILE = 'price_data.csv'
-WETH = 10000
-WSTETH = 10000
-WIDTH = 120
-MIN_DEVIATION = 30
+WETH = 1000
+WSTETH = 1000
+WIDTH = 100
+MIN_DEVIATION = WIDTH // 20
 POOL_SCALE = 1
 
 
@@ -91,7 +91,7 @@ def run_backtest(
     min_deviation: int = MIN_DEVIATION,
     pool_scale: int = POOL_SCALE,
 ):
-    prepare_dataset(fname, 1.046)
+    prepare_dataset(fname, 1.032)
     prepare_feed()
     prepare_constants(
         weth_amount,
