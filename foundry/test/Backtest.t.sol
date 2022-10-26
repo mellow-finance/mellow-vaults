@@ -875,7 +875,7 @@ contract Backtest is Test {
             IWSTETH(wsteth).wrap(10**21);
         }
 
-        amountIn += cowswapWethFees;
+        // amountIn += cowswapWethFees;
         address erc20Address = address(lstrategy.erc20Vault());
         if (expectedOut < minAmountOut || IWETH(weth).balanceOf(erc20Address) < cowswapWethFees + amountIn) {
             tokenIn = "weth";
@@ -922,7 +922,7 @@ contract Backtest is Test {
             mint(weth, deployer, 10**21);
         }
         
-        amountIn += cowswapWstethFees;
+        // amountIn += cowswapWstethFees;
         address erc20Address = address(lstrategy.erc20Vault());
         if (expectedOut < minAmountOut || IWSTETH(wsteth).balanceOf(erc20Address) < amountIn + cowswapWstethFees) {
             tokenIn = "wsteth";
@@ -1087,7 +1087,6 @@ contract Backtest is Test {
         } else {
             delta = neededRatio - currentRatio;
         }
-
         if (delta < 5 * 10**7) {
             return true;
         }
@@ -1124,6 +1123,14 @@ contract Backtest is Test {
             erc20UniV3Gas += gasBefore - gasAfter;
             erc20RebalanceCount += 1;
 
+            iter += 1;
+            if (iter >= 5) {
+                break;
+            }
+        }
+
+        if (wasRebalance) {
+            ERC20UniRebalance(blockNumber, priceX96, wstethAmount, wethAmount, stEthPerToken);
             swapOnCowswap(
                 blockNumber,
                 wstethAmount,
@@ -1131,14 +1138,6 @@ contract Backtest is Test {
                 stEthPerToken,
                 ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022)
             );
-            iter += 1;
-            if (iter >= 10) {
-                break;
-            }
-        }
-
-        if (wasRebalance) {
-            ERC20UniRebalance(blockNumber, priceX96, wstethAmount, wethAmount, stEthPerToken);
         }
     }
 
@@ -1176,8 +1175,6 @@ contract Backtest is Test {
         tvl[1] += upperTvl[1];
         tvl[0] = FullMath.mulDiv(tvl[0], feeNominator - feeDenominator, feeDenominator);
         tvl[1] = FullMath.mulDiv(tvl[1], feeNominator - feeDenominator, feeDenominator);
-        tvl[0] = FullMath.mulDiv(tvl[0], safePositionWidth, Constants.width);
-        tvl[1] = FullMath.mulDiv(tvl[1], safePositionWidth, Constants.width);
 
         mintWsteth(deployer, tvl[0]);
         mintWeth(deployer, tvl[1]);
@@ -1188,6 +1185,20 @@ contract Backtest is Test {
         console2.log("EARNINGS:");
         console2.log("BlockNumber: ", blockNumber);
         console2.log(tvl[0], tvl[1]);
+    }
+
+    function newPositionNeeded(int24 tick) public returns (bool) {
+        (, , , , , int24 tickLower0, int24 tickUpper0, , , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+            .positions(lstrategy.lowerVault().uniV3Nft());
+        if (tickLower0 <= tick && tick <= tickUpper0) {
+            return false;
+        }
+        (, , , , , int24 tickLower1, int24 tickUpper1, , , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+            .positions(lstrategy.lowerVault().uniV3Nft());
+        if (tickLower1 <= tick && tick <= tickUpper1) {
+            return false;
+        }
+        return true;
     }
 
     function execute(
@@ -1216,6 +1227,7 @@ contract Backtest is Test {
         ERC20UniRebalance(blocks[0], stringToSqrtPriceX96(prices[0]), stethAmounts[0], wethAmounts[0], stEthPerToken[0]);
         reportStats(blocks[0]);
         int24 lastRebalanceTick = getUniV3Tick();
+        uint256 totalRebalances;
         // reportStats();
 
         uint256 prev_block = 0;
@@ -1231,16 +1243,18 @@ contract Backtest is Test {
             if (diff < 0) {
                 diff = -diff;
             }
-            if (diff > Constants.minDeviation) {
+            if (diff > Constants.minDeviation || newPositionNeeded(tick)) {
                 fullPriceUpdate(tick);
                 removeSwapFees();
                 makeRebalances(blocks[i], stringToPriceX96(prices[i]), stethAmounts[i], wethAmounts[i], stEthPerToken[i]);
+                totalRebalances += 1;
                 reportStats(blocks[i]);
                 lastRebalanceTick = tick;
             }
             // reportStats();
         }
 
+        console2.log("Total rebalances: ", totalRebalances);
         console2.log("ERC20Rebalances: ", erc20RebalanceCount);
         console2.log("UniV3 rebalances: ", uniV3RebalanceCount);
         console2.log("UniV3 used: ", uniV3Gas);
