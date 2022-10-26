@@ -173,11 +173,10 @@ contract Attack {
         } else {
             deviation = uint24(trueTick - currentTick);
         }
-        if (deviation <= 50) {
-            return currentTick / 10;
-        }
         uint24 shift;
-        if (deviation > 50) {
+        if (deviation <= 50) {
+            shift = deviation / 10;
+        } else {
             shift = 5 + (deviation - 50) / 2;
         }
         if (isNegative) {
