@@ -208,6 +208,8 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                     strategyDeployParams.address
                 );
 
+                this.strategySigner = await addSigner(this.strategy.address);
+
                 await this.voltzVaultGovernance
                     .connect(this.admin)
                     .stageDelayedProtocolParams({
@@ -605,13 +607,13 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             this.user1.address
         );
 
-        await this.voltzVault.connect(this.voltzVaultOwner).setLeverageWad(
+        await this.voltzVault.connect(this.admin).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
         let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.voltzVaultOwner).rebalance({
+        await this.voltzVault.connect(this.admin).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
@@ -711,13 +713,13 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         });
 
         // change leverage
-        await this.voltzVault.connect(this.voltzVaultOwner).setLeverageWad(
+        await this.voltzVault.connect(this.strategySigner).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
         let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.voltzVaultOwner).rebalance({
+        await this.voltzVault.connect(this.strategySigner).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
@@ -817,13 +819,13 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         });
 
         // change leverage
-        await this.voltzVault.connect(this.voltzVaultOwner).setLeverageWad(
+        await this.voltzVault.connect(this.admin).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
         let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.voltzVaultOwner).rebalance({
+        await this.voltzVault.connect(this.admin).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
@@ -923,13 +925,13 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         });
 
         // change leverage
-        await this.voltzVault.connect(this.voltzVaultOwner).setLeverageWad(
+        await this.voltzVault.connect(this.strategySigner).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
         let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.voltzVaultOwner).rebalance({
+        await this.voltzVault.connect(this.strategySigner).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });

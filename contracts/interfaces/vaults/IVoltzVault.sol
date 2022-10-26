@@ -121,12 +121,16 @@ interface IVoltzVault is IIntegrationVault {
 
     /// @notice Emitted when Vault is initialised
     /// @param marginEngine The address of the Voltz margin engine
+    /// @param periphery The address of the Voltz periphery
+    /// @param voltzVaultHelper The address of the Voltz Vault helper
     /// @param tickLower Lower tick of initial LP position on Voltz
     /// @param tickUpper Upper tick of initial LP position on Voltz
     /// @param leverageWad Leverage used for LP positions on Voltz (in wad)
     /// @param marginMultiplierPostUnwindWad Multiplier used to decide how much margin is left in partially unwound positions on Voltz (in wad)
     event VaultInitialized(
         address indexed marginEngine,
+        address indexed periphery,
+        address indexed voltzVaultHelper,
         int24 tickLower,
         int24 tickUpper,
         uint256 leverageWad,
@@ -152,19 +156,19 @@ interface IVoltzVault is IIntegrationVault {
     );
 
     /// @notice Emitted when TVL is updated
-    /// @param minTvl The minimum estimated TVL
-    /// @param maxTvl the maximum estimated TVL
+    /// @param tvl The estimated TVL
     event TvlUpdate(
-        int256 minTvl,
-        int256 maxTvl
+        int256 tvl
     );
 
     /// @notice Emitted when a single Vault-owned position is settled and withdrawn from
     /// @param tickLower The lower tick of the position
     /// @param tickUpper The upper tick of the position
+    /// @param margin The margin withdrawn
     event PositionSettledAndMarginWithdrawn(
         int24 tickLower,
-        int24 tickUpper
+        int24 tickUpper,
+        int256 margin
     );
 
     /// @notice Emitted when multilpe Vault-owned positions are settled and withdrawn from

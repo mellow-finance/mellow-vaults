@@ -156,7 +156,7 @@ contract VoltzVaultHelper {
 
         _underlyingToken = address(marginEngine.underlyingToken());
         _termStartTimestampWad = marginEngine.termStartTimestampWad();
-        _termEndTimestampWad = _marginEngine.termEndTimestampWad();
+        _termEndTimestampWad = marginEngine.termEndTimestampWad();
 
         _marginMultiplierPostUnwindWad = vault_.marginMultiplierPostUnwindWad();
     }
