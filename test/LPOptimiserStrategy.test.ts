@@ -319,16 +319,23 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     });
                 });
 
+                const currentFixedRateWad = BigNumber.from(
+                    "1100000000000000000"
+                );
+
                 const tick = (await this.vammContract.vammVars()).tick;
                 console.log("Tick:", tick);
                 await this.subject
                     .connect(this.admin)
                     .setProximityWad("100000000000000000");
-                const result = await this.subject.callStatic.rebalanceCheck();
+                const result = await this.subject.callStatic.rebalanceCheck(currentFixedRateWad);
                 expect(result).to.be.equal(false);
             });
             it("Check if out-of-range position needs to be rebalanced", async () => {
-                const result = await this.subject.callStatic.rebalanceCheck();
+                const currentFixedRateWad = BigNumber.from(
+                    "1000000000000000000"
+                );
+                const result = await this.subject.callStatic.rebalanceCheck(currentFixedRateWad);
                 expect(result).to.be.equal(true);
             });
             it("Rebalance the position and return new ticks (max_poss_lower_bound < delta)", async () => {
@@ -336,7 +343,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     "2000000000000000000"
                 );
 
-                if (await this.subject.callStatic.rebalanceCheck()) {
+                if (await this.subject.callStatic.rebalanceCheck(currentFixedRateWad)) {
                     const newTicks = await this.subject
                         .connect(this.admin)
                         .callStatic.rebalanceTicks(currentFixedRateWad);
@@ -503,7 +510,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     await this.voltzVault.currentPosition()
                 );
 
-                if (await this.subject.rebalanceCheck()) {
+                if (await this.subject.rebalanceCheck(currentFixedRateWad)) {
                     await this.subject
                         .connect(this.admin)
                         .rebalanceTicks(currentFixedRateWad);
@@ -536,7 +543,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 const sigmaWad = await this.subject.getSigmaWad();
                 console.log("Print sigmaWad: ", sigmaWad.toString());
 
-                if (await this.subject.rebalanceCheck()) {
+                if (await this.subject.rebalanceCheck(currentFixedRateWad)) {
                     const newTicks = await this.subject
                         .connect(this.admin)
                         .callStatic.rebalanceTicks(currentFixedRateWad);
@@ -558,7 +565,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     "1001000000000000000000"
                 ); // 1001%
 
-                if (await this.subject.rebalanceCheck()) {
+                if (await this.subject.rebalanceCheck(currentFixedRateWad)) {
                     const newTicks = await this.subject
                         .connect(this.admin)
                         .callStatic.rebalanceTicks(currentFixedRateWad);
@@ -587,7 +594,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 const proximity = await this.subject.getProximityWad();
                 console.log("Print proximity: ", proximity.toString());
 
-                if (await this.subject.rebalanceCheck()) {
+                if (await this.subject.rebalanceCheck(currentFixedRateWad)) {
                     const newTicks = await this.subject
                         .connect(this.admin)
                         .callStatic.rebalanceTicks(currentFixedRateWad);
@@ -604,11 +611,14 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 }
             });
 
-            it("logProximity < 0 case (happy path)", async () => {
+            it("Proximity = 0 case (happy path)", async () => {
                 await this.subject.connect(this.admin).setProximityWad("0");
+                const currentFixedRateWad = BigNumber.from(
+                    "900000000000000000"
+                );
 
-                const result = await this.subject.callStatic.rebalanceCheck();
-                expect(result).to.be.equal(true);
+                const result = await this.subject.callStatic.rebalanceCheck(currentFixedRateWad);
+                expect(result).to.be.equal(false);
             });
 
             it("maxPossibleLowerBound = 1e16 i.e. effectively 0", async () => {
@@ -634,7 +644,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 );
                 console.log("Print sigmWad: ", sigmWad.toString());
 
-                if (await this.subject.rebalanceCheck()) {
+                if (await this.subject.rebalanceCheck(currentFixedRateWad)) {
                     const newTicks = await this.subject
                         .connect(this.admin)
                         .callStatic.rebalanceTicks(currentFixedRateWad);
@@ -792,29 +802,22 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
         });
 
         describe("Privilege tests sad path", async () => {
-            it("Require at least operator privilege test for logProx setter", async () => {
+            it("Require admin privilege test for logProx setter", async () => {
                 await expect(
                     this.subject.setProximityWad("100000000000000000")
                 ).to.be.revertedWith("FRB");
             });
-            it("Require at least operator privilege test for sigmaWad setter", async () => {
+            it("Require admin privilege test for sigmaWad setter", async () => {
                 await expect(this.subject.setSigmaWad(100)).to.be.revertedWith(
                     "FRB"
                 );
             });
-            it("Require at least operator privilege test for MaxPossibleLowerBound setter", async () => {
+            it("Require admin privilege test for MaxPossibleLowerBound setter", async () => {
                 await expect(
                     this.subject.setMaxPossibleLowerBound(100)
                 ).to.be.revertedWith("FRB");
             });
-            it("Require at least operator privilege test for convertFixedRateToTick", async () => {
-                await expect(
-                    this.subject.convertFixedRateToTick(
-                        BigNumber.from("1000000000000000000")
-                    )
-                ).to.be.revertedWith("FRB");
-            });
-            it("Require at least operator privilege test for rebalance ticks function", async () => {
+            it("Require require at least operator privilege test for rebalance ticks function", async () => {
                 const currentFixedRateWad = BigNumber.from(
                     "1000000000000000000"
                 ); // 1%
@@ -825,37 +828,28 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
         });
 
         describe("Privilege tests happy path", async () => {
-            it("Require at least operator privilege test for logProx setter", async () => {
+            it("Admin privilege test for Proximity setter", async () => {
                 await expect(
                     this.subject
-                        .connect(this.operator)
+                        .connect(this.admin)
                         .callStatic.setProximityWad("10000000000000000")
                 ).to.not.be.reverted;
             });
-            it("Require at least operator privilege test for sigmaWad setter", async () => {
+            it("Admin privilege test for sigmaWad setter", async () => {
                 await expect(
                     this.subject
-                        .connect(this.operator)
+                        .connect(this.admin)
                         .callStatic.setSigmaWad(
                             BigNumber.from("100000000000000000")
                         )
                 ).to.not.be.reverted;
             });
-            it("Require at least operator privilege test for MaxPossibleLowerBound setter", async () => {
+            it("Admin privilege test for MaxPossibleLowerBound setter", async () => {
                 await expect(
                     this.subject
-                        .connect(this.operator)
+                        .connect(this.admin)
                         .callStatic.setMaxPossibleLowerBound(
                             BigNumber.from("100000000000000000")
-                        )
-                ).to.not.be.reverted;
-            });
-            it("Require at least operator privilege test for convertFixedRateToTick", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.operator)
-                        .convertFixedRateToTick(
-                            BigNumber.from("1000000000000000000")
                         )
                 ).to.not.be.reverted;
             });
@@ -869,6 +863,32 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                         .callStatic.rebalanceTicks(currentFixedRateWad)
                 ).to.not.be.reverted;
             });
+            it("Require statement test for rebalanceTicks function SAD PATH", async () => {
+
+                const currentFixedRateWad = BigNumber.from(
+                    "900000000000000000"
+                ); // 0.9%
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .callStatic
+                        .rebalanceTicks(currentFixedRateWad)
+                ).to.be.revertedWith("RNN");
+            });
+
+            it("Require statement test for rebalanceTicks function HAPPY PATH", async () => {
+
+                const currentFixedRateWad = BigNumber.from(
+                    "2000000000000000000"
+                ); // 2%
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .callStatic
+                        .rebalanceTicks(currentFixedRateWad)
+                ).to.not.be.reverted;
+            });
+
         });
     }
 );
