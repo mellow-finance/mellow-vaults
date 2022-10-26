@@ -3,7 +3,7 @@ import { utils } from "ethers";
 import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { encodeToBytes, mint, withSigner } from "./library/Helpers";
+import { addSigner, encodeToBytes, mint, withSigner } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
@@ -203,6 +203,21 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     );
                 }
 
+                const { deploy } = deployments;
+                let strategyDeployParams = await deploy("LPOptimiserStrategy", {
+                    from: this.deployer.address,
+                    contract: "LPOptimiserStrategy",
+                    args: [
+                        this.erc20Vault.address,
+                        this.subject.address,
+                        this.deployer.address,
+                    ],
+                    log: true,
+                    autoMine: true,
+                });
+
+                this.strategy = await addSigner(strategyDeployParams.address);
+
                 this.preparePush = async (
                     value: number,
                     signerAddress?: string
@@ -232,10 +247,26 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 return this.subject;
             }
         );
+
+        this.grantPermissionsVoltzVaults = async () => {
+            let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+            ]);
+            await withSigner(
+                this.erc20RootVault.address,
+                async (erc20RootVaultSigner) => {
+                    await this.vaultRegistry
+                        .connect(erc20RootVaultSigner)
+                        .approve(this.strategy.address, tokenId);
+                }
+            );
+        };
     });
 
     beforeEach(async () => {
         await this.deploymentFixture();
+        await this.grantPermissionsVoltzVaults();
     });
 
     describe("Test Access Privileges & Getters & Setters", () => {
@@ -632,12 +663,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
 
             {
                 await expect(
-                    this.subject.callStatic.pull(
-                        this.erc20Vault.address,
-                        [this.usdc.address],
-                        [BigNumber.from(10).pow(6).mul(1000)],
-                        encodeToBytes([], [])
-                    )
+                    this.subject
+                        .connect(this.strategy)
+                        .callStatic.pull(
+                            this.erc20Vault.address,
+                            [this.usdc.address],
+                            [BigNumber.from(10).pow(6).mul(1000)],
+                            encodeToBytes([], [])
+                        )
                 ).to.be.revertedWith("FRB");
             }
 
@@ -650,12 +683,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             await this.subject.settleVault(0);
 
             {
-                const actualTokenAmounts = await this.subject.callStatic.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [BigNumber.from(10).pow(6).mul(1000)],
-                    encodeToBytes([], [])
-                );
+                const actualTokenAmounts = await this.subject
+                    .connect(this.strategy)
+                    .callStatic.pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address],
+                        [BigNumber.from(10).pow(6).mul(1000)],
+                        encodeToBytes([], [])
+                    );
                 expect(actualTokenAmounts[0]).to.be.equal(
                     BigNumber.from(10).pow(6).mul(1000)
                 );
@@ -665,12 +700,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                 this.erc20Vault.address
             );
 
-            await this.subject.pull(
-                this.erc20Vault.address,
-                [this.usdc.address],
-                [BigNumber.from(10).pow(6).mul(1000)],
-                encodeToBytes([], [])
-            );
+            await this.subject
+                .connect(this.strategy)
+                .pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(1000)],
+                    encodeToBytes([], [])
+                );
             const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
                 this.erc20Vault.address
             );
@@ -765,12 +802,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             );
 
             await this.subject.settleVault(0);
-            await this.subject.pull(
-                this.erc20Vault.address,
-                [this.usdc.address],
-                [groundTruthCashflow],
-                encodeToBytes([], [])
-            );
+            await this.subject
+                .connect(this.strategy)
+                .pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [groundTruthCashflow],
+                    encodeToBytes([], [])
+                );
             const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
                 this.erc20Vault.address
             );
@@ -865,12 +904,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             );
 
             await this.subject.settleVault(0);
-            await this.subject.pull(
-                this.erc20Vault.address,
-                [this.usdc.address],
-                [groundTruthCashflow.mul(2)],
-                encodeToBytes([], [])
-            );
+            await this.subject
+                .connect(this.strategy)
+                .pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [groundTruthCashflow.mul(2)],
+                    encodeToBytes([], [])
+                );
             const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
                 this.erc20Vault.address
             );
@@ -1014,12 +1055,14 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     this.subject.address
                 );
 
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [groundTruthCashflowBatch],
-                    encodeToBytes([], [])
-                );
+                await this.subject
+                    .connect(this.strategy)
+                    .pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address],
+                        [groundTruthCashflowBatch],
+                        encodeToBytes([], [])
+                    );
                 const erc20VaultFundsAfterPull = await this.usdc.balanceOf(
                     this.erc20Vault.address
                 );
@@ -1519,8 +1562,9 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             expect(lpInitialPositionInfo._liquidity).to.be.equal(
                 BigNumber.from(0)
             );
-            expect(lpInitialPositionInfo.variableTokenBalance).to.be.equal(
-                BigNumber.from(0)
+            expect(lpInitialPositionInfo.variableTokenBalance).to.be.closeTo(
+                BigNumber.from(0),
+                10
             );
 
             const positionRequirementInitial =
@@ -1606,8 +1650,9 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             expect(lpInitialPositionInfo._liquidity).to.be.equal(
                 BigNumber.from(0)
             );
-            expect(lpInitialPositionInfo.variableTokenBalance).to.be.equal(
-                BigNumber.from(0)
+            expect(lpInitialPositionInfo.variableTokenBalance).to.be.closeTo(
+                BigNumber.from(0),
+                10
             );
 
             const positionRequirementInitial =
@@ -1828,15 +1873,7 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
             const sumOfMargins = lpInitialPositionInfo.margin.add(
                 lpNewPositionInfo.margin
             );
-
-            // pull 0 to triger settle
             await this.subject.settleVault(0);
-            await this.subject.pull(
-                this.erc20Vault.address,
-                [this.usdc.address],
-                [BigNumber.from(10).pow(6).mul(0)],
-                encodeToBytes([], [])
-            );
 
             // make sure both positions are settled
             {
