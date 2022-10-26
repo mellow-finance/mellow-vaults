@@ -174,10 +174,15 @@ contract Attack {
             deviation = uint24(trueTick - currentTick);
         }
         uint24 shift;
-        if (deviation <= 50) {
-            shift = deviation / 10;
+        // if (deviation <= 50) {
+        //     shift = deviation / 10;
+        // } else {
+        //     shift = 5 + (deviation - 50) / 2;
+        // }
+        if (deviation <= 10) {
+            shift = 1;
         } else {
-            shift = 5 + (deviation - 50) / 2;
+            shift = 1 + (deviation - 10) / 20;
         }
         if (isNegative) {
             return currentTick - int24(shift);
@@ -192,7 +197,7 @@ contract Attack {
         int24 rightLowerTick = positionWidth / 2;
         int24 rightUpperTick = rightLowerTick + positionWidth;
 
-        uint128 liquidity = 10 ** 18;
+        uint128 liquidity = 2 ** 96;
 
         for (int24 currentTick = leftLowerTick; currentTick <= rightUpperTick; ++currentTick) {
             int24 deviatedTick = currentTick + deviation;
@@ -221,8 +226,10 @@ contract Attack {
                 spentTokens[1] -= amount1;
             }
             {
-                (spentTokens[0], spentTokens[1]) = maxTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
-                (uint256 amount0, uint256 amount1) = minTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
+                (uint256 amount0, uint256 amount1) = maxTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
+                spentTokens[0] += amount0;
+                spentTokens[1] += amount1;
+                (amount0, amount1) = minTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
                 spentTokens[0] -= amount0;
                 spentTokens[1] -= amount1;
             }
@@ -246,7 +253,7 @@ contract Attack {
             uint256 earnedCapital = currentCapital - trueCapital;
             earnedCapital = FullMath.mulDiv(earnedCapital, 10 ** 18, 19 * (10 ** 18));
             if (earnedCapital >= spentCapital) {
-                uint256 earnedRatioD18 = FullMath.mulDiv(earnedCapital - spentCapital, 10 ** 18, trueCapital);
+                uint256 earnedRatioD18 = FullMath.mulDiv(earnedCapital - spentCapital, 19 * 10 ** 18, 20 * trueCapital);
                 if (earnedRatioD18 > maxRatioD18) {
                     maxRatioD18 = earnedRatioD18;
                 }
@@ -256,11 +263,11 @@ contract Attack {
 
     function test() public {
         for (int24 positionWidth = 80; positionWidth <= 140; positionWidth += 20) {
-            for (int24 deviation = 5; deviation <= 100; deviation += 5) {
+            for (int24 deviation = 5; deviation <= 150; deviation += 5) {
                 uint256 earning0 = execute(positionWidth, deviation);
                 uint256 earning1 = execute(positionWidth, -deviation);
-                if (earning0 < earning0) {
-                    earning0 = earning0;
+                if (earning0 < earning1) {
+                    earning0 = earning1;
                 }
                 console2.log("Earning: ");
                 console2.log(uint24(positionWidth));
