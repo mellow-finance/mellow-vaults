@@ -7,7 +7,6 @@ import "../interfaces/vaults/IVoltzVault.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/external/FixedPoint96.sol";
-import "hardhat/console.sol";
 
 contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
