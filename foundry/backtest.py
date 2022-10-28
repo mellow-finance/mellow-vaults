@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 from backtest_analysis import plot_all
-
+import sys
 
 INPUT_FILE = 'price_data.csv'
 WETH = 1000
@@ -18,16 +18,16 @@ MIN_DEVIATION = WIDTH // 20
 POOL_SCALE = 1
 
 
-def prepare_dataset(fname: str, apy: float):
+def prepare_dataset(fname: str, apy: float, preview: str):
     df = pd.read_csv(fname)
     hw = np.power(apy, np.arange(len(df)) / 365 / 24 / 60 / 4)
     df['hw'] = [int((10 ** 9) * x) for x in np.maximum.accumulate(hw)]
     df = df[['block_number', 'wsteth_eth', 'stETH_amount', 'ETH_amount', 'stEthPerToken', 'hw']]
-    df.to_csv('tmp.csv', index=False, float_format='%.27f')
+    df.to_csv(preview + '/tmp.csv', index=False, float_format='%.27f')
 
 
-def prepare_feed():
-    file = open('tmp.csv')
+def prepare_feed(preview: str):
+    file = open(preview + '/tmp.csv')
     csvreader = csv.reader(file)
 
     # block_number, wsteth_eth, stETH_amount, ETH_amount, stEthPerToken, hw
@@ -61,8 +61,9 @@ def prepare_constants(
     width: int,
     min_deviation: int,
     pool_scale: int,
+    preview: str
 ):
-    length = len(pd.read_csv('tmp.csv'))
+    length = len(pd.read_csv(preview + '/tmp.csv'))
     with open('test/Constants.template', 'r') as file:
         text = ''.join(file.readlines())
     text = text.format(
@@ -84,6 +85,7 @@ def prepare_constants(
 )
 def run_backtest(
     file: TextIOWrapper,
+    preview: str,
     fname: str = INPUT_FILE,
     weth_amount: int = WETH,
     wsteth_amount: int = WSTETH,
@@ -91,14 +93,15 @@ def run_backtest(
     min_deviation: int = MIN_DEVIATION,
     pool_scale: int = POOL_SCALE,
 ):
-    prepare_dataset(fname, 1.032)
-    prepare_feed()
+    prepare_dataset(fname, 1.032, preview)
+    prepare_feed(preview)
     prepare_constants(
         weth_amount,
         wsteth_amount,
         width,
         min_deviation,
         pool_scale,
+        preview
     )
     print('BACKTEST PREPARED')
     print('STARTING BACKTEST')
@@ -115,7 +118,13 @@ def run_backtest(
 
 
 if __name__ == '__main__':
-    with open('backtest.log', 'w') as file:
-        run_backtest(file)
-    with open('backtest.log', 'r') as file:
-        plot_all(file.readlines())
+
+    deviation = int(sys.argv[1])
+    width = int(sys.argv[2])
+    amount = int(sys.argv[3])
+    preview = sys.argv[4]
+
+    with open(preview + '/backtest.log', 'w') as file:
+        run_backtest(file, preview, INPUT_FILE, amount, amount, width, deviation)
+    with open(preview + '/backtest.log', 'r') as file:
+        plot_all(file.readlines(), preview)

@@ -159,7 +159,7 @@ def parse_swaps(lines: List[str]) -> List[Fees]:
     return all_fees
 
 
-def plot_weth(all_stats: List[State]):
+def plot_weth(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
         15 * timedelta(seconds=x.block_number - 14297758)
@@ -184,10 +184,10 @@ def plot_weth(all_stats: List[State]):
     ax2.legend(loc=0)
     ax2.set_ylabel('WETH / WSTETH')
     ax.grid()
-    plt.savefig('weth.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/weth.jpg', bbox_inches='tight', dpi=150)
 
 
-def plot_wsteth(all_stats: List[State]):
+def plot_wsteth(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
         15 * timedelta(seconds=x.block_number - 14297758)
@@ -212,10 +212,10 @@ def plot_wsteth(all_stats: List[State]):
     ax2.legend()
     ax2.set_ylabel('WETH / WSTETH')
     ax.grid()
-    plt.savefig('wsteth.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/wsteth.jpg', bbox_inches='tight', dpi=150)
 
 
-def plot_capital(all_stats: List[State]):
+def plot_capital(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
         15 * timedelta(seconds=x.block_number - 14297758)
@@ -245,10 +245,10 @@ def plot_capital(all_stats: List[State]):
     ax2.legend()
     ax2.set_ylabel('WETH / WSTETH')
     ax.grid()
-    plt.savefig('capital.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/capital.jpg', bbox_inches='tight', dpi=150)
 
 
-def plot_weth_wsteth(all_stats: List[State]):
+def plot_weth_wsteth(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
         15 * timedelta(seconds=x.block_number - 14297758)
@@ -278,10 +278,10 @@ def plot_weth_wsteth(all_stats: List[State]):
     ax2.legend()
     ax2.set_ylabel('WETH / WSTETH')
     ax.grid()
-    plt.savefig('wsteth_weth.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/wsteth_weth.jpg', bbox_inches='tight', dpi=150)
 
 
-def plot_earnings(all_earnings: List[Earnings]):
+def plot_earnings(all_earnings: List[Earnings], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
         15 * timedelta(seconds=x.block_number - 14297758)
@@ -299,10 +299,10 @@ def plot_earnings(all_earnings: List[Earnings]):
     ax.set_ylabel('Amount of tokens')
     ax.legend(loc=0)
     ax.grid()
-    plt.savefig('earnings.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/earnings.jpg', bbox_inches='tight', dpi=150)
 
 
-def plot_swaps(all_swaps: List[Fees]):
+def plot_swaps(all_swaps: List[Fees], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
         15 * timedelta(seconds=x.block_number - 14297758)
@@ -322,7 +322,7 @@ def plot_swaps(all_swaps: List[Fees]):
     ax.set_ylabel('Amount of tokens')
     ax.legend(loc=0)
     ax.grid()
-    plt.savefig('fees.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/fees.jpg', bbox_inches='tight', dpi=150)
     fig = plt.figure(figsize=(8, 5))
     ax = fig.add_subplot(111)
     plt.title('Slippage loss')
@@ -333,7 +333,7 @@ def plot_swaps(all_swaps: List[Fees]):
     ax.set_ylabel('Amount of tokens')
     ax.legend(loc=0)
     ax.grid()
-    plt.savefig('slippage.jpg', bbox_inches='tight', dpi=150)
+    plt.savefig(preview + '/slippage.jpg', bbox_inches='tight', dpi=150)
 
 
 def get_total_swaps(all_swaps: List[Fees]) -> Tuple[float, float]:
@@ -348,12 +348,12 @@ def get_total_rebalances(lines: List[str]) -> int:
             return int(line.strip().split()[-1])
 
 
-def plot_all(lines: List[str]):
+def plot_all(lines: List[str], preview: str):
     earnings = parse_earnings(lines)
     state = parse_state(lines)
-    plot_weth(state)
-    plot_wsteth(state)
-    plot_capital(state)
-    plot_weth_wsteth(state)
-    plot_earnings(earnings)
-    plot_swaps(parse_swaps(lines))
+    plot_weth(state, preview)
+    plot_wsteth(state, preview)
+    plot_capital(state, preview)
+    plot_weth_wsteth(state, preview)
+    plot_earnings(earnings, preview)
+    plot_swaps(parse_swaps(lines), preview)
