@@ -146,16 +146,17 @@ contract Attack {
         int24 rightLowerTick,
         int24 rightUpperTick,
         int24 currentTick,
-        uint128 liquidity
+        uint128 liquidityLower,
+        uint128 liquidityUpper
     ) internal pure returns (uint256 capital) {
         uint256 capitalLeft;
         {
-            (uint256 amount0, uint256 amount1) = tvl(leftLowerTick, leftUpperTick, currentTick, liquidity);
+            (uint256 amount0, uint256 amount1) = tvl(leftLowerTick, leftUpperTick, currentTick, liquidityLower);
             capitalLeft = getCapital(amount0, amount1, currentTick);
         }
         uint256 capitalRight;
         {
-            (uint256 amount0, uint256 amount1) = tvl(rightLowerTick, rightUpperTick, currentTick, liquidity);
+            (uint256 amount0, uint256 amount1) = tvl(rightLowerTick, rightUpperTick, currentTick, liquidityUpper);
             capitalRight = getCapital(amount0, amount1, currentTick);
         }
         return capitalRight + capitalLeft;
@@ -173,16 +174,16 @@ contract Attack {
         } else {
             deviation = uint24(trueTick - currentTick);
         }
-        uint24 shift;
+        uint24 shift = deviation / 20;
         // if (deviation <= 50) {
         //     shift = deviation / 10;
         // } else {
         //     shift = 5 + (deviation - 50) / 2;
         // }
-        shift = deviation / 20;
-        if (deviation >= 60) {
-            shift = 3 + (deviation - 60) / 10;
-        }
+        // shift = deviation / 20;
+        // if (deviation >= 60) {
+        //     shift = 3 + (deviation - 60) / 10;
+        // }
         if (shift == 0) {
             shift = 1;
         }
@@ -194,55 +195,71 @@ contract Attack {
         }
     }
 
+    function getSpentCapital(
+        int24 leftLowerTick,
+        int24 leftUpperTick,
+        uint128 liquidityLower,
+        int24 rightLowerTick,
+        int24 rightUpperTick,
+        uint128 liquidityUpper,
+        int24 tickOne,
+        int24 tickOther,
+        int24 actualTick
+    ) internal view returns (uint256 capital) {
+        uint256[2] memory spentTokens;
+        (spentTokens[0], spentTokens[1]) = maxTvl(leftLowerTick, leftUpperTick, tickOne, tickOther, liquidityLower);
+        (uint256 amount0, uint256 amount1) = maxTvl(rightLowerTick, rightUpperTick, tickOne, tickOther, liquidityUpper);
+        spentTokens[0] += amount0;
+        spentTokens[1] += amount1;
+        (amount0, amount1) = minTvl(leftLowerTick, leftUpperTick, tickOne, tickOther, liquidityLower);
+        spentTokens[0] -= amount0;
+        spentTokens[1] -= amount1;
+        (amount0, amount1) = minTvl(rightLowerTick, rightUpperTick, tickOne, tickOther, liquidityUpper);
+        spentTokens[0] -= amount0;
+        spentTokens[1] -= amount1;
+        spentTokens[0] = FullMath.mulDivRoundingUp(spentTokens[0], 10 ** 18, 2000 * (10 ** 18));
+        spentTokens[1] = FullMath.mulDivRoundingUp(spentTokens[1], 10 ** 18, 2000 * (10 ** 18));
+        return getCapital(spentTokens[0], spentTokens[1], actualTick);
+    }
+
     function execute(int24 positionWidth, int24 deviation) internal view returns (uint256 maxRatioD18) {
         int24 leftLowerTick = 0;
         int24 leftUpperTick = positionWidth;
         int24 rightLowerTick = positionWidth / 2;
         int24 rightUpperTick = rightLowerTick + positionWidth;
 
-        uint128 liquidity = 2 ** 96;
+        uint128 liquidityLower = 10 ** 18;
+        uint128 liquidityUpper = 10 ** 18;
+
 
         for (int24 currentTick = leftLowerTick; currentTick <= rightUpperTick; ++currentTick) {
             int24 deviatedTick = currentTick + deviation;
             int24 shiftedTick = getShiftedTick(currentTick + deviation, currentTick);
             
             // true capital
-            uint256 trueCapital = getCapitalAtCurrentTick(leftLowerTick, leftUpperTick, rightLowerTick, rightUpperTick, currentTick, liquidity);
+            uint256 trueCapital = getCapitalAtCurrentTick(leftLowerTick, leftUpperTick, rightLowerTick, rightUpperTick, currentTick, liquidityLower, liquidityUpper);
             
             // capital with shifted tick
             uint256[2] memory currentTvl;
-            (currentTvl[0], currentTvl[1]) = minTvl(leftLowerTick, leftUpperTick, deviatedTick, shiftedTick, liquidity);
+            (currentTvl[0], currentTvl[1]) = minTvl(leftLowerTick, leftUpperTick, deviatedTick, shiftedTick, liquidityLower);
             {
-                (uint256 amount0, uint256 amount1) = minTvl(rightLowerTick, rightUpperTick, deviatedTick, shiftedTick, liquidity);
+                (uint256 amount0, uint256 amount1) = minTvl(rightLowerTick, rightUpperTick, deviatedTick, shiftedTick, liquidityUpper);
                 currentTvl[0] += amount0;
                 currentTvl[1] += amount1;
             }
             uint256 currentCapital = getCapital(currentTvl[0], currentTvl[1], currentTick);
 
-            // tokens spent on swaps
-            uint256[2] memory spentTokens;
-            console2.log("Before spent");
-            {
-                (spentTokens[0], spentTokens[1]) = maxTvl(leftLowerTick, leftUpperTick, currentTick, deviatedTick, liquidity);
-                (uint256 amount0, uint256 amount1) = minTvl(leftLowerTick, leftUpperTick, currentTick, deviatedTick, liquidity);
-                spentTokens[0] -= amount0 * 4 / 5;
-                spentTokens[1] -= amount1 * 4 / 5;
-            }
-            {
-                (uint256 amount0, uint256 amount1) = maxTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
-                spentTokens[0] += amount0;
-                spentTokens[1] += amount1;
-                (amount0, amount1) = minTvl(rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
-                spentTokens[0] -= amount0;
-                spentTokens[1] -= amount1;
-            }
-            console2.log("After spent");
-
-            // fees on the swap are 0.05%
-            // which means 1 / 2000 of tokens is spent on the fees
-            spentTokens[0] = FullMath.mulDivRoundingUp(spentTokens[0], 10 ** 18, 2000 * (10 ** 18));
-            spentTokens[1] = FullMath.mulDivRoundingUp(spentTokens[1], 10 ** 18, 2000 * (10 ** 18));
-            uint256 spentCapital = getCapital(spentTokens[0], spentTokens[1], currentTick);
+            uint256 spentCapital = getSpentCapital(
+                leftLowerTick,
+                leftUpperTick,
+                liquidityLower,
+                rightLowerTick,
+                rightUpperTick,
+                liquidityUpper,
+                currentTick,
+                deviatedTick,
+                currentTick
+            );
 
             // there is a small amount of tokens on erc20
             // actually, we care only about it in the attack
