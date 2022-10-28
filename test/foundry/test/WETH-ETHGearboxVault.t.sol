@@ -890,30 +890,5 @@ contract GearboxWETHTest is Test {
         vm.warp(block.timestamp + 86400 * 3); // only 3 days
         invokeExecution();
     }
-
-    function testDepositExchange() public {
-        gearboxVault.updateTargetMarginalFactor(2000000000);
-        deposit(500, address(this));
-        deposit(600, address(this));
-        uint256 amountPrev = tvl();
-        gearboxVault.adjustPosition();
-
-        creditAccount = gearboxVault.getCreditAccount();
-
-        uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-
-        vm.warp(block.timestamp + 7200 * YEAR); // mock time rolling to call large fees
-        assertTrue(tvl() < 600 * weiofUsdc && tvl() > 500 * weiofUsdc);
-
-        uint256 amount = tvl();
-
-        gearboxVault.adjustPosition();
-        assertTrue(isClose(IERC20(wbtc).balanceOf(creditAccount), amount, 20));
-
-        uint256 convexFantomAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        assertTrue(isClose(convexFantomBalance, convexFantomAfter * 3, 20)); // roughly in convex 1600 -> 550 usd
-    }
-
-
     
 }
