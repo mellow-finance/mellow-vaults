@@ -51,8 +51,10 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         curveRouter
                     } = await getNamedAccounts();
                     this.curveRouter = curveRouter;
+                    
+                    this.strategyTreasury = randomAddress();
 
-                    const tokens = [this.weth.address, this.squeeth.address]
+                    const tokens = [this.weth.address]
                         .map((t) => t.toLowerCase())
                         .sort();
 
@@ -87,7 +89,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         squeethVaultNft + 1,
                         [erc20VaultNft, squeethVaultNft],
                         this.deployer.address,
-                        this.deployer.address
+                        this.strategyTreasury
                     );
                     const erc20Vault = await read(
                         "VaultRegistry",
@@ -135,6 +137,8 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     }
                     this.healthFactor = BigNumber.from(10).pow(9).mul(2);
                     this.squeethVaultNft = squeethVaultNft;
+                    this.rootVaultNft = erc20RootVaultNft;
+                    this.erc20VaultNft = erc20VaultNft;
 
                     return this.subject;
                 }
@@ -351,12 +355,6 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
         });
 
-        // describe.only("write", () => {
-        //     it("", async () => {
-        //         console.log(await this.subject.write());
-        //     });
-        // });
-
         describe("#takeShort", () => {
             it("mints wPowerPerp using entire weth supply as a collateral", async () => {
                 let wethBalance = await this.weth.balanceOf(this.subject.address);
@@ -398,12 +396,14 @@ contract<SqueethVault, DeployOptions, CustomContext>(
 
                 it("allowed: approved account", async () => {
                     let account = randomAddress();
-                    await this.vaultRegistry
-                        .connect(this.deployer)
-                        .approve(account, this.squeethVaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                        .connect(s)
+                        .approve(account, this.squeethVaultNft);   
+                    });
                     await withSigner(account, async (s) => {
-                        expect(
-                            await this.subject
+                        await expect(
+                            this.subject
                                 .connect(s)
                                 .takeShort(
                                     this.healthFactor
@@ -500,12 +500,14 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 });
 
                 it("allowed: approved account", async () => {
-                    let account = randomAddress();
-                    let nft = Number(await this.vaultRegistry.vaultsCount());
-                    await this.vaultRegistry
-                        .connect(this.deployer)
-                        .approve(account, nft);
                     await this.subject.takeShort(this.healthFactor);
+                    
+                    let account = randomAddress();
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                        .connect(s)
+                        .approve(account, this.squeethVaultNft);   
+                    });
 
                     await withSigner(account, async (s) => {
                         await expect(
