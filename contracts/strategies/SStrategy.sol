@@ -30,12 +30,10 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
     uint256 public constant OVERCOLLATERIZATION_D9 = 15e8;
 
     address public mainToken;
-    address public sellToken;
     address public wPowerPerp;
     IERC20Vault public erc20Vault;
     ISqueethVault public squeethVault;
     ISwapRouter public swapRouter;
-    IUniswapV3Pool public sellPool;
     IUniswapV3Pool public squeethPool;
 
     // INTERNAL STATE
@@ -81,9 +79,7 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         IERC20Vault erc20Vault_,
         ISqueethVault squeethVault_,
         address mainToken_,
-        address sellToken_,
         ISwapRouter swapRouter_,
-        IUniswapV3Pool sellPool_,
         IUniswapV3Pool squeethPool_,
         address admin_
     ) DefaultAccessControl(admin_) {
@@ -94,14 +90,10 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         require(erc20Tokens[0] == mainToken_, ExceptionsLibrary.INVALID_TOKEN);
         require(squeethTokens[0] == mainToken_, ExceptionsLibrary.INVALID_TOKEN);
         require(squeethVault_.weth() == mainToken_, ExceptionsLibrary.INVALID_TOKEN);
-        require(sellPool_.token0() == mainToken_ || sellPool_.token1() == mainToken_);
-        require(sellPool_.token1() == sellToken_ || sellPool_.token1() == sellToken_);
         require(address(squeethPool_) == squeethVault_.wPowerPerpPool(), ExceptionsLibrary.INVALID_VALUE);
         mainToken = mainToken_;
-        sellToken = sellToken_;
         swapRouter = swapRouter_;
         wPowerPerp = squeethVault_.wPowerPerp();
-        sellPool = sellPool_;
         squeethPool = squeethPool_;
     }
 
@@ -121,7 +113,6 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         _requireAtLeastOperator(); 
         require(startingTime == 0, ExceptionsLibrary.INVARIANT);
 
-        address sellToken_ = sellToken;
         address mainToken_ = mainToken;
         
         uint256 amountD9;
@@ -131,15 +122,8 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
             startingPrice = currentPrice;
             lastStrikeD9 = strikeD9;
 
-            if (mainToken_ == sellToken_) {
-                //eth case
-                amountD9 = FullMath.mulDiv(strategyParams.upperHedgingThresholdD9 - D9, strategyParams.upperHedgingThresholdD9 - strikeD9, OVERCOLLATERIZATION_D9);
-            } else {
-                //usdc case
-                uint256 squared = FullMath.mulDiv(strategyParams.lowerHedgingThresholdD9, strategyParams.lowerHedgingThresholdD9, D9);
-                uint256 temp = FullMath.mulDiv(1 - squared, D9, FullMath.mulDiv(OVERCOLLATERIZATION_D9, strategyParams.upperHedgingThresholdD9, D9));  
-                amountD9 = FullMath.mulDiv(D9 - strategyParams.lowerHedgingThresholdD9 - temp, D9, strikeD9 - strategyParams.lowerHedgingThresholdD9);
-            }
+            amountD9 = FullMath.mulDiv(strategyParams.upperHedgingThresholdD9 - D9, strategyParams.upperHedgingThresholdD9 - strikeD9, OVERCOLLATERIZATION_D9);
+            
         }
         {
             uint256 totalMoney = IERC20(mainToken).balanceOf(address(erc20Vault));
@@ -154,10 +138,10 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
 
             erc20Vault.externalCall(mainToken, TRANSFER_FROM_SELECTOR, abi.encode(erc20Vault, safe, totalMoney - shortMoney));
         }
-        //sell wPowerPerp from sqVault for sellToken at erc20vault
+        //sell wPowerPerp from sqVault for mainToken at erc20vault
         SwapParams memory params = SwapParams({
                 tokenIn: wPowerPerp,
-                tokenOut: sellToken_,
+                tokenOut: mainToken,
                 pool: squeethPool,
                 spender: squeethVault,
                 recipient: address(erc20Vault)
@@ -187,7 +171,6 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         }
         squeethVault.closeShort();
         address mainToken_ = mainToken;
-        address sellToken_ = sellToken;
         uint256 squeethMoney = IERC20(mainToken_).balanceOf(address(squeethVault));
         {
             uint256[] memory amounts = new uint256[](1);
@@ -197,24 +180,9 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
             squeethVault.pull(address(erc20Vault), tokens, amounts, "");
         }
         int256 changeFromStrikeD9 = int256(FullMath.mulDiv(lastStrikeD9, D9, priceChangeD9)) - int256(D9);
-        if (sellToken_ != mainToken_) {
-            changeFromStrikeD9 *= -1;
-        }
         if (changeFromStrikeD9 > 0) {
             uint256 optionProfit = FullMath.mulDiv(uint256(changeFromStrikeD9), lastAmountD9, D9); 
             erc20Vault.externalCall(mainToken_, TRANSFER_FROM_SELECTOR, abi.encode(safe, erc20Vault, optionProfit));
-        }
-        
-        //convert everything to ETH
-        if (sellToken_ != mainToken_) {
-            SwapParams memory params = SwapParams({
-                tokenIn: sellToken_,
-                tokenOut: mainToken_,
-                pool: sellPool,
-                spender: erc20Vault,
-                recipient: address(erc20Vault)
-            });
-            _swapToToken(params);
         }
 
         startingTime = 0;
