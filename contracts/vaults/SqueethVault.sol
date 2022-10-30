@@ -23,12 +23,16 @@ import "../interfaces/external/squeeth/IWETH9.sol";
 import {IUniswapV3Pool as IUniV3Pool} from "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
 import "./IntegrationVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that interfaces Opyn Squeeth protocol in the integration layer.
 contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault, IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments {
     using SafeERC20 for IERC20;
     uint256 public immutable DUST = 10**3;
     uint256 public immutable D18 = 10**18;
+    uint256 public immutable D9 = 10**9;
+    uint256 public immutable D6 = 10**6;
+    uint256 public immutable D4 = 10**4;
     uint256 public immutable MINCOLLATERAL = 69 * 10**17;
 
 
@@ -89,36 +93,56 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         weth = protocolParams.controller.weth();
         shortPowerPerp = protocolParams.controller.shortPowerPerp();
         wPowerPerpPool = protocolParams.controller.wPowerPerpPool();
+        wethBorrowPool = protocolParams.wethBorrowPool;
 
         shortVaultId = 0; // maybe delete later
         require(vaultTokens_[0] == weth, ExceptionsLibrary.INVALID_TOKEN);
     }
 
     function takeShort(
-        uint256 healthFactor
+        uint256 healthFactorD9, bool reusePerp
     ) external nonReentrant {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); 
-        require(healthFactor > CommonLibrary.DENOMINATOR, ExceptionsLibrary.INVARIANT);
+        require(healthFactorD9 > CommonLibrary.DENOMINATOR, ExceptionsLibrary.INVARIANT);
         require(shortVaultId == 0, ExceptionsLibrary.INVALID_STATE);
         uint256 wethAmount = IERC20(weth).balanceOf(address(this));
-        require(wethAmount >= MINCOLLATERAL, ExceptionsLibrary.LIMIT_UNDERFLOW); //TODO: doublecheck
+        require(wethAmount >= MINCOLLATERAL, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
-        IWETH9(weth).withdraw(wethAmount);
         uint256 ethPrice = twapIndexPrice(); 
-        uint256 collateralFactor = FullMath.mulDiv(healthFactor, 3, 2);
+        uint256 collateralFactorD9 = FullMath.mulDiv(healthFactorD9, 3, 2);
         uint256 ethPriceNormalized = FullMath.mulDiv(ethPrice, controller.getExpectedNormalizationFactor(), CommonLibrary.D18);
-        uint256 wPowerPerpAmountExpected = FullMath.mulDiv(wethAmount, collateralFactor, ethPriceNormalized);
-        uint256 vaultId = controller.mintWPowerPerpAmount{value: wethAmount}(
-            0,
-            wPowerPerpAmountExpected,
-            0
-        );
+        uint256 wPowerPerpAmountExpected;
+        if (!reusePerp) {
+            IWETH9(weth).withdraw(wethAmount);
+            wPowerPerpAmountExpected = FullMath.mulDiv(wethAmount, collateralFactorD9, ethPriceNormalized);
+            shortVaultId = controller.mintWPowerPerpAmount{value: wethAmount}(
+                0,
+                wPowerPerpAmountExpected,
+                0
+            );
+        } else {
+            ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+            uint256 tempD9 = FullMath.mulDiv(D9 - protocolParams.slippageD9, D9, collateralFactorD9);
+            uint256 temp2D9 = D9 + FullMath.mulDiv(IUniV3Pool(wPowerPerpPool).fee(), D9, D6) - tempD9;
 
-        shortVaultId = vaultId;
+            uint256 wethToBorrow = FullMath.mulDiv(wethAmount, tempD9, temp2D9);
+        
+            uint256 mintedETHAmount = FullMath.mulDiv(wethAmount + wethToBorrow, tempD9, CommonLibrary.DENOMINATOR);
+            wPowerPerpAmountExpected = FullMath.mulDiv(mintedETHAmount, D4 * D18, ethPriceNormalized);
+            wethAmount += wethToBorrow;
+            _flashLoan(wethToBorrow, wPowerPerpAmountExpected, true);
+        }
+
         totalCollateral = wethAmount;
         wPowerPerpDebt = wPowerPerpAmountExpected;
 
         emit ShortTaken(tx.origin, msg.sender); //TODO: add data
+    }
+
+    function healthFactor() view external returns (uint256 ratioD9) {
+        uint256 ethPriceNormalized = FullMath.mulDiv(twapIndexPrice(), controller.getExpectedNormalizationFactor(), CommonLibrary.D18);
+        ratioD9 = FullMath.mulDiv(totalCollateral * D4, D18, ethPriceNormalized);
+        ratioD9 = FullMath.mulDiv(ratioD9, D9 * 2, wPowerPerpDebt * 3); 
     }
 
     function closeShort() external nonReentrant {
@@ -135,7 +159,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
             uint256 wethMax = FullMath.mulDiv(wethNeeded, CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
             if (IERC20(weth).balanceOf(address(this)) < wethMax) {
                 flashLoanNeeded = true;
-                _flashRepayDebt(wethMax - IERC20(weth).balanceOf(address(this)), wPowerPerpRemaining) ;
+                _flashLoan(wethMax - IERC20(weth).balanceOf(address(this)), wPowerPerpRemaining, false) ;
             }
         } else {
             wPowerPerpRemaining = 0;
@@ -182,11 +206,11 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 amountBorrowed;
         uint256 amountToSwap;
         PoolAddress.PoolKey poolKey;
+        bool isTake;
     }
 
-    function _flashRepayDebt(uint256 wethToBorrow, uint256 wPowerPerpToSwap) internal {
-        ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
-        IUniV3Pool pool = IUniV3Pool(protocolParams.wethBorrowPool);
+    function _flashLoan(uint256 wethToBorrow, uint256 wPowerPerpToSwap, bool isTake) internal {
+        IUniV3Pool pool = IUniV3Pool(wethBorrowPool);
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: pool.token0(), token1: pool.token1(), fee: pool.fee()});
         bool wethIsFirst = pool.token0() == weth;
@@ -198,7 +222,8 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
                 FlashCallbackData({
                     amountBorrowed: wethToBorrow,
                     amountToSwap: wPowerPerpToSwap,
-                    poolKey: poolKey
+                    poolKey: poolKey,
+                    isTake: isTake
                 })
             )
         );
@@ -212,10 +237,35 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         FlashCallbackData memory decoded = abi.decode(data, (FlashCallbackData));
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
 
-        _repayDebt(decoded.amountToSwap);
+        uint256 borrowedPlusFees = FullMath.mulDivRoundingUp(decoded.amountBorrowed, D6 + IUniV3Pool(wethBorrowPool).fee(), D6);
+        
+        if (!decoded.isTake) {
+            _repayDebt(decoded.amountToSwap);
+        } else {
+            uint256 wethAmount = IERC20(weth).balanceOf(address(this)); 
+            IWETH9(weth).withdraw(wethAmount);
+        
+            shortVaultId = controller.mintWPowerPerpAmount{value: wethAmount}(
+                0,
+                decoded.amountToSwap,
+                0
+            );
 
-        ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
-        uint256 borrowedPlusFees = FullMath.mulDiv(decoded.amountBorrowed, CommonLibrary.DENOMINATOR + protocolParams.slippageD9, CommonLibrary.DENOMINATOR);
+            ISwapRouter.ExactInputSingleParams memory exactInputParams = ISwapRouter.ExactInputSingleParams({
+                tokenIn: wPowerPerp,
+                tokenOut: weth,
+                fee: IUniV3Pool(wPowerPerpPool).fee(),
+                recipient: address(this),
+                deadline: block.timestamp + 1,
+                amountIn: decoded.amountToSwap,
+                amountOutMinimum: borrowedPlusFees,
+                sqrtPriceLimitX96: 0
+            });
+            IERC20(wPowerPerp).safeIncreaseAllowance(address(router), decoded.amountToSwap);
+            router.exactInputSingle(exactInputParams);
+            IERC20(wPowerPerp).safeApprove(address(router), 0);
+        }
+
         pay(weth, address(this), msg.sender, borrowedPlusFees);
     }
 
@@ -273,7 +323,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
     function twapIndexPrice() public view returns (uint256 indexPrice) {
         ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
-        indexPrice = CommonLibrary.sqrt(controller.getUnscaledIndex(protocolParams.twapPeriod));
+        indexPrice = CommonLibrary.sqrt(controller.getUnscaledIndex(protocolParams.twapPeriod)) * D9;
     }
 
     function twapMarkPrice() public view returns (uint256 markPrice) {

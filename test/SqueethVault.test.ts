@@ -365,7 +365,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     (await this.squeeth.balanceOf(this.subject.address)).eq(0)
                 ).to.be.true;
 
-                await this.subject.takeShort(this.healthFactor);
+                await this.subject.takeShort(this.healthFactor, false);
                 let mintedSqueeth = await this.squeeth.balanceOf(this.subject.address);
                 expect((await this.subject.shortVaultId()).gt(0)).to.be.true;
                 expect((await this.subject.totalCollateral()).eq(wethBalance)).to.be.true;
@@ -375,10 +375,31 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     (await this.weth.balanceOf(this.subject.address)).eq(0)).to.be.true;
             });
 
+            it("opens short position using all resources as collateral", async () => {
+                let wethBalance = await this.weth.balanceOf(this.subject.address);
+                expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).eq(0)).to.be.true;
+                expect(wethBalance.gt(0)).to.be.true;
+                expect(
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)
+                ).to.be.true;
+
+                await this.subject.takeShort(this.healthFactor, true);
+                console.log((await this.subject.healthFactor()).toString());
+                expect((await this.subject.shortVaultId()).gt(0)).to.be.true;
+                expect((await this.subject.totalCollateral()).gt(wethBalance)).to.be.true;
+                expect((await this.subject.wPowerPerpDebt()).gt(0)).to.be.true;
+                expect((await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
+                console.log((await this.weth.balanceOf(this.subject.address)).toString());
+                console.log((await this.subject.totalCollateral()).toString());
+                expect(
+                    (await this.weth.balanceOf(this.subject.address)).lt(wethBalance)).to.be.true;
+            });
+
             it("emits ShortTaken event", async () => {
                 await expect(
                     this.subject.takeShort(
-                        this.healthFactor
+                        this.healthFactor, false
                     )
                 ).to.emit(this.subject, "ShortTaken");
             });
@@ -389,7 +410,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         this.subject
                             .connect(this.deployer)
                             .takeShort(
-                                this.healthFactor
+                                this.healthFactor, false
                             )
                     ).to.not.be.reverted;
                 });
@@ -406,7 +427,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                             this.subject
                                 .connect(s)
                                 .takeShort(
-                                    this.healthFactor
+                                    this.healthFactor, false
                                 )
                         ).to.not.be.reverted;
                     });
@@ -418,7 +439,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                             this.subject
                                 .connect(s)
                                 .takeShort(
-                                    this.healthFactor
+                                    this.healthFactor, false
                                 )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
@@ -428,8 +449,8 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when short is taken twice", () => {
                     it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
-                        await this.subject.takeShort(this.healthFactor);
-                        await expect(this.subject.takeShort(this.healthFactor)).to.be.revertedWith(Exceptions.INVALID_STATE);;
+                        await this.subject.takeShort(this.healthFactor, false);
+                        await expect(this.subject.takeShort(this.healthFactor, false)).to.be.revertedWith(Exceptions.INVALID_STATE);;
                     });
                 });
             });
@@ -438,7 +459,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
 
         describe("#closeShort", () => {
             it("closes position using oSQTH left on vault", async () => {
-                await this.subject.takeShort(this.healthFactor);
+                await this.subject.takeShort(this.healthFactor, false);
 
                 let squeethBalance = await this.squeeth.balanceOf(this.subject.address);
                 expect((await this.subject.wPowerPerpDebt()).eq(squeethBalance)).to.be.true;
@@ -455,7 +476,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
 
             it("closes position using oSQTH from flash swap", async () => {
-                await this.subject.takeShort(this.healthFactor);
+                await this.subject.takeShort(this.healthFactor, false);
                 let squeethBalance = await this.squeeth.balanceOf(this.subject.address)
                 await withSigner(this.subject.address, async (s) => {
                     await this.squeeth
@@ -479,10 +500,27 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     (await this.weth.balanceOf(this.subject.address)).gt(0)).to.be.true;
             });
 
+
+            it.only("closes overcollaterized position using oSQTH from flash swap", async () => {
+                await this.subject.takeShort(this.healthFactor, true);
+                expect(
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)
+                ).to.be.true;
+
+                await this.subject.closeShort();
+
+                expect((await this.subject.wPowerPerpDebt()).eq(0)).to.be.true;
+                expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
+                expect(
+                    (await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
+                expect(
+                    (await this.weth.balanceOf(this.subject.address)).gt(0)).to.be.true;
+            });
+
             it("emits ShortClosed event", async () => {
                 await expect(
                     this.subject.takeShort(
-                        this.healthFactor
+                        this.healthFactor, false
                     ))
                 await expect(
                     this.subject.closeShort()
@@ -491,7 +529,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
 
             describe("access control:", () => {
                 it("allowed: vault owner", async () => {
-                    await this.subject.takeShort(this.healthFactor);
+                    await this.subject.takeShort(this.healthFactor, false);
                     await expect(
                         this.subject
                             .connect(this.deployer)
@@ -500,7 +538,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 });
 
                 it("allowed: approved account", async () => {
-                    await this.subject.takeShort(this.healthFactor);
+                    await this.subject.takeShort(this.healthFactor, false);
                     
                     let account = randomAddress();
                     await withSigner(this.erc20RootVault.address, async (s) => {
@@ -519,7 +557,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 });
 
                 it("denied: any other address", async () => {
-                    await this.subject.takeShort(this.healthFactor);
+                    await this.subject.takeShort(this.healthFactor, false);
                     await withSigner(randomAddress(), async (s) => {
                         await expect(
                             this.subject
@@ -533,7 +571,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when short is closed twice", () => {
                     it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
-                        await this.subject.takeShort(this.healthFactor);
+                        await this.subject.takeShort(this.healthFactor, false);
                         await this.subject.closeShort();
                         await expect(this.subject.closeShort()).to.be.revertedWith(Exceptions.INVALID_STATE);;
                     });
