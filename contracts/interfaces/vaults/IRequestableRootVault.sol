@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
 import "./IIntegrationVault.sol";
 
-interface IGearboxRootVault is IAggregateVault, IERC20 {
+interface IRequestableRootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
@@ -23,8 +23,8 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
 
-    /// @notice Gearbox vault that is the second subvault of the system
-    function gearboxVault() external view returns (IIntegrationVault);
+    /// @notice Requestable vault that is the second subvault of the system
+    function requestableVault() external view returns (IIntegrationVault);
 
     /// @notice ERC20 vault that is the first subvault of the system
     function erc20Vault() external view returns (IIntegrationVault);
@@ -37,6 +37,8 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
 
     /// @notice LP parameter that controls the charge in performance fees
     function lpPriceHighWaterMarkD18() external view returns (uint256);
+
+    function withdrawDelay() external view returns (uint256);
 
     /// @notice List of addresses of depositors from which interaction with private vaults is allowed
     function depositorsAllowlist() external view returns (address[] memory);
