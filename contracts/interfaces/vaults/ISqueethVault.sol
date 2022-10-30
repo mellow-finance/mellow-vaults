@@ -13,7 +13,7 @@ interface ISqueethVault is IIntegrationVault {
     function initialize(uint256 nft_, address[] memory vaultTokens_) external;
 
     function takeShort(
-        uint256 healthFactor
+        uint256 healthFactor, bool reusePerp
     ) external ;
 
     function closeShort() external;
@@ -23,6 +23,8 @@ interface ISqueethVault is IIntegrationVault {
     function totalCollateral() external view returns (uint256);
     
     function wPowerPerpDebt() external view returns (uint256);
+
+    function healthFactor() external view returns (uint256 ratioD9);
 
     function wPowerPerp() external view returns (address);
     
