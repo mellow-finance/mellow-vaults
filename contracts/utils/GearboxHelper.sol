@@ -268,11 +268,8 @@ contract GearboxHelper {
         }
     }
 
-    function claimRewards(
-        address vaultGovernance,
-        address creditAccount,
-        address convexOutputToken
-    ) public {
+    function claimRewards(address vaultGovernance, address creditAccount, address convexOutputToken) public {
+
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
         if (balance == 0) {
             return;
@@ -318,7 +315,7 @@ contract GearboxHelper {
             protocolParams.maxSmallPoolsSlippageD9
         );
 
-        if (weth != primaryToken) {
+        if (weth != primaryToken){
             calls[2] = createUniswapMulticall(
                 weth,
                 primaryToken,

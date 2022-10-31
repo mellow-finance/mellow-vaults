@@ -5,23 +5,23 @@ import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
 
-import "../src/ProtocolGovernance.sol";
-import "../src/MockOracle.sol";
-import "./helpers/MockRouter.t.sol";
-import "../src/ERC20RootVaultHelper.sol";
-import "../src/VaultRegistry.sol";
+import "../../src/ProtocolGovernance.sol";
+import "../../src/MockOracle.sol";
+import "../helpers/MockRouter.t.sol";
+import "../../src/ERC20RootVaultHelper.sol";
+import "../../src/VaultRegistry.sol";
 
-import "../src/vaults/GearboxVault.sol";
-import "../src/vaults/GearboxRootVault.sol";
-import "../src/vaults/ERC20Vault.sol";
+import "../../src/vaults/GearboxVault.sol";
+import "../../src/vaults/GearboxRootVault.sol";
+import "../../src/vaults/ERC20Vault.sol";
 
-import "../src/vaults/GearboxVaultGovernance.sol";
-import "../src/vaults/ERC20VaultGovernance.sol";
-import "../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/GearboxVaultGovernance.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
-import "../src/utils/GearboxHelper.sol";
+import "../../src/utils/GearboxHelper.sol";
 
-import "../src/external/ConvexBaseRewardPool.sol";
+import "../../src/external/ConvexBaseRewardPool.sol";
 
 contract GearboxWBTCTest is Test {
 

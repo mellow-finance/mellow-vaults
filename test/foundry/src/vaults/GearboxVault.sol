@@ -323,6 +323,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address depositToken_ = depositToken;
 
         (uint256 minBorrowingLimit, ) = creditFacade_.limits();
+        uint256 minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9));
+
         uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
@@ -333,12 +335,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             address(_vaultGovernance)
         ).strategyParams(_nft);
 
-        if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minBorrowingLimit) {
+        if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minimalNecessaryAmount) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             uint256 amountInMaximum = _helper.calculateAmountInMaximum(
                 depositToken_,
                 primaryToken_,
-                minBorrowingLimit - currentPrimaryTokenAmount,
+                minimalNecessaryAmount - currentPrimaryTokenAmount,
                 protocolParams.maxSlippageD9
             );
             require(IERC20(depositToken_).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
@@ -347,7 +349,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken),
                 recipient: address(this),
                 deadline: block.timestamp + 1,
-                amountOut: minBorrowingLimit - currentPrimaryTokenAmount,
+                amountOut: minimalNecessaryAmount - currentPrimaryTokenAmount,
                 amountInMaximum: amountInMaximum
             });
 
@@ -358,7 +360,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
         }
 
-        require(currentPrimaryTokenAmount >= minBorrowingLimit, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(currentPrimaryTokenAmount >= minimalNecessaryAmount, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         IERC20(primaryToken_).safeIncreaseAllowance(address(creditManager_), currentPrimaryTokenAmount);
         creditFacade_.openCreditAccount(

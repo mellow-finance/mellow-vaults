@@ -5,27 +5,29 @@ import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
 
-import "../src/ProtocolGovernance.sol";
-import "../src/MockOracle.sol";
-import "./helpers/MockRouter.t.sol";
-import "../src/ERC20RootVaultHelper.sol";
-import "../src/VaultRegistry.sol";
+import "../../src/ProtocolGovernance.sol";
+import "../../src/MockOracle.sol";
+import "../../src/ERC20RootVaultHelper.sol";
+import "../../src/VaultRegistry.sol";
 
-import "../src/vaults/GearboxVault.sol";
-import "../src/vaults/GearboxRootVault.sol";
-import "../src/vaults/ERC20Vault.sol";
+import "../../src/vaults/GearboxVault.sol";
+import "../../src/vaults/GearboxRootVault.sol";
+import "../../src/vaults/ERC20Vault.sol";
 
-import "../src/vaults/GearboxVaultGovernance.sol";
-import "../src/vaults/ERC20VaultGovernance.sol";
-import "../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/GearboxVaultGovernance.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
-import "../src/utils/GearboxHelper.sol";
+import "../../src/utils/GearboxHelper.sol";
 
-import "../src/external/ConvexBaseRewardPool.sol";
+import "../../src/external/ConvexBaseRewardPool.sol";
 
-contract GearboxWETHTest is Test {
+import "../../src/interfaces/external/gearbox/ICreditFacade.sol";
 
-    uint256 weiofUsdc = 10**15;
+
+contract GearboxUSDCTest is Test {
+
+    event CreditAccountOpened(address indexed origin, address indexed sender, address indexed creditAccount);
 
     ProtocolGovernance governance;
     VaultRegistry registry;
@@ -34,15 +36,17 @@ contract GearboxWETHTest is Test {
     ERC20Vault erc20Vault = new ERC20Vault();
     GearboxVault gearboxVault = new GearboxVault();   
 
+    address usdc = 0x1F2cd0D7E5a7d8fE41f886063E9F11A05dE217Fa;
     address weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6; 
-
+    address treasuryA;
+    address treasuryB;
     address creditAccount;
-    uint256 nftStart;
 
     ICurveV1Adapter curveAdapter;
     IConvexV1BaseRewardPoolAdapter convexAdapter;
-    GearboxVaultGovernance governanceC;
+
     ERC20RootVaultGovernance governanceA;
+    uint256 nftStart;
 
     uint256 YEAR = 365 * 24 * 60 * 60;
 
@@ -68,11 +72,11 @@ contract GearboxWETHTest is Test {
 
         address creditAccount = gearboxVault.getCreditAccount();
 
-        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
+        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
         uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
         uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
 
-        if (wethBalance > 1 || curveLpBalance > 1 || convexLpBalance > 1) {
+        if (usdcBalance > 1 || curveLpBalance > 1 || convexLpBalance > 1) {
             return false;
         }
 
@@ -80,7 +84,6 @@ contract GearboxWETHTest is Test {
     }
 
     function setUp() public {
-
         governance = new ProtocolGovernance(address(this));
         registry = new VaultRegistry("Mellow LP", "MLP", governance);
 
@@ -94,14 +97,17 @@ contract GearboxWETHTest is Test {
 
         governance.stageParams(governanceParams);
         governance.commitParams();
-        governance.stageUnitPrice(weth, 1);
+        governance.stageUnitPrice(usdc, 1);
+        governance.commitUnitPrice(usdc);
 
         {
             uint8[] memory args = new uint8[](1);
             args[0] = PermissionIdsLibrary.ERC20_VAULT_TOKEN;
+            governance.stagePermissionGrants(usdc, args);
             governance.stagePermissionGrants(weth, args);
 
             vm.warp(block.timestamp + governance.governanceDelay());
+            governance.commitPermissionGrants(usdc);
             governance.commitPermissionGrants(weth);
 
             args[0] = PermissionIdsLibrary.CREATE_VAULT;
@@ -129,18 +135,16 @@ contract GearboxWETHTest is Test {
             singleton: rootVault
         });
 
-        MockSwapRouter router = new MockSwapRouter();
-
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
             withdrawDelay: 86400 * 7,
             referralCode: 0,
-            univ3Adapter: 0x8d4dDb8c50A3281FB4B87139e11D67E416509528,
+            univ3Adapter: 0xA417851DdbB7095c76Ac69Df6152c86F01328C5f,
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
-            maxSlippageD9: 1000000,
+            maxSlippageD9: 100000000,
             maxSmallPoolsSlippageD9: 20000000,
-            maxCurveSlippageD9: 50000000,
-            uniswapRouter: address(router)
+            maxCurveSlippageD9: 500000000,
+            uniswapRouter: 0xE592427A0AEce92De3Edee1F18E0157C05861564
         });
 
         MockOracle oracle = new MockOracle();
@@ -153,7 +157,7 @@ contract GearboxWETHTest is Test {
         
         governanceA = new ERC20RootVaultGovernance(internalParamsA, delayedParamsA, IERC20RootVaultHelper(helper));
         ERC20VaultGovernance governanceB = new ERC20VaultGovernance(internalParamsB);
-        governanceC = new GearboxVaultGovernance(internalParamsC, delayedParams);
+        GearboxVaultGovernance governanceC = new GearboxVaultGovernance(internalParamsC, delayedParams);
         
         {
             uint8[] memory args = new uint8[](1);
@@ -173,9 +177,12 @@ contract GearboxWETHTest is Test {
             tokenLimit: type(uint256).max
         });
 
+        treasuryA = getNextUserAddress();
+        treasuryB = getNextUserAddress();
+
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance.DelayedStrategyParams({
-            strategyTreasury: address(this),
-            strategyPerformanceTreasury: address(this),
+            strategyTreasury: treasuryA,
+            strategyPerformanceTreasury: treasuryB,
             privateVault: false,
             managementFee: 10**8,
             performanceFee: 10**8,
@@ -186,10 +193,10 @@ contract GearboxWETHTest is Test {
         nftStart = registry.vaultsCount() + 1;
 
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
-            primaryToken: weth,
-            curveAdapter: 0xfB50859b3bb66F65623103A7C7852b96DaCCF0fd,
-            convexAdapter: 0x15D07f782492b4998C39943AbD8ADeA4B8D3C566,
-            facade: 0x2ADDB8489Eba8873277b39f15CF770f5e1eE21Fe,
+            primaryToken: usdc,
+            curveAdapter: 0x6f3A4EFe549c2Fa397ed40FD4DE9FEB922C0FE31,
+            convexAdapter: 0xb26586F4a9F157117651Da1A6DFa5b310790dd8A,
+            facade: 0xCd290664b0AE34D8a7249bc02d7bdbeDdf969820,
             initialMarginalValueD9: 3000000000
         });
 
@@ -205,7 +212,9 @@ contract GearboxWETHTest is Test {
         governanceA.commitDelayedStrategyParams(nftStart + 2);
 
         address[] memory tokens = new address[](1);
-        tokens[0] = weth; 
+        tokens[0] = usdc; 
+
+        deal(usdc, address(governanceC), 5*10**8);
 
         GearboxHelper helper2 = new GearboxHelper();
 
@@ -227,20 +236,11 @@ contract GearboxWETHTest is Test {
 
         gearboxVault = GearboxVault(registry.vaultForNft(nftStart + 1));
 
-        curveAdapter = ICurveV1Adapter(0xfB50859b3bb66F65623103A7C7852b96DaCCF0fd);
-        convexAdapter = IConvexV1BaseRewardPoolAdapter(0x15D07f782492b4998C39943AbD8ADeA4B8D3C566);
+        curveAdapter = ICurveV1Adapter(0x6f3A4EFe549c2Fa397ed40FD4DE9FEB922C0FE31);
+        convexAdapter = IConvexV1BaseRewardPoolAdapter(0xb26586F4a9F157117651Da1A6DFa5b310790dd8A);
         
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
-        IERC20(weth).approve(address(rootVault), type(uint256).max);
-    }
-
-    function setZeroManagementFees() public {
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = governanceA.delayedStrategyParams(nftStart + 2);
-        delayedStrategyParams.managementFee = 0;
-        delayedStrategyParams.performanceFee = 0;
-        governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
-        vm.warp(block.timestamp + governance.governanceDelay());
-        governanceA.commitDelayedStrategyParams(nftStart + 2);
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
     }
 
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
@@ -261,54 +261,39 @@ contract GearboxWETHTest is Test {
 
     function firstDeposit() public {
 
-        deal(weth, address(this), 10**10);
+        deal(usdc, address(this), 10**4);
 
         uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 10**10;
-        IERC20(weth).approve(address(rootVault), type(uint256).max);
+        amounts[0] = 10**4;
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
 
         rootVault.deposit(amounts, 0, "");
     }
 
     function deposit(uint256 amount, address user) public {
 
-        uint256 subtract = 0;
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
-            subtract = 10**10;
         }
 
-        deal(weth, user, amount * weiofUsdc - subtract); 
+        deal(usdc, user, amount * 10**6);
 
         uint256[] memory amounts = new uint256[](1);
-        amounts[0] = amount * weiofUsdc - subtract;
-        IERC20(weth).approve(address(rootVault), type(uint256).max);
+        amounts[0] = amount * 10**6;
 
+        vm.startPrank(user);
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
         rootVault.deposit(amounts, 0, "");
+        vm.stopPrank();
+
         if (gearboxVault.getCreditAccount() == address(0)) {
-            vm.stopPrank();
             gearboxVault.openCreditAccount();
         }
     }
 
-    function changeSlippage(uint256 x) public {
-        IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = governanceC.delayedProtocolParams();
-        delayedParams.maxSlippageD9 = x;
-
-        governanceC.stageDelayedProtocolParams(delayedParams);
-        vm.warp(block.timestamp + governance.governanceDelay());
-        governanceC.commitDelayedProtocolParams();
-    }
-
     function invokeExecution() public {
-
-        changeSlippage(10**7);
-
         vm.roll(block.number + 1);
         rootVault.invokeExecution();
-
-        changeSlippage(10**6);
     }
 
     function claimMoney(address recipient) public {
@@ -344,8 +329,8 @@ contract GearboxWETHTest is Test {
     }
 
     function testSetup() public {
-        uint256 wethBalance = IERC20(weth).balanceOf(address(gearboxVault));
-        assertTrue(wethBalance == 0);
+        uint256 usdcBalance = IERC20(usdc).balanceOf(address(gearboxVault));
+        assertTrue(usdcBalance == 0);
         assertTrue(gearboxVault.getCreditAccount() == address(0));
     }
 
@@ -359,25 +344,24 @@ contract GearboxWETHTest is Test {
         vm.stopPrank();
     }
 
-    function testSimpleDeposit() public {
+    function testSimpleDepositUSDC() public {
 
         deposit(500, address(this));
 
         creditAccount = gearboxVault.getCreditAccount();
 
-        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
+        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
         uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
         uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(wethBalance >= weiofUsdc * 500 * 3 && wethBalance <= weiofUsdc * 501 * 3);
+        assertTrue(usdcBalance == 15 * 10 ** 8 + 3 * 10**4);
         assertTrue(curveLpBalance == 0);
         assertTrue(convexLpBalance == 0);
         assertTrue(convexFantomBalance == 0);
-        assertTrue(isClose(tvl(), 500 * weiofUsdc, 100));
     }
 
-    function testTwoDepositsWETH() public {
+    function testTwoDepositsUSDC() public {
         
         deposit(500, address(this));
         uint256 lpAmountBefore = rootVault.balanceOf(address(this));
@@ -387,18 +371,17 @@ contract GearboxWETHTest is Test {
 
         creditAccount = gearboxVault.getCreditAccount();
 
-        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
+        uint256 usdcBalance = IERC20(usdc).balanceOf(creditAccount);
         uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
         uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(wethBalance >= weiofUsdc * 1600 && wethBalance <= weiofUsdc * 1601);
+        assertTrue(usdcBalance >= 16 * 10 ** 8 + 2*10**4 && usdcBalance <= 16 * 10 ** 8 + 4*10**4);
         assertTrue(curveLpBalance == 0);
         assertTrue(convexLpBalance == 0);
         assertTrue(convexFantomBalance == 0);
 
         assertTrue(isClose(lpAmountBefore * 6, lpAmountAfter * 5, 100));
-        assertTrue(isClose(tvl(), 600 * weiofUsdc, 100));
     }
 
     function testFailTooSmallInitialDepositFail() public {
@@ -409,9 +392,9 @@ contract GearboxWETHTest is Test {
         assertTrue(tvl() == 0);
     }
 
-    function testTvlAfterSingleDeposit() public {
+    function testTvlAfterSingleDepositUSDC() public {
         deposit(500, address(this));
-        assertTrue(isClose(tvl(), 500 * weiofUsdc, 100));
+        assertTrue(tvl() == 5 * 10**8 + 10**4 - 1);
     }
 
     function testFailOpenCreditAccountTwice() public {
@@ -426,14 +409,14 @@ contract GearboxWETHTest is Test {
     function testTvlAfterTimePasses() public {
         deposit(500, address(this));
         vm.warp(block.timestamp + YEAR);
-        assertTrue(tvl() < 49999 * weiofUsdc / 100); // some fees accrued
+        assertTrue(tvl() < 49999 * 10**4); // some fees accrued
     }
 
-    function testTvlAfterMultipleDeposits() public {
+    function testTvlAfterMultipleDepositsUSDC() public {
         deposit(500, address(this));
         deposit(100, address(this));
         deposit(50, address(this));
-        assertTrue(isClose(tvl(), 650 * weiofUsdc, 100));
+        assertTrue(tvl() >= 65 * 10**7 + 5*10**3 && tvl() <= 65 * 10**7 + 15*10**3);
     }
 
     function testWithdrawalOrders() public {
@@ -461,7 +444,7 @@ contract GearboxWETHTest is Test {
         assertTrue(rootVault.withdrawalRequests(address(this)) == lpTokens);
     }
 
-    function testSimpleAdjustingPositionWETH() public {
+    function testSimpleAdjustingPosition() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
@@ -475,14 +458,13 @@ contract GearboxWETHTest is Test {
         gearboxVault.adjustPosition();
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(IERC20(weth).balanceOf(creditAccount) <= 1);
         assertTrue(isClose(convexFantomBalance * 6, convexFantomBalanceAfter * 5, 100));
     }
 
-    function testSimpleAdjustingPositionAndTvlWETH() public {
+    function testSimpleAdjustingPositionAndTvl() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
-        assertTrue(isClose(tvl(), 500 * weiofUsdc, 80));
+        assertTrue(isClose(tvl(), 500 * 10**6, 100));
     }
 
     function testFailAdjustingPositionFromSomeAddress() public {
@@ -505,102 +487,99 @@ contract GearboxWETHTest is Test {
         gearboxVault.updateTargetMarginalFactor(200000000);
     }
 
-    function testSeveralAdjustingPositionAfterChangeInMarginalFactorWETH() public {
+    function testSeveralAdjustingPositionAfterChangeInMarginalFactor() public {
         deposit(500, address(this));
-        deposit(200, address(this)); // 2100 mETH in staking
         creditAccount = gearboxVault.getCreditAccount();
         gearboxVault.adjustPosition();
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        gearboxVault.updateTargetMarginalFactor(2500000000); // 1750 mETH in staking
+        gearboxVault.updateTargetMarginalFactor(2500000000);
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        assertTrue(isClose(convexFantomBalanceBefore * 175, convexFantomBalanceAfter * 210, 50));
-        assertTrue(isClose(tvl(), 700 * weiofUsdc, 100));
+        assertTrue(isClose(convexFantomBalanceBefore * 5, convexFantomBalanceAfter * 6, 100));
+        assertTrue(isClose(tvl(), 500 * 10**6, 100));
 
-        gearboxVault.updateTargetMarginalFactor(2700000000); // 1910 mETH in staking
         assertTrue(checkNotNonExpectedBalance());
-        assertTrue(isClose(tvl(), 700 * weiofUsdc, 100));
+
+        gearboxVault.updateTargetMarginalFactor(2700000000);
+        assertTrue(isClose(tvl(), 500 * 10**6, 100));
         uint256 convexFantomBalanceFinal = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        assertTrue(isClose(convexFantomBalanceFinal * 191, convexFantomBalanceAfter * 210, 50));
+        assertTrue(isClose(convexFantomBalanceFinal * 25, convexFantomBalanceAfter * 27, 100));
     }
 
-    function testEarnedRewardsWETH() public {
+    function testEarnedRewardsUSDC() public {
         deposit(500, address(this));
-        deposit(200, address(this)); // 2100 mETH in staking
-
         creditAccount = gearboxVault.getCreditAccount();
         gearboxVault.adjustPosition();
 
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        setNewRewardInRewardPool(5000, 1); // + 103 mETH
-        assertTrue(isClose(tvl(), 803 * weiofUsdc, 50));
-        gearboxVault.adjustPosition(); // 2409 mETH in staking now
-        assertTrue(isClose(tvl(), 803 * weiofUsdc, 50));
+
+        setNewRewardInRewardPool(5, 1); // + 76 USD
+        assertTrue(isClose(tvl(), 576 * 10**6, 100));
+        gearboxVault.adjustPosition();
+        assertTrue(isClose(tvl(), 576 * 10**6, 100));
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(isClose(convexFantomBalanceBefore * 2409, convexFantomBalanceAfter * 2100, 50));
+        assertTrue(isClose(convexFantomBalanceBefore * 576, convexFantomBalanceAfter * 500, 50));
 
-        setNewRewardInRewardPool(12, 10); // + 21 mETH
-        assertTrue(isClose(tvl(), 824 * weiofUsdc, 50));
+        setNewRewardInRewardPool(12, 10); // + 23 USD
+        assertTrue(isClose(tvl(), 599 * 10**6, 100));
         gearboxVault.adjustPosition();
-        assertTrue(isClose(tvl(), 824 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 599 * 10**6, 100));
     }
 
-    function testMultipleDepositsAndRewardsAndAdjustmentsTvlCorrectnessWETH() public {
+    function testMultipleDepositsAndRewardsAndAdjustmentsTvlCorrectness() public {
         deposit(500, address(this));
-        deposit(200, address(this));
         gearboxVault.adjustPosition();
-        setNewRewardInRewardPool(5000, 1); // + 103 mETH
+        setNewRewardInRewardPool(2, 1); // + 19 USD
 
-        assertTrue(isClose(tvl(), 803 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 519 * 10**6, 100));
         deposit(100, address(this));
-        assertTrue(isClose(tvl(), 903 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 619 * 10**6, 100));
         deposit(30, address(this));
-        assertTrue(isClose(tvl(), 933 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 649 * 10**6, 100));
         gearboxVault.adjustPosition();
-        assertTrue(isClose(tvl(), 933 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 649 * 10**6, 100));
         gearboxVault.updateTargetMarginalFactor(2000000000);
-        assertTrue(isClose(tvl(), 933 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 649 * 10**6, 100));
         deposit(16, address(this));
-        assertTrue(isClose(tvl(), 949 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 665 * 10**6, 100));
         gearboxVault.updateTargetMarginalFactor(2222222222);
-        assertTrue(isClose(tvl(), 949 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 665 * 10**6, 100));
     }
 
     function testWithValueFallingAndRewardsCovering() public {
         deposit(500, address(this));
-        deposit(200, address(this));
         gearboxVault.adjustPosition();
 
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        setNewRewardInRewardPool(5000, 1); // + 103 mETH
+        setNewRewardInRewardPool(10, 1); // + 171 USD
 
         gearboxVault.updateTargetMarginalFactor(2900000000);
-        assertTrue(isClose(tvl(), 803 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 671 * 10**6, 100));
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(isClose(convexFantomBalanceAfter*2100, convexFantomBalanceBefore*2328, 50));
+        assertTrue(checkNotNonExpectedBalance());
+        assertTrue(isClose(convexFantomBalanceAfter*500, convexFantomBalanceBefore*671, 100));
     }
 
-    function testVaultCloseWithoutOrdersAndConvexWETH() public {
+    function testVaultCloseWithoutOrdersAndConvex() public {
         deposit(500, address(this));
-        deposit(200, address(this));
         invokeExecution();
 
-        assertTrue(isClose(IERC20(weth).balanceOf(address(gearboxVault)), 700 * weiofUsdc, 500));
-        assertTrue(IERC20(weth).balanceOf(address(erc20Vault)) == 0);
-        assertTrue(IERC20(weth).balanceOf(address(rootVault)) == 0);
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 500 * 10**6, 100));
+        assertTrue(IERC20(usdc).balanceOf(address(erc20Vault)) == 0);
+        assertTrue(IERC20(usdc).balanceOf(address(rootVault)) == 0);
 
         assertTrue(gearboxVault.getCreditAccount() == address(0));
     }
 
     function checkIfSimpleCloseIsOkay() public returns (bool) {
-        if (IERC20(weth).balanceOf(address(erc20Vault)) != 0) {
+        if (IERC20(usdc).balanceOf(address(erc20Vault)) != 0) {
             return false;
         }
-        if (IERC20(weth).balanceOf(address(rootVault)) != 0) {
+        if (IERC20(usdc).balanceOf(address(rootVault)) != 0) {
             return false;
         }
 
@@ -612,26 +591,24 @@ contract GearboxWETHTest is Test {
 
     function testVaultCloseWithoutOrdersButWithConvex() public {
         deposit(500, address(this));
-        deposit(200, address(this));
         gearboxVault.adjustPosition();
         invokeExecution();
 
-        assertTrue(isClose(IERC20(weth).balanceOf(address(gearboxVault)), 700 * weiofUsdc, 500));
-
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 500 * 10**6, 100));
+        assertTrue(IERC20(usdc).balanceOf(address(gearboxVault)) < 4999 * 10**5); //some funds spent to comissions
         assertTrue(checkIfSimpleCloseIsOkay());
     }
 
     function testSimpleCloseVaultTvl() public {
         deposit(500, address(this));
-        deposit(200, address(this));
         gearboxVault.adjustPosition();
         invokeExecution();
 
-        assertTrue(isClose(tvl(), 700 * weiofUsdc, 500));
+        assertTrue(isClose(tvl(), 500 * 10**6, 100));
         assertTrue(checkIfSimpleCloseIsOkay());
     }
 
-    function testSimpleCloseVaultOkayAfterMultipleOperationsWETH() public {
+    function testSimpleCloseVaultOkayAfterMultipleOperations() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
         deposit(100, address(this));
@@ -639,27 +616,25 @@ contract GearboxWETHTest is Test {
         gearboxVault.adjustPosition();
         gearboxVault.updateTargetMarginalFactor(2500000000);
 
-        setNewRewardInRewardPool(5000, 1); // + 73 mETH
+        setNewRewardInRewardPool(10, 1); // + 171 USD
 
         invokeExecution();
 
-        assertTrue(isClose(IERC20(weth).balanceOf(address(gearboxVault)), 673 * weiofUsdc, 100));
-        assertTrue(isClose(tvl(), 673 * weiofUsdc, 100));
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 771 * 10**6, 100));
         assertTrue(checkIfSimpleCloseIsOkay());
     }
 
     function testCloseVaultAfterNegativeAdjusting() public {
         deposit(500, address(this));
-        deposit(200, address(this));
         gearboxVault.updateTargetMarginalFactor(2000000000);
 
         invokeExecution();
-        assertTrue(isClose(IERC20(weth).balanceOf(address(gearboxVault)), 700 * weiofUsdc, 100));
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 500 * 10**6, 100));
         assertTrue(checkIfSimpleCloseIsOkay());
     }
 
-    function testCloseVaultWithOneOrderWETH() public {
-        deposit(500, address(this)); // 500 mETH
+    function testCloseVaultWithOneOrder() public {
+        deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
@@ -668,151 +643,109 @@ contract GearboxWETHTest is Test {
         vm.warp(block.timestamp + YEAR / 12); // to impose root vault fees
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(weth).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(weth).balanceOf(address(erc20Vault));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
+        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
 
         assertTrue(leftOnGearbox * 995 > wentForWithdrawal * 1000); // the result of fees
 
         deposit(300, address(this));
         gearboxVault.adjustPosition();
 
-        assertTrue(isClose(tvl(), 550 * weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 552 * 10**6, 100));
 
         address recipient = getNextUserAddress();
 
         uint256 oldSupply = rootVault.totalSupply();
 
         claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 250 * weiofUsdc, 50));
+
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 248 * 10**6, 100));
         uint256 newSupply = rootVault.totalSupply();
         
         assertTrue(oldSupply - lpTokens / 2 == newSupply);
     }
 
-    function testCloseVaultWithOneLargerOrderWETH() public {
-        deposit(500, address(this)); // 500 mETH
-        gearboxVault.adjustPosition();
-
-        uint256 lpTokens = rootVault.balanceOf(address(this));
-
-        rootVault.registerWithdrawal(lpTokens * 3 / 4); // 375 mETH
-        invokeExecution();
-
-        deposit(400, address(this));
-        gearboxVault.adjustPosition();
-
-        assertTrue(isClose(tvl(), 525 * weiofUsdc, 50));
-
-        address recipient = getNextUserAddress();
-
-        uint256 oldSupply = rootVault.totalSupply();
-
-        claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 375 * weiofUsdc, 50));
-        uint256 newSupply = rootVault.totalSupply();
-        
-        assertTrue(oldSupply - lpTokens * 3 / 4 == newSupply);
-    }
-
-    function testCloseVaultWithOneFullWETH() public {
-        deposit(500, address(this));
-        deposit(300, address(this));
-        gearboxVault.adjustPosition();
-
-        uint256 lpTokens = rootVault.balanceOf(address(this));
-
-        rootVault.registerWithdrawal(lpTokens); // 800 mETH
-        invokeExecution();
-
-        assertTrue(tvl() > 0);
-        address recipient = getNextUserAddress();
-
-        claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 800 * weiofUsdc, 50));
-    }
-
-
-    function testCloseVaultWithSeveralDepositsAndPartialWithdrawalsWETH() public {
+    function testCloseVaultWithSeveralDepositsAndPartialWithdrawalsUSDC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 mETH
+        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
 
         address secondUser = getNextUserAddress();
-        vm.startPrank(secondUser);
 
         deposit(100, secondUser);
         uint256 secondUserLpTokens = rootVault.balanceOf(secondUser);
-        rootVault.registerWithdrawal(secondUserLpTokens / 4); // 25 mETH
+        vm.startPrank(secondUser);
+        rootVault.registerWithdrawal(secondUserLpTokens / 4); // 25 USD
 
         vm.stopPrank();
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(weth).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(weth).balanceOf(address(erc20Vault));
-        assertTrue(isClose(leftOnGearbox, 325 * weiofUsdc, 50));
-        assertTrue(isClose(wentForWithdrawal, 275 * weiofUsdc, 50));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
+        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        assertTrue(isClose(leftOnGearbox, 325 * 10**6, 100));
+        assertTrue(isClose(wentForWithdrawal, 275 * 10**6, 100));
 
 
         address recipient = getNextUserAddress();
         claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 250 * weiofUsdc, 80));
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 250 * 10**6, 100));
 
         vm.startPrank(secondUser);
         claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 275 * weiofUsdc, 80));
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2750 * 10**5, 100));
         vm.stopPrank();
 
         claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 275 * weiofUsdc, 80));
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2750 * 10**5, 100));
     }
 
-    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsMoreWETH() public {
+    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsMore() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 mETH
+        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
 
         invokeExecution();
         vm.warp(block.timestamp + 86400 * 10);
 
         deposit(500, address(this));
 
-        rootVault.registerWithdrawal(lpTokens * 2 / 3); // ~333 mETH
+        rootVault.registerWithdrawal(lpTokens * 2 / 3); // ~333 USD
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(weth).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(weth).balanceOf(address(erc20Vault));
-        assertTrue(isClose(leftOnGearbox, 417 * weiofUsdc, 20));
-        assertTrue(isClose(wentForWithdrawal, 583 * weiofUsdc, 20));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
+        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        assertTrue(isClose(leftOnGearbox, 417 * 10**6, 100));
+        assertTrue(isClose(wentForWithdrawal, 583 * 10**6, 100));
     }
 
-    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsLessWETH() public {
+    function testSeveralInvocationsWhenFirstNotTakenAndNewSumIsLessUSDC() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 mETH
+        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
 
         invokeExecution();
         vm.warp(block.timestamp + 86400 * 10);
 
         deposit(500, address(this));
 
-        rootVault.registerWithdrawal(lpTokens / 3); // ~166 mETH
+        rootVault.registerWithdrawal(lpTokens / 3); // ~166 USD
         invokeExecution();
 
-        uint256 leftOnGearbox = IERC20(weth).balanceOf(address(gearboxVault));
-        uint256 wentForWithdrawal = IERC20(weth).balanceOf(address(erc20Vault));
-        assertTrue(isClose(tvl(), 584*weiofUsdc, 50));
-        assertTrue(isClose(leftOnGearbox, 584 * weiofUsdc, 20));
-        assertTrue(isClose(wentForWithdrawal, 416 * weiofUsdc, 20));
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
+        uint256 wentForWithdrawal = IERC20(usdc).balanceOf(address(erc20Vault));
+        assertTrue(isClose(tvl(), 584*10**6, 100));
+        assertTrue(isClose(leftOnGearbox, 584*10**6, 100));
+        assertTrue(isClose(wentForWithdrawal, 416 * 10**6, 100));
     }
 
-    function testCancelWithdrawalIsOkayWETH() public {
-        deposit(500, address(this)); 
+    function testCancelWithdrawalIsOkayUSDC() public {
+        deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
@@ -823,15 +756,15 @@ contract GearboxWETHTest is Test {
         address recipient = getNextUserAddress();
         claimMoney(recipient);
 
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 125 * weiofUsdc, 50)); // anyway only 125 usd claimed
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 1250 * 10**5, 100)); // anyway only 125 usd claimed
     }
 
-    function testValueIncreasesAfterWithdrawalWETH() public {
+    function valueIncreasesAfterWithdrawal() public {
         deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 mETH
+        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
 
         invokeExecution();
 
@@ -839,28 +772,26 @@ contract GearboxWETHTest is Test {
         vm.startPrank(secondUser);
         deposit(500, secondUser);
         vm.stopPrank();
-
-        gearboxVault.adjustPosition();
         
-        setNewRewardInRewardPool(5000, 1); // + 110 mETH => 2580 mETH in pool
+        setNewRewardInRewardPool(10, 1); // + 171 USD => 921 USD in pool
         address recipient = getNextUserAddress();
-        claimMoney(recipient); // 250 mETH claimed
+        claimMoney(recipient); // 250 USD claimed
 
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 250 * weiofUsdc, 50)); // anyway only 250 mETH claimed
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 2500 * 10**5, 100)); // anyway only 250 usd claimed
         vm.startPrank(secondUser);
-        rootVault.registerWithdrawal(lpTokens / 2); // the same lp amount as previous but already 290 mETH
+        rootVault.registerWithdrawal(lpTokens / 2); // the same lp amount as previous but already 307 usd
         vm.stopPrank();
 
         vm.warp(block.timestamp + 86400 * 10);
         invokeExecution();
 
         vm.startPrank(secondUser);
-        claimMoney(recipient); // 290 mETH claimed
+        claimMoney(recipient); // 307 usd claimed
         vm.stopPrank();
 
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 540 * weiofUsdc, 20));
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 5570 * 10**5, 100));
         claimMoney(recipient); // try to claim by the first user
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 540 * weiofUsdc, 20));
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 5570 * 10**5, 100));
     }
 
     function testWitdrawalOrderCancelsAfterTime() public {
@@ -868,7 +799,7 @@ contract GearboxWETHTest is Test {
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
-        rootVault.registerWithdrawal(lpTokens / 2); // 250 mETH
+        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
 
         invokeExecution();
         deposit(500, address(this));
@@ -878,7 +809,7 @@ contract GearboxWETHTest is Test {
         address recipient = getNextUserAddress();
         claimMoney(recipient); 
 
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), 250 * weiofUsdc, 20));
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 250 * 10**6, 100)); // successfully claimed
     }
 
     function testFailTwoInvocationsInShortTime() public {
@@ -890,5 +821,297 @@ contract GearboxWETHTest is Test {
         vm.warp(block.timestamp + 86400 * 3); // only 3 days
         invokeExecution();
     }
-    
+
+    function testCreditAccountGetter() public {
+        assertTrue(gearboxVault.getCreditAccount() == address(0));
+        deposit(500, address(this));
+        assertTrue(gearboxVault.getCreditAccount() != address(0));
+        invokeExecution();
+        assertTrue(gearboxVault.getCreditAccount() == address(0));
+    }
+
+    function testPullFromEmptyVault() public {
+        deposit(500, address(this));
+        gearboxVault.adjustPosition();
+
+        invokeExecution();
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2); // 250 USD
+
+        address recipient = getNextUserAddress();
+        
+        vm.warp(block.timestamp + 86400 * 10);
+
+        invokeExecution();
+        claimMoney(recipient); 
+
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 250 * 10**6, 100)); // successfully claimed
+        uint256 leftOnGearbox = IERC20(usdc).balanceOf(address(gearboxVault));
+        assertTrue(isClose(leftOnGearbox, 250*10**6, 100));
+    }
+
+    function requestWithdrawal(uint256 lpTokensAmount, address addr) public {
+        vm.startPrank(addr);
+        rootVault.registerWithdrawal(lpTokensAmount); 
+        vm.stopPrank();
+    }
+
+    function cancelWithdrawal(uint256 lpTokensAmount, address addr) public {
+        vm.startPrank(addr);
+        rootVault.cancelWithdrawal(lpTokensAmount); 
+        vm.stopPrank();
+    }
+
+
+    function claimMoneySpecial(address recipient, address addr) public {
+        vm.startPrank(addr);
+        claimMoney(recipient); 
+        vm.stopPrank();
+    }
+
+    function testALotOfClaims() public {
+        deposit(500, address(this));
+        gearboxVault.adjustPosition();
+        address actorA = getNextUserAddress();
+        address actorB = getNextUserAddress();
+        address actorC = getNextUserAddress();
+        address recipient = getNextUserAddress();
+
+        deposit(200, actorA);
+        gearboxVault.adjustPosition();
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);  // 250 usd
+
+        invokeExecution();
+        vm.warp(block.timestamp + 86400 * 10);
+
+        deposit(100, actorA);
+        deposit(200, actorB);
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens2 = rootVault.balanceOf(actorA);
+        requestWithdrawal(lpTokens2 / 6, actorA); // 50 usd
+        requestWithdrawal(lpTokens2 / 6, actorA); // 50 usd
+        requestWithdrawal(lpTokens2 / 6, actorA); // 50 usd
+        cancelWithdrawal(5 * lpTokens2 / 12, actorA); // 125 usd
+        requestWithdrawal(lpTokens2 / 12, actorA); // 25 usd
+        requestWithdrawal(lpTokens / 4, address(this)); // 125 usd
+
+        deposit(50, actorB);
+        requestWithdrawal(lpTokens / 50, address(this)); // 10 usd
+
+        claimMoney(recipient); 
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 250 * 10**6, 100)); 
+
+        // HERE 800 usd total and 50 not yet there => 2250 usd on convex
+
+        setNewRewardInRewardPool(6, 1); // + 140 USD => all capital multiplied by ~1.175
+
+        invokeExecution();
+        vm.warp(block.timestamp + 86400 * 10);
+        claimMoneySpecial(recipient, actorA); //~59 USD
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 309 * 10**6, 100)); 
+
+        deposit(20, actorC);
+        deposit(20, actorB);
+
+        claimMoney(recipient);  // ~156 USD
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 465 * 10**6, 100)); 
+
+        uint256 lpTokens3 = rootVault.balanceOf(actorB);
+        requestWithdrawal(lpTokens3, actorB);
+
+        invokeExecution();
+        vm.warp(block.timestamp + 86400 * 10);
+        claimMoneySpecial(recipient, actorB); //~313 USD
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 779 * 10**6, 100)); 
+
+        claimMoneySpecial(recipient, actorC); 
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 779 * 10**6, 100)); 
+
+        uint256 lpTokens4 = rootVault.balanceOf(actorC);
+        deposit(300, actorC);
+        deposit(40, address(this));
+
+        requestWithdrawal(lpTokens4 / 2, actorC); //~10 USD
+
+        invokeExecution();
+        claimMoneySpecial(recipient, actorC);
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 789 * 10**6, 100)); 
+    }
+
+    function testShutdownAndReopen() public {
+        deposit(600, address(this));
+        gearboxVault.adjustPosition();
+
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+        assertTrue(gearboxVault.getCreditAccount() == address(0));
+        rootVault.reopen();
+        deposit(100, address(this));
+        assertTrue(gearboxVault.getCreditAccount() != address(0));
+    }
+
+    function testFailDoubleShutdown() public {
+        deposit(600, address(this));
+        gearboxVault.adjustPosition();
+
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+    }
+
+    function testFailShutdownFromWrongAddress() public {
+        address addr = getNextUserAddress();
+        vm.startPrank(addr);
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+        vm.stopPrank();
+    }
+
+    function testFailDepositAfterShutdown() public {
+        deposit(600, address(this));
+        gearboxVault.adjustPosition();
+
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+        deposit(100, address(this));
+    }
+
+    function testWithdrawAfterShutdownIsOkay() public {
+        deposit(600, address(this));
+        gearboxVault.adjustPosition();
+
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);  // 300 usd
+        invokeExecution();
+        rootVault.registerWithdrawal(lpTokens / 20);  // 30 usd
+        invokeExecution();
+        rootVault.registerWithdrawal(lpTokens / 20);  // 30 usd
+        invokeExecution();
+        rootVault.registerWithdrawal(lpTokens / 20);  // 30 usd
+        invokeExecution();
+        rootVault.registerWithdrawal(lpTokens / 20);  // 30 usd
+        rootVault.registerWithdrawal(lpTokens / 20);  // 30 usd
+        rootVault.registerWithdrawal(lpTokens / 20);  // 30 usd
+        invokeExecution();
+
+        address recipient = getNextUserAddress();
+        claimMoney(recipient); 
+        assertTrue(isClose(IERC20(usdc).balanceOf(recipient), 480 * 10**6, 100)); 
+    }
+
+    function testZeroBalanceAfterAdjusting() public {
+        deposit(600, address(this));
+        deposit(100, address(this));
+        gearboxVault.adjustPosition();
+        assertTrue(IERC20(usdc).balanceOf(address(gearboxVault)) == 0);
+
+        deposit(200, address(this));
+        assertTrue(IERC20(usdc).balanceOf(address(gearboxVault)) == 0);
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);  // 300 usd
+        invokeExecution();
+
+        deposit(200, address(this));
+        assertTrue(IERC20(usdc).balanceOf(address(gearboxVault)) == 0);
+    }
+
+    function testFailLiquidationCaseGoesAndSubsequentDepositDown() public {
+        deposit(600, address(this));
+        //gearboxVault.adjustPosition();
+
+        vm.warp(block.timestamp + YEAR * 5300);
+
+        address liquidator = getNextUserAddress();
+        deal(usdc, liquidator, 2000 * 10**6);
+
+        vm.startPrank(liquidator);
+
+        MultiCall[] memory noCalls = new MultiCall[](0);
+
+        vm.roll(block.number + 1);
+        IERC20(usdc).approve(address(gearboxVault.creditManager()), type(uint256).max);
+        ICreditFacade(gearboxVault.creditFacade()).liquidateCreditAccount(address(gearboxVault), liquidator, 0, false, noCalls);
+        vm.stopPrank();
+
+        assertTrue(gearboxVault.getCreditAccount() == address(0));
+        assertTrue(tvl() == 0);
+
+        gearboxVault.adjustPosition();
+        gearboxVault.updateTargetMarginalFactor(2000000000);
+        assertTrue(tvl() == 0);
+
+        deposit(600, address(this));
+    }
+
+    function testFailNotLiquidatedUntilTvlLessZeroWithDeposit() public {
+        deposit(600, address(this));
+        vm.warp(block.timestamp + YEAR * 10000);
+        assertTrue(tvl() == 0);
+        assertTrue(gearboxVault.getCreditAccount() != address(0));
+        deposit(600, address(this));
+    }
+
+    function testShutdownAndPriceDown() public {
+        deposit(600, address(this));
+        vm.warp(block.timestamp + YEAR * 2000);
+
+        vm.roll(block.number + 1);
+        rootVault.shutdown();
+        vm.warp(block.timestamp + YEAR * 8000);
+        assertTrue(tvl() > 300 * 10**6);
+
+        rootVault.reopen();
+        deposit(500, address(this));
+    }
+
+    function testPerformanceFees() public {
+        deposit(600, address(this));
+        gearboxVault.adjustPosition();
+        assertTrue(rootVault.balanceOf(treasuryB) == 0);
+        deposit(1, address(this));
+        setNewRewardInRewardPool(10, 1); 
+        deposit(1, address(this));
+
+        uint256 treasuryBalance = rootVault.balanceOf(treasuryB);
+        assertTrue(treasuryBalance > 0);
+
+        requestWithdrawal(treasuryBalance, treasuryB);
+
+        invokeExecution();
+
+        address recipient = getNextUserAddress();
+        claimMoneySpecial(recipient, treasuryB);
+
+        assertTrue(IERC20(usdc).balanceOf(recipient) > 20 * 10**6);
+    }
+
+    function testManagementFees() public {
+        deposit(600, address(this));
+        gearboxVault.adjustPosition();
+        assertTrue(rootVault.balanceOf(treasuryA) == 0);
+
+        vm.warp(block.timestamp + YEAR);
+        deposit(1, address(this));
+
+        uint256 treasuryBalance = rootVault.balanceOf(treasuryA);
+        assertTrue(treasuryBalance > 0);
+
+        requestWithdrawal(treasuryBalance, treasuryA);
+
+        invokeExecution();
+
+        address recipient = getNextUserAddress();
+        claimMoneySpecial(recipient, treasuryA);
+
+        assertTrue(IERC20(usdc).balanceOf(recipient) > 50 * 10**6);
+    }
+
+
 }
