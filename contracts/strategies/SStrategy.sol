@@ -10,6 +10,7 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
+import "../interfaces/vaults/IRequestableRootVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -17,20 +18,23 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/OracleLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../utils/ContractMeta.sol";
+import "hardhat/console.sol";
 
-contract SStrategy is DefaultAccessControl, ContractMeta {
+contract SStrategy is ContractMeta, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
-    uint256 public constant D9 = 10**9;
-    uint256 public constant D18 = 10**18;
-    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
-    bytes4 public constant TRANSFER_FROM_SELECTOR = 0x095ea7b3;
+    uint256 public constant D9 = 1e9;
+    uint256 public constant D18 = 1e18;
+    bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
+    bytes4 public constant TRANSFER_FROM_SELECTOR = IERC20.transferFrom.selector;
+    bytes4 public constant TRANSFER_SELECTOR = IERC20.transfer.selector;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     uint256 public constant OVERCOLLATERIZATION_D9 = 15e8;
 
     address public mainToken;
     address public wPowerPerp;
+    IRequestableRootVault rootVault;
     IERC20Vault public erc20Vault;
     ISqueethVault public squeethVault;
     ISwapRouter public swapRouter;
@@ -60,7 +64,6 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
     struct LiquidationParams {
         uint256 lowerLiquidationThresholdD9;
         uint256 upperLiquidationThresholdD9;
-        uint256 cycleDuration;
     }
 
     struct OracleParams {
@@ -76,11 +79,10 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
 
     /// @notice Constructor for a new contract
     constructor(
+        address mainToken_,
         IERC20Vault erc20Vault_,
         ISqueethVault squeethVault_,
-        address mainToken_,
         ISwapRouter swapRouter_,
-        IUniswapV3Pool squeethPool_,
         address admin_
     ) DefaultAccessControl(admin_) {
         address[] memory erc20Tokens = erc20Vault_.vaultTokens();
@@ -90,11 +92,11 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         require(erc20Tokens[0] == mainToken_, ExceptionsLibrary.INVALID_TOKEN);
         require(squeethTokens[0] == mainToken_, ExceptionsLibrary.INVALID_TOKEN);
         require(squeethVault_.weth() == mainToken_, ExceptionsLibrary.INVALID_TOKEN);
-        require(address(squeethPool_) == squeethVault_.wPowerPerpPool(), ExceptionsLibrary.INVALID_VALUE);
         mainToken = mainToken_;
-        swapRouter = swapRouter_;
+        erc20Vault = erc20Vault_;
+        squeethVault = squeethVault_;
         wPowerPerp = squeethVault_.wPowerPerp();
-        squeethPool = squeethPool_;
+        squeethPool = IUniswapV3Pool(squeethVault_.wPowerPerpPool());
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -102,7 +104,7 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    function startCycleMocked(uint256 strikeUSD, uint256 price, address safe)
+    function startCycleMocked(uint256 strike, uint256 optionPrice, address safe)
         external
         returns (
             int256[] memory poolAmounts,
@@ -116,9 +118,9 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         address mainToken_ = mainToken;
         
         uint256 amountD9;
+        uint256 currentPrice = squeethVault.twapIndexPrice();
         {
-            uint256 currentPrice = squeethVault.twapIndexPrice();
-            uint256 strikeD9 = FullMath.mulDiv(strikeUSD, D9, currentPrice);
+            uint256 strikeD9 = FullMath.mulDiv(strike, D9, currentPrice);
             startingPrice = currentPrice;
             lastStrikeD9 = strikeD9;
 
@@ -126,27 +128,16 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
             
         }
         {
-            uint256 totalMoney = IERC20(mainToken).balanceOf(address(erc20Vault));
-            uint256 shortMoney = FullMath.mulDiv(totalMoney, D9, D9 + FullMath.mulDiv(amountD9, price, D18));
-            
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = shortMoney;
-            address[] memory tokens = new address[](1);
-            tokens[0] = mainToken_;
-            erc20Vault.pull(address(squeethVault), tokens, amounts, "");
-            squeethVault.takeShort(strategyParams.upperHedgingThresholdD9);
-
-            erc20Vault.externalCall(mainToken, TRANSFER_FROM_SELECTOR, abi.encode(erc20Vault, safe, totalMoney - shortMoney));
+            uint256 totalMoney = IERC20(mainToken).balanceOf(address(squeethVault));
+            uint256 optionPriceETH = FullMath.mulDiv(optionPrice, D18, currentPrice);
+            uint256 shortMoney = FullMath.mulDiv(totalMoney, D9, D9 + FullMath.mulDiv(amountD9, optionPriceETH, D18));
+            console.log("distribution:");
+            console.log(totalMoney);
+            console.log(shortMoney);
+            squeethVault.externalCall(mainToken, TRANSFER_SELECTOR, abi.encode(safe, totalMoney - shortMoney));
+        
+            squeethVault.takeShort(strategyParams.upperHedgingThresholdD9, true);
         }
-        //sell wPowerPerp from sqVault for mainToken at erc20vault
-        SwapParams memory params = SwapParams({
-                tokenIn: wPowerPerp,
-                tokenOut: mainToken,
-                pool: squeethPool,
-                spender: squeethVault,
-                recipient: address(erc20Vault)
-            });
-        _swapToToken(params);
 
         //save amount and strike
         startingTime = block.timestamp;
@@ -166,36 +157,77 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         require(startingTime != 0, ExceptionsLibrary.INVARIANT);
         uint256 currentPrice = squeethVault.twapIndexPrice();
         uint256 priceChangeD9 = FullMath.mulDiv(currentPrice, D9, startingPrice);
-        if (block.timestamp - startingTime >= strategyParams.cycleDuration) {
-            require(priceChangeD9 < liquidationParams.lowerLiquidationThresholdD9 || priceChangeD9 > liquidationParams.upperLiquidationThresholdD9, ExceptionsLibrary.TIMESTAMP);
+        if (priceChangeD9 < liquidationParams.lowerLiquidationThresholdD9 || priceChangeD9 > liquidationParams.upperLiquidationThresholdD9) {
+            rootVault.shutdown();
+        } else {
+            require(block.timestamp - startingTime >= strategyParams.cycleDuration, ExceptionsLibrary.INVARIANT);
         }
         squeethVault.closeShort();
         address mainToken_ = mainToken;
         uint256 squeethMoney = IERC20(mainToken_).balanceOf(address(squeethVault));
-        {
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = squeethMoney;
-            address[] memory tokens = new address[](1);
-            tokens[0] = mainToken_;
-            squeethVault.pull(address(erc20Vault), tokens, amounts, "");
-        }
+
         int256 changeFromStrikeD9 = int256(FullMath.mulDiv(lastStrikeD9, D9, priceChangeD9)) - int256(D9);
         if (changeFromStrikeD9 > 0) {
             uint256 optionProfit = FullMath.mulDiv(uint256(changeFromStrikeD9), lastAmountD9, D9); 
-            erc20Vault.externalCall(mainToken_, TRANSFER_FROM_SELECTOR, abi.encode(safe, erc20Vault, optionProfit));
+            squeethVault.externalCall(mainToken_, TRANSFER_FROM_SELECTOR, abi.encode(safe, squeethVault, optionProfit));
         }
+        rootVault.invokeExecution();
 
         startingTime = 0;
     }
 
-
-    /// @notice Set new Oracle params
-    /// @param params Params to set
-    function setOracleParams(OracleParams memory params) external {
+    function setRootVault(IRequestableRootVault rootVault_) external {
         _requireAdmin();
+        require(address(rootVault) == address(0), ExceptionsLibrary.INIT);
+        address[] memory rootTokens = rootVault_.vaultTokens();
+        require(rootVault_.requestableVault() == squeethVault);
+        require(rootVault_.erc20Vault() == erc20Vault);
+        require(rootTokens.length == 1, ExceptionsLibrary.INVALID_LENGTH);
+        require(rootTokens[0] == mainToken, ExceptionsLibrary.INVALID_TOKEN);
+        rootVault = rootVault_;
+        rootVault_.setWithdrawDelay(strategyParams.cycleDuration);
+    }
 
-        oracleParams = params;
-        emit SetOracleParams(tx.origin, msg.sender, params);
+    /// @notice Sets new oracle params
+    /// @param newOracleParams New oracle parameters to set
+    function updateOracleParams(OracleParams calldata newOracleParams) external {
+        _requireAdmin();
+        require(
+            (newOracleParams.slippageD9 <= D9) &&
+                (newOracleParams.oracleObservationDelta > 0),
+            ExceptionsLibrary.INVARIANT
+        );
+        oracleParams = newOracleParams;
+        emit OracleParamsUpdated(tx.origin, msg.sender, newOracleParams);
+    }
+
+
+    /// @notice Sets new liqudation params
+    /// @param newLiquidationParams New oracle parameters to set
+    function updateLiquidationParams(LiquidationParams calldata newLiquidationParams) external {
+        _requireAdmin();
+        require(
+            (newLiquidationParams.lowerLiquidationThresholdD9 < D9) &&
+                (newLiquidationParams.upperLiquidationThresholdD9 > D9),
+            ExceptionsLibrary.INVARIANT
+        );
+        liquidationParams = newLiquidationParams;
+        emit LiquidationParamsUpdated(tx.origin, msg.sender, newLiquidationParams);
+    }
+
+    /// @notice Sets new oracle params
+    /// @param newStrategyParams New oracle parameters to set
+    function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
+        _requireAdmin();
+        require(
+            (newStrategyParams.lowerHedgingThresholdD9 < D9) &&
+                (newStrategyParams.upperHedgingThresholdD9 > D9) &&
+                (newStrategyParams.cycleDuration > 0),
+            ExceptionsLibrary.INVARIANT
+        );
+        strategyParams = newStrategyParams;
+        rootVault.setWithdrawDelay(newStrategyParams.cycleDuration);
+        emit StrategyParamsUpdated(tx.origin, msg.sender, newStrategyParams);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -210,7 +242,7 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
         }
         int24 tickDeviation = tick - averageTick;
         uint24 absoluteTickDeviation = (tickDeviation > 0) ? uint24(tickDeviation) : uint24(-tickDeviation);
-        require(absoluteTickDeviation > oracleParams.maxTickDeviation, ExceptionsLibrary.INVARIANT);
+        require(absoluteTickDeviation <= oracleParams.maxTickDeviation, ExceptionsLibrary.INVARIANT);
     }
 
     function _contractName() internal pure override returns (bytes32) {
@@ -255,5 +287,17 @@ contract SStrategy is DefaultAccessControl, ContractMeta {
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param params Updated params
-    event SetOracleParams(address indexed origin, address indexed sender, OracleParams params);
+    event OracleParamsUpdated(address indexed origin, address indexed sender, OracleParams params);
+
+    /// @notice Emitted when Oracle params are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params Updated params
+    event LiquidationParamsUpdated(address indexed origin, address indexed sender, LiquidationParams params);
+
+    /// @notice Emitted when Oracle params are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params Updated params
+    event StrategyParamsUpdated(address indexed origin, address indexed sender, StrategyParams params);
 }
