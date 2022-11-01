@@ -38,7 +38,7 @@ contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultG
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
             return
-                DelayedProtocolParams({controller: IController(payable(address(0))), router: ISwapRouter(address(0)), slippageD9: 0, twapPeriod: 0, wethBorrowPool: address(0)});
+                DelayedProtocolParams({controller: IController(payable(address(0))), router: ISwapRouter(address(0)), slippageD9: 0, twapPeriod: 0, wethBorrowPool: address(0), oracle: IOracle(address(0))});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }

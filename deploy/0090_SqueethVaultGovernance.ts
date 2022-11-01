@@ -20,6 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
     });
+    const { address: mellowOracle } = await get("MellowOracle");
     await deploy("SqueethVaultGovernance", {
         from: deployer,
         args: [
@@ -33,7 +34,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 router: uniswapV3Router,
                 slippageD9: BigNumber.from(10).pow(7),
                 twapPeriod: BigNumber.from(420),
-                wethBorrowPool: uniswapWethUsdcPool
+                wethBorrowPool: uniswapWethUsdcPool,
+                oracle: mellowOracle
             },
         ],
         log: true,

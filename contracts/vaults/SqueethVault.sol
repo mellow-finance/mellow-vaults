@@ -23,7 +23,6 @@ import "../interfaces/external/squeeth/IWETH9.sol";
 import {IUniswapV3Pool as IUniV3Pool} from "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
 import "./IntegrationVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces Opyn Squeeth protocol in the integration layer.
 contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, IntegrationVault, IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments {
@@ -59,18 +58,26 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        minTokenAmounts = new uint256[](1);
+        maxTokenAmounts = new uint256[](1);
         minTokenAmounts[0] = IERC20(weth).balanceOf(address(this));
         if (shortVaultId != 0) {
             minTokenAmounts[0] += totalCollateral;
+            maxTokenAmounts[0] = minTokenAmounts[0];
             uint256 normalizationFactorD18 = controller.getExpectedNormalizationFactor();
             uint256 wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this)); 
+            ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
+            (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(protocolParams.oracle);
             if (wPowerPerpDebt > wPowerPerpBalance) {
-                minTokenAmounts[0] -= FullMath.mulDiv(wPowerPerpDebt - wPowerPerpBalance, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+                minTokenAmounts[0] -= FullMath.mulDiv(wPowerPerpDebt - wPowerPerpBalance, maxPriceX96, CommonLibrary.Q96);
+                maxTokenAmounts[0] -= FullMath.mulDiv(wPowerPerpDebt - wPowerPerpBalance, minPriceX96, CommonLibrary.Q96);
             } else {
-                minTokenAmounts[0] += FullMath.mulDiv(wPowerPerpBalance - wPowerPerpDebt, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+                minTokenAmounts[0] += FullMath.mulDiv(wPowerPerpBalance - wPowerPerpDebt, minPriceX96, CommonLibrary.Q96);
+                maxTokenAmounts[0] += FullMath.mulDiv(wPowerPerpBalance - wPowerPerpDebt, maxPriceX96, CommonLibrary.Q96);
             }
+        } else {
+            maxTokenAmounts[0] = minTokenAmounts[0];
         }
-        maxTokenAmounts = minTokenAmounts; //TODO: unvi3 logic
     }
 
     /// @inheritdoc IERC165
@@ -154,7 +161,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256 wPowerPerpRemaining;
         if (wPowerPerpDebt > wPowerPerpBalance) {
             wPowerPerpRemaining = wPowerPerpDebt - wPowerPerpBalance;
-            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _spotPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
             ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
             uint256 wethMax = FullMath.mulDiv(wethNeeded, CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
             if (IERC20(weth).balanceOf(address(this)) < wethMax) {
@@ -271,7 +278,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
 
     function _repayDebt(uint256 wPowerPerpRemaining) internal {
         if (wPowerPerpRemaining > 0) {
-            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _grabPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
+            uint256 wethNeeded = FullMath.mulDiv(wPowerPerpRemaining, _spotPriceX96(wPowerPerp, wPowerPerpPool), CommonLibrary.Q96);
             ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(address(_vaultGovernance)).delayedProtocolParams();
             uint256 wethMax = FullMath.mulDiv(wethNeeded, CommonLibrary.DENOMINATOR, CommonLibrary.DENOMINATOR - protocolParams.slippageD9); //TODO: add fees
             
@@ -300,8 +307,11 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        actualTokenAmounts = new uint256[](1);
         if (shortVaultId == 0) {
-            actualTokenAmounts = tokenAmounts;
+            uint256 balance = IERC20(weth).balanceOf(address(this));
+            actualTokenAmounts[0] = tokenAmounts[0] > balance ? balance : tokenAmounts[0];
+            IERC20(weth).safeTransfer(to, actualTokenAmounts[0]);
         }
     }
 
@@ -331,11 +341,26 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         markPrice = controller.getDenormalizedMark(protocolParams.twapPeriod);
     }
 
-    function _grabPriceX96(address tokenIn, address pool) internal view returns (uint256 priceX96) {
+    function _spotPriceX96(address tokenIn, address pool) internal view returns (uint256 priceX96) {
         (uint160 poolSqrtPriceX96, , , , , ,) = IUniV3Pool(pool).slot0();
         priceX96 = FullMath.mulDiv(poolSqrtPriceX96, poolSqrtPriceX96, CommonLibrary.Q96); //TODO: check type convertion
         if (tokenIn == IUniV3Pool(pool).token1()) {
             priceX96 = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, priceX96);
+        }
+    }
+
+
+    function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
+        (uint256[] memory prices, ) = oracle.priceX96(wPowerPerp, weth, 0x2A);
+        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+        minPriceX96 = prices[0];
+        maxPriceX96 = prices[0];
+        for (uint32 i = 1; i < prices.length; ++i) {
+            if (prices[i] < minPriceX96) {
+                minPriceX96 = prices[i];
+            } else if (prices[i] > maxPriceX96) {
+                maxPriceX96 = prices[i];
+            }
         }
     }
 

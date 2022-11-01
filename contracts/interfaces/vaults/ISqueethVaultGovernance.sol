@@ -5,6 +5,7 @@ import "../external/squeeth/IController.sol";
 import "../external/univ3/ISwapRouter.sol";
 import "./ISqueethVault.sol";
 import "./IVaultGovernance.sol";
+import "../oracles/IOracle.sol";
 
 interface ISqueethVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
@@ -16,6 +17,7 @@ interface ISqueethVaultGovernance is IVaultGovernance {
         uint256 slippageD9;
         uint32 twapPeriod;
         address wethBorrowPool;
+        IOracle oracle;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
