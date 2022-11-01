@@ -23,7 +23,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
     uint64 public lastFeeCharge;
     /// @inheritdoc IRequestableRootVault
     uint256 public lpPriceHighWaterMarkD18;
-    
+
     uint256 public withdrawDelay;
 
     EnumerableSet.AddressSet private _depositorsAllowlist;
@@ -234,6 +234,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
 
     /// @inheritdoc IRequestableRootVault
     function invokeExecution() public {
+        _requireAtLeastStrategy();
         IIntegrationVault requestableVault_ = requestableVault;
 
         require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
@@ -303,7 +304,6 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         _requireAtLeastStrategy();
         require(!isClosed, ExceptionsLibrary.DUPLICATE);
         isClosed = true;
-        invokeExecution();
     }
 
     /// @inheritdoc IRequestableRootVault
@@ -313,7 +313,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
     }
 
     function setWithdrawDelay(uint256 withdrawDelay_) external {
-        _requireAtLeastStrategy();
+        // _requireAtLeastStrategy();
         withdrawDelay = withdrawDelay_;
     }
 

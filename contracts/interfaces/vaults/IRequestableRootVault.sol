@@ -123,4 +123,6 @@ interface IRequestableRootVault is IAggregateVault, IERC20 {
 
     /// @notice The function of opening deposits back in case of a previous shutdown
     function reopen() external;
+
+    function setWithdrawDelay(uint256 withdrawDelay_) external;
 }
