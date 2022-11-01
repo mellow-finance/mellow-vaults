@@ -356,7 +356,7 @@ contract GearboxHelper {
         address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
         uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
 
-        MultiCall[] memory calls = new MultiCall[](1);
+        MultiCall[] memory calls = new MultiCall[](3);
 
         calls[0] = MultiCall({
             target: convexAdapter,
