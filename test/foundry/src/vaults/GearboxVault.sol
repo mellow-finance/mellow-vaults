@@ -323,7 +323,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address depositToken_ = depositToken;
 
         (uint256 minBorrowingLimit, ) = creditFacade_.limits();
-        uint256 minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9));
+        uint256 minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9)) + 1;
 
         uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
 
@@ -346,7 +346,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             require(IERC20(depositToken_).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
 
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken),
+                path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_), // exactOuput arguments are in reversed order
                 recipient: address(this),
                 deadline: block.timestamp + 1,
                 amountOut: minimalNecessaryAmount - currentPrimaryTokenAmount,

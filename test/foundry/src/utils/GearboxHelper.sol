@@ -11,6 +11,7 @@ import "../interfaces/external/gearbox/IConvexV1BaseRewardPoolAdapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
+import "forge-std/console2.sol";
 
 contract GearboxHelper {
     using SafeERC20 for IERC20;
@@ -258,12 +259,13 @@ contract GearboxHelper {
                 amountIn: toSwap,
                 amountOutMinimum: FullMath.mulDiv(expectedOutput, D9 - protocolParams.maxSlippageD9, D9)
             });
-
+/*
             { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
                 ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
                 router.exactInput(inputParams);
                 return;
             }
+*/
 
             calls[0] = MultiCall({ // swap deposit to primary token
                 target: protocolParams.univ3Adapter,
@@ -344,6 +346,8 @@ contract GearboxHelper {
             return;
         }
 
+        address tt = 0x117A0bab81F25e60900787d98061cCFae023560c;
+
         address curveAdapter_ = curveAdapter;
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -352,13 +356,14 @@ contract GearboxHelper {
         address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
         uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
 
-        MultiCall[] memory calls = new MultiCall[](3);
+        MultiCall[] memory calls = new MultiCall[](1);
 
         calls[0] = MultiCall({
             target: convexAdapter,
             callData: abi.encodeWithSelector(IBaseRewardPool.withdraw.selector, amount, false)
         });
-
+        console2.log(poolId);
+        console2.log(creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()));
         calls[1] = MultiCall({
             target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
             callData: abi.encodeWithSelector(IBooster.withdrawAll.selector, poolId)
@@ -507,11 +512,13 @@ contract GearboxHelper {
             amountInMaximum: amountInMaximum
         });
 
+        /*
         { //////////// USE THIS ONLY IN TESTING MODE!!! REMOVE IN PROD
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             router.exactOutput(uniParams);
             return;
         }
+        */
 
         MultiCall[] memory calls = new MultiCall[](1);
 
@@ -558,7 +565,7 @@ contract GearboxHelper {
 
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_),
+                path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken_), // exactOuput arguments are in reversed order
                 recipient: address(admin_),
                 deadline: block.timestamp + 1,
                 amountOut: outputWant,
