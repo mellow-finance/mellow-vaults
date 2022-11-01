@@ -1,6 +1,6 @@
-from io import TextIOWrapper
+import sys
 import subprocess
-import tempfile
+from io import TextIOWrapper
 
 import backoff
 import csv
@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 
 from backtest_analysis import plot_all
-import sys
 
 INPUT_FILE = 'price_data.csv'
 WETH = 1000
@@ -55,29 +54,6 @@ def prepare_feed(preview: str):
         file.write(text)
 
 
-def prepare_constants(
-    weth_amount: int,
-    wsteth_amount: int,
-    width: int,
-    min_deviation: int,
-    pool_scale: int,
-    preview: str
-):
-    length = len(pd.read_csv(preview + '/tmp.csv'))
-    with open('test/Constants.template', 'r') as file:
-        text = ''.join(file.readlines())
-    text = text.format(
-        length=length,
-        weth_amount=weth_amount,
-        wsteth_amount=wsteth_amount,
-        width=width,
-        pool_scale=pool_scale,
-        min_deviation=min_deviation,
-    )
-    with open('test/Constants.sol', 'w') as file:
-        file.write(text)
-
-
 @backoff.on_exception(
     backoff.constant,
     subprocess.CalledProcessError,
@@ -91,25 +67,18 @@ def run_backtest(
     wsteth_amount: int = WSTETH,
     width: int = WIDTH,
     min_deviation: int = MIN_DEVIATION,
-    pool_scale: int = POOL_SCALE,
 ):
-    prepare_dataset(fname, 1.032, preview)
+    prepare_dataset(fname, 1.2, preview)
     prepare_feed(preview)
-    prepare_constants(
-        weth_amount,
-        wsteth_amount,
-        width,
-        min_deviation,
-        pool_scale,
-        preview
-    )
+
     print('BACKTEST PREPARED')
     print('STARTING BACKTEST')
     try:
         subprocess.run(
-            ['yarn', 'test'],
+            [f'len={30048} wethAmount={weth_amount} wstethAmount={wsteth_amount} width={width} minDeviation={min_deviation} yarn test'],
             stdout=file,
             check=True,
+            shell=True,
         )
     except subprocess.CalledProcessError:
         file.seek(0)

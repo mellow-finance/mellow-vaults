@@ -4,7 +4,7 @@ import "../lib/forge-std/src/console2.sol";
 import "./Constants.sol";
 
 contract Feed {{
-    function parseFile()
+    function parseFile(uint256 len)
         public
         returns (
             uint256[] memory a0,
@@ -17,8 +17,6 @@ contract Feed {{
     {{
         string[] memory a = new string[](6);
 
-
-        uint256 len = Constants.len;
 
         a0 = new uint256[](len);
         a1 = new uint256[](len);

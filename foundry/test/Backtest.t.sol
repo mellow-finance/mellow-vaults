@@ -25,7 +25,6 @@ import "../src/LStrategy.sol";
 import "../src/ERC20Validator.sol";
 import "../src/CowSwapValidator.sol";
 import "../src/MockOracle.sol";
-import "./Constants.sol";
 import "./FeedContract.sol";
 
 contract Backtest is Test {
@@ -262,7 +261,7 @@ contract Backtest is Test {
             uniV3UpperVault,
             ILStrategyHelper(lStrategyHelper),
             admin,
-            uint16(Constants.width)
+            uint16(vm.envUint("width"))
         );
         ERC20Validator wstethValidator = new ERC20Validator(IProtocolGovernance(governance));
 
@@ -407,7 +406,7 @@ contract Backtest is Test {
 
     function makeDesiredPoolPrice(int24 tick) public {
         IUniswapV3Pool pool = getPool();
-        uint256 startTry = 10**17 * (Constants.wethAmount + Constants.wstethAmount);
+        uint256 startTry = 10**17 * (vm.envUint("wethAmount") + vm.envUint("wstethAmount"));
 
         uint256 needIncrease = 0;
 
@@ -433,7 +432,7 @@ contract Backtest is Test {
         }
     }
 
-    function removeSwapFees() public {
+    function removeSwapFees() public returns (uint256[] memory) {
         address erc20Vault = address(lstrategy.erc20Vault());
         IUniV3Vault lowerVault = lstrategy.lowerVault();
         IUniV3Vault upperVault = lstrategy.upperVault();
@@ -451,6 +450,7 @@ contract Backtest is Test {
             IWETH(weth).transfer(deployer, collected[1]);
         }
         vm.stopPrank();
+        return collected;
     }
 
     function fullPriceUpdate(int24 tick) public {
@@ -707,7 +707,7 @@ contract Backtest is Test {
                 FullMath.mulDiv(amountIn, stEthPerToken, D18),
                 newPoolEth,
                 wethAmountInPool
-            ) / Constants.poolScale;
+            );
 
             uint256 balance = ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84).balanceOf(deployer);
             if (balance * 10 < adjustedVal * 11) {
@@ -758,15 +758,15 @@ contract Backtest is Test {
             //     console2.log("swap fees: ", fees);
             // }
 
-            expectedOut = FullMath.mulDiv(expectedOut, wethAmountInPool, newPoolEth) * Constants.poolScale;
-            swapFees = FullMath.mulDiv(fees, wethAmountInPool, newPoolEth) * Constants.poolScale;
+            expectedOut = FullMath.mulDiv(expectedOut, wethAmountInPool, newPoolEth);
+            swapFees = FullMath.mulDiv(fees, wethAmountInPool, newPoolEth);
             if (slippageFees > 0) {
                 slippageFees = int256(
-                    FullMath.mulDiv(uint256(slippageFees), wethAmountInPool, newPoolEth) * Constants.poolScale
+                    FullMath.mulDiv(uint256(slippageFees), wethAmountInPool, newPoolEth)
                 );
             } else {
                 slippageFees = -int256(
-                    FullMath.mulDiv(uint256(-slippageFees), wethAmountInPool, newPoolEth) * Constants.poolScale
+                    FullMath.mulDiv(uint256(-slippageFees), wethAmountInPool, newPoolEth)
                 );
             }
         } else {
@@ -774,7 +774,7 @@ contract Backtest is Test {
 
             {
                 uint256 valWeth = amountIn;
-                adjustedVal = FullMath.mulDiv(valWeth, newPoolEth, wethAmountInPool) / Constants.poolScale;
+                adjustedVal = FullMath.mulDiv(valWeth, newPoolEth, wethAmountInPool);
             }
 
             if (deployer.balance * 10 < adjustedVal * 11) {
@@ -828,15 +828,15 @@ contract Backtest is Test {
             //     console2.log("swap fees: ", fees);
             // }
 
-            expectedOut = FullMath.mulDiv(expectedOut, wethAmountInPool, newPoolEth) * Constants.poolScale;
-            swapFees = FullMath.mulDiv(fees, wethAmountInPool, newPoolEth) * Constants.poolScale;
+            expectedOut = FullMath.mulDiv(expectedOut, wethAmountInPool, newPoolEth);
+            swapFees = FullMath.mulDiv(fees, wethAmountInPool, newPoolEth);
             if (slippageFees > 0) {
                 slippageFees = int256(
-                    FullMath.mulDiv(uint256(slippageFees), wethAmountInPool, newPoolEth) * Constants.poolScale
+                    FullMath.mulDiv(uint256(slippageFees), wethAmountInPool, newPoolEth)
                 );
             } else {
                 slippageFees = -int256(
-                    FullMath.mulDiv(uint256(-slippageFees), wethAmountInPool, newPoolEth) * Constants.poolScale
+                    FullMath.mulDiv(uint256(-slippageFees), wethAmountInPool, newPoolEth)
                 );
             }
         }
@@ -1020,6 +1020,7 @@ contract Backtest is Test {
             uint256[] memory arr = new uint256[](2);
             uint256 gasBefore = gasleft();
             lstrategy.rebalanceERC20UniV3Vaults(arr, arr, type(uint256).max);
+            lstrategy.rebalanceUniV3Vaults(arr, arr, type(uint256).max);
             uint256 gasAfter = gasleft();
             erc20RebalanceCount += 1;
             erc20UniV3Gas += gasBefore - gasAfter;
@@ -1031,10 +1032,9 @@ contract Backtest is Test {
             IWSTETH wstethContract = IWSTETH(wsteth);
             ISTETH stethContract = ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
 
-            swapOnCowswap(blockNumber, wstethAmount, wethAmount, stEthPerToken, curvePool);
             i += 1;
 
-            if (i >= 10) {
+            if (i >= 4) {
                 break;
             }
         }
@@ -1114,10 +1114,6 @@ contract Backtest is Test {
             uniV3Gas += gasBefore - gasAfter;
             uniV3RebalanceCount += 1;
 
-            gasBefore = gasleft();
-            lstrategy.rebalanceERC20UniV3Vaults(arr, arr, type(uint256).max);
-            gasAfter = gasleft();
-
             vm.stopPrank();
 
             erc20UniV3Gas += gasBefore - gasAfter;
@@ -1168,7 +1164,7 @@ contract Backtest is Test {
         reportErc20Stats();
     }
 
-    function addFees(uint256 blockNumber, uint256 feeNominator, uint256 feeDenominator) public {
+    function addFees(uint256 blockNumber, uint256 feeNominator, uint256 feeDenominator) public returns (uint256[] memory) {
         (uint256[] memory tvl, ) = lstrategy.lowerVault().tvl();
         (uint256[] memory upperTvl, ) = lstrategy.upperVault().tvl();
         tvl[0] += upperTvl[0];
@@ -1180,11 +1176,7 @@ contract Backtest is Test {
         mintWeth(deployer, tvl[1]);
 
         address erc20Vault = address(lstrategy.erc20Vault());
-        IERC20(wsteth).transfer(erc20Vault, tvl[0]);
-        IERC20(weth).transfer(erc20Vault, tvl[1]);
-        console2.log("EARNINGS:");
-        console2.log("BlockNumber: ", blockNumber);
-        console2.log(tvl[0], tvl[1]);
+        return tvl;
     }
 
     function newPositionNeeded(int24 tick) public returns (bool) {
@@ -1201,13 +1193,40 @@ contract Backtest is Test {
         return true;
     }
 
+    function processFees(uint256 blockNumber, uint256 feeMultiplier, uint256 prevFeeMultiplier, uint256 priceX96) public {
+        uint256[] memory candidate1 = removeSwapFees();
+        uint256[] memory candidate2 = addFees(blockNumber, feeMultiplier, prevFeeMultiplier);
+        uint256 capital1 = FullMath.mulDiv(candidate1[0], priceX96, 2 ** 96) + candidate1[1];
+        uint256 capital2 = FullMath.mulDiv(candidate2[0], priceX96, 2 ** 96) + candidate2[1];
+        if (capital1 > capital2) {
+            console2.log("EARNINGS:");
+            console2.log("BlockNumber: ", blockNumber);
+            if (candidate1[0] != 0) {
+                IWSTETH(wsteth).transfer(deployer, candidate1[0]);
+            }
+            if (candidate1[1] != 0) {
+                IWSTETH(weth).transfer(deployer, candidate1[1]);
+            }
+            console2.log(candidate1[0], candidate1[1]);
+        } else {
+            console2.log("EARNINGS:");
+            console2.log("BlockNumber: ", blockNumber);
+            if (candidate2[0] != 0) {
+                IWSTETH(wsteth).transfer(deployer, candidate2[0]);
+            }
+            if (candidate2[1] != 0) {
+                IWSTETH(weth).transfer(deployer, candidate2[1]);
+            }
+            console2.log(candidate2[0], candidate2[1]);
+        }
+    }
+
     function execute(
         uint256 width,
         uint256 weth_amount,
         uint256 wsteth_amount,
         uint256 startNft
     ) public {
-
         mintMockPosition();
         Feed feed = new Feed();
         (
@@ -1217,7 +1236,7 @@ contract Backtest is Test {
             uint256[] memory wethAmounts,
             uint256[] memory stEthPerToken,
             uint256[] memory feeMultiplier
-        ) = feed.parseFile();
+        ) = feed.parseFile(vm.envUint("len"));
 
 
         fullPriceUpdate(getTick(stringToSqrtPriceX96(prices[0])));
@@ -1231,25 +1250,30 @@ contract Backtest is Test {
         // reportStats();
 
         uint256 prev_block = 0;
+        uint256 lastRebalanceBlock;
         for (uint256 i = 1; i < prices.length; i += 12) {
             // addFees(stethAmounts[i], wethAmounts[i], curveLpSupply[i], curveLpSupply[i - 1]);
+            int24 tick = getTick(stringToSqrtPriceX96(prices[i]));
             if (blocks[i] - prev_block > 604800 / 15) {
-                removeSwapFees();
-                addFees(blocks[i], feeMultiplier[i], feeMultiplier[prev_block]);
+                fullPriceUpdate(tick);
+                processFees(blocks[i], feeMultiplier[i], feeMultiplier[prev_block], getUniV3Price());
                 prev_block = i;
             }
-            int24 tick = getTick(stringToSqrtPriceX96(prices[i]));
+            if (i < 12 * 8 + lastRebalanceBlock) {
+                continue;
+            }
             int24 diff = tick - lastRebalanceTick;
             if (diff < 0) {
                 diff = -diff;
             }
-            if (diff > Constants.minDeviation || newPositionNeeded(tick)) {
+            if (diff > vm.envInt("minDeviation") || newPositionNeeded(tick)) {
                 fullPriceUpdate(tick);
-                removeSwapFees();
+                processFees(blocks[i], feeMultiplier[i], feeMultiplier[prev_block], getUniV3Price());
                 makeRebalances(blocks[i], stringToPriceX96(prices[i]), stethAmounts[i], wethAmounts[i], stEthPerToken[i]);
                 totalRebalances += 1;
                 reportStats(blocks[i]);
                 lastRebalanceTick = tick;
+                lastRebalanceBlock = i;
             }
             // reportStats();
         }
@@ -1270,6 +1294,6 @@ contract Backtest is Test {
         vm.stopPrank();
 
         uint256 nft = setup();
-        execute(Constants.width, Constants.wethAmount, Constants.wstethAmount, nft);
+        execute(vm.envUint("width"), vm.envUint("wethAmount"), vm.envUint("wstethAmount"), nft);
     }
 }

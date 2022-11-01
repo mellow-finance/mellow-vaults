@@ -348,6 +348,38 @@ def get_total_rebalances(lines: List[str]) -> int:
             return int(line.strip().split()[-1])
 
 
+def short_report(all_stats: List[State], all_swaps: List[Fees], preview):
+    weth_fees = np.sum([
+        x.weth_cowswap_fees / 10 ** 18 +
+        x.weth_swap_fees / 10 ** 18 for x in all_swaps
+    ])
+    wsteth_fees = np.sum([
+        x.wsteth_cowswap_fees / 10 ** 18 +
+        x.wsteth_swap_fees / 10 ** 18 for x in all_swaps
+    ])
+    price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
+    wsteth_amount = (
+        np.array([x.lower_wsteth for x in all_stats]) +
+        np.array([x.upper_wsteth for x in all_stats]) +
+        np.array([x.erc20_wsteth for x in all_stats])
+    ) / 10 ** 18
+    weth_amount = (
+        np.array([x.lower_weth for x in all_stats]) +
+        np.array([x.upper_weth for x in all_stats]) +
+        np.array([x.erc20_weth for x in all_stats])
+    ) / 10 ** 18
+    initial_capital = wsteth_amount[0] * price[0] + weth_amount[0]
+    end_capital = wsteth_amount[-1] * price[-1] + weth_amount[-1]
+    end_capital_without_strategy = wsteth_amount[0] * price[-1] + weth_amount[0]
+    with open(preview + '/report.txt', 'w') as file:
+        file.write(f'WETH fees: {weth_fees}\n')
+        file.write(f'WSTETH fees: {wsteth_fees}\n')
+        file.write(f'initial capital: {round(initial_capital, 2)}\n')
+        file.write(f'end capital: {round(end_capital, 2)}\n')
+        file.write(f'growth: {round(100 * end_capital / initial_capital - 100, 2)}\n')
+        file.write(f'neutral growth: {round(100 * end_capital / end_capital_without_strategy - 100, 2)}\n')
+
+
 def plot_all(lines: List[str], preview: str):
     earnings = parse_earnings(lines)
     state = parse_state(lines)
@@ -357,3 +389,4 @@ def plot_all(lines: List[str], preview: str):
     plot_weth_wsteth(state, preview)
     plot_earnings(earnings, preview)
     plot_swaps(parse_swaps(lines), preview)
+    short_report(state, parse_swaps(lines), preview)
