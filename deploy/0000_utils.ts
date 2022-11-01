@@ -137,7 +137,7 @@ export const setupVault = async (
                 log: true,
                 autoMine: true,
                 ...TRANSACTION_GAS_LIMITS
-            },
+            },  
             "createVault",
             ...createVaultArgs
         );
@@ -265,7 +265,8 @@ export const combineVaults = async (
         tokenLimit: BigNumberish;
         managementFee: BigNumberish;
         performanceFee: BigNumberish;
-    }
+    },
+    rootVaultName?: string
 ): Promise<void> => {
     if (nfts.length === 0) {
         throw `Trying to combine 0 vaults`;
@@ -281,7 +282,8 @@ export const combineVaults = async (
     const vault = await hre.ethers.getContractAt("IVault", firstAddress);
     const tokens = await vault.vaultTokens();
     const coder = hre.ethers.utils.defaultAbiCoder;
-
+    rootVaultName = rootVaultName == null ? "ERC20RootVault" : "RequestableRootVault";
+    let governanceName = rootVaultName == "ERC20RootVault" ? "ERC20RootVaultGovernance" : "ERC20RootVaultGovernanceForRequestable";
     const {
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
@@ -291,7 +293,7 @@ export const combineVaults = async (
         performanceFee = 20 * 10 ** 7,
     } = options || {};
 
-    await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
+    await setupVault(hre, expectedNft, governanceName, {
         createVaultArgs: [tokens, strategyAddress, nfts, deployer],
         delayedStrategyParams: {
             strategyTreasury: strategyTreasuryAddress,
@@ -314,7 +316,7 @@ export const combineVaults = async (
     );
     if (PRIVATE_VAULT) {
         const rootVaultContract = await hre.ethers.getContractAt(
-            "ERC20RootVault",
+            rootVaultName,
             rootVault
         );
         const depositors = (await rootVaultContract.depositorsAllowlist()).map(
