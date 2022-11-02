@@ -177,7 +177,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     /// @inheritdoc IGearboxVault
     function updateTargetMarginalFactor(uint256 marginalFactorD9_) external {
         require(_isApprovedOrOwner(msg.sender));
-        require(marginalFactorD9_ >= D9, ExceptionsLibrary.INVALID_VALUE);
+        require(marginalFactorD9_ > D9, ExceptionsLibrary.INVALID_VALUE);
 
         address creditAccount_ = getCreditAccount();
         GearboxHelper helper_ = _helper;
