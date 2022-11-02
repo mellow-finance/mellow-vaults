@@ -1,4 +1,3 @@
-from cmath import sin
 from concurrent.futures import ProcessPoolExecutor
 
 import os

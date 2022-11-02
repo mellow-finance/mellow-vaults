@@ -1033,6 +1033,13 @@ contract Backtest is Test {
             ISTETH stethContract = ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
 
             i += 1;
+            swapOnCowswap(
+                blockNumber,
+                wstethAmount,
+                wethAmount,
+                stEthPerToken,
+                ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022)
+            );
 
             if (i >= 4) {
                 break;
@@ -1146,6 +1153,7 @@ contract Backtest is Test {
         (uint256[] memory tvl, ) = vault.tvl();
         console2.log(tvl[0], tvl[1]);
         console2.log(sqrtRatioAX96, sqrtRatioBX96);
+        console2.log(liquidity);
     }
 
     function reportErc20Stats() public {
@@ -1202,20 +1210,20 @@ contract Backtest is Test {
             console2.log("EARNINGS:");
             console2.log("BlockNumber: ", blockNumber);
             if (candidate1[0] != 0) {
-                IWSTETH(wsteth).transfer(deployer, candidate1[0]);
+                IWSTETH(wsteth).transfer(address(lstrategy.erc20Vault()), candidate1[0]);
             }
             if (candidate1[1] != 0) {
-                IWSTETH(weth).transfer(deployer, candidate1[1]);
+                IWSTETH(weth).transfer(address(lstrategy.erc20Vault()), candidate1[1]);
             }
             console2.log(candidate1[0], candidate1[1]);
         } else {
             console2.log("EARNINGS:");
             console2.log("BlockNumber: ", blockNumber);
             if (candidate2[0] != 0) {
-                IWSTETH(wsteth).transfer(deployer, candidate2[0]);
+                IWSTETH(wsteth).transfer(address(lstrategy.erc20Vault()), candidate2[0]);
             }
             if (candidate2[1] != 0) {
-                IWSTETH(weth).transfer(deployer, candidate2[1]);
+                IWSTETH(weth).transfer(address(lstrategy.erc20Vault()), candidate2[1]);
             }
             console2.log(candidate2[0], candidate2[1]);
         }

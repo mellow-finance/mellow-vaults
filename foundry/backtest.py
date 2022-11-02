@@ -19,7 +19,8 @@ POOL_SCALE = 1
 
 def prepare_dataset(fname: str, apy: float, preview: str):
     df = pd.read_csv(fname)
-    hw = np.power(apy, np.arange(len(df)) / 365 / 24 / 60 / 4)
+    blocks_in_year = 365 * 24 * 60 * 60 / 12
+    hw = np.power(apy, np.arange(len(df)) / blocks_in_year)
     df['hw'] = [int((10 ** 9) * x) for x in np.maximum.accumulate(hw)]
     df = df[['block_number', 'wsteth_eth', 'stETH_amount', 'ETH_amount', 'stEthPerToken', 'hw']]
     df.to_csv(preview + '/tmp.csv', index=False, float_format='%.27f')

@@ -5,6 +5,7 @@ from typing import List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
+import il
 
 @dataclass
 class State:
@@ -14,10 +15,12 @@ class State:
     lower_weth: int
     lower_sqrt_ratio_ax96: int
     lower_sqrt_ratio_bx96: int
+    lower_liquidity: int
     upper_wsteth: int
     upper_weth: int
     upper_sqrt_ratio_ax96: int
     upper_sqrt_ratio_bx96: int
+    upper_liquidity: int
     erc20_wsteth: int
     erc20_weth: int
 
@@ -52,9 +55,11 @@ def parse_state(lines: List[str]) -> List[State]:
         sqrt_price = int(lines[i + 2].strip().split()[-1])
         lower_tvl = lines[i + 3].strip().split(', ')
         lower_ratios = lines[i + 4].strip().split(', ')
-        upper_tvl = lines[i + 5].strip().split(', ')
-        upper_ratios = lines[i + 6].strip().split(', ')
-        erc20 = lines[i + 7].strip().split(', ')
+        lower_liquidity = int(lines[i + 5].strip().split()[-1])
+        upper_tvl = lines[i + 6].strip().split(', ')
+        upper_ratios = lines[i + 7].strip().split(', ')
+        upper_liquidity = int(lines[i + 8].strip().split()[-1])
+        erc20 = lines[i + 9].strip().split(', ')
         all_stats.append(
             State(
                 block_number=block_number,
@@ -63,10 +68,12 @@ def parse_state(lines: List[str]) -> List[State]:
                 lower_weth=int(lower_tvl[1]),
                 lower_sqrt_ratio_ax96=int(lower_ratios[0]),
                 lower_sqrt_ratio_bx96=int(lower_ratios[1]),
+                lower_liquidity=lower_liquidity,
                 upper_wsteth=int(upper_tvl[0]),
                 upper_weth=int(upper_tvl[1]),
                 upper_sqrt_ratio_ax96=int(upper_ratios[0]),
                 upper_sqrt_ratio_bx96=int(upper_ratios[1]),
+                upper_liquidity=upper_liquidity,
                 erc20_wsteth=int(erc20[0]),
                 erc20_weth=int(erc20[1]),
             )
@@ -162,7 +169,7 @@ def parse_swaps(lines: List[str]) -> List[Fees]:
 def plot_weth(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
-        15 * timedelta(seconds=x.block_number - 14297758)
+        12 * timedelta(seconds=x.block_number - 14297758)
         for x in all_stats
     ]
     price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
@@ -190,7 +197,7 @@ def plot_weth(all_stats: List[State], preview: str):
 def plot_wsteth(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
-        15 * timedelta(seconds=x.block_number - 14297758)
+        12 * timedelta(seconds=x.block_number - 14297758)
         for x in all_stats
     ]
     price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
@@ -251,7 +258,7 @@ def plot_capital(all_stats: List[State], preview: str):
 def plot_weth_wsteth(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
-        15 * timedelta(seconds=x.block_number - 14297758)
+        12 * timedelta(seconds=x.block_number - 14297758)
         for x in all_stats
     ]
     price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
@@ -284,7 +291,7 @@ def plot_weth_wsteth(all_stats: List[State], preview: str):
 def plot_earnings(all_earnings: List[Earnings], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
-        15 * timedelta(seconds=x.block_number - 14297758)
+        12 * timedelta(seconds=x.block_number - 14297758)
         for x in all_earnings
     ]
     weth_earnings = np.array([x.weth for x in all_earnings]) / 10 ** 18
@@ -305,7 +312,7 @@ def plot_earnings(all_earnings: List[Earnings], preview: str):
 def plot_swaps(all_swaps: List[Fees], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
-        15 * timedelta(seconds=x.block_number - 14297758)
+        12 * timedelta(seconds=x.block_number - 14297758)
         for x in all_swaps
     ]
     weth_fees = np.array([x.weth_cowswap_fees + x.weth_swap_fees for x in all_swaps]) / 10 ** 18
@@ -336,6 +343,40 @@ def plot_swaps(all_swaps: List[Fees], preview: str):
     plt.savefig(preview + '/slippage.jpg', bbox_inches='tight', dpi=150)
 
 
+def plot_capital_distribution(all_stats: List[State], preview):
+    input_ts = [
+        datetime(2022, 2, 28, 11, 59, 58) +
+        12 * timedelta(seconds=x.block_number - 14297758)
+        for x in all_stats
+    ]
+    price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
+    wsteth_amount_univ3 = (
+        np.array([x.lower_wsteth for x in all_stats]) +
+        np.array([x.upper_wsteth for x in all_stats])
+    ) / 10 ** 18
+    weth_amount_univ3 = (
+        np.array([x.lower_weth for x in all_stats]) +
+        np.array([x.upper_weth for x in all_stats])
+    ) / 10 ** 18
+    wsteth_amount_erc20 = (
+        np.array([x.erc20_wsteth for x in all_stats])
+    ) / 10 ** 18
+    weth_amount_erc20 = (
+        np.array([x.erc20_weth for x in all_stats])
+    ) / 10 ** 18
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    plt.title('Distribution of capitals')
+    ax.plot(input_ts, weth_amount_univ3 + wsteth_amount_univ3 * price, label='UniV3', color='blue')
+    ax.plot(input_ts, weth_amount_erc20 + wsteth_amount_erc20 * price, label='erc20', color='red')
+    ax.tick_params(axis='x', rotation=25)
+    ax.set_xlabel('Date')
+    ax.set_ylabel('WETH')
+    ax.legend()
+    ax.grid()
+    plt.savefig(preview + '/distribution.jpg', bbox_inches='tight', dpi=150)
+
+
 def get_total_swaps(all_swaps: List[Fees]) -> Tuple[float, float]:
     weth_fees = np.array([x.weth_cowswap_fees + x.weth_swap_fees for x in all_swaps]) / 10 ** 18
     wsteth_fees = np.array([x.wsteth_cowswap_fees + x.wsteth_swap_fees for x in all_swaps]) / 10 ** 18
@@ -346,6 +387,86 @@ def get_total_rebalances(lines: List[str]) -> int:
     for line in lines:
         if line.startswith('  Total rebalances: '):
             return int(line.strip().split()[-1])
+
+
+def plot_il(all_stats: List[State], preview):
+    result = il.calculate_il(all_stats)
+    input_ts = [
+        datetime(2022, 2, 28, 11, 59, 58) +
+        12 * timedelta(seconds=x.block_number - 14297758)
+        for x in all_stats
+    ]
+    price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
+    il_ = np.cumsum([result[x.block_number] / 10 ** 18 for x in all_stats])
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    plt.title('IL')
+    ax.plot(input_ts, il_, label='amount', color='blue')
+    ax2 = ax.twinx()
+    ax2.plot(input_ts, price, label='price', color='orange')
+    ax.tick_params(axis='x', rotation=25)
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Amount of capital (WETH)')
+    ax.legend()
+    ax2.legend()
+    ax2.set_ylabel('WETH / WSTETH')
+    ax.grid()
+    plt.savefig(preview + '/il.jpg', bbox_inches='tight', dpi=150)
+
+
+def scatter_loss(all_stats: List[State], all_earnings: List[Earnings], preview):
+    capital_earnings = np.zeros(len(all_stats) - 1)
+    price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
+    j = 0
+    for i in range(len(all_stats) - 1):
+        while j < len(all_earnings) and all_earnings[j].block_number <= all_stats[i + 1].block_number:
+            capital_earnings[i] += (all_earnings[j].weth + all_earnings[j].wsteth * price[i + 1]) / 10 ** 18
+            j += 1
+    wsteth_amount = (
+        np.array([x.lower_wsteth for x in all_stats]) +
+        np.array([x.upper_wsteth for x in all_stats]) +
+        np.array([x.erc20_wsteth for x in all_stats])
+    ) / 10 ** 18
+    weth_amount = (
+        np.array([x.lower_weth for x in all_stats]) +
+        np.array([x.upper_weth for x in all_stats]) +
+        np.array([x.erc20_weth for x in all_stats])
+    ) / 10 ** 18
+    capital = weth_amount + wsteth_amount * price
+    diff = np.diff(capital)
+    loss = (capital_earnings - diff) / capital[1:]
+    price_deviation = np.abs(100 * price[1:] / price[:-1] - 100)
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    ax.grid()
+    plt.title('Capital loss / price deviation')
+    ax.scatter(price_deviation, loss)
+    plt.xlabel('Price deviation (%)')
+    plt.ylabel('Loss (%)')
+    plt.savefig(preview + '/loss.jpg', bbox_inches='tight', dpi=150)
+
+
+def scatter_il(all_stats: List[State], preview):
+    result = il.calculate_il(all_stats)
+    input_ts = [
+        datetime(2022, 2, 28, 11, 59, 58) +
+        12 * timedelta(seconds=x.block_number - 14297758)
+        for x in all_stats
+    ]
+    price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
+    il_ = np.array([result[x.block_number] / 10 ** 18 for x in all_stats[:-1]])
+    price_deviation = np.abs(100 * price[1:] / price[:-1] - 100)
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    ax.grid()
+    plt.title('Capital loss / price deviation')
+    print(il_.shape)
+    print(price_deviation.shape)
+    ax.scatter(il_, price_deviation, alpha=0.5)
+    plt.xlabel('Price deviation (%)')
+    plt.ylabel('Loss (WETH)')
+    plt.savefig(preview + '/il_loss.jpg', bbox_inches='tight', dpi=150)
+
 
 
 def short_report(all_stats: List[State], all_swaps: List[Fees], preview):
@@ -378,6 +499,7 @@ def short_report(all_stats: List[State], all_swaps: List[Fees], preview):
         file.write(f'end capital: {round(end_capital, 2)}\n')
         file.write(f'growth: {round(100 * end_capital / initial_capital - 100, 2)}\n')
         file.write(f'neutral growth: {round(100 * end_capital / end_capital_without_strategy - 100, 2)}\n')
+        file.write(f'end capital without strategy: {round(end_capital_without_strategy, 2)}\n')
 
 
 def plot_all(lines: List[str], preview: str):
@@ -389,4 +511,8 @@ def plot_all(lines: List[str], preview: str):
     plot_weth_wsteth(state, preview)
     plot_earnings(earnings, preview)
     plot_swaps(parse_swaps(lines), preview)
+    plot_capital_distribution(state, preview)
+    plot_il(state, preview)
+    scatter_loss(state, earnings, preview)
+    scatter_il(state, preview)
     short_report(state, parse_swaps(lines), preview)
