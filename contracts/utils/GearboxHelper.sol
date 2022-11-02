@@ -349,19 +349,14 @@ contract GearboxHelper {
         address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
         uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
 
-        MultiCall[] memory calls = new MultiCall[](3);
+        MultiCall[] memory calls = new MultiCall[](2);
 
         calls[0] = MultiCall({
             target: convexAdapter,
-            callData: abi.encodeWithSelector(IBaseRewardPool.withdraw.selector, amount, false)
+            callData: abi.encodeWithSelector(IBaseRewardPool.withdrawAndUnwrap.selector, amount, false)
         });
 
         calls[1] = MultiCall({
-            target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
-            callData: abi.encodeWithSelector(IBooster.withdrawAll.selector, poolId)
-        });
-
-        calls[2] = MultiCall({
             target: curveAdapter_,
             callData: abi.encodeWithSelector(
                 ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
@@ -497,7 +492,7 @@ contract GearboxHelper {
         }
 
         ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-            path: abi.encodePacked(fromToken, strategyParams.largePoolFeeUsed, toToken),
+            path: abi.encodePacked(toToken, strategyParams.largePoolFeeUsed, fromToken), // exactOutput arguments are in reversed order
             recipient: creditAccount,
             deadline: block.timestamp + 1,
             amountOut: amount,
@@ -549,7 +544,7 @@ contract GearboxHelper {
 
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_),
+                path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken_), // exactOutput arguments are in reversed order
                 recipient: address(admin_),
                 deadline: block.timestamp + 1,
                 amountOut: outputWant,

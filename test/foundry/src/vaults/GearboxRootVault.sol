@@ -231,6 +231,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() public {
 
+        _requireAtLeastStrategy();
+
         IIntegrationVault gearboxVault_ = gearboxVault;
 
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault_).vaultGovernance()));
