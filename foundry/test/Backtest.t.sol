@@ -406,7 +406,7 @@ contract Backtest is Test {
 
     function makeDesiredPoolPrice(int24 tick) public {
         IUniswapV3Pool pool = getPool();
-        uint256 startTry = 10**17 * (vm.envUint("wethAmount") + vm.envUint("wstethAmount"));
+        uint256 startTry = 10**16 * (vm.envUint("wethAmount") + vm.envUint("wstethAmount"));
 
         uint256 needIncrease = 0;
 
@@ -1277,6 +1277,7 @@ contract Backtest is Test {
             if (diff > vm.envInt("minDeviation") || newPositionNeeded(tick)) {
                 fullPriceUpdate(tick);
                 processFees(blocks[i], feeMultiplier[i], feeMultiplier[prev_block], getUniV3Price());
+                prev_block = i;
                 makeRebalances(blocks[i], stringToPriceX96(prices[i]), stethAmounts[i], wethAmounts[i], stEthPerToken[i]);
                 totalRebalances += 1;
                 reportStats(blocks[i]);
@@ -1285,6 +1286,8 @@ contract Backtest is Test {
             }
             // reportStats();
         }
+
+        reportStats(blocks[prices.length - 1]);
 
         console2.log("Total rebalances: ", totalRebalances);
         console2.log("ERC20Rebalances: ", erc20RebalanceCount);

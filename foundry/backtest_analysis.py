@@ -434,25 +434,21 @@ def scatter_loss(all_stats: List[State], all_earnings: List[Earnings], preview):
     ) / 10 ** 18
     capital = weth_amount + wsteth_amount * price
     diff = np.diff(capital)
-    loss = (capital_earnings - diff) / capital[1:]
-    price_deviation = np.abs(100 * price[1:] / price[:-1] - 100)
+    loss = (diff - capital_earnings)
+
+    price_deviation = 100 * price[1:] / price[:-1] - 100
     fig = plt.figure(figsize=(8, 5))
     ax = fig.add_subplot(111)
     ax.grid()
-    plt.title('Capital loss / price deviation')
+    plt.title('Capital change / price deviation')
     ax.scatter(price_deviation, loss)
     plt.xlabel('Price deviation (%)')
-    plt.ylabel('Loss (%)')
+    plt.ylabel('Capital change (WETH)')
     plt.savefig(preview + '/loss.jpg', bbox_inches='tight', dpi=150)
 
 
 def scatter_il(all_stats: List[State], preview):
     result = il.calculate_il(all_stats)
-    input_ts = [
-        datetime(2022, 2, 28, 11, 59, 58) +
-        12 * timedelta(seconds=x.block_number - 14297758)
-        for x in all_stats
-    ]
     price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
     il_ = np.array([result[x.block_number] / 10 ** 18 for x in all_stats[:-1]])
     price_deviation = np.abs(100 * price[1:] / price[:-1] - 100)

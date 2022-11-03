@@ -19,7 +19,7 @@ POOL_SCALE = 1
 
 def prepare_dataset(fname: str, apy: float, preview: str):
     df = pd.read_csv(fname)
-    blocks_in_year = 365 * 24 * 60 * 60 / 12
+    blocks_in_year = 365 * 24 * 60 * 60 / 12 / 22
     hw = np.power(apy, np.arange(len(df)) / blocks_in_year)
     df['hw'] = [int((10 ** 9) * x) for x in np.maximum.accumulate(hw)]
     df = df[['block_number', 'wsteth_eth', 'stETH_amount', 'ETH_amount', 'stEthPerToken', 'hw']]
@@ -69,7 +69,7 @@ def run_backtest(
     width: int = WIDTH,
     min_deviation: int = MIN_DEVIATION,
 ):
-    prepare_dataset(fname, 1.2, preview)
+    prepare_dataset(fname, 1.15, preview)
     prepare_feed(preview)
 
     print('BACKTEST PREPARED')

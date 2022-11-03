@@ -2,12 +2,9 @@ from concurrent.futures import ProcessPoolExecutor
 
 import os
 
-deviationsArray = [10, 20]
+deviationsArray = [5, 10, 20]
 positionWidths = [100, 120, 140]
 tokenAmounts = [1000]
-
-processesNumber = 3
-
 
 def singleProcess(currentTuple):
     folderName = 'deviation' + str(currentTuple[0]) + 'width' + str(currentTuple[1]) + 'amount' + str(currentTuple[2])
