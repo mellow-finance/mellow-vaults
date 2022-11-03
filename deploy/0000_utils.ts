@@ -293,10 +293,10 @@ export const combineVaults = async (
     const {
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
-        tokenLimitPerAddress = BigNumber.from("1000000000000000000000"),
-        tokenLimit = BigNumber.from("1000000000000000000000"),
-        managementFee = 0,
-        performanceFee = 0,
+        tokenLimitPerAddress = ethers.constants.MaxUint256,
+        tokenLimit = ethers.constants.MaxUint256,
+        managementFee = 2 * 10 ** 7,
+        performanceFee = 20 * 10 ** 7,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
@@ -320,12 +320,12 @@ export const combineVaults = async (
         "vaultForNft",
         expectedNft
     );
+    log("ERC20RootVault address: " + rootVault);
     if (PRIVATE_VAULT) {
         const rootVaultContract = await hre.ethers.getContractAt(
             "ERC20RootVault",
             rootVault
         );
-        log("ERC20RootVault address: " + rootVault);
         const depositors = (await rootVaultContract.depositorsAllowlist()).map(
             (x: any) => x.toString()
         );
