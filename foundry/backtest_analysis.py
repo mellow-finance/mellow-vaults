@@ -225,7 +225,7 @@ def plot_wsteth(all_stats: List[State], preview: str):
 def plot_capital(all_stats: List[State], preview: str):
     input_ts = [
         datetime(2022, 2, 28, 11, 59, 58) +
-        15 * timedelta(seconds=x.block_number - 14297758)
+        12 * timedelta(seconds=x.block_number - 14297758)
         for x in all_stats
     ]
     price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
@@ -464,8 +464,40 @@ def scatter_il(all_stats: List[State], preview):
     plt.savefig(preview + '/il_loss.jpg', bbox_inches='tight', dpi=150)
 
 
+def parse_final_stats(lines: List[str]) -> State:
+    i = 0
 
-def short_report(all_stats: List[State], all_swaps: List[Fees], preview):
+    while i < len(lines):
+        if lines[i] != '  FINAL STATS:\n':
+            i += 1
+            continue
+        sqrt_price = int(lines[i + 1].strip().split()[-1])
+        lower_tvl = lines[i + 2].strip().split(', ')
+        lower_ratios = lines[i + 3].strip().split(', ')
+        lower_liquidity = int(lines[i + 4].strip().split()[-1])
+        upper_tvl = lines[i + 5].strip().split(', ')
+        upper_ratios = lines[i + 6].strip().split(', ')
+        upper_liquidity = int(lines[i + 7].strip().split()[-1])
+        erc20 = lines[i + 8].strip().split(', ')
+        return State(
+            block_number=0,
+            sqrt_price_x96=sqrt_price,
+            lower_wsteth=int(lower_tvl[0]),
+            lower_weth=int(lower_tvl[1]),
+            lower_sqrt_ratio_ax96=int(lower_ratios[0]),
+            lower_sqrt_ratio_bx96=int(lower_ratios[1]),
+            lower_liquidity=lower_liquidity,
+            upper_wsteth=int(upper_tvl[0]),
+            upper_weth=int(upper_tvl[1]),
+            upper_sqrt_ratio_ax96=int(upper_ratios[0]),
+            upper_sqrt_ratio_bx96=int(upper_ratios[1]),
+            upper_liquidity=upper_liquidity,
+            erc20_wsteth=int(erc20[0]),
+            erc20_weth=int(erc20[1]),
+        )
+
+
+def short_report(all_stats: List[State], final_state: State, all_swaps: List[Fees], preview):
     weth_fees = np.sum([
         x.weth_cowswap_fees / 10 ** 18 +
         x.weth_swap_fees / 10 ** 18 for x in all_swaps
@@ -487,15 +519,24 @@ def short_report(all_stats: List[State], all_swaps: List[Fees], preview):
     ) / 10 ** 18
     initial_capital = wsteth_amount[0] * price[0] + weth_amount[0]
     end_capital = wsteth_amount[-1] * price[-1] + weth_amount[-1]
+    end_capital_initial_price = wsteth_amount[-1] * price[0] + weth_amount[-1]
     end_capital_without_strategy = wsteth_amount[0] * price[-1] + weth_amount[0]
+    backtest_power = (365 * 24 * 60 * 60) / 12 / (all_stats[-1].block_number - all_stats[0].block_number)
+    end_capital_modified = (final_state.lower_weth + final_state.upper_weth + final_state.erc20_weth) + \
+        (final_state.lower_wsteth + final_state.upper_wsteth + final_state.erc20_wsteth) * (final_state.sqrt_price_x96 / 2 ** 96) ** 2
+    end_capital_modified /= 10 ** 18
+
     with open(preview + '/report.txt', 'w') as file:
         file.write(f'WETH fees: {weth_fees}\n')
         file.write(f'WSTETH fees: {wsteth_fees}\n')
         file.write(f'initial capital: {round(initial_capital, 2)}\n')
         file.write(f'end capital: {round(end_capital, 2)}\n')
-        file.write(f'growth: {round(100 * end_capital / initial_capital - 100, 2)}\n')
-        file.write(f'neutral growth: {round(100 * end_capital / end_capital_without_strategy - 100, 2)}\n')
+        file.write(f'apr: {round(100 * (end_capital / initial_capital) ** backtest_power - 100 , 2)}\n')
+        file.write(f'neutral apr: {round(100 * (end_capital / end_capital_without_strategy) ** backtest_power - 100, 2)}\n')
         file.write(f'end capital without strategy: {round(end_capital_without_strategy, 2)}\n')
+        file.write(f'end capial modified: {end_capital_modified}\n')
+        file.write(f'modified apr: {round(100 * (end_capital_modified / initial_capital) ** backtest_power - 100, 2)}\n')
+        file.write(f'modifier apr-2: {round(100 * (end_capital_initial_price / initial_capital) ** backtest_power - 100 , 2)}\n')
 
 
 def plot_all(lines: List[str], preview: str):
@@ -511,4 +552,4 @@ def plot_all(lines: List[str], preview: str):
     plot_il(state, preview)
     scatter_loss(state, earnings, preview)
     scatter_il(state, preview)
-    short_report(state, parse_swaps(lines), preview)
+    short_report(state, parse_final_stats(lines), parse_swaps(lines), preview)

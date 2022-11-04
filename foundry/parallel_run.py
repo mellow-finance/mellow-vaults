@@ -2,8 +2,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 import os
 
-deviationsArray = [5, 10, 20]
-positionWidths = [100, 120, 140]
+deviationsArray = [5, 10, 20, 30, 40]
+positionWidths = [80, 100, 120, 140, 160, 200, 240, 300]
 tokenAmounts = [1000]
 
 def singleProcess(currentTuple):
