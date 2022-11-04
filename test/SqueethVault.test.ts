@@ -23,7 +23,6 @@ import {
     SQUEETH_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import Exceptions from "./library/Exceptions";
-import { assert } from "console";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -385,13 +384,10 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 ).to.be.true;
 
                 await this.subject.takeShort(this.healthFactor, true);
-                console.log((await this.subject.healthFactor()).toString());
                 expect((await this.subject.shortVaultId()).gt(0)).to.be.true;
                 expect((await this.subject.totalCollateral()).gt(wethBalance)).to.be.true;
                 expect((await this.subject.wPowerPerpDebt()).gt(0)).to.be.true;
                 expect((await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
-                console.log((await this.weth.balanceOf(this.subject.address)).toString());
-                console.log((await this.subject.totalCollateral()).toString());
                 expect(
                     (await this.weth.balanceOf(this.subject.address)).lt(wethBalance)).to.be.true;
             });
@@ -501,7 +497,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
 
 
-            it.only("closes overcollaterized position using oSQTH from flash swap", async () => {
+            it("closes overcollaterized position using oSQTH from flash swap", async () => {
                 await this.subject.takeShort(this.healthFactor, true);
                 expect(
                     (await this.squeeth.balanceOf(this.subject.address)).eq(0)
