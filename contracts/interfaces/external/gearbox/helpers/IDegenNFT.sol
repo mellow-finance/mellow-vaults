@@ -2,7 +2,7 @@
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Holdings, 2022
 pragma solidity ^0.8.9;
-import { IVersion } from "./external/gearbox/helpers/IVersion.sol";
+import { IVersion } from "./IVersion.sol";
 import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 interface IDegenNFTExceptions {

@@ -23,6 +23,15 @@ interface IGearboxVault is IIntegrationVault {
     /// For a vault with X usd of collateral and marginal factor T >= 1, total assets (collateral + debt) should be equal to X * T 
     function marginalFactorD9() external view returns (uint256);
 
+    /// @notice Index used for claiming in Gearbox V2 Degen contract
+    function merkleIndex() external view returns (uint256);
+
+    /// @notice NFTs amount used for claiming in Gearbox V2 Degen contract
+    function merkleTotalAmount() external view returns (uint256);
+
+    /// @notice Proof used for claiming in Gearbox V2 Degen contract
+    function getMerkleProof() external view returns (bytes32[] memory);
+
     /// @notice The index of the curve pool the vault invests into
     function poolId() external view returns (uint256);
 
@@ -43,11 +52,21 @@ interface IGearboxVault is IIntegrationVault {
     /// @param marginalFactorD_ New marginalFactorD9
     function updateTargetMarginalFactor(uint256 marginalFactorD_) external;
 
+    /// @notice Sets merkle tree parameters for claiming Gearbox V2 Degen NFT (can be successfully called only by an admin or a strategist)
+    /// @param merkleIndex_ Required index
+    /// @param merkleTotalAmount_ Total amount of NFTs we have in Gearbox Degen Contract
+    /// @param merkleProof_ Proof in Merkle tree
+    function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) external;
+
     /// @notice Adjust a position (takes more debt or repays some, depending on the past performance) to achieve the required marginalFactorD9
     function adjustPosition() external;
 
     /// @notice Opens a new credit account on the address of the vault
     function openCreditAccount() external;
+
+    /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
+    /// Can be successfully called only by the helper
+    function openCreditAccountInManager(uint256 currentPrimaryTokenAmount, uint16 referralCode) external;
 
     /// @notice Returns an address of the credit account connected to the address of the vault
     function getCreditAccount() external view returns (address);

@@ -26,6 +26,8 @@ import "../../src/interfaces/external/gearbox/ICreditFacade.sol";
 
 import "../../src/interfaces/IDegenNft.sol";
 
+import "../helpers/MockDistributor.t.sol";
+
 contract GearboxUSDCTest is Test {
 
     event CreditAccountOpened(address indexed origin, address indexed sender, address indexed creditAccount);
@@ -40,8 +42,9 @@ contract GearboxUSDCTest is Test {
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address admin = 0x565766498604676D9916D4838455Cc5fED24a5B3;
-    address minter = 0x7CECf6A7457a60A16c8D1ABfdc649F140114078d;
     address cvx = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
+    MockDegenDistributor distributor = new MockDegenDistributor();
+    address configurator = 0xA7D5DDc1b8557914F158076b228AA91eF613f1D5;
 
     address treasuryA;
     address treasuryB;
@@ -255,6 +258,16 @@ contract GearboxUSDCTest is Test {
         
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
+
+        address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
+        vm.startPrank(configurator);
+        IDegenNFT(degenNft).setMinter(address(distributor));
+        vm.stopPrank();
+
+        bytes32[] memory arr = new bytes32[](1);
+        arr[0] = DegenConstants.DEGEN;
+
+        gearboxVault.setMerkleParameters(0, 20, arr);
     }
 
     function testSetup() public {
@@ -281,12 +294,7 @@ contract GearboxUSDCTest is Test {
 
     function firstDeposit() public {
 
-        address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
         deal(usdc, address(this), 10**4);
-
-        vm.startPrank(minter);
-        IDegenNFT(degenNft).mint(address(gearboxVault), 1);
-        vm.stopPrank();
 
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = 10**4;
@@ -312,10 +320,6 @@ contract GearboxUSDCTest is Test {
         vm.stopPrank();
 
         if (gearboxVault.getCreditAccount() == address(0)) {
-            address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
-            vm.startPrank(minter);
-            IDegenNFT(degenNft).mint(address(gearboxVault), 1);
-            vm.stopPrank();
             gearboxVault.openCreditAccount();
         }
     }

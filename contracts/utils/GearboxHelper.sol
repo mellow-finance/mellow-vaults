@@ -219,6 +219,9 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) public {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
 
@@ -273,6 +276,9 @@ contract GearboxHelper {
         address creditAccount,
         address convexOutputToken
     ) public {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
         if (balance == 0) {
             return;
@@ -334,12 +340,13 @@ contract GearboxHelper {
     function withdrawFromConvex(
         uint256 amount,
         address vaultGovernance,
-        uint256 poolId,
         int128 primaryIndex
     ) public {
         if (amount == 0) {
             return;
         }
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         address curveAdapter_ = curveAdapter;
 
@@ -374,6 +381,9 @@ contract GearboxHelper {
         uint256 poolId,
         int128 primaryIndex
     ) public {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
         MultiCall[] memory calls = new MultiCall[](3);
 
         address curveAdapter_ = curveAdapter;
@@ -410,6 +420,9 @@ contract GearboxHelper {
         address convexOutputToken,
         address creditAccount_
     ) external {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
         claimRewards(vaultGovernance, creditAccount_, convexOutputToken);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -449,7 +462,7 @@ contract GearboxHelper {
                     creditAccount_,
                     convexOutputToken
                 );
-                withdrawFromConvex(convexAmountToWithdraw, vaultGovernance, poolId, primaryIndex);
+                withdrawFromConvex(convexAmountToWithdraw, vaultGovernance, primaryIndex);
 
                 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
                 if (currentPrimaryTokenAmount < delta) {
@@ -477,6 +490,9 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
@@ -513,6 +529,9 @@ contract GearboxHelper {
         external
         returns (uint256[] memory actualAmounts)
     {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
@@ -562,5 +581,60 @@ contract GearboxHelper {
         actualAmounts[0] = amount;
     }
 
+    function openCreditAccount(address creditAccount, address vaultGovernance, uint256 marginalFactorD9) external {
+
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+        require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
+
+        ICreditFacade creditFacade_ = creditFacade;
+        address primaryToken_ = primaryToken;
+        address depositToken_ = depositToken;
+
+        (uint256 minBorrowingLimit, ) = creditFacade_.limits();
+        uint256 minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9)) + 1;
+
+        uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin));
+
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance).delayedProtocolParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance).strategyParams(vaultNft);
+
+        if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minimalNecessaryAmount) {
+            ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
+            uint256 amountInMaximum = calculateAmountInMaximum(
+                depositToken_,
+                primaryToken_,
+                minimalNecessaryAmount - currentPrimaryTokenAmount,
+                protocolParams.maxSlippageD9
+            );
+            require(IERC20(depositToken_).balanceOf(address(admin)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
+
+            ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
+                path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_), // exactOutput arguments are in reversed order
+                recipient: address(admin),
+                deadline: block.timestamp + 1,
+                amountOut: minimalNecessaryAmount - currentPrimaryTokenAmount,
+                amountInMaximum: amountInMaximum
+            });
+
+            admin.swap(router, uniParams, depositToken_, amountInMaximum);
+
+            currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin));
+        }
+
+        require(currentPrimaryTokenAmount >= minimalNecessaryAmount, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        admin.openCreditAccountInManager(currentPrimaryTokenAmount, protocolParams.referralCode);
+        emit CreditAccountOpened(tx.origin, msg.sender, creditManager.creditAccounts(address(admin)));
+    }
+
+    /// @notice Emitted when a credit account linked to this vault is opened in Gearbox
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param creditAccount Address of the opened credit account
+    event CreditAccountOpened(address indexed origin, address indexed sender, address creditAccount);
+
+    /// @notice Emitted when an adjusment of the position made in Gearbox
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param newTotalAssetsValue New value of all assets (debt + real assets) of the vault
     event PositionAdjusted(address indexed origin, address indexed sender, uint256 newTotalAssetsValue);
 }

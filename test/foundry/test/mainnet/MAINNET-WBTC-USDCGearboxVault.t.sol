@@ -24,6 +24,8 @@ import "../../src/utils/GearboxHelper.sol";
 import "../../src/external/ConvexBaseRewardPool.sol";
 import "../../src/interfaces/IDegenNft.sol";
 
+import "../helpers/MockDistributor.t.sol";
+
 contract GearboxWBTCTest is Test {
 
     uint256 satoshiOfUsdc = 4892;
@@ -39,7 +41,8 @@ contract GearboxWBTCTest is Test {
     address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
     address wbtc = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address admin = 0x565766498604676D9916D4838455Cc5fED24a5B3;
-    address minter = 0x7CECf6A7457a60A16c8D1ABfdc649F140114078d;
+    MockDegenDistributor distributor = new MockDegenDistributor();
+    address configurator = 0xA7D5DDc1b8557914F158076b228AA91eF613f1D5;
     address cvx = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
 
     address creditAccount;
@@ -255,6 +258,16 @@ contract GearboxWBTCTest is Test {
         
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
         IERC20(wbtc).approve(address(rootVault), type(uint256).max);
+
+        address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
+        vm.startPrank(configurator);
+        IDegenNFT(degenNft).setMinter(address(distributor));
+        vm.stopPrank();
+
+        bytes32[] memory arr = new bytes32[](1);
+        arr[0] = DegenConstants.DEGEN;
+
+        gearboxVault.setMerkleParameters(0, 20, arr);
     }
 
     function setZeroFees() public {
@@ -312,10 +325,6 @@ contract GearboxWBTCTest is Test {
 
         rootVault.deposit(amounts, 0, "");
         if (gearboxVault.getCreditAccount() == address(0)) {
-            vm.stopPrank();
-            address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
-            vm.startPrank(minter);
-            IDegenNFT(degenNft).mint(address(gearboxVault), 1);
             vm.stopPrank();
             gearboxVault.openCreditAccount();
         }

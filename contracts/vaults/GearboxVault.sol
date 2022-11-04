@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
+import "../interfaces/external/gearbox/helpers/IDegenDistributor.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -11,6 +12,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 public constant D7 = 10**7;
 
     GearboxHelper internal _helper;
+
+    bytes32[] private _merkleProof;
 
     /// @inheritdoc IGearboxVault
     ICreditFacade public creditFacade;
@@ -32,6 +35,13 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     uint256 public marginalFactorD9;
+
+    /// @inheritdoc IGearboxVault
+    uint256 public merkleIndex;
+
+    /// @inheritdoc IGearboxVault
+    uint256 public merkleTotalAmount; 
+    
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -103,6 +113,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         return _helper.calculateClaimableRewards(creditAccount, address(_vaultGovernance));
     }
 
+    function getMerkleProof() external view returns (bytes32[] memory) {
+        return _merkleProof;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IGearboxVault
@@ -142,7 +156,23 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     /// @inheritdoc IGearboxVault
     function openCreditAccount() external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _openCreditAccount();
+        address degenNft = creditFacade.degenNFT();
+
+        if (degenNft != address(0)) {
+            IDegenNFT degenContract = IDegenNFT(degenNft);
+            IDegenDistributor distributor = IDegenDistributor(degenContract.minter());
+            if (distributor.claimed(address(this)) < merkleTotalAmount) {
+                distributor.claim(merkleIndex, address(this), merkleTotalAmount, _merkleProof);
+            }
+        }
+
+        address creditAccount = getCreditAccount();
+        _helper.openCreditAccount(creditAccount, address(_vaultGovernance), marginalFactorD9);
+
+        if (depositToken != primaryToken) {
+            creditFacade.enableToken(depositToken);
+            _addDepositTokenAsCollateral();
+        }
     }
 
     /// @inheritdoc IGearboxVault
@@ -172,6 +202,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             convexOutputToken,
             creditAccount
         );
+    }
+
+    /// @inheritdoc IGearboxVault
+    function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) public {
+        require(_isApprovedOrOwner(msg.sender));
+        merkleIndex = merkleIndex_;
+        merkleTotalAmount = merkleTotalAmount_;
+        _merkleProof = merkleProof_;
     }
 
     /// @inheritdoc IGearboxVault
@@ -226,6 +264,19 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         IERC20(token).approve(address(router), 0);
     }
 
+    /// @inheritdoc IGearboxVault
+    function openCreditAccountInManager(uint256 currentPrimaryTokenAmount, uint16 referralCode) external {
+        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
+        IERC20(primaryToken).safeIncreaseAllowance(address(creditManager), currentPrimaryTokenAmount);
+        creditFacade.openCreditAccount(
+            currentPrimaryTokenAmount,
+            address(this),
+            uint16((marginalFactorD9 - D9) / D7),
+            referralCode
+        );
+        IERC20(primaryToken).approve(address(creditManager), 0);
+    }
+
     // -------------------  INTERNAL, VIEW  -------------------
 
     function _isReclaimForbidden(address) internal pure override returns (bool) {
@@ -268,7 +319,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         helper_.withdrawFromConvex(
             IERC20(convexOutputToken).balanceOf(creditAccount_),
             address(_vaultGovernance),
-            poolId,
             primaryIndex
         );
 
@@ -312,74 +362,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         actualTokenAmounts[0] = amountToPull;
     }
 
-    function _openCreditAccount() internal {
-        address creditAccount = getCreditAccount();
-        require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
-
-        ICreditFacade creditFacade_ = creditFacade;
-        ICreditManagerV2 creditManager_ = creditManager;
-        address primaryToken_ = primaryToken;
-        address depositToken_ = depositToken;
-
-        (uint256 minBorrowingLimit, ) = creditFacade_.limits();
-        uint256 minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9)) + 1;
-
-        uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
-
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedProtocolParams();
-
-        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(
-            address(_vaultGovernance)
-        ).strategyParams(_nft);
-
-        if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minimalNecessaryAmount) {
-            ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
-            uint256 amountInMaximum = _helper.calculateAmountInMaximum(
-                depositToken_,
-                primaryToken_,
-                minimalNecessaryAmount - currentPrimaryTokenAmount,
-                protocolParams.maxSlippageD9
-            );
-            require(IERC20(depositToken_).balanceOf(address(this)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
-
-            ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
-                path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_), // exactOuput arguments are in reversed order
-                recipient: address(this),
-                deadline: block.timestamp + 1,
-                amountOut: minimalNecessaryAmount - currentPrimaryTokenAmount,
-                amountInMaximum: amountInMaximum
-            });
-
-            IERC20(depositToken_).safeIncreaseAllowance(address(router), amountInMaximum);
-            router.exactOutput(uniParams);
-            IERC20(depositToken_).approve(address(router), 0);
-
-            currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(this));
-        }
-
-        require(currentPrimaryTokenAmount >= minimalNecessaryAmount, ExceptionsLibrary.LIMIT_UNDERFLOW);
-
-        IERC20(primaryToken_).safeIncreaseAllowance(address(creditManager_), currentPrimaryTokenAmount);
-        creditFacade_.openCreditAccount(
-            currentPrimaryTokenAmount,
-            address(this),
-            uint16((marginalFactorD9 - D9) / D7),
-            protocolParams.referralCode
-        );
-        IERC20(primaryToken_).approve(address(creditManager_), 0);
-
-        creditAccount = creditManager_.getCreditAccountOrRevert(address(this));
-
-        if (depositToken_ != primaryToken_) {
-            creditFacade_.enableToken(depositToken_);
-            _addDepositTokenAsCollateral();
-        }
-
-        emit CreditAccountOpened(tx.origin, msg.sender, getCreditAccount());
-    }
-
     /// @notice Deposits all deposit tokens which are on the address of the vault into the credit account
     function _addDepositTokenAsCollateral() internal {
         ICreditFacade creditFacade_ = creditFacade;
@@ -407,10 +389,4 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     /// @param sender Sender of the call (msg.sender)
     /// @param newMarginalFactorD9 New marginal factor
     event TargetMarginalFactorUpdated(address indexed origin, address indexed sender, uint256 newMarginalFactorD9);
-
-    /// @notice Emitted when a credit account linked to this vault is opened in Gearbox
-    /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender)
-    /// @param creditAccount Address of the opened credit account
-    event CreditAccountOpened(address indexed origin, address indexed sender, address creditAccount);
 }
