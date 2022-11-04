@@ -111,7 +111,6 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         primaryToken = vaultTokens_[0];
 
         currentEpoch = 1;
-
         lastFeeCharge = uint64(block.timestamp);
     }
 
