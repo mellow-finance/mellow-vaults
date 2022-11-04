@@ -138,8 +138,10 @@ contract<WhiteList, DeployOptions, CustomContext>("WhiteList", function () {
                     });
                 }
 
-
-                this.usualDepositAvailable = async (vault: ERC20RootVault, depositorAddress: string) => {
+                this.usualDepositAvailable = async (
+                    vault: ERC20RootVault,
+                    depositorAddress: string
+                ) => {
                     const allDepositors = await vault.depositorsAllowlist();
                     for (let elem in allDepositors) {
                         if (elem == depositorAddress) {
@@ -156,7 +158,10 @@ contract<WhiteList, DeployOptions, CustomContext>("WhiteList", function () {
                     return this.subject.address;
                 };
 
-                this.getProof = async (whitelistAddress: string, depositorAddress: string) => {
+                this.getProof = async (
+                    whitelistAddress: string,
+                    depositorAddress: string
+                ) => {
                     // For now we use constant proofs
                     // actual example:
                     // https://api.mellow.finance/proof/0xa96eB894266a9CB08d64867C1365E9f1157D5B68/0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3?chain=mainnet
@@ -168,12 +173,20 @@ contract<WhiteList, DeployOptions, CustomContext>("WhiteList", function () {
                     return tree.getHexProof(keccak256(depositorAddress));
                 };
 
-                this.proxyDepositAvailable = async (vault: ERC20RootVault, depositorAddress: string) => {
-                    const whitlistAddres = await this.getWhitelistForVault(vault);
+                this.proxyDepositAvailable = async (
+                    vault: ERC20RootVault,
+                    depositorAddress: string
+                ) => {
+                    const whitlistAddres = await this.getWhitelistForVault(
+                        vault
+                    );
                     if (!whitlistAddres) {
                         return false;
                     }
-                    const proof = await this.getProof(whitlistAddres, depositorAddress);
+                    const proof = await this.getProof(
+                        whitlistAddres,
+                        depositorAddress
+                    );
                     return proof.length != 0;
                 };
 
@@ -183,10 +196,19 @@ contract<WhiteList, DeployOptions, CustomContext>("WhiteList", function () {
                     minLpAmount: BigNumber,
                     options: BytesLike,
                     whitelist: WhiteList,
-                    depositorAddress: string,
+                    depositorAddress: string
                 ) => {
-                    const proof = await this.getProof(whitelist.address, depositorAddress);
-                    return await whitelist.deposit(vaultAddress, amounts, minLpAmount, options, proof);
+                    const proof = await this.getProof(
+                        whitelist.address,
+                        depositorAddress
+                    );
+                    return await whitelist.deposit(
+                        vaultAddress,
+                        amounts,
+                        minLpAmount,
+                        options,
+                        proof
+                    );
                 };
 
                 return this.subject;
