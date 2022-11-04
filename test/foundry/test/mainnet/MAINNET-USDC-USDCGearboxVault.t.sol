@@ -102,18 +102,7 @@ contract GearboxUSDCTest is Test {
 
             vm.startPrank(admin);
 
-            governance.stageUnitPrice(usdc, 1);
-            vm.warp(block.timestamp + 15 * 60 * 60 * 24);
-            governance.commitUnitPrice(usdc);
-
             uint8[] memory args = new uint8[](1);
-            args[0] = PermissionIdsLibrary.ERC20_VAULT_TOKEN;
-            governance.stagePermissionGrants(usdc, args);
-            governance.stagePermissionGrants(weth, args);
-
-            vm.warp(block.timestamp + governance.governanceDelay());
-            governance.commitPermissionGrants(usdc);
-            governance.commitPermissionGrants(weth);
 
             args[0] = PermissionIdsLibrary.CREATE_VAULT;
             governance.stagePermissionGrants(address(this), args);
@@ -220,7 +209,6 @@ contract GearboxUSDCTest is Test {
             governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
             governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1, delayedVaultParams);
             governanceC.setStrategyParams(nftStart + 1, strategyParamsB);
-            vm.warp(block.timestamp + governance.governanceDelay());
             governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1);
             governanceA.commitDelayedStrategyParams(nftStart + 2);
 
