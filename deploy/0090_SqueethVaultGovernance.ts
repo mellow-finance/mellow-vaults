@@ -32,7 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             {
                 controller: squeethController,
                 router: uniswapV3Router,
-                slippageD9: BigNumber.from(10).pow(7).mul(3),
+                slippageD9: BigNumber.from(10).pow(7),
                 twapPeriod: BigNumber.from(420),
                 wethBorrowPool: uniswapWethUsdcPool,
                 oracle: mellowOracle
