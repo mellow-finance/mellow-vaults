@@ -1229,6 +1229,16 @@ contract Backtest is Test {
         }
     }
 
+    function reportFinalStats() public {
+        console2.log("FINAL STATS:");
+        IUniswapV3Pool pool = getPool();
+        (uint256 sqrtPriceX96, , , , , , ) = pool.slot0();
+        console2.log("sqrtPrice: ", sqrtPriceX96);
+        reportUniStats(lstrategy.lowerVault());
+        reportUniStats(lstrategy.upperVault());
+        reportErc20Stats();
+    }
+
     function execute(
         uint256 width,
         uint256 weth_amount,
@@ -1288,6 +1298,9 @@ contract Backtest is Test {
         }
 
         reportStats(blocks[prices.length - 1]);
+
+        fullPriceUpdate(getTick(stringToSqrtPriceX96(prices[0])));
+        reportFinalStats();
 
         console2.log("Total rebalances: ", totalRebalances);
         console2.log("ERC20Rebalances: ", erc20RebalanceCount);
