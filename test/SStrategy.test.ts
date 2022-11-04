@@ -201,11 +201,11 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                 });
 
                 this.depositor = randomAddress();
-                this.depositAmount = generateSingleParams(uint256).mod(BigNumber.from(10).pow(18).mul(90)).add(BigNumber.from(10).pow(18).mul(10));
+                this.depositAmount = generateSingleParams(uint256).mod(BigNumber.from(10).pow(18).mul(1)).add(BigNumber.from(10).pow(18).mul(9));
                 await mint(
                     "WETH",
                     this.depositor,
-                    BigNumber.from(10).pow(18).mul(100)
+                    BigNumber.from(10).pow(18).mul(10)
                 );
                 await withSigner(this.depositor, async (s) => {
                     await this.weth.connect(s).approve(this.rootVault.address, this.depositAmount)
@@ -270,7 +270,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                 let lpAmount = await this.rootVault.balanceOf(this.depositor);
                 await this.rootVault.connect(s).registerWithdrawal(lpAmount);
                 await sleep(3600 * 24 * 30);
-                await this.rootVault.connect(s).invokeExecution();
+                await this.rootVault.connect(this.admin).invokeExecution();
                 let withdrawn = await this.rootVault.connect(s).callStatic.withdraw(this.depositor, [randomBytes(4), randomBytes(4)]);
                 await this.rootVault.connect(s).withdraw(this.depositor, [randomBytes(4), randomBytes(4)]);
                 expect((await this.weth.balanceOf(this.depositor)).gt(wethBefore)).to.be.true;
@@ -292,23 +292,182 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
             let tvlAfter = await this.rootVault.tvl();
             expect(tvlAfter[0][0].lt(tvlBefore[0][0])).to.be.true;
-            expect(tvlAfter[0][1].lt(tvlBefore[0][1])).to.be.true;
+            expect(tvlAfter[1][0].lt(tvlBefore[1][0])).to.be.true;
         })
 
-        // it.only("option has no value", async () => {
-        //     let currentEthPrice = await this.squeethVault.twapIndexPrice();
-        //     await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
+        it("option has no value", async () => {
+            
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+            
+            let safeBalance = await this.weth.balanceOf(this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
+            let newSafeBalance = await this.weth.balanceOf(this.safe);
+            expect(newSafeBalance.gt(safeBalance)).to.be.true;
+            
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            })
 
-        //     await withSigner(this.safe, async (s) => {
-        //         await this.weth.connect(s).approve(this.squeethVault.address, BigNumber.from(10).pow(18).mul(100));
-        //     })
-        //     console.log((await this.squeethVault.twapIndexPrice()).toString());
-        //     await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(100));
-        //     await sleep(3600 * 24 * 30);
-        //     console.log((await this.squeethVault.twapIndexPrice()).toString());
-        //     await this.subject.endCycleMocked(this.safe);
+            let previousEthPrice = await this.squeethVault.twapIndexPrice();
+            await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(1000));
+            await sleep(3600 * 24 * 30);
+            let newEthPrice = await this.squeethVault.twapIndexPrice();
+            expect(newEthPrice.lt(previousEthPrice)).to.be.true;
+            await this.subject.endCycleMocked(this.safe);
 
-        // })
+            await withSigner(this.depositor, async (s) => {
+                let withdrawn = await this.rootVault.connect(s).callStatic.withdraw(this.depositor, [randomBytes(4), randomBytes(4)]);
+                console.log("check");
+                console.log(withdrawn[0].toString());
+                console.log(this.depositAmount.toString());
+                expect(withdrawn[0].lt(this.depositAmount.toString())).to.be.true;
+            });
+
+        })
+        it("crossing lower threshold", async () => {
+            
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+            
+            let safeBalance = await this.weth.balanceOf(this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
+            let newSafeBalance = await this.weth.balanceOf(this.safe);
+            expect(newSafeBalance.gt(safeBalance)).to.be.true;
+            
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            })
+
+            await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(1000));
+            await sleep(3600 * 24 * 30);
+            let newEthPrice = await this.squeethVault.twapIndexPrice();
+            expect(newEthPrice.lt(currentEthPrice)).to.be.true;
+            console.log("multiply: " + newEthPrice.mul(100).div(currentEthPrice).toString());
+            await this.subject.endCycleMocked(this.safe);
+
+            await withSigner(this.depositor, async (s) => {
+                let withdrawn = await this.rootVault.connect(s).callStatic.withdraw(this.depositor, [randomBytes(4), randomBytes(4)]);
+                console.log("check");
+                console.log(withdrawn[0].toString());
+                console.log(this.depositAmount.toString());
+                expect(withdrawn[0].lt(this.depositAmount.toString())).to.be.true;
+            });
+
+        })
+
+
+        it("option has value", async () => {
+            let optionPrice = BigNumber.from(10).pow(18).mul(100);
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            })
+
+            await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, false, BigNumber.from(10).pow(11).mul(500));
+            await sleep(3600 * 24 * 30);
+            let newEthPrice = await this.squeethVault.twapIndexPrice();
+            expect(newEthPrice.gt(currentEthPrice)).to.be.true;
+
+            let ONE = BigNumber.from(1e9);
+            let optionPriceEth = ONE.mul(optionPrice).div(currentEthPrice);
+            let priceMultiplicator = newEthPrice.mul(1e9).div(currentEthPrice);
+            let shortMoney = this.depositAmount.mul(ONE).div(ONE.add(optionPriceEth));
+            let optionMoney = this.depositAmount.sub(shortMoney)
+            let optionProfit = ONE.sub(ONE.mul(ONE).div(priceMultiplicator));
+            let optionProfitETH = optionMoney.mul(optionProfit).div(optionPriceEth);
+
+            let toAllow = optionProfitETH.mul(11).div(10);
+            let atLeast = optionProfitETH.mul(9).div(10);
+
+            await withSigner(this.safe, async (s) => {
+                await this.weth.connect(s).approve(this.squeethVault.address, toAllow)
+            })
+            let safeBalance = await this.weth.balanceOf(this.safe);
+            await this.subject.endCycleMocked(this.safe);
+            let newSafeBalance = await this.weth.balanceOf(this.safe);
+            
+            expect(safeBalance.sub(newSafeBalance).gt(atLeast)).to.be.true;
+
+            await withSigner(this.depositor, async (s) => {
+                let withdrawn = await this.rootVault.connect(s).callStatic.withdraw(this.depositor, [randomBytes(4), randomBytes(4)]);
+                expect(withdrawn[0].gt(this.depositAmount)).to.be.true;
+                console.log("check");
+                console.log(withdrawn[0].toString());
+                console.log(this.depositAmount.toString());
+            });
+        })
+
+
+        it("no money for second", async () => {
+            await withSigner(this.safe, async (s) => {
+                await this.weth.connect(s).approve(this.squeethVault.address, BigNumber.from(10).pow(20))
+            })
+
+            let optionPrice = BigNumber.from(10).pow(18).mul(100);
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            })
+
+            await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, false, BigNumber.from(10).pow(11).mul(500));
+            await sleep(3600 * 24 * 30);
+            
+            await this.subject.endCycleMocked(this.safe);
+
+            await expect(this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe)).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
+        })
+
+
+        it.only("two cycles", async () => {
+            await withSigner(this.safe, async (s) => {
+                await this.weth.connect(s).approve(this.squeethVault.address, BigNumber.from(10).pow(20))
+            })
+
+            let optionPrice = BigNumber.from(10).pow(18).mul(100);
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            })
+
+            await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, false, BigNumber.from(10).pow(11).mul(500));
+            await sleep(3600 * 24 * 30);
+            
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).cancelWithdrawal(lpAmount);
+            })
+            await this.subject.endCycleMocked(this.safe);
+
+            console.log("squeeth balance: " + (await this.weth.balanceOf(this.squeethVault.address)).toString());
+            console.log("erc20 balance: " + (await this.weth.balanceOf(this.erc20Vault.address)).toString());
+            console.log("squeeth balance perp: " + (await this.squeeth.balanceOf(this.squeethVault.address)).toString());
+            console.log("erc20 balance perp: " + (await this.squeeth.balanceOf(this.erc20Vault.address)).toString());
+
+            let newEthPrice = await this.squeethVault.twapIndexPrice();
+            await this.subject.startCycleMocked(newEthPrice, optionPrice, this.safe);
+
+            await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, false, BigNumber.from(10).pow(11).mul(200));
+            await sleep(3600 * 24 * 30);
+            
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            })
+
+            await this.subject.endCycleMocked(this.safe);
+            await withSigner(this.depositor, async (s) => {
+                let withdrawn = await this.rootVault.connect(s).callStatic.withdraw(this.depositor, [randomBytes(4), randomBytes(4)]);
+                expect(withdrawn[0].gt(this.depositAmount)).to.be.true;
+            });
+        })
     })
 
 });

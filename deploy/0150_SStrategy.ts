@@ -27,8 +27,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         uniswapV3Router
     } = await getNamedAccounts();
     const tokens = [weth].map((t) => t.toLowerCase()).sort();
-    const startNft =
-        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+
+    let vaultRegistry = await ethers.getContract("VaultRegistry");
+    const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
     let erc20VaultNft = startNft;
     let squeethVaultNft = startNft + 1;
