@@ -5,7 +5,6 @@ import "hardhat-deploy";
 import { MAIN_NETWORKS, TRANSACTION_GAS_LIMITS } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    console.log('Kek');
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
@@ -19,7 +18,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-    console.log('Wait');
 
     await deploy("UniV3Helper", {
         from: deployer,
