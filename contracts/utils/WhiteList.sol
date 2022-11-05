@@ -34,14 +34,30 @@ contract WhiteList is DefaultAccessControl {
 
         actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            IERC20(tokens[i]).safeTransferFrom(address(this), msg.sender, IERC20(tokens[i]).balanceOf(address(this)));
+            IERC20(tokens[i]).safeTransfer(msg.sender, IERC20(tokens[i]).balanceOf(address(this)));
         }
 
-        vault.transfer(msg.sender, vault.balanceOf(address(this)));
+        uint256 lpTokenMinted = vault.balanceOf(address(this));
+        vault.transfer(msg.sender, lpTokenMinted);
+
+        emit Deposit(msg.sender, address(vault), tokens, actualTokenAmounts, lpTokenMinted);
     }
 
     function updateRoot(bytes32 root_) external {
         _requireAdmin();
         root = root_;
     }
+
+    /// @notice Emitted when liquidity is deposited
+    /// @param from The source address for the liquidity
+    /// @param tokens ERC20 tokens deposited
+    /// @param actualTokenAmounts Token amounts deposited
+    /// @param lpTokenMinted LP tokens received by the liquidity provider
+    event Deposit(
+        address indexed from,
+        address indexed to,
+        address[] tokens,
+        uint256[] actualTokenAmounts,
+        uint256 lpTokenMinted
+    );
 }
