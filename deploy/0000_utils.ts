@@ -12,10 +12,12 @@ import {
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
+// 2e10 for mainnet
+// 1e11 for polygon
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: ethers.BigNumber.from(90000000000),
-    maxPriorityFeePerGas: ethers.BigNumber.from(40000000000),
-}
+    maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+    maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+};
 
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
@@ -43,7 +45,7 @@ export const ALLOWED_APPROVE_LIST = {
             "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
             "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
             "0x6b175474e89094c44da98b954eedeac495271d0f", // DAI
-        ]
+        ],
     },
     polygon: {
         uniV3: [
@@ -61,7 +63,7 @@ export const ALLOWED_APPROVE_LIST = {
             "0xE62Ec2e799305E0D367b0Cc3ee2CdA135bF89816", // WBTC-WETH
         ],
         curve: [
-            "0x92215849c439E1f8612b6646060B4E3E5ef822cC" // ATRICRYPTO3 (DAI-USDC-USDT-WBTC-WETH)
+            "0x92215849c439E1f8612b6646060B4E3E5ef822cC", // ATRICRYPTO3 (DAI-USDC-USDT-WBTC-WETH)
         ],
         erc20: [
             "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", // WETH
@@ -69,7 +71,7 @@ export const ALLOWED_APPROVE_LIST = {
             "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", // WBTC
             "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063", // DAI
         ],
-    }
+    },
 };
 
 export const PRIVATE_VAULT = true;
@@ -105,7 +107,13 @@ export const ALL_NETWORKS = [
     "xdai",
     "rinkeby",
 ];
-export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan", "rinkeby"];
+export const MAIN_NETWORKS = [
+    "hardhat",
+    "localhost",
+    "mainnet",
+    "kovan",
+    "rinkeby",
+];
 
 export const setupVault = async (
     hre: HardhatRuntimeEnvironment,
@@ -136,7 +144,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
-                ...TRANSACTION_GAS_LIMITS
+                ...TRANSACTION_GAS_LIMITS,
             },
             "createVault",
             ...createVaultArgs
@@ -166,7 +174,7 @@ export const setupVault = async (
                     from: deployer,
                     log: true,
                     autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS
+                    ...TRANSACTION_GAS_LIMITS,
                 },
                 "setStrategyParams",
                 expectedNft,
@@ -195,7 +203,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
-                ...TRANSACTION_GAS_LIMITS
+                ...TRANSACTION_GAS_LIMITS,
             },
             "stageDelayedStrategyParams",
             expectedNft,
@@ -207,7 +215,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
-                ...TRANSACTION_GAS_LIMITS
+                ...TRANSACTION_GAS_LIMITS,
             },
             "commitDelayedStrategyParams",
             expectedNft
@@ -231,7 +239,7 @@ export const setupVault = async (
                     from: deployer,
                     log: true,
                     autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS
+                    ...TRANSACTION_GAS_LIMITS,
                 },
                 "stageDelayedProtocolPerVaultParams",
                 expectedNft,
@@ -243,7 +251,7 @@ export const setupVault = async (
                     from: deployer,
                     log: true,
                     autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS
+                    ...TRANSACTION_GAS_LIMITS,
                 },
                 "commitDelayedProtocolPerVaultParams",
                 expectedNft
@@ -271,7 +279,7 @@ export const combineVaults = async (
         throw `Trying to combine 0 vaults`;
     }
     const { log } = deployments;
-    const { deployer, admin } = await hre.getNamedAccounts();
+    const { deployer, admin, mStrategyAdmin } = await hre.getNamedAccounts();
     const firstNft = nfts[0];
     const firstAddress = await deployments.read(
         "VaultRegistry",
@@ -312,6 +320,7 @@ export const combineVaults = async (
         "vaultForNft",
         expectedNft
     );
+    log("ERC20RootVault address: " + rootVault);
     if (PRIVATE_VAULT) {
         const rootVaultContract = await hre.ethers.getContractAt(
             "ERC20RootVault",
@@ -340,7 +349,7 @@ export const combineVaults = async (
         { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
         "transferFrom(address,address,uint256)",
         deployer,
-        rootVault,
+        mStrategyAdmin,
         expectedNft
     );
 };
@@ -366,7 +375,6 @@ export class PermissionIdsLibrary {
 export const USDC_PRICE = BigNumber.from(10).pow(6);
 export const WETH_PRICE = BigNumber.from(10).pow(18).div(3000);
 export const WBTC_PRICE = BigNumber.from(10).pow(18).div(45000);
-
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;
