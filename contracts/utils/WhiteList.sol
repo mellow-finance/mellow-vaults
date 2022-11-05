@@ -53,5 +53,11 @@ contract WhiteList is DefaultAccessControl {
     /// @param tokens ERC20 tokens deposited
     /// @param actualTokenAmounts Token amounts deposited
     /// @param lpTokenMinted LP tokens received by the liquidity provider
-    event Deposit(address indexed from, address indexed to, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);
+    event Deposit(
+        address indexed from,
+        address indexed to,
+        address[] tokens,
+        uint256[] actualTokenAmounts,
+        uint256 lpTokenMinted
+    );
 }
