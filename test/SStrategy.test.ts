@@ -48,7 +48,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                 await deployments.fixture();
                 const { read } = deployments;
 
-                const { uniswapV3PositionManager, uniswapV3Router } =
+                const { uniswapV3PositionManager, uniswapV3Router, mStrategyAdmin } =
                     await getNamedAccounts();
 
                 let strategyTreasury = randomAddress();
@@ -136,7 +136,9 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     undefined, 
                     "RequestableRootVault"
                 );
-                
+                await withSigner(mStrategyAdmin, async (s) => {
+                    await this.vaultRegistry.connect(s).approve(strategyDeployParams.address, rootVaultNft);
+                });
 
                 const requestableRootVault = await read(
                     "VaultRegistry",

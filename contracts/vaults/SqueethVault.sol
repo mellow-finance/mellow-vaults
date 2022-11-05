@@ -99,6 +99,7 @@ contract SqueethVault is ISqueethVault, IERC721Receiver, ReentrancyGuard, Integr
         weth = protocolParams.controller.weth();
         shortPowerPerp = protocolParams.controller.shortPowerPerp();
         wPowerPerpPool = protocolParams.controller.wPowerPerpPool();
+        require(IUniV3Pool(protocolParams.wethBorrowPool).token0() == protocolParams.controller.weth() || IUniV3Pool(protocolParams.wethBorrowPool).token1() == protocolParams.controller.weth(), ExceptionsLibrary.INVALID_VALUE);
         wethBorrowPool = protocolParams.wethBorrowPool;
 
         shortVaultId = 0; // maybe delete later

@@ -7,6 +7,7 @@ import {
     combineVaults,
     MAIN_NETWORKS,
     setupVault,
+    TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
 import { BigNumber } from "ethers";
 import { map } from "ramda";
@@ -24,9 +25,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         squeeth,
         mStrategyTreasury,
         mStrategyAdmin,
-        uniswapV3Router
+        uniswapV3Router,
+        opynWeth
     } = await getNamedAccounts();
-    const tokens = [weth].map((t) => t.toLowerCase()).sort();
+    
+    let wethUsedByController = opynWeth == undefined ? weth : opynWeth;
+
+    const tokens = [wethUsedByController];
 
     let vaultRegistry = await ethers.getContract("VaultRegistry");
     const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
@@ -52,12 +57,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "vaultForNft",
         squeethVaultNft
     );
+    
+    let rootVaultGovernance = await ethers.getContract("ERC20RootVaultGovernanceForRequestable");
+
+    await vaultRegistry.approve(rootVaultGovernance.address, erc20VaultNft);
+    await vaultRegistry.approve(rootVaultGovernance.address, squeethVaultNft);
 
     let strategyDeployParams = await deploy("SStrategy", {
         from: deployer,
         contract: "SStrategy",
         args: [
-            weth,
+            wethUsedByController,
             erc20Vault,
             squeethVault,
             uniswapV3Router,
@@ -74,10 +84,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         [erc20VaultNft, squeethVaultNft],
         sStrategy.address,
         mStrategyTreasury,
-        undefined, 
+        {
+            limits: undefined,
+            strategyPerformanceTreasuryAddress: mStrategyTreasury,
+            tokenLimitPerAddress: BigNumber.from(10).pow(25),
+            tokenLimit: BigNumber.from(10).pow(25),
+            managementFee: 0,
+            performanceFee: 0,
+        }, 
         "RequestableRootVault"
     );
 
+    await deployments.execute(
+        "VaultRegistry",
+        { from: mStrategyAdmin, autoMine: true, ...TRANSACTION_GAS_LIMITS },
+        "approve(address,uint256)",
+        sStrategy.address,
+        rootVaultNft
+    );
+    
     const rootVault = await read(
         "VaultRegistry",
         "vaultForNft",
@@ -129,6 +154,7 @@ func.dependencies = [
     "ProtocolGovernance",
     "VaultRegistry",
     "MellowOracle",
+    "ERC20RootVaultGovernanceForRequestable",
     "SqueethVaultGovernance",
     "ERC20VaultGovernance",
 ];

@@ -12,15 +12,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth, uniswapWethUsdcPool } = await getNamedAccounts();
+    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth, opynWeth, squeethWethBorrowPool } = await getNamedAccounts();
+    
+    let wethUsedByController = opynWeth == undefined ? weth : opynWeth;
     const { address: singleton } = await deploy("SqueethVault", {
         from: deployer,
-        args: [uniswapV3Factory, weth],
+        args: [uniswapV3Factory, wethUsedByController],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
     });
     const { address: mellowOracle } = await get("MellowOracle");
+    
     await deploy("SqueethVaultGovernance", {
         from: deployer,
         args: [
@@ -34,7 +37,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 router: uniswapV3Router,
                 slippageD9: BigNumber.from(10).pow(7),
                 twapPeriod: BigNumber.from(420),
-                wethBorrowPool: uniswapWethUsdcPool,
+                wethBorrowPool: squeethWethBorrowPool,
                 oracle: mellowOracle
             },
         ],
@@ -47,8 +50,6 @@ export default func;
 func.tags = [
     "SqueethVaultGovernance",
     "core",
-    ...MAIN_NETWORKS,
-    "avalanche",
-    "polygon",
+    ...MAIN_NETWORKS
 ];
-func.dependencies = ["ProtocolGovernance", "VaultRegistry"];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry", "MellowOracle"];

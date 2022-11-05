@@ -54,6 +54,12 @@ const config: HardhatUserConfig = {
                 ? [process.env["MAINNET_DEPLOYER_PK"], process.env["MAINNET_APPROVER_PK"]]
                 : undefined,
         },
+        goerli: {
+            url: process.env["GOERLI_RPC"],
+            accounts: (process.env["GOERLI_DEPLOYER_PK"] && process.env["GOERLI_APPROVER_PK"])
+                ? [process.env["GOERLI_DEPLOYER_PK"], process.env["GOERLI_APPROVER_PK"]]
+                : undefined,
+        },
         avalanche: {
             url:
                 process.env["AVALANCHE_RPC"] ||
@@ -123,6 +129,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
+            goerli: process.env["GOERLI_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
         },
         mStrategyAdmin: {
             hardhat: "0x1aD91ee08f21bE3dE0BA2ba6918E714dA6B45836",
@@ -132,6 +139,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
+            goerli: process.env["GOERLI_STRATEGY_ADMIN_ADDRESS"] || "0x0",
         },
         mStrategyTreasury: {
             hardhat: "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",
@@ -142,6 +150,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
+            goerli: process.env["GOERLI_STRATEGY_TREASURY_ADDRESS"] || "0x0",
         },
         protocolTreasury: {
             hardhat: "0x00192Fb10dF37c9FB26829eb2CC623cd1BF599E8",
@@ -152,6 +161,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
+            goerli: process.env["GOERLI_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
         },
         test: {
             default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
@@ -176,6 +186,7 @@ const config: HardhatUserConfig = {
             arbitrum: "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
             optimism: "0x68f180fcce6836688e9084f035309e29bf0a2095",
             rinkeby: "0x577d296678535e4903d59a4c929b718e1d575e0a",
+            goerli: "0x9c556b18d2370d4c44f3b3153d340d9abfd8d995",
         },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -188,6 +199,7 @@ const config: HardhatUserConfig = {
             arbitrum: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
             optimism: "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
             rinkeby: "0xeb8f08a975ab53e34d8a0330e0d34de942c95926",
+            goerli: "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
         },
         weth: {
             default: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
@@ -199,6 +211,10 @@ const config: HardhatUserConfig = {
             arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
             optimism: "0x4200000000000000000000000000000000000006",
             rinkeby: "0xc778417e063141139fce010982780140aa0cd5ab",
+            goerli: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+        },
+        opynWeth: {
+            goerli: "0x0719E63EC564259D1ce12dFFD1431269C7d88700",
         },
         wsteth: {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
@@ -262,6 +278,7 @@ const config: HardhatUserConfig = {
             arbitrum: "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
             optimism: "0xA969bEB73d918f6100163Cd0fba3C586C269bee1",
             rinkeby: "0x8A753747A1Fa494EC906cE90E9f37563A8AF630e",
+            goerli: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e",
         },
         chainlinkBtc: {
             default: "0xf4030086522a5beea4988f8ca5b36dbc97bee88c",
@@ -274,6 +291,7 @@ const config: HardhatUserConfig = {
             arbitrum: "0x6ce185860a4963106506C203335A2910413708e9",
             optimism: "0xc326371d4D866C6Ff522E69298e36Fe75797D358",
             rinkeby: "0xECe365B379E1dD183B20fc5f022230C044d51404",
+            goerli: "0xA39434A63A52E749F02807ae27335515BA4b07F7",
         },
         chainlinkUsdc: {
             default: "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6",
@@ -286,6 +304,7 @@ const config: HardhatUserConfig = {
             arbitrum: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
             optimism: "0x",
             rinkeby: "0xa24de01df22b63d23Ebc1882a5E3d4ec0d907bFB",
+            goerli: "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7",
         },
         cowswap: {
             default: "0x9008D19f58AAbD9eD0D60971565AA8510560ab41",
@@ -295,21 +314,23 @@ const config: HardhatUserConfig = {
         },
         squeethController: {
             default: "0x64187ae08781B09368e6253F9E94951243A493D5",
+            goerli: "0x2c60f986260c8412De7fA3384C7f0Bab1a4F72bf",
         },
         squeethOracle: {
             default: "0x65D66c76447ccB45dAf1e8044e918fA786A483A1",
+            goerli: "0x3A1B8e5D405F4080442C878aA114B17a1D60E14B",
         },
         squeethShortPowerPerp: {
             default: "0xa653e22A963ff0026292Cc8B67941c0ba7863a38",
+            goerli: "0x66a6a5bCF0cc97b317779152A8a8765FE3802E7C",
         },
         squeethWrappedPowerPerp: {
             default: "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B",
+            goerli: "0x6b03eD2C590A301E79E2DCe4ce38D7402dC6735a",
         },
-        squeethShortPositionHelper: {
-            default: "0x3b4095D5ff0e629972CAAa50bd3004B09a1632C5",
-        },
-        uniswapWethUsdcPool: {
+        squeethWethBorrowPool: {
             default: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
+            goerli: "0x8875e9c9EB0909da889CB3Dc9c5E8856093CE6b0",
         }
     },
 

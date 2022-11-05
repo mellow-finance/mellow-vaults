@@ -4,17 +4,17 @@ import "hardhat-deploy";
 import {ALL_NETWORKS, MAIN_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy, get } = deployments;
-    const protocolGovernance = await get("ProtocolGovernance");
-    const { deployer } = await getNamedAccounts();
-    await deploy("CowswapValidator", {
-        from: deployer,
-        args: [protocolGovernance.address],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS
-    });
+    // const { deployments, getNamedAccounts } = hre;
+    // const { deploy, get } = deployments;
+    // const protocolGovernance = await get("ProtocolGovernance");
+    // const { deployer } = await getNamedAccounts();
+    // await deploy("CowswapValidator", {
+    //     from: deployer,
+    //     args: [protocolGovernance.address],
+    //     log: true,
+    //     autoMine: true,
+    //     ...TRANSACTION_GAS_LIMITS
+    // });
 };
 export default func;
 func.tags = ["CowswapValidator", "core", ...MAIN_NETWORKS];

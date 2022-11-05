@@ -13,8 +13,8 @@ import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: ethers.BigNumber.from(90000000000),
-    maxPriorityFeePerGas: ethers.BigNumber.from(40000000000),
+    maxFeePerGas: BigNumber.from(10).pow(9).mul(30),
+    maxPriorityFeePerGas: BigNumber.from(10).pow(9).mul(10),
 }
 
 export const ALLOWED_APPROVE_LIST = {
@@ -104,8 +104,9 @@ export const ALL_NETWORKS = [
     "fantom",
     "xdai",
     "rinkeby",
+    "goerli",
 ];
-export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan", "rinkeby"];
+export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan", "rinkeby", "goerli"];
 
 export const setupVault = async (
     hre: HardhatRuntimeEnvironment,
@@ -136,6 +137,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
+                gasLimit: BigNumber.from(10).pow(6).mul(3),
                 ...TRANSACTION_GAS_LIMITS
             },  
             "createVault",
@@ -345,15 +347,6 @@ export const combineVaults = async (
         mStrategyAdmin,
         expectedNft
     );
-    if (rootVaultName == "RequestableRootVault") {
-        await deployments.execute(
-            "VaultRegistry",
-            { from: mStrategyAdmin, autoMine: true, ...TRANSACTION_GAS_LIMITS },
-            "approve(address,uint256)",
-            strategyAddress,
-            expectedNft
-        );
-    }
 };
 
 export const toObject = (obj: any) =>
