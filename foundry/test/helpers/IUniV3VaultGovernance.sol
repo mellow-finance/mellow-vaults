@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "./INonFungiblePositionManager.sol";
+import "./INonfungiblePositionManager.sol";
 import "./IOracle.sol";
 import "./IVaultGovernance.sol";
 import "./IUniV3Vault.sol";

@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../test/helpers/INonFungiblePositionManager.sol";
+import "../test/helpers/INonfungiblePositionManager.sol";
 import "../test/helpers/IERC20Vault.sol";
 import "../test/helpers/IUniV3Vault.sol";
 import "../test/helpers/IOracle.sol";
@@ -24,7 +24,7 @@ contract LStrategy is DefaultAccessControl {
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
-    INonFungiblePositionManager public immutable positionManager;
+    INonfungiblePositionManager public immutable positionManager;
     ILStrategyHelper public immutable orderHelper;
     uint24 public immutable poolFee;
     address public immutable cowswap;
@@ -88,7 +88,7 @@ contract LStrategy is DefaultAccessControl {
     // @param vault1_ Reference to Uniswap V3 Vault 1
     // @param vault2_ Reference to Uniswap V3 Vault 2
     constructor(
-        INonFungiblePositionManager positionManager_,
+        INonfungiblePositionManager positionManager_,
         address cowswap_,
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,

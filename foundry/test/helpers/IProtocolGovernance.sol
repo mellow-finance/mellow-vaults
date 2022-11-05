@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IProtocolGovernance {
+import "./utils/IDefaultAccessControl.sol";
+import "./IUnitPricesGovernance.sol";
+
+interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @notice CommonLibrary protocol params.
     /// @param maxTokensPerVault Max different token addresses that could be managed by the vault
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
@@ -27,8 +30,6 @@ interface IProtocolGovernance {
     /// @param target The given address
     /// @return Bitmask
     function stagedPermissionGrantsMasks(address target) external view returns (uint256);
-
-    function isAdmin(address target) external view returns (bool);
 
     /// @notice Permission bitmask for the given address.
     /// @param target The given address

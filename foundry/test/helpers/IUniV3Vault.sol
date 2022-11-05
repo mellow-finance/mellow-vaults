@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
-import "./INonFungiblePositionManager.sol";
+import "./INonfungiblePositionManager.sol";
 import "./IUniswapV3Pool.sol";
 
 interface IUniV3Vault is IERC721Receiver, IIntegrationVault {

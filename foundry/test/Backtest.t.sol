@@ -11,7 +11,7 @@ import "../test/helpers/IWSTETH.sol";
 import "../test/helpers/ISTETH.sol";
 import "../test/helpers/ICurvePool.sol";
 import "../test/helpers/ISwapRouter.sol";
-import "../test/helpers/INonFungiblePositionManager.sol";
+import "../test/helpers/INonfungiblePositionManager.sol";
 import "../test/helpers/IProtocolGovernance.sol";
 import "../test/helpers/IUniV3Helper.sol";
 import "../test/helpers/ILStrategyHelper.sol";
@@ -37,13 +37,13 @@ contract Backtest is Test {
     address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
     address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
     address public helper = 0x1E13A22d392584B24f5DDd6E6Da88f54dA872FA8;
-    address public uniGovernance = 0x8306bec30063f00F5ffd6976f09F6b10E77B27F2;
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
     address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
     address public lStrategyHelper = 0x9Cf7dFEf7C0311C16C864e8B88bf3261F19a6DB8;
     address public router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public mockOracleAddress;
     address public stethContractAddress = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+    address public uniGovernance;
     LStrategy lstrategy;
 
     address public rootVault;
@@ -94,6 +94,10 @@ contract Backtest is Test {
     fallback() external payable {}
 
     receive() external payable {}
+
+    function setupUniGovernance() public {
+
+    }
 
     function onERC721Received(
         address operator,
@@ -203,7 +207,7 @@ contract Backtest is Test {
 
         uint256 uniV3PoolFee = 500;
         ISwapRouter swapRouter = ISwapRouter(uniswapV3Router);
-        INonFungiblePositionManager positionManager = INonFungiblePositionManager(uniswapV3PositionManager);
+        INonfungiblePositionManager positionManager = INonfungiblePositionManager(uniswapV3PositionManager);
 
         IWETH wethContract = IWETH(weth);
         IWSTETH wstethContract = IWSTETH(wsteth);
@@ -285,7 +289,7 @@ contract Backtest is Test {
     }
 
     function mintMockPosition() public {
-        INonFungiblePositionManager positionManager = INonFungiblePositionManager(uniswapV3PositionManager);
+        INonfungiblePositionManager positionManager = INonfungiblePositionManager(uniswapV3PositionManager);
         positionManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: wsteth,
@@ -479,7 +483,7 @@ contract Backtest is Test {
         IVaultRegistry(registry).approve(deployer, vault.nft());
         vm.stopPrank();
 
-        (uint256 nft, , , ) = INonFungiblePositionManager(uniswapV3PositionManager).mint(
+        (uint256 nft, , , ) = INonfungiblePositionManager(uniswapV3PositionManager).mint(
             INonfungiblePositionManager.MintParams({
                 token0: wsteth,
                 token1: weth,
@@ -495,7 +499,7 @@ contract Backtest is Test {
             })
         );
 
-        INonFungiblePositionManager(uniswapV3PositionManager).safeTransferFrom(deployer, address(vault), nft);
+        INonfungiblePositionManager(uniswapV3PositionManager).safeTransferFrom(deployer, address(vault), nft);
     }
 
     function buildInitialPositions(
@@ -1075,9 +1079,9 @@ contract Backtest is Test {
         IUniV3Vault lowerVault = lstrategy.lowerVault();
         IUniV3Vault upperVault = lstrategy.upperVault();
 
-        (, , , , , , , uint128 lowerVaultLiquidity, , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+        (, , , , , , , uint128 lowerVaultLiquidity, , , , ) = INonfungiblePositionManager(uniswapV3PositionManager)
             .positions(lowerVault.uniV3Nft());
-        (, , , , , , , uint128 upperVaultLiquidity, , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+        (, , , , , , , uint128 upperVaultLiquidity, , , , ) = INonfungiblePositionManager(uniswapV3PositionManager)
             .positions(upperVault.uniV3Nft());
 
         uint256 total = uint256(lowerVaultLiquidity) + uint256(upperVaultLiquidity);
@@ -1146,7 +1150,7 @@ contract Backtest is Test {
 
     function reportUniStats(IUniV3Vault vault) public {
         uint256 nft = vault.uniV3Nft();
-        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = INonfungiblePositionManager(uniswapV3PositionManager)
             .positions(nft);
         uint256 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint256 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -1188,12 +1192,12 @@ contract Backtest is Test {
     }
 
     function newPositionNeeded(int24 tick) public returns (bool) {
-        (, , , , , int24 tickLower0, int24 tickUpper0, , , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+        (, , , , , int24 tickLower0, int24 tickUpper0, , , , , ) = INonfungiblePositionManager(uniswapV3PositionManager)
             .positions(lstrategy.lowerVault().uniV3Nft());
         if (tickLower0 <= tick && tick <= tickUpper0) {
             return false;
         }
-        (, , , , , int24 tickLower1, int24 tickUpper1, , , , , ) = INonFungiblePositionManager(uniswapV3PositionManager)
+        (, , , , , int24 tickLower1, int24 tickUpper1, , , , , ) = INonfungiblePositionManager(uniswapV3PositionManager)
             .positions(lstrategy.lowerVault().uniV3Nft());
         if (tickLower1 <= tick && tick <= tickUpper1) {
             return false;

@@ -43,6 +43,10 @@ contract Attack {
         }
     }
 
+    fallback() external payable {}
+
+    receive() external payable {}
+
     function getMinCapital(
         int24 leftLowerTick,
         int24 leftUpperTick,

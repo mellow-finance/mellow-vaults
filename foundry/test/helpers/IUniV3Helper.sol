@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./IUniswapV3Pool.sol";
-import "./INonFungiblePositionManager.sol";
+import "./INonfungiblePositionManager.sol";
 
 interface IUniV3Helper {
     function liquidityToTokenAmounts(
