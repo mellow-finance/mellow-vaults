@@ -5,13 +5,16 @@ import "./helpers/libraries/LiquidityAmounts.sol";
 import "./helpers/libraries/TickMath.sol";
 import "./helpers/libraries/FullMath.sol";
 
-
 contract SlippageT {
-    function getCapital(uint256 amount0, uint256 amount1, int24 currentTick) internal pure returns (uint256 capital) {
+    function getCapital(
+        uint256 amount0,
+        uint256 amount1,
+        int24 currentTick
+    ) internal pure returns (uint256 capital) {
         uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(currentTick);
-        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 2 ** 96);
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 2**96);
         // TODO: check order
-        return FullMath.mulDiv(amount0, priceX96, 2 ** 96) + amount1;
+        return FullMath.mulDiv(amount0, priceX96, 2**96) + amount1;
     }
 
     function minTvl(
@@ -137,7 +140,7 @@ contract SlippageT {
             amount1 += tmp1;
         }
         capital = getCapital(amount0, amount1, currentTick);
-        capital = FullMath.mulDiv(capital, 10 ** 18 / 20, 10 ** 18);
+        capital = FullMath.mulDiv(capital, 10**18 / 20, 10**18);
     }
 
     function execute(int24 positionWidth, int24 deviation) internal view returns (uint256 maxDeviationD18) {
@@ -146,18 +149,41 @@ contract SlippageT {
         int24 rightLowerTick = positionWidth / 2;
         int24 rightUpperTick = rightLowerTick + positionWidth;
 
-        uint128 liquidity = 10 ** 18;
+        uint128 liquidity = 10**18;
 
         for (int24 currentTick = leftLowerTick; currentTick <= rightUpperTick; ++currentTick) {
             int24 deviatedTick = currentTick + deviation;
-            uint256 minCapital = getMinCapital(leftLowerTick, leftUpperTick, rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
-            uint256 maxCapital = getMaxCapital(leftLowerTick, leftUpperTick, rightLowerTick, rightUpperTick, currentTick, deviatedTick, liquidity);
-            uint256 erc20Capital = getErc20Capital(leftLowerTick, leftUpperTick, rightLowerTick, rightUpperTick, currentTick, liquidity);
+            uint256 minCapital = getMinCapital(
+                leftLowerTick,
+                leftUpperTick,
+                rightLowerTick,
+                rightUpperTick,
+                currentTick,
+                deviatedTick,
+                liquidity
+            );
+            uint256 maxCapital = getMaxCapital(
+                leftLowerTick,
+                leftUpperTick,
+                rightLowerTick,
+                rightUpperTick,
+                currentTick,
+                deviatedTick,
+                liquidity
+            );
+            uint256 erc20Capital = getErc20Capital(
+                leftLowerTick,
+                leftUpperTick,
+                rightLowerTick,
+                rightUpperTick,
+                currentTick,
+                liquidity
+            );
             minCapital += erc20Capital;
             maxCapital += erc20Capital;
-            uint256 capitalDeviationD18 = 10 ** 22;
-            if (minCapital != 0 ) {
-                capitalDeviationD18 = FullMath.mulDiv(maxCapital, 10 ** 18, minCapital);
+            uint256 capitalDeviationD18 = 10**22;
+            if (minCapital != 0) {
+                capitalDeviationD18 = FullMath.mulDiv(maxCapital, 10**18, minCapital);
             }
             if (capitalDeviationD18 > maxDeviationD18) {
                 maxDeviationD18 = capitalDeviationD18;

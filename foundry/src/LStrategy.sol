@@ -298,7 +298,7 @@ contract LStrategy is DefaultAccessControl {
             block.timestamp >= lastRebalanceUniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
             ExceptionsLibrary.TIMESTAMP
         );
-        
+
         lastRebalanceUniV3VaultsTimestamp = block.timestamp;
         LiquidityParams memory liquidityParams;
 

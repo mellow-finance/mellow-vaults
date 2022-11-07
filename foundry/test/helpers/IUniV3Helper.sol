@@ -18,7 +18,7 @@ interface IUniV3Helper {
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager
     ) external view returns (uint128 liquidity);
-    
+
     function calculatePositionInfo(
         INonfungiblePositionManager positionManager,
         IUniswapV3Pool pool,

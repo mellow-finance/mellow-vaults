@@ -19,6 +19,6 @@
       "compile": "forge build",
       "spread-test": "forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 --match-contract=SlippageT",
       "attack-test": "forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 --match-contract=Attack",
-      "advanced-attack-test": "forge test -vvvv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) --match-contract=AdvancedAttack"
+      "advanced-attack-test": "forge test -vv --fork-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15350000 --match-contract=AdvancedAttack"
     }
   }

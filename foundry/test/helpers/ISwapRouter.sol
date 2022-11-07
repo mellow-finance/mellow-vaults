@@ -33,25 +33,13 @@ interface ISwapRouter {
         uint160 sqrtPriceLimitX96;
     }
 
-    function exactInput(ExactOutputParams memory params)
-        external
-        payable
-        returns (uint256 amountOut);
+    function exactInput(ExactOutputParams memory params) external payable returns (uint256 amountOut);
 
-    function exactInputSingle(ExactInputSingleParams memory params)
-        external
-        payable
-        returns (uint256 amountOut);
+    function exactInputSingle(ExactInputSingleParams memory params) external payable returns (uint256 amountOut);
 
-    function exactOutput(ExactOutputParams memory params)
-        external
-        payable
-        returns (uint256 amountIn);
+    function exactOutput(ExactOutputParams memory params) external payable returns (uint256 amountIn);
 
-    function exactOutputSingle(ExactOutputSingleParams memory params)
-        external
-        payable
-        returns (uint256 amountIn);
+    function exactOutputSingle(ExactOutputSingleParams memory params) external payable returns (uint256 amountIn);
 
     function uniswapV3SwapCallback(
         int256 amount0Delta,

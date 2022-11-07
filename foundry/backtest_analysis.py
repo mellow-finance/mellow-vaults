@@ -529,14 +529,12 @@ def short_report(all_stats: List[State], final_state: State, all_swaps: List[Fee
     with open(preview + '/report.txt', 'w') as file:
         file.write(f'WETH fees: {weth_fees}\n')
         file.write(f'WSTETH fees: {wsteth_fees}\n')
-        file.write(f'initial capital: {round(initial_capital, 2)}\n')
-        file.write(f'end capital: {round(end_capital, 2)}\n')
-        file.write(f'apr: {round(100 * (end_capital / initial_capital) ** backtest_power - 100 , 2)}\n')
+        file.write(f'initial capital WETH: {round(initial_capital, 2)}\n')
+        file.write(f'end capital WETH: {round(end_capital, 2)}\n')
+        file.write(f'apr WETH: {round(100 * (end_capital / initial_capital) ** backtest_power - 100 , 2)}\n')
+        file.write(f'apr WSTETH: {round(100 * (end_capital / price[-1] / initial_capital * price[0] - 100, 2))}\n')
         file.write(f'neutral apr: {round(100 * (end_capital / end_capital_without_strategy) ** backtest_power - 100, 2)}\n')
-        file.write(f'end capital without strategy: {round(end_capital_without_strategy, 2)}\n')
-        file.write(f'end capial modified: {end_capital_modified}\n')
         file.write(f'modified apr: {round(100 * (end_capital_modified / initial_capital) ** backtest_power - 100, 2)}\n')
-        file.write(f'modifier apr-2: {round(100 * (end_capital_initial_price / initial_capital) ** backtest_power - 100 , 2)}\n')
 
 
 def plot_all(lines: List[str], preview: str):

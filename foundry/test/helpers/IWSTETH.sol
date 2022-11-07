@@ -3,19 +3,12 @@
 pragma solidity ^0.8.9;
 
 interface IWSTETH {
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     function DOMAIN_SEPARATOR() external view returns (bytes32);
 
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
 
     function approve(address spender, uint256 amount) external returns (bool);
 
@@ -23,23 +16,13 @@ interface IWSTETH {
 
     function decimals() external view returns (uint8);
 
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        external
-        returns (bool);
+    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
 
-    function getStETHByWstETH(uint256 _wstETHAmount)
-        external
-        view
-        returns (uint256);
+    function getStETHByWstETH(uint256 _wstETHAmount) external view returns (uint256);
 
-    function getWstETHByStETH(uint256 _stETHAmount)
-        external
-        view
-        returns (uint256);
+    function getWstETHByStETH(uint256 _stETHAmount) external view returns (uint256);
 
-    function increaseAllowance(address spender, uint256 addedValue)
-        external
-        returns (bool);
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
 
     function name() external view returns (string memory);
 
@@ -65,9 +48,7 @@ interface IWSTETH {
 
     function totalSupply() external view returns (uint256);
 
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
+    function transfer(address recipient, uint256 amount) external returns (bool);
 
     function transferFrom(
         address sender,

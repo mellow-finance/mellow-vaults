@@ -27,10 +27,7 @@ interface ISTETH {
 
     function totalSupply() external view returns (uint256);
 
-    function getSharesByPooledEth(uint256 _ethAmount)
-        external
-        view
-        returns (uint256);
+    function getSharesByPooledEth(uint256 _ethAmount) external view returns (uint256);
 
     function isStakingPaused() external view returns (bool);
 
@@ -42,15 +39,9 @@ interface ISTETH {
 
     function getOperators() external view returns (address);
 
-    function getEVMScriptExecutor(bytes memory _script)
-        external
-        view
-        returns (address);
+    function getEVMScriptExecutor(bytes memory _script) external view returns (address);
 
-    function setStakingLimit(
-        uint256 _maxStakeLimit,
-        uint256 _stakeLimitIncreasePerBlock
-    ) external;
+    function setStakingLimit(uint256 _maxStakeLimit, uint256 _stakeLimitIncreasePerBlock) external;
 
     function RESUME_ROLE() external view returns (bytes32);
 
@@ -66,9 +57,7 @@ interface ISTETH {
 
     function PAUSE_ROLE() external view returns (bytes32);
 
-    function increaseAllowance(address _spender, uint256 _addedValue)
-        external
-        returns (bool);
+    function increaseAllowance(address _spender, uint256 _addedValue) external returns (bool);
 
     function getTreasury() external view returns (address);
 
@@ -90,10 +79,7 @@ interface ISTETH {
 
     function setELRewardsWithdrawalLimit(uint16 _limitPoints) external;
 
-    function handleOracleReport(
-        uint256 _beaconValidators,
-        uint256 _beaconBalance
-    ) external;
+    function handleOracleReport(uint256 _beaconValidators, uint256 _beaconBalance) external;
 
     function getStakeLimitFullInfo()
         external
@@ -108,10 +94,7 @@ interface ISTETH {
             uint256 prevStakeBlockNumber
         );
 
-    function SET_EL_REWARDS_WITHDRAWAL_LIMIT_ROLE()
-        external
-        view
-        returns (bytes32);
+    function SET_EL_REWARDS_WITHDRAWAL_LIMIT_ROLE() external view returns (bytes32);
 
     function getELRewardsVault() external view returns (address);
 
@@ -128,10 +111,7 @@ interface ISTETH {
             uint16 operatorsFeeBasisPoints
         );
 
-    function getPooledEthByShares(uint256 _sharesAmount)
-        external
-        view
-        returns (uint256);
+    function getPooledEthByShares(uint256 _sharesAmount) external view returns (uint256);
 
     function setELRewardsVault(address _executionLayerRewardsVault) external;
 
@@ -153,9 +133,7 @@ interface ISTETH {
 
     function setFee(uint16 _feeBasisPoints) external;
 
-    function transferShares(address _recipient, uint256 _sharesAmount)
-        external
-        returns (uint256);
+    function transferShares(address _recipient, uint256 _sharesAmount) external returns (uint256);
 
     function depositBufferedEther(uint256 _maxDeposits) external;
 
@@ -175,9 +153,7 @@ interface ISTETH {
 
     function WITHDRAWAL_CREDENTIALS_LENGTH() external view returns (uint256);
 
-    function decreaseAllowance(address _spender, uint256 _subtractedValue)
-        external
-        returns (bool);
+    function decreaseAllowance(address _spender, uint256 _subtractedValue) external returns (bool);
 
     function getEVMScriptRegistry() external view returns (address);
 
@@ -185,9 +161,7 @@ interface ISTETH {
 
     function SET_EL_REWARDS_VAULT_ROLE() external view returns (bytes32);
 
-    function transfer(address _recipient, uint256 _amount)
-        external
-        returns (bool);
+    function transfer(address _recipient, uint256 _amount) external returns (bool);
 
     function getDepositContract() external view returns (address);
 
@@ -210,10 +184,7 @@ interface ISTETH {
 
     function getTotalShares() external view returns (uint256);
 
-    function allowance(address _owner, address _spender)
-        external
-        view
-        returns (uint256);
+    function allowance(address _owner, address _spender) external view returns (uint256);
 
     function isPetrified() external view returns (bool);
 
@@ -229,9 +200,7 @@ interface ISTETH {
 
     function depositBufferedEther() external;
 
-    function burnShares(address _account, uint256 _sharesAmount)
-        external
-        returns (uint256 newTotalShares);
+    function burnShares(address _account, uint256 _sharesAmount) external returns (uint256 newTotalShares);
 
     function sharesOf(address _account) external view returns (uint256);
 
@@ -239,22 +208,9 @@ interface ISTETH {
 
     function getTotalELRewardsCollected() external view returns (uint256);
 
-    event ScriptResult(
-        address indexed executor,
-        bytes script,
-        bytes input,
-        bytes returnData
-    );
-    event RecoverToVault(
-        address indexed vault,
-        address indexed token,
-        uint256 amount
-    );
-    event TransferShares(
-        address indexed from,
-        address indexed to,
-        uint256 sharesValue
-    );
+    event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
+    event RecoverToVault(address indexed vault, address indexed token, uint256 amount);
+    event TransferShares(address indexed from, address indexed to, uint256 sharesValue);
     event SharesBurnt(
         address indexed account,
         uint256 preRebaseTokenAmount,
@@ -264,23 +220,12 @@ interface ISTETH {
     event Stopped();
     event Resumed();
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
     event StakingPaused();
     event StakingResumed();
-    event StakingLimitSet(
-        uint256 maxStakeLimit,
-        uint256 stakeLimitIncreasePerBlock
-    );
+    event StakingLimitSet(uint256 maxStakeLimit, uint256 stakeLimitIncreasePerBlock);
     event StakingLimitRemoved();
-    event ProtocolContactsSet(
-        address oracle,
-        address treasury,
-        address insuranceFund
-    );
+    event ProtocolContactsSet(address oracle, address treasury, address insuranceFund);
     event FeeSet(uint16 feeBasisPoints);
     event FeeDistributionSet(
         uint16 treasuryFeeBasisPoints,

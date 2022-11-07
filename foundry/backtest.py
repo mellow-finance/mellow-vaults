@@ -9,7 +9,7 @@ import numpy as np
 
 from backtest_analysis import plot_all
 
-INPUT_FILE = 'price_data.csv'
+INPUT_FILE = 'new_prices.csv'
 WETH = 1000
 WSTETH = 1000
 WIDTH = 100
@@ -19,7 +19,7 @@ POOL_SCALE = 1
 
 def prepare_dataset(fname: str, apy: float, preview: str):
     df = pd.read_csv(fname)
-    blocks_in_year = 365 * 24 * 60 * 60 / 12 / 22
+    blocks_in_year = 365 * 24 * 60 * 60 / 12 / 264
     hw = np.power(apy, np.arange(len(df)) / blocks_in_year)
     df['hw'] = [int((10 ** 9) * x) for x in np.maximum.accumulate(hw)]
     df = df[['block_number', 'wsteth_eth', 'stETH_amount', 'ETH_amount', 'stEthPerToken', 'hw']]
@@ -76,7 +76,7 @@ def run_backtest(
     print('STARTING BACKTEST')
     try:
         subprocess.run(
-            [f'len={30048} wethAmount={weth_amount} wstethAmount={wsteth_amount} width={width} minDeviation={min_deviation} yarn test'],
+            [f'len={2318} wethAmount={weth_amount} wstethAmount={wsteth_amount} width={width} minDeviation={min_deviation} yarn test'],
             stdout=file,
             check=True,
             shell=True,

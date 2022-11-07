@@ -3,39 +3,12 @@
 pragma solidity ^0.8.9;
 
 interface INonFungiblePositionManager {
-    event Approval(
-        address indexed owner,
-        address indexed approved,
-        uint256 indexed tokenId
-    );
-    event ApprovalForAll(
-        address indexed owner,
-        address indexed operator,
-        bool approved
-    );
-    event Collect(
-        uint256 indexed tokenId,
-        address recipient,
-        uint256 amount0,
-        uint256 amount1
-    );
-    event DecreaseLiquidity(
-        uint256 indexed tokenId,
-        uint128 liquidity,
-        uint256 amount0,
-        uint256 amount1
-    );
-    event IncreaseLiquidity(
-        uint256 indexed tokenId,
-        uint128 liquidity,
-        uint256 amount0,
-        uint256 amount1
-    );
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 indexed tokenId
-    );
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
+    event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     function DOMAIN_SEPARATOR() external view returns (bytes32);
 
@@ -61,20 +34,16 @@ interface INonFungiblePositionManager {
         uint160 sqrtPriceX96
     ) external payable returns (address pool);
 
-    function decreaseLiquidity(
-        INonfungiblePositionManager.DecreaseLiquidityParams memory params
-    ) external payable returns (uint256 amount0, uint256 amount1);
+    function decreaseLiquidity(INonfungiblePositionManager.DecreaseLiquidityParams memory params)
+        external
+        payable
+        returns (uint256 amount0, uint256 amount1);
 
     function factory() external view returns (address);
 
-    function getApproved(uint256 tokenId)
-        external
-        view
-        returns (address operator);
+    function getApproved(uint256 tokenId) external view returns (address operator);
 
-    function increaseLiquidity(
-        INonfungiblePositionManager.IncreaseLiquidityParams memory params
-    )
+    function increaseLiquidity(INonfungiblePositionManager.IncreaseLiquidityParams memory params)
         external
         payable
         returns (
@@ -83,10 +52,7 @@ interface INonFungiblePositionManager {
             uint256 amount1
         );
 
-    function isApprovedForAll(address owner, address operator)
-        external
-        view
-        returns (bool);
+    function isApprovedForAll(address owner, address operator) external view returns (bool);
 
     function mint(INonfungiblePositionManager.MintParams memory params)
         external
@@ -158,10 +124,7 @@ interface INonFungiblePositionManager {
 
     function tokenByIndex(uint256 index) external view returns (uint256);
 
-    function tokenOfOwnerByIndex(address owner, uint256 index)
-        external
-        view
-        returns (uint256 tokenId);
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
 
     function tokenURI(uint256 tokenId) external view returns (string memory);
 
@@ -173,9 +136,7 @@ interface INonFungiblePositionManager {
         uint256 tokenId
     ) external;
 
-    function unwrapWETH9(uint256 amountMinimum, address recipient)
-        external
-        payable;
+    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable;
 }
 
 interface INonfungiblePositionManager {
