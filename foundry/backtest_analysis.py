@@ -519,7 +519,6 @@ def short_report(all_stats: List[State], final_state: State, all_swaps: List[Fee
     ) / 10 ** 18
     initial_capital = wsteth_amount[0] * price[0] + weth_amount[0]
     end_capital = wsteth_amount[-1] * price[-1] + weth_amount[-1]
-    end_capital_initial_price = wsteth_amount[-1] * price[0] + weth_amount[-1]
     end_capital_without_strategy = wsteth_amount[0] * price[-1] + weth_amount[0]
     backtest_power = (365 * 24 * 60 * 60) / 12 / (all_stats[-1].block_number - all_stats[0].block_number)
     end_capital_modified = (final_state.lower_weth + final_state.upper_weth + final_state.erc20_weth) + \

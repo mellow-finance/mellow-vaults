@@ -250,11 +250,6 @@ contract AdvancedAttack is Test {
         address addr,
         uint256 amount
     ) public {
-        if (addr == attacker) {
-            console2.log("ATTACKER MINT:");
-            console2.log(token);
-            console2.log(amount);
-        }
         uint256 currentBalance = IERC20(token).balanceOf(addr);
         deal(token, addr, currentBalance + amount);
     }
@@ -486,9 +481,15 @@ contract AdvancedAttack is Test {
 
     function mintWeth(address sender, uint256 targetValue) public {
         uint256 balance = IERC20(weth).balanceOf(sender);
+        uint256 initialBalance = balance;
         while (balance < targetValue) {
             mint(weth, sender, 3000 * (10**18));
             balance = IERC20(weth).balanceOf(sender);
+        }
+        if (sender == attacker && balance != initialBalance) {
+            console2.log("ATTACKER_MINTED");
+            console2.log("WETH");
+            console2.log(balance - initialBalance);
         }
     }
 
@@ -509,6 +510,7 @@ contract AdvancedAttack is Test {
         }
         ISTETH stethContract = ISTETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
         uint256 balance = IERC20(wsteth).balanceOf(sender);
+        uint256 initialBalance = IERC20(wsteth).balanceOf(sender);
         while (balance < targetValue) {
             uint256 toMint = 3000 * (10**18);
             mint(weth, sender, toMint);
@@ -527,6 +529,11 @@ contract AdvancedAttack is Test {
                 IWSTETH(wsteth).wrap(toMint);
             }
             balance = IERC20(wsteth).balanceOf(sender);
+        }
+        if (sender == attacker && balance != initialBalance) {
+            console2.log("ATTACKER_MINTED");
+            console2.log("WSTETH");
+            console2.log(balance - initialBalance);
         }
         if (sender != deployer) {
             vm.stopPrank();
@@ -587,12 +594,14 @@ contract AdvancedAttack is Test {
         makeDeposit(tokenAmounts, depositor);
         fullPriceUpdate(initialTick, deployer);
         reportCapital(attacker, initialTick);
-        console2.log("INITIAL PRICE: ", getLpPriceD18(initialTick));
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(initialTick);
+        console2.log("PRICE: ", FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 96));
+        console2.log("INITIAL_LP_PRICE: ", getLpPriceD18(initialTick));
         makeDeposit(tokenAmounts, attacker);
         fullPriceUpdate(shiftedTick, attacker);
         withdrawAll(attacker);
         fullPriceUpdate(initialTick, attacker);
-        console2.log("FINAL PRICE: ", getLpPriceD18(initialTick));
+        console2.log("FINAL_LP_PRICE: ", getLpPriceD18(initialTick));
         withdrawAll(depositor);
         reportCapital(attacker, initialTick);
     }
@@ -645,11 +654,10 @@ contract AdvancedAttack is Test {
         buildInitialPositions(vm.envUint("width"), nft);
 
         int24 deviation = int24(vm.envInt("deviation"));
-        int24 shift = int24(vm.envInt("shift"));
+        // int24 shift = int24(vm.envInt("shift"));
         for (int24 initialTick = 0; initialTick * 2 <= vm.envInt("width"); initialTick += 10) {
             for (int24 shift = -int24(vm.envInt("width")) * 2; shift <= vm.envInt("width") * 2; shift += 5) {
                 console2.log("NEW ROUND");
-                console2.log("INITIAL TICK:", uint24(initialTick));
                 execute(initialTick + deviation, initialTick, initialTick + shift);
                 vm.warp(block.timestamp + 12);
             }
