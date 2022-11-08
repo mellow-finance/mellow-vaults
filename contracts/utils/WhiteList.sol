@@ -9,6 +9,7 @@ import "./DefaultAccessControl.sol";
 
 contract WhiteList is DefaultAccessControl {
     using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20RootVault;
 
     bytes32 public root;
 
@@ -27,18 +28,20 @@ contract WhiteList is DefaultAccessControl {
         require(MerkleProof.verify(proof, root, leaf), ExceptionsLibrary.FORBIDDEN);
 
         address[] memory tokens = vault.vaultTokens();
+        require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), tokenAmounts[i]);
-            IERC20(tokens[i]).approve(address(vault), tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(vault), tokenAmounts[i]);
         }
 
         actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions);
         for (uint256 i = 0; i < tokens.length; ++i) {
+            IERC20(tokens[i]).safeApprove(address(vault), 0);
             IERC20(tokens[i]).safeTransfer(msg.sender, IERC20(tokens[i]).balanceOf(address(this)));
         }
 
         uint256 lpTokenMinted = vault.balanceOf(address(this));
-        vault.transfer(msg.sender, lpTokenMinted);
+        vault.safeTransfer(msg.sender, lpTokenMinted);
 
         emit Deposit(msg.sender, address(vault), tokens, actualTokenAmounts, lpTokenMinted);
     }
