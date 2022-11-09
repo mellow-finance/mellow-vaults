@@ -37,24 +37,30 @@ contract MainnetDeployment is Script {
     address sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
     address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
     address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
+
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
     function run() external {
         vm.startBroadcast();
 
-        rootVault = new GearboxRootVault();
-        erc20Vault = new ERC20Vault();
-        gearboxVault = new GearboxVault();  
-
         governance = ProtocolGovernance(0xDc9C17662133fB865E7bA3198B67c53a617B2153);
         registry = VaultRegistry(0xFD23F971696576331fCF96f80a20B4D3b31ca5b2);
+
+        gearboxVault = new GearboxVault();
+        rootVault = new GearboxRootVault();
 
         IVaultGovernance.InternalParams memory internalParamsC = IVaultGovernance.InternalParams({
             protocolGovernance: governance,
             registry: registry,
             singleton: gearboxVault
-        });
+        }); // INTERNAL PARAMS FOR NEW GEARBOX GOVERNANCE
+
+        IVaultGovernance.InternalParams memory internalParamsA = IVaultGovernance.InternalParams({
+            protocolGovernance: governance,
+            registry: registry,
+            singleton: rootVault
+        }); // INTERNAL PARAMS FOR NEW GEARBOXROOTVAULTGOVERNANCE WHICH IS THE SAME AS ERC20ROOTVAULTGOVERNANCE
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
             withdrawDelay: 86400 * 7,
@@ -62,30 +68,35 @@ contract MainnetDeployment is Script {
             univ3Adapter: 0x3883500A0721c09DC824421B00F79ae524569E09,
             crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
             cvx: cvx,
-            maxSlippageD9: 10000000,
-            maxSmallPoolsSlippageD9: 20000000,
-            maxCurveSlippageD9: 30000000,
+            maxSlippageD9: 10000000, // 1%
+            maxSmallPoolsSlippageD9: 20000000, // 2%
+            maxCurveSlippageD9: 300000000, // 3%
             uniswapRouter: 0xE592427A0AEce92De3Edee1F18E0157C05861564
         });
 
-        governanceA = ERC20RootVaultGovernance(0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA);
+        ERC20RootVaultHelper helper = ERC20RootVaultHelper(0xACEE4A703f27eA1EbCd550511aAE58ad012624CC);
+
+        IERC20RootVaultGovernance.DelayedProtocolParams memory delayedParamsA = IERC20RootVaultGovernance.DelayedProtocolParams({
+            managementFeeChargeDelay: 86400,
+            oracle: IOracle(0x9d992650B30C6FB7a83E7e7a430b4e015433b838)
+        });
+        
+        governanceA = new ERC20RootVaultGovernance(internalParamsA, delayedParamsA, IERC20RootVaultHelper(helper)); // => GEARBOX ROOT VAULT GOVERNANCE
         governanceB = ERC20VaultGovernance(0x0bf7B603389795E109a13140eCb07036a1534573);
         governanceC = new GearboxVaultGovernance(internalParamsC, delayedParams);
-        
-        console2.log("Gearbox Vault Governance", address(governanceC));
-        console2.log("Root Vault", address(rootVault));
-        console2.log("ERC20 Vault", address(erc20Vault));
-        console2.log("Gearbox Vault", address(gearboxVault));
 
-        /////////////////////////////////////////////////////////////////// STOP HERE
-        return;
+        console2.log("Gearbox Governance: ", address(governanceC));
+        console2.log("Gearbox Root Governance: ", address(governanceA));
+    
+    /////////////////////////////////////////////// UP TO SIGN IN 24H
+        uint8[] memory args = new uint8[](1);
+        args[0] = PermissionIdsLibrary.REGISTER_VAULT;
+        governance.stagePermissionGrants(address(governanceA), args);
+        governance.stagePermissionGrants(address(governanceC), args);
 
-        {
-            uint8[] memory args = new uint8[](1);
-            args[0] = PermissionIdsLibrary.REGISTER_VAULT;
-            governance.stagePermissionGrants(address(governanceC), args);
-            governance.commitPermissionGrants(address(governanceC));
-        }
+        governance.commitPermissionGrants(address(governanceA));
+        governance.commitPermissionGrants(address(governanceC));
+    ///////////////////////////////////////////////
 
         IERC20RootVaultGovernance.StrategyParams memory strategyParams = IERC20RootVaultGovernance.StrategyParams({
             tokenLimitPerAddress: type(uint256).max,
@@ -106,9 +117,9 @@ contract MainnetDeployment is Script {
 
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
             primaryToken: usdc,
-            curveAdapter: 0x6f3A4EFe549c2Fa397ed40FD4DE9FEB922C0FE31,
-            convexAdapter: 0xb26586F4a9F157117651Da1A6DFa5b310790dd8A,
-            facade: 0xCd290664b0AE34D8a7249bc02d7bdbeDdf969820,
+            curveAdapter: 0xa4b2b3Dede9317fCbd9D78b8250ac44Bf23b64F4,
+            convexAdapter: 0x023e429Df8129F169f9756A4FBd885c18b05Ec2d,
+            facade: 0x61fbb350e39cc7bF22C01A469cf03085774184aa,
             initialMarginalValueD9: 5000000000
         });
 
@@ -116,11 +127,10 @@ contract MainnetDeployment is Script {
             largePoolFeeUsed: 500
         });
 
-        governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
+        ////////////////////// TO BE SIGNED INSTANTLY
         governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1, delayedVaultParams);
-        governanceC.setStrategyParams(nftStart + 1, strategyParamsB);
         governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1);
-        governanceA.commitDelayedStrategyParams(nftStart + 2);
+        //////////////////////
 
         address[] memory tokens = new address[](1);
         tokens[0] = usdc; 
@@ -140,10 +150,24 @@ contract MainnetDeployment is Script {
 
         governanceA.createVault(tokens, operator, nfts, deployer);
 
+        rootVault = GearboxRootVault(registry.vaultForNft(nftStart + 2));
+        erc20Vault = ERC20Vault(registry.vaultForNft(nftStart));
+        gearboxVault = GearboxVault(registry.vaultForNft(nftStart + 1));
+
+        console2.log("Root Vault: ", address(rootVault));
+        console2.log("ERC20 Vault: ", address(erc20Vault));
+        console2.log("Gearbox Vault: ", address(gearboxVault));
+        console2.log("Helper: ", address(helper2));
+        
+        governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
+        governanceA.commitDelayedStrategyParams(nftStart + 2);
+        governanceA.setStrategyParams(nftStart + 2, strategyParams);
+
         registry.approve(operator, nftStart + 2);
         registry.transferFrom(deployer, sAdmin, nftStart + 2);
 
-        governanceA.setStrategyParams(nftStart + 2, strategyParams);
+        // DO FROM OPERATOR: governanceC.setStrategyParams(nftStart + 1, strategyParamsB);
+
         vm.stopBroadcast();
     }
 }
