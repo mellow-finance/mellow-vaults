@@ -127,24 +127,24 @@ def process_results(lines: List[str]) -> List[str]:
     return result
 
 
-def full_pipeline(args: Tuple[str, int, int]):
-    preview, width, deviation = args
-    fname = preview + f'/width{width}deviation{deviation}.log'
+def full_pipeline(args: Tuple[str, int, int, int]):
+    preview, width, deviation, deposit_capital = args
+    fname = preview + f'/width{width}deviation{deviation}deposit{deposit_capital}.log'
     with open(fname, 'w') as file:
         subprocess.run(
-            f'width={width} deviation={deviation} yarn advanced-attack-test',
+            f'width={width} deviation={deviation} deposit={deposit_capital} yarn advanced-attack-test',
             shell=True,
             stdout=file,
         )
     with open(fname, 'r') as file:
         result = process_results(file.readlines())
-    with open(preview + f'/result_width{width}deviation{deviation}.log', 'w') as file:
+    with open(preview + f'/result_width{width}deviation{deviation}deposit{deposit_capital}.log', 'w') as file:
         for line in result:
             file.write(line)
 
 
-def run_in_parallel(width_grid: List[int], deviation_grid: List[int]):
-    args = itertools.product(['advanced_results'], width_grid, deviation_grid)
+def run_in_parallel(width_grid: List[int], deviation_grid: List[int], capital_amount: List[int]):
+    args = itertools.product(['advanced_results'], width_grid, deviation_grid, capital_amount)
     os.system('rm -rf advanced_results')
     os.system('mkdir advanced_results')
     with ProcessPoolExecutor(2) as pool:
@@ -152,4 +152,4 @@ def run_in_parallel(width_grid: List[int], deviation_grid: List[int]):
 
 
 if __name__ == '__main__':
-    run_in_parallel([80, 100], [-20, -15, -10, -5, 0, 5, 10, 15, 20])
+    run_in_parallel([80, 100], [-20, -15, -10, -5, 0, 5, 10, 15, 20], [100, 1000, 5000, 10000])
