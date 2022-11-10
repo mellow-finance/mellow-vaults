@@ -59,7 +59,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         contract: "LPOptimiserStrategy",
         args: [
             erc20Vault,
-            voltzVault,
+            [voltzVault],
+            [{
+                sigmaWad: "100000000000000000",
+                maxPossibleLowerBoundWad: "1500000000000000000",
+                proximityWad: "100000000000000000",
+                weight: "1"
+            }],
             deployer,
         ],
         log: true,
