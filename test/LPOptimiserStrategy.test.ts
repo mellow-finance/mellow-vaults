@@ -18,7 +18,7 @@ import { BigNumber, utils } from "ethers";
 import { expect } from "chai";
 
 type CustomContext = {
-    voltzVault: VoltzVault;
+    voltzVaults: VoltzVault[];
     erc20Vault: ERC20Vault;
     preparePush: () => any;
     marginEngine: string;
@@ -35,13 +35,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
 
         const leverage = 10;
         const marginMultiplierPostUnwind = 2;
-
-        const ADMIN_ROLE =
-            "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin")
-        const ADMIN_DELEGATE_ROLE =
-            "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
-        const OPERATOR_ROLE =
-            "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
+        const noOfVoltzVaults = 2;
 
         before(async () => {
             this.deploymentFixtureOne = deployments.createFixture(
@@ -90,37 +84,39 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                             await read("VaultRegistry", "vaultsCount")
                         ).toNumber() + 1;
 
-                    let voltzVaultNft = startNft;
-                    let erc20VaultNft = startNft + 1;
+                    let voltzVaultNfts = Array.from(Array(noOfVoltzVaults).keys()).map(val => startNft + val);
+                    let erc20VaultNft = startNft + noOfVoltzVaults;
 
                     this.voltzVaultHelperSingleton = (
                         await ethers.getContract("VoltzVaultHelper")
                     ).address;
 
-                    await setupVault(
-                        hre,
-                        voltzVaultNft,
-                        "VoltzVaultGovernance",
-                        {
-                            createVaultArgs: [
-                                tokens,
-                                this.deployer.address,
-                                this.marginEngine,
-                                this.voltzVaultHelperSingleton,
-                                {
-                                    tickLower: LOW_TICK,
-                                    tickUpper: HIGH_TICK,
-                                    leverageWad: utils.parseEther(
-                                        leverage.toString()
-                                    ),
-                                    marginMultiplierPostUnwindWad:
-                                        utils.parseEther(
-                                            marginMultiplierPostUnwind.toString()
+                    for (let nft of voltzVaultNfts) {
+                        await setupVault(
+                            hre,
+                            nft,
+                            "VoltzVaultGovernance",
+                            {
+                                createVaultArgs: [
+                                    tokens,
+                                    this.deployer.address,
+                                    this.marginEngine,
+                                    this.voltzVaultHelperSingleton,
+                                    {
+                                        tickLower: LOW_TICK,
+                                        tickUpper: HIGH_TICK,
+                                        leverageWad: utils.parseEther(
+                                            leverage.toString()
                                         ),
-                                },
-                            ],
-                        }
-                    );
+                                        marginMultiplierPostUnwindWad:
+                                            utils.parseEther(
+                                                marginMultiplierPostUnwind.toString()
+                                            ),
+                                    },
+                                ],
+                            }
+                        );
+                    }
 
                     await setupVault(
                         hre,
@@ -139,21 +135,26 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                         erc20VaultNft
                     );
 
-                    const voltzVault = await read(
-                        "VaultRegistry",
-                        "vaultForNft",
-                        voltzVaultNft
-                    );
-
                     this.erc20Vault = await ethers.getContractAt(
                         "ERC20Vault",
                         erc20Vault
                     );
 
-                    this.voltzVault = await ethers.getContractAt(
-                        "VoltzVault",
-                        voltzVault
-                    );
+                    this.voltzVaults = [];
+                    for (let i = 0; i < noOfVoltzVaults; i++) {
+                        const voltzVaultAddress = await read(
+                            "VaultRegistry",
+                            "vaultForNft",
+                            voltzVaultNfts[i]
+                        );
+
+                        const voltzVault = await ethers.getContractAt(
+                            "VoltzVault",
+                            voltzVaultAddress
+                        );
+
+                        this.voltzVaults.push(voltzVault as VoltzVault);
+                    }
 
                     let strategyDeployParams = await deploy(
                         "LPOptimiserStrategy",
@@ -162,13 +163,15 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                             contract: "LPOptimiserStrategy",
                             args: [
                                 this.erc20Vault.address,
-                                [this.voltzVault.address],
-                                [{
-                                    sigmaWad: "100000000000000000",
-                                    maxPossibleLowerBoundWad: "1500000000000000000",
-                                    proximityWad: "100000000000000000",
-                                    weight: "1"
-                                }],
+                                this.voltzVaults.map(val => val.address),
+                                this.voltzVaults.map((_) => {
+                                    return {
+                                        sigmaWad: "100000000000000000",
+                                        maxPossibleLowerBoundWad: "1500000000000000000",
+                                        proximityWad: "100000000000000000",
+                                        weight: "1"
+                                    };
+                                }),
                                 this.admin.address,
                             ],
                             log: true,
@@ -179,7 +182,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     await combineVaults(
                         hre,
                         erc20VaultNft + 1,
-                        [erc20VaultNft, voltzVaultNft],
+                        [erc20VaultNft].concat(voltzVaultNfts),
                         this.deployer.address,
                         this.deployer.address
                     );
@@ -277,21 +280,24 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     };
 
                     this.grantPermissionsVoltzVaults = async () => {
-                        let tokenId = await ethers.provider.send(
-                            "eth_getStorageAt",
-                            [
-                                this.voltzVault.address,
-                                "0x4", // address of _nft
-                            ]
-                        );
-                        await withSigner(
-                            this.erc20RootVault.address,
-                            async (erc20RootVaultSigner) => {
-                                await this.vaultRegistry
-                                    .connect(erc20RootVaultSigner)
-                                    .approve(this.subject.address, tokenId);
-                            }
-                        );
+                        for (let i = 0; i < noOfVoltzVaults; i++) {
+                            let tokenId = await ethers.provider.send(
+                                "eth_getStorageAt",
+                                [
+                                    this.voltzVaults[i].address,
+                                    "0x4", // address of _nft
+                                ]
+                            );
+                            await withSigner(
+                                this.erc20RootVault.address,
+                                async (erc20RootVaultSigner) => {
+                                    await this.vaultRegistry
+                                        .connect(erc20RootVaultSigner)
+                                        .approve(this.subject.address, tokenId);
+                                }
+                            );
+                        }
+
                     };
 
                     return this.subject;
@@ -307,7 +313,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
         describe("Rebalance Logic", async () => {
             it("Check if in-range position needs to be rebalanced", async () => {
                 await withSigner(this.subject.address, async (s) => {
-                    await this.voltzVault.connect(s).rebalance({
+                    await this.voltzVaults[0].connect(s).rebalance({
                         tickLower: -3000,
                         tickUpper: 0,
                     });
@@ -526,7 +532,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .callStatic.rebalanceTicks(0, currentFixedRateWad);
 
-                    const position = await this.voltzVault.currentPosition();
+                    const position = await this.voltzVaults[0].currentPosition();
 
                     expect(position.tickLower).to.be.equal(
                         newTicks.newTickLower
@@ -688,7 +694,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
         });
 
         describe("Setters and Getters", async () => {
-            it("Set proximityWad", async () => {
+            it("Set parameters", async () => {
                 const vaultParams0 = await this.subject.getVaultParams(0);
                 expect(vaultParams0.sigmaWad).to.be.eq("100000000000000000");
                 expect(vaultParams0.maxPossibleLowerBoundWad).to.be.eq("1500000000000000000");
@@ -702,11 +708,63 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     weight: "2",
                 });
                 const vaultParams1 = await this.subject.getVaultParams(0);
-                
+
                 expect(vaultParams1.sigmaWad).to.be.eq("200000000000000000");
                 expect(vaultParams1.maxPossibleLowerBoundWad).to.be.eq("400000000000000000");
                 expect(vaultParams1.proximityWad).to.be.eq("200000000000000000");
                 expect(vaultParams1.weight).to.be.eq("2");
+            });
+
+            it("Set parameters for the second pool", async () => {
+                {
+                    const vaultParams = await this.subject.getVaultParams(0);
+                    expect(vaultParams.sigmaWad).to.be.eq("100000000000000000");
+                    expect(vaultParams.maxPossibleLowerBoundWad).to.be.eq("1500000000000000000");
+                    expect(vaultParams.proximityWad).to.be.eq("100000000000000000");
+                    expect(vaultParams.weight).to.be.eq("1");
+                }
+                
+                {
+                    const vaultParams = await this.subject.getVaultParams(1);
+                    expect(vaultParams.sigmaWad).to.be.eq("100000000000000000");
+                    expect(vaultParams.maxPossibleLowerBoundWad).to.be.eq("1500000000000000000");
+                    expect(vaultParams.proximityWad).to.be.eq("100000000000000000");
+                    expect(vaultParams.weight).to.be.eq("1");
+                }
+
+                await this.subject.connect(this.admin).setVaultParams(1, {
+                    sigmaWad: "200000000000000000",
+                    maxPossibleLowerBoundWad: "400000000000000000",
+                    proximityWad: "200000000000000000",
+                    weight: "2",
+                });
+                
+                {
+                    const vaultParams = await this.subject.getVaultParams(0);
+                    expect(vaultParams.sigmaWad).to.be.eq("100000000000000000");
+                    expect(vaultParams.maxPossibleLowerBoundWad).to.be.eq("1500000000000000000");
+                    expect(vaultParams.proximityWad).to.be.eq("100000000000000000");
+                    expect(vaultParams.weight).to.be.eq("1");
+                }
+                
+                {
+                    const vaultParams = await this.subject.getVaultParams(1);
+                    expect(vaultParams.sigmaWad).to.be.eq("200000000000000000");
+                    expect(vaultParams.maxPossibleLowerBoundWad).to.be.eq("400000000000000000");
+                    expect(vaultParams.proximityWad).to.be.eq("200000000000000000");
+                    expect(vaultParams.weight).to.be.eq("2");
+                }
+            });
+
+            it("Set parameters for non-existing vault", async () => {
+                await expect(this.subject.getVaultParams(noOfVoltzVaults)).to.be.reverted;
+                
+                await expect(this.subject.connect(this.admin).setVaultParams(noOfVoltzVaults, {
+                    sigmaWad: "200000000000000000",
+                    maxPossibleLowerBoundWad: "400000000000000000",
+                    proximityWad: "200000000000000000",
+                    weight: "2",
+                })).to.be.reverted;
             });
 
             it("Get the tickSpacing from the vamm", async () => {

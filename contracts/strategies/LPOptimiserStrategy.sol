@@ -231,6 +231,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         for (uint256 i = 0; i < _vaults.length; i++) {
             uint256[] memory vaultShare = new uint256[](1);
 
+            if (_vaultParams[i].weight == 0) {
+                continue;
+            }
+
             // The share of i-th is vaultParams[i].weight / sum(vaultParams.weight)
             vaultShare[0] = FullMath.mulDiv(balance, _vaultParams[i].weight, _totalWeight); 
 
