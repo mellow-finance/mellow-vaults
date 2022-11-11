@@ -318,7 +318,7 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 );
 
                 const tick = (await this.vammContract.vammVars()).tick;
-                console.log("Tick:", tick);
+                expect(tick).to.be.eq(-1069);
 
                 const vaultParams = await this.subject.getVaultParams(0);
                 await this.subject.connect(this.admin).setVaultParams(0, {
@@ -517,10 +517,6 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                 const currentFixedRateWad = BigNumber.from(
                     "1000000000000000000"
                 );
-                console.log(
-                    "Print current ticks: ",
-                    await this.voltzVault.currentPosition()
-                );
 
                 if (await this.subject.rebalanceCheck(0, currentFixedRateWad)) {
                     await this.subject
@@ -568,10 +564,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     expect(newTicks.newTickLower).to.be.equal(-4320);
                     expect(newTicks.newTickUpper).to.be.equal(-3660);
 
-                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
                     const newFixedLower = 1.0001 ** -newTicks.newTickUpper;
+                    expect(newFixedLower).to.be.closeTo(1.45, 0.03);
 
-                    console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
+                    expect(newFixedUpper).to.be.closeTo(1.55, 0.03);
                 } else {
                     throw new Error("Position does not need to be rebalanced");
                 }
@@ -590,10 +587,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     expect(newTicks.newTickLower).to.be.equal(-5220);
                     expect(newTicks.newTickUpper).to.be.equal(-4020);
 
-                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
                     const newFixedLower = 1.0001 ** -newTicks.newTickUpper;
+                    expect(newFixedLower).to.be.closeTo(1.5, 0.03);
 
-                    console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
+                    expect(newFixedUpper).to.be.closeTo(1.7, 0.03);
                 } else {
                     throw new Error("Position does not need to be rebalanced");
                 }
@@ -626,10 +624,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     expect(newTicks.newTickLower).to.be.equal(-900);
                     expect(newTicks.newTickUpper).to.be.equal(1080);
 
-                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
                     const newFixedLower = 1.0001 ** -newTicks.newTickUpper;
+                    expect(newFixedLower).to.be.closeTo(0.9, 0.03);
 
-                    console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
+                    expect(newFixedUpper).to.be.closeTo(1.1, 0.03);
                 } else {
                     throw new Error("Position does not need to be rebalanced");
                 }
@@ -677,10 +676,11 @@ contract<LPOptimiserStrategy, DeployOptions, CustomContext>(
                     expect(newTicks.newTickLower).to.be.equal(-6900);
                     expect(newTicks.newTickUpper).to.be.equal(46080);
 
-                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
                     const newFixedLower = 1.0001 ** -newTicks.newTickUpper;
+                    expect(newFixedLower).to.be.closeTo(0, 0.03);
 
-                    console.log("f_l: ", newFixedLower, "f_u: ", newFixedUpper);
+                    const newFixedUpper = 1.0001 ** -newTicks.newTickLower;
+                    expect(newFixedUpper).to.be.closeTo(2, 0.03);
                 } else {
                     throw new Error("Position does not need to be rebalanced");
                 }

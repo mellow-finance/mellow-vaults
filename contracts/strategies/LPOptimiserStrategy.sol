@@ -26,6 +26,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     // INTERNAL STATE
     IVoltzVault[] internal _vaults;
     VaultParams[] internal _vaultParams;
+    uint256 _totalWeight;
 
     // CONSTANTS
     int256 internal constant MINIMUM_FIXED_RATE = 1e16;
@@ -39,7 +40,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     function setVaultParams(uint256 index, VaultParams memory vaultParams_) external {
         _requireAdmin();
+        require(index < _vaultParams.length, ExceptionsLibrary.INVALID_STATE);
+
+        _totalWeight -= _vaultParams[index].weight;
         _vaultParams[index] = vaultParams_;
+        _totalWeight += _vaultParams[index].weight;
     }
 
     // EVENTS
@@ -84,6 +89,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
         _vaults.push(vault_);
         _vaultParams.push(vaultParams_);
+        _totalWeight += vaultParams_.weight;
     }
 
     /// @notice Get the current tick and position ticks and decide whether to rebalance
@@ -199,15 +205,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
         address[] memory tokens = _tokens;
         uint256 balance = IERC20(tokens[0]).balanceOf(address(_erc20Vault));
-    
-        uint256 totalWeight = 0;
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            totalWeight += _vaultParams[i].weight;
-        }
 
         for (uint256 i = 0; i < _vaults.length; i++) {
             uint256[] memory vaultShare = new uint256[](1);
-            vaultShare[0] = FullMath.mulDiv(balance, _vaultParams[i].weight, totalWeight); 
+            vaultShare[0] = FullMath.mulDiv(balance, _vaultParams[i].weight, _totalWeight); 
 
             _erc20Vault.pull(address(_vaults[i]), tokens, vaultShare, "");
         }

@@ -3,7 +3,6 @@ import {
     combineVaults,
     PermissionIdsLibrary,
     setupVault,
-    TRANSACTION_GAS_LIMITS,
 } from "../deploy/0000_utils";
 import {
     addSigner,
@@ -161,7 +160,13 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                     contract: "LPOptimiserStrategy",
                     args: [
                         this.erc20Vault.address,
-                        this.voltzVault.address,
+                        [this.voltzVault.address],
+                        [{
+                            sigmaWad: "100000000000000000",
+                            maxPossibleLowerBoundWad: "1500000000000000000",
+                            proximityWad: "100000000000000000",
+                            weight: "1"
+                        }],
                         this.admin.address,
                     ],
                     log: true,
@@ -337,15 +342,12 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             .connect(this.user2.signer)
             .approve(this.erc20RootVault.address, BigNumber.from(10).pow(27));
 
-        await this.strategy
-            .connect(this.admin)
-            .setProximityWad("100000000000000000");
-        await this.strategy
-            .connect(this.admin)
-            .setSigmaWad(BigNumber.from("100000000000000000"));
-        await this.strategy
-            .connect(this.admin)
-            .setMaxPossibleLowerBound(BigNumber.from("1500000000000000000"));
+        await this.strategy.connect(this.admin).setVaultParams(0, {
+            sigmaWad: "100000000000000000",
+            maxPossibleLowerBoundWad: "1500000000000000000",
+            proximityWad: "100000000000000000",
+            weight: "1",
+        });
 
         await withSigner(this.voltzVault.address, async (signer) => {
             await this.usdc
@@ -396,6 +398,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -421,11 +424,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             marginDelta: BigNumber.from(10).pow(6).mul(1000000),
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
@@ -444,6 +442,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -490,6 +489,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -515,11 +515,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             marginDelta: BigNumber.from(10).pow(6).mul(100000000),
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
@@ -538,6 +533,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -603,6 +599,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -617,11 +614,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
-
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
 
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
@@ -641,6 +633,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -687,6 +680,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -724,11 +718,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             tickUpper: currentPosition.tickUpper,
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
@@ -747,6 +736,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -793,6 +783,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -830,11 +821,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             tickUpper: currentPosition.tickUpper,
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
@@ -853,6 +839,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -899,6 +886,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -936,11 +924,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             tickUpper: currentPosition.tickUpper,
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
@@ -959,6 +942,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
+        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
