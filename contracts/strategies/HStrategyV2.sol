@@ -97,6 +97,7 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
         uint256 newErc20CapitalD
     ) external {
         _requireAdmin();
+        // TODO: add checks
         halfOfShortInterval = newHalfOfShortInterval;
         domainLowerTick = newDomainLowerTick;
         domainUpperTick = newDomainUpperTick;
@@ -130,6 +131,7 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
     }
 
     function rebalance() external {
+        // TODO: restrictions (?)
         _requireAtLeastOperator();
         _positionRebalance();
         _swapRebalance();
@@ -165,6 +167,7 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
 
         shortLowerTick = newShortLowerTick;
         shortUpperTick = newShortUpperTick;
+        // TODO: restrictions (?)
         _drainPosition();
     }
 
@@ -173,47 +176,44 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
         (uint256[] memory erc20Tvl, , , uint256[] memory totalTvl) = caclulateCurrentTvl(sqrtPriceX96);
         uint256 currentToken0 = totalTvl[0];
         uint256 currentToken1 = totalTvl[1];
-        uint256 ratio0 = expectedToken0Ratio(sqrtPriceX96);
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+        uint256 ratio0 = expectedToken0Ratio(sqrtPriceX96, domainLowerTick, domainUpperTick);
         uint256 capital0 = currentToken0 + FullMath.mulDiv(currentToken1, Q96, priceX96);
         uint256 expectedAmount0 = FullMath.mulDiv(capital0, ratio0, DENOMINATOR);
+
+        address[] memory tokens = erc20Vault.vaultTokens();
         if (expectedAmount0 > currentToken0) {
             uint256 amount1 = FullMath.mulDiv(expectedAmount0 - currentToken0, priceX96, Q96);
             if (amount1 > erc20Tvl[1]) {
                 uint256[] memory needToPull = new uint256[](2);
-                needToPull[1] = amount1;
-                uint256[] memory pulled = moneyVault.pull(
-                    address(erc20Vault),
-                    erc20Vault.vaultTokens(),
-                    needToPull,
-                    ""
-                );
+                needToPull[1] = amount1 - erc20Tvl[1];
+                uint256[] memory pulled = moneyVault.pull(address(erc20Vault), tokens, needToPull, "");
                 if (pulled[1] < needToPull[1]) {
                     needToPull[1] = needToPull[1] - pulled[1];
-                    uniV3Vault.pull(address(erc20Vault), erc20Vault.vaultTokens(), needToPull, "");
+                    // TODO: restrictions (?) - perhaps unreachable code
+                    uniV3Vault.pull(address(erc20Vault), tokens, needToPull, "");
                 }
             }
-            _swapOneToAnother(-int256(expectedAmount0 - currentToken0), priceX96);
+            _swapOneToAnother(0, amount1);
         } else {
-            if (currentToken0 - expectedAmount0 > erc20Tvl[0]) {
+            uint256 amount0 = currentToken0 - expectedAmount0;
+            if (amount0 > erc20Tvl[0]) {
                 uint256[] memory needToPull = new uint256[](2);
-                needToPull[0] = currentToken0 - expectedAmount0;
-                uint256[] memory pulled = moneyVault.pull(
-                    address(erc20Vault),
-                    erc20Vault.vaultTokens(),
-                    needToPull,
-                    ""
-                );
+                needToPull[0] = amount0;
+                uint256[] memory pulled = moneyVault.pull(address(erc20Vault), tokens, needToPull, "");
                 if (pulled[0] < needToPull[0]) {
                     needToPull[0] = needToPull[0] - pulled[0];
-                    uniV3Vault.pull(address(erc20Vault), erc20Vault.vaultTokens(), needToPull, "");
+                    // TODO: restrictions (?) - perhaps unreachable code
+                    uniV3Vault.pull(address(erc20Vault), tokens, needToPull, "");
                 }
             }
-            _swapOneToAnother(int256(currentToken0 - expectedAmount0), priceX96);
+            _swapOneToAnother(currentToken0 - expectedAmount0, 0);
         }
     }
 
     function _liquidityRebalance() internal {
+        // TODO: restrictions (?)
         _mintPositionInNeeded();
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         (, uint256[] memory uniV3Tvl, uint256[] memory moneyTvl, uint256[] memory totalTvl) = caclulateCurrentTvl(
@@ -235,8 +235,17 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
         uint256[] memory uniV3Expected = new uint256[](2);
         uint256[] memory moneyExpected = new uint256[](2);
 
-        uniV3Expected[0] = FullMath.mulDiv(totalTvl[0], uniV3RatioD, DENOMINATOR);
-        uniV3Expected[1] = FullMath.mulDiv(totalTvl[1], uniV3RatioD, DENOMINATOR);
+        {
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+            uint256 uniCapital = FullMath.mulDiv(
+                totalTvl[0] + FullMath.mulDiv(totalTvl[1], Q96, priceX96),
+                uniV3RatioD,
+                DENOMINATOR
+            );
+            uint256 ratio0 = expectedToken0Ratio(sqrtPriceX96, shortLowerTick, shortUpperTick);
+            uniV3Expected[0] = FullMath.mulDiv(uniCapital, ratio0, DENOMINATOR);
+            uniV3Expected[1] = FullMath.mulDiv(uniCapital - uniV3Expected[0], priceX96, Q96);
+        }
 
         moneyExpected[0] = FullMath.mulDiv(totalTvl[0] - uniV3Expected[0], DENOMINATOR - erc20CapitalD, DENOMINATOR);
         moneyExpected[1] = FullMath.mulDiv(totalTvl[1] - uniV3Expected[1], DENOMINATOR - erc20CapitalD, DENOMINATOR);
@@ -248,9 +257,13 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
         _pullMissing(moneyVault, moneyTvl, moneyExpected);
     }
 
-    function expectedToken0Ratio(uint160 sqrtC) public view returns (uint256 ratio0) {
-        uint160 sqrtA = TickMath.getSqrtRatioAtTick(domainLowerTick);
-        uint160 sqrtB = TickMath.getSqrtRatioAtTick(domainUpperTick);
+    function expectedToken0Ratio(
+        uint160 sqrtC,
+        int24 lowerTick,
+        int24 upperTick
+    ) public pure returns (uint256 ratio0) {
+        uint160 sqrtA = TickMath.getSqrtRatioAtTick(lowerTick);
+        uint160 sqrtB = TickMath.getSqrtRatioAtTick(upperTick);
 
         ratio0 = FullMath.mulDiv(DENOMINATOR, sqrtB - sqrtC, 2 * sqrtB - sqrtC - FullMath.mulDiv(sqrtA, sqrtB, sqrtC));
     }
@@ -262,8 +275,8 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
     ) internal returns (uint256[] memory tokenAmounts) {
         if (expected[0] < current[0] || expected[1] < current[1]) {
             uint256[] memory pullAmount = new uint256[](2);
-            pullAmount[0] = current[0] - expected[0];
-            pullAmount[1] = current[1] - expected[1];
+            if (current[0] > expected[0]) pullAmount[0] = current[0] - expected[0];
+            if (current[1] > expected[1]) pullAmount[1] = current[1] - expected[1];
             tokenAmounts = vault.pull(address(erc20Vault), vault.vaultTokens(), pullAmount, "");
         }
     }
@@ -275,25 +288,28 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
     ) internal returns (uint256[] memory tokenAmounts) {
         if (expected[0] > current[0] || expected[1] > current[1]) {
             uint256[] memory pullAmount = new uint256[](2);
-            pullAmount[0] = expected[0] - current[0];
-            pullAmount[1] = expected[1] - current[1];
+            if (expected[0] > current[0]) pullAmount[0] = expected[0] - current[0];
+            if (expected[1] > current[1]) pullAmount[1] = expected[1] - current[1];
             tokenAmounts = erc20Vault.pull(address(vault), vault.vaultTokens(), pullAmount, "");
         }
     }
 
-    function _swapOneToAnother(int256 amount0, uint256 priceX96) internal {
+    function _swapOneToAnother(uint256 amount0, uint256 amount1) internal {
         address[] memory tokens = erc20Vault.vaultTokens();
 
-        uint256 tokenInIndex = 0;
+        uint256 tokenInIndex;
         uint256 amountIn;
         if (amount0 > 0) {
-            amountIn = uint256(amount0);
+            amountIn = amount0;
+            tokenInIndex = 0;
         } else {
-            amountIn = uint256(FullMath.mulDiv(uint256(-amount0), priceX96, Q96));
+            amountIn = amount1;
             tokenInIndex = 1;
         }
 
-        {}
+        if (amountIn == 0) {
+            return;
+        }
 
         bytes memory routerResult;
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
@@ -311,11 +327,12 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
         erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), amountIn));
         routerResult = erc20Vault.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data);
         erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), 0));
+        // TODO: amountOut >= expectedAmountOut (?)
     }
 
     function _mintPositionInNeeded() internal {
-        address[] memory tokens = erc20Vault.vaultTokens();
         if (uniV3Nft == 0) {
+            address[] memory tokens = erc20Vault.vaultTokens();
             uint256[] memory pullExistentials = erc20Vault.pullExistentials();
             uint256[] memory tokenAmounts = new uint256[](2);
             tokenAmounts[0] = pullExistentials[0] * 10;
@@ -347,12 +364,13 @@ contract HStrategyV2 is ContractMeta, DefaultAccessControlLateInit {
             if (oldNft != 0) {
                 positionManager.burn(oldNft);
             }
+            uniV3Nft = newNft;
         }
     }
 
-    function _drainPosition() internal {
+    function _drainPosition() internal returns (uint256[] memory tokenAmounts) {
         if (uniV3Nft != 0) {
-            uniV3Vault.pull(
+            tokenAmounts = uniV3Vault.pull(
                 address(erc20Vault),
                 erc20Vault.vaultTokens(),
                 uniV3Vault.liquidityToTokenAmounts(type(uint128).max),

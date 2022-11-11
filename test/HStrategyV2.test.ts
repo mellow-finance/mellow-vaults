@@ -284,6 +284,17 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
                             []
                         );
 
+                    await this.erc20RootVault
+                        .connect(this.deployer)
+                        .deposit(
+                            [
+                                BigNumber.from(10).pow(10),
+                                BigNumber.from(10).pow(18),
+                            ],
+                            0,
+                            []
+                        );
+
                     await this.usdc
                         .connect(this.deployer)
                         .transfer(
@@ -331,8 +342,10 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#rebalance", () => {
+        describe("#rebalance", () => {
             it("", async () => {
+                await this.subject.connect(this.mStrategyAdmin).rebalance();
+                await this.subject.connect(this.mStrategyAdmin).rebalance();
                 await this.subject.connect(this.mStrategyAdmin).rebalance();
 
                 const { sqrtPriceX96 } = await this.pool.slot0();
@@ -350,9 +363,28 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
                     totalTvl[1].mul(Q96).div(priceX96)
                 );
 
+                console.log(
+                    "Short Lower tick:",
+                    await this.subject.shortLowerTick()
+                );
+                console.log(
+                    "Short Upper tick:",
+                    await this.subject.shortUpperTick()
+                );
+                console.log(
+                    "Domain Lower tick:",
+                    await this.subject.domainLowerTick()
+                );
+                console.log(
+                    "Domain Upper tick:",
+                    await this.subject.domainUpperTick()
+                );
+                console.log("Spot tick:", (await this.pool.slot0())[1]);
+
                 const sqrtA = this.getSqrtRatioAtTick(
                     await this.subject.shortLowerTick()
                 );
+
                 const sqrtB = this.getSqrtRatioAtTick(
                     await this.subject.shortUpperTick()
                 );
@@ -374,7 +406,7 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
                 );
 
                 const token0RatioD = DENOMINATOR.mul(
-                    sqrtC.div(sqrtB).sub(sqrtC.div(sqrtB0))
+                    Q96.mul(sqrtC).div(sqrtB).sub(Q96.mul(sqrtC).div(sqrtB0))
                 ).div(
                     Q96.mul(2)
                         .sub(sqrtA0.mul(Q96).div(sqrtC))
@@ -382,7 +414,7 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
                 );
 
                 const token1RatioD = DENOMINATOR.mul(
-                    sqrtA.div(sqrtC).sub(sqrtA0.div(sqrtC))
+                    Q96.mul(sqrtA).div(sqrtC).sub(Q96.mul(sqrtA0).div(sqrtC))
                 ).div(
                     Q96.mul(2)
                         .sub(sqrtA0.mul(Q96).div(sqrtC))
@@ -396,33 +428,43 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
                     .mul(uniV3RatioD)
                     .div(DENOMINATOR);
                 const expectedToken0Capital = capital0
-                    .mul(uniV3RatioD)
+                    .mul(token0RatioD)
                     .div(DENOMINATOR);
                 const expectedToken1Capital = capital0
-                    .mul(uniV3RatioD)
+                    .mul(token1RatioD)
                     .div(DENOMINATOR);
 
                 const currentUniV3Capital = uniV3Tvl[0].add(
                     uniV3Tvl[1].mul(Q96).div(priceX96)
                 );
 
-                expect(expectedUniV3Capital.sub(1000)).lte(currentUniV3Capital)
+                expect(expectedUniV3Capital.sub(100).lte(currentUniV3Capital))
                     .to.be.true;
-                expect(expectedUniV3Capital.add(1000)).gte(currentUniV3Capital)
+                expect(expectedUniV3Capital.add(100).gte(currentUniV3Capital))
                     .to.be.true;
 
-                expect(expectedToken0Capital.sub(1000)).lte(
-                    erc20Tvl[0].add(moneyTvl[0])
+                expect(
+                    expectedToken0Capital
+                        .sub(100)
+                        .lte(erc20Tvl[0].add(moneyTvl[0]))
                 ).to.be.true;
-                expect(expectedToken0Capital.add(1000)).gte(
-                    erc20Tvl[0].add(moneyTvl[0])
+                expect(
+                    expectedToken0Capital
+                        .add(100)
+                        .gte(erc20Tvl[0].add(moneyTvl[0]))
                 ).to.be.true;
 
-                expect(expectedToken1Capital.sub(1000)).lte(
-                    erc20Tvl[1].add(moneyTvl[1])
+                expect(
+                    expectedToken1Capital
+                        .sub(100)
+                        .lte(erc20Tvl[1].add(moneyTvl[1]))
                 ).to.be.true;
-                expect(expectedToken1Capital.add(1000)).gte(
-                    erc20Tvl[1].add(moneyTvl[1])
+                expect(
+                    expectedToken1Capital
+                        .add(100)
+                        .gte(
+                            erc20Tvl[1].add(moneyTvl[1]).mul(Q96).div(priceX96)
+                        )
                 ).to.be.true;
 
                 const currentRatio0D = erc20Tvl[0]
@@ -433,12 +475,11 @@ contract<MockHStrategyV2, DeployOptions, CustomContext>(
                     .div(erc20Tvl[1].add(moneyTvl[1]));
 
                 const expectedRatioD = await this.subject.erc20CapitalD();
+                expect(expectedRatioD.sub(100).lte(currentRatio0D)).to.be.true;
+                expect(expectedRatioD.add(100).gte(currentRatio0D)).to.be.true;
 
-                expect(expectedRatioD.sub(1000)).lte(currentRatio0D).to.be.true;
-                expect(expectedRatioD.add(1000)).gte(currentRatio0D).to.be.true;
-
-                expect(expectedRatioD.sub(1000)).lte(currentRatio1D).to.be.true;
-                expect(expectedRatioD.add(1000)).gte(currentRatio1D).to.be.true;
+                expect(expectedRatioD.sub(100).lte(currentRatio1D)).to.be.true;
+                expect(expectedRatioD.add(100).gte(currentRatio1D)).to.be.true;
             });
         });
     }
