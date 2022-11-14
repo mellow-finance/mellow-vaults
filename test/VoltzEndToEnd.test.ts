@@ -418,7 +418,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
+
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -462,7 +462,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -509,7 +508,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -553,7 +551,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -619,7 +616,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -653,7 +649,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -700,7 +695,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -756,7 +750,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -803,7 +796,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -859,7 +851,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -906,7 +897,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -962,7 +952,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );
@@ -1028,7 +1017,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -1091,7 +1079,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0),
                 []
             );
-        await this.strategy.connect(this.admin).pushFunds();
         this.user2.lpTokens = await this.erc20RootVault.balanceOf(
             this.user2.address
         );

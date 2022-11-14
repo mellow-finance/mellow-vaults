@@ -220,9 +220,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return (newTickLower, newTickUpper);
     }
 
-    function pushFunds() external {
-        _requireAtLeastOperator();
-        
+    function _pushFunds() internal {
         // 0. Set the local variables
         address[] memory tokens = _tokens;
         uint256 balance = IERC20(tokens[0]).balanceOf(address(_erc20Vault));
@@ -245,7 +243,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Callback function called after for ERC20RootVault::deposit
     function depositCallback() external override {
-        // Do nothing on deposit
+        _pushFunds();
     }
 
     /// @notice Callback function called after for ERC20RootVault::withdraw
