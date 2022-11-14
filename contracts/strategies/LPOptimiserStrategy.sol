@@ -49,11 +49,11 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @notice Set the parameters of a vault
     function setVaultParams(uint256 index, VaultParams memory vaultParams_) external {
         _requireAdmin();
-        require(index < _vaultParams.length, ExceptionsLibrary.INVALID_STATE);
+        require(index < _vaults.length, ExceptionsLibrary.INVALID_STATE);
 
-        _totalWeight -= _vaultParams[index].weight;
+        uint256 previousWeight = _vaultParams[index].weight;
         _vaultParams[index] = vaultParams_;
-        _totalWeight += _vaultParams[index].weight;
+        _totalWeight = (_totalWeight + vaultParams_.weight) - previousWeight;
     }
 
     // EVENTS
@@ -111,6 +111,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck(uint256 index, uint256 currentFixedRateWad) public view returns (bool) {
+        require(index < _vaults.length, ExceptionsLibrary.INVALID_STATE);
+        
         // 0. Set the local variables
         VaultParams memory vaultParams = _vaultParams[index];
         IVoltzVault vault = _vaults[index];
@@ -222,22 +224,26 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     function _pushFunds() internal {
         // 0. Set the local variables
+        IERC20Vault erc20Vault = _erc20Vault;
         address[] memory tokens = _tokens;
-        uint256 balance = IERC20(tokens[0]).balanceOf(address(_erc20Vault));
+        uint256 totalWeight = _totalWeight;
+
+        uint256[] memory balances = new uint256[](1);
+        balances[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
 
         // 1. Distribute the funds
+        uint256[] memory vaultShare = new uint256[](1);
+    
         for (uint256 i = 0; i < _vaults.length; i++) {
-            uint256[] memory vaultShare = new uint256[](1);
-
             if (_vaultParams[i].weight == 0) {
                 continue;
             }
 
             // The share of i-th is vaultParams[i].weight / sum(vaultParams.weight)
-            vaultShare[0] = FullMath.mulDiv(balance, _vaultParams[i].weight, _totalWeight); 
+            vaultShare[0] = FullMath.mulDiv(balances[0], _vaultParams[i].weight, totalWeight); 
 
             // Pull funds from the erc20 vault and push the share into the i-th voltz vault
-            _erc20Vault.pull(address(_vaults[i]), tokens, vaultShare, "");
+            erc20Vault.pull(address(_vaults[i]), tokens, vaultShare, "");
         }
     }
 
