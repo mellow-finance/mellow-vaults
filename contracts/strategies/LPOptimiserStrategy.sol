@@ -47,6 +47,8 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Set the parameters of a vault
+    /// @param index The index of the vault in _vaults
+    /// @param vaultParams_ The new parameters of the vault
     function setVaultParams(uint256 index, VaultParams memory vaultParams_) external {
         _requireAdmin();
         require(index < _vaults.length, ExceptionsLibrary.INVALID_STATE);
@@ -108,6 +110,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Get the current tick and position ticks and decide whether to rebalance
+    /// @param index The index of the vault in _vaults
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck(uint256 index, uint256 currentFixedRateWad) public view returns (bool) {
@@ -155,6 +158,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return -PRBMathSD59x18.div(PRBMathSD59x18.log2(int256(fixedRateWad)), PRBMathSD59x18.log2(int256(LOG_BASE)));
     }
 
+    /// @notice Get the fixed rate corresponding to tick
+    /// @param tick The tick to be converted into fixed rate
+    /// @return uint256 The fixed rate in wad (1.0001 ^ -tick)
     function convertTickToFixedRate(int24 tick) public pure returns (uint256) {
         // 1. Convert the tick into X96 sqrt price (scaled by 2^96)
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
@@ -170,6 +176,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Set new optimal tick range based on current twap tick given that we are using the offchain moving average of the fixed rate in the current iteration
+    /// @param index The index of the vault in _vaults
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
     /// @return newTickLower The new lower tick for the rebalanced position
     /// @return newTickUpper The new upper tick for the rebalanced position
@@ -222,7 +229,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return (newTickLower, newTickUpper);
     }
 
-    function _pushFunds() internal {
+    /// @notice This function grabs all funds from the buffer vault 
+    /// and distributed them to the voltz vaults according to their weights
+    function _distributeTokens() internal {
         // 0. Set the local variables
         IERC20Vault erc20Vault = _erc20Vault;
         address[] memory tokens = _tokens;
@@ -235,12 +244,14 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         uint256[] memory vaultShare = new uint256[](1);
     
         for (uint256 i = 0; i < _vaults.length; i++) {
-            if (_vaultParams[i].weight == 0) {
+            uint256 vaultWeight = _vaultParams[i].weight;
+
+            if (vaultWeight == 0) {
                 continue;
             }
 
-            // The share of i-th is vaultParams[i].weight / sum(vaultParams.weight)
-            vaultShare[0] = FullMath.mulDiv(balances[0], _vaultParams[i].weight, totalWeight); 
+            // The share of i-th is vaultWeight / sum(vaultParams.weight)
+            vaultShare[0] = FullMath.mulDiv(balances[0], vaultWeight, totalWeight); 
 
             // Pull funds from the erc20 vault and push the share into the i-th voltz vault
             erc20Vault.pull(address(_vaults[i]), tokens, vaultShare, "");
@@ -249,7 +260,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Callback function called after for ERC20RootVault::deposit
     function depositCallback() external override {
-        _pushFunds();
+        _distributeTokens();
     }
 
     /// @notice Callback function called after for ERC20RootVault::withdraw
