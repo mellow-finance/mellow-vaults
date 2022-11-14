@@ -3,7 +3,6 @@ import {
     combineVaults,
     PermissionIdsLibrary,
     setupVault,
-    TRANSACTION_GAS_LIMITS,
 } from "../deploy/0000_utils";
 import {
     addSigner,
@@ -28,7 +27,7 @@ import { expect } from "chai";
 
 type CustomContext = {
     strategy: LPOptimiserStrategy;
-    voltzVault: VoltzVault;
+    voltzVaults: VoltzVault[];
     erc20Vault: ERC20Vault;
     preparePush: () => any;
     marginEngine: string;
@@ -46,6 +45,8 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
     const leverage = 2.2;
     const marginMultiplierPostUnwind = 2;
+    const noOfVoltzVaults = 2;
+    const vaultWithdrawalOptions = [[], [], []];
 
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
@@ -100,8 +101,8 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 const startNft =
                     (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
-                let voltzVaultNft = startNft;
-                let erc20VaultNft = startNft + 1;
+                let voltzVaultNfts = Array.from(Array(noOfVoltzVaults).keys()).map(val => startNft + val);
+                let erc20VaultNft = startNft + noOfVoltzVaults;
 
                 this.voltzVaultHelperSingleton = (
                     await ethers.getContract("VoltzVaultHelper")
@@ -111,22 +112,24 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 this.initialTickLow = currentTick - (currentTick % 60) - 600;
                 this.initialTickHigh = currentTick - (currentTick % 60) + 600;
 
-                await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
-                    createVaultArgs: [
-                        tokens,
-                        this.deployer.address,
-                        this.marginEngine,
-                        this.voltzVaultHelperSingleton,
-                        {
-                            tickLower: this.initialTickLow,
-                            tickUpper: this.initialTickHigh,
-                            leverageWad: utils.parseEther(leverage.toString()),
-                            marginMultiplierPostUnwindWad: utils.parseEther(
-                                marginMultiplierPostUnwind.toString()
-                            ),
-                        },
-                    ],
-                });
+                for (let nft of voltzVaultNfts) {
+                    await setupVault(hre, nft, "VoltzVaultGovernance", {
+                        createVaultArgs: [
+                            tokens,
+                            this.deployer.address,
+                            this.marginEngine,
+                            this.voltzVaultHelperSingleton,
+                            {
+                                tickLower: this.initialTickLow,
+                                tickUpper: this.initialTickHigh,
+                                leverageWad: utils.parseEther(leverage.toString()),
+                                marginMultiplierPostUnwindWad: utils.parseEther(
+                                    marginMultiplierPostUnwind.toString()
+                                ),
+                            },
+                        ],
+                    });
+                }
 
                 await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
                     createVaultArgs: [tokens, this.deployer.address],
@@ -140,28 +143,41 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                     erc20VaultNft
                 );
 
-                const voltzVault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    voltzVaultNft
-                );
-
                 this.erc20Vault = await ethers.getContractAt(
                     "ERC20Vault",
                     erc20Vault
                 );
 
-                this.voltzVault = await ethers.getContractAt(
-                    "VoltzVault",
-                    voltzVault
-                );
+                this.voltzVaults = [];
+                for (let i = 0; i < noOfVoltzVaults; i++) {
+                    const voltzVaultAddress = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        voltzVaultNfts[i]
+                    );
+
+                    const voltzVault = await ethers.getContractAt(
+                        "VoltzVault",
+                        voltzVaultAddress
+                    );
+
+                    this.voltzVaults.push(voltzVault as VoltzVault);
+                }
 
                 let strategyDeployParams = await deploy("LPOptimiserStrategy", {
                     from: this.deployer.address,
                     contract: "LPOptimiserStrategy",
                     args: [
                         this.erc20Vault.address,
-                        this.voltzVault.address,
+                        this.voltzVaults.map(val => val.address),
+                        this.voltzVaults.map((_, index) => {
+                            return {
+                                sigmaWad: "100000000000000000",
+                                maxPossibleLowerBoundWad: "1500000000000000000",
+                                proximityWad: "100000000000000000",
+                                weight: (index === 0) ? "1" : "0",
+                            };
+                        }),
                         this.admin.address,
                     ],
                     log: true,
@@ -171,7 +187,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 await combineVaults(
                     hre,
                     erc20VaultNft + 1,
-                    [erc20VaultNft, voltzVaultNft],
+                    [erc20VaultNft].concat(voltzVaultNfts),
                     this.deployer.address,
                     this.deployer.address
                 );
@@ -238,34 +254,41 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 };
 
                 this.grantPermissionsVoltzVaults = async () => {
-                    let tokenId1 = await ethers.provider.send(
-                        "eth_getStorageAt",
-                        [
-                            this.voltzVault.address,
-                            "0x4", // address of _nft
-                        ]
-                    );
-                    let tokenId2 = await ethers.provider.send(
+                    let tokenIds: string[] = [];
+                    for (let vault of this.voltzVaults) {
+                        let tokenId = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                vault.address,
+                                "0x4", // address of _nft
+                            ]
+                        );
+                        tokenIds.push(tokenId);
+                    }
+
+
+                    tokenIds.push(await ethers.provider.send(
                         "eth_getStorageAt",
                         [
                             this.erc20Vault.address,
                             "0x4", // address of _nft
                         ]
-                    );
+                    ));
+
                     await withSigner(
                         this.erc20RootVault.address,
                         async (erc20RootVaultSigner) => {
-                            await this.vaultRegistry
-                                .connect(erc20RootVaultSigner)
-                                .approve(this.strategy.address, tokenId1);
-                            await this.vaultRegistry
-                                .connect(erc20RootVaultSigner)
-                                .approve(this.strategy.address, tokenId2);
+                            for (let tokenId of tokenIds) {
+                                await this.vaultRegistry
+                                    .connect(erc20RootVaultSigner)
+                                    .approve(this.strategy.address, tokenId);
+                            }
+
                         }
                     );
                 };
 
-                this.voltzVaultNft = voltzVaultNft;
+                this.voltzVaultNfts = voltzVaultNfts;
 
                 return this.strategy;
             }
@@ -337,28 +360,27 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             .connect(this.user2.signer)
             .approve(this.erc20RootVault.address, BigNumber.from(10).pow(27));
 
-        await this.strategy
-            .connect(this.admin)
-            .setProximityWad("100000000000000000");
-        await this.strategy
-            .connect(this.admin)
-            .setSigmaWad(BigNumber.from("100000000000000000"));
-        await this.strategy
-            .connect(this.admin)
-            .setMaxPossibleLowerBound(BigNumber.from("1500000000000000000"));
-
-        await withSigner(this.voltzVault.address, async (signer) => {
-            await this.usdc
-                .connect(signer)
-                .approve(this.deployer.address, ethers.constants.MaxUint256);
-
-            await this.usdc
-                .connect(signer)
-                .transfer(
-                    this.deployer.address,
-                    await this.usdc.balanceOf(this.voltzVault.address)
-                );
+        await this.strategy.connect(this.admin).setVaultParams(0, {
+            sigmaWad: "100000000000000000",
+            maxPossibleLowerBoundWad: "1500000000000000000",
+            proximityWad: "100000000000000000",
+            weight: "1",
         });
+
+        for (let vault of this.voltzVaults) {
+            await withSigner(vault.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(this.deployer.address, ethers.constants.MaxUint256);
+
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(vault.address)
+                    );
+            });
+        }
 
         await this.usdc
             .connect(this.user1.signer)
@@ -374,7 +396,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             );
 
         const voltzVaultOwnerAddress = await this.vaultRegistry.ownerOf(
-            this.voltzVaultNft
+            this.voltzVaultNfts[0]
         );
         this.voltzVaultOwner = await addSigner(voltzVaultOwnerAddress);
     });
@@ -396,6 +418,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 BigNumber.from(0).toString(),
                 []
             );
+
         this.user1.lpTokens = await this.erc20RootVault.balanceOf(
             this.user1.address
         );
@@ -421,16 +444,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             marginDelta: BigNumber.from(10).pow(6).mul(1000000),
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
+        await this.voltzVaults[0].updateTvl();
 
         await mint(
             "USDC",
@@ -452,16 +470,16 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
-        await this.voltzVault.settleVault(0);
+        await this.voltzVaults[0].updateTvl();
+        await this.voltzVaults[0].settleVault(0);
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], [[], []]);
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], [[], []]);
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100059531613),
@@ -515,16 +533,11 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             marginDelta: BigNumber.from(10).pow(6).mul(100000000),
         });
 
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
-
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
+        await this.voltzVaults[0].updateTvl();
 
         await mint(
             "USDC",
@@ -565,16 +578,16 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
-        await this.voltzVault.settleVault(0);
+        await this.voltzVaults[0].updateTvl();
+        await this.voltzVaults[0].settleVault(0);
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], [[], []]);
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], [[], []]);
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100062735231),
@@ -607,27 +620,22 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             this.user1.address
         );
 
-        await this.voltzVault.connect(this.admin).setLeverageWad(
+        await this.voltzVaults[0].connect(this.admin).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
-        let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.admin).rebalance({
+        let currentPosition = await this.voltzVaults[0].currentPosition();
+        await this.voltzVaults[0].connect(this.admin).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
-
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
 
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
+        await this.voltzVaults[0].updateTvl();
 
         await mint(
             "USDC",
@@ -649,16 +657,16 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
-        await this.voltzVault.settleVault(0);
+        await this.voltzVaults[0].updateTvl();
+        await this.voltzVaults[0].settleVault(0);
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], [[], []]);
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], [[], []]);
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(10).pow(6).mul(100000),
@@ -713,27 +721,22 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         });
 
         // change leverage
-        await this.voltzVault.connect(this.strategySigner).setLeverageWad(
+        await this.voltzVaults[0].connect(this.strategySigner).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
-        let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.strategySigner).rebalance({
+        let currentPosition = await this.voltzVaults[0].currentPosition();
+        await this.voltzVaults[0].connect(this.strategySigner).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
-
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
 
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
+        await this.voltzVaults[0].updateTvl();
 
         await mint(
             "USDC",
@@ -755,16 +758,16 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
-        await this.voltzVault.settleVault(0);
+        await this.voltzVaults[0].updateTvl();
+        await this.voltzVaults[0].settleVault(0);
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], [[], []]);
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], [[], []]);
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100059531613),
@@ -819,27 +822,22 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         });
 
         // change leverage
-        await this.voltzVault.connect(this.admin).setLeverageWad(
+        await this.voltzVaults[0].connect(this.admin).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
-        let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.admin).rebalance({
+        let currentPosition = await this.voltzVaults[0].currentPosition();
+        await this.voltzVaults[0].connect(this.admin).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
-
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
 
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
+        await this.voltzVaults[0].updateTvl();
 
         await mint(
             "USDC",
@@ -861,16 +859,16 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
-        await this.voltzVault.settleVault(0);
+        await this.voltzVaults[0].updateTvl();
+        await this.voltzVaults[0].settleVault(0);
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], [[], []]);
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], [[], []]);
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(99987062685),
@@ -925,27 +923,22 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         });
 
         // change leverage
-        await this.voltzVault.connect(this.strategySigner).setLeverageWad(
+        await this.voltzVaults[0].connect(this.strategySigner).setLeverageWad(
             BigNumber.from(10)
                 .pow(18)
                 .mul(leverage * 10)
         );
-        let currentPosition = await this.voltzVault.currentPosition();
-        await this.voltzVault.connect(this.strategySigner).rebalance({
+        let currentPosition = await this.voltzVaults[0].currentPosition();
+        await this.voltzVaults[0].connect(this.strategySigner).rebalance({
             tickLower: currentPosition.tickLower,
             tickUpper: currentPosition.tickUpper,
         });
-
-        const currentBlock = await hre.ethers.provider.getBlock("latest");
-        const swapTimestampWad = BigNumber.from(currentBlock.timestamp).mul(
-            BigNumber.from(10).pow(18)
-        );
 
         // advance time by 20 days
         await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
+        await this.voltzVaults[0].updateTvl();
 
         await mint(
             "USDC",
@@ -986,16 +979,145 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
         await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
         await network.provider.send("evm_mine", []);
 
-        await this.voltzVault.updateTvl();
-        await this.voltzVault.settleVault(0);
+        await this.voltzVaults[0].updateTvl();
+        await this.voltzVaults[0].settleVault(0);
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], [[], []]);
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], [[], []]);
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+
+        expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
+            BigNumber.from(100019094304),
+            1000
+        );
+        expect(await this.usdc.balanceOf(this.user2.address)).to.be.closeTo(
+            BigNumber.from(1000320357),
+            1000
+        );
+    });
+
+    it("e2e #7: User 1 deposits, Swap, Change Leverage, User 2 deposits, Swap -- 2 pools", async () => {
+        expect(await this.usdc.balanceOf(this.user1.address)).to.be.eq(0);
+        expect(await this.usdc.balanceOf(this.user2.address)).to.be.eq(0);
+
+        await mint(
+            "USDC",
+            this.user1.address,
+            BigNumber.from(10).pow(6).mul(100000)
+        );
+        await this.preparePush();
+        await this.erc20RootVault
+            .connect(this.user1.signer)
+            .deposit(
+                [BigNumber.from(10).pow(6).mul(100000)],
+                BigNumber.from(0).toString(),
+                []
+            );
+        this.user1.lpTokens = await this.erc20RootVault.balanceOf(
+            this.user1.address
+        );
+
+        // trade VT with some other account
+        const { test } = await getNamedAccounts();
+        const testSigner = await hre.ethers.getSigner(test);
+        await mint(
+            "USDC",
+            testSigner.address,
+            BigNumber.from(10).pow(6).mul(1000000)
+        );
+        await this.usdc
+            .connect(testSigner)
+            .approve(this.periphery, BigNumber.from(10).pow(27));
+        await this.peripheryContract.connect(testSigner).swap({
+            marginEngine: this.marginEngine,
+            isFT: false,
+            notional: BigNumber.from(10).pow(6).mul(1000000),
+            sqrtPriceLimitX96: MIN_SQRT_RATIO.add(1),
+            tickLower: -60,
+            tickUpper: 60,
+            marginDelta: BigNumber.from(10).pow(6).mul(1000000),
+        });
+
+        // change leverage of all vaults
+        for (let vault of this.voltzVaults) {
+            await vault.connect(this.strategySigner).setLeverageWad(
+                BigNumber.from(10)
+                    .pow(18)
+                    .mul(leverage * 10)
+            );
+        }
+    
+        for (let vault of this.voltzVaults) {
+            let currentPosition = await vault.currentPosition();
+            await vault.connect(this.strategySigner).rebalance({
+                tickLower: currentPosition.tickLower,
+                tickUpper: currentPosition.tickUpper,
+            });
+        }
+
+        // advance time by 20 days
+        await network.provider.send("evm_increaseTime", [20 * 24 * 60 * 60]);
+        await network.provider.send("evm_mine", []);
+
+        for (let vault of this.voltzVaults) {
+            await vault.updateTvl();
+        }
+
+        await mint(
+            "USDC",
+            this.user2.address,
+            BigNumber.from(10).pow(6).mul(1000)
+        );
+        await this.erc20RootVault
+            .connect(this.user2.signer)
+            .deposit(
+                [BigNumber.from(10).pow(6).mul(1000)],
+                BigNumber.from(0),
+                []
+            );
+        this.user2.lpTokens = await this.erc20RootVault.balanceOf(
+            this.user2.address
+        );
+
+        // trade FT
+        await mint(
+            "USDC",
+            testSigner.address,
+            BigNumber.from(10).pow(6).mul(100000000)
+        );
+        await this.usdc
+            .connect(testSigner)
+            .approve(this.periphery, BigNumber.from(10).pow(27));
+        await this.peripheryContract.connect(testSigner).swap({
+            marginEngine: this.marginEngine,
+            isFT: true,
+            notional: BigNumber.from(10).pow(6).mul(100000000),
+            sqrtPriceLimitX96: MAX_SQRT_RATIO.sub(1),
+            tickLower: -60,
+            tickUpper: 60,
+            marginDelta: BigNumber.from(10).pow(6).mul(100000000),
+        });
+
+        // advance time by 60 days to reach maturity
+        await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]);
+        await network.provider.send("evm_mine", []);
+
+        for (let vault of this.voltzVaults) {
+            await vault.updateTvl();
+            await vault.settleVault(0);
+        }
+        
+        await this.erc20RootVault
+            .connect(this.user1.signer)
+            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+
+        await this.erc20RootVault
+            .connect(this.user2.signer)
+            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100019094304),
