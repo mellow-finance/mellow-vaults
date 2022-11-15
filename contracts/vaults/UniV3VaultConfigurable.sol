@@ -28,7 +28,7 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
     uint256 public uniV3Nft;
     INonfungiblePositionManager private _positionManager;
     UniV3Helper private _uniV3Helper;
-    uint256 public _safetyIndicesSet;
+    uint256 public safetyIndicesSet;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -135,7 +135,7 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
             IUniswapV3Factory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
         _uniV3Helper = UniV3Helper(uniV3Hepler_);
-        _safetyIndicesSet = safetyIndicesSet_;
+        safetyIndicesSet = safetyIndicesSet_;
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
 
@@ -204,7 +204,7 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
     }
 
     function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], _safetyIndicesSet);
+        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndicesSet);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];

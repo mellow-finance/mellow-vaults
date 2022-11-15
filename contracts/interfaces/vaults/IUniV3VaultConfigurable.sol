@@ -19,6 +19,9 @@ interface IUniV3VaultConfigurable is IERC721Receiver, IIntegrationVault {
     /// @notice Reference to UniswapV3 pool.
     function pool() external view returns (IUniswapV3Pool);
 
+    /// @notice A mask of oracles used in tvl calculation.
+    function safetyIndicesSet() external view return (uint256);
+
     /// @notice NFT of UniV3 position manager
     function uniV3Nft() external view returns (uint256);
 
