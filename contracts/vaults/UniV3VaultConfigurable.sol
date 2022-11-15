@@ -26,9 +26,10 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
     IUniswapV3Pool public pool;
     /// @inheritdoc IUniV3VaultConfigurable
     uint256 public uniV3Nft;
+    /// @inheritdoc IUniV3VaultConfigurable
+    uint256 public safetyIndicesSet;
     INonfungiblePositionManager private _positionManager;
     UniV3Helper private _uniV3Helper;
-    uint256 public safetyIndicesSet;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
