@@ -44,8 +44,9 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
         int24 tickUpper;
         uint128 liquidity;
         {
-            IUniV3VaultConfigurableGovernance.DelayedProtocolParams memory params = IUniV3VaultConfigurableGovernance(address(_vaultGovernance))
-                .delayedProtocolParams();
+            IUniV3VaultConfigurableGovernance.DelayedProtocolParams memory params = IUniV3VaultConfigurableGovernance(
+                address(_vaultGovernance)
+            ).delayedProtocolParams();
             {
                 uint128 tokensOwed0;
                 uint128 tokensOwed1;
@@ -127,7 +128,9 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         require(safetyIndicesSet_ != 0, ExceptionsLibrary.VALUE_ZERO);
         _initialize(vaultTokens_, nft_);
-        _positionManager = IUniV3VaultConfigurableGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
+        _positionManager = IUniV3VaultConfigurableGovernance(address(_vaultGovernance))
+            .delayedProtocolParams()
+            .positionManager;
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
@@ -201,7 +204,7 @@ contract UniV3VaultConfigurable is IUniV3VaultConfigurable, IntegrationVault {
     }
 
     function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], 0x2A);
+        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], _safetyIndicesSet);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];
