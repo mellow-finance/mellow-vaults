@@ -11,7 +11,6 @@ import "../interfaces/utils/ILStrategyHelper.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
 

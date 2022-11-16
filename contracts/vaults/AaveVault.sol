@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-
 import "../interfaces/external/aave/ILendingPool.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../interfaces/vaults/IAaveVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/external/FullMath.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
@@ -62,6 +61,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Update all tvls to current aToken balances.
+    /// @inheritdoc IAaveVault
     function updateTvls() external {
         _updateTvls();
     }

@@ -36,6 +36,7 @@ import {
     VoltzVaultGovernance,
     VoltzVault,
     LPOptimiserStrategy,
+    HStrategy,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
@@ -58,6 +59,7 @@ export interface TestContext<T, F> extends Suite {
     voltzVaultGovernance: VoltzVaultGovernance;
     voltzVaultSingleton: VoltzVault;
     lPOptimiserStrategy: LPOptimiserStrategy;
+    hStrategy: HStrategy;
 
     usdc: ERC20;
     weth: ERC20;
@@ -171,6 +173,15 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     }
     this.lStrategy = await ethers.getContract("LStrategy");
     this.lPOptimiserStrategy = await ethers.getContract("LPOptimiserStrategy");
+
+    const hStrategy: HStrategy | null = await ethers.getContractOrNull(
+        "HStrategyAave"
+    );
+    if (!hStrategy) {
+        this.hStrategy = await ethers.getContract("HStrategyYearn");
+    } else {
+        this.hStrategy = hStrategy;
+    }
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {

@@ -32,7 +32,7 @@
     "gastest": "hardhat test --config hardhat.gastest.config.ts",
     "coverage": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && hardhat coverage --config hardhat.test.config.ts",
     "coverage:fast": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && hardhat coverage --config hardhat.fast-test.config.ts",
-    "size": "rm -rf artifacts && hardhat compile && hardhat size-contracts --config hardhat.size-test.config.ts",
+    "size": "rm -rf artifacts && hardhat size-contracts --config hardhat.size-test.config.ts",
     "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts test/integration/*.ts test/behaviors/*.ts tasks/*.ts",
     "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts",
     "clean": "rm -rf artifacts && rm -rf test/types",
@@ -78,7 +78,11 @@
     "@uniswap/v3-sdk": "^3.8.1",
     "csv-parse": "^5.1.0",
     "dotenv": "^10.0.0",
+    "ethereumjs-util": "^7.1.5",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.2.32",
     "solc": "0.8.9",
-    "solidity-docgen": "^0.5.16"
+    "solidity-docgen": "^0.5.16",
+    "typescript-solidity-merkle-tree": "^0.3.0"
   }
 }
