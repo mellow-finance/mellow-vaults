@@ -21,13 +21,13 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     }
 
     // IMMUTABLES
-    address[] public _tokens;
-    IERC20Vault public immutable _erc20Vault;
+    address[] public tokens;
+    IERC20Vault public immutable erc20Vault;
 
     // INTERNAL STATE
     IVoltzVault[] internal _vaults;
     VaultParams[] internal _vaultParams;
-    uint256 _totalWeight; // sum of all vault weights
+    uint256 private _totalWeight; // sum of all vault weights
 
     // CONSTANTS
     int256 internal constant MINIMUM_FIXED_RATE = 1e16;
@@ -58,11 +58,6 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _totalWeight = (_totalWeight + vaultParams_.weight) - previousWeight;
     }
 
-    // EVENTS
-    event StrategyDeployment(IERC20Vault erc20vault, IVoltzVault[] vaults, VaultParams[] vaultParams, address admin);
-
-    event RebalancedTicks(IVoltzVault voltzVault, int24 tickLower, int24 tickUpper);
-
     /// @notice Constructor for a new contract
     /// @param erc20vault_ Reference to ERC20 Vault
     /// @param vaults_ Reference to Voltz Vaults
@@ -74,10 +69,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         VaultParams[] memory vaultParams_,
         address admin_
     ) DefaultAccessControl(admin_) {
-        _erc20Vault = erc20vault_;
+        erc20Vault = erc20vault_;
 
-        _tokens = _erc20Vault.vaultTokens();
-        require(_tokens.length == 1, ExceptionsLibrary.INVALID_TOKEN);
+        tokens = erc20vault_.vaultTokens();
+        require(tokens.length == 1, ExceptionsLibrary.INVALID_TOKEN);
     
         require(vaults_.length == vaultParams_.length, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < vaults_.length; i += 1) {
@@ -87,21 +82,13 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         emit StrategyDeployment(erc20vault_, vaults_, vaultParams_, admin_);
     }
 
-    /// @notice Attach another voltz vault to the strategy
-    /// @param vault_ The address of the vault
-    /// @param vaultParams_ The paremeters of the new vault
-    function addVault(IVoltzVault vault_, VaultParams memory vaultParams_) external {
-        _requireAdmin();
-        _addVault(vault_, vaultParams_);
-    }
-
     function _addVault(IVoltzVault vault_, VaultParams memory vaultParams_) internal {
         // 0. Set the local variables
-        address[] memory tokens = vault_.vaultTokens();
+        address[] memory vaultTokens = vault_.vaultTokens();
 
         // 1. Check if the tokens correspond
-        require(tokens.length == 1, ExceptionsLibrary.INVALID_TOKEN);
-        require(tokens[0] == _tokens[0], ExceptionsLibrary.INVALID_TOKEN);
+        require(vaultTokens.length == 1, ExceptionsLibrary.INVALID_TOKEN);
+        require(vaultTokens[0] == tokens[0], ExceptionsLibrary.INVALID_TOKEN);
 
         // 2. Add the vault 
         _vaults.push(vault_);
@@ -233,18 +220,19 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// and distributed them to the voltz vaults according to their weights
     function _distributeTokens() internal {
         // 0. Set the local variables
-        IERC20Vault erc20Vault = _erc20Vault;
-        address[] memory tokens = _tokens;
+        IERC20Vault localErc20Vault = erc20Vault;
+        address[] memory localTokens = tokens;
+        VaultParams[] memory vaultParams = _vaultParams;
         uint256 totalWeight = _totalWeight;
 
         uint256[] memory balances = new uint256[](1);
-        balances[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
+        balances[0] = IERC20(localTokens[0]).balanceOf(address(localErc20Vault));
 
         // 1. Distribute the funds
         uint256[] memory vaultShare = new uint256[](1);
     
         for (uint256 i = 0; i < _vaults.length; i++) {
-            uint256 vaultWeight = _vaultParams[i].weight;
+            uint256 vaultWeight = vaultParams[i].weight;
 
             if (vaultWeight == 0) {
                 continue;
@@ -254,7 +242,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             vaultShare[0] = FullMath.mulDiv(balances[0], vaultWeight, totalWeight); 
 
             // Pull funds from the erc20 vault and push the share into the i-th voltz vault
-            erc20Vault.pull(address(_vaults[i]), tokens, vaultShare, "");
+            localErc20Vault.pull(address(_vaults[i]), localTokens, vaultShare, "");
         }
     }
 
@@ -267,4 +255,9 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     function withdrawCallback() external override {
         // Do nothing on withdraw
     }
+
+    // EVENTS
+    event StrategyDeployment(IERC20Vault erc20vault, IVoltzVault[] vaults, VaultParams[] vaultParams, address admin);
+
+    event RebalancedTicks(IVoltzVault voltzVault, int24 tickLower, int24 tickUpper);
 }
