@@ -246,6 +246,16 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         }
     }
 
+    function transferPermissions(address newStrategy) external {
+        _requireAdmin();
+        IVaultRegistry vaultRegistry = erc20Vault.vaultGovernance().internalParams().registry;
+        IVoltzVault[] memory voltzVaults = _vaults;
+        for (uint256 i = 0; i < voltzVaults.length; ++i) {
+            vaultRegistry.approve(newStrategy, voltzVaults[i].nft());
+        }
+        vaultRegistry.approve(newStrategy, erc20Vault.nft());
+    }
+
     /// @notice Callback function called after for ERC20RootVault::deposit
     function depositCallback() external override {
         _distributeTokens();
