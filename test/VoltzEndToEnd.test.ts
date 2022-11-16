@@ -101,7 +101,9 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                 const startNft =
                     (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
-                let voltzVaultNfts = Array.from(Array(noOfVoltzVaults).keys()).map(val => startNft + val);
+                let voltzVaultNfts = Array.from(
+                    Array(noOfVoltzVaults).keys()
+                ).map((val) => startNft + val);
                 let erc20VaultNft = startNft + noOfVoltzVaults;
 
                 this.voltzVaultHelperSingleton = (
@@ -122,7 +124,9 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                             {
                                 tickLower: this.initialTickLow,
                                 tickUpper: this.initialTickHigh,
-                                leverageWad: utils.parseEther(leverage.toString()),
+                                leverageWad: utils.parseEther(
+                                    leverage.toString()
+                                ),
                                 marginMultiplierPostUnwindWad: utils.parseEther(
                                     marginMultiplierPostUnwind.toString()
                                 ),
@@ -169,13 +173,13 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                     contract: "LPOptimiserStrategy",
                     args: [
                         this.erc20Vault.address,
-                        this.voltzVaults.map(val => val.address),
+                        this.voltzVaults.map((val) => val.address),
                         this.voltzVaults.map((_, index) => {
                             return {
                                 sigmaWad: "100000000000000000",
                                 maxPossibleLowerBoundWad: "1500000000000000000",
                                 proximityWad: "100000000000000000",
-                                weight: (index === 0) ? "1" : "0",
+                                weight: index === 0 ? "1" : "0",
                             };
                         }),
                         this.admin.address,
@@ -266,14 +270,12 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                         tokenIds.push(tokenId);
                     }
 
-
-                    tokenIds.push(await ethers.provider.send(
-                        "eth_getStorageAt",
-                        [
+                    tokenIds.push(
+                        await ethers.provider.send("eth_getStorageAt", [
                             this.erc20Vault.address,
                             "0x4", // address of _nft
-                        ]
-                    ));
+                        ])
+                    );
 
                     await withSigner(
                         this.erc20RootVault.address,
@@ -283,7 +285,6 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                                     .connect(erc20RootVaultSigner)
                                     .approve(this.strategy.address, tokenId);
                             }
-
                         }
                     );
                 };
@@ -371,7 +372,10 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             await withSigner(vault.address, async (signer) => {
                 await this.usdc
                     .connect(signer)
-                    .approve(this.deployer.address, ethers.constants.MaxUint256);
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
 
                 await this.usdc
                     .connect(signer)
@@ -475,11 +479,21 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100059531613),
@@ -583,11 +597,21 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100062735231),
@@ -662,11 +686,21 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(10).pow(6).mul(100000),
@@ -763,11 +797,21 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100059531613),
@@ -864,11 +908,21 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(99987062685),
@@ -984,11 +1038,21 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100019094304),
@@ -1050,7 +1114,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                     .mul(leverage * 10)
             );
         }
-    
+
         for (let vault of this.voltzVaults) {
             let currentPosition = await vault.currentPosition();
             await vault.connect(this.strategySigner).rebalance({
@@ -1110,14 +1174,24 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
             await vault.updateTvl();
             await vault.settleVault(0);
         }
-        
+
         await this.erc20RootVault
             .connect(this.user1.signer)
-            .withdraw(this.user1.address, this.user1.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user1.address,
+                this.user1.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         await this.erc20RootVault
             .connect(this.user2.signer)
-            .withdraw(this.user2.address, this.user2.lpTokens, [0], vaultWithdrawalOptions);
+            .withdraw(
+                this.user2.address,
+                this.user2.lpTokens,
+                [0],
+                vaultWithdrawalOptions
+            );
 
         expect(await this.usdc.balanceOf(this.user1.address)).to.be.closeTo(
             BigNumber.from(100019094304),

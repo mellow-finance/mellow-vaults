@@ -40,7 +40,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return _vaults;
     }
 
-    /// @notice Get the parameters of a vault 
+    /// @notice Get the parameters of a vault
     /// @param index The index of the vault in _vaults
     function getVaultParams(uint256 index) public view returns (VaultParams memory) {
         return _vaultParams[index];
@@ -73,7 +73,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
         tokens = erc20vault_.vaultTokens();
         require(tokens.length == 1, ExceptionsLibrary.INVALID_TOKEN);
-    
+
         require(vaults_.length == vaultParams_.length, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < vaults_.length; i += 1) {
             _addVault(vaults_[i], vaultParams_[i]);
@@ -90,7 +90,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         require(vaultTokens.length == 1, ExceptionsLibrary.INVALID_TOKEN);
         require(vaultTokens[0] == tokens[0], ExceptionsLibrary.INVALID_TOKEN);
 
-        // 2. Add the vault 
+        // 2. Add the vault
         _vaults.push(vault_);
         _vaultParams.push(vaultParams_);
         _totalWeight += vaultParams_.weight;
@@ -102,7 +102,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @return bool True if rebalanceTicks should be called, false otherwise
     function rebalanceCheck(uint256 index, uint256 currentFixedRateWad) public view returns (bool) {
         require(index < _vaults.length, ExceptionsLibrary.INVALID_STATE);
-        
+
         // 0. Set the local variables
         VaultParams memory vaultParams = _vaultParams[index];
         IVoltzVault vault = _vaults[index];
@@ -155,7 +155,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         // 2. Convert the X96 sqrt price (scaled by 2^96) to wad 1/sqrt price (scaled by 10^18)
         uint256 sqrtRatioWad = FullMath.mulDiv(1e18, FixedPoint96.Q96, sqrtPriceX96);
 
-        // 3. Convert 1/sqrt price into fixed rate (1/price) 
+        // 3. Convert 1/sqrt price into fixed rate (1/price)
         uint256 fixedRateWad = sqrtRatioWad.mul(sqrtRatioWad);
 
         // 4. Return the fixed rate
@@ -167,7 +167,10 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
     /// @param currentFixedRateWad currentFixedRate which is passed in from a 7-day rolling avg. historical fixed rate.
     /// @return newTickLower The new lower tick for the rebalanced position
     /// @return newTickUpper The new upper tick for the rebalanced position
-    function rebalanceTicks(uint256 index, uint256 currentFixedRateWad) public returns (int24 newTickLower, int24 newTickUpper) {
+    function rebalanceTicks(uint256 index, uint256 currentFixedRateWad)
+        public
+        returns (int24 newTickLower, int24 newTickUpper)
+    {
         _requireAtLeastOperator();
         require(rebalanceCheck(index, currentFixedRateWad), ExceptionsLibrary.REBALANCE_NOT_NEEDED);
 
@@ -216,7 +219,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         return (newTickLower, newTickUpper);
     }
 
-    /// @notice This function grabs all funds from the buffer vault 
+    /// @notice This function grabs all funds from the buffer vault
     /// and distributed them to the voltz vaults according to their weights
     function _distributeTokens() internal {
         // 0. Set the local variables
@@ -230,7 +233,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
         // 1. Distribute the funds
         uint256[] memory vaultShare = new uint256[](1);
-    
+
         for (uint256 i = 0; i < _vaults.length; i++) {
             uint256 vaultWeight = vaultParams[i].weight;
 
@@ -239,7 +242,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             }
 
             // The share of i-th is vaultWeight / sum(vaultParams.weight)
-            vaultShare[0] = FullMath.mulDiv(balances[0], vaultWeight, totalWeight); 
+            vaultShare[0] = FullMath.mulDiv(balances[0], vaultWeight, totalWeight);
 
             // Pull funds from the erc20 vault and push the share into the i-th voltz vault
             localErc20Vault.pull(address(_vaults[i]), localTokens, vaultShare, "");
