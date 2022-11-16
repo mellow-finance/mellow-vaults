@@ -64,12 +64,10 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
         returns (uint256 amount0, uint256 amount1)
     {
         IUniV3Vault vault = IUniV3Vault(vaultAddress);
-        (amount0, amount1) = PositionValue.total(
-            positionManager,
-            vault.uniV3Nft(),
-            sqrtPriceX96,
-            address(vault.pool())
-        );
+        uint256 uniV3Nft = vault.uniV3Nft();
+        if (uniV3Nft != 0) {
+            (amount0, amount1) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96, address(vault.pool()));
+        }
     }
 
     function getTvls(
@@ -89,7 +87,9 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
         if (needUpdate) {
             for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
                 IUniV3Vault vault = IUniV3Vault(data.uniV3Vaults[i]);
-                vault.collectEarnings();
+                if (vault.uniV3Nft() != 0) {
+                    vault.collectEarnings();
+                }
             }
 
             if (IVault(data.moneyVault).supportsInterface(type(IAaveVault).interfaceId)) {
@@ -100,6 +100,8 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
         (erc20, ) = IVault(data.erc20Vault).tvl();
         (money, ) = IVault(data.moneyVault).tvl();
 
+        total = new uint256[](2);
+        totalUniV3 = new uint256[](2);
         total[0] = erc20[0] + money[0];
         total[1] = erc20[1] + money[1];
 
