@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../external/chainlink/IAggregatorV3.sol";
 import "./IOracle.sol";
 
 interface IChainlinkOracle is IOracle {

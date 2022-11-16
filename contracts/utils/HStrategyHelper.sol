@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
-import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/vaults/IAaveVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";

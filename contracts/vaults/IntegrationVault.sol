@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/external/erc/IERC1271.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
@@ -11,7 +10,6 @@ import "../interfaces/validators/IValidator.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
-import "./VaultGovernance.sol";
 import "./Vault.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.

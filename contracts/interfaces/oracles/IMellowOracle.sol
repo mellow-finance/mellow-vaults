@@ -1,8 +1,6 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "../external/univ3/IUniswapV3Factory.sol";
-import "../external/univ3/IUniswapV3Pool.sol";
 import "./IOracle.sol";
 import "./IUniV2Oracle.sol";
 import "./IUniV3Oracle.sol";
