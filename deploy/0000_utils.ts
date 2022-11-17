@@ -15,9 +15,15 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 // 2e10 for mainnet
 // 1e11 for polygon
 export const TRANSACTION_GAS_LIMITS = {
+<<<<<<< HEAD
     maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
     maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
 };
+=======
+    maxFeePerGas: ethers.BigNumber.from(100000000000),
+    maxPriorityFeePerGas: ethers.BigNumber.from(60000000000),
+}
+>>>>>>> deploy-improvements
 
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
@@ -28,6 +34,9 @@ export const ALLOWED_APPROVE_LIST = {
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
             "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
+            "0xD340B57AAcDD10F96FC1CF10e15921936F41E29c", // WSTETH - WETH 0.05%
+
+            "0x4585FE77225b41b697C938B018E2Ac67Ac5a20c0" // WBTC-WETH 0.05%
         ],
         uniV2: [
             "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // SwapRouter
@@ -55,6 +64,8 @@ export const ALLOWED_APPROVE_LIST = {
             "0xfe343675878100b344802A6763fd373fDeed07A4", // WBTC-ETH 0.3%
             "0x45dDa9cb7c25131DF268515131f647d726f50608", // USDC-ETH 0.05%
             "0x847b64f9d3A95e977D157866447a5C0A5dFa0Ee5", // WBTC-USDC 0.3%
+
+            "0x50eaEDB835021E4A108B7290636d62E9765cc6d7", // WBTC-USDC 0.05%
         ],
         uniV2: [
             "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", // SwapRouter
@@ -138,6 +149,7 @@ export const setupVault = async (
     const currentNft = await read("VaultRegistry", "vaultsCount");
     if (currentNft <= expectedNft) {
         log(`Deploying ${contractName.replace("Governance", "")}...`);
+        log(createVaultArgs);
         await execute(
             contractName,
             {
@@ -286,6 +298,13 @@ export const combineVaults = async (
         "vaultForNft",
         firstNft
     );
+    const vaultRegistry = await hre.ethers.getContract("VaultRegistry");
+    const erc20RootVaultGovernance = await hre.ethers.getContract("ERC20RootVaultGovernance");
+    log("Approving nfts...");
+    for (let nft of nfts) {
+        await vaultRegistry.approve(erc20RootVaultGovernance.address, nft, {...TRANSACTION_GAS_LIMITS});
+    }
+    log("Approved nfts!..");
     const vault = await hre.ethers.getContractAt("IVault", firstAddress);
     const tokens = await vault.vaultTokens();
     const coder = hre.ethers.utils.defaultAbiCoder;
@@ -333,7 +352,7 @@ export const combineVaults = async (
             log("Adding admin to depositors");
             const tx =
                 await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
-                    [admin]
+                    [admin, mStrategyAdmin, deployer]
                 );
             const [operator] = await hre.ethers.getSigners();
             const txResp = await operator.sendTransaction(tx);
