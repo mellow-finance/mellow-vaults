@@ -122,7 +122,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
-        address helper_
+        address helper_,
+        address uniV3Adapter_
     ) external {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
@@ -146,7 +147,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             params.convexAdapter,
             params.primaryToken,
             vaultTokens_[0],
-            _nft
+            _nft,
+            uniV3Adapter_
         );
 
         (primaryIndex, convexOutputToken, poolId) = _helper.verifyInstances();

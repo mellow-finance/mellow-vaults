@@ -26,6 +26,7 @@ contract GearboxHelper {
     address public convexAdapter;
     address public primaryToken;
     address public depositToken;
+    address public uniV3Adapter;
 
     bool public parametersSet;
     IGearboxVault public admin;
@@ -39,7 +40,8 @@ contract GearboxHelper {
         address convexAdapter_,
         address primaryToken_,
         address depositToken_,
-        uint256 nft_
+        uint256 nft_,
+        address uniV3Adapter_
     ) external {
         require(!parametersSet, ExceptionsLibrary.FORBIDDEN);
         creditFacade = creditFacade_;
@@ -49,6 +51,7 @@ contract GearboxHelper {
         primaryToken = primaryToken_;
         depositToken = depositToken_;
         vaultNft = nft_;
+        uniV3Adapter = uniV3Adapter_;
 
         parametersSet = true;
         admin = IGearboxVault(msg.sender);
@@ -262,7 +265,7 @@ contract GearboxHelper {
             });
 
             calls[0] = MultiCall({ // swap deposit to primary token
-                target: protocolParams.univ3Adapter,
+                target: uniV3Adapter,
                 callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
             });
 
@@ -306,11 +309,12 @@ contract GearboxHelper {
 
         calls = new MultiCall[](callsCount);
 
+        address uniV3Adapter_ = uniV3Adapter;
         calls[0] = createUniswapMulticall(
             protocolParams.crv,
             weth,
             10000,
-            protocolParams.univ3Adapter,
+            uniV3Adapter_,
             protocolParams.maxSmallPoolsSlippageD9
         );
 
@@ -318,7 +322,7 @@ contract GearboxHelper {
             protocolParams.cvx,
             weth,
             10000,
-            protocolParams.univ3Adapter,
+            uniV3Adapter_,
             protocolParams.maxSmallPoolsSlippageD9
         );
 
@@ -327,7 +331,7 @@ contract GearboxHelper {
                 weth,
                 primaryToken,
                 strategyParams.largePoolFeeUsed,
-                protocolParams.univ3Adapter,
+                uniV3Adapter_,
                 protocolParams.maxSlippageD9
             );
         }
@@ -513,7 +517,7 @@ contract GearboxHelper {
         MultiCall[] memory calls = new MultiCall[](1);
 
         calls[0] = MultiCall({
-            target: protocolParams.univ3Adapter,
+            target: uniV3Adapter,
             callData: abi.encodeWithSelector(ISwapRouter.exactOutput.selector, uniParams)
         });
 

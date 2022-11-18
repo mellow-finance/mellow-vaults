@@ -14,7 +14,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         VaultGovernance(internalParams_)
     {
         require(delayedProtocolParams_.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
-        require(delayedProtocolParams_.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -44,7 +43,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                 DelayedProtocolParams({
                     withdrawDelay: 0,
                     referralCode: 0,
-                    univ3Adapter: address(0),
                     crv: address(0),
                     cvx: address(0),
                     maxSlippageD9: 0,
@@ -103,7 +101,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     /// @inheritdoc IGearboxVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
         require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
-        require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -168,13 +165,14 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     function createVault(
         address[] memory vaultTokens_,
         address owner_,
-        address helper_
+        address helper_,
+        address uniV3Adapter_
     ) external returns (IGearboxVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
 
-        gearboxVault.initialize(nft, vaultTokens_, helper_);
+        gearboxVault.initialize(nft, vaultTokens_, helper_, uniV3Adapter_);
         vault = IGearboxVault(vaddr);
     }
 
