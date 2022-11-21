@@ -2,23 +2,14 @@ import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
-import {
-    combineVaults,
-    MAIN_NETWORKS,
-    setupVault,
-} from "./0000_utils";
+import { combineVaults, MAIN_NETWORKS, setupVault } from "./0000_utils";
 import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, read, log } = deployments;
-    const {
-        deployer,
-        usdc,
-        marginEngine,
-        mStrategyTreasury,
-        mStrategyAdmin,
-    } = await getNamedAccounts();
+    const { deployer, usdc, marginEngine, mStrategyTreasury, mStrategyAdmin } =
+        await getNamedAccounts();
 
     const tokens = [usdc].map((t) => t.toLowerCase()).sort();
     const startNft =
@@ -27,17 +18,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let voltzVaultNft = startNft;
     let erc20VaultNft = startNft + 1;
 
-    const voltzVaultHelper = (await ethers.getContract("VoltzVaultHelper")).address;
+    const voltzVaultHelper = (await ethers.getContract("VoltzVaultHelper"))
+        .address;
 
     await setupVault(hre, voltzVaultNft, "VoltzVaultGovernance", {
-        createVaultArgs: [tokens, deployer, marginEngine, voltzVaultHelper, {
-            tickLower: 0,
-            tickUpper: 60,
-            leverageWad: BigNumber.from("10000000000000000000"), // 10
-            marginMultiplierPostUnwindWad: BigNumber.from("2000000000000000000"), // 2
-            lookbackWindowInSeconds: 1209600, // 14 days
-            estimatedAPYDecimalDeltaWad: BigNumber.from("0")
-        }],
+        createVaultArgs: [
+            tokens,
+            deployer,
+            marginEngine,
+            voltzVaultHelper,
+            {
+                tickLower: 0,
+                tickUpper: 60,
+                leverageWad: BigNumber.from("10000000000000000000"), // 10
+                marginMultiplierPostUnwindWad: BigNumber.from(
+                    "2000000000000000000"
+                ), // 2
+                lookbackWindowInSeconds: 1209600, // 14 days
+                estimatedAPYDecimalDeltaWad: BigNumber.from("0"),
+            },
+        ],
     });
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
         createVaultArgs: [tokens, deployer],
@@ -54,23 +54,44 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         voltzVaultNft
     );
 
-    let strategyDeployParams = await deploy("LPOptimiserStrategy", {
+    let strategyDeployParams = await deploy("LPOptimiserStrategyRoot", {
         from: deployer,
         contract: "LPOptimiserStrategy",
-        args: [
-            erc20Vault,
-            [voltzVault],
-            [{
-                sigmaWad: "100000000000000000",
-                maxPossibleLowerBoundWad: "1500000000000000000",
-                proximityWad: "100000000000000000",
-                weight: "1"
-            }],
-            deployer,
-        ],
+        args: [deployer],
         log: true,
         autoMine: true,
     });
+
+    const lPOptimiserStrategyRoot = await hre.ethers.getContract(
+        "LPOptimiserStrategyRoot"
+    );
+
+    const params = [
+        erc20Vault,
+        [voltzVault],
+        [
+            {
+                sigmaWad: "100000000000000000",
+                maxPossibleLowerBoundWad: "1500000000000000000",
+                proximityWad: "100000000000000000",
+                weight: "1",
+            },
+        ],
+        deployer,
+    ];
+
+    const address = await lPOptimiserStrategyRoot.callStatic.createStrategy(
+        ...params
+    );
+    await lPOptimiserStrategyRoot.createStrategy(...params);
+    await deployments.save("LPOptimiserStrategy", {
+        abi: (await deployments.get("LPOptimiserStrategyRoot")).abi,
+        address,
+    });
+
+    const lPOptimiserStrategy = await hre.ethers.getContract(
+        "LPOptimiserStrategy"
+    );
 
     await combineVaults(
         hre,
@@ -79,8 +100,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         strategyDeployParams.address,
         mStrategyTreasury
     );
-
-    const lPOptimiserStrategy = await ethers.getContract("LPOptimiserStrategy");
 
     log("Transferring ownership to LPOptimiserStrategy");
 

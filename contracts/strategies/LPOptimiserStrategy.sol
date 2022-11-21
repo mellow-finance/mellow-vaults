@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVoltzVault.sol";
-import "../utils/DefaultAccessControl.sol";
+import "../utils/DefaultAccessControlLateInit.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/external/FixedPoint96.sol";
 
-contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
+contract LPOptimiserStrategy is DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
     using PRBMathUD60x18 for uint256;
 
@@ -22,7 +23,7 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
 
     // IMMUTABLES
     address[] public tokens;
-    IERC20Vault public immutable erc20Vault;
+    IERC20Vault public erc20Vault;
 
     // INTERNAL STATE
     IVoltzVault[] internal _vaults;
@@ -58,17 +59,21 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
         _totalWeight = (_totalWeight + vaultParams_.weight) - previousWeight;
     }
 
+    constructor(address admin_) {
+        DefaultAccessControlLateInit.init(admin_);
+    }
+
     /// @notice Constructor for a new contract
     /// @param erc20vault_ Reference to ERC20 Vault
     /// @param vaults_ Reference to Voltz Vaults
     /// @param vaultParams_ Rebalancing parameters of the voltz vaults
     /// @param admin_ Admin of the strategy
-    constructor(
+    function initialize(
         IERC20Vault erc20vault_,
         IVoltzVault[] memory vaults_,
         VaultParams[] memory vaultParams_,
         address admin_
-    ) DefaultAccessControl(admin_) {
+    ) public {
         erc20Vault = erc20vault_;
 
         tokens = erc20vault_.vaultTokens();
@@ -79,7 +84,19 @@ contract LPOptimiserStrategy is DefaultAccessControl, ILpCallback {
             _addVault(vaults_[i], vaultParams_[i]);
         }
 
+        DefaultAccessControlLateInit.init(admin_);
+
         emit StrategyDeployment(erc20vault_, vaults_, vaultParams_, admin_);
+    }
+
+    function createStrategy(
+        IERC20Vault erc20vault_,
+        IVoltzVault[] memory vaults_,
+        VaultParams[] memory vaultParams_,
+        address admin_
+    ) external returns (LPOptimiserStrategy strategy) {
+        strategy = LPOptimiserStrategy(Clones.clone(address(this)));
+        strategy.initialize(erc20vault_, vaults_, vaultParams_, admin_);
     }
 
     function _addVault(IVoltzVault vault_, VaultParams memory vaultParams_) internal {

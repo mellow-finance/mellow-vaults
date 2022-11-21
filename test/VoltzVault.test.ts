@@ -203,28 +203,30 @@ contract<VoltzVault, DeployOptions, CustomContext>("VoltzVault", function () {
                     );
                 }
 
-                const { deploy } = deployments;
-                let strategyDeployParams = await deploy("LPOptimiserStrategy", {
-                    from: this.deployer.address,
-                    contract: "LPOptimiserStrategy",
-                    args: [
-                        this.erc20Vault.address,
-                        [this.subject.address],
-                        [
-                            {
-                                sigmaWad: "100000000000000000",
-                                maxPossibleLowerBoundWad: "1500000000000000000",
-                                proximityWad: "100000000000000000",
-                                weight: "1",
-                            },
-                        ],
-                        this.deployer.address,
+                const lPOptimiserStrategyRoot = await hre.ethers.getContract(
+                    "LPOptimiserStrategyRoot"
+                );
+            
+                const params = [
+                    erc20Vault,
+                    [voltzVault],
+                    [
+                        {
+                            sigmaWad: "100000000000000000",
+                            maxPossibleLowerBoundWad: "1500000000000000000",
+                            proximityWad: "100000000000000000",
+                            weight: "1",
+                        },
                     ],
-                    log: true,
-                    autoMine: true,
-                });
+                    this.deployer.address,
+                ];
 
-                this.strategy = await addSigner(strategyDeployParams.address);
+                const strategyAddress = await lPOptimiserStrategyRoot.callStatic.createStrategy(
+                    ...params
+                );
+                await lPOptimiserStrategyRoot.createStrategy(...params);
+
+                this.strategy = await addSigner(strategyAddress);
 
                 this.preparePush = async (
                     value: number,

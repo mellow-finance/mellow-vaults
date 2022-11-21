@@ -168,25 +168,28 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
                     this.voltzVaults.push(voltzVault as VoltzVault);
                 }
 
-                let strategyDeployParams = await deploy("LPOptimiserStrategy", {
-                    from: this.deployer.address,
-                    contract: "LPOptimiserStrategy",
-                    args: [
-                        this.erc20Vault.address,
-                        this.voltzVaults.map((val) => val.address),
-                        this.voltzVaults.map((_, index) => {
-                            return {
-                                sigmaWad: "100000000000000000",
-                                maxPossibleLowerBoundWad: "1500000000000000000",
-                                proximityWad: "100000000000000000",
-                                weight: index === 0 ? "1" : "0",
-                            };
-                        }),
-                        this.admin.address,
-                    ],
-                    log: true,
-                    autoMine: true,
-                });
+                const lPOptimiserStrategyRoot = await hre.ethers.getContract(
+                    "LPOptimiserStrategyRoot"
+                );
+            
+                const params = [
+                    this.erc20Vault.address,
+                    this.voltzVaults.map((val) => val.address),
+                    this.voltzVaults.map((_, index) => {
+                        return {
+                            sigmaWad: "100000000000000000",
+                            maxPossibleLowerBoundWad: "1500000000000000000",
+                            proximityWad: "100000000000000000",
+                            weight: index === 0 ? "1" : "0",
+                        };
+                    }),
+                    this.admin.address,
+                ];
+
+                const strategyAddress = await lPOptimiserStrategyRoot.callStatic.createStrategy(
+                    ...params
+                );
+                await lPOptimiserStrategyRoot.createStrategy(...params);
 
                 await combineVaults(
                     hre,
@@ -225,7 +228,7 @@ contract<{}, DeployOptions, CustomContext>("Voltz E2E", function () {
 
                 this.strategy = await ethers.getContractAt(
                     "LPOptimiserStrategy",
-                    strategyDeployParams.address
+                    strategyAddress
                 );
 
                 this.strategySigner = await addSigner(this.strategy.address);
