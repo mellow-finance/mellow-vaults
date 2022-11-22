@@ -8,15 +8,6 @@ import "../utils/DefaultAccessControl.sol";
 contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
-    address public immutable token0;
-    address public immutable token1;
-    IERC20Vault public immutable erc20Vault;
-    IIntegrationVault public immutable moneyVault;
-    IUniswapV3Pool public immutable pool;
-    address public immutable router;
-    MultiPoolHStrategyRebalancer public immutable rebalancer;
-    IUniV3Vault[] public uniV3Vaults;
-
     struct MutableParams {
         int24 halfOfShortInterval;
         int24 domainLowerTick;
@@ -27,13 +18,26 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         uint256[] uniV3Weights;
     }
 
-    struct VolatileParams {
-        int24 shortLowerTick;
-        int24 shortUpperTick;
+    struct Interval {
+        int24 lowerTick;
+        int24 upperTick;
     }
 
+    // Immutable params
+    address public immutable token0;
+    address public immutable token1;
+    IERC20Vault public immutable erc20Vault;
+    IIntegrationVault public immutable moneyVault;
+    IUniswapV3Pool public immutable pool;
+    address public immutable router;
+    MultiPoolHStrategyRebalancer public immutable rebalancer;
+    IUniV3Vault[] public uniV3Vaults;
+
+    // Mutable params
     MutableParams public mutableParams;
-    VolatileParams public volatileParams;
+
+    // Internal params
+    Interval public shortInterval;
 
     constructor(
         address token0_,
@@ -42,7 +46,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         IIntegrationVault moneyVault_,
         IUniswapV3Pool pool_,
         address router_,
-        address rebalancer_,
+        MultiPoolHStrategyRebalancer rebalancer_,
         address admin,
         IUniV3Vault[] memory uniV3Vaults_
     ) DefaultAccessControl(admin) {
@@ -63,7 +67,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         require(pool_.token1() == token1_, ExceptionsLibrary.INVARIANT);
 
         require(router_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(rebalancer_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(rebalancer_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(uniV3Vaults_.length > 0, ExceptionsLibrary.INVALID_LENGTH);
 
@@ -79,7 +83,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         pool = pool_;
         router = router_;
         uniV3Vaults = uniV3Vaults_;
-        rebalancer = MultiPoolHStrategyRebalancer(rebalancer_).createRebalancer(address(this));
+        rebalancer = rebalancer_.createRebalancer(address(this));
     }
 
     function updateMutableParams(MutableParams memory newParams) external {
@@ -93,7 +97,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
     function rebalance() external {
         _requireAdmin();
         MutableParams memory mutableParams_ = mutableParams;
-        VolatileParams memory volatileParams_ = volatileParams;
+        Interval memory shortInterval_ = shortInterval;
         address[] memory tokens = new address[](2);
         tokens[0] = token0;
         tokens[1] = token1;
@@ -105,8 +109,8 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
             halfOfShortInterval: mutableParams_.halfOfShortInterval,
             domainLowerTick: mutableParams_.domainLowerTick,
             domainUpperTick: mutableParams_.domainUpperTick,
-            shortLowerTick: volatileParams_.shortLowerTick,
-            shortUpperTick: volatileParams_.shortUpperTick,
+            shortLowerTick: shortInterval_.lowerTick,
+            shortUpperTick: shortInterval_.upperTick,
             pool: pool,
             amount0ForMint: mutableParams_.amount0ForMint,
             amount1ForMint: mutableParams_.amount1ForMint,
@@ -117,7 +121,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         (bool newShortInterval, int24 lowerTick, int24 upperTick) = MultiPoolHStrategyRebalancer(rebalancer)
             .processRebalance(data);
         if (newShortInterval) {
-            volatileParams = VolatileParams({shortLowerTick: lowerTick, shortUpperTick: upperTick});
+            shortInterval = Interval({lowerTick: lowerTick, upperTick: upperTick});
         }
     }
 

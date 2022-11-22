@@ -45,7 +45,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         positionManager = positionManager_;
         DefaultAccessControlLateInit.init(admin);
     }
-    
+
     function initialize(address admin) external {
         DefaultAccessControlLateInit.init(admin);
     }
@@ -53,7 +53,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
     function createRebalancer(address admin) external returns (MultiPoolHStrategyRebalancer rebalancer) {
         rebalancer = MultiPoolHStrategyRebalancer(Clones.clone(address(this)));
         rebalancer.initialize(admin);
-    } 
+    }
 
     function _getUniV3VaultTvl(IUniV3Vault vault, uint160 sqrtPriceX96)
         private
@@ -227,12 +227,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             amountForPull[1] = expectedAmount[1] - tvl[1];
         }
         if (amountForPull[0] > 0 || amountForPull[1] > 0) {
-            uint256[] memory pulledAmounts = vault.pull(
-                address(data.erc20Vault),
-                data.tokens,
-                amountForPull,
-                ""
-            );
+            uint256[] memory pulledAmounts = vault.pull(address(data.erc20Vault), data.tokens, amountForPull, "");
             if (pulledAmounts[0] >= amountForPull[0] && pulledAmounts[1] >= amountForPull[1]) {
                 done = true;
             }
