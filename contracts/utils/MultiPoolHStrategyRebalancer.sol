@@ -3,20 +3,17 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
-
 import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "../interfaces/vaults/IIntegrationVault.sol";
+
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IAaveVault.sol";
-import "../libraries/CommonLibrary.sol";
-import "../libraries/external/TickMath.sol";
-import "../libraries/external/LiquidityAmounts.sol";
-import "../utils/DefaultAccessControlLateInit.sol";
-import "../libraries/external/PositionValue.sol";
 
-contract HStrategyRebalancer is DefaultAccessControlLateInit {
+import "../libraries/external/LiquidityAmounts.sol";
+import "../libraries/external/PositionValue.sol";
+import "../utils/DefaultAccessControlLateInit.sol";
+
+contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     uint256 public constant DENOMINATOR = 1000_000_000;
@@ -28,15 +25,15 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
 
     struct StrategyData {
         address[] tokens;
-        address[] uniV3Vaults;
-        address erc20Vault;
-        address moneyVault;
+        IUniV3Vault[] uniV3Vaults;
+        IERC20Vault erc20Vault;
+        IIntegrationVault moneyVault;
         int24 halfOfShortInterval;
         int24 domainLowerTick;
         int24 domainUpperTick;
         int24 shortLowerTick;
         int24 shortUpperTick;
-        address pool;
+        IUniswapV3Pool pool;
         uint256 amount0ForMint;
         uint256 amount1ForMint;
         address router;
@@ -44,26 +41,25 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
         uint256[] uniV3Weights;
     }
 
-    function initialize(address strategyAddress) external {
-        DefaultAccessControlLateInit.init(strategyAddress);
-    }
-
-    function createRebalancer(address strategyAddress) external returns (HStrategyRebalancer rebalancer) {
-        rebalancer = HStrategyRebalancer(Clones.clone(address(this)));
-        rebalancer.initialize(strategyAddress);
-    }
-
-    constructor(address strategyAddress, INonfungiblePositionManager positionManager_) {
-        DefaultAccessControlLateInit.init(strategyAddress);
+    constructor(INonfungiblePositionManager positionManager_, address admin) {
         positionManager = positionManager_;
+        DefaultAccessControlLateInit.init(admin);
+    }
+    
+    function initialize(address admin) external {
+        DefaultAccessControlLateInit.init(admin);
     }
 
-    function _getUniV3VaultTvl(address vaultAddress, uint160 sqrtPriceX96)
+    function createRebalancer(address admin) external returns (MultiPoolHStrategyRebalancer rebalancer) {
+        rebalancer = MultiPoolHStrategyRebalancer(Clones.clone(address(this)));
+        rebalancer.initialize(admin);
+    } 
+
+    function _getUniV3VaultTvl(IUniV3Vault vault, uint160 sqrtPriceX96)
         private
         view
         returns (uint256 amount0, uint256 amount1)
     {
-        IUniV3Vault vault = IUniV3Vault(vaultAddress);
         uint256 uniV3Nft = vault.uniV3Nft();
         if (uniV3Nft != 0) {
             (amount0, amount1) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96, address(vault.pool()));
@@ -93,7 +89,7 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
             }
 
             if (IVault(data.moneyVault).supportsInterface(type(IAaveVault).interfaceId)) {
-                IAaveVault(data.moneyVault).updateTvls();
+                IAaveVault(address(data.moneyVault)).updateTvls();
             }
         }
 
@@ -220,9 +216,9 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
     function _pullIfNeeded(
         uint256[] memory expectedAmount,
         StrategyData memory data,
-        address vault
+        IIntegrationVault vault
     ) private returns (bool done) {
-        (uint256[] memory tvl, ) = IVault(data.erc20Vault).tvl();
+        (uint256[] memory tvl, ) = data.erc20Vault.tvl();
         uint256[] memory amountForPull = new uint256[](2);
         if (tvl[0] < expectedAmount[0]) {
             amountForPull[0] = expectedAmount[0] - tvl[0];
@@ -231,8 +227,8 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
             amountForPull[1] = expectedAmount[1] - tvl[1];
         }
         if (amountForPull[0] > 0 || amountForPull[1] > 0) {
-            uint256[] memory pulledAmounts = IIntegrationVault(vault).pull(
-                data.erc20Vault,
+            uint256[] memory pulledAmounts = vault.pull(
+                address(data.erc20Vault),
                 data.tokens,
                 amountForPull,
                 ""
@@ -298,7 +294,7 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
             tokenIn: data.tokens[tokenInIndex],
             tokenOut: data.tokens[tokenInIndex ^ 1],
             fee: IUniswapV3Pool(data.pool).fee(),
-            recipient: data.erc20Vault,
+            recipient: address(data.erc20Vault),
             deadline: type(uint256).max,
             amountIn: amountIn,
             amountOutMinimum: 0,
@@ -404,14 +400,14 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
     }
 
     function _pull(
-        address from,
-        address to,
+        IIntegrationVault from,
+        IIntegrationVault to,
         uint256 amount0,
         uint256 amount1,
         uint256 expectedAmount0,
         uint256 expectedAmount1,
         address[] memory tokens
-    ) private {
+    ) private returns (uint256[] memory tokenAmounts) {
         uint256[] memory amountsForPull = new uint256[](2);
         if (amount0 > expectedAmount0) {
             amountsForPull[0] = amount0 - expectedAmount0;
@@ -422,7 +418,9 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
         }
 
         if (amountsForPull[0] > 0 || amountsForPull[1] > 0) {
-            IIntegrationVault(from).pull(to, tokens, amountsForPull, "");
+            tokenAmounts = from.pull(address(to), tokens, amountsForPull, "");
+        } else {
+            tokenAmounts = new uint256[](2);
         }
     }
 
@@ -464,8 +462,7 @@ contract HStrategyRebalancer is DefaultAccessControlLateInit {
             int24 newUpperTick
         )
     {
-        _requireAdmin();
-
+        _requireAtLeastOperator();
         IUniswapV3Pool pool = IUniswapV3Pool(data.pool);
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
         {

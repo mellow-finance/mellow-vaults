@@ -1,27 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import "../libraries/ExceptionsLibrary.sol";
-
 import "../utils/ContractMeta.sol";
+import "../utils/MultiPoolHStrategyRebalancer.sol";
 import "../utils/DefaultAccessControl.sol";
-import "../utils/HStrategyRebalancer.sol";
 
-contract HStrategyV3 is ContractMeta, DefaultAccessControl {
+contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     address public immutable token0;
     address public immutable token1;
-    address public immutable erc20Vault;
-    address public immutable moneyVault;
-    address public immutable pool;
+    IERC20Vault public immutable erc20Vault;
+    IIntegrationVault public immutable moneyVault;
+    IUniswapV3Pool public immutable pool;
     address public immutable router;
-    HStrategyRebalancer public immutable rebalancer;
-
-    // also immutable
-    address[] public uniV3Vaults;
+    MultiPoolHStrategyRebalancer public immutable rebalancer;
+    IUniV3Vault[] public uniV3Vaults;
 
     struct MutableParams {
         int24 halfOfShortInterval;
@@ -44,26 +38,40 @@ contract HStrategyV3 is ContractMeta, DefaultAccessControl {
     constructor(
         address token0_,
         address token1_,
-        address erc20Vault_,
-        address moneyVault_,
-        address pool_,
+        IERC20Vault erc20Vault_,
+        IIntegrationVault moneyVault_,
+        IUniswapV3Pool pool_,
         address router_,
         address rebalancer_,
         address admin,
-        address[] memory uniV3Vaults_
+        IUniV3Vault[] memory uniV3Vaults_
     ) DefaultAccessControl(admin) {
         require(token0_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(token1_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(erc20Vault_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(moneyVault_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(pool_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(erc20Vault_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        address[] memory erc20VaultTokens = erc20Vault_.vaultTokens();
+        require(erc20VaultTokens[0] == token0_, ExceptionsLibrary.INVARIANT);
+        require(erc20VaultTokens[1] == token1_, ExceptionsLibrary.INVARIANT);
+
+        require(address(moneyVault_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        address[] memory moneyVaultTokens = erc20Vault_.vaultTokens();
+        require(moneyVaultTokens[0] == token0_, ExceptionsLibrary.INVARIANT);
+        require(moneyVaultTokens[1] == token1_, ExceptionsLibrary.INVARIANT);
+
+        require(address(pool_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(pool_.token0() == token0_, ExceptionsLibrary.INVARIANT);
+        require(pool_.token1() == token1_, ExceptionsLibrary.INVARIANT);
+
         require(router_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(rebalancer_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(uniV3Vaults_.length > 0, ExceptionsLibrary.INVALID_LENGTH);
+
         for (uint256 i = 0; i < uniV3Vaults_.length; ++i) {
-            require(uniV3Vaults_[i] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+            require(address(uniV3Vaults_[i]) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+            require(uniV3Vaults_[i].pool() == pool_);
         }
+
         token0 = token0_;
         token1 = token1_;
         erc20Vault = erc20Vault_;
@@ -71,7 +79,7 @@ contract HStrategyV3 is ContractMeta, DefaultAccessControl {
         pool = pool_;
         router = router_;
         uniV3Vaults = uniV3Vaults_;
-        rebalancer = HStrategyRebalancer(rebalancer_).createRebalancer(address(this));
+        rebalancer = MultiPoolHStrategyRebalancer(rebalancer_).createRebalancer(address(this));
     }
 
     function updateMutableParams(MutableParams memory newParams) external {
@@ -89,7 +97,7 @@ contract HStrategyV3 is ContractMeta, DefaultAccessControl {
         address[] memory tokens = new address[](2);
         tokens[0] = token0;
         tokens[1] = token1;
-        HStrategyRebalancer.StrategyData memory data = HStrategyRebalancer.StrategyData({
+        MultiPoolHStrategyRebalancer.StrategyData memory data = MultiPoolHStrategyRebalancer.StrategyData({
             tokens: tokens,
             uniV3Vaults: uniV3Vaults,
             erc20Vault: erc20Vault,
@@ -106,14 +114,15 @@ contract HStrategyV3 is ContractMeta, DefaultAccessControl {
             erc20CapitalD: mutableParams_.erc20CapitalD,
             uniV3Weights: mutableParams_.uniV3Weights
         });
-        (bool newShortInterval, int24 lowerTick, int24 upperTick) = rebalancer.processRebalance(data);
+        (bool newShortInterval, int24 lowerTick, int24 upperTick) = MultiPoolHStrategyRebalancer(rebalancer)
+            .processRebalance(data);
         if (newShortInterval) {
             volatileParams = VolatileParams({shortLowerTick: lowerTick, shortUpperTick: upperTick});
         }
     }
 
     function _contractName() internal pure override returns (bytes32) {
-        return bytes32("HStrategyV3");
+        return bytes32("MultiPoolHStrategy");
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
