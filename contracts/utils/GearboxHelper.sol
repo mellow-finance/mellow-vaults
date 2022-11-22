@@ -8,6 +8,7 @@ import "../libraries/external/FullMath.sol";
 import "../interfaces/external/gearbox/ICreditFacade.sol";
 import "../interfaces/external/gearbox/ICurveV1Adapter.sol";
 import "../interfaces/external/gearbox/IConvexV1BaseRewardPoolAdapter.sol";
+import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
@@ -35,8 +36,6 @@ contract GearboxHelper {
     function setParameters(
         ICreditFacade creditFacade_,
         ICreditManagerV2 creditManager_,
-        address curveAdapter_,
-        address convexAdapter_,
         address primaryToken_,
         address depositToken_,
         uint256 nft_
@@ -44,14 +43,51 @@ contract GearboxHelper {
         require(!parametersSet, ExceptionsLibrary.FORBIDDEN);
         creditFacade = creditFacade_;
         creditManager = creditManager_;
-        curveAdapter = curveAdapter_;
-        convexAdapter = convexAdapter_;
         primaryToken = primaryToken_;
         depositToken = depositToken_;
         vaultNft = nft_;
 
         parametersSet = true;
         admin = IGearboxVault(msg.sender);
+    }
+
+    function setAdapters(address curveAdapter_, address convexAdapter_) external {
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+        curveAdapter = curveAdapter_;
+        convexAdapter = convexAdapter_;
+    }
+
+    function calcTvl(address creditAccount, address vaultGovernance) external view returns (uint256) {
+
+        address depositToken_ = depositToken;
+        address primaryToken_ = primaryToken;
+        ICreditManagerV2 creditManager_ = creditManager;
+
+        uint256 primaryTokenAmount = calculateClaimableRewards(creditAccount, vaultGovernance);
+
+        if (primaryToken_ != depositToken_) {
+            primaryTokenAmount += IERC20(primaryToken_).balanceOf(address(admin));
+        }
+
+        if (creditAccount != address(0)) {
+            (uint256 currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
+            (, , uint256 borrowAmountWithInterestAndFees) = creditManager_.calcCreditAccountAccruedInterest(
+                creditAccount
+            );
+
+            if (currentAllAssetsValue >= borrowAmountWithInterestAndFees) {
+                primaryTokenAmount += currentAllAssetsValue - borrowAmountWithInterestAndFees;
+            }
+        }
+
+        if (primaryToken_ == depositToken_) {
+            return primaryTokenAmount + IERC20(depositToken_).balanceOf(address(this));
+        } else {
+            IPriceOracleV2 oracle = IPriceOracleV2(creditManager_.priceOracle());
+            return oracle.convert(primaryTokenAmount, primaryToken_, depositToken_) +
+                IERC20(depositToken_).balanceOf(address(this));
+        }
+
     }
 
     function verifyInstances()
@@ -67,14 +103,15 @@ contract GearboxHelper {
         IConvexV1BaseRewardPoolAdapter convexAdapter_ = IConvexV1BaseRewardPoolAdapter(convexAdapter);
 
         poolId = convexAdapter_.pid();
+        address primaryToken_ = primaryToken;
 
-        require(creditFacade.isTokenAllowed(primaryToken), ExceptionsLibrary.INVALID_TOKEN);
+        require(creditFacade.isTokenAllowed(primaryToken_), ExceptionsLibrary.INVALID_TOKEN);
 
         bool havePrimaryTokenInCurve = false;
 
         for (uint256 i = 0; i < curveAdapter_.nCoins(); ++i) {
             address tokenI = curveAdapter_.coins(i);
-            if (tokenI == primaryToken) {
+            if (tokenI == primaryToken_) {
                 primaryIndex = int128(int256(i));
                 havePrimaryTokenInCurve = true;
             }
@@ -219,6 +256,7 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) public {
+
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         address depositToken_ = depositToken;
@@ -233,6 +271,9 @@ contract GearboxHelper {
 
         IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
             .strategyParams(vaultNft);
+
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolPerVaultParams(vaultNft);
 
         uint256 currentDepositTokenAmount = IERC20(depositToken_).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
@@ -262,7 +303,7 @@ contract GearboxHelper {
             });
 
             calls[0] = MultiCall({ // swap deposit to primary token
-                target: protocolParams.univ3Adapter,
+                target: vaultParams.univ3Adapter,
                 callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
             });
 
@@ -275,18 +316,27 @@ contract GearboxHelper {
         address creditAccount,
         address convexOutputToken
     ) public {
-        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
+        IGearboxVault admin_ = admin;
+        address primaryToken_ = primaryToken;
+
+        require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
 
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
         if (balance == 0) {
             return;
         }
 
+        IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
         IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
             .strategyParams(vaultNft);
+
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolPerVaultParams(vaultNft);
 
         MultiCall[] memory calls = new MultiCall[](1);
 
@@ -299,9 +349,9 @@ contract GearboxHelper {
 
         admin.multicall(calls);
 
-        uint256 callsCount = 3;
-        if (weth == primaryToken) {
-            callsCount = 2;
+        uint256 callsCount = 3 + underlyingContract.extraRewardsLength();
+        if (weth == primaryToken_) {
+            callsCount -= 1;
         }
 
         calls = new MultiCall[](callsCount);
@@ -310,7 +360,7 @@ contract GearboxHelper {
             protocolParams.crv,
             weth,
             10000,
-            protocolParams.univ3Adapter,
+            vaultParams.univ3Adapter,
             protocolParams.maxSmallPoolsSlippageD9
         );
 
@@ -318,21 +368,31 @@ contract GearboxHelper {
             protocolParams.cvx,
             weth,
             10000,
-            protocolParams.univ3Adapter,
+            vaultParams.univ3Adapter,
             protocolParams.maxSmallPoolsSlippageD9
         );
 
-        if (weth != primaryToken) {
-            calls[2] = createUniswapMulticall(
+        for (uint256 i = 2; i < 2 + underlyingContract.extraRewardsLength(); ++i) {
+            calls[i] = createUniswapMulticall(
+                underlyingContract.extraRewards(i),
                 weth,
-                primaryToken,
+                10000,
+                vaultParams.univ3Adapter,
+                protocolParams.maxSmallPoolsSlippageD9
+            );
+        }
+
+        if (weth != primaryToken_) {
+            calls[callsCount - 1] = createUniswapMulticall(
+                weth,
+                primaryToken_,
                 strategyParams.largePoolFeeUsed,
-                protocolParams.univ3Adapter,
+                vaultParams.univ3Adapter,
                 protocolParams.maxSlippageD9
             );
         }
 
-        admin.multicall(calls);
+        admin_.multicall(calls);
     }
 
     function withdrawFromConvex(
@@ -344,7 +404,9 @@ contract GearboxHelper {
             return;
         }
 
-        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+        IGearboxVault admin_ = admin;
+
+        require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
 
         address curveAdapter_ = curveAdapter;
 
@@ -370,7 +432,7 @@ contract GearboxHelper {
             )
         });
 
-        admin.multicall(calls);
+        admin_.multicall(calls);
     }
 
     function depositToConvex(
@@ -379,7 +441,10 @@ contract GearboxHelper {
         uint256 poolId,
         int128 primaryIndex
     ) public {
-        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
+        IGearboxVault admin_ = admin;
+
+        require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
 
         MultiCall[] memory calls = new MultiCall[](3);
 
@@ -404,7 +469,7 @@ contract GearboxHelper {
             callData: abi.encodeWithSelector(IBooster.depositAll.selector, poolId, true)
         });
 
-        admin.multicall(calls);
+        admin_.multicall(calls);
     }
 
     function adjustPosition(
@@ -417,6 +482,7 @@ contract GearboxHelper {
         address convexOutputToken,
         address creditAccount_
     ) external {
+
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         claimRewards(vaultGovernance, creditAccount_, convexOutputToken);
@@ -486,6 +552,7 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
+
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -493,6 +560,9 @@ contract GearboxHelper {
 
         IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
             .strategyParams(vaultNft);
+
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolPerVaultParams(vaultNft);
 
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
         uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.maxSlippageD9);
@@ -513,7 +583,7 @@ contract GearboxHelper {
         MultiCall[] memory calls = new MultiCall[](1);
 
         calls[0] = MultiCall({
-            target: protocolParams.univ3Adapter,
+            target: vaultParams.univ3Adapter,
             callData: abi.encodeWithSelector(ISwapRouter.exactOutput.selector, uniParams)
         });
 
@@ -524,7 +594,10 @@ contract GearboxHelper {
         external
         returns (uint256[] memory actualAmounts)
     {
-        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
+        IGearboxVault admin_ = admin;
+
+        require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
@@ -534,8 +607,6 @@ contract GearboxHelper {
 
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
-
-        IGearboxVault admin_ = admin;
 
         uint256 depositBalance = IERC20(depositToken_).balanceOf(address(admin_));
         uint256 primaryBalance = IERC20(primaryToken_).balanceOf(address(admin_));
@@ -575,27 +646,33 @@ contract GearboxHelper {
         actualAmounts[0] = amount;
     }
 
-    function openCreditAccount(
-        address creditAccount,
-        address vaultGovernance,
-        uint256 marginalFactorD9
-    ) external {
-        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
-        require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
+    function openCreditAccount(address vaultGovernance, uint256 marginalFactorD9) external {
+
+        IGearboxVault admin_ = admin;
+
+        require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
 
         ICreditFacade creditFacade_ = creditFacade;
         address primaryToken_ = primaryToken;
         address depositToken_ = depositToken;
 
-        (uint256 minBorrowingLimit, ) = creditFacade_.limits();
-        uint256 minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9)) + 1;
+        uint256 minimalNecessaryAmount;
 
-        uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin));
+        {
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolParams();
-        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
-            .strategyParams(vaultNft);
+            (uint256 minBorrowingLimit, ) = creditFacade_.limits();
+            minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9)) + 1;
+
+        }
+
+        uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin_));
+
+        IGearboxVaultGovernance vaultGovernance_ = IGearboxVaultGovernance(vaultGovernance);
+        uint256 vaultNft_ = vaultNft;
+
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = vaultGovernance_.delayedProtocolParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = vaultGovernance_.strategyParams(vaultNft_);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = vaultGovernance_.delayedProtocolPerVaultParams(vaultNft_);
 
         if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minimalNecessaryAmount) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);
@@ -605,24 +682,24 @@ contract GearboxHelper {
                 minimalNecessaryAmount - currentPrimaryTokenAmount,
                 protocolParams.maxSlippageD9
             );
-            require(IERC20(depositToken_).balanceOf(address(admin)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
+            require(IERC20(depositToken_).balanceOf(address(admin_)) >= amountInMaximum, ExceptionsLibrary.INVARIANT);
 
             ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
                 path: abi.encodePacked(primaryToken_, strategyParams.largePoolFeeUsed, depositToken_), // exactOutput arguments are in reversed order
-                recipient: address(admin),
+                recipient: address(admin_),
                 deadline: block.timestamp + 1,
                 amountOut: minimalNecessaryAmount - currentPrimaryTokenAmount,
                 amountInMaximum: amountInMaximum
             });
 
-            admin.swap(router, uniParams, depositToken_, amountInMaximum);
+            admin_.swap(router, uniParams, depositToken_, amountInMaximum);
 
-            currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin));
+            currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin_));
         }
 
         require(currentPrimaryTokenAmount >= minimalNecessaryAmount, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        admin.openCreditAccountInManager(currentPrimaryTokenAmount, protocolParams.referralCode);
-        emit CreditAccountOpened(tx.origin, msg.sender, creditManager.creditAccounts(address(admin)));
+        admin_.openCreditAccountInManager(currentPrimaryTokenAmount, vaultParams.referralCode);
+        emit CreditAccountOpened(tx.origin, msg.sender, creditManager.creditAccounts(address(admin_)));
     }
 
     /// @notice Emitted when a credit account linked to this vault is opened in Gearbox

@@ -13,8 +13,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
-        require(delayedProtocolParams_.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
-        require(delayedProtocolParams_.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -42,9 +40,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         if (_stagedDelayedProtocolParams.length == 0) {
             return
                 DelayedProtocolParams({
-                    withdrawDelay: 0,
-                    referralCode: 0,
-                    univ3Adapter: address(0),
                     crv: address(0),
                     cvx: address(0),
                     maxSlippageD9: 0,
@@ -68,8 +63,11 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     primaryToken: address(0),
                     curveAdapter: address(0),
                     convexAdapter: address(0),
+                    univ3Adapter: address(0),
                     facade: address(0),
-                    initialMarginalValueD9: 0
+                    withdrawDelay: 0,
+                    initialMarginalValueD9: 0,
+                    referralCode: 0
                 });
         }
         return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
@@ -91,8 +89,11 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     primaryToken: address(0),
                     curveAdapter: address(0),
                     convexAdapter: address(0),
+                    univ3Adapter: address(0),
                     facade: address(0),
-                    initialMarginalValueD9: 0
+                    withdrawDelay: 0,
+                    initialMarginalValueD9: 0,
+                    referralCode: 0
                 });
         }
         return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
@@ -102,8 +103,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     /// @inheritdoc IGearboxVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
-        require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
-        require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -128,7 +128,9 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.primaryToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.curveAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.convexAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
         require(params.initialMarginalValueD9 >= D9, ExceptionsLibrary.INVALID_VALUE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(

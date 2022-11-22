@@ -52,6 +52,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
         address creditAccount_ = creditAccount;
+        ICreditManagerV2 creditManager_ = creditManager;
 
         uint256 primaryTokenAmount = _helper.calculateClaimableRewards(creditAccount_, address(_vaultGovernance));
 
@@ -61,7 +62,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         if (creditAccount_ != address(0)) {
             (uint256 currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount_);
-            (, , uint256 borrowAmountWithInterestAndFees) = creditManager.calcCreditAccountAccruedInterest(
+            (, , uint256 borrowAmountWithInterestAndFees) = creditManager_.calcCreditAccountAccruedInterest(
                 creditAccount_
             );
 
@@ -75,7 +76,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         if (primaryToken_ == depositToken_) {
             minTokenAmounts[0] = primaryTokenAmount + IERC20(depositToken_).balanceOf(address(this));
         } else {
-            IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
+            IPriceOracleV2 oracle = IPriceOracleV2(creditManager_.priceOracle());
             uint256 valueDeposit = oracle.convert(primaryTokenAmount, primaryToken_, depositToken_) +
                 IERC20(depositToken_).balanceOf(address(this));
 
@@ -267,14 +268,18 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     /// @inheritdoc IGearboxVault
     function openCreditAccountInManager(uint256 currentPrimaryTokenAmount, uint16 referralCode) external {
         require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
-        IERC20(primaryToken).safeIncreaseAllowance(address(creditManager), currentPrimaryTokenAmount);
+
+        address creditManagerAddress = address(creditManager);
+        IERC20 primaryToken_ = IERC20(primaryToken);
+
+        primaryToken_.safeIncreaseAllowance(creditManagerAddress, currentPrimaryTokenAmount);
         creditFacade.openCreditAccount(
             currentPrimaryTokenAmount,
             address(this),
             uint16((marginalFactorD9 - D9) / D7),
             referralCode
         );
-        IERC20(primaryToken).approve(address(creditManager), 0);
+        primaryToken_.approve(creditManagerAddress, 0);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -368,18 +373,18 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         MultiCall[] memory calls = new MultiCall[](1);
         address creditManagerAddress = address(creditManager);
 
-        address token = depositToken;
-        uint256 amount = IERC20(token).balanceOf(address(this));
+        IERC20 token = IERC20(depositToken);
+        uint256 amount = token.balanceOf(address(this));
 
-        IERC20(token).safeIncreaseAllowance(creditManagerAddress, amount);
+        token.safeIncreaseAllowance(creditManagerAddress, amount);
 
         calls[0] = MultiCall({
             target: address(creditFacade_),
-            callData: abi.encodeWithSelector(ICreditFacade.addCollateral.selector, address(this), token, amount)
+            callData: abi.encodeWithSelector(ICreditFacade.addCollateral.selector, address(this), address(token), amount)
         });
 
         creditFacade_.multicall(calls);
-        IERC20(token).approve(creditManagerAddress, 0);
+        token.approve(creditManagerAddress, 0);
     }
 
     // --------------------------  EVENTS  --------------------------

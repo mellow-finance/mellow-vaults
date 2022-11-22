@@ -7,9 +7,6 @@ import "./IVaultGovernance.sol";
 interface IGearboxVaultGovernance is IVaultGovernance {
 
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
-    /// @param withdrawDelay The minimal time to pass between two consecutive withdrawal orders execution
-    /// @param referralCode The referral code to be used when depositing to Gearbox
-    /// @param univ3Adapter Address of the Uniswap V3 Adapter by Gearbox used by the system
     /// @param crv CRV token address
     /// @param cvx CVX token address
     /// @param maxSlippageD9 Maximal admissible slippage for swaps between primary/deposit tokes
@@ -17,9 +14,6 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param maxCurveSlippageD9 Maximal admissible slippage for add/remove liquidity in Curve pool
     /// @param uniswapRouter Address of the Uniswap V3 router
     struct DelayedProtocolParams {
-        uint256 withdrawDelay;
-        uint16 referralCode;
-        address univ3Adapter;
         address crv;
         address cvx;
         uint256 maxSlippageD9;
@@ -32,14 +26,18 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param primaryToken Primary token of the vault (i.e. the token of the Gearbox Credit Account)
     /// @param curveAdapter Address of the specific Curve pool Adapter by Gearbox used by the vault
     /// @param convexAdapter Address of the specific Convex Base Reward pool Adapter by Gearbox used by the vault
+    /// @param univ3Adapter Address of the Uniswap V3 Adapter by Gearbox used by the system
     /// @param facade Address of the Gearbox CreditFacade contract used by the vault
+    /// @param withdrawDelay The minimal time to pass between two consecutive withdrawal orders execution
     /// @param initialMarginalValueD9 Initial value of marginal factor of the vault
+    /// @param referralCode The referral code to be used when depositing to Gearbox
     struct DelayedProtocolPerVaultParams {
         address primaryToken;
-        address curveAdapter;
-        address convexAdapter;
+        address univ3Adapter;
         address facade;
+        uint256 withdrawDelay;
         uint256 initialMarginalValueD9;
+        uint16 referralCode;
     }
 
     /// @notice Params that could be changed by Strategy or Protocol Governance.

@@ -236,7 +236,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         IIntegrationVault gearboxVault_ = gearboxVault;
 
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault_).vaultGovernance()));
-        uint256 withdrawDelay = governance.delayedProtocolParams().withdrawDelay;
+        uint256 withdrawDelay = governance.delayedProtocolPerVaultParams(gearboxVault_.nft()).withdrawDelay;
 
         require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
         lastEpochChangeTimestamp = block.timestamp;
@@ -330,6 +330,18 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     function _getTokenName(bytes memory prefix, uint256 nft_) internal pure returns (string memory) {
         bytes memory number = bytes(Strings.toString(nft_));
         return string(abi.encodePacked(prefix, number));
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address,
+        uint256 amount
+    ) internal view override {
+        uint256 senderBalance = balanceOf[from] -
+                lpTokensWaitingForClaim[from] -
+                withdrawalRequests[from];
+
+        require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

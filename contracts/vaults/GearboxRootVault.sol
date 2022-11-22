@@ -133,10 +133,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         if (totalSupply == 0) {
             uint256 pullExistentialsForToken = _pullExistentials[0];
             require(tokenAmounts[0] >= 10 * pullExistentialsForToken, ExceptionsLibrary.LIMIT_UNDERFLOW);
-            require(
-                tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken,
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
+            require(tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken, ExceptionsLibrary.LIMIT_OVERFLOW);
         }
 
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
@@ -233,12 +230,13 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() public {
+
         _requireAtLeastStrategy();
 
         IIntegrationVault gearboxVault_ = gearboxVault;
 
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault_).vaultGovernance()));
-        uint256 withdrawDelay = governance.delayedProtocolParams().withdrawDelay;
+        uint256 withdrawDelay = governance.delayedProtocolPerVaultParams(gearboxVault_.nft()).withdrawDelay;
 
         require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
         lastEpochChangeTimestamp = block.timestamp;
@@ -332,6 +330,18 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     function _getTokenName(bytes memory prefix, uint256 nft_) internal pure returns (string memory) {
         bytes memory number = bytes(Strings.toString(nft_));
         return string(abi.encodePacked(prefix, number));
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address,
+        uint256 amount
+    ) internal view override {
+        uint256 senderBalance = balanceOf[from] -
+                lpTokensWaitingForClaim[from] -
+                withdrawalRequests[from];
+
+        require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

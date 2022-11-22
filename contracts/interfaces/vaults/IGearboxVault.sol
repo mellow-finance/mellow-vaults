@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./IIntegrationVault.sol";
 import "../external/gearbox/ICreditFacade.sol";
 import "../external/gearbox/IUniswapV3Adapter.sol";
+import "../../utils/GearboxHelper.sol";
 
 interface IGearboxVault is IIntegrationVault {
 
@@ -18,6 +19,9 @@ interface IGearboxVault is IIntegrationVault {
 
     /// @notice Deposit token of the vault, deposits/withdawals are made in this token (might be the same or different with primaryToken)
     function depositToken() external view returns (address);
+
+    /// @notice Gearbox vault helper
+    function helper() external view returns (GearboxHelper);
 
     /// @notice The leverage factor of the vault, multiplied by 10^9
     /// For a vault with X usd of collateral and marginal factor T >= 1, total assets (collateral + debt) should be equal to X * T 
@@ -40,12 +44,20 @@ interface IGearboxVault is IIntegrationVault {
 
     /// @notice The address of the convex token we receive after staking Convex LPs
     function convexOutputToken() external view returns (address);
+
+    /// @notice Adds an array of pools into the set of approved pools (opening a credit account is allowed by our protocol only for operations in such pools)
+    /// @param pools List of pools
+    function addPoolsToAllowList(uint256[] calldata pools) external;
+
+    /// @notice Remove an array of pools from the set of approved pools (opening a credit account is allowed by our protocol only for operations in such pools)
+    /// @param pools List of pools
+    function removeDepositorsFromAllowlist(uint256[] calldata pools) external;
     
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    /// @param helper_ address of helper
+    /// @param helper_ Address of helper
     function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
 
     /// @notice Updates marginalFactorD9 (can be successfully called only by an admin or a strategist)
@@ -62,7 +74,7 @@ interface IGearboxVault is IIntegrationVault {
     function adjustPosition() external;
 
     /// @notice Opens a new credit account on the address of the vault
-    function openCreditAccount() external;
+    function openCreditAccount(address curveAdapter, address convexAdapter) external;
 
     /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
     /// Can be successfully called only by the helper
