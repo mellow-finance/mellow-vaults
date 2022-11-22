@@ -35,6 +35,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
 
     // Mutable params
     MutableParams public mutableParams;
+    bool public newDomainParamsSet;
 
     // Internal params
     Interval public shortInterval;
@@ -71,9 +72,15 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(uniV3Vaults_.length > 0, ExceptionsLibrary.INVALID_LENGTH);
 
+        uint24 lastPoolFee = 0;
         for (uint256 i = 0; i < uniV3Vaults_.length; ++i) {
             require(address(uniV3Vaults_[i]) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-            require(uniV3Vaults_[i].pool() == pool_);
+            address[] memory uniV3VaultTokens = uniV3Vaults_[i].vaultTokens();
+            require(uniV3VaultTokens[0] == token0_, ExceptionsLibrary.INVARIANT);
+            require(uniV3VaultTokens[1] == token1_, ExceptionsLibrary.INVARIANT);
+            uint24 poolFee = uniV3Vaults_[i].pool().fee();
+            require(lastPoolFee < poolFee, ExceptionsLibrary.INVARIANT);
+            lastPoolFee = poolFee;
         }
 
         token0 = token0_;
@@ -86,16 +93,65 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         rebalancer = rebalancer_.createRebalancer(address(this));
     }
 
-    function updateMutableParams(MutableParams memory newParams) external {
+    function updateIntervalParams(MutableParams memory newStrategyParams) external {
         _requireAdmin();
+        int24 tickSpacing = pool.tickSpacing();
+        require(
+            newStrategyParams.halfOfShortInterval > 0 && (newStrategyParams.halfOfShortInterval % tickSpacing == 0),
+            ExceptionsLibrary.INVARIANT
+        );
 
-        // TODO: add more checks
+        int24 globalIntervalWidth = newStrategyParams.domainUpperTick - newStrategyParams.domainLowerTick;
+        require(
+            (newStrategyParams.domainLowerTick % tickSpacing == 0) &&
+                (newStrategyParams.domainUpperTick % tickSpacing == 0) &&
+                globalIntervalWidth > newStrategyParams.halfOfShortInterval &&
+                (globalIntervalWidth % newStrategyParams.halfOfShortInterval == 0),
+            ExceptionsLibrary.INVARIANT
+        );
 
-        mutableParams = newParams;
+        MutableParams memory strategyParams_ = mutableParams;
+        if (
+            newStrategyParams.halfOfShortInterval != strategyParams_.halfOfShortInterval ||
+            newStrategyParams.domainLowerTick != strategyParams_.domainLowerTick ||
+            newStrategyParams.domainUpperTick != strategyParams_.domainUpperTick
+        ) {
+            newDomainParamsSet = true;
+        }
+
+        mutableParams = newStrategyParams;
     }
 
-    function rebalance() external {
+    function updateMintingParams(MutableParams memory newStrategyParams) external {
         _requireAdmin();
+        require(
+            newStrategyParams.amount0ForMint > 0 &&
+                newStrategyParams.amount1ForMint > 0 &&
+                (newStrategyParams.amount0ForMint <= 1000000000) &&
+                (newStrategyParams.amount1ForMint <= 1000000000),
+            ExceptionsLibrary.INVARIANT
+        );
+        mutableParams = newStrategyParams;
+    }
+
+    function updatePoolWeights(MutableParams memory newStrategyParams) external {
+        _requireAdmin();
+        require(newStrategyParams.uniV3Weights.length == uniV3Vaults.length, ExceptionsLibrary.INVALID_LENGTH);
+
+        uint256 newTotalWeight = 0;
+        for (uint256 i = 0; i < newStrategyParams.uniV3Weights.length; ++i) {
+            newTotalWeight += newStrategyParams.uniV3Weights[i];
+        }
+        require(newTotalWeight > 0, ExceptionsLibrary.VALUE_ZERO);
+
+        mutableParams = newStrategyParams;
+    }
+
+    function rebalance(MultiPoolHStrategyRebalancer.Restrictions memory restrictions)
+        external
+        returns (MultiPoolHStrategyRebalancer.Restrictions memory actualAmounts)
+    {
+        _requireAtLeastOperator();
         MutableParams memory mutableParams_ = mutableParams;
         Interval memory shortInterval_ = shortInterval;
         address[] memory tokens = new address[](2);
@@ -118,10 +174,18 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
             erc20CapitalD: mutableParams_.erc20CapitalD,
             uniV3Weights: mutableParams_.uniV3Weights
         });
-        (bool newShortInterval, int24 lowerTick, int24 upperTick) = MultiPoolHStrategyRebalancer(rebalancer)
-            .processRebalance(data);
-        if (newShortInterval) {
-            shortInterval = Interval({lowerTick: lowerTick, upperTick: upperTick});
+
+        actualAmounts = MultiPoolHStrategyRebalancer(rebalancer).processRebalance(
+            data,
+            newDomainParamsSet,
+            restrictions
+        );
+        newDomainParamsSet = false;
+        if (actualAmounts.newShortLowerTick < actualAmounts.newShortUpperTick) {
+            shortInterval = Interval({
+                lowerTick: actualAmounts.newShortLowerTick,
+                upperTick: actualAmounts.newShortUpperTick
+            });
         }
     }
 

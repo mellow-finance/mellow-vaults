@@ -10,7 +10,7 @@ import {
     ProtocolGovernance,
     UniV3Vault,
     ISwapRouter as SwapRouterInterface,
-    HStrategyV3,
+    MultiPoolHStrategy,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -22,10 +22,15 @@ import {
 import { Contract } from "@ethersproject/contracts";
 import { expect } from "chai";
 import { TickMath } from "@uniswap/v3-sdk";
-import { MutableParamsStruct } from "./types/HStrategyV3";
 import { IUniswapV3Pool } from "./types/IUniswapV3Pool";
-import { HStrategyRebalancer } from "./types/HStrategyRebalancer";
-import { fromAscii } from "ethjs-util";
+import {
+    MultiPoolHStrategyRebalancer,
+    StrategyDataStruct,
+} from "./types/MultiPoolHStrategyRebalancer";
+import {
+    MutableParamsStruct,
+    RestrictionsStruct,
+} from "./types/MultiPoolHStrategy";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -40,7 +45,7 @@ type CustomContext = {
     swapRouter: SwapRouterInterface;
     params: any;
     pool: IUniswapV3Pool;
-    rebalancer: HStrategyRebalancer;
+    rebalancer: MultiPoolHStrategyRebalancer;
 };
 
 type DeployOptions = {};
@@ -48,434 +53,475 @@ type DeployOptions = {};
 const DENOMINATOR = BigNumber.from(10).pow(9);
 const Q96 = BigNumber.from(2).pow(96);
 
-contract<HStrategyV3, DeployOptions, CustomContext>("HStrategyV3", function () {
-    before(async () => {
-        this.deploymentFixture = deployments.createFixture(
-            async (_, __?: DeployOptions) => {
-                const { read } = deployments;
-                const { deploy } = deployments;
-                const tokens = [this.weth.address, this.usdc.address]
-                    .map((t) => t.toLowerCase())
-                    .sort();
+contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
+    "MultiPoolHStrategy",
+    function () {
+        before(async () => {
+            this.deploymentFixture = deployments.createFixture(
+                async (_, __?: DeployOptions) => {
+                    const { read } = deployments;
+                    const { deploy } = deployments;
+                    const tokens = [this.weth.address, this.usdc.address]
+                        .map((t) => t.toLowerCase())
+                        .sort();
 
-                /*
-                 * Configure & deploy subvaults
-                 */
-                const startNft =
-                    (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
-                let yearnVaultNft = startNft;
-                let erc20VaultNft = startNft + 1;
-                let uniV3Vault500Nft = startNft + 2;
-                let uniV3Vault3000Nft = startNft + 3;
-                let erc20RootVaultNft = startNft + 4;
-                await setupVault(hre, yearnVaultNft, "YearnVaultGovernance", {
-                    createVaultArgs: [tokens, this.deployer.address],
-                });
-                await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
-                    createVaultArgs: [tokens, this.deployer.address],
-                });
+                    /*
+                     * Configure & deploy subvaults
+                     */
+                    const startNft =
+                        (
+                            await read("VaultRegistry", "vaultsCount")
+                        ).toNumber() + 1;
+                    let yearnVaultNft = startNft;
+                    let erc20VaultNft = startNft + 1;
+                    let uniV3Vault500Nft = startNft + 2;
+                    let uniV3Vault3000Nft = startNft + 3;
+                    let erc20RootVaultNft = startNft + 4;
+                    await setupVault(
+                        hre,
+                        yearnVaultNft,
+                        "YearnVaultGovernance",
+                        {
+                            createVaultArgs: [tokens, this.deployer.address],
+                        }
+                    );
+                    await setupVault(
+                        hre,
+                        erc20VaultNft,
+                        "ERC20VaultGovernance",
+                        {
+                            createVaultArgs: [tokens, this.deployer.address],
+                        }
+                    );
 
-                await deploy("UniV3Helper", {
-                    from: this.deployer.address,
-                    contract: "UniV3Helper",
-                    args: [],
-                    log: true,
-                    autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS,
-                });
-
-                this.uniV3Helper = await ethers.getContract("UniV3Helper");
-
-                await setupVault(
-                    hre,
-                    uniV3Vault500Nft,
-                    "UniV3VaultGovernance",
-                    {
-                        createVaultArgs: [
-                            tokens,
-                            this.deployer.address,
-                            500,
-                            this.uniV3Helper.address,
-                        ],
-                    }
-                );
-                await setupVault(
-                    hre,
-                    uniV3Vault3000Nft,
-                    "UniV3VaultGovernance",
-                    {
-                        createVaultArgs: [
-                            tokens,
-                            this.deployer.address,
-                            3000,
-                            this.uniV3Helper.address,
-                        ],
-                    }
-                );
-
-                const erc20Vault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    erc20VaultNft
-                );
-                const yearnVault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    yearnVaultNft
-                );
-
-                const uniV3Vault500 = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    uniV3Vault500Nft
-                );
-
-                const uniV3Vault3000 = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    uniV3Vault3000Nft
-                );
-
-                this.erc20Vault = await ethers.getContractAt(
-                    "ERC20Vault",
-                    erc20Vault
-                );
-                this.yearnVault = await ethers.getContractAt(
-                    "YearnVault",
-                    yearnVault
-                );
-
-                this.uniV3Vault500 = await ethers.getContractAt(
-                    "UniV3Vault",
-                    uniV3Vault500
-                );
-
-                this.uniV3Vault3000 = await ethers.getContractAt(
-                    "UniV3Vault",
-                    uniV3Vault3000
-                );
-
-                /*
-                 * Deploy HStrategy
-                 */
-                const { uniswapV3PositionManager, uniswapV3Router } =
-                    await getNamedAccounts();
-                this.positionManager = await ethers.getContractAt(
-                    INonfungiblePositionManager,
-                    uniswapV3PositionManager
-                );
-
-                this.swapRouter = await ethers.getContractAt(
-                    ISwapRouter,
-                    uniswapV3Router
-                );
-
-                const { address: rebalancerAddress } = await deploy(
-                    "HStrategyRebalancer",
-                    {
+                    await deploy("UniV3Helper", {
                         from: this.deployer.address,
-                        contract: "HStrategyRebalancer",
-                        args: [
-                            this.deployer.address,
-                            this.positionManager.address,
-                        ],
+                        contract: "UniV3Helper",
+                        args: [],
                         log: true,
                         autoMine: true,
                         ...TRANSACTION_GAS_LIMITS,
-                    }
-                );
+                    });
 
-                this.pool = await ethers.getContractAt(
-                    "IUniswapV3Pool",
-                    await this.uniV3Vault500.pool()
-                );
+                    this.uniV3Helper = await ethers.getContract("UniV3Helper");
 
-                const { address: hStrategyV3Address } = await deploy(
-                    "HStrategyV3",
-                    {
-                        from: this.deployer.address,
-                        contract: "HStrategyV3",
-                        args: [
-                            tokens[0],
-                            tokens[1],
-                            this.erc20Vault.address,
-                            this.yearnVault.address,
-                            this.pool.address,
-                            this.swapRouter.address,
-                            rebalancerAddress,
-                            this.mStrategyAdmin.address,
-                            Array.from([
-                                this.uniV3Vault500.address,
-                                this.uniV3Vault3000.address,
-                            ]),
-                        ],
-                        log: true,
-                        autoMine: true,
-                        ...TRANSACTION_GAS_LIMITS,
-                    }
-                );
+                    await setupVault(
+                        hre,
+                        uniV3Vault500Nft,
+                        "UniV3VaultGovernance",
+                        {
+                            createVaultArgs: [
+                                tokens,
+                                this.deployer.address,
+                                500,
+                                this.uniV3Helper.address,
+                            ],
+                        }
+                    );
+                    await setupVault(
+                        hre,
+                        uniV3Vault3000Nft,
+                        "UniV3VaultGovernance",
+                        {
+                            createVaultArgs: [
+                                tokens,
+                                this.deployer.address,
+                                3000,
+                                this.uniV3Helper.address,
+                            ],
+                        }
+                    );
 
-                this.subject = await ethers.getContractAt(
-                    "HStrategyV3",
-                    hStrategyV3Address
-                );
+                    const erc20Vault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20VaultNft
+                    );
+                    const yearnVault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        yearnVaultNft
+                    );
 
-                this.rebalancer = await ethers.getContractAt(
-                    "HStrategyRebalancer",
-                    await this.subject.rebalancer()
-                );
+                    const uniV3Vault500 = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        uniV3Vault500Nft
+                    );
 
-                await this.usdc.approve(
-                    this.swapRouter.address,
-                    ethers.constants.MaxUint256
-                );
-                await this.weth.approve(
-                    this.swapRouter.address,
-                    ethers.constants.MaxUint256
-                );
+                    const uniV3Vault3000 = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        uniV3Vault3000Nft
+                    );
 
-                /*
-                 * Configure oracles for the HStrategy
-                 */
+                    this.erc20Vault = await ethers.getContractAt(
+                        "ERC20Vault",
+                        erc20Vault
+                    );
+                    this.yearnVault = await ethers.getContractAt(
+                        "YearnVault",
+                        yearnVault
+                    );
 
-                await this.subject
-                    .connect(this.mStrategyAdmin)
-                    .updateMutableParams({
+                    this.uniV3Vault500 = await ethers.getContractAt(
+                        "UniV3Vault",
+                        uniV3Vault500
+                    );
+
+                    this.uniV3Vault3000 = await ethers.getContractAt(
+                        "UniV3Vault",
+                        uniV3Vault3000
+                    );
+
+                    /*
+                     * Deploy HStrategy
+                     */
+                    const { uniswapV3PositionManager, uniswapV3Router } =
+                        await getNamedAccounts();
+                    this.positionManager = await ethers.getContractAt(
+                        INonfungiblePositionManager,
+                        uniswapV3PositionManager
+                    );
+
+                    this.swapRouter = await ethers.getContractAt(
+                        ISwapRouter,
+                        uniswapV3Router
+                    );
+
+                    const { address: rebalancerAddress } = await deploy(
+                        "MultiPoolHStrategyRebalancer",
+                        {
+                            from: this.deployer.address,
+                            contract: "MultiPoolHStrategyRebalancer",
+                            args: [
+                                this.positionManager.address,
+                                this.deployer.address,
+                            ],
+                            log: true,
+                            autoMine: true,
+                            ...TRANSACTION_GAS_LIMITS,
+                        }
+                    );
+
+                    this.pool = await ethers.getContractAt(
+                        "IUniswapV3Pool",
+                        await this.uniV3Vault500.pool()
+                    );
+
+                    const { address: hStrategyV3Address } = await deploy(
+                        "MultiPoolHStrategy",
+                        {
+                            from: this.deployer.address,
+                            contract: "MultiPoolHStrategy",
+                            args: [
+                                tokens[0],
+                                tokens[1],
+                                this.erc20Vault.address,
+                                this.yearnVault.address,
+                                this.pool.address,
+                                this.swapRouter.address,
+                                rebalancerAddress,
+                                this.mStrategyAdmin.address,
+                                Array.from([
+                                    this.uniV3Vault500.address,
+                                    this.uniV3Vault3000.address,
+                                ]),
+                            ],
+                            log: true,
+                            autoMine: true,
+                            ...TRANSACTION_GAS_LIMITS,
+                        }
+                    );
+
+                    this.subject = await ethers.getContractAt(
+                        "MultiPoolHStrategy",
+                        hStrategyV3Address
+                    );
+
+                    this.rebalancer = await ethers.getContractAt(
+                        "MultiPoolHStrategyRebalancer",
+                        await this.subject.rebalancer()
+                    );
+
+                    await this.usdc.approve(
+                        this.swapRouter.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.weth.approve(
+                        this.swapRouter.address,
+                        ethers.constants.MaxUint256
+                    );
+
+                    /*
+                     * Configure oracles for the HStrategy
+                     */
+
+                    const mutableParams = {
                         halfOfShortInterval: 1800,
                         domainLowerTick: 190800,
                         domainUpperTick: 219600,
-                        amount0ForMint: 10 ** 9,
+                        amount0ForMint: 10 ** 5,
                         amount1ForMint: 10 ** 9,
                         erc20CapitalD: 5000000,
                         uniV3Weights: [1, 1],
-                    } as MutableParamsStruct);
+                    } as MutableParamsStruct;
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateIntervalParams(mutableParams);
 
-                await combineVaults(
-                    hre,
-                    erc20RootVaultNft,
-                    [
-                        erc20VaultNft,
-                        yearnVaultNft,
-                        uniV3Vault500Nft,
-                        uniV3Vault3000Nft,
-                    ],
-                    this.rebalancer.address,
-                    this.deployer.address
-                );
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateMintingParams(mutableParams);
 
-                this.erc20RootVaultNft = erc20RootVaultNft;
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updatePoolWeights(mutableParams);
 
-                const erc20RootVault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    erc20RootVaultNft
-                );
-                this.erc20RootVault = await ethers.getContractAt(
-                    "ERC20RootVault",
-                    erc20RootVault
-                );
+                    await combineVaults(
+                        hre,
+                        erc20RootVaultNft,
+                        [
+                            erc20VaultNft,
+                            yearnVaultNft,
+                            uniV3Vault500Nft,
+                            uniV3Vault3000Nft,
+                        ],
+                        this.rebalancer.address,
+                        this.deployer.address
+                    );
 
-                await this.erc20RootVault
-                    .connect(this.admin)
-                    .addDepositorsToAllowlist([this.deployer.address]);
+                    this.erc20RootVaultNft = erc20RootVaultNft;
 
-                this.deployerUsdcAmount = BigNumber.from(10).pow(9).mul(3000);
-                this.deployerWethAmount = BigNumber.from(10).pow(18).mul(4000);
+                    const erc20RootVault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20RootVaultNft
+                    );
+                    this.erc20RootVault = await ethers.getContractAt(
+                        "ERC20RootVault",
+                        erc20RootVault
+                    );
 
-                await mint(
-                    "USDC",
-                    this.deployer.address,
-                    this.deployerUsdcAmount
-                );
-                await mint(
-                    "WETH",
-                    this.deployer.address,
-                    this.deployerWethAmount
-                );
+                    await this.erc20RootVault
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([this.deployer.address]);
 
-                for (let addr of [
-                    this.rebalancer.address,
-                    this.subject.address,
-                    this.erc20RootVault.address,
-                ]) {
-                    await this.weth.approve(addr, ethers.constants.MaxUint256);
-                    await this.usdc.approve(addr, ethers.constants.MaxUint256);
+                    this.deployerUsdcAmount = BigNumber.from(10)
+                        .pow(9)
+                        .mul(3000);
+                    this.deployerWethAmount = BigNumber.from(10)
+                        .pow(18)
+                        .mul(4000);
+
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        this.deployerUsdcAmount
+                    );
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        this.deployerWethAmount
+                    );
+
+                    for (let addr of [
+                        this.rebalancer.address,
+                        this.subject.address,
+                        this.erc20RootVault.address,
+                    ]) {
+                        await this.weth.approve(
+                            addr,
+                            ethers.constants.MaxUint256
+                        );
+                        await this.usdc.approve(
+                            addr,
+                            ethers.constants.MaxUint256
+                        );
+                    }
+
+                    this.positionManager = await ethers.getContractAt(
+                        INonfungiblePositionManager,
+                        uniswapV3PositionManager
+                    );
+
+                    const pullExistentials =
+                        await this.erc20Vault.pullExistentials();
+
+                    await this.erc20RootVault
+                        .connect(this.deployer)
+                        .deposit(
+                            [
+                                pullExistentials[0].mul(10),
+                                pullExistentials[1].mul(10),
+                            ],
+                            0,
+                            []
+                        );
+
+                    await this.erc20RootVault
+                        .connect(this.deployer)
+                        .deposit(
+                            [
+                                BigNumber.from(10).pow(10),
+                                BigNumber.from(10).pow(18),
+                            ],
+                            0,
+                            []
+                        );
+
+                    await this.usdc
+                        .connect(this.deployer)
+                        .transfer(
+                            this.subject.address,
+                            pullExistentials[0].mul(10)
+                        );
+                    await this.weth
+                        .connect(this.deployer)
+                        .transfer(
+                            this.subject.address,
+                            pullExistentials[1].mul(10)
+                        );
+
+                    await this.usdc
+                        .connect(this.deployer)
+                        .transfer(
+                            this.rebalancer.address,
+                            pullExistentials[0].mul(10)
+                        );
+                    await this.weth
+                        .connect(this.deployer)
+                        .transfer(
+                            this.rebalancer.address,
+                            pullExistentials[1].mul(10)
+                        );
+
+                    this.getSqrtRatioAtTick = (tick: number) => {
+                        return BigNumber.from(
+                            TickMath.getSqrtRatioAtTick(tick).toString()
+                        );
+                    };
+
+                    return this.subject;
                 }
+            );
+        });
 
-                this.positionManager = await ethers.getContractAt(
-                    INonfungiblePositionManager,
-                    uniswapV3PositionManager
-                );
+        beforeEach(async () => {
+            await this.deploymentFixture();
+        });
 
-                const pullExistentials =
-                    await this.erc20Vault.pullExistentials();
-
-                await this.erc20RootVault
-                    .connect(this.deployer)
-                    .deposit(
-                        [
-                            pullExistentials[0].mul(10),
-                            pullExistentials[1].mul(10),
+        describe("#rebalance", () => {
+            it("works correctly", async () => {
+                const getData = async () => {
+                    const shortInterval = await this.subject.shortInterval();
+                    const mutableParams = await this.subject.mutableParams();
+                    const data = {
+                        halfOfShortInterval: mutableParams.halfOfShortInterval,
+                        domainLowerTick: mutableParams.domainLowerTick,
+                        domainUpperTick: mutableParams.domainUpperTick,
+                        shortLowerTick: shortInterval.lowerTick,
+                        shortUpperTick: shortInterval.upperTick,
+                        erc20Vault: this.erc20Vault.address,
+                        moneyVault: this.yearnVault.address,
+                        router: await this.subject.router(),
+                        pool: await this.subject.pool(),
+                        amount0ForMint: mutableParams.amount0ForMint,
+                        amount1ForMint: mutableParams.amount1ForMint,
+                        erc20CapitalD: mutableParams.erc20CapitalD,
+                        uniV3Weights: [1, 1],
+                        tokens: await this.erc20RootVault.vaultTokens(),
+                        uniV3Vaults: [
+                            this.uniV3Vault500.address,
+                            this.uniV3Vault3000.address,
                         ],
-                        0,
-                        []
-                    );
+                    } as StrategyDataStruct;
+                    return data;
+                };
 
-                await this.erc20RootVault
-                    .connect(this.deployer)
-                    .deposit(
-                        [
-                            BigNumber.from(10).pow(10),
-                            BigNumber.from(10).pow(18),
-                        ],
-                        0,
-                        []
-                    );
-
-                await this.usdc
-                    .connect(this.deployer)
-                    .transfer(
-                        this.subject.address,
-                        pullExistentials[0].mul(10)
-                    );
-                await this.weth
-                    .connect(this.deployer)
-                    .transfer(
-                        this.subject.address,
-                        pullExistentials[1].mul(10)
-                    );
-
-                await this.usdc
-                    .connect(this.deployer)
-                    .transfer(
-                        this.rebalancer.address,
-                        pullExistentials[0].mul(10)
-                    );
-                await this.weth
-                    .connect(this.deployer)
-                    .transfer(
-                        this.rebalancer.address,
-                        pullExistentials[1].mul(10)
-                    );
-
-                this.getSqrtRatioAtTick = (tick: number) => {
-                    return BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(tick).toString()
+                const getTvls = async () => {
+                    return await this.rebalancer.callStatic.getTvls(
+                        await getData()
                     );
                 };
 
-                return this.subject;
-            }
-        );
-    });
+                await expect(
+                    this.subject.connect(this.mStrategyAdmin).rebalance({
+                        newShortLowerTick: 205200,
+                        newShortUpperTick: 208800,
+                        swappedAmounts: [0, 0],
+                        drainedAmounts: [
+                            [0, 0],
+                            [0, 0],
+                        ],
+                        pulledToUniV3: [
+                            [0, 0],
+                            [0, 0],
+                        ],
+                        pulledFromUniV3: [
+                            [0, 0],
+                            [0, 0],
+                        ],
+                        deadline: ethers.constants.MaxUint256,
+                    } as RestrictionsStruct)
+                ).not.to.be.reverted;
 
-    beforeEach(async () => {
-        await this.deploymentFixture();
-    });
+                const { sqrtPriceX96, tick } = await this.pool.slot0();
+                const sqrtC = sqrtPriceX96;
+                const priceX96 = sqrtPriceX96
+                    .pow(2)
+                    .div(BigNumber.from(2).pow(96));
 
-    describe("#constructor", () => {
-        it("deploys a new contract", async () => {
-            expect(this.subject.address).to.not.eq(
-                ethers.constants.AddressZero
-            );
+                const data = await getData();
+                const tvls = await getTvls();
+
+                const capital0 = tvls.total[0].add(
+                    tvls.total[1].mul(Q96).div(priceX96)
+                );
+
+                const sqrtA = this.getSqrtRatioAtTick(data.shortLowerTick);
+                const sqrtB = this.getSqrtRatioAtTick(data.shortUpperTick);
+                const sqrtA0 = this.getSqrtRatioAtTick(data.domainLowerTick);
+                const sqrtB0 = this.getSqrtRatioAtTick(data.domainUpperTick);
+
+                const uniV3RatioD = DENOMINATOR.mul(
+                    Q96.mul(2)
+                        .sub(sqrtA.mul(Q96).div(sqrtC))
+                        .sub(sqrtC.mul(Q96).div(sqrtB))
+                ).div(
+                    Q96.mul(2)
+                        .sub(sqrtA0.mul(Q96).div(sqrtC))
+                        .sub(sqrtC.mul(Q96).div(sqrtB0))
+                );
+                const token0RatioD = DENOMINATOR.mul(
+                    Q96.mul(sqrtC).div(sqrtB).sub(Q96.mul(sqrtC).div(sqrtB0))
+                ).div(
+                    Q96.mul(2)
+                        .sub(sqrtA0.mul(Q96).div(sqrtC))
+                        .sub(sqrtC.mul(Q96).div(sqrtB0))
+                );
+                const token1RatioD = DENOMINATOR.mul(
+                    Q96.mul(sqrtA).div(sqrtC).sub(Q96.mul(sqrtA0).div(sqrtC))
+                ).div(
+                    Q96.mul(2)
+                        .sub(sqrtA0.mul(Q96).div(sqrtC))
+                        .sub(sqrtC.mul(Q96).div(sqrtB0))
+                );
+
+                expect(
+                    uniV3RatioD.add(token0RatioD).add(token1RatioD).toNumber()
+                ).to.be.closeTo(DENOMINATOR.toNumber(), 1000);
+                const currentUniV3Capital = tvls.totalUniV3[0].add(
+                    tvls.totalUniV3[1].mul(Q96).div(priceX96)
+                );
+
+                const currentRatioD =
+                    DENOMINATOR.mul(currentUniV3Capital).div(capital0);
+                expect(currentRatioD.toNumber()).closeTo(
+                    uniV3RatioD.toNumber(),
+                    DENOMINATOR.div(100).mul(5).toNumber()
+                );
+            });
         });
-    });
-
-    describe.only("#rebalance", () => {
-        it("works correctly", async () => {
-            await this.subject.connect(this.mStrategyAdmin).rebalance();
-            await this.subject.connect(this.mStrategyAdmin).rebalance();
-            await this.subject.connect(this.mStrategyAdmin).rebalance();
-            await this.subject.connect(this.mStrategyAdmin).rebalance();
-            await this.subject.connect(this.mStrategyAdmin).rebalance();
-            // const { sqrtPriceX96 } = await this.pool.slot0();
-            // const sqrtC = sqrtPriceX96;
-            // const priceX96 = sqrtPriceX96.pow(2).div(BigNumber.from(2).pow(96));
-            // const { erc20Tvl, moneyTvl, uniV3Tvl, totalTvl } =
-            //     await this.subject.callStatic.caclulateCurrentTvl(sqrtPriceX96);
-            // const capital0 = totalTvl[0].add(
-            //     totalTvl[1].mul(Q96).div(priceX96)
-            // );
-
-            // const sqrtA = this.getSqrtRatioAtTick(
-            //     await this.subject.shortLowerTick()
-            // );
-            // const sqrtB = this.getSqrtRatioAtTick(
-            //     await this.subject.shortUpperTick()
-            // );
-            // const sqrtA0 = this.getSqrtRatioAtTick(
-            //     await this.subject.domainLowerTick()
-            // );
-            // const sqrtB0 = this.getSqrtRatioAtTick(
-            //     await this.subject.domainUpperTick()
-            // );
-            // const uniV3RatioD = DENOMINATOR.mul(
-            //     Q96.mul(2)
-            //         .sub(sqrtA.mul(Q96).div(sqrtC))
-            //         .sub(sqrtC.mul(Q96).div(sqrtB))
-            // ).div(
-            //     Q96.mul(2)
-            //         .sub(sqrtA0.mul(Q96).div(sqrtC))
-            //         .sub(sqrtC.mul(Q96).div(sqrtB0))
-            // );
-            // const token0RatioD = DENOMINATOR.mul(
-            //     Q96.mul(sqrtC).div(sqrtB).sub(Q96.mul(sqrtC).div(sqrtB0))
-            // ).div(
-            //     Q96.mul(2)
-            //         .sub(sqrtA0.mul(Q96).div(sqrtC))
-            //         .sub(sqrtC.mul(Q96).div(sqrtB0))
-            // );
-            // const token1RatioD = DENOMINATOR.mul(
-            //     Q96.mul(sqrtA).div(sqrtC).sub(Q96.mul(sqrtA0).div(sqrtC))
-            // ).div(
-            //     Q96.mul(2)
-            //         .sub(sqrtA0.mul(Q96).div(sqrtC))
-            //         .sub(sqrtC.mul(Q96).div(sqrtB0))
-            // );
-            // expect(
-            //     uniV3RatioD.add(token0RatioD).add(token1RatioD).toNumber()
-            // ).to.be.closeTo(DENOMINATOR.toNumber(), 1000);
-            // const expectedUniV3Capital = capital0
-            //     .mul(uniV3RatioD)
-            //     .div(DENOMINATOR);
-            // const expectedToken0Capital = capital0
-            //     .mul(token0RatioD)
-            //     .div(DENOMINATOR);
-            // const expectedToken1Capital = capital0
-            //     .mul(token1RatioD)
-            //     .div(DENOMINATOR);
-            // const currentUniV3Capital = uniV3Tvl[0].add(
-            //     uniV3Tvl[1].mul(Q96).div(priceX96)
-            // );
-            // expect(expectedUniV3Capital.sub(100).lte(currentUniV3Capital)).to.be
-            //     .true;
-            // expect(expectedUniV3Capital.add(100).gte(currentUniV3Capital)).to.be
-            //     .true;
-            // expect(
-            //     expectedToken0Capital.sub(100).lte(erc20Tvl[0].add(moneyTvl[0]))
-            // ).to.be.true;
-            // expect(
-            //     expectedToken0Capital.add(100).gte(erc20Tvl[0].add(moneyTvl[0]))
-            // ).to.be.true;
-            // expect(
-            //     expectedToken1Capital.sub(100).lte(erc20Tvl[1].add(moneyTvl[1]))
-            // ).to.be.true;
-            // expect(
-            //     expectedToken1Capital
-            //         .add(100)
-            //         .gte(erc20Tvl[1].add(moneyTvl[1]).mul(Q96).div(priceX96))
-            // ).to.be.true;
-            // const currentRatio0D = erc20Tvl[0]
-            //     .mul(DENOMINATOR)
-            //     .div(erc20Tvl[0].add(moneyTvl[0]));
-            // const currentRatio1D = erc20Tvl[1]
-            //     .mul(DENOMINATOR)
-            //     .div(erc20Tvl[1].add(moneyTvl[1]));
-            // const expectedRatioD = await this.subject.erc20CapitalD();
-            // expect(expectedRatioD.sub(100).lte(currentRatio0D)).to.be.true;
-            // expect(expectedRatioD.add(100).gte(currentRatio0D)).to.be.true;
-            // expect(expectedRatioD.sub(100).lte(currentRatio1D)).to.be.true;
-            // expect(expectedRatioD.add(100).gte(currentRatio1D)).to.be.true;
-        });
-    });
-});
+    }
+);
