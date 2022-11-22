@@ -99,7 +99,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     /// @inheritdoc IGearboxVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
-
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -149,7 +148,13 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     /// @inheritdoc IGearboxVaultGovernance
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
-        require(params.largePoolFeeUsed == 100 || params.largePoolFeeUsed == 500 || params.largePoolFeeUsed == 3000 || params.largePoolFeeUsed == 10000, ExceptionsLibrary.FORBIDDEN);
+        require(
+            params.largePoolFeeUsed == 100 ||
+                params.largePoolFeeUsed == 500 ||
+                params.largePoolFeeUsed == 3000 ||
+                params.largePoolFeeUsed == 10000,
+            ExceptionsLibrary.FORBIDDEN
+        );
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, params);
     }

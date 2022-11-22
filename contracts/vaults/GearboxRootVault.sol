@@ -133,7 +133,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         if (totalSupply == 0) {
             uint256 pullExistentialsForToken = _pullExistentials[0];
             require(tokenAmounts[0] >= 10 * pullExistentialsForToken, ExceptionsLibrary.LIMIT_UNDERFLOW);
-            require(tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken, ExceptionsLibrary.LIMIT_OVERFLOW);
+            require(
+                tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken,
+                ExceptionsLibrary.LIMIT_OVERFLOW
+            );
         }
 
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
@@ -230,7 +233,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() public {
-
         _requireAtLeastStrategy();
 
         IIntegrationVault gearboxVault_ = gearboxVault;
@@ -337,9 +339,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         address,
         uint256 amount
     ) internal view override {
-        uint256 senderBalance = balanceOf[from] -
-                lpTokensWaitingForClaim[from] -
-                withdrawalRequests[from];
+        uint256 senderBalance = balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from];
 
         require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
     }

@@ -45,8 +45,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 public merkleIndex;
 
     /// @inheritdoc IGearboxVault
-    uint256 public merkleTotalAmount; 
-    
+    uint256 public merkleTotalAmount;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -56,7 +55,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-
         uint256 amount = helper.calcTvl(getCreditAccount(), address(_vaultGovernance));
         minTokenAmounts = new uint256[](1);
 
@@ -135,13 +133,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
         helper = GearboxHelper(helper_);
-        helper.setParameters(
-            creditFacade,
-            creditManager,
-            params.primaryToken,
-            vaultTokens_[0],
-            _nft
-        );
+        helper.setParameters(creditFacade, creditManager, params.primaryToken, vaultTokens_[0], _nft);
     }
 
     /// @inheritdoc IGearboxVault
@@ -201,7 +193,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) public {
+    function setMerkleParameters(
+        uint256 merkleIndex_,
+        uint256 merkleTotalAmount_,
+        bytes32[] memory merkleProof_
+    ) public {
         require(_isApprovedOrOwner(msg.sender));
         merkleIndex = merkleIndex_;
         merkleTotalAmount = merkleTotalAmount_;
@@ -375,7 +371,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         calls[0] = MultiCall({
             target: address(creditFacade_),
-            callData: abi.encodeWithSelector(ICreditFacade.addCollateral.selector, address(this), address(token), amount)
+            callData: abi.encodeWithSelector(
+                ICreditFacade.addCollateral.selector,
+                address(this),
+                address(token),
+                amount
+            )
         });
 
         creditFacade_.multicall(calls);
