@@ -105,7 +105,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function removeDepositorsFromAllowlist(uint256[] calldata pools) external {
+    function removePoolsFromAllowlist(uint256[] calldata pools) external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         for (uint256 i = 0; i < pools.length; i++) {
             _poolsAllowList.remove(pools[i]);

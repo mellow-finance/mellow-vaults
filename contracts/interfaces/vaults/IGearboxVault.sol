@@ -51,7 +51,7 @@ interface IGearboxVault is IIntegrationVault {
 
     /// @notice Remove an array of pools from the set of approved pools (opening a credit account is allowed by our protocol only for operations in such pools)
     /// @param pools List of pools
-    function removeDepositorsFromAllowlist(uint256[] calldata pools) external;
+    function removePoolsFromAllowlist(uint256[] calldata pools) external;
     
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
