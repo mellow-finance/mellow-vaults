@@ -889,5 +889,106 @@ contract GearboxWETHTest is Test {
         invokeExecution();
     }
 
+    function testFailExcessiveLpTokensTransfer() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);
+
+        address recipient = getNextUserAddress();
+
+        rootVault.transfer(recipient, lpTokens / 4 * 3);
+    }
+
+    function testFailExcessiveLpTokensTransferAfterInvocation() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);
+
+        invokeExecution();
+
+        address recipient = getNextUserAddress();
+
+        rootVault.transfer(recipient, lpTokens / 4 * 3);
+    }
+
+    function testFailExcessiveLpTokensTransferAfterWithdrawal() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);
+
+        invokeExecution();
+
+        rootVault.registerWithdrawal(lpTokens / 10);
+
+        address recipient = getNextUserAddress();
+        claimMoney(recipient); 
+
+        rootVault.transfer(recipient, lpTokens / 20 * 9);
+    }
+
+    function testRegisterAfterTransferIsOkay() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        address recipient = getNextUserAddress();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.transfer(recipient, lpTokens / 2);
+
+        vm.startPrank(recipient);
+        rootVault.registerWithdrawal(lpTokens / 2);
+        vm.stopPrank();
+
+        invokeExecution();
+        vm.startPrank(recipient);
+        claimMoney(recipient); 
+        vm.stopPrank();
+
+        assertTrue(isClose(IERC20(weth).balanceOf(recipient), FIRST_DEPOSIT / 2 * weiofUsdc, 100));
+    }
+
+    function testCancelAndTransferIsOkay() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+
+        address recipient = getNextUserAddress();
+        rootVault.registerWithdrawal(lpTokens / 2);
+        rootVault.cancelWithdrawal(lpTokens / 4);
+
+        rootVault.transfer(recipient, lpTokens / 5 * 3);
+    }
+
+    function testTransferNormalAmountWorks() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpTokens = rootVault.balanceOf(address(this));
+        rootVault.registerWithdrawal(lpTokens / 2);
+
+        address recipient = getNextUserAddress();
+
+        rootVault.transfer(recipient, lpTokens / 4);
+        assertTrue(rootVault.balanceOf(address(this)) == lpTokens - lpTokens / 4);
+    }
+
+    function testFailBadPool() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        ICurveV1Adapter curveAdapter2 = ICurveV1Adapter(0xa4b2b3Dede9317fCbd9D78b8250ac44Bf23b64F4);
+        IConvexV1BaseRewardPoolAdapter convexAdapter2 = IConvexV1BaseRewardPoolAdapter(0x023e429Df8129F169f9756A4FBd885c18b05Ec2d);
+
+        invokeExecution();
+
+        gearboxVault.openCreditAccount(address(curveAdapter2), address(convexAdapter2));
+    }
     
 }

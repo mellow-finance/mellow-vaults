@@ -1164,5 +1164,37 @@ contract GearboxUSDCTest is Test {
         assertTrue(IERC20(usdc).balanceOf(recipient) > FIRST_DEPOSIT / 10 * 10**6);
     }
 
+    function testFailOpenAccountInNonApprovePool() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        invokeExecution();
+
+        curveAdapter = ICurveV1Adapter(0xbd871de345b2408f48C1B249a1dac7E0D7D4F8f9);
+        convexAdapter = IConvexV1BaseRewardPoolAdapter(0x54dF63cd15f76eB562dA001c675459De294a2390);
+
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));        
+    }
+
+    function testSeveralOptionsAreOkay() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        invokeExecution();
+
+        curveAdapter = ICurveV1Adapter(0xbd871de345b2408f48C1B249a1dac7E0D7D4F8f9);
+        convexAdapter = IConvexV1BaseRewardPoolAdapter(0x54dF63cd15f76eB562dA001c675459De294a2390);
+
+        uint256[] memory arr2 = new uint256[](1);
+        arr2[0] = 9;
+        gearboxVault.addPoolsToAllowList(arr2);
+
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));        
+
+        gearboxVault.adjustPosition();
+        vm.warp(block.timestamp + 86400 * 10);
+        invokeExecution();
+    }
+
 
 }
