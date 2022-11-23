@@ -37,7 +37,6 @@ contract MainnetDeployment is Script {
     address sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
     address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
     address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
-
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
