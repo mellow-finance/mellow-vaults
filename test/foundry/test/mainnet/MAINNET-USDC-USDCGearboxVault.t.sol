@@ -132,9 +132,6 @@ contract GearboxUSDCTest is Test {
         });
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
-            withdrawDelay: 86400 * 7,
-            referralCode: 0,
-            univ3Adapter: 0x3883500A0721c09DC824421B00F79ae524569E09,
             crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
             cvx: cvx,
             maxSlippageD9: 100000000,
@@ -192,10 +189,11 @@ contract GearboxUSDCTest is Test {
 
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
             primaryToken: usdc,
-            curveAdapter: 0xa4b2b3Dede9317fCbd9D78b8250ac44Bf23b64F4,
-            convexAdapter: 0x023e429Df8129F169f9756A4FBd885c18b05Ec2d,
+            univ3Adapter: 0x3883500A0721c09DC824421B00F79ae524569E09,
             facade: 0x61fbb350e39cc7bF22C01A469cf03085774184aa,
-            initialMarginalValueD9: 5000000000
+            withdrawDelay: 86400 * 7,
+            initialMarginalValueD9: 5000000000,
+            referralCode: 0
         });
 
         IGearboxVaultGovernance.StrategyParams memory strategyParamsB = IGearboxVaultGovernance.StrategyParams({
@@ -256,6 +254,13 @@ contract GearboxUSDCTest is Test {
         arr[0] = DegenConstants.DEGEN;
 
         gearboxVault.setMerkleParameters(0, 20, arr);
+
+        uint256[] memory arr2 = new uint256[](2);
+        arr2[0] = 25;
+        arr2[1] = 100;
+
+        gearboxVault.addPoolsToAllowList(arr2);
+
     }
 
     function testSetup() public {
@@ -308,7 +313,7 @@ contract GearboxUSDCTest is Test {
         vm.stopPrank();
 
         if (gearboxVault.getCreditAccount() == address(0)) {
-            gearboxVault.openCreditAccount();
+            gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
         }
     }
 
@@ -330,12 +335,12 @@ contract GearboxUSDCTest is Test {
     }
 
     function testFailOpenVaultWithoutFunds() public {
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
     }
 
     function testFailOpenVaultFromAnyAddress() public {
         vm.startPrank(getNextUserAddress());
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
         vm.stopPrank();
     }
 
@@ -394,11 +399,11 @@ contract GearboxUSDCTest is Test {
 
     function testFailOpenCreditAccountTwice() public {
         deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
     }
 
     function testFailOpenCreditWithoutDeposit() public {
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter)); 
     }
 
     function testTvlAfterTimePasses() public {

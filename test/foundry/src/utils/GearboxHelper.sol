@@ -3,11 +3,13 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/external/convex/ICvx.sol";
+import "../interfaces/external/convex/Interfaces.sol";
 import "../interfaces/external/gearbox/helpers/IPriceOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/external/gearbox/ICreditFacade.sol";
 import "../interfaces/external/gearbox/ICurveV1Adapter.sol";
 import "../interfaces/external/gearbox/IConvexV1BaseRewardPoolAdapter.sol";
+import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
@@ -35,8 +37,6 @@ contract GearboxHelper {
     function setParameters(
         ICreditFacade creditFacade_,
         ICreditManagerV2 creditManager_,
-        address curveAdapter_,
-        address convexAdapter_,
         address primaryToken_,
         address depositToken_,
         uint256 nft_
@@ -44,14 +44,50 @@ contract GearboxHelper {
         require(!parametersSet, ExceptionsLibrary.FORBIDDEN);
         creditFacade = creditFacade_;
         creditManager = creditManager_;
-        curveAdapter = curveAdapter_;
-        convexAdapter = convexAdapter_;
         primaryToken = primaryToken_;
         depositToken = depositToken_;
         vaultNft = nft_;
 
         parametersSet = true;
         admin = IGearboxVault(msg.sender);
+    }
+
+    function setAdapters(address curveAdapter_, address convexAdapter_) external {
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+        curveAdapter = curveAdapter_;
+        convexAdapter = convexAdapter_;
+    }
+
+    function calcTvl(address creditAccount, address vaultGovernance) external view returns (uint256) {
+        address depositToken_ = depositToken;
+        address primaryToken_ = primaryToken;
+        ICreditManagerV2 creditManager_ = creditManager;
+
+        uint256 primaryTokenAmount = calculateClaimableRewards(creditAccount, vaultGovernance);
+
+        if (primaryToken_ != depositToken_) {
+            primaryTokenAmount += IERC20(primaryToken_).balanceOf(address(admin));
+        }
+
+        if (creditAccount != address(0)) {
+            (uint256 currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
+            (, , uint256 borrowAmountWithInterestAndFees) = creditManager_.calcCreditAccountAccruedInterest(
+                creditAccount
+            );
+
+            if (currentAllAssetsValue >= borrowAmountWithInterestAndFees) {
+                primaryTokenAmount += currentAllAssetsValue - borrowAmountWithInterestAndFees;
+            }
+        }
+
+        if (primaryToken_ == depositToken_) {
+            return primaryTokenAmount + IERC20(depositToken_).balanceOf(address(admin));
+        } else {
+            IPriceOracleV2 oracle = IPriceOracleV2(creditManager_.priceOracle());
+            return
+                oracle.convert(primaryTokenAmount, primaryToken_, depositToken_) +
+                IERC20(depositToken_).balanceOf(address(admin));
+        }
     }
 
     function verifyInstances()
@@ -134,7 +170,16 @@ contract GearboxHelper {
             protocolParams.cvx
         );
 
-        return oracle.convertFromUSD(valueCrvToUsd + valueCvxToUsd, primaryToken);
+        uint256 valueExtraToUsd = 0;
+
+        IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
+        for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
+            IRewards rewardsContract = IRewards(underlyingContract.extraRewards(i));
+            uint256 valueEarned = rewardsContract.earned(creditAccount);
+            valueExtraToUsd += oracle.convertToUSD(valueEarned, rewardsContract.rewardToken());
+        }
+
+        return oracle.convertFromUSD(valueCrvToUsd + valueCvxToUsd + valueExtraToUsd, primaryToken);
     }
 
     function calculateDesiredTotalValue(
@@ -220,7 +265,6 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) public {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         address depositToken_ = depositToken;
@@ -236,8 +280,9 @@ contract GearboxHelper {
         IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
             .strategyParams(vaultNft);
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolPerVaultParams(vaultNft);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolPerVaultParams(vaultNft);
 
         uint256 currentDepositTokenAmount = IERC20(depositToken_).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
@@ -280,7 +325,6 @@ contract GearboxHelper {
         address creditAccount,
         address convexOutputToken
     ) public {
-
         IGearboxVault admin_ = admin;
         address primaryToken_ = primaryToken;
 
@@ -291,14 +335,17 @@ contract GearboxHelper {
             return;
         }
 
+        IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
+
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
         IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
             .strategyParams(vaultNft);
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolPerVaultParams(vaultNft);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolPerVaultParams(vaultNft);
 
         MultiCall[] memory calls = new MultiCall[](1);
 
@@ -311,9 +358,9 @@ contract GearboxHelper {
 
         admin.multicall(calls);
 
-        uint256 callsCount = 3;
+        uint256 callsCount = 3 + underlyingContract.extraRewardsLength();
         if (weth == primaryToken_) {
-            callsCount = 2;
+            callsCount -= 1;
         }
 
         calls = new MultiCall[](callsCount);
@@ -334,8 +381,18 @@ contract GearboxHelper {
             protocolParams.maxSmallPoolsSlippageD9
         );
 
+        for (uint256 i = 2; i < 2 + underlyingContract.extraRewardsLength(); ++i) {
+            calls[i] = createUniswapMulticall(
+                address(IRewards(underlyingContract.extraRewards(i - 2)).rewardToken()),
+                weth,
+                10000,
+                vaultParams.univ3Adapter,
+                protocolParams.maxSmallPoolsSlippageD9
+            );
+        }
+
         if (weth != primaryToken_) {
-            calls[2] = createUniswapMulticall(
+            calls[callsCount - 1] = createUniswapMulticall(
                 weth,
                 primaryToken_,
                 strategyParams.largePoolFeeUsed,
@@ -393,7 +450,6 @@ contract GearboxHelper {
         uint256 poolId,
         int128 primaryIndex
     ) public {
-
         IGearboxVault admin_ = admin;
 
         require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
@@ -434,7 +490,6 @@ contract GearboxHelper {
         address convexOutputToken,
         address creditAccount_
     ) external {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         claimRewards(vaultGovernance, creditAccount_, convexOutputToken);
@@ -504,7 +559,6 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -513,8 +567,9 @@ contract GearboxHelper {
         IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
             .strategyParams(vaultNft);
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolPerVaultParams(vaultNft);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolPerVaultParams(vaultNft);
 
         uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
         uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.maxSlippageD9);
@@ -546,7 +601,6 @@ contract GearboxHelper {
         external
         returns (uint256[] memory actualAmounts)
     {
-
         IGearboxVault admin_ = admin;
 
         require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
@@ -598,12 +652,10 @@ contract GearboxHelper {
         actualAmounts[0] = amount;
     }
 
-    function openCreditAccount(address creditAccount, address vaultGovernance, uint256 marginalFactorD9) external {
-
+    function openCreditAccount(address vaultGovernance, uint256 marginalFactorD9) external {
         IGearboxVault admin_ = admin;
 
         require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
-        require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 
         ICreditFacade creditFacade_ = creditFacade;
         address primaryToken_ = primaryToken;
@@ -612,10 +664,8 @@ contract GearboxHelper {
         uint256 minimalNecessaryAmount;
 
         {
-
             (uint256 minBorrowingLimit, ) = creditFacade_.limits();
             minimalNecessaryAmount = FullMath.mulDiv(minBorrowingLimit, D9, (marginalFactorD9 - D9)) + 1;
-
         }
 
         uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin_));
@@ -625,7 +675,8 @@ contract GearboxHelper {
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = vaultGovernance_.delayedProtocolParams();
         IGearboxVaultGovernance.StrategyParams memory strategyParams = vaultGovernance_.strategyParams(vaultNft_);
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = vaultGovernance_.delayedProtocolPerVaultParams(vaultNft_);
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = vaultGovernance_
+            .delayedProtocolPerVaultParams(vaultNft_);
 
         if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minimalNecessaryAmount) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);

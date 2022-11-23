@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/external/convex/ICvx.sol";
+import "../interfaces/external/convex/Interfaces.sol";
 import "../interfaces/external/gearbox/helpers/IPriceOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/external/gearbox/ICreditFacade.sol";
@@ -80,12 +81,12 @@ contract GearboxHelper {
         }
 
         if (primaryToken_ == depositToken_) {
-            return primaryTokenAmount + IERC20(depositToken_).balanceOf(address(this));
+            return primaryTokenAmount + IERC20(depositToken_).balanceOf(address(admin));
         } else {
             IPriceOracleV2 oracle = IPriceOracleV2(creditManager_.priceOracle());
             return
                 oracle.convert(primaryTokenAmount, primaryToken_, depositToken_) +
-                IERC20(depositToken_).balanceOf(address(this));
+                IERC20(depositToken_).balanceOf(address(admin));
         }
     }
 
@@ -169,7 +170,16 @@ contract GearboxHelper {
             protocolParams.cvx
         );
 
-        return oracle.convertFromUSD(valueCrvToUsd + valueCvxToUsd, primaryToken);
+        uint256 valueExtraToUsd = 0;
+
+        IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
+        for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
+            IRewards rewardsContract = IRewards(underlyingContract.extraRewards(i));
+            uint256 valueEarned = rewardsContract.earned(creditAccount);
+            valueExtraToUsd += oracle.convertToUSD(valueEarned, rewardsContract.rewardToken());
+        }
+
+        return oracle.convertFromUSD(valueCrvToUsd + valueCvxToUsd + valueExtraToUsd, primaryToken);
     }
 
     function calculateDesiredTotalValue(
@@ -373,7 +383,7 @@ contract GearboxHelper {
 
         for (uint256 i = 2; i < 2 + underlyingContract.extraRewardsLength(); ++i) {
             calls[i] = createUniswapMulticall(
-                underlyingContract.extraRewards(i),
+                address(IRewards(underlyingContract.extraRewards(i - 2)).rewardToken()),
                 weth,
                 10000,
                 vaultParams.univ3Adapter,

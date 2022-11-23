@@ -33,8 +33,6 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param referralCode The referral code to be used when depositing to Gearbox
     struct DelayedProtocolPerVaultParams {
         address primaryToken;
-        address curveAdapter;
-        address convexAdapter;
         address univ3Adapter;
         address facade;
         uint256 withdrawDelay;

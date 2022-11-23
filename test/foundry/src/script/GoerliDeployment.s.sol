@@ -97,9 +97,6 @@ contract GoerliDeployment is Script {
         });
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
-            withdrawDelay: 60,
-            referralCode: 0,
-            univ3Adapter: 0xA417851DdbB7095c76Ac69Df6152c86F01328C5f,
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
             maxSlippageD9: 100000000,
@@ -152,10 +149,11 @@ contract GoerliDeployment is Script {
 
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
             primaryToken: usdc,
-            curveAdapter: 0x6f3A4EFe549c2Fa397ed40FD4DE9FEB922C0FE31,
-            convexAdapter: 0xb26586F4a9F157117651Da1A6DFa5b310790dd8A,
+            univ3Adapter: 0xA417851DdbB7095c76Ac69Df6152c86F01328C5f,
             facade: 0xCd290664b0AE34D8a7249bc02d7bdbeDdf969820,
-            initialMarginalValueD9: 3000000000
+            withdrawDelay: 60,
+            initialMarginalValueD9: 3000000000,
+            referralCode: 0
         });
 
         IGearboxVaultGovernance.StrategyParams memory strategyParamsB = IGearboxVaultGovernance.StrategyParams({

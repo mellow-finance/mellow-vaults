@@ -4,16 +4,21 @@ pragma solidity 0.8.9;
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
 import "../interfaces/IDegenDistributor.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     uint256 public constant D9 = 10**9;
     uint256 public constant D7 = 10**7;
 
-    GearboxHelper internal _helper;
-
     bytes32[] private _merkleProof;
+
+    EnumerableSet.UintSet private _poolsAllowList;
+
+    /// @inheritdoc IGearboxVault
+    GearboxHelper public helper;
 
     /// @inheritdoc IGearboxVault
     ICreditFacade public creditFacade;
@@ -40,49 +45,20 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 public merkleIndex;
 
     /// @inheritdoc IGearboxVault
-    uint256 public merkleTotalAmount; 
-    
+    uint256 public merkleTotalAmount;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    function approvedPools() external view returns (uint256[] memory) {
+        return _poolsAllowList.values();
+    }
+
     /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        address creditAccount = getCreditAccount();
-
-        address depositToken_ = depositToken;
-        address primaryToken_ = primaryToken;
-        address creditAccount_ = creditAccount;
-        ICreditManagerV2 creditManager_ = creditManager;
-
-        uint256 primaryTokenAmount = _helper.calculateClaimableRewards(creditAccount_, address(_vaultGovernance));
-
-        if (primaryToken_ != depositToken_) {
-            primaryTokenAmount += IERC20(primaryToken_).balanceOf(address(this));
-        }
-
-        if (creditAccount_ != address(0)) {
-            (uint256 currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount_);
-            (, , uint256 borrowAmountWithInterestAndFees) = creditManager_.calcCreditAccountAccruedInterest(
-                creditAccount_
-            );
-
-            if (currentAllAssetsValue >= borrowAmountWithInterestAndFees) {
-                primaryTokenAmount += currentAllAssetsValue - borrowAmountWithInterestAndFees;
-            }
-        }
-
+        uint256 amount = helper.calcTvl(getCreditAccount(), address(_vaultGovernance));
         minTokenAmounts = new uint256[](1);
 
-        if (primaryToken_ == depositToken_) {
-            minTokenAmounts[0] = primaryTokenAmount + IERC20(depositToken_).balanceOf(address(this));
-        } else {
-            IPriceOracleV2 oracle = IPriceOracleV2(creditManager_.priceOracle());
-            uint256 valueDeposit = oracle.convert(primaryTokenAmount, primaryToken_, depositToken_) +
-                IERC20(depositToken_).balanceOf(address(this));
-
-            minTokenAmounts[0] = valueDeposit;
-        }
-
+        minTokenAmounts[0] = amount;
         maxTokenAmounts = minTokenAmounts;
     }
 
@@ -111,7 +87,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         if (creditAccount == address(0)) {
             return 0;
         }
-        return _helper.calculateClaimableRewards(creditAccount, address(_vaultGovernance));
+        return helper.calculateClaimableRewards(creditAccount, address(_vaultGovernance));
     }
 
     function getMerkleProof() external view returns (bytes32[] memory) {
@@ -119,6 +95,22 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IGearboxVault
+    function addPoolsToAllowList(uint256[] calldata pools) external {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        for (uint256 i = 0; i < pools.length; i++) {
+            _poolsAllowList.add(pools[i]);
+        }
+    }
+
+    /// @inheritdoc IGearboxVault
+    function removeDepositorsFromAllowlist(uint256[] calldata pools) external {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        for (uint256 i = 0; i < pools.length; i++) {
+            _poolsAllowList.remove(pools[i]);
+        }
+    }
 
     /// @inheritdoc IGearboxVault
     function initialize(
@@ -140,23 +132,16 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditFacade = ICreditFacade(params.facade);
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
-        _helper = GearboxHelper(helper_);
-        _helper.setParameters(
-            creditFacade,
-            creditManager,
-            params.curveAdapter,
-            params.convexAdapter,
-            params.primaryToken,
-            vaultTokens_[0],
-            _nft
-        );
-
-        (primaryIndex, convexOutputToken, poolId) = _helper.verifyInstances();
+        helper = GearboxHelper(helper_);
+        helper.setParameters(creditFacade, creditManager, params.primaryToken, vaultTokens_[0], _nft);
     }
 
     /// @inheritdoc IGearboxVault
-    function openCreditAccount() external {
+    function openCreditAccount(address curveAdapter, address convexAdapter) external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        address creditAccount = getCreditAccount();
+        require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
+
         address degenNft = creditFacade.degenNFT();
 
         if (degenNft != address(0)) {
@@ -167,8 +152,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             }
         }
 
-        address creditAccount = getCreditAccount();
-        _helper.openCreditAccount(creditAccount, address(_vaultGovernance), marginalFactorD9);
+        helper.setAdapters(curveAdapter, convexAdapter);
+        (primaryIndex, convexOutputToken, poolId) = helper.verifyInstances();
+        require(_poolsAllowList.contains(poolId), ExceptionsLibrary.FORBIDDEN);
+        helper.openCreditAccount(address(_vaultGovernance), marginalFactorD9);
 
         if (depositToken != primaryToken) {
             creditFacade.enableToken(depositToken);
@@ -186,7 +173,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         uint256 marginalFactorD9_ = marginalFactorD9;
-        GearboxHelper helper_ = _helper;
+        GearboxHelper helper_ = helper;
 
         (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = helper_.calculateDesiredTotalValue(
             creditAccount,
@@ -206,7 +193,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) public {
+    function setMerkleParameters(
+        uint256 merkleIndex_,
+        uint256 merkleTotalAmount_,
+        bytes32[] memory merkleProof_
+    ) public {
         require(_isApprovedOrOwner(msg.sender));
         merkleIndex = merkleIndex_;
         merkleTotalAmount = merkleTotalAmount_;
@@ -219,7 +210,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(marginalFactorD9_ > D9, ExceptionsLibrary.INVALID_VALUE);
 
         address creditAccount_ = getCreditAccount();
-        GearboxHelper helper_ = _helper;
+        GearboxHelper helper_ = helper;
 
         if (creditAccount_ == address(0)) {
             marginalFactorD9 = marginalFactorD9_;
@@ -248,7 +239,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function multicall(MultiCall[] memory calls) external {
-        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
         creditFacade.multicall(calls);
     }
 
@@ -259,7 +250,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address token,
         uint256 amount
     ) external {
-        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
         IERC20(token).safeIncreaseAllowance(address(router), amount);
         router.exactOutput(uniParams);
         IERC20(token).approve(address(router), 0);
@@ -267,7 +258,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function openCreditAccountInManager(uint256 currentPrimaryTokenAmount, uint16 referralCode) external {
-        require(msg.sender == address(_helper), ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
 
         address creditManagerAddress = address(creditManager);
         IERC20 primaryToken_ = IERC20(primaryToken);
@@ -311,7 +302,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
         address creditAccount_ = getCreditAccount();
-        GearboxHelper helper_ = _helper;
+        GearboxHelper helper_ = helper;
 
         if (creditAccount_ == address(0)) {
             actualTokenAmounts = helper_.pullFromAddress(tokenAmounts[0], address(_vaultGovernance));
@@ -380,7 +371,12 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         calls[0] = MultiCall({
             target: address(creditFacade_),
-            callData: abi.encodeWithSelector(ICreditFacade.addCollateral.selector, address(this), address(token), amount)
+            callData: abi.encodeWithSelector(
+                ICreditFacade.addCollateral.selector,
+                address(this),
+                address(token),
+                amount
+            )
         });
 
         creditFacade_.multicall(calls);

@@ -22,6 +22,7 @@ import "../../src/vaults/ERC20RootVaultGovernance.sol";
 import "../../src/utils/GearboxHelper.sol";
 
 import "../../src/external/ConvexBaseRewardPool.sol";
+import "../../src/external/VirtualPool.sol";
 import "../../src/interfaces/IDegenNft.sol";
 
 import "../helpers/MockDistributor.t.sol";
@@ -135,9 +136,6 @@ contract GearboxWETHTest is Test {
         });
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
-            withdrawDelay: 86400 * 7,
-            referralCode: 0,
-            univ3Adapter: 0xed5B30F8604c0743F167a19F42fEC8d284963a7D,
             crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
             cvx: cvx,
             maxSlippageD9: 10000000,
@@ -195,10 +193,11 @@ contract GearboxWETHTest is Test {
 
         IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
             primaryToken: weth,
-            curveAdapter: 0x0Ad2Fc10F677b2554553DaF80312A98ddb38f8Ef,
-            convexAdapter: 0xeBE13b1874bB2913CB3F04d4231837867ff77999,
+            univ3Adapter: 0xed5B30F8604c0743F167a19F42fEC8d284963a7D,
             facade: 0xC59135f449bb623501145443c70A30eE648Fa304,
-            initialMarginalValueD9: 5000000000
+            withdrawDelay: 86400 * 7,
+            initialMarginalValueD9: 5000000000,
+            referralCode: 0
         });
 
         IGearboxVaultGovernance.StrategyParams memory strategyParamsB = IGearboxVaultGovernance.StrategyParams({
@@ -258,6 +257,12 @@ contract GearboxWETHTest is Test {
         arr[0] = DegenConstants.DEGEN;
 
         gearboxVault.setMerkleParameters(0, 20, arr);
+
+        uint256[] memory arr2 = new uint256[](2);
+        arr2[0] = 25;
+        arr2[1] = 100;
+
+        gearboxVault.addPoolsToAllowList(arr2);
     }
 
     function setZeroFees() public {
@@ -316,7 +321,7 @@ contract GearboxWETHTest is Test {
         rootVault.deposit(amounts, 0, "");
         if (gearboxVault.getCreditAccount() == address(0)) {
             vm.stopPrank();
-            gearboxVault.openCreditAccount();
+            gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
         }
     }
 
@@ -348,6 +353,18 @@ contract GearboxWETHTest is Test {
             vm.warp(block.timestamp + rewardsPool.duration() + 1);
         }
         vm.stopPrank();
+
+        VirtualBalanceRewardPool rewardsPool2 = VirtualBalanceRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
+        vm.startPrank(rewardsPool2.operator());
+        for (uint256 i = 0; i < 1; ++i) {
+            uint256 multiplier = 1;
+            if (i == 0) {
+                multiplier = 1000;
+            }
+            rewardsPool2.queueNewRewards(10**18);
+            vm.warp(block.timestamp + rewardsPool2.duration() + 1);
+        }
+        vm.stopPrank();
     }
 
     function tvl() public returns (uint256) {
@@ -363,12 +380,12 @@ contract GearboxWETHTest is Test {
     }
 
     function testFailOpenVaultWithoutFunds() public {
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
     }
 
     function testFailOpenVaultFromAnyAddress() public {
         vm.startPrank(getNextUserAddress());
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
         vm.stopPrank();
     }
 
@@ -430,11 +447,11 @@ contract GearboxWETHTest is Test {
 
     function testFailOpenCreditAccountTwice() public {
         deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
     }
 
     function testFailOpenCreditWithoutDeposit() public {
-        gearboxVault.openCreditAccount();
+        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
     }
 
     function testTvlAfterTimePasses() public {
@@ -547,8 +564,13 @@ contract GearboxWETHTest is Test {
         creditAccount = gearboxVault.getCreditAccount();
         gearboxVault.adjustPosition();
 
+        IBaseRewardPool kek = IBaseRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
+        console2.log(kek.rewardPerToken());
+
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         runRewarding(); // +1.63% on staking money
+
+        console2.log(kek.rewardPerToken());
 
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
         gearboxVault.adjustPosition();

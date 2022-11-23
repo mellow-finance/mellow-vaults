@@ -61,8 +61,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
             return
                 DelayedProtocolPerVaultParams({
                     primaryToken: address(0),
-                    curveAdapter: address(0),
-                    convexAdapter: address(0),
                     univ3Adapter: address(0),
                     facade: address(0),
                     withdrawDelay: 0,
@@ -87,8 +85,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
             return
                 DelayedProtocolPerVaultParams({
                     primaryToken: address(0),
-                    curveAdapter: address(0),
-                    convexAdapter: address(0),
                     univ3Adapter: address(0),
                     facade: address(0),
                     withdrawDelay: 0,
@@ -103,7 +99,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     /// @inheritdoc IGearboxVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
-
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -126,8 +121,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
         require(params.primaryToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.curveAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.convexAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
@@ -155,7 +148,13 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     /// @inheritdoc IGearboxVaultGovernance
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
-        require(params.largePoolFeeUsed == 100 || params.largePoolFeeUsed == 500 || params.largePoolFeeUsed == 3000 || params.largePoolFeeUsed == 10000, ExceptionsLibrary.FORBIDDEN);
+        require(
+            params.largePoolFeeUsed == 100 ||
+                params.largePoolFeeUsed == 500 ||
+                params.largePoolFeeUsed == 3000 ||
+                params.largePoolFeeUsed == 10000,
+            ExceptionsLibrary.FORBIDDEN
+        );
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, params);
     }

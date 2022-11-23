@@ -3,17 +3,12 @@
 // (c) Gearbox Holdings, 2021
 pragma solidity ^0.8.9;
 
-import "./Interfaces.sol";
+import "../interfaces/external/convex/Interfaces.sol";
+import "./interfaces/MathUtil.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-library MathUtil {
-  function min(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
-}
 
 contract BaseRewardPool {
   using SafeMath for uint256;
