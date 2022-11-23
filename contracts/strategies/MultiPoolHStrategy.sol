@@ -8,6 +8,8 @@ import "../utils/DefaultAccessControl.sol";
 contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
+    uint256 public constant DENOMINATOR = 1000_000_000;
+
     struct MutableParams {
         int24 halfOfShortInterval;
         int24 domainLowerTick;
@@ -93,7 +95,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         rebalancer = rebalancer_.createRebalancer(address(this));
     }
 
-    function updateIntervalParams(MutableParams memory newStrategyParams) external {
+    function updateMutableParams(MutableParams memory newStrategyParams) external {
         _requireAdmin();
         int24 tickSpacing = pool.tickSpacing();
         require(
@@ -119,11 +121,10 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
             newDomainParamsSet = true;
         }
 
-        mutableParams = newStrategyParams;
-    }
-
-    function updateMintingParams(MutableParams memory newStrategyParams) external {
-        _requireAdmin();
+        require(
+            newStrategyParams.erc20CapitalD > 0 && newStrategyParams.erc20CapitalD < DENOMINATOR,
+            ExceptionsLibrary.INVARIANT
+        );
         require(
             newStrategyParams.amount0ForMint > 0 &&
                 newStrategyParams.amount1ForMint > 0 &&
@@ -131,11 +132,6 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
                 (newStrategyParams.amount1ForMint <= 1000000000),
             ExceptionsLibrary.INVARIANT
         );
-        mutableParams = newStrategyParams;
-    }
-
-    function updatePoolWeights(MutableParams memory newStrategyParams) external {
-        _requireAdmin();
         require(newStrategyParams.uniV3Weights.length == uniV3Vaults.length, ExceptionsLibrary.INVALID_LENGTH);
 
         uint256 newTotalWeight = 0;
@@ -143,7 +139,6 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
             newTotalWeight += newStrategyParams.uniV3Weights[i];
         }
         require(newTotalWeight > 0, ExceptionsLibrary.VALUE_ZERO);
-
         mutableParams = newStrategyParams;
     }
 

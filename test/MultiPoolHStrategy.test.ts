@@ -37,6 +37,7 @@ type CustomContext = {
     yearnVault: YearnVault;
     uniV3Vault500: UniV3Vault;
     uniV3Vault3000: UniV3Vault;
+    uniV3Vault10000: UniV3Vault;
     erc20RootVault: ERC20RootVault;
     positionManager: Contract;
     protocolGovernance: ProtocolGovernance;
@@ -76,7 +77,8 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     let erc20VaultNft = startNft + 1;
                     let uniV3Vault500Nft = startNft + 2;
                     let uniV3Vault3000Nft = startNft + 3;
-                    let erc20RootVaultNft = startNft + 4;
+                    let uniV3Vault10000Nft = startNft + 4;
+                    let erc20RootVaultNft = startNft + 5;
                     await setupVault(
                         hre,
                         yearnVaultNft,
@@ -132,6 +134,20 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         }
                     );
 
+                    await setupVault(
+                        hre,
+                        uniV3Vault10000Nft,
+                        "UniV3VaultGovernance",
+                        {
+                            createVaultArgs: [
+                                tokens,
+                                this.deployer.address,
+                                10000,
+                                this.uniV3Helper.address,
+                            ],
+                        }
+                    );
+
                     const erc20Vault = await read(
                         "VaultRegistry",
                         "vaultForNft",
@@ -155,6 +171,12 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         uniV3Vault3000Nft
                     );
 
+                    const uniV3Vault10000 = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        uniV3Vault10000Nft
+                    );
+
                     this.erc20Vault = await ethers.getContractAt(
                         "ERC20Vault",
                         erc20Vault
@@ -172,6 +194,11 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     this.uniV3Vault3000 = await ethers.getContractAt(
                         "UniV3Vault",
                         uniV3Vault3000
+                    );
+
+                    this.uniV3Vault10000 = await ethers.getContractAt(
+                        "UniV3Vault",
+                        uniV3Vault10000
                     );
 
                     /*
@@ -209,6 +236,16 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         await this.uniV3Vault500.pool()
                     );
 
+                    this.weights = [
+                        1, 1,
+                        // 1
+                    ];
+                    this.uniV3Vaults = Array.from([
+                        this.uniV3Vault500.address,
+                        this.uniV3Vault3000.address,
+                        // this.uniV3Vault10000.address
+                    ]);
+
                     const { address: hStrategyV3Address } = await deploy(
                         "MultiPoolHStrategy",
                         {
@@ -223,10 +260,7 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                                 this.swapRouter.address,
                                 rebalancerAddress,
                                 this.mStrategyAdmin.address,
-                                Array.from([
-                                    this.uniV3Vault500.address,
-                                    this.uniV3Vault3000.address,
-                                ]),
+                                this.uniV3Vaults,
                             ],
                             log: true,
                             autoMine: true,
@@ -264,19 +298,11 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         amount0ForMint: 10 ** 5,
                         amount1ForMint: 10 ** 9,
                         erc20CapitalD: 5000000,
-                        uniV3Weights: [1, 1],
+                        uniV3Weights: this.weights,
                     } as MutableParamsStruct;
                     await this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateIntervalParams(mutableParams);
-
-                    await this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateMintingParams(mutableParams);
-
-                    await this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updatePoolWeights(mutableParams);
+                        .updateMutableParams(mutableParams);
 
                     await combineVaults(
                         hre,
@@ -286,6 +312,7 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                             yearnVaultNft,
                             uniV3Vault500Nft,
                             uniV3Vault3000Nft,
+                            uniV3Vault10000Nft,
                         ],
                         this.rebalancer.address,
                         this.deployer.address
@@ -429,12 +456,9 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         amount0ForMint: mutableParams.amount0ForMint,
                         amount1ForMint: mutableParams.amount1ForMint,
                         erc20CapitalD: mutableParams.erc20CapitalD,
-                        uniV3Weights: [1, 1],
+                        uniV3Weights: this.weights,
                         tokens: await this.erc20RootVault.vaultTokens(),
-                        uniV3Vaults: [
-                            this.uniV3Vault500.address,
-                            this.uniV3Vault3000.address,
-                        ],
+                        uniV3Vaults: this.uniV3Vaults,
                     } as StrategyDataStruct;
                     return data;
                 };
@@ -445,28 +469,23 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     );
                 };
 
-                await expect(
-                    this.subject.connect(this.mStrategyAdmin).rebalance({
-                        newShortLowerTick: 205200,
-                        newShortUpperTick: 208800,
-                        swappedAmounts: [0, 0],
-                        drainedAmounts: [
-                            [0, 0],
-                            [0, 0],
-                        ],
-                        pulledToUniV3: [
-                            [0, 0],
-                            [0, 0],
-                        ],
-                        pulledFromUniV3: [
-                            [0, 0],
-                            [0, 0],
-                        ],
-                        deadline: ethers.constants.MaxUint256,
-                    } as RestrictionsStruct)
-                ).not.to.be.reverted;
+                let emptyArrays = [];
+                for (var i = 0; i < this.uniV3Vaults.length; i++) {
+                    emptyArrays.push([0, 0]);
+                }
+                // await expect(
+                await this.subject.connect(this.mStrategyAdmin).rebalance({
+                    newShortLowerTick: 205200,
+                    newShortUpperTick: 208800,
+                    swappedAmounts: [0, 0],
+                    drainedAmounts: emptyArrays,
+                    pulledToUniV3: emptyArrays,
+                    pulledFromUniV3: emptyArrays,
+                    deadline: ethers.constants.MaxUint256,
+                } as RestrictionsStruct);
+                // ).not.to.be.reverted;
 
-                const { sqrtPriceX96, tick } = await this.pool.slot0();
+                const { sqrtPriceX96 } = await this.pool.slot0();
                 const sqrtC = sqrtPriceX96;
                 const priceX96 = sqrtPriceX96
                     .pow(2)
