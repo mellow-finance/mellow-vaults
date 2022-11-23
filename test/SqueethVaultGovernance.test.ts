@@ -16,7 +16,7 @@ import {
 } from "./types/SqueethVaultGovernance";
 import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { contract } from "./library/setup";
-import { address } from "./library/property";
+import { address, uint256 } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Arbitrary, integer, tuple } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
@@ -79,9 +79,11 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
                         "SqueethVaultGovernance",
                         address
                     );
+                    this.params = await this.subject.delayedProtocolParams()
                     this.ownerSigner = await addSigner(randomAddress());
                     this.strategySigner = await addSigner(randomAddress());
-
+                    
+                    this.helper = await ethers.getContract("SqueethHelper");
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
@@ -98,8 +100,7 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
                             ).toNumber() + 1;
 
                         await this.subject.createVault(
-                            this.ownerSigner.address,
-                            true
+                            this.ownerSigner.address
                         );
                         await this.vaultRegistry
                             .connect(this.ownerSigner)
@@ -115,11 +116,17 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
             this.startTimestamp = now();
             await sleepTo(this.startTimestamp);
         });
-
+        
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-            tuple(address, address).map(([controller, router]) => ({
+            tuple(address, address, uint256, uint256, address, address, address, uint256).map(([controller, router, slippageD9, twapPeriod, wethBorrowPool, oracle, squeethHelper, maxDepegD9]) => ({
                 controller,
                 router,
+                slippageD9,
+                twapPeriod,
+                wethBorrowPool,
+                oracle,
+                squeethHelper,
+                maxDepegD9
             }));
 
         describe("#constructor", () => {
@@ -188,14 +195,18 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
             describe("edge cases", () => {
                 describe("when controller address is 0", () => {
                     it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
-                        const uniswapV3Router = (await getNamedAccounts())
-                            .uniswapV3Router;
                         await expect(
                             this.subject
                                 .connect(this.admin)
                                 .stageDelayedProtocolParams({
                                     controller: ethers.constants.AddressZero,
-                                    router: uniswapV3Router,
+                                    router: this.params.router,
+                                    slippageD9: this.params.slippageD9,
+                                    twapPeriod: this.params.twapPeriod,
+                                    wethBorrowPool: this.params.wethBorrowPool,
+                                    oracle: this.params.oracle,
+                                    squeethHelper: this.params.squeethHelper,
+                                    maxDepegD9: this.params.maxDepegD9
                                 })
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
@@ -203,14 +214,18 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
 
                 describe("when router address is 0", () => {
                     it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
-                        const squeethController = (await getNamedAccounts())
-                            .squeethController;
                         await expect(
                             this.subject
                                 .connect(this.admin)
                                 .stageDelayedProtocolParams({
-                                    controller: squeethController,
+                                    controller: this.params.squeethController,
                                     router: ethers.constants.AddressZero,
+                                    slippageD9: this.params.slippageD9,
+                                    twapPeriod: this.params.twapPeriod,
+                                    wethBorrowPool: this.params.wethBorrowPool,
+                                    oracle: this.params.oracle,
+                                    squeethHelper: this.params.squeethHelper,
+                                    maxDepegD9: this.params.maxDepegD9
                                 })
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
@@ -247,7 +262,7 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
                 tokenAddresses: string[],
                 owner: string
             ) => {
-                await this.subject.connect(deployer).createVault(owner, true);
+                await this.subject.connect(deployer).createVault(owner);
             },
             ...this,
         });

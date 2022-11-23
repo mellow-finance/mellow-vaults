@@ -13,8 +13,8 @@ import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: BigNumber.from(10).pow(9).mul(30),
-    maxPriorityFeePerGas: BigNumber.from(10).pow(9).mul(10),
+    maxFeePerGas: BigNumber.from(10).pow(9).mul(40),
+    maxPriorityFeePerGas: BigNumber.from(10).pow(9).mul(20),
 }
 
 export const ALLOWED_APPROVE_LIST = {
@@ -24,8 +24,9 @@ export const ALLOWED_APPROVE_LIST = {
 
             "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8", // USDC-ETH 0.3%
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
-            "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
+            // "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
+            "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // wPowerPerpPool
         ],
         uniV2: [
             "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // SwapRouter
@@ -43,6 +44,19 @@ export const ALLOWED_APPROVE_LIST = {
             "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
             "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
             "0x6b175474e89094c44da98b954eedeac495271d0f", // DAI
+        ]
+    },
+    goerli: {
+        uniV3: [
+            "0xe592427a0aece92de3edee1f18e0157c05861564", // SwapRouter
+            "0x8875e9c9EB0909da889CB3Dc9c5E8856093CE6b0", // wethBorrowPool
+            "0xB583EA07699c5DEa4da084056273d6D70c2C3309", // wPowerPerpPool
+
+        ],
+        erc20: [
+            "0x6b03eD2C590A301E79E2DCe4ce38D7402dC6735a", // wPowerPerp
+            "0x0719E63EC564259D1ce12dFFD1431269C7d88700", // opynWETH
+            "0x12F263aAB668aF8918E077af3a9CF5da9fE9A417", // opynUSDC
         ]
     },
     polygon: {
@@ -137,7 +151,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
-                gasLimit: BigNumber.from(10).pow(6).mul(3),
+                gasLimit: BigNumber.from(10).pow(6).mul(20),
                 ...TRANSACTION_GAS_LIMITS
             },  
             "createVault",
@@ -284,8 +298,8 @@ export const combineVaults = async (
     const vault = await hre.ethers.getContractAt("IVault", firstAddress);
     const tokens = await vault.vaultTokens();
     const coder = hre.ethers.utils.defaultAbiCoder;
-    rootVaultName = rootVaultName == null ? "ERC20RootVault" : "RequestableRootVault";
-    let governanceName = rootVaultName == "ERC20RootVault" ? "ERC20RootVaultGovernance" : "ERC20RootVaultGovernanceForRequestable";
+    rootVaultName = rootVaultName == null ? "ERC20RootVault" : rootVaultName;
+    let governanceName = rootVaultName == "RequestableRootVault" ? "ERC20RootVaultGovernanceForRequestable" : "ERC20RootVaultGovernance";
     const {
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
@@ -326,27 +340,40 @@ export const combineVaults = async (
         );
         if (!depositors.includes(admin)) {
             log("Adding admin to depositors");
-            const tx =
+            let tx =
                 await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
                     [admin]
                 );
-            const [operator] = await hre.ethers.getSigners();
-            const txResp = await operator.sendTransaction(tx);
+            let [operator] = await hre.ethers.getSigners();
+            let txResp = await operator.sendTransaction(tx);
             log(
                 `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
             );
-            const receipt = await txResp.wait(1);
+            let receipt = await txResp.wait(1);
+            log("Transaction confirmed");
+            log("Adding deployer to depositors");
+            tx =
+                await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
+                    [deployer]
+                );
+            [operator] = await hre.ethers.getSigners();
+            txResp = await operator.sendTransaction(tx);
+            log(
+                `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
+            );
+            receipt = await txResp.wait(1);
             log("Transaction confirmed");
         }
     }
     await deployments.execute(
         "VaultRegistry",
-        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
+        { from: deployer, autoMine: true, gasLimit: BigNumber.from(10).pow(7),...TRANSACTION_GAS_LIMITS },
         "transferFrom(address,address,uint256)",
         deployer,
         mStrategyAdmin,
         expectedNft
     );
+    console.log("transfered " + expectedNft.toString() + " to " + mStrategyAdmin);
 };
 
 export const toObject = (obj: any) =>

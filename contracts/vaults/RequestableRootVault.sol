@@ -312,7 +312,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
     }
 
     function setWithdrawDelay(uint256 withdrawDelay_) external {
-        // _requireAtLeastStrategy();
+        _requireAtLeastStrategy();
         withdrawDelay = withdrawDelay_;
     }
 

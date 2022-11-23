@@ -372,6 +372,22 @@ contract<CommonTest, DeployOptions, CustomContext>("CommonTest", function () {
         });
     });
 
+
+    describe.only("#sqrt2", () => {
+        it("succesfull, x in [2 ** 128, 2 ** 256)", async () => {
+            for (let i = 0; i < 20000; i++) {
+                let x = genBigNumberBetweenPowersOfTwo(255, 256);
+                let sqrt = await this.subject.sqrt(x);
+                let sqrt2 = await this.subject.sqrt2(x);
+                if (!sqrt.eq(sqrt2)) {
+                    console.log(x.toString());
+                    console.log(sqrt.toString());
+                    console.log(sqrt2.toString());
+                }
+            }
+        });
+    });
+
     describe("#recoverSigner", () => {
         it("succesfull recover", async () => {
             const messageHash = ethers.utils

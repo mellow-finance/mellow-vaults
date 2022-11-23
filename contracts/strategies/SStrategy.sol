@@ -18,7 +18,6 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/OracleLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../utils/ContractMeta.sol";
-import "hardhat/console.sol";
 
 contract SStrategy is ContractMeta, DefaultAccessControl {
     using SafeERC20 for IERC20;
@@ -33,7 +32,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
     address public mainToken;
     address public wPowerPerp;
-    IRequestableRootVault rootVault;
+    IRequestableRootVault public rootVault;
     IERC20Vault public erc20Vault;
     ISqueethVault public squeethVault;
     ISwapRouter public swapRouter;
@@ -105,11 +104,12 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    function startCycleMocked(uint256 strike, uint256 optionPriceUSD, address safe)
+    function startCycleMocked(uint256 strike, uint256 optionPriceUSD, address safe, bool reusePerp)
         external
     {
         _requireAtLeastOperator(); 
-        require(startingTime == 0, ExceptionsLibrary.INVARIANT);
+        require(startingTime == 0, ExceptionsLibrary.INVALID_STATE);
+        require(rootVault.isClosed() == false, ExceptionsLibrary.INVALID_STATE);
         
         uint256 currentPrice = squeethVault.twapIndexPrice();
         uint256 strikeD9 = FullMath.mulDiv(strike, D9, currentPrice);
@@ -120,13 +120,8 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
             uint256 optionPriceETH = FullMath.mulDiv(optionPriceUSD, D18, currentPrice);
             uint256 shortMoney = FullMath.mulDiv(totalMoney, D9, D9 + FullMath.mulDiv(amountD9, optionPriceETH, D18));
 
-            console.log("to squeeth:");
-            console.log(shortMoney);
-            console.log("to option:");
-            console.log(totalMoney - shortMoney);
-
             squeethVault.externalCall(mainToken_, TRANSFER_SELECTOR, abi.encode(safe, totalMoney - shortMoney));
-            squeethVault.takeShort(strategyParams.upperHedgingThresholdD9, true);
+            squeethVault.takeShort(strategyParams.upperHedgingThresholdD9, reusePerp);
 
             startingOptionPriceETH = optionPriceETH;
             startingOptionMoney = totalMoney - shortMoney;  
@@ -140,31 +135,41 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
 
     function endCycleMocked(address safe)
-        external
+        external returns (uint256 priceChangeD9, bool isLiquidated)
     {
         _requireAtLeastOperator();
         require(startingTime != 0, ExceptionsLibrary.INVARIANT);
 
         uint256 currentPrice = squeethVault.twapIndexPrice();
-        uint256 priceChangeD9 = FullMath.mulDiv(currentPrice, D9, startingPrice);
-        if (priceChangeD9 < liquidationParams.lowerLiquidationThresholdD9 || priceChangeD9 > liquidationParams.upperLiquidationThresholdD9) {
-            rootVault.shutdown();
-        } else {
-            require(block.timestamp - startingTime >= strategyParams.cycleDuration, ExceptionsLibrary.INVARIANT);
+        priceChangeD9 = FullMath.mulDiv(currentPrice, D9, startingPrice);
+
+        if (rootVault.isClosed() == false) {
+            if (priceChangeD9 < liquidationParams.lowerLiquidationThresholdD9 || priceChangeD9 > liquidationParams.upperLiquidationThresholdD9) {
+                rootVault.shutdown();
+                isLiquidated = true;
+            } else {
+                require(block.timestamp - startingTime >= strategyParams.cycleDuration, ExceptionsLibrary.INVARIANT);
+            }
         }
         squeethVault.closeShort();
+
+        if (IERC20(wPowerPerp).balanceOf(address(this)) > D9) {
+            SwapParams memory swapSqueeth = SwapParams({
+                tokenIn: wPowerPerp,
+                tokenOut: mainToken,
+                pool: squeethPool,
+                spender: squeethVault,
+                recipient: address(squeethVault)
+            });
+            _swapToToken(swapSqueeth);
+        }
 
         address mainToken_ = mainToken;
         int256 singleOptionProfitETH =  int256(D18) - int256(FullMath.mulDiv(startingOptionStrikeD9, D18, priceChangeD9));
         
-        console.log("change");
-        console.logInt(singleOptionProfitETH);
-
         if (singleOptionProfitETH > 0) {
             uint256 optionProfit = FullMath.mulDiv(startingOptionMoney, uint256(singleOptionProfitETH), startingOptionPriceETH);
-            console.log("profit");
-            console.log(optionProfit);
-            require(IERC20(mainToken).allowance(safe, address(squeethVault)) >= optionProfit, ExceptionsLibrary.LIMIT_UNDERFLOW);
+            require(IERC20(mainToken_).allowance(safe, address(squeethVault)) >= optionProfit, ExceptionsLibrary.LIMIT_UNDERFLOW);
             squeethVault.externalCall(mainToken_, TRANSFER_FROM_SELECTOR, abi.encode(safe, squeethVault, optionProfit));
         }
         rootVault.invokeExecution();
@@ -275,7 +280,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
         ISwapRouter swapRouter_ = swapRouter;
         bytes memory data = abi.encode(uniswapParams);
         params.spender.externalCall(params.tokenIn, APPROVE_SELECTOR, abi.encode(address(swapRouter_), amountIn)); // approve
-        bytes memory routerResult = erc20Vault.externalCall(address(swapRouter_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
+        bytes memory routerResult = params.spender.externalCall(address(swapRouter_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
         params.spender.externalCall(params.tokenIn, APPROVE_SELECTOR, abi.encode(address(swapRouter_), 0)); // reset allowance
         amountOut = abi.decode(routerResult, (uint256));
     }

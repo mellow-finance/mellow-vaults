@@ -7,6 +7,8 @@ pragma abicoder v2;
 import {VaultLib} from "../../../libraries/external/VaultLib.sol";
 
 interface IController {
+    function TWAP_PERIOD() external view returns (uint32);
+
     function ethQuoteCurrencyPool() external view returns (address);
 
     function feeRate() external view returns (uint256);

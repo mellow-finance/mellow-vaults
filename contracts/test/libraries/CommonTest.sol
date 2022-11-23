@@ -21,12 +21,16 @@ contract CommonTest {
         return CommonLibrary.projectTokenAmounts(tokens, tokensToProject, tokenAmountsToProject);
     }
 
-    function sqrtX96(uint256 xX96) external pure returns (uint256) {
+    function sqrtX96(uint256 xX96) external view returns (uint256) {
         return CommonLibrary.sqrtX96(xX96);
     }
 
-    function sqrt(uint256 x) external pure returns (uint256) {
+    function sqrt(uint256 x) external view returns (uint256) {
         return CommonLibrary.sqrt(x);
+    }
+
+    function sqrt2(uint256 x) external view returns (uint256) {
+        return CommonLibrary.sqrt2(x);
     }
 
     function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) external pure returns (address) {

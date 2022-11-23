@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./IIntegrationVault.sol";
 import "../external/squeeth/IController.sol";
 import "../external/univ3/ISwapRouter.sol";
+import "../../utils/SqueethHelper.sol";
 
 interface ISqueethVault is IIntegrationVault {
 
@@ -24,13 +25,9 @@ interface ISqueethVault is IIntegrationVault {
     
     function wPowerPerpDebt() external view returns (uint256);
 
-    function healthFactor() external view returns (uint256 ratioD9);
-
     function wPowerPerp() external view returns (address);
     
     function weth() external view returns (address);
-    
-    function shortPowerPerp() external view returns (address);
     
     function wPowerPerpPool() external view returns (address);
 
@@ -40,5 +37,5 @@ interface ISqueethVault is IIntegrationVault {
 
     function twapIndexPrice() external view returns (uint256 indexPrice);
 
-    function twapMarkPrice() external view returns (uint256 markPrice);
+    function helper() external view returns (SqueethHelper);
 }

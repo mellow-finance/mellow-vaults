@@ -21,12 +21,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const {
         approver,
         deployer,
+        strategyAdmin,
         weth,
-        squeeth,
         mStrategyTreasury,
         mStrategyAdmin,
         uniswapV3Router,
-        opynWeth
+        opynWeth,
+        strategyOperator
     } = await getNamedAccounts();
     
     let wethUsedByController = opynWeth == undefined ? weth : opynWeth;
@@ -60,9 +61,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     
     let rootVaultGovernance = await ethers.getContract("ERC20RootVaultGovernanceForRequestable");
 
-    await vaultRegistry.approve(rootVaultGovernance.address, erc20VaultNft);
-    await vaultRegistry.approve(rootVaultGovernance.address, squeethVaultNft);
-
+    await deployments.execute(
+        "VaultRegistry",
+        { from: deployer, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "approve(address,uint256)",
+        rootVaultGovernance.address,
+        erc20VaultNft
+    );
+    await deployments.execute(
+        "VaultRegistry",
+        { from: deployer, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "approve(address,uint256)",
+        rootVaultGovernance.address,
+        squeethVaultNft
+    );
+;
     let strategyDeployParams = await deploy("SStrategy", {
         from: deployer,
         contract: "SStrategy",
@@ -71,9 +84,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             erc20Vault,
             squeethVault,
             uniswapV3Router,
-            deployer],
+            mStrategyAdmin],
         log: true,
         autoMine: true,
+        gasLimit: BigNumber.from(10).pow(6).mul(20),
+        ...TRANSACTION_GAS_LIMITS
     });
 
     const sStrategy = await ethers.getContractAt("SStrategy", strategyDeployParams.address);
@@ -94,10 +109,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }, 
         "RequestableRootVault"
     );
-
+    console.log("approving " + rootVaultNft.toString() + " from " + strategyAdmin);
     await deployments.execute(
         "VaultRegistry",
-        { from: mStrategyAdmin, autoMine: true, ...TRANSACTION_GAS_LIMITS },
+        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
         "approve(address,uint256)",
         sStrategy.address,
         rootVaultNft
@@ -108,6 +123,42 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "vaultForNft",
         rootVaultNft
     );
+    
+    const ADMIN_ROLE =
+    "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
+    const ADMIN_DELEGATE_ROLE =
+        "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
+    const OPERATOR_ROLE =
+        "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
+    
+    await deployments.execute(
+        "SStrategy",
+        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "grantRole(bytes32,address)",
+        ADMIN_ROLE,
+        deployer
+    );
+    await deployments.execute(
+        "SStrategy",
+        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "grantRole(bytes32,address)",
+        ADMIN_DELEGATE_ROLE,
+        mStrategyAdmin
+    );
+    await deployments.execute(
+        "SStrategy",
+        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "grantRole(bytes32,address)",
+        ADMIN_DELEGATE_ROLE,
+        deployer
+    );
+    await deployments.execute(
+        "SStrategy",
+        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "grantRole(bytes32,address)",
+        OPERATOR_ROLE,
+        strategyOperator
+    );
 
     await sStrategy.setRootVault(
         rootVault
@@ -116,12 +167,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await sStrategy.updateStrategyParams({
         lowerHedgingThresholdD9: BigNumber.from(10).pow(8).mul(5),
         upperHedgingThresholdD9: BigNumber.from(10).pow(9).mul(2),
-        cycleDuration: BigNumber.from(3600).mul(24).mul(28),
+        cycleDuration: BigNumber.from(3600).mul(1),
     });
 
     await sStrategy.updateLiquidationParams({
-        lowerLiquidationThresholdD9: BigNumber.from(10).pow(8).mul(5), 
-        upperLiquidationThresholdD9: BigNumber.from(10).pow(8).mul(18),
+        lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(90), 
+        upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(110),
     });
 
     await sStrategy.updateOracleParams({
@@ -131,19 +182,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     
     
-
-    const ADMIN_ROLE =
-    "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
-    const ADMIN_DELEGATE_ROLE =
-        "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
-    const OPERATOR_ROLE =
-        "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
-
-    await sStrategy.grantRole(ADMIN_ROLE, mStrategyAdmin);
-    await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, mStrategyAdmin);
-    await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
-    await sStrategy.grantRole(OPERATOR_ROLE, mStrategyAdmin);
-    await sStrategy.revokeRole(OPERATOR_ROLE, deployer);
     await sStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
     await sStrategy.revokeRole(ADMIN_ROLE, deployer);
 };

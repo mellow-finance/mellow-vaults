@@ -24,6 +24,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     const { address: mellowOracle } = await get("MellowOracle");
     
+    const { address: helper } = await deploy("SqueethHelper", {
+        from: deployer,
+        args: [squeethController],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS
+    });
+
+    console.log("helper address is " + helper);
     await deploy("SqueethVaultGovernance", {
         from: deployer,
         args: [
@@ -38,7 +47,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 slippageD9: BigNumber.from(10).pow(7),
                 twapPeriod: BigNumber.from(420),
                 wethBorrowPool: squeethWethBorrowPool,
-                oracle: mellowOracle
+                oracle: mellowOracle,
+                squeethHelper: helper,
+                maxDepegD9: BigNumber.from(10).pow(8)
             },
         ],
         log: true,

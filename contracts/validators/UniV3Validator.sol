@@ -9,6 +9,7 @@ import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
+import "hardhat/console.sol";
 
 contract UniV3Validator is ContractMeta, Validator {
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
@@ -118,6 +119,8 @@ contract UniV3Validator is ContractMeta, Validator {
         require(tokenIn != tokenOut, ExceptionsLibrary.INVALID_TOKEN);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         address pool = factory.getPool(tokenIn, tokenOut, fee);
+        console.log("pool");
+        console.log(pool);
         require(
             protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_APPROVE),
             ExceptionsLibrary.FORBIDDEN

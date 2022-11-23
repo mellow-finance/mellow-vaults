@@ -56,8 +56,8 @@ const config: HardhatUserConfig = {
         },
         goerli: {
             url: process.env["GOERLI_RPC"],
-            accounts: (process.env["GOERLI_DEPLOYER_PK"] && process.env["GOERLI_APPROVER_PK"])
-                ? [process.env["GOERLI_DEPLOYER_PK"], process.env["GOERLI_APPROVER_PK"]]
+            accounts: (process.env["GOERLI_DEPLOYER_PK"] && process.env["GOERLI_APPROVER_PK"] && process.env["GOERLI_STRATEGY_ADMIN_PK"])
+                ? [process.env["GOERLI_DEPLOYER_PK"], process.env["GOERLI_APPROVER_PK"], process.env["GOERLI_STRATEGY_ADMIN_PK"]]
                 : undefined,
         },
         avalanche: {
@@ -121,6 +121,9 @@ const config: HardhatUserConfig = {
         approver: {
             default: 1,
         },
+        strategyAdmin: {
+            default: 2,
+        },
         admin: {
             hardhat: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
             mainnet: process.env["MAINNET_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
@@ -140,6 +143,10 @@ const config: HardhatUserConfig = {
             rinkeby: process.env["RINKEBY_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             goerli: process.env["GOERLI_STRATEGY_ADMIN_ADDRESS"] || "0x0",
+        },
+        strategyOperator: {
+            hardhat: "0x0000000000000000000000000000000000000000",
+            goerli: process.env["GOERLI_STRATEGY_OPERATOR_ADDRESS"] || "0x0",
         },
         mStrategyTreasury: {
             hardhat: "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",
@@ -216,9 +223,13 @@ const config: HardhatUserConfig = {
         opynWeth: {
             goerli: "0x0719E63EC564259D1ce12dFFD1431269C7d88700",
         },
+        opynUsdc: {
+            goerli: "0x12F263aAB668aF8918E077af3a9CF5da9fE9A417",
+        },
         wsteth: {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
             rinkeby: "0x2ca788280fb10384946d3ecc838d94deca505cf4",
+            goerli: "0x0719E63EC564259D1ce12dFFD1431269C7d88700",
         },
         dai: {
             default: "0x6b175474e89094c44da98b954eedeac495271d0f",

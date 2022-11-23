@@ -27,9 +27,6 @@ const config: HardhatUserConfig = {
             },
         ],
     },
-    contractSizer: {
-        strict: true,
-    },
 };
 
 export default config;

@@ -46,7 +46,7 @@ contract LStrategyHelper is ILStrategyHelper {
         require(order.feeAmount <= fee, ExceptionsLibrary.INVALID_VALUE);
     }
 
-    function tickFromPriceX96(uint256 priceX96) external pure returns (int24) {
+    function tickFromPriceX96(uint256 priceX96) external view returns (int24) {
         uint256 sqrtPriceX96 = CommonLibrary.sqrtX96(priceX96);
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }

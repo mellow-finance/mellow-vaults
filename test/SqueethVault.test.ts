@@ -9,8 +9,10 @@ import {
     sleep,
     withSigner,
     approxEqual,
+    uniSwapTokensGivenInput,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
+import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { ERC20RootVault, ERC20Vault, SqueethVault } from "./types";
 import {
     combineVaults,
@@ -47,10 +49,13 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     };
 
                     const {
-                        curveRouter
+                        uniswapV3Router,
                     } = await getNamedAccounts();
-                    this.curveRouter = curveRouter;
                     
+                    this.swapRouter = await ethers.getContractAt(
+                        ISwapRouter,
+                        uniswapV3Router
+                    );
                     this.strategyTreasury = randomAddress();
 
                     const tokens = [this.weth.address]
@@ -88,7 +93,9 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         squeethVaultNft + 1,
                         [erc20VaultNft, squeethVaultNft],
                         this.deployer.address,
-                        this.strategyTreasury
+                        this.strategyTreasury,
+                        undefined,
+                        "RequestableRootVault"
                     );
                     const erc20Vault = await read(
                         "VaultRegistry",
@@ -138,6 +145,12 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     this.squeethVaultNft = squeethVaultNft;
                     this.rootVaultNft = erc20RootVaultNft;
                     this.erc20VaultNft = erc20VaultNft;
+
+                    let helperAddress = await this.subject.helper();   
+                    this.helper = await ethers.getContractAt(
+                        "SqueethHelper",
+                        helperAddress
+                    );     
 
                     return this.subject;
                 }
@@ -374,7 +387,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                     (await this.weth.balanceOf(this.subject.address)).eq(0)).to.be.true;
             });
 
-            it("opens short position using all resources as collateral", async () => {
+            it.only("opens short position using all resources as collateral", async () => {
                 let wethBalance = await this.weth.balanceOf(this.subject.address);
                 expect((await this.subject.totalCollateral()).eq(0)).to.be.true;
                 expect((await this.subject.wPowerPerpDebt()).eq(0)).to.be.true;
@@ -390,6 +403,38 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                 expect((await this.squeeth.balanceOf(this.subject.address)).eq(0)).to.be.true;
                 expect(
                     (await this.weth.balanceOf(this.subject.address)).lt(wethBalance)).to.be.true;
+            });
+
+            it("cant open short position with recollaterization when pools are mad", async () => {
+                let perpPool = await this.subject.wPowerPerpPool();
+                //adjust spot
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await sleep(3600);
+
+                await expect(this.subject.takeShort(this.healthFactor, true)).to.be.revertedWith(Exceptions.INVALID_STATE);
+            });
+
+            it("opens usual short position when pools are mad", async () => {
+                let perpPool = await this.subject.wPowerPerpPool();
+                //adjust spot
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await uniSwapTokensGivenInput(this.swapRouter, [this.squeeth, this.weth], 3000, true, BigNumber.from(10).pow(18).mul(200));
+                await sleep(3600);
+
+                await expect(this.subject.takeShort(this.healthFactor, false)).to.not.be.reverted;
             });
 
             it("emits ShortTaken event", async () => {
@@ -514,12 +559,11 @@ contract<SqueethVault, DeployOptions, CustomContext>(
             });
 
             it("emits ShortClosed event", async () => {
+                await this.subject.takeShort(
+                    this.healthFactor, false
+                )
                 await expect(
-                    this.subject.takeShort(
-                        this.healthFactor, false
-                    ))
-                await expect(
-                    this.subject.closeShort()
+                    await this.subject.closeShort()
                 ).to.emit(this.subject, "ShortClosed");
             });
 

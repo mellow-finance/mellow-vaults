@@ -23,7 +23,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, getOrNull } = deployments;
-    const { deployer, admin, protocolTreasury, weth, wbtc, usdc } =
+    const { deployer, admin, protocolTreasury, weth, opynWeth, wbtc, usdc } =
         await getNamedAccounts();
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
@@ -39,6 +39,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await registerGovernances(hre, txDatas);
     await registerTokens(hre, txDatas);
     await registerExternalProtocols(hre, txDatas);
+
+    let wethUsedByStrategy = opynWeth == undefined ? weth : opynWeth;
+    const allowAllValidator = await deployments.get("AllowAllValidator");
+    let tx1 = await protocolGovernance.populateTransaction.stageValidator(
+        wethUsedByStrategy,
+        allowAllValidator.address
+    );
+    txDatas.push(tx1.data);
 
     if (!ALLOW_ALL_CREATE_VAULT) {
         for (const address of [deployer, admin]) {
@@ -61,7 +69,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const params = {
         forceAllowMask: ALLOW_MASK,
         maxTokensPerVault: 10,
-        governanceDelay: 86400,
+        governanceDelay: 1,
         protocolTreasury,
         withdrawLimit: 200000,
     };
@@ -198,7 +206,9 @@ async function registerExternalProtocols(
         if (!validator) {
             continue;
         }
+        console.log(key);
         for (const address of data[key]) {
+            console.log("Staging " + validator.address + " at " + address);
             const tx =
                 await protocolGovernance.populateTransaction.stageValidator(
                     address,

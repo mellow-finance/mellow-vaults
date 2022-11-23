@@ -18,6 +18,8 @@ interface ISqueethVaultGovernance is IVaultGovernance {
         uint32 twapPeriod;
         address wethBorrowPool;
         IOracle oracle;
+        address squeethHelper;
+        uint256 maxDepegD9;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

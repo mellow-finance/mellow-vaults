@@ -16,5 +16,5 @@ interface ILStrategyHelper {
         uint256 fee
     ) external;
 
-    function tickFromPriceX96(uint256 priceX96) external pure returns (int24);
+    function tickFromPriceX96(uint256 priceX96) external view returns (int24);
 }

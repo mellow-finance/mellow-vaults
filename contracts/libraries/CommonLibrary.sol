@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./external/FullMath.sol";
 import "./ExceptionsLibrary.sol";
+import "hardhat/console.sol";
 
 /// @notice CommonLibrary shared utilities
 library CommonLibrary {
@@ -84,7 +85,7 @@ library CommonLibrary {
     /// @notice Calculated sqrt of uint in X96 format
     /// @param xX96 input number in X96 format
     /// @return sqrt of xX96 in X96 format
-    function sqrtX96(uint256 xX96) internal pure returns (uint256) {
+    function sqrtX96(uint256 xX96) internal view returns (uint256) {
         uint256 sqX96 = sqrt(xX96);
         return sqX96 << 48;
     }
@@ -92,7 +93,7 @@ library CommonLibrary {
     /// @notice Calculated sqrt of uint
     /// @param x input number
     /// @return sqrt of x
-    function sqrt(uint256 x) internal pure returns (uint256) {
+    function sqrt(uint256 x) internal view returns (uint256) {
         if (x == 0) return 0;
         uint256 xx = x;
         uint256 r = 1;
@@ -121,6 +122,52 @@ library CommonLibrary {
             r <<= 2;
         }
         if (xx >= 0x8) {
+            r <<= 1;
+        }
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        uint256 r1 = x / r;
+        return (r < r1 ? r : r1);
+    }
+
+
+    /// @notice Calculated sqrt of uint
+    /// @param x input number
+    /// @return sqrt of x
+    function sqrt2(uint256 x) internal view returns (uint256) {
+        if (x == 0) return 0;
+        uint256 xx = x;
+        uint256 r = 1;
+        if (xx >= 0x100000000000000000000000000000000) {
+            xx >>= 128;
+            r <<= 64;
+        }
+        if (xx >= 0x10000000000000000) {
+            xx >>= 64;
+            r <<= 32;
+        }
+        if (xx >= 0x100000000) {
+            xx >>= 32;
+            r <<= 16;
+        }
+        if (xx >= 0x10000) {
+            xx >>= 16;
+            r <<= 8;
+        }
+        if (xx >= 0x100) {
+            xx >>= 8;
+            r <<= 4;
+        }
+        if (xx >= 0x10) {
+            xx >>= 4;
+            r <<= 2;
+        }
+        if (xx >= 0x4) {
             r <<= 1;
         }
         r = (r + x / r) >> 1;

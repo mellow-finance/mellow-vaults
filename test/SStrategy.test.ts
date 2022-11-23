@@ -224,10 +224,15 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
 
                 let allowAllValidator = await ethers.getContract("AllowAllValidator");
                 await this.protocolGovernance.connect(this.admin).stageValidator(this.weth.address, allowAllValidator.address);
+                let uniV3Validator = await ethers.getContract("UniV3Validator");
+                await this.protocolGovernance.connect(this.admin).stageValidator(this.swapRouter.address, uniV3Validator.address);
                 await sleep(await this.protocolGovernance.governanceDelay());
                 await this.protocolGovernance
                     .connect(this.admin)
                     .commitValidator(this.weth.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(this.swapRouter.address);
                 
                 
                 this.uniV3Oracle = await ethers.getContract(
@@ -290,7 +295,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
         it("start", async () => {
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
             let tvlBefore = await this.rootVault.tvl();
-            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe, false);
             let tvlAfter = await this.rootVault.tvl();
             expect(tvlAfter[0][0].lt(tvlBefore[0][0])).to.be.true;
             expect(tvlAfter[1][0].lt(tvlBefore[1][0])).to.be.true;
@@ -301,7 +306,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
             
             let safeBalance = await this.weth.balanceOf(this.safe);
-            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe, false);
             let newSafeBalance = await this.weth.balanceOf(this.safe);
             expect(newSafeBalance.gt(safeBalance)).to.be.true;
             
@@ -329,7 +334,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             
             let safeBalance = await this.weth.balanceOf(this.safe);
             let optionPrice = BigNumber.from(10).pow(18).mul(100)
-            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe, false);
             let newSafeBalance = await this.weth.balanceOf(this.safe);
             expect(newSafeBalance.gt(safeBalance)).to.be.true;
             
@@ -374,7 +379,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
             
             let safeBalance = await this.weth.balanceOf(this.safe);
-            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, BigNumber.from(10).pow(18).mul(100), this.safe, false);
             let newSafeBalance = await this.weth.balanceOf(this.safe);
             expect(newSafeBalance.gt(safeBalance)).to.be.true;
             
@@ -401,7 +406,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
         it("option has value", async () => {
             let optionPrice = BigNumber.from(10).pow(18).mul(100);
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
-            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe, false);
 
             let lpAmount = await this.rootVault.balanceOf(this.depositor);
             await withSigner(this.depositor, async (s) => {
@@ -442,7 +447,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
 
             let optionPrice = BigNumber.from(10).pow(18).mul(100);
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
-            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe, false);
 
             let lpAmount = await this.rootVault.balanceOf(this.depositor);
             await withSigner(this.depositor, async (s) => {
@@ -454,7 +459,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             
             await this.subject.endCycleMocked(this.safe);
 
-            await expect(this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe)).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
+            await expect(this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe, false)).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
         })
 
 
@@ -465,7 +470,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
 
             let optionPrice = BigNumber.from(10).pow(18).mul(100);
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
-            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe);
+            await this.subject.startCycleMocked(currentEthPrice, optionPrice, this.safe, false);
 
             let lpAmount = await this.rootVault.balanceOf(this.depositor);
             await withSigner(this.depositor, async (s) => {
@@ -481,7 +486,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             await this.subject.endCycleMocked(this.safe);
 
             let newEthPrice = await this.squeethVault.twapIndexPrice();
-            await this.subject.startCycleMocked(newEthPrice, optionPrice, this.safe);
+            await this.subject.startCycleMocked(newEthPrice, optionPrice, this.safe, false);
 
             await uniSwapTokensGivenInput(this.swapRouter, [this.usdc, this.weth], 3000, false, BigNumber.from(10).pow(11).mul(200));
             await sleep(3600 * 24 * 30);
