@@ -587,12 +587,52 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     tvls.totalUniV3[1].mul(Q96).div(priceX96)
                 );
 
-                const currentRatioD =
+                const actualUniV3RatioD =
                     DENOMINATOR.mul(currentUniV3Capital).div(capital0);
                 // up to 0.05% diff
-                expect(currentRatioD.toNumber()).closeTo(
+                expect(actualUniV3RatioD.toNumber()).closeTo(
                     uniV3RatioD.toNumber(),
                     DENOMINATOR.div(10000).mul(5).toNumber()
+                );
+
+                const actualToken0Capital = tvls.erc20[0].add(tvls.money[0]);
+                const actualToken1Capital = tvls.erc20[1]
+                    .add(tvls.money[1])
+                    .mul(Q96)
+                    .div(priceX96);
+                const actualToken0RatioD = actualToken0Capital
+                    .mul(DENOMINATOR)
+                    .div(capital0);
+                const actualToken1RatioD = actualToken1Capital
+                    .mul(DENOMINATOR)
+                    .div(capital0);
+
+                // up to 0.05% diff
+                expect(actualToken0RatioD.toNumber()).closeTo(
+                    token0RatioD.toNumber(),
+                    DENOMINATOR.div(10000).mul(5).toNumber()
+                );
+
+                // up to 0.05% diff
+                expect(actualToken1RatioD.toNumber()).closeTo(
+                    token1RatioD.toNumber(),
+                    DENOMINATOR.div(10000).mul(5).toNumber()
+                );
+
+                console.log(
+                    "UniV3 ratio:",
+                    actualUniV3RatioD.toString(),
+                    uniV3RatioD.toString()
+                );
+                console.log(
+                    "Token0 ratio:",
+                    actualToken0RatioD.toString(),
+                    token0RatioD.toString()
+                );
+                console.log(
+                    "Token1 ratio:",
+                    actualToken1RatioD.toString(),
+                    token1RatioD.toString()
                 );
             });
         });
