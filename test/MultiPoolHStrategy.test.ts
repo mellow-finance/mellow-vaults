@@ -484,7 +484,7 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#rebalance", () => {
+        describe("#rebalance", () => {
             it("works correctly", async () => {
                 const getData = async () => {
                     const shortInterval = await this.subject.shortInterval();
