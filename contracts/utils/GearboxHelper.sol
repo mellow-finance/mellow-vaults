@@ -30,6 +30,8 @@ contract GearboxHelper {
     address public depositToken;
 
     bool public parametersSet;
+    bool public is3crv;
+
     IGearboxVault public admin;
 
     uint256 public vaultNft;
@@ -90,15 +92,18 @@ contract GearboxHelper {
         }
     }
 
-    function verifyInstances()
+    function verifyInstances(address vaultGovernance)
         external
-        view
         returns (
             int128 primaryIndex,
             address convexOutputToken,
             uint256 poolId
         )
     {
+        
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
+
         ICurveV1Adapter curveAdapter_ = ICurveV1Adapter(curveAdapter);
         IConvexV1BaseRewardPoolAdapter convexAdapter_ = IConvexV1BaseRewardPoolAdapter(convexAdapter);
 
@@ -108,12 +113,33 @@ contract GearboxHelper {
         require(creditFacade.isTokenAllowed(primaryToken_), ExceptionsLibrary.INVALID_TOKEN);
 
         bool havePrimaryTokenInCurve = false;
+        is3crv = false;
 
         for (uint256 i = 0; i < curveAdapter_.nCoins(); ++i) {
             address tokenI = curveAdapter_.coins(i);
             if (tokenI == primaryToken_) {
                 primaryIndex = int128(int256(i));
                 havePrimaryTokenInCurve = true;
+            }
+        }
+
+        if (!havePrimaryTokenInCurve) {
+
+            ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
+            address crv3Token = crv3Adapter.lp_token();
+
+            for (uint256 i = 0; i < curveAdapter_.nCoins(); ++i) {
+                address tokenI = curveAdapter_.coins(i);
+                if (tokenI == crv3Token) {
+                    is3crv = true;
+                    for (uint256 j = 0; j < 3; ++j) {
+                        address tokenJ = crv3Adapter.coins(j);
+                        if (tokenJ == primaryToken_) {
+                            primaryIndex = int128(int256(j));
+                            havePrimaryTokenInCurve = true;
+                        }
+                    }
+                }
             }
         }
 
@@ -274,16 +300,6 @@ contract GearboxHelper {
             return;
         }
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
-            .delayedProtocolParams();
-
-        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
-            .strategyParams(vaultNft);
-
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
-            vaultGovernance
-        ).delayedProtocolPerVaultParams(vaultNft);
-
         uint256 currentDepositTokenAmount = IERC20(depositToken_).balanceOf(creditAccount);
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
 
@@ -400,31 +416,70 @@ contract GearboxHelper {
 
         require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
 
-        address curveAdapter_ = curveAdapter;
-
+        address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
-        address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
-        uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
+        if (!is3crv) {
 
-        MultiCall[] memory calls = new MultiCall[](2);
+            uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
 
-        calls[0] = MultiCall({
-            target: convexAdapter,
-            callData: abi.encodeWithSelector(IBaseRewardPool.withdrawAndUnwrap.selector, amount, false)
-        });
+            MultiCall[] memory calls = new MultiCall[](2);
 
-        calls[1] = MultiCall({
-            target: curveAdapter_,
-            callData: abi.encodeWithSelector(
-                ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
-                primaryIndex,
-                FullMath.mulDiv(rateRAY, D9 - protocolParams.maxCurveSlippageD9, D9)
-            )
-        });
+            calls[0] = MultiCall({
+                target: convexAdapter,
+                callData: abi.encodeWithSelector(IBaseRewardPool.withdrawAndUnwrap.selector, amount, false)
+            });
 
-        admin_.multicall(calls);
+            calls[1] = MultiCall({
+                target: curveAdapter,
+                callData: abi.encodeWithSelector(
+                    ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
+                    primaryIndex,
+                    FullMath.mulDiv(rateRAY, D9 - protocolParams.maxCurveSlippageD9, D9)
+                )
+            });
+
+            admin_.multicall(calls);
+
+        }
+
+        else {
+
+            ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
+            address crv3Token = crv3Adapter.lp_token();
+
+            uint256 rateRAY1 = calcRateRAY(curveLpToken, crv3Token);
+            uint256 rateRAY2 = calcRateRAY(crv3Token, primaryToken);
+
+            MultiCall[] memory calls = new MultiCall[](3);
+
+            calls[0] = MultiCall({
+                target: convexAdapter,
+                callData: abi.encodeWithSelector(IBaseRewardPool.withdrawAndUnwrap.selector, amount, false)
+            });
+
+            calls[1] = MultiCall({
+                target: curveAdapter,
+                callData: abi.encodeWithSelector(
+                    ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
+                    1,
+                    FullMath.mulDiv(rateRAY1, D9 - protocolParams.maxCurveSlippageD9, D9)
+                )
+            });
+
+            calls[2] = MultiCall({
+                target: address(crv3Adapter),
+                callData: abi.encodeWithSelector(
+                    ICurveV1Adapter.remove_all_liquidity_one_coin.selector,
+                    primaryIndex,
+                    FullMath.mulDiv(rateRAY2, D9 - protocolParams.maxCurveSlippageD9, D9)
+                )
+            });
+
+            admin_.multicall(calls);
+
+        }
     }
 
     function depositToConvex(
@@ -436,31 +491,70 @@ contract GearboxHelper {
         IGearboxVault admin_ = admin;
 
         require(msg.sender == address(admin_), ExceptionsLibrary.FORBIDDEN);
+        address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
 
-        MultiCall[] memory calls = new MultiCall[](3);
+        if (!is3crv) {
 
-        address curveAdapter_ = curveAdapter;
+            uint256 rateRAY = calcRateRAY(primaryToken, curveLpToken);
 
-        address curveLpToken = ICurveV1Adapter(curveAdapter_).lp_token();
-        uint256 rateRAY = calcRateRAY(primaryToken, curveLpToken);
+            MultiCall[] memory calls = new MultiCall[](3);
 
-        calls[0] = debtManagementCall;
+            calls[0] = debtManagementCall;
 
-        calls[1] = MultiCall({
-            target: curveAdapter_,
-            callData: abi.encodeWithSelector(
-                ICurveV1Adapter.add_all_liquidity_one_coin.selector,
-                primaryIndex,
-                FullMath.mulDiv(rateRAY, D9 - protocolParams.maxCurveSlippageD9, D9)
-            )
-        });
+            calls[1] = MultiCall({
+                target: curveAdapter,
+                callData: abi.encodeWithSelector(
+                    ICurveV1Adapter.add_all_liquidity_one_coin.selector,
+                    primaryIndex,
+                    FullMath.mulDiv(rateRAY, D9 - protocolParams.maxCurveSlippageD9, D9)
+                )
+            });
 
-        calls[2] = MultiCall({
-            target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
-            callData: abi.encodeWithSelector(IBooster.depositAll.selector, poolId, true)
-        });
+            calls[2] = MultiCall({
+                target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
+                callData: abi.encodeWithSelector(IBooster.depositAll.selector, poolId, true)
+            });
 
-        admin_.multicall(calls);
+            admin_.multicall(calls);
+
+        }
+
+        else {
+            ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
+            address crv3Token = crv3Adapter.lp_token();
+
+            uint256 rateRAY1 = calcRateRAY(primaryToken, crv3Token);
+            uint256 rateRAY2 = calcRateRAY(crv3Token, curveLpToken);
+
+            MultiCall[] memory calls = new MultiCall[](4);
+
+            calls[0] = debtManagementCall;
+
+            calls[1] = MultiCall({
+                target: address(crv3Adapter),
+                callData: abi.encodeWithSelector(
+                    ICurveV1Adapter.add_all_liquidity_one_coin.selector,
+                    primaryIndex,
+                    FullMath.mulDiv(rateRAY1, D9 - protocolParams.maxCurveSlippageD9, D9)
+                )
+            });
+
+            calls[2] = MultiCall({
+                target: curveAdapter,
+                callData: abi.encodeWithSelector(
+                    ICurveV1Adapter.add_all_liquidity_one_coin.selector,
+                    1,
+                    FullMath.mulDiv(rateRAY2, D9 - protocolParams.maxCurveSlippageD9, D9)
+                )
+            });
+
+            calls[3] = MultiCall({
+                target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
+                callData: abi.encodeWithSelector(IBooster.depositAll.selector, poolId, true)
+            });
+
+            admin_.multicall(calls);
+        }
     }
 
     function adjustPosition(
