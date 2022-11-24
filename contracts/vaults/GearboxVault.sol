@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
-import "../interfaces/IDegenDistributor.sol";
+import "../interfaces/external/gearbox/helpers/IDegenDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
