@@ -165,7 +165,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function closeCreditAccount() external {
-
         GearboxHelper helper_ = helper;
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -197,9 +196,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 address(_vaultGovernance),
                 creditAccount_
             );
-        }
-
-        else if (primaryToken_ != depositToken_) {
+        } else if (primaryToken_ != depositToken_) {
             helper_.swapExactInput(
                 primaryToken_,
                 depositToken_,
@@ -347,7 +344,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         address creditAccount_ = getCreditAccount();
         require(creditAccount_ == address(0), ExceptionsLibrary.FORBIDDEN);

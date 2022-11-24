@@ -260,7 +260,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 totalAmount = 0;
 
         if (totalCurrentEpochLpWitdrawalRequests_ > 0) {
-
             totalAmount = FullMath.mulDiv(
                 totalCurrentEpochLpWitdrawalRequests_,
                 minTokenAmounts[0],
