@@ -100,7 +100,6 @@ contract GearboxHelper {
             uint256 poolId
         )
     {
-        
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
 
@@ -124,7 +123,6 @@ contract GearboxHelper {
         }
 
         if (!havePrimaryTokenInCurve) {
-
             ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
             address crv3Token = crv3Adapter.lp_token();
 
@@ -421,7 +419,6 @@ contract GearboxHelper {
             .delayedProtocolParams();
 
         if (!is3crv) {
-
             uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
 
             MultiCall[] memory calls = new MultiCall[](2);
@@ -441,11 +438,7 @@ contract GearboxHelper {
             });
 
             admin_.multicall(calls);
-
-        }
-
-        else {
-
+        } else {
             ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
             address crv3Token = crv3Adapter.lp_token();
 
@@ -478,7 +471,6 @@ contract GearboxHelper {
             });
 
             admin_.multicall(calls);
-
         }
     }
 
@@ -494,7 +486,6 @@ contract GearboxHelper {
         address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
 
         if (!is3crv) {
-
             uint256 rateRAY = calcRateRAY(primaryToken, curveLpToken);
 
             MultiCall[] memory calls = new MultiCall[](3);
@@ -516,10 +507,7 @@ contract GearboxHelper {
             });
 
             admin_.multicall(calls);
-
-        }
-
-        else {
+        } else {
             ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
             address crv3Token = crv3Adapter.lp_token();
 
