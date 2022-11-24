@@ -3,15 +3,11 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
-
 import "./DefaultAccessControlLateInit.sol";
-
 import "../interfaces/external/univ3/ISwapRouter.sol";
-
 import "../interfaces/vaults/IAaveVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 
@@ -25,6 +21,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     INonfungiblePositionManager public immutable positionManager;
 
+    /// @notice all data that needed to process rebalance
     struct StrategyData {
         int24 halfOfShortInterval;
         int24 domainLowerTick;
@@ -34,48 +31,63 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         IERC20Vault erc20Vault;
         IIntegrationVault moneyVault;
         address router;
-        IUniswapV3Pool pool;
         uint256 amount0ForMint;
         uint256 amount1ForMint;
-        uint256 erc20CapitalD;
+        uint256 erc20CapitalRatioD;
         uint256[] uniV3Weights;
         address[] tokens;
         IUniV3Vault[] uniV3Vaults;
     }
 
+    /// @param money tvl of moneyVault
+    /// @param uniV3 arrays of tvls of UniV3Vaults calculated by spot price
+    /// @param erc20 tvl of erc20Vault
+    /// @param total tvl of erc20RootVault calculated by spot price
+    /// @param totalUniV3 cumulative tvl over all UniV3Vaults calculated by spot price
     struct Tvls {
         uint256[] money;
-        uint256[2][] uniV3;
+        uint256[][] uniV3;
         uint256[] erc20;
         uint256[] total;
         uint256[] totalUniV3;
     }
 
+    /// @notice rebalance parameters restricting the tokens transfer
     struct Restrictions {
         int24 newShortLowerTick;
         int24 newShortUpperTick;
         int256[] swappedAmounts;
-        uint256[2][] drainedAmounts;
-        uint256[2][] pulledToUniV3;
-        uint256[2][] pulledFromUniV3;
+        uint256[][] drainedAmounts;
+        uint256[][] pulledToUniV3;
+        uint256[][] pulledFromUniV3;
         uint256 deadline;
     }
 
-    constructor(INonfungiblePositionManager positionManager_, address admin) {
+    // -------------------  EXTERNAL, MUTATING  -------------------
+    /// @notice constructs rebalancer
+    /// @param positionManager_ NonfungiblePositionManager of UniswapV3 protocol
+    /// @param strategy address of the strategy
+    constructor(INonfungiblePositionManager positionManager_, address strategy) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(strategy != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
-        DefaultAccessControlLateInit.init(admin);
+        DefaultAccessControlLateInit.init(strategy);
     }
 
-    function initialize(address admin) external {
-        DefaultAccessControlLateInit.init(admin);
+    /// @param strategy address of the strategy
+    function initialize(address strategy) external {
+        DefaultAccessControlLateInit.init(strategy);
     }
 
-    function createRebalancer(address admin) external returns (MultiPoolHStrategyRebalancer rebalancer) {
+    /// @param strategy address of the strategy
+    /// @return rebalancer new instance of rebalances for given strategy
+    function createRebalancer(address strategy) external returns (MultiPoolHStrategyRebalancer rebalancer) {
         rebalancer = MultiPoolHStrategyRebalancer(Clones.clone(address(this)));
-        rebalancer.initialize(admin);
+        rebalancer.initialize(strategy);
     }
 
+    /// @param data all needed data (addresses, ticks, amounts and ratios) to process rebalance
+    /// @return tvls structure with information about tvls of all vaults of the system
     function getTvls(StrategyData memory data) public returns (Tvls memory tvls) {
         bool hasUniV3Nft = data.uniV3Vaults[0].uniV3Nft() != 0;
         {
@@ -98,12 +110,12 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         tvls.total[0] = tvls.erc20[0] + tvls.money[0];
         tvls.total[1] = tvls.erc20[1] + tvls.money[1];
 
-        tvls.uniV3 = new uint256[2][](data.uniV3Vaults.length);
+        tvls.uniV3 = new uint256[][](data.uniV3Vaults.length);
         for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
             if (hasUniV3Nft) {
                 uint256 uniV3Nft = data.uniV3Vaults[i].uniV3Nft();
                 (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(uniV3Nft);
-                tvls.uniV3[i] = _convertToStaticArray(data.uniV3Vaults[i].liquidityToTokenAmounts(liquidity));
+                tvls.uniV3[i] = data.uniV3Vaults[i].liquidityToTokenAmounts(liquidity);
                 tvls.totalUniV3[0] += tvls.uniV3[i][0];
                 tvls.totalUniV3[1] += tvls.uniV3[i][1];
             }
@@ -113,62 +125,9 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         tvls.total[1] += tvls.totalUniV3[1];
     }
 
-    function _drainPositions(StrategyData memory data) private returns (uint256[2][] memory drainedAmounts) {
-        drainedAmounts = new uint256[2][](data.uniV3Vaults.length);
-        for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
-            IUniV3Vault vault = IUniV3Vault(data.uniV3Vaults[i]);
-            uint256 uniV3Nft = vault.uniV3Nft();
-
-            if (uniV3Nft != 0) {
-                uint256[] memory tokenAmounts = vault.pull(
-                    address(data.erc20Vault),
-                    data.tokens,
-                    vault.liquidityToTokenAmounts(type(uint128).max),
-                    ""
-                );
-                drainedAmounts[i][0] = tokenAmounts[0];
-                drainedAmounts[i][1] = tokenAmounts[1];
-            }
-        }
-    }
-
-    function _mintPositions(
-        StrategyData memory data,
-        int24 newLowerTick,
-        int24 newUpperTick
-    ) private {
-        IERC20(data.tokens[0]).safeApprove(address(positionManager), data.amount0ForMint * data.uniV3Vaults.length);
-        IERC20(data.tokens[1]).safeApprove(address(positionManager), data.amount1ForMint * data.uniV3Vaults.length);
-
-        for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
-            IUniV3Vault vault = IUniV3Vault(data.uniV3Vaults[i]);
-            (uint256 newNft, , , ) = positionManager.mint(
-                INonfungiblePositionManager.MintParams({
-                    token0: data.tokens[0],
-                    token1: data.tokens[1],
-                    fee: vault.pool().fee(),
-                    tickLower: newLowerTick,
-                    tickUpper: newUpperTick,
-                    amount0Desired: data.amount0ForMint,
-                    amount1Desired: data.amount1ForMint,
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: address(this),
-                    deadline: type(uint256).max
-                })
-            );
-
-            uint256 oldNft = vault.uniV3Nft();
-            positionManager.safeTransferFrom(address(this), address(vault), newNft);
-            if (oldNft != 0) {
-                positionManager.burn(oldNft);
-            }
-        }
-
-        IERC20(data.tokens[0]).safeApprove(address(positionManager), 0);
-        IERC20(data.tokens[1]).safeApprove(address(positionManager), 0);
-    }
-
+    /// @param sqrtSpotPriceX96 sqrt ratio X96 at spot tick
+    /// @param lowerTick lower tick of position
+    /// @param upperTick upper tick of position
     function _calculateRatioOfToken0D(
         uint160 sqrtSpotPriceX96,
         int24 lowerTick,
@@ -186,19 +145,11 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         );
     }
 
-    function _positionsRebalance(
-        StrategyData memory data,
-        int24 tick,
-        bool forcePositionRebalance,
-        Restrictions memory restrictions
-    )
-        private
-        returns (
-            bool needToMintNewPositions,
-            int24 newShortLowerTick,
-            int24 newShortUpperTick,
-            uint256[2][] memory drainedAmounts
-        )
+    /// @param data all needed data (addresses, ticks, amounts and ratios) to process rebalance
+    function calculateNewPosition(StrategyData memory data, int24 tick)
+        public
+        pure
+        returns (int24 newShortLowerTick, int24 newShortUpperTick)
     {
         int24 lowerTick = tick - (tick % data.halfOfShortInterval);
         int24 upperTick = lowerTick + data.halfOfShortInterval;
@@ -218,28 +169,105 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             newShortUpperTick = data.domainUpperTick;
             newShortLowerTick = newShortUpperTick - data.halfOfShortInterval * 2;
         }
+    }
+
+    function _positionsRebalance(
+        StrategyData memory data,
+        int24 tick,
+        Restrictions memory restrictions
+    )
+        private
+        returns (
+            bool needToMintNewPositions,
+            int24 newShortLowerTick,
+            int24 newShortUpperTick,
+            uint256[][] memory drainedAmounts
+        )
+    {
+        (newShortLowerTick, newShortUpperTick) = calculateNewPosition(data, tick);
 
         require(
             restrictions.newShortLowerTick == newShortLowerTick && restrictions.newShortUpperTick == newShortUpperTick,
             ExceptionsLibrary.INVARIANT
         );
 
-        if (
-            !forcePositionRebalance &&
-            data.shortLowerTick == newShortLowerTick &&
-            data.shortUpperTick == newShortUpperTick
-        ) {
-            return (false, 0, 0, new uint256[2][](restrictions.drainedAmounts.length));
+        if (data.shortLowerTick == newShortLowerTick && data.shortUpperTick == newShortUpperTick) {
+            drainedAmounts = new uint256[][](restrictions.drainedAmounts.length);
+            for (uint256 i = 0; i < drainedAmounts.length; i++) {
+                drainedAmounts[i] = new uint256[](2);
+            }
+            return (false, 0, 0, drainedAmounts);
         }
 
-        drainedAmounts = _drainPositions(data);
-        for (uint256 i = 0; i < drainedAmounts.length; ++i) {
-            _compareAmounts(
-                _convertToDynamicArray(drainedAmounts[i]),
-                _convertToDynamicArray(restrictions.drainedAmounts[i])
-            );
-        }
+        data.shortLowerTick = newShortLowerTick;
+        data.shortUpperTick = newShortUpperTick;
+        drainedAmounts = _updatePositions(data, restrictions);
         needToMintNewPositions = true;
+    }
+
+    function _updatePositions(StrategyData memory data, Restrictions memory restrictions)
+        private
+        returns (uint256[][] memory drainedAmounts)
+    {
+        IERC20(data.tokens[0]).safeIncreaseAllowance(
+            address(positionManager),
+            data.amount0ForMint * data.uniV3Vaults.length
+        );
+        IERC20(data.tokens[1]).safeIncreaseAllowance(
+            address(positionManager),
+            data.amount1ForMint * data.uniV3Vaults.length
+        );
+
+        uint256[] memory mintedPositions = new uint256[](data.uniV3Vaults.length);
+        uint256[] memory burntPositions = new uint256[](data.uniV3Vaults.length);
+        drainedAmounts = new uint256[][](data.uniV3Vaults.length);
+        for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
+            IUniV3Vault vault = IUniV3Vault(data.uniV3Vaults[i]);
+            uint256 uniV3Nft = vault.uniV3Nft();
+
+            if (uniV3Nft != 0) {
+                drainedAmounts[i] = vault.pull(
+                    address(data.erc20Vault),
+                    data.tokens,
+                    vault.liquidityToTokenAmounts(type(uint128).max),
+                    ""
+                );
+            } else {
+                drainedAmounts[i] = new uint256[](2);
+            }
+
+            _compareAmounts(drainedAmounts[i], restrictions.drainedAmounts[i]);
+            (uint256 newNft, , , ) = positionManager.mint(
+                INonfungiblePositionManager.MintParams({
+                    token0: data.tokens[0],
+                    token1: data.tokens[1],
+                    fee: vault.pool().fee(),
+                    tickLower: data.shortLowerTick,
+                    tickUpper: data.shortUpperTick,
+                    amount0Desired: data.amount0ForMint,
+                    amount1Desired: data.amount1ForMint,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    recipient: address(this),
+                    deadline: type(uint256).max
+                })
+            );
+
+            uint256 oldNft = vault.uniV3Nft();
+            positionManager.safeTransferFrom(address(this), address(vault), newNft);
+            mintedPositions[i] = newNft;
+            if (oldNft != 0) {
+                positionManager.burn(oldNft);
+                burntPositions[i] = oldNft;
+            }
+        }
+        IERC20(data.tokens[0]).safeApprove(address(positionManager), 0);
+        IERC20(data.tokens[1]).safeApprove(address(positionManager), 0);
+
+        emit PositionsMinted(mintedPositions);
+        if (burntPositions[0] > 0) {
+            emit PositionsBurned(burntPositions);
+        }
     }
 
     function _swapRebalance(
@@ -290,7 +318,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
             tokenIn: data.tokens[tokenInIndex],
             tokenOut: data.tokens[tokenInIndex ^ 1],
-            fee: IUniswapV3Pool(data.pool).fee(),
+            fee: IUniswapV3Pool(data.uniV3Vaults[0].pool()).fee(),
             recipient: address(data.erc20Vault),
             deadline: restrictions.deadline,
             amountIn: amountIn,
@@ -314,6 +342,8 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         swappedAmounts = new int256[](2);
         swappedAmounts[tokenInIndex ^ 1] = int256(amountOut);
         swappedAmounts[tokenInIndex] = -int256(amountIn);
+
+        emit TokensSwapped(swapParams, amountOut);
     }
 
     function _calculateUniV3RatioD(StrategyData memory data, uint160 sqrtPriceX96)
@@ -334,6 +364,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         );
     }
 
+    /// @dev method calculated expected amounts after rebalance according to current tvl, spot tick and intervals
     function calculateExpectedAmounts(
         StrategyData memory data,
         uint160 sqrtPriceX96,
@@ -341,60 +372,58 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         uint256 totalToken1
     )
         public
-        pure
+        view
         returns (
             uint256[] memory moneyExpected,
-            uint256[2][] memory uniV3Expected,
+            uint256[][] memory uniV3Expected,
             uint256 expectedAmount0
         )
     {
-        moneyExpected = new uint256[](2);
-
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256 totalCapitalInToken0 = totalToken0 + FullMath.mulDiv(totalToken1, Q96, priceX96);
-
+        uint256[] memory totalUniV3Expected = new uint256[](2);
         {
-            uint256[] memory totalUniV3Expected = new uint256[](2);
-            {
-                uint256 uniV3RatioD = _calculateUniV3RatioD(data, sqrtPriceX96);
-                uint256 uniCapitalInToken0 = FullMath.mulDiv(totalCapitalInToken0, uniV3RatioD, DENOMINATOR);
+            uint256 uniV3RatioD = _calculateUniV3RatioD(data, sqrtPriceX96);
+            uint256 uniCapitalInToken0 = FullMath.mulDiv(totalCapitalInToken0, uniV3RatioD, DENOMINATOR);
+            uint256 ratioOfToken0D = _calculateRatioOfToken0D(sqrtPriceX96, data.shortLowerTick, data.shortUpperTick);
 
-                uint256 ratioOfToken0D = _calculateRatioOfToken0D(
-                    sqrtPriceX96,
-                    data.shortLowerTick,
-                    data.shortUpperTick
-                );
-                totalUniV3Expected[0] = FullMath.mulDiv(uniCapitalInToken0, ratioOfToken0D, DENOMINATOR);
-                totalUniV3Expected[1] = FullMath.mulDiv(uniCapitalInToken0 - totalUniV3Expected[0], priceX96, Q96);
-            }
+            totalUniV3Expected[0] = FullMath.mulDiv(uniCapitalInToken0, ratioOfToken0D, DENOMINATOR);
+            totalUniV3Expected[1] = FullMath.mulDiv(uniCapitalInToken0 - totalUniV3Expected[0], priceX96, Q96);
+            uint128 totalExpectedLiqudity = data.uniV3Vaults[0].tokenAmountsToLiquidity(totalUniV3Expected);
+            // totalUniV3Expected calculated by liquidity may differ slightly from totalUniV3Expected calculated
+            // by price from the `pool`. But according to our logic, the domain interval is much larger
+            // than the short interval, so we store much fewer tokens (10-20% of the total capital) in UniV3 positions.
+            // So we can compute this part a bit less accurately.
 
-            expectedAmount0 = FullMath.mulDiv(
-                totalCapitalInToken0,
-                _calculateRatioOfToken0D(sqrtPriceX96, data.domainLowerTick, data.domainUpperTick),
-                DENOMINATOR
-            );
-
-            moneyExpected[0] = FullMath.mulDiv(
-                expectedAmount0 - totalUniV3Expected[0],
-                DENOMINATOR - data.erc20CapitalD,
-                DENOMINATOR
-            );
-
-            uint256 expectedAmount1 = FullMath.mulDiv(totalCapitalInToken0 - expectedAmount0, priceX96, Q96);
-            moneyExpected[1] = FullMath.mulDiv(
-                expectedAmount1 - totalUniV3Expected[1],
-                DENOMINATOR - data.erc20CapitalD,
-                DENOMINATOR
-            );
-
-            uniV3Expected = _calculateVaultsExpectedAmounts(totalUniV3Expected, data);
+            (uniV3Expected, totalUniV3Expected) = _calculateUniV3VaultsExpectedAmounts(totalExpectedLiqudity, data);
         }
+
+        expectedAmount0 = FullMath.mulDiv(
+            totalCapitalInToken0,
+            _calculateRatioOfToken0D(sqrtPriceX96, data.domainLowerTick, data.domainUpperTick),
+            DENOMINATOR
+        );
+
+        moneyExpected = new uint256[](2);
+        moneyExpected[0] = FullMath.mulDiv(
+            expectedAmount0 - totalUniV3Expected[0],
+            DENOMINATOR - data.erc20CapitalRatioD,
+            DENOMINATOR
+        );
+
+        uint256 expectedAmount1 = FullMath.mulDiv(totalCapitalInToken0 - expectedAmount0, priceX96, Q96);
+        moneyExpected[1] = FullMath.mulDiv(
+            expectedAmount1 - totalUniV3Expected[1],
+            DENOMINATOR - data.erc20CapitalRatioD,
+            DENOMINATOR
+        );
     }
 
-    function _calculateVaultsExpectedAmounts(uint256[] memory totalUniV3Expected, StrategyData memory data)
+    /// @dev method calculated expected amounts after rebalance on UniV3Vaults according to weights and expected total tvl on UniV3Vaults
+    function _calculateUniV3VaultsExpectedAmounts(uint128 totalExpectedLiquidity, StrategyData memory data)
         private
-        pure
-        returns (uint256[2][] memory expectedTokenAmounts)
+        view
+        returns (uint256[][] memory expectedTokenAmounts, uint256[] memory totalAmount)
     {
         uint256 totalWeight = 0;
         uint256 maxWeight = 0;
@@ -408,38 +437,36 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             }
         }
 
-        expectedTokenAmounts = new uint256[2][](data.uniV3Weights.length);
-        expectedTokenAmounts[indexOfVaultWithMaxWeight][0] = totalUniV3Expected[0];
-        expectedTokenAmounts[indexOfVaultWithMaxWeight][1] = totalUniV3Expected[1];
+        totalAmount = new uint256[](2);
+        expectedTokenAmounts = new uint256[][](data.uniV3Weights.length);
         for (uint256 i = 0; i < data.uniV3Weights.length; ++i) {
             uint256 weight = data.uniV3Weights[i];
-            if (weight == 0 || i == indexOfVaultWithMaxWeight) continue;
-            expectedTokenAmounts[i][0] = FullMath.mulDiv(totalUniV3Expected[0], weight, totalWeight);
-            expectedTokenAmounts[i][1] = FullMath.mulDiv(totalUniV3Expected[1], weight, totalWeight);
-            expectedTokenAmounts[indexOfVaultWithMaxWeight][0] -= expectedTokenAmounts[i][0];
-            expectedTokenAmounts[indexOfVaultWithMaxWeight][1] -= expectedTokenAmounts[i][1];
+            if (weight == 0) continue;
+            uint128 expectedLiquidityOnVault = uint128(FullMath.mulDiv(weight, totalExpectedLiquidity, totalWeight));
+            expectedTokenAmounts[i] = data.uniV3Vaults[i].liquidityToTokenAmounts(expectedLiquidityOnVault);
+            totalAmount[0] += expectedTokenAmounts[i][0];
+            totalAmount[1] += expectedTokenAmounts[i][1];
         }
     }
 
+    /// @dev method transfers extra tokens from subvaults to erc20Vault according to current and expected amounts
     function _pullExtraTokens(
         StrategyData memory data,
-        uint256[2][] memory uniV3Expected,
+        uint256[][] memory uniV3Expected,
         uint256[] memory moneyExpected,
         Restrictions memory restrictions,
         Tvls memory tvls
-    ) private returns (uint256[2][] memory pulledFromUniV3) {
-        pulledFromUniV3 = new uint256[2][](data.uniV3Vaults.length);
+    ) private returns (uint256[][] memory pulledFromUniV3) {
+        pulledFromUniV3 = new uint256[][](data.uniV3Vaults.length);
         for (uint256 i = 0; i < pulledFromUniV3.length; ++i) {
-            pulledFromUniV3[i] = _convertToStaticArray(
-                _pullTokens(
-                    data.tokens,
-                    data.uniV3Vaults[i],
-                    data.erc20Vault,
-                    _convertToDynamicArray(uniV3Expected[i]),
-                    _convertToDynamicArray(tvls.uniV3[i]),
-                    _convertToDynamicArray(restrictions.pulledFromUniV3[i]),
-                    true
-                )
+            pulledFromUniV3[i] = _pullTokens(
+                data.tokens,
+                data.uniV3Vaults[i],
+                data.erc20Vault,
+                uniV3Expected[i],
+                tvls.uniV3[i],
+                restrictions.pulledFromUniV3[i],
+                true
             );
         }
 
@@ -448,29 +475,28 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     function _pullMissingTokens(
         StrategyData memory data,
-        uint256[2][] memory uniV3Expected,
+        uint256[][] memory uniV3Expected,
         uint256[] memory moneyExpected,
         Restrictions memory restrictions,
         Tvls memory tvls
-    ) private returns (uint256[2][] memory pulledToUniV3) {
-        pulledToUniV3 = new uint256[2][](data.uniV3Vaults.length);
+    ) private returns (uint256[][] memory pulledToUniV3) {
+        pulledToUniV3 = new uint256[][](data.uniV3Vaults.length);
         for (uint256 i = 0; i < pulledToUniV3.length; ++i) {
-            pulledToUniV3[i] = _convertToStaticArray(
-                _pullTokens(
-                    data.tokens,
-                    data.uniV3Vaults[i],
-                    data.erc20Vault,
-                    _convertToDynamicArray(uniV3Expected[i]),
-                    _convertToDynamicArray(tvls.uniV3[i]),
-                    _convertToDynamicArray(restrictions.pulledToUniV3[i]),
-                    false
-                )
+            pulledToUniV3[i] = _pullTokens(
+                data.tokens,
+                data.uniV3Vaults[i],
+                data.erc20Vault,
+                uniV3Expected[i],
+                tvls.uniV3[i],
+                restrictions.pulledToUniV3[i],
+                false
             );
         }
 
         _pullTokens(data.tokens, data.moneyVault, data.erc20Vault, moneyExpected, tvls.money, new uint256[](2), false);
     }
 
+    /// @notice function for transfer tokens from one subvault like uniV3Vault or moneyVault to
     function _pullTokens(
         address[] memory tokens,
         IIntegrationVault vault,
@@ -510,14 +536,19 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         }
     }
 
-    function processRebalance(
-        StrategyData memory data,
-        bool forcePositionRebalance,
-        Restrictions memory restrictions
-    ) external returns (Restrictions memory actualAmounts) {
+    /// @notice main method to process rebalance in strategy
+    /// @param data structure with all needed addresses, intervals parameters, token amounts and ratios that set during deploy and initializing of the strategy needed to process the rebalance
+    /// @param restrictions restrictions for token amounts to be transfered and new short interval to be minted
+    /// @return actualAmounts actual transferred amounts and new minted short intervals
+    function processRebalance(StrategyData memory data, Restrictions memory restrictions)
+        external
+        returns (Restrictions memory actualAmounts)
+    {
         _requireAdmin();
 
-        (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = data.pool.slot0();
+        // Getting sqrtPriceX96 and spotTick from pool of the first UniV3Vault. These parameters will be used for future ratio calculations.
+        // It is also need to keep it in mind, that these parameters for different UniV3Vault could be slightly different.
+        (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = data.uniV3Vaults[0].pool().slot0();
         bool newPositionMinted = false;
         int24 newLowerTick;
         int24 newUpperTick;
@@ -525,7 +556,6 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             (newPositionMinted, newLowerTick, newUpperTick, actualAmounts.drainedAmounts) = _positionsRebalance(
                 data,
                 spotTick,
-                forcePositionRebalance,
                 restrictions
             );
             if (newPositionMinted) {
@@ -539,18 +569,20 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         Tvls memory tvls = getTvls(data);
         (
             uint256[] memory moneyExpected,
-            uint256[2][] memory uniV3Expected,
+            uint256[][] memory uniV3Expected,
             uint256 expectedAmount0
         ) = calculateExpectedAmounts(data, sqrtPriceX96, tvls.total[0], tvls.total[1]);
 
         actualAmounts.pulledFromUniV3 = _pullExtraTokens(data, uniV3Expected, moneyExpected, restrictions, tvls);
         actualAmounts.swappedAmounts = _swapRebalance(data, sqrtPriceX96, restrictions, tvls.total[0], expectedAmount0);
-        if (newPositionMinted) {
-            _mintPositions(data, newLowerTick, newUpperTick);
-        }
         actualAmounts.pulledToUniV3 = _pullMissingTokens(data, uniV3Expected, moneyExpected, restrictions, tvls);
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    /// @notice method comparing needed amount of tokens and actual. Reverts in for any elent holds needed[i] > actual[i]
+    /// @param expected the needed amount of tokens from some action
+    /// @param actual actual amount of tokens from the action
     function _compareAmounts(uint256[] memory actual, uint256[] memory expected) private pure {
         require(actual.length == expected.length, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < actual.length; i++) {
@@ -558,14 +590,14 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         }
     }
 
-    function _convertToDynamicArray(uint256[2] memory array) private pure returns (uint256[] memory result) {
-        result = new uint256[](2);
-        result[0] = array[0];
-        result[1] = array[1];
-    }
+    // EVENTS
 
-    function _convertToStaticArray(uint256[] memory array) private pure returns (uint256[2] memory result) {
-        require(array.length == result.length, ExceptionsLibrary.INVALID_LENGTH);
-        result = [array[0], array[1]];
-    }
+    event PositionsMinted(uint256[] uniV3Nfts);
+
+    event PositionsBurned(uint256[] uniV3Nfts);
+
+    /// @notice Emitted when tokens swapped via uniswap router
+    /// @param swapParams Swap domainPositionParams
+    /// @param amountOut recieved amount of token during the swap
+    event TokensSwapped(ISwapRouter.ExactInputSingleParams swapParams, uint256 amountOut);
 }
