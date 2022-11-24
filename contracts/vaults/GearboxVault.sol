@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
-import "../interfaces/external/gearbox/helpers/IDegenDistributor.sol";
+import "../interfaces/IDegenDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
@@ -165,6 +165,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function closeCreditAccount() external {
+
         GearboxHelper helper_ = helper;
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -174,7 +175,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         address primaryToken_ = primaryToken;
         address creditAccount_ = getCreditAccount();
 
-        require(creditAccount_ != address(0), ExceptionsLibrary.INVALID_TARGET);
+        if (creditAccount_ == address(0)) {
+            return;
+        }
 
         helper_.claimRewards(address(_vaultGovernance), creditAccount_, convexOutputToken);
         helper_.withdrawFromConvex(
@@ -194,7 +197,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 address(_vaultGovernance),
                 creditAccount_
             );
-        } else {
+        }
+
+        else if (primaryToken_ != depositToken_) {
             helper_.swapExactInput(
                 primaryToken_,
                 depositToken_,
@@ -342,6 +347,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         address creditAccount_ = getCreditAccount();
         require(creditAccount_ == address(0), ExceptionsLibrary.FORBIDDEN);
