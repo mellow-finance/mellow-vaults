@@ -56,11 +56,12 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @param minLpTokens Minimal value of LP tokens
     /// @param vaultOptions Options of vaults
     /// @return actualTokenAmounts Arrays of actual token amounts after deposit
+    /// @return lpAmount Amount of LP tokens minted
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
         bytes memory vaultOptions
-    ) external returns (uint256[] memory actualTokenAmounts);
+    ) external returns (uint256[] memory actualTokenAmounts, uint256 lpAmount);
 
     /// @notice Current epoch, where the epoch means the number of completed withdrawal executions plus 1
     function currentEpoch() external view returns (uint256);

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -12,7 +13,6 @@ import "../interfaces/vaults/IGearboxRootVault.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
-import "forge-std/console2.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -120,7 +120,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
         bytes memory vaultOptions
-    ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts) {
+    ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts, uint256 lpAmount) {
         address vaultGovernance = address(_vaultGovernance);
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         require(
@@ -150,11 +150,16 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         (uint256[] memory minTvl, ) = gearboxVault.tvl();
         _chargeFees(thisNft, minTvl[0], totalSupply - totalLpTokensWaitingWithdrawal);
+
         uint256 supply = totalSupply - totalLpTokensWaitingWithdrawal;
-        uint256 lpAmount;
+        lpAmount;
 
         if (supply == 0) {
-            lpAmount = tokenAmounts[0];
+            uint256 tokenDecimals = ERC20(primaryToken).decimals();
+            if (tokenDecimals > 18) {
+                tokenDecimals = 18;
+            }
+            lpAmount = tokenAmounts[0] * 10**(18 - tokenDecimals);
         } else {
             uint256 tvl = minTvl[0];
             lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], tvl);
@@ -194,7 +199,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             }
 
             withdrawalRequests[msg.sender] += lpTokenAmount;
-            latestRequestEpoch[msg.sender] = currentEpoch;
         } else {
             _processHangingWithdrawal(msg.sender, false);
 
@@ -204,8 +208,9 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             }
 
             withdrawalRequests[msg.sender] = lpTokenAmount;
-            latestRequestEpoch[msg.sender] = currentEpoch;
         }
+
+        latestRequestEpoch[msg.sender] = currentEpoch;
 
         totalCurrentEpochLpWitdrawalRequests += lpTokenAmount;
         emit WithdrawalRegistered(msg.sender, lpTokenAmount);
@@ -233,33 +238,40 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IGearboxRootVault
     function invokeExecution() public {
-        _requireAtLeastStrategy();
-
         IIntegrationVault gearboxVault_ = gearboxVault;
 
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault_).vaultGovernance()));
         uint256 withdrawDelay = governance.delayedProtocolPerVaultParams(gearboxVault_.nft()).withdrawDelay;
 
+        if (lastEpochChangeTimestamp + 2 * withdrawDelay > block.timestamp) {
+            _requireAtLeastStrategy();
+        }
+
         require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
         lastEpochChangeTimestamp = block.timestamp;
+
+        IGearboxVault(address(gearboxVault_)).closeCreditAccount();
 
         (uint256[] memory minTokenAmounts, ) = gearboxVault_.tvl();
         _chargeFees(_nft, minTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
         uint256 totalCurrentEpochLpWitdrawalRequests_ = totalCurrentEpochLpWitdrawalRequests;
 
-        uint256 totalAmount = FullMath.mulDiv(
-            totalCurrentEpochLpWitdrawalRequests_,
-            minTokenAmounts[0],
-            totalSupply - totalLpTokensWaitingWithdrawal
-        );
-
-        uint256[] memory tokenAmounts = new uint256[](1);
-        tokenAmounts[0] = totalAmount;
-        uint256[] memory pulledAmounts = gearboxVault_.pull(address(erc20Vault), _vaultTokens, tokenAmounts, "");
-        totalAmount = pulledAmounts[0];
+        uint256 totalAmount = 0;
 
         if (totalCurrentEpochLpWitdrawalRequests_ > 0) {
+
+            totalAmount = FullMath.mulDiv(
+                totalCurrentEpochLpWitdrawalRequests_,
+                minTokenAmounts[0],
+                totalSupply - totalLpTokensWaitingWithdrawal
+            );
+
+            uint256[] memory tokenAmounts = new uint256[](1);
+            tokenAmounts[0] = totalAmount;
+            uint256[] memory pulledAmounts = gearboxVault_.pull(address(erc20Vault), _vaultTokens, tokenAmounts, "");
+            totalAmount = pulledAmounts[0];
+
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests_;
             epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(
                 totalAmount,
@@ -340,7 +352,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 amount
     ) internal view override {
         uint256 senderBalance = balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from];
-
         require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 

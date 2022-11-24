@@ -661,8 +661,8 @@ contract GearboxWBTCTest is Test {
         deposit(FIRST_DEPOSIT, address(this));
         invokeExecution();
 
-        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 25000 * 10**6, 100));
-        assertTrue(isClose(IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc, (FIRST_DEPOSIT - 25000) * 10**6, 100));
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 0, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc, (FIRST_DEPOSIT) * 10**6, 100));
         assertTrue(IERC20(usdc).balanceOf(address(erc20Vault)) == 0);
         assertTrue(IERC20(usdc).balanceOf(address(rootVault)) == 0);
 
@@ -689,8 +689,8 @@ contract GearboxWBTCTest is Test {
         gearboxVault.adjustPosition();
         invokeExecution();
 
-        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 25000 * 10**6, 100));
-        assertTrue(isClose(IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc, (FIRST_DEPOSIT - 25000) * 10**6, 100));
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 0, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc, FIRST_DEPOSIT * 10**6, 100));
 
         assertTrue(checkIfSimpleCloseIsOkay());
     }
@@ -717,7 +717,7 @@ contract GearboxWBTCTest is Test {
 
         invokeExecution();
 
-        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), FIRST_DEPOSIT * 10**6 * 86 / 100, 100));
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 0, 100));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * 134 / 100 * satoshiOfUsdc, 100));
         assertTrue(checkIfSimpleCloseIsOkay());
     }
@@ -728,8 +728,8 @@ contract GearboxWBTCTest is Test {
         gearboxVault.updateTargetMarginalFactor(4000000000);
 
         invokeExecution();
-        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 25000 * 10**6, 100));
-        assertTrue(isClose(IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc, (FIRST_DEPOSIT * 7 / 5 - 25000) * 10**6, 100));
+        assertTrue(isClose(IERC20(usdc).balanceOf(address(gearboxVault)), 0, 100));
+        assertTrue(isClose(IERC20(wbtc).balanceOf(address(gearboxVault)) * 10**6 / satoshiOfUsdc, (FIRST_DEPOSIT * 7 / 5) * 10**6, 100));
         assertTrue(checkIfSimpleCloseIsOkay());
     }
 

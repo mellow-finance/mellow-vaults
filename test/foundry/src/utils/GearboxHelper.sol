@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -299,24 +299,7 @@ contract GearboxHelper {
                 currentValueDepositTokenNominatedUnderlying - expectedMaximalDepositTokenValueNominatedUnderlying,
                 currentValueDepositTokenNominatedUnderlying
             );
-            MultiCall[] memory calls = new MultiCall[](1);
-
-            uint256 expectedOutput = oracle.convert(toSwap, depositToken_, primaryToken_);
-
-            ISwapRouter.ExactInputParams memory inputParams = ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(depositToken_, strategyParams.largePoolFeeUsed, primaryToken_),
-                recipient: creditAccount,
-                deadline: block.timestamp + 1,
-                amountIn: toSwap,
-                amountOutMinimum: FullMath.mulDiv(expectedOutput, D9 - protocolParams.maxSlippageD9, D9)
-            });
-
-            calls[0] = MultiCall({ // swap deposit to primary token
-                target: vaultParams.univ3Adapter,
-                callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
-            });
-
-            admin.multicall(calls);
+            swapExactInput(depositToken_, primaryToken_, toSwap, vaultGovernance, creditAccount);
         }
     }
 
@@ -555,7 +538,6 @@ contract GearboxHelper {
         address fromToken,
         address toToken,
         uint256 amount,
-        uint256 untouchableSum,
         address vaultGovernance,
         address creditAccount
     ) external {
@@ -571,13 +553,7 @@ contract GearboxHelper {
             vaultGovernance
         ).delayedProtocolPerVaultParams(vaultNft);
 
-        uint256 allowedToUse = IERC20(fromToken).balanceOf(creditAccount) - untouchableSum;
         uint256 amountInMaximum = calculateAmountInMaximum(fromToken, toToken, amount, protocolParams.maxSlippageD9);
-
-        if (amountInMaximum > allowedToUse) {
-            amount = FullMath.mulDiv(amount, allowedToUse, amountInMaximum);
-            amountInMaximum = allowedToUse;
-        }
 
         ISwapRouter.ExactOutputParams memory uniParams = ISwapRouter.ExactOutputParams({
             path: abi.encodePacked(toToken, strategyParams.largePoolFeeUsed, fromToken), // exactOutput arguments are in reversed order
@@ -592,6 +568,46 @@ contract GearboxHelper {
         calls[0] = MultiCall({
             target: vaultParams.univ3Adapter,
             callData: abi.encodeWithSelector(ISwapRouter.exactOutput.selector, uniParams)
+        });
+
+        admin.multicall(calls);
+    }
+
+    function swapExactInput(
+        address fromToken,
+        address toToken,
+        uint256 amount,
+        address vaultGovernance,
+        address creditAccount
+    ) public {
+        require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
+
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
+
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
+            .strategyParams(vaultNft);
+
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolPerVaultParams(vaultNft);
+
+        MultiCall[] memory calls = new MultiCall[](1);
+
+        IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
+        uint256 expectedOutput = oracle.convert(amount, fromToken, toToken);
+
+        ISwapRouter.ExactInputParams memory inputParams = ISwapRouter.ExactInputParams({
+            path: abi.encodePacked(fromToken, strategyParams.largePoolFeeUsed, toToken),
+            recipient: creditAccount,
+            deadline: block.timestamp + 1,
+            amountIn: amount,
+            amountOutMinimum: FullMath.mulDiv(expectedOutput, D9 - protocolParams.maxSlippageD9, D9)
+        });
+
+        calls[0] = MultiCall({ // swap deposit to primary token
+            target: vaultParams.univ3Adapter,
+            callData: abi.encodeWithSelector(ISwapRouter.exactInput.selector, inputParams)
         });
 
         admin.multicall(calls);

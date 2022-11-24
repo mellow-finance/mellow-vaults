@@ -24,8 +24,6 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param primaryToken Primary token of the vault (i.e. the token of the Gearbox Credit Account)
-    /// @param curveAdapter Address of the specific Curve pool Adapter by Gearbox used by the vault
-    /// @param convexAdapter Address of the specific Convex Base Reward pool Adapter by Gearbox used by the vault
     /// @param univ3Adapter Address of the Uniswap V3 Adapter by Gearbox used by the system
     /// @param facade Address of the Gearbox CreditFacade contract used by the vault
     /// @param withdrawDelay The minimal time to pass between two consecutive withdrawal orders execution

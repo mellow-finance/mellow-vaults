@@ -718,7 +718,7 @@ contract GearboxWETHTest is Test {
         uint256 oldSupply = rootVault.totalSupply();
 
         claimMoney(recipient);
-        assertTrue(isClose(IERC20(weth).balanceOf(recipient), FIRST_DEPOSIT / 2 * weiofUsdc, 100));
+        assertTrue(isClose(IERC20(weth).balanceOf(recipient), FIRST_DEPOSIT / 2 * weiofUsdc, 50));
         uint256 newSupply = rootVault.totalSupply();
         
         assertTrue(oldSupply - lpTokens / 2 == newSupply);

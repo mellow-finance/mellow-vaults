@@ -76,6 +76,9 @@ interface IGearboxVault is IIntegrationVault {
     /// @notice Opens a new credit account on the address of the vault
     function openCreditAccount(address curveAdapter, address convexAdapter) external;
 
+    /// @notice Closes existing credit account (only possible to be successfully called by the root vault)
+    function closeCreditAccount() external;
+
     /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
     /// Can be successfully called only by the helper
     function openCreditAccountInManager(uint256 currentPrimaryTokenAmount, uint16 referralCode) external;

@@ -164,6 +164,51 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
+    function closeCreditAccount() external {
+        GearboxHelper helper_ = helper;
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(registry.ownerOf(helper_.vaultNft()) == msg.sender, ExceptionsLibrary.FORBIDDEN);
+
+        address depositToken_ = depositToken;
+        address primaryToken_ = primaryToken;
+        address creditAccount_ = getCreditAccount();
+
+        require(creditAccount_ != address(0), ExceptionsLibrary.INVALID_TARGET);
+
+        helper_.claimRewards(address(_vaultGovernance), creditAccount_, convexOutputToken);
+        helper_.withdrawFromConvex(
+            IERC20(convexOutputToken).balanceOf(creditAccount_),
+            address(_vaultGovernance),
+            primaryIndex
+        );
+
+        (, , uint256 debtAmount) = creditManager.calcCreditAccountAccruedInterest(creditAccount_);
+        uint256 underlyingBalance = IERC20(primaryToken_).balanceOf(creditAccount_);
+
+        if (underlyingBalance < debtAmount + 1) {
+            helper_.swapExactOutput(
+                depositToken_,
+                primaryToken_,
+                debtAmount + 1 - underlyingBalance,
+                address(_vaultGovernance),
+                creditAccount_
+            );
+        } else {
+            helper_.swapExactInput(
+                primaryToken_,
+                depositToken_,
+                underlyingBalance - (debtAmount + 1),
+                address(_vaultGovernance),
+                creditAccount_
+            );
+        }
+
+        MultiCall[] memory noCalls = new MultiCall[](0);
+        creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
+    }
+
+    /// @inheritdoc IGearboxVault
     function adjustPosition() external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
@@ -298,64 +343,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
-
-        address depositToken_ = depositToken;
-        address primaryToken_ = primaryToken;
         address creditAccount_ = getCreditAccount();
-        GearboxHelper helper_ = helper;
+        require(creditAccount_ == address(0), ExceptionsLibrary.FORBIDDEN);
 
-        if (creditAccount_ == address(0)) {
-            actualTokenAmounts = helper_.pullFromAddress(tokenAmounts[0], address(_vaultGovernance));
-            IERC20(depositToken_).safeTransfer(to, actualTokenAmounts[0]);
-            return actualTokenAmounts;
-        }
-        uint256 amountToPull = tokenAmounts[0];
-
-        helper_.claimRewards(address(_vaultGovernance), creditAccount_, convexOutputToken);
-        helper_.withdrawFromConvex(
-            IERC20(convexOutputToken).balanceOf(creditAccount_),
-            address(_vaultGovernance),
-            primaryIndex
-        );
-
-        (, , uint256 debtAmount) = creditManager.calcCreditAccountAccruedInterest(creditAccount_);
-        uint256 underlyingBalance = IERC20(primaryToken_).balanceOf(creditAccount_);
-
-        if (underlyingBalance < debtAmount + 1) {
-            helper_.swapExactOutput(
-                depositToken_,
-                primaryToken_,
-                debtAmount + 1 - underlyingBalance,
-                0,
-                address(_vaultGovernance),
-                creditAccount_
-            );
-        }
-
-        uint256 depositTokenBalance = IERC20(depositToken_).balanceOf(creditAccount_);
-        if (depositTokenBalance < amountToPull && primaryToken_ != depositToken_) {
-            helper_.swapExactOutput(
-                primaryToken_,
-                depositToken_,
-                amountToPull - depositTokenBalance,
-                debtAmount + 1,
-                address(_vaultGovernance),
-                creditAccount_
-            );
-        }
-
-        MultiCall[] memory noCalls = new MultiCall[](0);
-        creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
-
-        depositTokenBalance = IERC20(depositToken_).balanceOf(address(this));
-        if (depositTokenBalance < amountToPull) {
-            amountToPull = depositTokenBalance;
-        }
-
-        IERC20(depositToken_).safeTransfer(to, amountToPull);
-        actualTokenAmounts = new uint256[](1);
-
-        actualTokenAmounts[0] = amountToPull;
+        IERC20(depositToken).safeTransfer(to, tokenAmounts[0]);
+        actualTokenAmounts = tokenAmounts;
     }
 
     /// @notice Deposits all deposit tokens which are on the address of the vault into the credit account
