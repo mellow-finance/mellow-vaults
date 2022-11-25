@@ -10,6 +10,7 @@ import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/OracleLibrary.sol";
 
 contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -28,8 +29,11 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         int24 domainUpperTick;
         int24 shortLowerTick;
         int24 shortUpperTick;
+        int24 maxTickDeviation;
+        uint32 averageTickTimespan;
         IERC20Vault erc20Vault;
         IIntegrationVault moneyVault;
+        IUniswapV3Pool swapPool;
         address router;
         uint256 amount0ForMint;
         uint256 amount1ForMint;
@@ -302,7 +306,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
             tokenIn: data.tokens[tokenInIndex],
             tokenOut: data.tokens[tokenInIndex ^ 1],
-            fee: IUniswapV3Pool(data.uniV3Vaults[0].pool()).fee(),
+            fee: data.swapPool.fee(),
             recipient: address(data.erc20Vault),
             deadline: restrictions.deadline,
             amountIn: amountIn,
@@ -310,9 +314,8 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             sqrtPriceLimitX96: 0
         });
 
-        bytes memory routerData = abi.encode(swapParams);
         data.erc20Vault.externalCall(data.tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(data.router, amountIn));
-        routerResult = data.erc20Vault.externalCall(data.router, EXACT_INPUT_SINGLE_SELECTOR, routerData);
+        routerResult = data.erc20Vault.externalCall(data.router, EXACT_INPUT_SINGLE_SELECTOR, abi.encode(swapParams));
         data.erc20Vault.externalCall(data.tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(data.router, 0));
         uint256 amountOut = abi.decode(routerResult, (uint256));
 
@@ -532,10 +535,25 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
     {
         _requireAdmin();
 
-        // Getting sqrtPriceX96 and spotTick from pool of the first UniV3Vault. These parameters will be used for future ratio calculations.
+        // Getting sqrtPriceX96 and spotTick from pool for swaps. These parameters will be used for future ratio calculations.
         // It is also need to keep it in mind, that these parameters for different UniV3Vault could be slightly different.
-        (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = data.uniV3Vaults[0].pool().slot0();
+        (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = data.swapPool.slot0();
         bool newPositionMinted = false;
+        {
+            (int24 averageTick, , bool withFail) = OracleLibrary.consult(
+                address(data.swapPool),
+                data.averageTickTimespan
+            );
+            require(!withFail, ExceptionsLibrary.INVALID_STATE);
+            for (uint256 i = 0; i < data.uniV3Vaults.length; i++) {
+                (, int24 vaultSpotTick, , , , , ) = data.uniV3Vaults[i].pool().slot0();
+                int24 tickDelta = vaultSpotTick - averageTick;
+                if (tickDelta < 0) {
+                    tickDelta = -tickDelta;
+                }
+                require(tickDelta < data.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+            }
+        }
         {
             (
                 newPositionMinted,

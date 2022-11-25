@@ -15,10 +15,13 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         int24 halfOfShortInterval;
         int24 domainLowerTick;
         int24 domainUpperTick;
+        int24 maxTickDeviation;
+        uint32 averageTickTimespan;
         uint256 amount0ForMint;
         uint256 amount1ForMint;
         uint256 erc20CapitalRatioD;
         uint256[] uniV3Weights;
+        IUniswapV3Pool swapPool;
     }
 
     // TODO: add comments
@@ -106,10 +109,16 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
 
         require(newStrategyParams.halfOfShortInterval > 0, ExceptionsLibrary.VALUE_ZERO);
         require(newStrategyParams.halfOfShortInterval % tickSpacing_ == 0, ExceptionsLibrary.INVALID_VALUE);
+        require(newStrategyParams.maxTickDeviation > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(
+            newStrategyParams.maxTickDeviation < newStrategyParams.halfOfShortInterval,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
         require(newStrategyParams.domainLowerTick % tickSpacing_ == 0, ExceptionsLibrary.INVALID_VALUE);
         require(newStrategyParams.domainUpperTick % tickSpacing_ == 0, ExceptionsLibrary.INVALID_VALUE);
         require(globalIntervalWidth > newStrategyParams.halfOfShortInterval, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(globalIntervalWidth % newStrategyParams.halfOfShortInterval == 0, ExceptionsLibrary.INVALID_VALUE);
+        require(newStrategyParams.averageTickTimespan > 0, ExceptionsLibrary.VALUE_ZERO);
 
         require(newStrategyParams.erc20CapitalRatioD > 0, ExceptionsLibrary.VALUE_ZERO);
         require(newStrategyParams.erc20CapitalRatioD < DENOMINATOR, ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -127,6 +136,9 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         require(newTotalWeight > 0, ExceptionsLibrary.VALUE_ZERO);
         mutableParams = newStrategyParams;
 
+        require(address(newStrategyParams.swapPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(newStrategyParams.swapPool.token0() == token0, ExceptionsLibrary.INVALID_TOKEN);
+        require(newStrategyParams.swapPool.token1() == token1, ExceptionsLibrary.INVALID_TOKEN);
         emit UpdateMutableParams(tx.origin, msg.sender, newStrategyParams);
     }
 
@@ -146,6 +158,9 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
             uniV3Vaults: uniV3Vaults,
             erc20Vault: erc20Vault,
             moneyVault: moneyVault,
+            swapPool: mutableParams_.swapPool,
+            maxTickDeviation: mutableParams_.maxTickDeviation,
+            averageTickTimespan: mutableParams_.averageTickTimespan,
             halfOfShortInterval: mutableParams_.halfOfShortInterval,
             domainLowerTick: mutableParams_.domainLowerTick,
             domainUpperTick: mutableParams_.domainUpperTick,

@@ -344,6 +344,9 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         amount1ForMint: 10 ** 9,
                         erc20CapitalRatioD: 5000000,
                         uniV3Weights: this.weights,
+                        swapPool: this.firstPool.address,
+                        maxTickDeviation: 100,
+                        averageTickTimespan: 60,
                     } as MutableParamsStruct;
                     await this.subject
                         .connect(this.mStrategyAdmin)
@@ -505,6 +508,9 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         uniV3Weights: this.weights,
                         tokens: await this.erc20RootVault.vaultTokens(),
                         uniV3Vaults: this.uniV3Vaults,
+                        swapPool: this.firstPool.address,
+                        maxTickDeviation: 100,
+                        averageTickTimespan: 60,
                     } as StrategyDataStruct;
                     return data;
                 };
