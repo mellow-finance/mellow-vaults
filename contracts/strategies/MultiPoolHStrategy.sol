@@ -10,13 +10,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
 
     uint256 public constant DENOMINATOR = 1000_000_000;
 
-    /// @param halfOfShortInterval half of width of the uniV3 position measured in the strategy in ticks
-    /// @param domainLowerTick the lower tick of the domain uniV3 position
-    /// @param domainUpperTick the upper tick of the domain uniV3 position
-    /// @param amount0ForMint the amount of token0 are tried to be depositted on the new position
-    /// @param amount1ForMint the amount of token1 are tried to be depositted on the new position
-    /// @param erc20CapitalRatioD the ratio of tokens kept in money vault instead of erc20. The ratio is maintained for each token
-    /// @param uniV3Weights array of weights that shows ratio of liquidity accoss UniswapV3 pools in strategy
+    // TODO: add comments
     struct MutableParams {
         int24 halfOfShortInterval;
         int24 domainLowerTick;
@@ -27,9 +21,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         uint256[] uniV3Weights;
     }
 
-    /// @notice parameters of the current short position
-    /// @param lowerTick lower tick of interval
-    /// @param upperTick upper tick of interval
+    // TODO: add comments
     struct Interval {
         int24 lowerTick;
         int24 upperTick;
@@ -52,15 +44,8 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
     Interval public shortInterval;
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-    /// @notice constructs a strategy
-    /// @param token0_ first token of strategy
-    /// @param token1_ second token of strategy
-    /// @param erc20Vault_  erc20Vault of RootVault system
-    /// @param moneyVault_ YearnVault or AaveVault in RootVault system to gerenate additional yield
-    /// @param router_ the UniswapV3 router for swapping tokens
-    /// @param rebalancer_ strategy rebalances which is needed to process rebalance
-    /// @param admin admin of this strategy
-    /// @param uniV3Vaults_ UniV3Vaults of strategy for UniswapV3Pools with different fees
+
+    // TODO: add comments
     constructor(
         address token0_,
         address token1_,
@@ -113,8 +98,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         rebalancer = rebalancer_.createRebalancer(address(this));
     }
 
-    /// @notice updates mutable parameters of the strategy. Can be called only by admin
-    /// @param newStrategyParams the new parameters
+    // TODO: add comments
     function updateMutableParams(MutableParams memory newStrategyParams) external {
         _requireAdmin();
         int24 tickSpacing_ = tickSpacing;
@@ -146,9 +130,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         emit UpdateMutableParams(tx.origin, msg.sender, newStrategyParams);
     }
 
-    /// @notice rebalance method. Need to be called if the new position or new ratio of tokens are needed
-    /// @param restrictions the restrictions of the amounts of tokens to be transferred and ticks of new position
-    /// @return actualAmounts actual transferred amounts
+    // TODO: add comments
     function rebalance(MultiPoolHStrategyRebalancer.Restrictions memory restrictions)
         external
         returns (MultiPoolHStrategyRebalancer.Restrictions memory actualAmounts)
@@ -197,16 +179,10 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         return bytes32("1.0.0");
     }
 
-    /// @notice Emitted when Strategy mutableParams are set.
-    /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender)
-    /// @param mutableParams Updated mutableParams
+    // TODO: add comments
     event UpdateMutableParams(address indexed origin, address indexed sender, MutableParams mutableParams);
 
-    /// @notice Emitted when the rebalance function is called.
-    /// @param sender Sender of the call (msg.sender)
-    /// @param expectedAmounts restrictions for token transfers and minting positions
-    /// @param actualAmounts actual transferred amounts and minted positions
+    // TODO: add comments
     event Rebalance(
         address indexed sender,
         MultiPoolHStrategyRebalancer.Restrictions expectedAmounts,
