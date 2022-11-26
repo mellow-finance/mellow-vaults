@@ -348,9 +348,16 @@ contract GearboxHelper {
 
         address weth = creditManager.wethAddress();
 
-        uint256 callsCount = 4 + underlyingContract.extraRewardsLength();
+        uint256 callsCount = 4;
         if (weth == primaryToken_ || weth == depositToken) {
             callsCount -= 1;
+        }
+
+        for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
+            address rewardToken = address(IRewards(underlyingContract.extraRewards(i)).rewardToken());
+            if (rewardToken != depositToken && rewardToken != primaryToken_ && rewardToken != weth) {
+                callsCount += 1;
+            }
         }
 
         MultiCall[] memory calls = new MultiCall[](callsCount);
@@ -376,14 +383,20 @@ contract GearboxHelper {
             protocolParams.maxSmallPoolsSlippageD9
         );
 
+        uint256 pointer = 3;
+
         for (uint256 i = 2; i < 2 + underlyingContract.extraRewardsLength(); ++i) {
-            calls[i + 1] = createUniswapMulticall(
-                address(IRewards(underlyingContract.extraRewards(i - 2)).rewardToken()),
-                weth,
-                10000,
-                vaultParams.univ3Adapter,
-                protocolParams.maxSmallPoolsSlippageD9
-            );
+            address rewardToken = address(IRewards(underlyingContract.extraRewards(i - 2)).rewardToken());
+            if (rewardToken != depositToken && rewardToken != primaryToken_ && rewardToken != weth) {
+                calls[pointer] = createUniswapMulticall(
+                    rewardToken,
+                    weth,
+                    10000,
+                    vaultParams.univ3Adapter,
+                    protocolParams.maxSmallPoolsSlippageD9
+                );
+                pointer += 1;
+            }
         }
 
         if (weth != primaryToken_ && weth != depositToken) {
