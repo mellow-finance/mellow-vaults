@@ -259,7 +259,6 @@ contract GearboxUSDCTest is Test {
         uint256[] memory arr2 = new uint256[](3);
         arr2[0] = 25;
         arr2[1] = 100;
-        arr2[2] = 32;
 
         gearboxVault.addPoolsToAllowList(arr2);
 
@@ -1188,7 +1187,7 @@ contract GearboxUSDCTest is Test {
         convexAdapter = IConvexV1BaseRewardPoolAdapter(0xB26e063F062F76f9F7Dfa1a3f4b7fDa4A2197DfB);
 
         uint256[] memory arr2 = new uint256[](1);
-        arr2[0] = 9;
+        arr2[0] = 32;
         gearboxVault.addPoolsToAllowList(arr2);
 
         gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));        
