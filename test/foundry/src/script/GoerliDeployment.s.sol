@@ -97,6 +97,7 @@ contract GoerliDeployment is Script {
         });
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
+            crv3Pool: 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7,
             crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
             cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
             maxSlippageD9: 100000000,

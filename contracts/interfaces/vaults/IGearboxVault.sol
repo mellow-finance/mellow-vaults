@@ -98,5 +98,5 @@ interface IGearboxVault is IIntegrationVault {
 
     /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
     /// Can be successfully called only by the helper
-    function swap(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams, address token, uint256 amount) external;
+    function swapExactOutput(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams, address token, uint256 amount) external;
 }

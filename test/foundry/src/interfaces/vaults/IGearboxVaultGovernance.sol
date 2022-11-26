@@ -7,6 +7,7 @@ import "./IVaultGovernance.sol";
 interface IGearboxVaultGovernance is IVaultGovernance {
 
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
+    /// @param crv3Pool 3CRV token address
     /// @param crv CRV token address
     /// @param cvx CVX token address
     /// @param maxSlippageD9 Maximal admissible slippage for swaps between primary/deposit tokes
@@ -14,6 +15,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param maxCurveSlippageD9 Maximal admissible slippage for add/remove liquidity in Curve pool
     /// @param uniswapRouter Address of the Uniswap V3 router
     struct DelayedProtocolParams {
+        address crv3Pool;
         address crv;
         address cvx;
         uint256 maxSlippageD9;

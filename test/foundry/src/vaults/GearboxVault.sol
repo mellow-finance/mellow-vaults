@@ -153,7 +153,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         helper.setAdapters(curveAdapter, convexAdapter);
-        (primaryIndex, convexOutputToken, poolId) = helper.verifyInstances();
+        (primaryIndex, convexOutputToken, poolId) = helper.verifyInstances(address(_vaultGovernance));
         require(_poolsAllowList.contains(poolId), ExceptionsLibrary.FORBIDDEN);
         helper.openCreditAccount(address(_vaultGovernance), marginalFactorD9);
 
@@ -165,11 +165,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function closeCreditAccount() external {
-
         GearboxHelper helper_ = helper;
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(registry.ownerOf(helper_.vaultNft()) == msg.sender, ExceptionsLibrary.FORBIDDEN);
+        require(registry.ownerOf(_nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
 
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
@@ -197,9 +196,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
                 address(_vaultGovernance),
                 creditAccount_
             );
-        }
-
-        else if (primaryToken_ != depositToken_) {
+        } else if (primaryToken_ != depositToken_) {
             helper_.swapExactInput(
                 primaryToken_,
                 depositToken_,
@@ -214,7 +211,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function adjustPosition() external {
+    function adjustPosition() public {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
 
@@ -256,34 +253,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function updateTargetMarginalFactor(uint256 marginalFactorD9_) external {
-        require(_isApprovedOrOwner(msg.sender));
         require(marginalFactorD9_ > D9, ExceptionsLibrary.INVALID_VALUE);
 
-        address creditAccount_ = getCreditAccount();
-        GearboxHelper helper_ = helper;
-
-        if (creditAccount_ == address(0)) {
-            marginalFactorD9 = marginalFactorD9_;
-            return;
-        }
-
         marginalFactorD9 = marginalFactorD9_;
-        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = helper_.calculateDesiredTotalValue(
-            creditAccount_,
-            address(_vaultGovernance),
-            marginalFactorD9_
-        );
+        adjustPosition();
 
-        helper_.adjustPosition(
-            expectedAllAssetsValue,
-            currentAllAssetsValue,
-            address(_vaultGovernance),
-            marginalFactorD9_,
-            primaryIndex,
-            poolId,
-            convexOutputToken,
-            creditAccount_
-        );
         emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
     }
 
@@ -294,7 +268,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function swap(
+    function swapExactOutput(
         ISwapRouter router,
         ISwapRouter.ExactOutputParams memory uniParams,
         address token,
@@ -303,7 +277,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
         IERC20(token).safeIncreaseAllowance(address(router), amount);
         router.exactOutput(uniParams);
-        IERC20(token).approve(address(router), 0);
+        IERC20(token).safeApprove(address(router), 0);
     }
 
     /// @inheritdoc IGearboxVault
@@ -320,7 +294,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             uint16((marginalFactorD9 - D9) / D7),
             referralCode
         );
-        primaryToken_.approve(creditManagerAddress, 0);
+        primaryToken_.safeApprove(creditManagerAddress, 0);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -347,10 +321,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
-        address creditAccount_ = getCreditAccount();
-        require(creditAccount_ == address(0), ExceptionsLibrary.FORBIDDEN);
 
         IERC20(depositToken).safeTransfer(to, tokenAmounts[0]);
         actualTokenAmounts = tokenAmounts;
@@ -378,7 +349,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         });
 
         creditFacade_.multicall(calls);
-        token.approve(creditManagerAddress, 0);
+        token.safeApprove(creditManagerAddress, 0);
     }
 
     // --------------------------  EVENTS  --------------------------

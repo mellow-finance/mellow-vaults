@@ -13,6 +13,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        require(delayedProtocolParams_.crv3Pool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -40,6 +41,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         if (_stagedDelayedProtocolParams.length == 0) {
             return
                 DelayedProtocolParams({
+                    crv3Pool: address(0),
                     crv: address(0),
                     cvx: address(0),
                     maxSlippageD9: 0,
@@ -99,6 +101,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
 
     /// @inheritdoc IGearboxVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
+        require(params.crv3Pool != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.cvx != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniswapRouter != address(0), ExceptionsLibrary.ADDRESS_ZERO);

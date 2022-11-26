@@ -136,6 +136,7 @@ contract GearboxWETHTest is Test {
         });
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
+            crv3Pool: 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7,
             crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
             cvx: cvx,
             maxSlippageD9: 10000000,

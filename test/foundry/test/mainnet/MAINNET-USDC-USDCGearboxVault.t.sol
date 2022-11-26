@@ -132,6 +132,7 @@ contract GearboxUSDCTest is Test {
         });
 
         IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
+            crv3Pool: 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7,
             crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
             cvx: cvx,
             maxSlippageD9: 100000000,
@@ -255,9 +256,10 @@ contract GearboxUSDCTest is Test {
 
         gearboxVault.setMerkleParameters(0, 20, arr);
 
-        uint256[] memory arr2 = new uint256[](2);
+        uint256[] memory arr2 = new uint256[](3);
         arr2[0] = 25;
         arr2[1] = 100;
+        arr2[2] = 32;
 
         gearboxVault.addPoolsToAllowList(arr2);
 
@@ -1170,8 +1172,8 @@ contract GearboxUSDCTest is Test {
 
         invokeExecution();
 
-        curveAdapter = ICurveV1Adapter(0xbd871de345b2408f48C1B249a1dac7E0D7D4F8f9);
-        convexAdapter = IConvexV1BaseRewardPoolAdapter(0x54dF63cd15f76eB562dA001c675459De294a2390);
+        curveAdapter = ICurveV1Adapter(0x1C8281606377d79522515681BD94fc9d02b0d20B);
+        convexAdapter = IConvexV1BaseRewardPoolAdapter(0xB26e063F062F76f9F7Dfa1a3f4b7fDa4A2197DfB);
 
         gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));        
     }
@@ -1182,8 +1184,8 @@ contract GearboxUSDCTest is Test {
 
         invokeExecution();
 
-        curveAdapter = ICurveV1Adapter(0xbd871de345b2408f48C1B249a1dac7E0D7D4F8f9);
-        convexAdapter = IConvexV1BaseRewardPoolAdapter(0x54dF63cd15f76eB562dA001c675459De294a2390);
+        curveAdapter = ICurveV1Adapter(0x1C8281606377d79522515681BD94fc9d02b0d20B);
+        convexAdapter = IConvexV1BaseRewardPoolAdapter(0xB26e063F062F76f9F7Dfa1a3f4b7fDa4A2197DfB);
 
         uint256[] memory arr2 = new uint256[](1);
         arr2[0] = 9;
