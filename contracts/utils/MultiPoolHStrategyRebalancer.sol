@@ -152,15 +152,15 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         pure
         returns (int24 newShortLowerTick, int24 newShortUpperTick)
     {
-        int24 lowerTick = tick - (tick % data.halfOfShortInterval);
-        int24 upperTick = lowerTick + data.halfOfShortInterval;
+        int24 lowerCentralTick = tick - (tick % data.halfOfShortInterval);
+        int24 upperCentralTick = lowerCentralTick + data.halfOfShortInterval;
 
-        if (tick - lowerTick <= upperTick - tick) {
-            newShortLowerTick = lowerTick - data.halfOfShortInterval;
-            newShortUpperTick = lowerTick + data.halfOfShortInterval;
+        if (tick - lowerCentralTick <= upperCentralTick - tick) {
+            newShortLowerTick = lowerCentralTick - data.halfOfShortInterval;
+            newShortUpperTick = lowerCentralTick + data.halfOfShortInterval;
         } else {
-            newShortLowerTick = upperTick - data.halfOfShortInterval;
-            newShortUpperTick = upperTick + data.halfOfShortInterval;
+            newShortLowerTick = upperCentralTick - data.halfOfShortInterval;
+            newShortUpperTick = upperCentralTick + data.halfOfShortInterval;
         }
 
         if (newShortLowerTick < data.domainLowerTick) {
@@ -278,17 +278,17 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         uint160 sqrtPriceX96,
         Restrictions memory restrictions,
         uint256 currentAmount0,
-        uint256 expectedAmount0
+        uint256 expectedAmountOfToken0
     ) private returns (int256[] memory swappedAmounts) {
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256 tokenInIndex;
         uint256 amountIn;
-        if (expectedAmount0 > currentAmount0) {
+        if (expectedAmountOfToken0 > currentAmount0) {
             tokenInIndex = 1;
-            amountIn = FullMath.mulDiv(expectedAmount0 - currentAmount0, priceX96, Q96);
+            amountIn = FullMath.mulDiv(expectedAmountOfToken0 - currentAmount0, priceX96, Q96);
         } else {
             tokenInIndex = 0;
-            amountIn = currentAmount0 - expectedAmount0;
+            amountIn = currentAmount0 - expectedAmountOfToken0;
         }
 
         if (amountIn == 0) {
@@ -367,7 +367,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         returns (
             uint256[] memory moneyExpected,
             uint256[][] memory uniV3Expected,
-            uint256 expectedAmount0
+            uint256 expectedAmountOfToken0
         )
     {
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
@@ -398,7 +398,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             (uniV3Expected, totalUniV3Expected) = _calculateUniV3VaultsExpectedAmounts(totalExpectedLiqudity, data);
         }
 
-        expectedAmount0 = FullMath.mulDiv(
+        expectedAmountOfToken0 = FullMath.mulDiv(
             totalCapitalInToken0,
             _calculateRatioOfToken0D(sqrtPriceX96, sqrtRatios.sqrtDomainLowerX96, sqrtRatios.sqrtDomainUpperX96),
             DENOMINATOR
@@ -406,14 +406,14 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
         moneyExpected = new uint256[](2);
         moneyExpected[0] = FullMath.mulDiv(
-            expectedAmount0 - totalUniV3Expected[0],
+            expectedAmountOfToken0 - totalUniV3Expected[0],
             DENOMINATOR - data.erc20CapitalRatioD,
             DENOMINATOR
         );
 
-        uint256 expectedAmount1 = FullMath.mulDiv(totalCapitalInToken0 - expectedAmount0, priceX96, Q96);
+        uint256 expectedAmountOfToken1 = FullMath.mulDiv(totalCapitalInToken0 - expectedAmountOfToken0, priceX96, Q96);
         moneyExpected[1] = FullMath.mulDiv(
-            expectedAmount1 - totalUniV3Expected[1],
+            expectedAmountOfToken1 - totalUniV3Expected[1],
             DENOMINATOR - data.erc20CapitalRatioD,
             DENOMINATOR
         );
@@ -439,54 +439,6 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
             totalAmount[0] += expectedTokenAmounts[i][0];
             totalAmount[1] += expectedTokenAmounts[i][1];
         }
-    }
-
-    // TODO: add comments
-    function _pullExtraTokens(
-        StrategyData memory data,
-        uint256[][] memory uniV3Expected,
-        uint256[] memory moneyExpected,
-        Restrictions memory restrictions,
-        Tvls memory tvls
-    ) private returns (uint256[][] memory pulledFromUniV3) {
-        pulledFromUniV3 = new uint256[][](data.uniV3Vaults.length);
-        for (uint256 i = 0; i < pulledFromUniV3.length; ++i) {
-            pulledFromUniV3[i] = _pullTokens(
-                data.tokens,
-                data.uniV3Vaults[i],
-                data.erc20Vault,
-                uniV3Expected[i],
-                tvls.uniV3[i],
-                restrictions.pulledFromUniV3[i],
-                true
-            );
-        }
-
-        _pullTokens(data.tokens, data.moneyVault, data.erc20Vault, moneyExpected, tvls.money, new uint256[](2), true);
-    }
-
-    // TODO: add comments
-    function _pullMissingTokens(
-        StrategyData memory data,
-        uint256[][] memory uniV3Expected,
-        uint256[] memory moneyExpected,
-        Restrictions memory restrictions,
-        Tvls memory tvls
-    ) private returns (uint256[][] memory pulledToUniV3) {
-        pulledToUniV3 = new uint256[][](data.uniV3Vaults.length);
-        for (uint256 i = 0; i < pulledToUniV3.length; ++i) {
-            pulledToUniV3[i] = _pullTokens(
-                data.tokens,
-                data.uniV3Vaults[i],
-                data.erc20Vault,
-                uniV3Expected[i],
-                tvls.uniV3[i],
-                restrictions.pulledToUniV3[i],
-                false
-            );
-        }
-
-        _pullTokens(data.tokens, data.moneyVault, data.erc20Vault, moneyExpected, tvls.money, new uint256[](2), false);
     }
 
     // TODO: add comments
@@ -571,12 +523,45 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
         (
             uint256[] memory moneyExpected,
             uint256[][] memory uniV3Expected,
-            uint256 expectedAmount0
+            uint256 expectedAmountOfToken0
         ) = calculateExpectedAmounts(data, sqrtPriceX96, tvls.total[0], tvls.total[1]);
 
-        actualAmounts.pulledFromUniV3 = _pullExtraTokens(data, uniV3Expected, moneyExpected, restrictions, tvls);
-        actualAmounts.swappedAmounts = _swapRebalance(data, sqrtPriceX96, restrictions, tvls.total[0], expectedAmount0);
-        actualAmounts.pulledToUniV3 = _pullMissingTokens(data, uniV3Expected, moneyExpected, restrictions, tvls);
+        // pull extra tokens from subvaults to erc20Vault
+        actualAmounts.pulledFromUniV3 = new uint256[][](data.uniV3Vaults.length);
+        for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
+            actualAmounts.pulledFromUniV3[i] = _pullTokens(
+                data.tokens,
+                data.uniV3Vaults[i],
+                data.erc20Vault,
+                uniV3Expected[i],
+                tvls.uniV3[i],
+                restrictions.pulledFromUniV3[i],
+                true
+            );
+        }
+        _pullTokens(data.tokens, data.moneyVault, data.erc20Vault, moneyExpected, tvls.money, new uint256[](2), true);
+
+        actualAmounts.swappedAmounts = _swapRebalance(
+            data,
+            sqrtPriceX96,
+            restrictions,
+            tvls.total[0],
+            expectedAmountOfToken0
+        );
+        actualAmounts.pulledToUniV3 = new uint256[][](data.uniV3Vaults.length);
+        for (uint256 i = 0; i < data.uniV3Vaults.length; ++i) {
+            actualAmounts.pulledToUniV3[i] = _pullTokens(
+                data.tokens,
+                data.uniV3Vaults[i],
+                data.erc20Vault,
+                uniV3Expected[i],
+                tvls.uniV3[i],
+                restrictions.pulledToUniV3[i],
+                false
+            );
+        }
+
+        _pullTokens(data.tokens, data.moneyVault, data.erc20Vault, moneyExpected, tvls.money, new uint256[](2), false);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

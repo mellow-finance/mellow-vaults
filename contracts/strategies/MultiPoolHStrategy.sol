@@ -64,11 +64,13 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         require(token1_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(erc20Vault_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         address[] memory erc20VaultTokens = erc20Vault_.vaultTokens();
+        require(erc20VaultTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(erc20VaultTokens[0] == token0_, ExceptionsLibrary.INVARIANT);
         require(erc20VaultTokens[1] == token1_, ExceptionsLibrary.INVARIANT);
 
         require(address(moneyVault_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         address[] memory moneyVaultTokens = erc20Vault_.vaultTokens();
+        require(moneyVaultTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(moneyVaultTokens[0] == token0_, ExceptionsLibrary.INVARIANT);
         require(moneyVaultTokens[1] == token1_, ExceptionsLibrary.INVARIANT);
 
@@ -121,7 +123,7 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
         require(newStrategyParams.averageTickTimespan > 0, ExceptionsLibrary.VALUE_ZERO);
 
         require(newStrategyParams.erc20CapitalRatioD > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(newStrategyParams.erc20CapitalRatioD < DENOMINATOR, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(newStrategyParams.erc20CapitalRatioD < DENOMINATOR, ExceptionsLibrary.LIMIT_OVERFLOW);
 
         require(newStrategyParams.amount0ForMint > 0, ExceptionsLibrary.VALUE_ZERO);
         require(newStrategyParams.amount0ForMint <= 1000_000_000, ExceptionsLibrary.LIMIT_OVERFLOW);

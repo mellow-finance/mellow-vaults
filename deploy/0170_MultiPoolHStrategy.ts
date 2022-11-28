@@ -8,7 +8,7 @@ import {
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
 import { BigNumber, BigNumberish } from "ethers";
-import { map } from "ramda";
+import { F, map } from "ramda";
 import { ethers } from "hardhat";
 
 const deployHelpers = async function (hre: HardhatRuntimeEnvironment) {
@@ -69,7 +69,7 @@ const deployMultiPoolHStrategy = async function (
     });
 
     const { address } = await deployments.get(deploymentName);
-    return await hre.ethers.getContractAt("MultiPoolHStrategyAddress", address);
+    return await hre.ethers.getContractAt("MultiPoolHStrategy", address);
 };
 
 const setupStrategy = async (
@@ -81,7 +81,7 @@ const setupStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
-    const { deployer } = await getNamedAccounts();
+    const { deployer, mStrategyAdmin } = await getNamedAccounts();
 
     const strategy = await deployMultiPoolHStrategy(
         hre,
@@ -90,6 +90,18 @@ const setupStrategy = async (
         vaults
     );
     const txs: string[] = [];
+    for (var uniV3Vault of vaults.uniV3Vaults) {
+        let vault = await ethers.getContractAt("UniV3Vault", uniV3Vault);
+        const pool = await ethers.getContractAt(
+            "IUniswapV3Pool",
+            await vault.pool()
+        );
+        const fee = await pool.fee();
+        if (fee.toString() == mutableParams.swapPool) {
+            mutableParams.swapPool = pool.address;
+            break;
+        }
+    }
     txs.push(
         strategy.interface.encodeFunctionData("updateMutableParams", [
             mutableParams,
@@ -102,18 +114,18 @@ const setupStrategy = async (
     );
 
     // const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
-    const adminDelegateRole = await read(
-        "ProtocolGovernance",
-        "ADMIN_DELEGATE_ROLE"
-    );
-    const operatorRole = await read("ProtocolGovernance", "OPERATOR");
+    // const adminDelegateRole = await read(
+    //     "ProtocolGovernance",
+    //     "ADMIN_DELEGATE_ROLE"
+    // );
+    // const operatorRole = await read("ProtocolGovernance", "OPERATOR");
 
-    txs.push(
-        strategy.interface.encodeFunctionData("grantRole", [
-            adminDelegateRole,
-            deployer,
-        ])
-    );
+    // txs.push(
+    //     strategy.interface.encodeFunctionData("grantRole", [
+    //         adminDelegateRole,
+    //         deployer,
+    //     ])
+    // );
 
     // txs.push(
     //     strategy.interface.encodeFunctionData("grantRole", [
@@ -122,15 +134,15 @@ const setupStrategy = async (
     //     ])
     // );
 
-    const hStrategyOperator = "0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E";
-    if (hStrategyOperator.length > 0) {
-        txs.push(
-            strategy.interface.encodeFunctionData("grantRole", [
-                operatorRole,
-                hStrategyOperator,
-            ])
-        );
-    }
+    // const hStrategyOperator = "0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E";
+    // if (hStrategyOperator.length > 0) {
+    //     txs.push(
+    //         strategy.interface.encodeFunctionData("grantRole", [
+    //             operatorRole,
+    //             hStrategyOperator,
+    //         ])
+    //     );
+    // }
 
     // // renounce roles
     // txs.push(
@@ -154,25 +166,26 @@ const setupStrategy = async (
     //     ])
     // );
 
-    while (true) {
-        try {
-            await execute(
-                deploymentName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS,
-                },
-                "multicall",
-                txs
-            );
-            break;
-        } catch {
-            log("trying to do multicall again");
-            continue;
-        }
-    }
+    // while (true) {
+    //     try {
+    // await execute(
+    //     deploymentName,
+    //     {
+    //         from: deployer,
+    //         log: true,
+    //         autoMine: true,
+    //         ...TRANSACTION_GAS_LIMITS,
+    //     },
+    //     "multicall",
+    //     txs
+    // );
+    //         break;
+    //     } catch {
+    //         console.log("Fucked")
+    //         log("trying to do multicall again");
+    //         continue;
+    //     }
+    // }
 };
 
 const buildMultiPoolHStrategy = async (
@@ -340,7 +353,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             amount1ForMint: 10 ** 9,
             erc20CapitalRatioD: BigNumber.from(10).pow(9).div(100), // 1%
             uniV3Weights: [1, 1],
-            swapPool: "0x45dDa9cb7c25131DF268515131f647d726f50608",
+            swapPool: "500",
         } as MultiPoolStrategyMutableParams,
         "AaveVaultGovernance"
     );
