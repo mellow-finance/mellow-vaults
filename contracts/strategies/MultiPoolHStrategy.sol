@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/Multicall.sol";
+
 import "../utils/ContractMeta.sol";
 import "../utils/MultiPoolHStrategyRebalancer.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
+contract MultiPoolHStrategy is ContractMeta, Multicall, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     uint256 public constant DENOMINATOR = 1000_000_000;
@@ -136,11 +138,12 @@ contract MultiPoolHStrategy is ContractMeta, DefaultAccessControl {
             newTotalWeight += newStrategyParams.uniV3Weights[i];
         }
         require(newTotalWeight > 0, ExceptionsLibrary.VALUE_ZERO);
-        mutableParams = newStrategyParams;
 
         require(address(newStrategyParams.swapPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(newStrategyParams.swapPool.token0() == token0, ExceptionsLibrary.INVALID_TOKEN);
         require(newStrategyParams.swapPool.token1() == token1, ExceptionsLibrary.INVALID_TOKEN);
+
+        mutableParams = newStrategyParams;
         emit UpdateMutableParams(tx.origin, msg.sender, newStrategyParams);
     }
 

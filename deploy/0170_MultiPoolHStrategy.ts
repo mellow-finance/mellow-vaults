@@ -76,7 +76,7 @@ const setupStrategy = async (
     hre: HardhatRuntimeEnvironment,
     deploymentName: string,
     constructorParams: MultiPoolStrategyConstructorParams,
-    mutableParams: MultiPoolStrategyMutableParams,
+    mutableParams: MutableParamsStruct,
     vaults: VaultsAddresses
 ) => {
     const { deployments, getNamedAccounts } = hre;
@@ -102,10 +102,12 @@ const setupStrategy = async (
             break;
         }
     }
+
     txs.push(
-        strategy.interface.encodeFunctionData("updateMutableParams", [
-            mutableParams,
-        ])
+        strategy.interface.encodeFunctionData(
+            "updateMutableParams((int24,int24,int24,int24,uint32,uint256,uint256,uint256,uint256[],address))",
+            [mutableParams]
+        )
     );
 
     log(
@@ -113,86 +115,86 @@ const setupStrategy = async (
         map((x) => x.toString(), mutableParams)
     );
 
-    // const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
-    // const adminDelegateRole = await read(
-    //     "ProtocolGovernance",
-    //     "ADMIN_DELEGATE_ROLE"
-    // );
-    // const operatorRole = await read("ProtocolGovernance", "OPERATOR");
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    const adminDelegateRole = await read(
+        "ProtocolGovernance",
+        "ADMIN_DELEGATE_ROLE"
+    );
+    const operatorRole = await read("ProtocolGovernance", "OPERATOR");
 
-    // txs.push(
-    //     strategy.interface.encodeFunctionData("grantRole", [
-    //         adminDelegateRole,
-    //         deployer,
-    //     ])
-    // );
+    txs.push(
+        strategy.interface.encodeFunctionData("grantRole", [
+            adminDelegateRole,
+            deployer,
+        ])
+    );
 
-    // txs.push(
-    //     strategy.interface.encodeFunctionData("grantRole", [
-    //         adminRole,
-    //         mStrategyAdmin,
-    //     ])
-    // );
+    txs.push(
+        strategy.interface.encodeFunctionData("grantRole", [
+            adminRole,
+            mStrategyAdmin,
+        ])
+    );
 
-    // const hStrategyOperator = "0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E";
-    // if (hStrategyOperator.length > 0) {
-    //     txs.push(
-    //         strategy.interface.encodeFunctionData("grantRole", [
-    //             operatorRole,
-    //             hStrategyOperator,
-    //         ])
-    //     );
-    // }
+    const hStrategyOperator = "0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E";
+    if (hStrategyOperator.length > 0) {
+        txs.push(
+            strategy.interface.encodeFunctionData("grantRole", [
+                operatorRole,
+                hStrategyOperator,
+            ])
+        );
+    }
 
-    // // renounce roles
-    // txs.push(
-    //     strategy.interface.encodeFunctionData("renounceRole", [
-    //         operatorRole,
-    //         deployer,
-    //     ])
-    // );
+    // renounce roles
+    txs.push(
+        strategy.interface.encodeFunctionData("renounceRole", [
+            operatorRole,
+            deployer,
+        ])
+    );
 
-    // txs.push(
-    //     strategy.interface.encodeFunctionData("renounceRole", [
-    //         adminDelegateRole,
-    //         deployer,
-    //     ])
-    // );
+    txs.push(
+        strategy.interface.encodeFunctionData("renounceRole", [
+            adminDelegateRole,
+            deployer,
+        ])
+    );
 
-    // txs.push(
-    //     strategy.interface.encodeFunctionData("renounceRole", [
-    //         adminRole,
-    //         deployer,
-    //     ])
-    // );
+    txs.push(
+        strategy.interface.encodeFunctionData("renounceRole", [
+            adminRole,
+            deployer,
+        ])
+    );
 
-    // while (true) {
-    //     try {
-    // await execute(
-    //     deploymentName,
-    //     {
-    //         from: deployer,
-    //         log: true,
-    //         autoMine: true,
-    //         ...TRANSACTION_GAS_LIMITS,
-    //     },
-    //     "multicall",
-    //     txs
-    // );
-    //         break;
-    //     } catch {
-    //         console.log("Fucked")
-    //         log("trying to do multicall again");
-    //         continue;
-    //     }
-    // }
+    while (true) {
+        try {
+            await execute(
+                deploymentName,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS,
+                },
+                "multicall",
+                txs
+            );
+            break;
+        } catch {
+            console.log("Fucked");
+            log("trying to do multicall again");
+            continue;
+        }
+    }
 };
 
 const buildMultiPoolHStrategy = async (
     hre: HardhatRuntimeEnvironment,
     tokens: string[],
     constructorParams: MultiPoolStrategyConstructorParams,
-    mutableParams: MultiPoolStrategyMutableParams,
+    mutableParams: MutableParamsStruct,
     moneyGovernance: string
 ) => {
     const { deployments, getNamedAccounts } = hre;
@@ -316,7 +318,7 @@ type MultiPoolStrategyConstructorParams = {
     tickSpacing: BigNumberish;
 };
 
-type MultiPoolStrategyMutableParams = {
+type MutableParamsStruct = {
     halfOfShortInterval: BigNumberish;
     domainLowerTick: BigNumberish;
     domainUpperTick: BigNumberish;
@@ -354,7 +356,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             erc20CapitalRatioD: BigNumber.from(10).pow(9).div(100), // 1%
             uniV3Weights: [1, 1],
             swapPool: "500",
-        } as MultiPoolStrategyMutableParams,
+        } as MutableParamsStruct,
         "AaveVaultGovernance"
     );
 };
