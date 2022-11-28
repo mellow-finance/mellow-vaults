@@ -8,10 +8,9 @@ import {
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
 import { BigNumber, BigNumberish } from "ethers";
-import { F, map } from "ramda";
 import { ethers } from "hardhat";
 
-const deployHelpers = async function (hre: HardhatRuntimeEnvironment) {
+const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
     const { deployer, uniswapV3PositionManager } = await getNamedAccounts();
@@ -28,48 +27,78 @@ const deployHelpers = async function (hre: HardhatRuntimeEnvironment) {
     await deploy("MultiPoolHStrategyRebalancer", {
         from: deployer,
         contract: "MultiPoolHStrategyRebalancer",
-        args: [uniswapV3PositionManager, deployer],
+        args: [uniswapV3PositionManager],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
+
+    await deploy("MultiPoolHStrategy", {
+        from: deployer,
+        contract: "MultiPoolHStrategy",
+        args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
 };
 
-const deployMultiPoolHStrategy = async function (
+const createMultiPoolHStrategy = async function (
     hre: HardhatRuntimeEnvironment,
     constructorParams: MultiPoolStrategyConstructorParams,
     deploymentName: string,
-    vaults: VaultsAddresses
+    vaults: VaultsAddresses,
+    mutableParams: MutableParamsStruct
 ) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy } = deployments;
+    const { execute } = deployments;
     const { deployer } = await getNamedAccounts();
 
     const { address: rebalancer } = await hre.ethers.getContract(
         "MultiPoolHStrategyRebalancer"
     );
 
-    await deploy(deploymentName, {
-        from: deployer,
-        contract: "MultiPoolHStrategy",
-        args: [
-            constructorParams.token0,
-            constructorParams.token1,
-            vaults.erc20Vault,
-            vaults.moneyVault,
-            constructorParams.router,
-            rebalancer,
-            deployer,
-            vaults.uniV3Vaults,
-            constructorParams.tickSpacing,
-        ],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
+    const baseStrategy = await hre.ethers.getContract("MultiPoolHStrategy");
+
+    const immutableParams = {
+        tokens: [constructorParams.token0, constructorParams.token1],
+        erc20Vault: vaults.erc20Vault,
+        moneyVault: vaults.moneyVault,
+        router: constructorParams.router,
+        rebalancer: rebalancer,
+        uniV3Vaults: vaults.uniV3Vaults,
+        tickSpacing: constructorParams.tickSpacing,
+    } as ImmutableParamsStruct;
+    const address = await baseStrategy.callStatic.createStrategy(
+        immutableParams,
+        mutableParams,
+        deployer
+    );
+    await execute(
+        "MultiPoolHStrategy",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        },
+        "createStrategy",
+        immutableParams,
+        mutableParams,
+        deployer
+    );
+
+    await deployments.save(deploymentName, {
+        abi: (await deployments.get("MultiPoolHStrategy")).abi,
+        address,
     });
 
-    const { address } = await deployments.get(deploymentName);
-    return await hre.ethers.getContractAt("MultiPoolHStrategy", address);
+    const createdStrategy = await hre.ethers.getContractAt(
+        "MultiPoolHStrategy",
+        address
+    );
+
+    return createdStrategy;
 };
 
 const setupStrategy = async (
@@ -83,13 +112,6 @@ const setupStrategy = async (
     const { log, execute, read } = deployments;
     const { deployer, mStrategyAdmin } = await getNamedAccounts();
 
-    const strategy = await deployMultiPoolHStrategy(
-        hre,
-        constructorParams,
-        deploymentName,
-        vaults
-    );
-    const txs: string[] = [];
     for (var uniV3Vault of vaults.uniV3Vaults) {
         let vault = await ethers.getContractAt("UniV3Vault", uniV3Vault);
         const pool = await ethers.getContractAt(
@@ -103,17 +125,14 @@ const setupStrategy = async (
         }
     }
 
-    txs.push(
-        strategy.interface.encodeFunctionData(
-            "updateMutableParams((int24,int24,int24,int24,uint32,uint256,uint256,uint256,uint256[],address))",
-            [mutableParams]
-        )
+    const strategy = await createMultiPoolHStrategy(
+        hre,
+        constructorParams,
+        deploymentName,
+        vaults,
+        mutableParams
     );
-
-    log(
-        `Mutable Params:`,
-        map((x) => x.toString(), mutableParams)
-    );
+    const txs: string[] = [];
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
     const adminDelegateRole = await read(
@@ -183,7 +202,6 @@ const setupStrategy = async (
             );
             break;
         } catch {
-            console.log("Fucked");
             log("trying to do multicall again");
             continue;
         }
@@ -253,13 +271,19 @@ const buildMultiPoolHStrategy = async (
         uniV3VaultNft3000
     );
 
-    const deploymentName =
-        "MultiPoolHStrategy_" + (moneyGovernance[0] == "A" ? "Aave" : "Yearn");
     const vaults: VaultsAddresses = {
         erc20Vault: erc20Vault,
         moneyVault: moneyVault,
         uniV3Vaults: [uniV3Vault500, uniV3Vault3000],
     };
+
+    const deploymentName =
+        "MultiPoolHStrategy_" +
+        (moneyGovernance[0] == "A" ? "Aave" : "Yearn") +
+        "_" +
+        ("SwapPoolFee" + mutableParams.swapPool) +
+        "_" +
+        ("UniV3VaultsCount" + vaults.uniV3Vaults.length.toString());
 
     await setupStrategy(
         hre,
@@ -296,11 +320,12 @@ const buildMultiPoolHStrategy = async (
         "MultiPoolHStrategy",
         strategyAddress
     );
+    const immutableParams = await strategy.immutableParams();
     await combineVaults(
         hre,
         erc20RootVaultNft,
         [erc20VaultNft, moneyVaultNft, uniV3VaultNft500, uniV3VaultNft3000],
-        await strategy.rebalancer(),
+        immutableParams.rebalancer,
         mStrategyTreasury
     );
 };
@@ -331,11 +356,21 @@ type MutableParamsStruct = {
     swapPool: string;
 };
 
+type ImmutableParamsStruct = {
+    tokens: string[];
+    erc20Vault: string;
+    moneyVault: string;
+    router: string;
+    rebalancer: string;
+    uniV3Vaults: string[];
+    tickSpacing: BigNumberish;
+};
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { getNamedAccounts } = hre;
     const { weth, usdc, wbtc, uniswapV3Router } = await getNamedAccounts();
 
-    await deployHelpers(hre);
+    await deployStrategy(hre);
     await buildMultiPoolHStrategy(
         hre,
         [usdc, weth],

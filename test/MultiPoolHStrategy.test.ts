@@ -28,6 +28,7 @@ import {
     StrategyDataStruct,
 } from "./types/MultiPoolHStrategyRebalancer";
 import {
+    ImmutableParamsStruct,
     MutableParamsStruct,
     RestrictionsStruct,
 } from "./types/MultiPoolHStrategy";
@@ -76,11 +77,10 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         ).toNumber() + 1;
                     let yearnVaultNft = startNft;
                     let erc20VaultNft = startNft + 1;
-                    let uniV3Vault100Nft = startNft + 2;
-                    let uniV3Vault500Nft = startNft + 3;
-                    let uniV3Vault3000Nft = startNft + 4;
-                    let uniV3Vault10000Nft = startNft + 5;
-                    let erc20RootVaultNft = startNft + 6;
+                    let uniV3Vault500Nft = startNft + 2;
+                    let uniV3Vault3000Nft = startNft + 3;
+                    let uniV3Vault10000Nft = startNft + 4;
+                    let erc20RootVaultNft = startNft + 5;
                     await setupVault(
                         hre,
                         yearnVaultNft,
@@ -108,20 +108,6 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     });
 
                     this.uniV3Helper = await ethers.getContract("UniV3Helper");
-
-                    await setupVault(
-                        hre,
-                        uniV3Vault100Nft,
-                        "UniV3VaultGovernance",
-                        {
-                            createVaultArgs: [
-                                tokens,
-                                this.deployer.address,
-                                100,
-                                this.uniV3Helper.address,
-                            ],
-                        }
-                    );
 
                     await setupVault(
                         hre,
@@ -175,12 +161,6 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         yearnVaultNft
                     );
 
-                    const uniV3Vault100 = await read(
-                        "VaultRegistry",
-                        "vaultForNft",
-                        uniV3Vault100Nft
-                    );
-
                     const uniV3Vault500 = await read(
                         "VaultRegistry",
                         "vaultForNft",
@@ -206,11 +186,6 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     this.yearnVault = await ethers.getContractAt(
                         "YearnVault",
                         yearnVault
-                    );
-
-                    this.uniV3Vault100 = await ethers.getContractAt(
-                        "UniV3Vault",
-                        uniV3Vault100
                     );
 
                     this.uniV3Vault500 = await ethers.getContractAt(
@@ -245,82 +220,81 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         {
                             from: this.deployer.address,
                             contract: "MultiPoolHStrategyRebalancer",
-                            args: [
-                                this.positionManager.address,
-                                this.deployer.address,
-                            ],
+                            args: [this.positionManager.address],
                             log: true,
                             autoMine: true,
                             ...TRANSACTION_GAS_LIMITS,
                         }
                     );
 
-                    this.weights = [
-                        1,
-                        1,
-                        1, // 1
-                    ];
+                    const { address: baseStrategyAddress } = await deploy(
+                        "MultiPoolHStrategy",
+                        {
+                            from: this.deployer.address,
+                            contract: "MultiPoolHStrategy",
+                            args: [],
+                            log: true,
+                            autoMine: true,
+                            ...TRANSACTION_GAS_LIMITS,
+                        }
+                    );
+
+                    const baseStrategy = await ethers.getContractAt(
+                        "MultiPoolHStrategy",
+                        baseStrategyAddress
+                    );
+                    this.weights = [1, 1, 1];
                     this.firstPool = await ethers.getContractAt(
                         "IUniswapV3Pool",
                         await this.uniV3Vault500.pool()
                     );
 
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(this.firstPool.address, [4]);
-                    const erc20Validator = await get("ERC20Validator");
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .stageValidator(
-                            this.firstPool.address,
-                            erc20Validator.address
-                        );
-                    await sleep(this.governanceDelay);
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .commitAllPermissionGrantsSurpassedDelay();
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .commitAllValidatorsSurpassedDelay();
-
                     this.uniV3Vaults = Array.from([
-                        // this.uniV3Vault100.address,
                         this.uniV3Vault500.address,
                         this.uniV3Vault3000.address,
                         this.uniV3Vault10000.address,
                     ]);
 
-                    this.tickSpacing = 600;
-                    const { address: hStrategyV3Address } = await deploy(
-                        "MultiPoolHStrategy",
-                        {
-                            from: this.deployer.address,
-                            contract: "MultiPoolHStrategy",
-                            args: [
-                                tokens[0],
-                                tokens[1],
-                                this.erc20Vault.address,
-                                this.yearnVault.address,
-                                this.swapRouter.address,
-                                rebalancerAddress,
-                                this.mStrategyAdmin.address,
-                                this.uniV3Vaults,
-                                this.tickSpacing,
-                            ],
-                            log: true,
-                            autoMine: true,
-                            ...TRANSACTION_GAS_LIMITS,
-                        }
-                    );
+                    const mutableParams = {
+                        halfOfShortInterval: 1800,
+                        domainLowerTick: 190800,
+                        domainUpperTick: 219600,
+                        amount0ForMint: 10 ** 5,
+                        amount1ForMint: 10 ** 9,
+                        erc20CapitalRatioD: 5000000,
+                        uniV3Weights: this.weights,
+                        swapPool: this.firstPool.address,
+                        maxTickDeviation: 100,
+                        averageTickTimespan: 60,
+                    } as MutableParamsStruct;
 
+                    this.tickSpacing = 600;
+                    const params = [
+                        {
+                            tokens: tokens,
+                            erc20Vault: this.erc20Vault.address,
+                            moneyVault: this.yearnVault.address,
+                            router: this.swapRouter.address,
+                            rebalancer: rebalancerAddress,
+                            uniV3Vaults: this.uniV3Vaults,
+                            tickSpacing: this.tickSpacing,
+                        } as ImmutableParamsStruct,
+                        mutableParams,
+                        this.mStrategyAdmin.address,
+                    ];
+                    const newStrategyAddress =
+                        await baseStrategy.callStatic.createStrategy(...params);
+                    await baseStrategy.createStrategy(...params);
                     this.subject = await ethers.getContractAt(
                         "MultiPoolHStrategy",
-                        hStrategyV3Address
+                        newStrategyAddress
                     );
 
+                    const immutableParams =
+                        await this.subject.immutableParams();
                     this.rebalancer = await ethers.getContractAt(
                         "MultiPoolHStrategyRebalancer",
-                        await this.subject.rebalancer()
+                        immutableParams.rebalancer
                     );
 
                     await this.usdc.approve(
@@ -336,29 +310,12 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                      * Configure oracles for the HStrategy
                      */
 
-                    const mutableParams = {
-                        halfOfShortInterval: 1800,
-                        domainLowerTick: 190800,
-                        domainUpperTick: 219600,
-                        amount0ForMint: 10 ** 5,
-                        amount1ForMint: 10 ** 9,
-                        erc20CapitalRatioD: 5000000,
-                        uniV3Weights: this.weights,
-                        swapPool: this.firstPool.address,
-                        maxTickDeviation: 100,
-                        averageTickTimespan: 60,
-                    } as MutableParamsStruct;
-                    await this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateMutableParams(mutableParams);
-
                     await combineVaults(
                         hre,
                         erc20RootVaultNft,
                         [
                             erc20VaultNft,
                             yearnVaultNft,
-                            uniV3Vault100Nft,
                             uniV3Vault500Nft,
                             uniV3Vault3000Nft,
                             uniV3Vault10000Nft,
@@ -490,6 +447,8 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
         describe("#rebalance", () => {
             it("works correctly", async () => {
                 const getData = async () => {
+                    const immutableParams =
+                        await this.subject.immutableParams();
                     const shortInterval = await this.subject.shortInterval();
                     const mutableParams = await this.subject.mutableParams();
 
@@ -501,7 +460,7 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                         shortUpperTick: shortInterval.upperTick,
                         erc20Vault: this.erc20Vault.address,
                         moneyVault: this.yearnVault.address,
-                        router: await this.subject.router(),
+                        router: immutableParams.router,
                         amount0ForMint: mutableParams.amount0ForMint,
                         amount1ForMint: mutableParams.amount1ForMint,
                         erc20CapitalRatioD: mutableParams.erc20CapitalRatioD,
@@ -543,7 +502,6 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                     pulledFromUniV3: emptyArrays,
                     deadline: ethers.constants.MaxUint256,
                 } as RestrictionsStruct);
-                // ).not.to.be.reverted;
 
                 const sqrtC = sqrtPriceX96;
                 const priceX96 = sqrtPriceX96
@@ -623,22 +581,6 @@ contract<MultiPoolHStrategy, DeployOptions, CustomContext>(
                 expect(actualToken1RatioD.toNumber()).closeTo(
                     token1RatioD.toNumber(),
                     DENOMINATOR.div(10000).mul(5).toNumber()
-                );
-
-                console.log(
-                    "UniV3 ratio:",
-                    actualUniV3RatioD.toString(),
-                    uniV3RatioD.toString()
-                );
-                console.log(
-                    "Token0 ratio:",
-                    actualToken0RatioD.toString(),
-                    token0RatioD.toString()
-                );
-                console.log(
-                    "Token1 ratio:",
-                    actualToken1RatioD.toString(),
-                    token1RatioD.toString()
                 );
             });
         });
