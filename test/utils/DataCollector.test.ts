@@ -157,7 +157,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
             return vault;
         };
 
-        describe.only("#collect", () => {
+        describe("#collect", () => {
             it("collects data for all given vaults in each root vault system", async () => {
                 const { deployments, getNamedAccounts } = hre;
                 const { read } = deployments;
