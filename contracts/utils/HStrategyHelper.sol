@@ -173,28 +173,36 @@ contract HStrategyHelper {
         HStrategy.DomainPositionParams memory domainPositionParams,
         UniV3Helper uniV3Helper
     ) external pure returns (HStrategy.TokenAmounts memory amounts) {
-        amounts.erc20Token0 = FullMath.mulDiv(
-            expectedRatios.token0RatioD,
-            expectedTokenAmountsInToken0.erc20TokensAmountInToken0,
-            expectedRatios.token0RatioD + expectedRatios.token1RatioD
-        );
-        amounts.erc20Token1 = FullMath.mulDiv(
-            expectedTokenAmountsInToken0.erc20TokensAmountInToken0 - amounts.erc20Token0,
-            domainPositionParams.spotPriceX96,
-            CommonLibrary.Q96
-        );
+        if (expectedRatios.token0RatioD + expectedRatios.token1RatioD == 0) {
+            amounts.erc20Token0 = expectedTokenAmountsInToken0.erc20TokensAmountInToken0 / 2;
+            amounts.erc20Token1 = FullMath.mulDiv(
+                expectedTokenAmountsInToken0.erc20TokensAmountInToken0 - amounts.erc20Token0,
+                domainPositionParams.spotPriceX96,
+                CommonLibrary.Q96
+            );
+        } else {
+            amounts.erc20Token0 = FullMath.mulDiv(
+                expectedRatios.token0RatioD,
+                expectedTokenAmountsInToken0.erc20TokensAmountInToken0,
+                expectedRatios.token0RatioD + expectedRatios.token1RatioD
+            );
+            amounts.erc20Token1 = FullMath.mulDiv(
+                expectedTokenAmountsInToken0.erc20TokensAmountInToken0 - amounts.erc20Token0,
+                domainPositionParams.spotPriceX96,
+                CommonLibrary.Q96
+            );
 
-        amounts.moneyToken0 = FullMath.mulDiv(
-            expectedRatios.token0RatioD,
-            expectedTokenAmountsInToken0.moneyTokensAmountInToken0,
-            expectedRatios.token0RatioD + expectedRatios.token1RatioD
-        );
-        amounts.moneyToken1 = FullMath.mulDiv(
-            expectedTokenAmountsInToken0.moneyTokensAmountInToken0 - amounts.moneyToken0,
-            domainPositionParams.spotPriceX96,
-            CommonLibrary.Q96
-        );
-
+            amounts.moneyToken0 = FullMath.mulDiv(
+                expectedRatios.token0RatioD,
+                expectedTokenAmountsInToken0.moneyTokensAmountInToken0,
+                expectedRatios.token0RatioD + expectedRatios.token1RatioD
+            );
+            amounts.moneyToken1 = FullMath.mulDiv(
+                expectedTokenAmountsInToken0.moneyTokensAmountInToken0 - amounts.moneyToken0,
+                domainPositionParams.spotPriceX96,
+                CommonLibrary.Q96
+            );
+        }
         (amounts.uniV3Token0, amounts.uniV3Token1) = uniV3Helper.getPositionTokenAmountsByCapitalOfToken0(
             domainPositionParams.lowerPriceSqrtX96,
             domainPositionParams.upperPriceSqrtX96,

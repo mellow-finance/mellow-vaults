@@ -193,6 +193,9 @@ const config: HardhatUserConfig = {
             optimism: "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
             rinkeby: "0xeb8f08a975ab53e34d8a0330e0d34de942c95926",
         },
+        bob: {
+            polygon: "0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b",
+        },
         weth: {
             default: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             kovan: "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
