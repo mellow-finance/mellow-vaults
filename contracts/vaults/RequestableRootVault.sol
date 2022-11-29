@@ -84,6 +84,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         for (uint256 i = 0; i < depositors.length; i++) {
             _depositorsAllowlist.add(depositors[i]);
         }
+        emit DepositorsAdded(msg.sender, depositors);
     }
 
     /// @inheritdoc IRequestableRootVault
@@ -92,6 +93,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         for (uint256 i = 0; i < depositors.length; i++) {
             _depositorsAllowlist.remove(depositors[i]);
         }
+        emit DepositorsRemoved(msg.sender, depositors);
     }   
 
     /// @inheritdoc IRequestableRootVault
@@ -119,7 +121,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
         bytes memory vaultOptions
-    ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts) {
+    ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts, lpAmount) {
         address vaultGovernance = address(_vaultGovernance);
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         require(
@@ -148,14 +150,17 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         );
 
         (uint256[] memory minTvl, ) = requestableVault.tvl();
-        _chargeFees(thisNft, minTvl[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
         uint256 supply = totalSupply - totalLpTokensWaitingWithdrawal;
-        uint256 lpAmount;
 
         if (supply == 0) {
-            lpAmount = tokenAmounts[0];
+            uint256 tokenDecimals = ERC20(primaryToken).decimals();
+            if (tokenDecimals > 18) {
+                tokenDecimals = 18;
+            }
+            lpAmount = tokenAmounts[0] * 10**(18 - tokenDecimals);
         } else {
+            _chargeFees(thisNft, minTvl[0], supply);
             uint256 tvl = minTvl[0];
             lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], tvl);
             tokenAmounts[0] = FullMath.mulDiv(tvl, lpAmount, supply);
@@ -194,7 +199,6 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
             }
 
             withdrawalRequests[msg.sender] += lpTokenAmount;
-            latestRequestEpoch[msg.sender] = currentEpoch;
         } else {
             _processHangingWithdrawal(msg.sender, false);
 
@@ -204,9 +208,9 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
             }
 
             withdrawalRequests[msg.sender] = lpTokenAmount;
-            latestRequestEpoch[msg.sender] = currentEpoch;
         }
 
+        latestRequestEpoch[msg.sender] = currentEpoch;
         totalCurrentEpochLpWitdrawalRequests += lpTokenAmount;
         emit WithdrawalRegistered(msg.sender, lpTokenAmount);
         return lpTokenAmount;
@@ -233,7 +237,10 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
 
     /// @inheritdoc IRequestableRootVault
     function invokeExecution() public {
-        _requireAtLeastStrategy();
+
+        if (lastEpochChangeTimestamp + 2 * withdrawDelay > block.timestamp) {
+            _requireAtLeastStrategy();
+        }
         IIntegrationVault requestableVault_ = requestableVault;
 
         require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
@@ -244,7 +251,9 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
 
         uint256 totalCurrentEpochLpWitdrawalRequests_ = totalCurrentEpochLpWitdrawalRequests;
 
-        uint256 totalAmount = FullMath.mulDiv(
+        uint256 totalAmount = 0
+        if (totalCurrentEpochLpWitdrawalRequests_ > 0) {
+            totalAmount = FullMath.mulDiv(
             totalCurrentEpochLpWitdrawalRequests_,
             maxTokenAmounts[0],
             totalSupply - totalLpTokensWaitingWithdrawal
@@ -255,7 +264,6 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         uint256[] memory pulledAmounts = requestableVault_.pull(address(erc20Vault), _vaultTokens, tokenAmounts, "");
         totalAmount = pulledAmounts[0];
 
-        if (totalCurrentEpochLpWitdrawalRequests_ > 0) {
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests_;
             epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(
                 totalAmount,
@@ -312,6 +320,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
     }
 
     function setWithdrawDelay(uint256 withdrawDelay_) external {
+        //todo: make staging?
         _requireAtLeastStrategy();
         withdrawDelay = withdrawDelay_;
     }
@@ -332,6 +341,15 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
     function _getTokenName(bytes memory prefix, uint256 nft_) internal pure returns (string memory) {
         bytes memory number = bytes(Strings.toString(nft_));
         return string(abi.encodePacked(prefix, number));
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address,
+        uint256 amount
+    ) internal view override {
+        uint256 senderBalance = balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from];
+        require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -401,7 +419,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         uint256 performanceFee,
         address treasury
     ) internal {
-        if ((performanceFee == 0) || (baseSupply == 0)) {
+        if (performanceFee == 0) {
             return;
         }
 
@@ -506,4 +524,14 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
     /// @notice Emitted when callback in withdraw failed
     /// @param reason Error reason
     event WithdrawCallbackLog(string reason);
+
+    /// @notice Emitted when depositors added into the allow list
+    /// @param sender Sender of the call (msg.sender)
+    /// @param depositors Array of depositors added into the allow list
+    event DepositorsAdded(address indexed sender, address[] depositors);
+
+    /// @notice Emitted when depositors removed from the allow list
+    /// @param sender Sender of the call (msg.sender)
+    /// @param depositors Array of depositors removed from the allow list
+    event DepositorsRemoved(address indexed sender, address[] depositors);
 }
