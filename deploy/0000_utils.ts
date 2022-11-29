@@ -296,7 +296,7 @@ export const combineVaults = async (
         tokenLimitPerAddress = ethers.constants.MaxUint256,
         tokenLimit = ethers.constants.MaxUint256,
         managementFee = 2 * 10 ** 7,
-        performanceFee = 2 * 10 ** 7,
+        performanceFee = 20 * 10 ** 7,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
