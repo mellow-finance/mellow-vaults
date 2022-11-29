@@ -15,7 +15,7 @@ import {
     ERC20Vault,
     ProtocolGovernance,
     UniV3Helper,
-    UniV3Vault,
+    UniV3VaultConfigurable,
     ISwapRouter as SwapRouterInterface,
     IYearnProtocolVault,
     HStrategyHelper,
@@ -52,7 +52,7 @@ import {
 type CustomContext = {
     erc20Vault: ERC20Vault;
     yearnVault: YearnVault;
-    uniV3Vault: UniV3Vault;
+    uniV3Vault: UniV3VaultConfigurable;
     uniV3Helper: UniV3Helper;
     erc20RootVault: ERC20RootVault;
     positionManager: Contract;
@@ -126,14 +126,20 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     hStrategyHelper
                 );
 
-                await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
-                    createVaultArgs: [
-                        tokens,
-                        this.deployer.address,
-                        3000,
-                        uniV3Helper,
-                    ],
-                });
+                await setupVault(
+                    hre,
+                    uniV3VaultNft,
+                    "UniV3VaultConfigurableGovernance",
+                    {
+                        createVaultArgs: [
+                            tokens,
+                            this.deployer.address,
+                            3000,
+                            uniV3Helper,
+                            2,
+                        ],
+                    }
+                );
                 const erc20Vault = await read(
                     "VaultRegistry",
                     "vaultForNft",
@@ -160,7 +166,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
 
                 this.uniV3Vault = await ethers.getContractAt(
-                    "UniV3Vault",
+                    "UniV3VaultConfigurable",
                     uniV3Vault
                 );
 

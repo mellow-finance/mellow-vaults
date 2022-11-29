@@ -9,7 +9,7 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/vaults/IUniV3Vault.sol";
+import "../interfaces/vaults/IUniV3VaultConfigurable.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
@@ -28,7 +28,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     IERC20Vault public erc20Vault;
     IIntegrationVault public moneyVault;
-    IUniV3Vault public uniV3Vault;
+    IUniV3VaultConfigurable public uniV3Vault;
     address[] public tokens;
 
     INonfungiblePositionManager private immutable _positionManager;
@@ -205,7 +205,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
-        IUniV3Vault uniV3Vault_,
+        IUniV3VaultConfigurable uniV3Vault_,
         uint24 fee_,
         address admin_
     ) external {
@@ -243,7 +243,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
-        IUniV3Vault uniV3Vault_,
+        IUniV3VaultConfigurable uniV3Vault_,
         uint24 fee_,
         address admin_
     ) external returns (HStrategy strategy) {
@@ -377,7 +377,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (uint256[] memory burnedAmounts)
     {
         IIntegrationVault erc20Vault_ = erc20Vault;
-        IUniV3Vault uniV3Vault_ = uniV3Vault;
+        IUniV3VaultConfigurable uniV3Vault_ = uniV3Vault;
         uint256 uniV3Nft = uniV3Vault_.uniV3Nft();
         StrategyParams memory strategyParams_ = strategyParams;
         IUniswapV3Pool pool_ = pool;
@@ -431,7 +431,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 tick
     ) internal returns (RebalanceTokenAmounts memory actualPulledAmounts) {
         HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
-        IUniV3Vault uniV3Vault_ = uniV3Vault;
+        IUniV3VaultConfigurable uniV3Vault_ = uniV3Vault;
         DomainPositionParams memory domainPositionParams;
         {
             uint256 uniV3Nft = uniV3Vault_.uniV3Nft();
@@ -565,7 +565,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         DomainPositionParams memory domainPositionParams,
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
-        IUniV3Vault uniV3Vault_,
+        IUniV3VaultConfigurable uniV3Vault_,
         address[] memory tokens_
     ) internal returns (uint256[] memory pulledFromUniV3Vault) {
         pulledFromUniV3Vault = new uint256[](2);
@@ -608,7 +608,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         bytes memory moneyVaultOptions,
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
-        IUniV3Vault uniV3Vault_,
+        IUniV3VaultConfigurable uniV3Vault_,
         address[] memory tokens_
     ) internal returns (uint256[] memory pulledToUniV3Vault) {
         pulledToUniV3Vault = new uint256[](2);
@@ -642,7 +642,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniswapV3Pool pool_,
         uint256 deadline,
         INonfungiblePositionManager positionManager_,
-        IUniV3Vault uniV3Vault_,
+        IUniV3VaultConfigurable uniV3Vault_,
         uint256 oldNft,
         address[] memory tokens_
     ) internal {
@@ -692,7 +692,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function _drainPosition(
         RebalanceTokenAmounts memory restrictions,
         IIntegrationVault erc20Vault_,
-        IUniV3Vault uniV3Vault_,
+        IUniV3VaultConfigurable uniV3Vault_,
         uint256 uniV3Nft,
         address[] memory tokens_
     ) internal returns (uint256[] memory drainedTokens) {
