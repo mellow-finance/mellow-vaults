@@ -208,6 +208,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         fee: 500,
                         rootVaultNft: erc20RootVaultNft,
                         user: this.deployer.address,
+                        domainPositionNft: 0,
                     } as VaultRequestStruct);
                 }
                 {
@@ -274,6 +275,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         fee: 500,
                         rootVaultNft: erc20RootVaultNft,
                         user: this.deployer.address,
+                        domainPositionNft: 0,
                     } as VaultRequestStruct);
                 }
                 {
@@ -340,6 +342,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         fee: 500,
                         rootVaultNft: erc20RootVaultNft,
                         user: this.deployer.address,
+                        domainPositionNft: 0,
                     } as VaultRequestStruct);
                 }
                 {
@@ -399,6 +402,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         fee: 500,
                         rootVaultNft: erc20RootVaultNft,
                         user: this.deployer.address,
+                        domainPositionNft: 0,
                     } as VaultRequestStruct);
                 }
                 {
@@ -495,6 +499,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         fee: uniswapFees,
                         rootVaultNft: erc20RootVaultNft,
                         user: this.deployer.address,
+                        domainPositionNft: result.tokenId,
                     } as VaultRequestStruct);
                 }
                 {
@@ -592,6 +597,7 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         fee: uniswapFees,
                         rootVaultNft: erc20RootVaultNft,
                         user: this.deployer.address,
+                        domainPositionNft: tokenId,
                     } as VaultRequestStruct);
                 }
 
@@ -625,6 +631,10 @@ contract<DataCollector, DeployOptions, CustomContext>(
                     console.log(
                         "RootVault spot tvls:",
                         data.rootVaultSpotTvl.toString()
+                    );
+                    console.log(
+                        "Domain Position tvl:",
+                        data.domainPositionSpotTvl.toString()
                     );
                     console.log();
                 }

@@ -28,6 +28,7 @@ contract DataCollector {
         uint24 fee;
         uint256 rootVaultNft;
         address user;
+        uint256 domainPositionNft;
     }
 
     struct VaultResponse {
@@ -42,6 +43,7 @@ contract DataCollector {
         uint256[][] uniV3VaultSpotTvls;
         uint256[] rootVaultTvl;
         uint256[] rootVaultSpotTvl;
+        uint256[] domainPositionSpotTvl;
     }
 
     constructor(
@@ -146,6 +148,26 @@ contract DataCollector {
                         response.pricesToUsdcX96[i] = priceX96;
                     }
                 }
+            }
+
+            if (request.domainPositionNft != 0) {
+                uint128 liquidity = 0;
+                uint256 fees0 = 0;
+                uint256 fees1 = 0;
+                IUniswapV3Pool pool = IUniswapV3Pool(factory.getPool(vaultTokens[0], vaultTokens[1], request.fee));
+                (, , liquidity, fees0, fees1) = uniV3Helper.calculatePositionInfo(
+                    positionManager,
+                    pool,
+                    request.domainPositionNft
+                );
+                response.domainPositionSpotTvl = uniV3Helper.liquidityToTokenAmounts(
+                    liquidity,
+                    pool,
+                    request.domainPositionNft,
+                    positionManager
+                );
+                response.domainPositionSpotTvl[0] += fees0;
+                response.domainPositionSpotTvl[1] += fees1;
             }
 
             responses[requestIndex] = response;
