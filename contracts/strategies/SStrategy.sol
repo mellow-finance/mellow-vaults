@@ -10,7 +10,7 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/ISqueethVault.sol";
-import "../interfaces/vaults/IRequestableRootVault.sol";
+import "../interfaces/vaults/ICyclicRootVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -32,7 +32,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
     address public mainToken;
     address public wPowerPerp;
-    IRequestableRootVault public rootVault;
+    ICyclicRootVault public rootVault;
     IERC20Vault public erc20Vault;
     ISqueethVault public squeethVault;
     ISwapRouter public swapRouter;
@@ -57,7 +57,6 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
     struct StrategyParams {
         uint256 lowerHedgingThresholdD9;
         uint256 upperHedgingThresholdD9;
-        uint256 cycleDuration;
     }
 
     struct LiquidationParams {
@@ -153,7 +152,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
                 rootVault.shutdown();
                 isLiquidated = true;
             } else {
-                require(block.timestamp - startingTime >= strategyParams.cycleDuration, ExceptionsLibrary.INVARIANT);
+                require(block.timestamp - startingTime >= rootVault.cycleDuration(), ExceptionsLibrary.INVARIANT);
             }
         }
         squeethVault.closeShort();
@@ -190,16 +189,15 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
         startingTime = 0;
     }
 
-    function setRootVault(IRequestableRootVault rootVault_) external {
+    function setRootVault(ICyclicRootVault rootVault_) external {
         _requireAdmin();
         require(address(rootVault) == address(0), ExceptionsLibrary.INIT);
         address[] memory rootTokens = rootVault_.vaultTokens();
-        require(rootVault_.requestableVault() == squeethVault);
+        require(rootVault_.cyclableVault() == squeethVault);
         require(rootVault_.erc20Vault() == erc20Vault);
         require(rootTokens.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         require(rootTokens[0] == mainToken, ExceptionsLibrary.INVALID_TOKEN);
         rootVault = rootVault_;
-        rootVault_.setWithdrawDelay(strategyParams.cycleDuration);
     }
 
     /// @notice Sets new oracle params
@@ -233,12 +231,10 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
         _requireAdmin();
         require(
             (newStrategyParams.lowerHedgingThresholdD9 < D9) &&
-                (newStrategyParams.upperHedgingThresholdD9 > D9) &&
-                (newStrategyParams.cycleDuration > 0),
+                (newStrategyParams.upperHedgingThresholdD9 > D9),
             ExceptionsLibrary.INVARIANT
         );
         strategyParams = newStrategyParams;
-        rootVault.setWithdrawDelay(newStrategyParams.cycleDuration);
         emit StrategyParamsUpdated(tx.origin, msg.sender, newStrategyParams);
     }
 

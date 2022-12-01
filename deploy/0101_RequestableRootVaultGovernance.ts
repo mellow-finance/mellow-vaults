@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const vaultRegistry = await get("VaultRegistry");
     const { address: oracle } = await get("MellowOracle");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
-    const { address: singleton } = await deploy("RequestableRootVault", {
+    const { address: singleton } = await deploy("CyclicRootVault", {
         from: deployer,
         args: [],
         log: true,
@@ -29,8 +29,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             ...TRANSACTION_GAS_LIMITS
         }
     );
-    const { address: ERC20RootVaultGovernanceForRequestableAddress } = await deploy(
-        "ERC20RootVaultGovernanceForRequestable",
+    const { address: ERC20RootVaultGovernanceForCyclicAddress } = await deploy(
+        "ERC20RootVaultGovernanceForCyclic",
         {
             contract: "ERC20RootVaultGovernance",
             from: deployer,
@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "VaultRegistry",
         "isApprovedForAll",
         deployer,
-        ERC20RootVaultGovernanceForRequestableAddress
+        ERC20RootVaultGovernanceForCyclicAddress
     );
     if (!approvedIssuer) {
         log("Approving ERC20RootVault governance");
@@ -65,11 +65,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 ...TRANSACTION_GAS_LIMITS
             },
             "setApprovalForAll",
-            ERC20RootVaultGovernanceForRequestableAddress,
+            ERC20RootVaultGovernanceForCyclicAddress,
             true
         );
     }
 };
 export default func;
-func.tags = ["ERC20RootVaultGovernanceForRequestable", "core", ...ALL_NETWORKS];
+func.tags = ["ERC20RootVaultGovernanceForCyclic", "core", ...ALL_NETWORKS];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry", "MellowOracle"];

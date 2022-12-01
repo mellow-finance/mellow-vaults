@@ -58,7 +58,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         squeethVaultNft
     );
     
-    let rootVaultGovernance = await ethers.getContract("ERC20RootVaultGovernanceForRequestable");
+    let rootVaultGovernance = await ethers.getContract("ERC20RootVaultGovernanceForCyclic");
 
     await deployments.execute(
         "VaultRegistry",
@@ -106,8 +106,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             managementFee: 0,
             performanceFee: 0,
         }, 
-        "RequestableRootVault"
+        "CyclicRootVault"
     );
+
+    await deployments.execute(
+        "CyclicRootVault",
+        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        "setCycleDuration(uint256)",
+        BigNumber.from(3600).mul(24).mul(5)
+    );
+
     await deployments.execute(
         "VaultRegistry",
         { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
@@ -190,7 +198,7 @@ func.dependencies = [
     "ProtocolGovernance",
     "VaultRegistry",
     "MellowOracle",
-    "ERC20RootVaultGovernanceForRequestable",
+    "ERC20RootVaultGovernanceForCyclic",
     "SqueethVaultGovernance",
     "ERC20VaultGovernance",
 ];

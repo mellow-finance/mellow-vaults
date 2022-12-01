@@ -92,7 +92,7 @@ contract<SqueethVault, DeployOptions, CustomContext>(
                         this.deployer.address,
                         this.strategyTreasury,
                         undefined,
-                        "RequestableRootVault"
+                        "CyclicRootVault"
                     );
                     const erc20Vault = await read(
                         "VaultRegistry",

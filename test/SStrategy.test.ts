@@ -9,7 +9,7 @@ import {
     MockCowswap,
     MockOracle,
     UniV3Vault,
-    RequestableRootVault,
+    CyclicRootVault,
     SqueethVault,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
@@ -43,7 +43,7 @@ import { uint256 } from "./library/property";
 type CustomContext = {
     erc20Vault: ERC20Vault;
     squeethVault: SqueethVault;
-    rootVault: RequestableRootVault;
+    rootVault: CyclicRootVault;
 };
 
 type DeployOptions = {};
@@ -134,7 +134,7 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     strategyDeployParams.address,
                     strategyTreasury,
                     undefined,
-                    "RequestableRootVault"
+                    "CyclicRootVault"
                 );
                 await withSigner(mStrategyAdmin, async (s) => {
                     await this.vaultRegistry
@@ -142,15 +142,15 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                         .approve(strategyDeployParams.address, rootVaultNft);
                 });
 
-                const requestableRootVault = await read(
+                const cyclicRootVault = await read(
                     "VaultRegistry",
                     "vaultForNft",
                     rootVaultNft
                 );
 
                 this.rootVault = await ethers.getContractAt(
-                    "RequestableRootVault",
-                    requestableRootVault
+                    "CyclicRootVault",
+                    cyclicRootVault
                 );
 
                 //TODO: validator
@@ -172,11 +172,11 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     this.deployer.address,
                     BigNumber.from(10).pow(18).mul(100)
                 );
+                await this.rootVault.setCycleDuration(BigNumber.from(3600).mul(24).mul(5));
 
                 await this.subject.updateStrategyParams({
                     lowerHedgingThresholdD9: BigNumber.from(10).pow(8).mul(5),
                     upperHedgingThresholdD9: BigNumber.from(10).pow(9).mul(2),
-                    cycleDuration: BigNumber.from(3600).mul(24).mul(28),
                 });
 
                 await this.subject.updateLiquidationParams({

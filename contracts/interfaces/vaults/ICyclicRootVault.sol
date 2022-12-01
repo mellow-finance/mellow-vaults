@@ -4,8 +4,9 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
 import "./IIntegrationVault.sol";
+import "./ISqueethVault.sol";
 
-interface IRequestableRootVault is IAggregateVault, IERC20 {
+interface ICyclicRootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
@@ -23,8 +24,8 @@ interface IRequestableRootVault is IAggregateVault, IERC20 {
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
 
-    /// @notice Requestable vault that is the second subvault of the system
-    function requestableVault() external view returns (IIntegrationVault);
+    /// @notice Cyclic vault that is the second subvault of the system
+    function cyclableVault() external view returns (ISqueethVault);
 
     /// @notice ERC20 vault that is the first subvault of the system
     function erc20Vault() external view returns (IIntegrationVault);
@@ -38,7 +39,9 @@ interface IRequestableRootVault is IAggregateVault, IERC20 {
     /// @notice LP parameter that controls the charge in performance fees
     function lpPriceHighWaterMarkD18() external view returns (uint256);
 
-    function withdrawDelay() external view returns (uint256);
+    function cycleDuration() external view returns (uint256);
+
+    function setCycleDuration(uint256 cycleDuration) external;
 
     /// @notice List of addresses of depositors from which interaction with private vaults is allowed
     function depositorsAllowlist() external view returns (address[] memory);
@@ -123,6 +126,4 @@ interface IRequestableRootVault is IAggregateVault, IERC20 {
 
     /// @notice The function of opening deposits back in case of a previous shutdown
     function reopen() external;
-
-    function setWithdrawDelay(uint256 withdrawDelay_) external;
 }

@@ -37,7 +37,7 @@ import {
     SStrategy,
     SqueethVaultGovernance,
     SqueethVault,
-    RequestableRootVault,
+    CyclicRootVault,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
@@ -56,8 +56,8 @@ export interface TestContext<T, F> extends Suite {
     squeethVaultGovernance: SqueethVaultGovernance;
     erc20RootVaultGovernance: ERC20RootVaultGovernance;
     erc20RootVaultSingleton: ERC20RootVault;
-    erc20RootVaultGovernanceForRequestable: ERC20RootVaultGovernance;
-    requestableRootVaultSingleton: RequestableRootVault;
+    erc20RootVaultGovernanceForCyclic: ERC20RootVaultGovernance;
+    cyclicRootVaultSingleton: CyclicRootVault;
     mellowOracle: MellowOracle;
     mStrategy: MStrategy;
     lStrategy: LStrategy;
@@ -165,11 +165,11 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         "ERC20RootVaultGovernance"
     );
     this.erc20RootVaultSingleton = await ethers.getContract("ERC20RootVault");
-    this.erc20RootVaultGovernanceForRequestable = await ethers.getContract(
-        "ERC20RootVaultGovernanceForRequestable"
+    this.erc20RootVaultGovernanceForCyclic = await ethers.getContract(
+        "ERC20RootVaultGovernanceForCyclic"
     );
-    this.requestableRootVaultSingleton = await ethers.getContract(
-        "RequestableRootVault"
+    this.cyclicRootVaultSingleton = await ethers.getContract(
+        "CyclicRootVault"
     );
     this.mellowOracle = await ethers.getContract("MellowOracle");
     const mStrategy: MStrategy | null = await ethers.getContractOrNull(

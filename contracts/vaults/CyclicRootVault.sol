@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,60 +9,60 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
-import "../interfaces/vaults/IRequestableRootVault.sol";
+import "../interfaces/vaults/ICyclicRootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGuard, AggregateVault {
+contract CyclicRootVault is ICyclicRootVault, ERC20Token, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant D18 = 10**18;
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     uint64 public lastFeeCharge;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     uint256 public lpPriceHighWaterMarkD18;
 
-    uint256 public withdrawDelay;
+    uint256 public cycleDuration;
 
     EnumerableSet.AddressSet private _depositorsAllowlist;
 
-    /// @inheritdoc IRequestableRootVault
-    IIntegrationVault public requestableVault;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
+    ISqueethVault public cyclableVault;
+    /// @inheritdoc ICyclicRootVault
     IIntegrationVault public erc20Vault;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     address public primaryToken;
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     bool public isClosed;
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     uint256 public currentEpoch;
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     mapping(address => uint256) public primaryTokensToClaim;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     mapping(address => uint256) public lpTokensWaitingForClaim;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     mapping(address => uint256) public withdrawalRequests;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     mapping(address => uint256) public latestRequestEpoch;
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     mapping(uint256 => uint256) public epochToPriceForLpTokenD18;
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     uint256 public totalCurrentEpochLpWitdrawalRequests;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     uint256 public totalLpTokensWaitingWithdrawal;
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     uint256 public lastEpochChangeTimestamp;
 
     // -------------------  EXTERNAL, VIEW  -------------------
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function depositorsAllowlist() external view returns (address[] memory) {
         return _depositorsAllowlist.values();
     }
@@ -75,11 +75,11 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         override(IERC165, AggregateVault)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId) || type(IRequestableRootVault).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(ICyclicRootVault).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -88,7 +88,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         emit DepositorsAdded(msg.sender, depositors);
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function removeDepositorsFromAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -97,7 +97,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         emit DepositorsRemoved(msg.sender, depositors);
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -110,14 +110,14 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
 
         erc20Vault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(0));
-        requestableVault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(1));
+        cyclableVault = ISqueethVault(IAggregateVault(address(this)).subvaultAt(1));
         primaryToken = vaultTokens_[0];
 
         currentEpoch = 1;
         lastFeeCharge = uint64(block.timestamp);
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
@@ -150,7 +150,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
             ExceptionsLibrary.FORBIDDEN
         );
 
-        (uint256[] memory minTvl, ) = requestableVault.tvl();
+        (uint256[] memory minTvl, ) = cyclableVault.tvl();
 
         uint256 supply = totalSupply - totalLpTokensWaitingWithdrawal;
 
@@ -182,12 +182,12 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
             _mint(msg.sender, lpAmount);
         }
 
-        actualTokenAmounts = _pushIntoRequestable(tokenAmounts[0], vaultOptions);
+        actualTokenAmounts = _pushIntoCyclable(tokenAmounts[0], vaultOptions);
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRegistered) {
         uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
 
@@ -217,7 +217,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         return lpTokenAmount;
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRemained) {
         require(latestRequestEpoch[msg.sender] == currentEpoch, ExceptionsLibrary.DISABLED);
 
@@ -236,17 +236,19 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         return withdrawalRequests[msg.sender];
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function invokeExecution() public {
-        if (lastEpochChangeTimestamp + 2 * withdrawDelay > block.timestamp) {
+        ISqueethVault cyclableVault_ = cyclableVault;
+        require(cyclableVault_.totalCollateral() == 0, ExceptionsLibrary.INVALID_STATE);
+
+        if (lastEpochChangeTimestamp + 2 * cycleDuration > block.timestamp) {
             _requireAtLeastStrategy();
         }
-        IIntegrationVault requestableVault_ = requestableVault;
 
-        require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
+        require(lastEpochChangeTimestamp + cycleDuration <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
         lastEpochChangeTimestamp = block.timestamp;
 
-        (, uint256[] memory maxTokenAmounts) = requestableVault_.tvl();
+        (, uint256[] memory maxTokenAmounts) = cyclableVault_.tvl();
         _chargeFees(_nft, maxTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
 
         uint256 totalCurrentEpochLpWitdrawalRequests_ = totalCurrentEpochLpWitdrawalRequests;
@@ -261,7 +263,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
 
             uint256[] memory tokenAmounts = new uint256[](1);
             tokenAmounts[0] = totalAmount;
-            uint256[] memory pulledAmounts = requestableVault_.pull(
+            uint256[] memory pulledAmounts = cyclableVault_.pull(
                 address(erc20Vault),
                 _vaultTokens,
                 tokenAmounts,
@@ -282,7 +284,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         emit ExecutionInvoked(msg.sender, totalAmount);
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function withdraw(address to, bytes[] memory vaultsOptions)
         external
         nonReentrant
@@ -311,23 +313,22 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         emit Withdraw(msg.sender, actualTokenAmounts, lpTokensToBurn);
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function shutdown() external {
         _requireAtLeastStrategy();
         require(!isClosed, ExceptionsLibrary.DUPLICATE);
         isClosed = true;
     }
 
-    /// @inheritdoc IRequestableRootVault
+    /// @inheritdoc ICyclicRootVault
     function reopen() external {
         _requireAtLeastStrategy();
         isClosed = false;
     }
 
-    function setWithdrawDelay(uint256 withdrawDelay_) external {
-        //todo: make staging?
+    function setCycleDuration(uint256 cycleDuration_) external {
         _requireAtLeastStrategy();
-        withdrawDelay = withdrawDelay_;
+        cycleDuration = cycleDuration_;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -458,20 +459,20 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
         }
     }
 
-    function _pushIntoRequestable(uint256 amount, bytes memory vaultOptions)
+    function _pushIntoCyclable(uint256 amount, bytes memory vaultOptions)
         internal
         returns (uint256[] memory actualTokenAmounts)
     {
         require(_nft != 0, ExceptionsLibrary.INIT);
-        IIntegrationVault requestableVault_ = requestableVault;
+        ISqueethVault cyclableVault_ = cyclableVault;
         address primaryToken_ = primaryToken;
 
         uint256[] memory tokenAmounts = new uint256[](1);
         tokenAmounts[0] = amount;
 
-        IERC20(primaryToken_).safeIncreaseAllowance(address(requestableVault_), amount);
-        actualTokenAmounts = requestableVault_.transferAndPush(address(this), _vaultTokens, tokenAmounts, vaultOptions);
-        IERC20(primaryToken_).safeApprove(address(requestableVault_), 0);
+        IERC20(primaryToken_).safeIncreaseAllowance(address(cyclableVault_), amount);
+        actualTokenAmounts = cyclableVault_.transferAndPush(address(this), _vaultTokens, tokenAmounts, vaultOptions);
+        IERC20(primaryToken_).safeApprove(address(cyclableVault_), 0);
     }
 
     // --------------------------  EVENTS  --------------------------
@@ -494,7 +495,7 @@ contract RequestableRootVault is IRequestableRootVault, ERC20Token, ReentrancyGu
 
     /// @notice Emitted when the withdrawal orderd execution completed
     /// @param sender Sender of the call (msg.sender)
-    /// @param amountWithdrawnToERC20 Amount of vault tokens withdrawn from Requestable to the ERC20 vault
+    /// @param amountWithdrawnToERC20 Amount of vault tokens withdrawn from Cyclable to the ERC20 vault
     event ExecutionInvoked(address indexed sender, uint256 amountWithdrawnToERC20);
 
     /// @notice Emitted when protocol fees are charged

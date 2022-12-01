@@ -308,7 +308,7 @@ export const combineVaults = async (
     const coder = hre.ethers.utils.defaultAbiCoder;
 
     rootVaultName = rootVaultName == null ? "ERC20RootVault" : rootVaultName;
-    let governanceName = rootVaultName == "RequestableRootVault" ? "ERC20RootVaultGovernanceForRequestable" : "ERC20RootVaultGovernance";
+    let governanceName = rootVaultName == "CyclicRootVault" ? "ERC20RootVaultGovernanceForCyclic" : "ERC20RootVaultGovernance";
     
     const {
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
