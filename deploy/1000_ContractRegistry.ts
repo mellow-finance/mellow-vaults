@@ -26,6 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const uniV3VaultGovernance = await get("UniV3VaultGovernance");
     const erc20VaultGovernance = await get("ERC20VaultGovernance");
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
+    const erc20RootVaultGovernanceForRequestable = await get("ERC20RootVaultGovernanceForRequestable");
     const yearnVaultGovernance = await get("YearnVaultGovernance");
     
     const multicallData = [
@@ -40,6 +41,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         contractRegistry.interface.encodeFunctionData("registerContract", [uniV3VaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [erc20VaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [erc20RootVaultGovernance.address]),
+        // contractRegistry.interface.encodeFunctionData("registerContract", [erc20RootVaultGovernanceForRequestable.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [yearnVaultGovernance.address]),
     ];
 
@@ -68,5 +70,6 @@ func.dependencies = [
     "UniV3VaultGovernance",
     "ERC20VaultGovernance",
     "ERC20RootVaultGovernance",
+    "ERC20RootVaultGovernanceForRequestable",
     "YearnVaultGovernance"
 ];

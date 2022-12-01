@@ -109,8 +109,10 @@ async function registerGovernances(
         "UniV3VaultGovernance",
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
+        "SqueethVaultGovernance",
         "ERC20RootVaultGovernance",
         "MellowVaultGovernance",
+        "ERC20RootVaultGovernanceForRequestable"
     ]) {
         const governance = await hre.deployments.getOrNull(name);
         if (!governance) {
@@ -133,8 +135,8 @@ async function registerTokens(
         "ProtocolGovernance"
     );
     const erc20Validator = await deployments.get("ERC20Validator");
-    const { weth, wbtc, usdc, dai, wsteth } = await hre.getNamedAccounts();
-    const tokens = [weth, wbtc, usdc, dai, wsteth].map((t) => t.toLowerCase()).sort();
+    const { weth, wbtc, usdc, dai, wsteth, opynWeth, squeethWPowerPerp } = await hre.getNamedAccounts();
+    const tokens = [weth, wbtc, usdc, dai, wsteth, squeethWPowerPerp].map((t) => t.toLowerCase()).sort();
     for (const token of tokens) {
         if (!token) {
             continue
@@ -154,6 +156,13 @@ async function registerTokens(
         );
         txDatas.push(tx.data);
     }
+    let wethUsedBySStrategy = opynWeth == undefined ? weth : opynWeth;
+    const allowAllValidator = await deployments.get("AllowAllValidator");
+    let tx = await protocolGovernance.populateTransaction.stageValidator(
+        wethUsedBySStrategy,
+        allowAllValidator.address
+    );
+    txDatas.push(tx.data);
 }
 
 async function registerExternalProtocols(

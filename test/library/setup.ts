@@ -34,6 +34,10 @@ import {
     MStrategy,
     LStrategy,
     HStrategy,
+    SStrategy,
+    SqueethVaultGovernance,
+    SqueethVault,
+    RequestableRootVault,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
@@ -48,18 +52,24 @@ export interface TestContext<T, F> extends Suite {
     aaveVaultSingleton: AaveVault;
     uniV3VaultGovernance: UniV3VaultGovernance;
     uniV3VaultSingleton: UniV3Vault;
+    squeethVault: SqueethVault;
+    squeethVaultGovernance: SqueethVaultGovernance;
     erc20RootVaultGovernance: ERC20RootVaultGovernance;
     erc20RootVaultSingleton: ERC20RootVault;
+    erc20RootVaultGovernanceForRequestable: ERC20RootVaultGovernance;
+    requestableRootVaultSingleton: RequestableRootVault;
     mellowOracle: MellowOracle;
     mStrategy: MStrategy;
     lStrategy: LStrategy;
     hStrategy: HStrategy;
+    sStrategy: SStrategy;
 
     usdc: ERC20;
     weth: ERC20;
     wbtc: ERC20;
     dai: ERC20;
     wsteth: ERC20;
+    squeethWPowerPerp: ERC20;
     tokens: ERC20[];
     deployer: SignerWithAddress;
     admin: SignerWithAddress;
@@ -146,11 +156,21 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         "UniV3VaultGovernance"
     );
     this.uniV3VaultSingleton = await ethers.getContract("UniV3Vault");
+    this.squeethVaultGovernance = await ethers.getContract(
+        "SqueethVaultGovernance"
+    );
+    this.squeethVaultSingleton = await ethers.getContract("SqueethVault");
 
     this.erc20RootVaultGovernance = await ethers.getContract(
         "ERC20RootVaultGovernance"
     );
     this.erc20RootVaultSingleton = await ethers.getContract("ERC20RootVault");
+    this.erc20RootVaultGovernanceForRequestable = await ethers.getContract(
+        "ERC20RootVaultGovernanceForRequestable"
+    );
+    this.requestableRootVaultSingleton = await ethers.getContract(
+        "RequestableRootVault"
+    );
     this.mellowOracle = await ethers.getContract("MellowOracle");
     const mStrategy: MStrategy | null = await ethers.getContractOrNull(
         "MStrategyYearn"
@@ -170,6 +190,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     } else {
         this.hStrategy = hStrategy;
     }
+    this.sStrategy = await ethers.getContract("SStrategy");
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
@@ -177,12 +198,16 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         const signer = await addSigner(address);
         this[name] = signer;
     }
-    const { usdc, wbtc, dai } = namedAccounts;
+    const { usdc, wbtc, dai, squeethWPowerPerp } = namedAccounts;
     this.usdc = await ethers.getContractAt("ERC20Token", usdc);
     this.weth = await ethers.getContractAt("ERC20Token", weth);
     this.wbtc = await ethers.getContractAt("ERC20Token", wbtc);
     this.dai = await ethers.getContractAt("ERC20Token", dai);
     this.wsteth = await ethers.getContractAt("ERC20Token", wsteth);
+    this.squeethWPowerPerp = await ethers.getContractAt(
+        "ERC20Token",
+        squeethWPowerPerp
+    );
     this.tokens = sortBy(
         (c: ERC20) => c.address.toLowerCase(),
         [this.usdc, this.weth, this.wbtc, this.dai]

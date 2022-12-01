@@ -28,6 +28,7 @@ export const ALLOWED_APPROVE_LIST = {
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
             "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
+            "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // wPowerPerpPool
         ],
         uniV2: [
             "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // SwapRouter
@@ -46,6 +47,19 @@ export const ALLOWED_APPROVE_LIST = {
             "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
             "0x6b175474e89094c44da98b954eedeac495271d0f", // DAI
         ],
+    },
+    goerli: {
+        uniV3: [
+            "0xe592427a0aece92de3edee1f18e0157c05861564", // SwapRouter
+            "0x8875e9c9EB0909da889CB3Dc9c5E8856093CE6b0", // wethBorrowPool
+            "0xB583EA07699c5DEa4da084056273d6D70c2C3309", // wPowerPerpPool
+
+                 ],
+        erc20: [
+            "0x6b03eD2C590A301E79E2DCe4ce38D7402dC6735a", // wPowerPerp
+            "0x0719E63EC564259D1ce12dFFD1431269C7d88700", // opynWETH
+            "0x12F263aAB668aF8918E077af3a9CF5da9fE9A417", // opynUSDC
+        ]
     },
     polygon: {
         uniV3: [
@@ -106,6 +120,7 @@ export const ALL_NETWORKS = [
     "fantom",
     "xdai",
     "rinkeby",
+    "goerli"
 ];
 export const MAIN_NETWORKS = [
     "hardhat",
@@ -113,6 +128,7 @@ export const MAIN_NETWORKS = [
     "mainnet",
     "kovan",
     "rinkeby",
+    "goerli"
 ];
 
 export const setupVault = async (
@@ -273,7 +289,8 @@ export const combineVaults = async (
         tokenLimit: BigNumberish;
         managementFee: BigNumberish;
         performanceFee: BigNumberish;
-    }
+    },
+    rootVaultName?: string
 ): Promise<void> => {
     if (nfts.length === 0) {
         throw `Trying to combine 0 vaults`;
@@ -290,6 +307,9 @@ export const combineVaults = async (
     const tokens = await vault.vaultTokens();
     const coder = hre.ethers.utils.defaultAbiCoder;
 
+    rootVaultName = rootVaultName == null ? "ERC20RootVault" : rootVaultName;
+    let governanceName = rootVaultName == "RequestableRootVault" ? "ERC20RootVaultGovernanceForRequestable" : "ERC20RootVaultGovernance";
+    
     const {
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
@@ -299,7 +319,7 @@ export const combineVaults = async (
         performanceFee = 20 * 10 ** 7,
     } = options || {};
 
-    await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
+    await setupVault(hre, expectedNft, governanceName, {
         createVaultArgs: [tokens, strategyAddress, nfts, deployer],
         delayedStrategyParams: {
             strategyTreasury: strategyTreasuryAddress,
@@ -323,7 +343,7 @@ export const combineVaults = async (
     log("ERC20RootVault address: " + rootVault);
     if (PRIVATE_VAULT) {
         const rootVaultContract = await hre.ethers.getContractAt(
-            "ERC20RootVault",
+            rootVaultName,
             rootVault
         );
         const depositors = (await rootVaultContract.depositorsAllowlist()).map(
