@@ -16,6 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [],
         log: true,
         autoMine: true,
+        gasLimit: BigNumber.from(10).pow(6).mul(6),
         ...TRANSACTION_GAS_LIMITS
     });
     await deploy("ERC20VaultGovernance", {

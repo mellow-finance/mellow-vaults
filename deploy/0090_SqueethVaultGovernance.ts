@@ -20,6 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [uniswapV3Factory, wethUsedBySqueethController],
         log: true,
         autoMine: true,
+        gasLimit: BigNumber.from(10).pow(6).mul(6),
         ...TRANSACTION_GAS_LIMITS
     });
     const { address: mellowOracle } = await get("MellowOracle");
@@ -29,6 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [squeethController],
         log: true,
         autoMine: true,
+        gasLimit: BigNumber.from(10).pow(6).mul(2),
         ...TRANSACTION_GAS_LIMITS
     });
 
@@ -53,6 +55,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
         autoMine: true,
+        gasLimit: BigNumber.from(10).pow(6).mul(2),
         ...TRANSACTION_GAS_LIMITS
     });
 };

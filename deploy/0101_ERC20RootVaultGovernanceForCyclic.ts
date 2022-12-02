@@ -17,6 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [],
         log: true,
         autoMine: true,
+        gasLimit: BigNumber.from(10).pow(6).mul(6),
         ...TRANSACTION_GAS_LIMITS
     });
     const { address: helperAddress } = await deploy(
@@ -45,6 +46,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             ],
             log: true,
             autoMine: true,
+            gasLimit: BigNumber.from(10).pow(6).mul(4),
             ...TRANSACTION_GAS_LIMITS
         }
     );
