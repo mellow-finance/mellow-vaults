@@ -165,7 +165,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
                 spender: squeethVault,
                 recipient: address(squeethVault)
             });
-            _swapToToken(swapSqueeth);
+            _swapToToken(swapSqueeth, isLiquidated);
         }
 
         address mainToken_ = mainToken;
@@ -239,7 +239,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _getPriceAfterTickChecked(IUniswapV3Pool pool_) internal view returns (uint160) {
+    function _getPriceAfterTickChecked(IUniswapV3Pool pool_, bool isLiquidated) internal view returns (uint160) {
         uint32 oracleObservationDelta = oracleParams.oracleObservationDelta;
         (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool_.slot0();
         (int24 averageTick, , bool withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
@@ -249,7 +249,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
         }
         int24 tickDeviation = tick - averageTick;
         uint24 absoluteTickDeviation = (tickDeviation > 0) ? uint24(tickDeviation) : uint24(-tickDeviation);
-        require(absoluteTickDeviation <= oracleParams.maxTickDeviation, ExceptionsLibrary.INVARIANT);
+        require(isLiquidated || absoluteTickDeviation <= oracleParams.maxTickDeviation, ExceptionsLibrary.INVARIANT);
         return sqrtPriceX96;
     }
 
@@ -263,9 +263,9 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _swapToToken(SwapParams memory params) internal returns (uint256 amountIn, uint256 amountOut) {
+    function _swapToToken(SwapParams memory params, bool isLiquidated) internal returns (uint256 amountIn, uint256 amountOut) {
         amountIn = IERC20(params.tokenIn).balanceOf(address(params.spender));
-        uint256 sqrtPriceX96 = uint256(_getPriceAfterTickChecked(params.pool));
+        uint256 sqrtPriceX96 = uint256(_getPriceAfterTickChecked(params.pool, isLiquidated));
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
         if (params.tokenIn == params.pool.token1()) {
             priceX96 = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, priceX96);

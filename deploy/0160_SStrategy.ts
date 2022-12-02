@@ -104,7 +104,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     let rootVault = await ethers.getContractAt("CyclicRootVault", rootVaultAddress);
 
-    await rootVault.setCycleDuration(BigNumber.from(3600).mul(24).mul(5))
+    await rootVault.setCycleDuration(BigNumber.from(60).mul(10))
     
     const ADMIN_ROLE =
     "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
@@ -128,8 +128,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     await sStrategy.updateLiquidationParams({
-        lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(90), 
-        upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(110),
+        lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(98), 
+        upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(102),
     });
 
     await sStrategy.updateOracleParams({
