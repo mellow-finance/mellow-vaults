@@ -73,7 +73,7 @@ export interface TestContext<T, F> extends Suite {
     tokens: ERC20[];
     deployer: SignerWithAddress;
     admin: SignerWithAddress;
-    mStrategyAdmin: SignerWithAddress;
+    strategyAdmin: SignerWithAddress;
     test: SignerWithAddress;
     startTimestamp: number;
     deploymentFixture: (x?: F) => Promise<T>;
@@ -168,9 +168,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     this.erc20RootVaultGovernanceForCyclic = await ethers.getContract(
         "ERC20RootVaultGovernanceForCyclic"
     );
-    this.cyclicRootVaultSingleton = await ethers.getContract(
-        "CyclicRootVault"
-    );
+    this.cyclicRootVaultSingleton = await ethers.getContract("CyclicRootVault");
     this.mellowOracle = await ethers.getContract("MellowOracle");
     const mStrategy: MStrategy | null = await ethers.getContractOrNull(
         "MStrategyYearn"
@@ -193,7 +191,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     this.sStrategy = await ethers.getContract("SStrategy");
 
     const namedAccounts = await getNamedAccounts();
-    for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
+    for (const name of ["deployer", "admin", "strategyAdmin", "test"]) {
         const address = namedAccounts[name];
         const signer = await addSigner(address);
         this[name] = signer;

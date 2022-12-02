@@ -70,7 +70,7 @@ const setupStrategy = async (
         usdc,
         uniswapV3Router,
         uniswapV3Factory,
-        mStrategyAdmin,
+        strategyAdmin,
     } = await getNamedAccounts();
     const mStrategyName = `MStrategy${kind}`;
     const { address: mStrategyAddress } = await deployments.get(mStrategyName);
@@ -131,13 +131,13 @@ const setupStrategy = async (
         map((x) => x.toString(), ratioParams)
     );
 
-    log("Transferring ownership to mStrategyAdmin");
+    log("Transferring ownership to strategyAdmin");
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
     txs.push(
         mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
             adminRole,
-            mStrategyAdmin
+            strategyAdmin
         ])
     );
 
@@ -169,7 +169,7 @@ const buildMStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury } = await getNamedAccounts();
+    const { deployer, strategyTreasury } = await getNamedAccounts();
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
@@ -210,7 +210,7 @@ const buildMStrategy = async (
         erc20VaultNft + 1,
         [erc20VaultNft, yearnVaultNft],
         strategy.address,
-        mStrategyTreasury
+        strategyTreasury
     );
 };
 
@@ -219,7 +219,6 @@ export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
         const { deployments, getNamedAccounts } = hre;
         const { weth, usdc, wbtc } = await getNamedAccounts();
         await deployMStrategy(hre, kind);
-
         for (let [tokens, deploymentName] of [
             [[weth, usdc], `MStrategy${kind}_WETH_USDC`],
             [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`],

@@ -95,7 +95,7 @@ const setupStrategy = async (
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
 
-    const { deployer, mStrategyAdmin } = await getNamedAccounts();
+    const { deployer, strategyAdmin } = await getNamedAccounts();
     const hStrategyName = `HStrategy${kind}`;
     const { address: hStrategyAddress } = await deployments.get(hStrategyName);
     const hStrategy = await hre.ethers.getContractAt(
@@ -193,7 +193,7 @@ const setupStrategy = async (
         hStrategyWethUsdc.interface.encodeFunctionData("updateSwapFees", [500])
     );
     log(`Swap fees:`, "500");
-    log("Transferring ownership to mStrategyAdmin");
+    log("Transferring ownership to strategyAdmin");
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
     const adminDelegateRole = await read(
@@ -212,7 +212,7 @@ const setupStrategy = async (
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
             adminRole,
-            mStrategyAdmin,
+            strategyAdmin,
         ])
     );
 
@@ -281,7 +281,7 @@ const buildHStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get } = deployments;
-    const { deployer, mStrategyTreasury } = await getNamedAccounts();
+    const { deployer, strategyTreasury } = await getNamedAccounts();
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
@@ -362,7 +362,7 @@ const buildHStrategy = async (
         erc20RootVaultNft,
         [erc20VaultNft, yearnVaultNft, uniV3VaultNft],
         strategy.address,
-        mStrategyTreasury
+        strategyTreasury
     );
 };
 

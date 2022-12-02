@@ -230,8 +230,7 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
         require(
-            (newStrategyParams.lowerHedgingThresholdD9 < D9) &&
-                (newStrategyParams.upperHedgingThresholdD9 > D9),
+            (newStrategyParams.lowerHedgingThresholdD9 < D9) && (newStrategyParams.upperHedgingThresholdD9 > D9),
             ExceptionsLibrary.INVARIANT
         );
         strategyParams = newStrategyParams;

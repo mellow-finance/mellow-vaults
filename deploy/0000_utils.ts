@@ -296,7 +296,7 @@ export const combineVaults = async (
         throw `Trying to combine 0 vaults`;
     }
     const { log } = deployments;
-    const { deployer, admin, mStrategyAdmin } = await hre.getNamedAccounts();
+    const { deployer, admin, strategyAdmin } = await hre.getNamedAccounts();
     const firstNft = nfts[0];
     const firstAddress = await deployments.read(
         "VaultRegistry",
@@ -364,14 +364,16 @@ export const combineVaults = async (
             log("Transaction confirmed");
         }
     }
-    await deployments.execute(
-        "VaultRegistry",
-        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
-        "transferFrom(address,address,uint256)",
-        deployer,
-        mStrategyAdmin,
-        expectedNft
-    );
+    if (rootVaultName != "CyclicRootVault") {
+        await deployments.execute(
+            "VaultRegistry",
+            { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
+            "transferFrom(address,address,uint256)",
+            deployer,
+            strategyAdmin,
+            expectedNft
+        );
+    }
 };
 
 export const toObject = (obj: any) =>

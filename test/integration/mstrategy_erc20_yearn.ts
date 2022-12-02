@@ -105,7 +105,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         erc20Vault,
                         yearnVault,
                         3000,
-                        this.mStrategyAdmin.address,
+                        this.strategyAdmin.address,
                     ];
                     const address = await mStrategy.callStatic.createStrategy(
                         ...params
@@ -152,7 +152,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         )
                     );
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .functions["multicall"](txs);
 
                     await combineVaults(
@@ -231,7 +231,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 console.log(
                     (
                         await this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .callStatic.rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []

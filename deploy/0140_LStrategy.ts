@@ -25,8 +25,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         cowswapRelayer,
         weth,
         wsteth,
-        mStrategyTreasury,
-        mStrategyAdmin,
+        strategyTreasury,
+        strategyAdmin,
     } = await getNamedAccounts();
     const tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
     const startNft =
@@ -205,7 +205,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         erc20VaultNft + 1,
         [erc20VaultNft, uniV3LowerVaultNft, uniV3UpperVaultNft],
         strategyDeployParams.address,
-        mStrategyTreasury
+        strategyTreasury
     );
 
     const mellowOracle = await get("MellowOracle");
@@ -240,10 +240,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OPERATOR_ROLE =
         "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
 
-    await lStrategy.grantRole(ADMIN_ROLE, mStrategyAdmin);
-    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, mStrategyAdmin);
+    await lStrategy.grantRole(ADMIN_ROLE, strategyAdmin);
+    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, strategyAdmin);
     await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
-    await lStrategy.grantRole(OPERATOR_ROLE, mStrategyAdmin);
+    await lStrategy.grantRole(OPERATOR_ROLE, strategyAdmin);
     await lStrategy.revokeRole(OPERATOR_ROLE, deployer);
     await lStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
     await lStrategy.revokeRole(ADMIN_ROLE, deployer);

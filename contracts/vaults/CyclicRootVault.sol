@@ -263,12 +263,7 @@ contract CyclicRootVault is ICyclicRootVault, ERC20Token, ReentrancyGuard, Aggre
 
             uint256[] memory tokenAmounts = new uint256[](1);
             tokenAmounts[0] = totalAmount;
-            uint256[] memory pulledAmounts = cyclableVault_.pull(
-                address(erc20Vault),
-                _vaultTokens,
-                tokenAmounts,
-                ""
-            );
+            uint256[] memory pulledAmounts = cyclableVault_.pull(address(erc20Vault), _vaultTokens, tokenAmounts, "");
             totalAmount = pulledAmounts[0];
 
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests_;

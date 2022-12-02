@@ -59,7 +59,8 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                 const {
                     uniswapV3PositionManager,
                     uniswapV3Router,
-                    mStrategyAdmin,
+                    strategyAdmin,
+                    deployer,
                 } = await getNamedAccounts();
 
                 let strategyTreasury = randomAddress();
@@ -136,11 +137,6 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     undefined,
                     "CyclicRootVault"
                 );
-                await withSigner(mStrategyAdmin, async (s) => {
-                    await this.vaultRegistry
-                        .connect(s)
-                        .approve(strategyDeployParams.address, rootVaultNft);
-                });
 
                 const cyclicRootVault = await read(
                     "VaultRegistry",
@@ -152,6 +148,22 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     "CyclicRootVault",
                     cyclicRootVault
                 );
+
+                await this.rootVault.setCycleDuration(
+                    BigNumber.from(3600).mul(24).mul(5)
+                );
+
+                await this.vaultRegistry.transferFrom(
+                    deployer,
+                    strategyAdmin,
+                    rootVaultNft
+                );
+
+                await withSigner(strategyAdmin, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(strategyDeployParams.address, rootVaultNft);
+                });
 
                 //TODO: validator
 
@@ -172,7 +184,6 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     this.deployer.address,
                     BigNumber.from(10).pow(18).mul(100)
                 );
-                await this.rootVault.setCycleDuration(BigNumber.from(3600).mul(24).mul(5));
 
                 await this.subject.updateStrategyParams({
                     lowerHedgingThresholdD9: BigNumber.from(10).pow(8).mul(5),
@@ -416,6 +427,107 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
                     .true;
             });
         });
+
+        it("option has value", async () => {
+            let optionPrice = BigNumber.from(10).pow(18).mul(100);
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+            await this.subject.startCycleMocked(
+                currentEthPrice,
+                optionPrice,
+                this.safe,
+                false
+            );
+
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            });
+
+            await uniSwapTokensGivenInput(
+                this.swapRouter,
+                [this.usdc, this.weth],
+                3000,
+                false,
+                BigNumber.from(10).pow(11).mul(500)
+            );
+            await sleep(3600 * 24 * 30);
+            let newEthPrice = await this.squeethVault.twapIndexPrice();
+            expect(newEthPrice.gt(currentEthPrice)).to.be.true;
+
+            let ONE = BigNumber.from(1e9);
+            let optionPriceEth = ONE.mul(optionPrice).div(currentEthPrice);
+            let priceMultiplicator = newEthPrice.mul(1e9).div(currentEthPrice);
+            let shortMoney = this.depositAmount
+                .mul(ONE)
+                .div(ONE.add(optionPriceEth));
+            let optionMoney = this.depositAmount.sub(shortMoney);
+            let optionProfit = ONE.sub(ONE.mul(ONE).div(priceMultiplicator));
+            let optionProfitETH = optionMoney
+                .mul(optionProfit)
+                .div(optionPriceEth);
+
+            let toAllow = optionProfitETH.mul(11).div(10);
+            let atLeast = optionProfitETH.mul(9).div(10);
+
+            await withSigner(this.safe, async (s) => {
+                await this.weth
+                    .connect(s)
+                    .approve(this.squeethVault.address, toAllow);
+            });
+            let safeBalance = await this.weth.balanceOf(this.safe);
+            await this.subject.endCycleMocked(this.safe);
+            let newSafeBalance = await this.weth.balanceOf(this.safe);
+
+            expect(safeBalance.sub(newSafeBalance).gt(atLeast)).to.be.true;
+        });
+
+        it("crossing lower threshold", async () => {
+            await this.subject.updateLiquidationParams({
+                lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(95),
+                upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(180),
+            });
+            let currentEthPrice = await this.squeethVault.twapIndexPrice();
+
+            let safeBalance = await this.weth.balanceOf(this.safe);
+            await this.subject.startCycleMocked(
+                currentEthPrice,
+                BigNumber.from(10).pow(18).mul(100),
+                this.safe,
+                false
+            );
+            let newSafeBalance = await this.weth.balanceOf(this.safe);
+            expect(newSafeBalance.gt(safeBalance)).to.be.true;
+
+            let lpAmount = await this.rootVault.balanceOf(this.depositor);
+            await withSigner(this.depositor, async (s) => {
+                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
+            });
+            for (let i = 0; i < 3; i++) {
+                await uniSwapTokensGivenInput(
+                    this.swapRouter,
+                    [this.usdc, this.weth],
+                    3000,
+                    true,
+                    BigNumber.from(10).pow(18).mul(4000)
+                );
+                await sleep(3600);
+            }
+            let newEthPrice = await this.squeethVault.twapIndexPrice();
+            expect(newEthPrice.lt(currentEthPrice)).to.be.true;
+            await this.subject.endCycleMocked(this.safe);
+
+            await withSigner(this.depositor, async (s) => {
+                let withdrawn = await this.rootVault
+                    .connect(s)
+                    .callStatic.withdraw(this.depositor, [
+                        randomBytes(4),
+                        randomBytes(4),
+                    ]);
+                expect(withdrawn[0].lt(this.depositAmount.toString())).to.be
+                    .true;
+            });
+        });
+
         it("crossing upper threshold", async () => {
             let currentEthPrice = await this.squeethVault.twapIndexPrice();
 
@@ -490,106 +602,6 @@ contract<SStrategy, DeployOptions, CustomContext>("SStrategy", function () {
             });
 
             await this.subject.endCycleMocked(this.safe);
-        });
-
-        it("crossing lower threshold", async () => {
-            await this.subject.updateLiquidationParams({
-                lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(95),
-                upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(180),
-            });
-            let currentEthPrice = await this.squeethVault.twapIndexPrice();
-
-            let safeBalance = await this.weth.balanceOf(this.safe);
-            await this.subject.startCycleMocked(
-                currentEthPrice,
-                BigNumber.from(10).pow(18).mul(100),
-                this.safe,
-                false
-            );
-            let newSafeBalance = await this.weth.balanceOf(this.safe);
-            expect(newSafeBalance.gt(safeBalance)).to.be.true;
-
-            let lpAmount = await this.rootVault.balanceOf(this.depositor);
-            await withSigner(this.depositor, async (s) => {
-                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
-            });
-            for (let i = 0; i < 3; i++) {
-                await uniSwapTokensGivenInput(
-                    this.swapRouter,
-                    [this.usdc, this.weth],
-                    3000,
-                    true,
-                    BigNumber.from(10).pow(18).mul(4000)
-                );
-                await sleep(3600);
-            }
-            let newEthPrice = await this.squeethVault.twapIndexPrice();
-            expect(newEthPrice.lt(currentEthPrice)).to.be.true;
-            await this.subject.endCycleMocked(this.safe);
-
-            await withSigner(this.depositor, async (s) => {
-                let withdrawn = await this.rootVault
-                    .connect(s)
-                    .callStatic.withdraw(this.depositor, [
-                        randomBytes(4),
-                        randomBytes(4),
-                    ]);
-                expect(withdrawn[0].lt(this.depositAmount.toString())).to.be
-                    .true;
-            });
-        });
-
-        it("option has value", async () => {
-            let optionPrice = BigNumber.from(10).pow(18).mul(100);
-            let currentEthPrice = await this.squeethVault.twapIndexPrice();
-            await this.subject.startCycleMocked(
-                currentEthPrice,
-                optionPrice,
-                this.safe,
-                false
-            );
-
-            let lpAmount = await this.rootVault.balanceOf(this.depositor);
-            await withSigner(this.depositor, async (s) => {
-                await this.rootVault.connect(s).registerWithdrawal(lpAmount);
-            });
-
-            await uniSwapTokensGivenInput(
-                this.swapRouter,
-                [this.usdc, this.weth],
-                3000,
-                false,
-                BigNumber.from(10).pow(11).mul(500)
-            );
-            await sleep(3600 * 24 * 30);
-            let newEthPrice = await this.squeethVault.twapIndexPrice();
-            expect(newEthPrice.gt(currentEthPrice)).to.be.true;
-
-            let ONE = BigNumber.from(1e9);
-            let optionPriceEth = ONE.mul(optionPrice).div(currentEthPrice);
-            let priceMultiplicator = newEthPrice.mul(1e9).div(currentEthPrice);
-            let shortMoney = this.depositAmount
-                .mul(ONE)
-                .div(ONE.add(optionPriceEth));
-            let optionMoney = this.depositAmount.sub(shortMoney);
-            let optionProfit = ONE.sub(ONE.mul(ONE).div(priceMultiplicator));
-            let optionProfitETH = optionMoney
-                .mul(optionProfit)
-                .div(optionPriceEth);
-
-            let toAllow = optionProfitETH.mul(11).div(10);
-            let atLeast = optionProfitETH.mul(9).div(10);
-
-            await withSigner(this.safe, async (s) => {
-                await this.weth
-                    .connect(s)
-                    .approve(this.squeethVault.address, toAllow);
-            });
-            let safeBalance = await this.weth.balanceOf(this.safe);
-            await this.subject.endCycleMocked(this.safe);
-            let newSafeBalance = await this.weth.balanceOf(this.safe);
-
-            expect(safeBalance.sub(newSafeBalance).gt(atLeast)).to.be.true;
         });
 
         it("no money for second", async () => {

@@ -187,7 +187,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     moneyVault: yearnVault,
                     uniV3Vault: uniV3Vault,
                     fee: 3000,
-                    admin: this.mStrategyAdmin.address,
+                    admin: this.strategyAdmin.address,
                     uniV3Helper: uniV3Helper,
                     hStrategyHelper: hStrategyHelper,
                 };
@@ -289,7 +289,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     )
                 );
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .functions["multicall"](txs);
 
                 await combineVaults(
@@ -442,7 +442,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("#createStrategy", () => {
         it("creates a new strategy and initializes it", async () => {
             const address = await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .callStatic.createStrategy(
                     this.params.tokens,
                     this.params.erc20Vault,
@@ -456,7 +456,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .createStrategy(
                         this.params.tokens,
                         this.params.erc20Vault,
@@ -472,7 +472,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("#updateParams", () => {
         it("set new strategy parameters", async () => {
             await expect(
-                this.subject.connect(this.mStrategyAdmin).updateStrategyParams({
+                this.subject.connect(this.strategyAdmin).updateStrategyParams({
                     ...this.strategyParams,
                 } as StrategyParamsStruct)
             ).to.emit(this.subject, "UpdateStrategyParams");
@@ -482,7 +482,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when averagePriceTimeSpan <= 0, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateOracleParams({
                             ...this.oracleParams,
                             averagePriceTimeSpan: 0,
@@ -491,18 +491,16 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             });
             it("when erc20CapitalRatioD > DENOMINATOR (1e9), then reverts with INVARIANT", async () => {
                 await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateRatioParams({
-                            ...this.ratioParams,
-                            erc20CapitalRatioD: DENOMINATOR.add(1),
-                        })
+                    this.subject.connect(this.strategyAdmin).updateRatioParams({
+                        ...this.ratioParams,
+                        erc20CapitalRatioD: DENOMINATOR.add(1),
+                    })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
             it("when minToken0ForOpening <= 0, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateMintingParams({
                             ...this.mintingParams,
                             minToken0ForOpening: 0,
@@ -512,7 +510,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when minToken1ForOpening <= 0, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateMintingParams({
                             ...this.mintingParams,
                             minToken1ForOpening: 0,
@@ -523,7 +521,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when globalUpperTick <= globalLowerTick, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateStrategyParams({
                             ...this.strategyParams,
                             domainLowerTick: 0,
@@ -535,7 +533,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when globalIntervalWidth % halfOfShortInterval > 0, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateStrategyParams({
                             ...this.strategyParams,
                             halfOfShortInterval: 30,
@@ -548,7 +546,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when tickNeighborhood > MAX_TICK, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateStrategyParams({
                             ...this.strategyParams,
                             tickNeighborhood: TickMath.MAX_TICK + 1,
@@ -559,7 +557,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when tickNeighborhood < MIN_TICK, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateStrategyParams({
                             ...this.strategyParams,
                             tickNeighborhood: TickMath.MIN_TICK - 1,
@@ -570,7 +568,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("when maxTickDeviation > MAX_TICK, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateOracleParams({
                             ...this.oracleParams,
                             maxTickDeviation: TickMath.MAX_TICK + 1,
@@ -623,7 +621,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             let amountUSDCtoPull = randomInt(0, amountUSDC);
 
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .manualPull(
                     this.params.erc20Vault,
                     this.params.moneyVault,
@@ -649,7 +647,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             ).to.be.equal(BigNumber.from(amountUSDC - amountUSDCtoPull));
 
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .manualPull(
                     this.params.moneyVault,
                     this.params.erc20Vault,
@@ -696,7 +694,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     ...this.strategyParams,
                     tickNeighborhood: 10,
@@ -747,13 +745,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             } as RebalanceTokenAmountsStruct;
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
 
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .rebalance(restrictions, [])
             );
 
@@ -765,7 +763,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             {
                 const ratioParams = await this.subject.ratioParams();
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .updateRatioParams({
                         ...ratioParams,
                         minErc20CaptialDeviationD: 0,
@@ -774,7 +772,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             }
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
             const { tickLower, tickUpper } =
@@ -783,7 +781,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
 
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     halfOfShortInterval: 60,
                     tickNeighborhood: 10,
@@ -802,7 +800,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             }
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
             await sleep(this.governanceDelay);
@@ -818,7 +816,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             }
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
         });
@@ -827,7 +825,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("calculateExpectedRatios", () => {
         it("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     ...this.strategyParams,
                 } as StrategyParamsStruct);
@@ -1077,7 +1075,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await this.positionManager.positions(nft);
             const strategyParams = await this.subject.strategyParams();
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     domainLowerTick: tickLower - 600,
                     domainUpperTick: tickUpper + 600,
@@ -1317,7 +1315,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     domainLowerTick: tickLower - 600,
                     domainUpperTick: tickUpper + 600,
@@ -1555,7 +1553,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     domainLowerTick: tickLower - 600,
                     domainUpperTick: tickUpper + 600,
@@ -1661,7 +1659,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     domainLowerTick: tickLower - 600,
                     domainUpperTick: tickUpper + 600,
@@ -1792,7 +1790,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .updateStrategyParams({
                     domainLowerTick: tickLower - 600,
                     domainUpperTick: tickUpper + 600,

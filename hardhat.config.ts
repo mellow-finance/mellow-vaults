@@ -125,9 +125,6 @@ const config: HardhatUserConfig = {
         approver: {
             default: 1,
         },
-        sStrategyAdmin: {
-            default: 2,
-        },
         admin: {
             hardhat: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
             mainnet: process.env["MAINNET_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
@@ -137,7 +134,7 @@ const config: HardhatUserConfig = {
             rinkeby: process.env["RINKEBY_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
         },
-        mStrategyAdmin: {
+        strategyAdmin: {
             hardhat: "0x1aD91ee08f21bE3dE0BA2ba6918E714dA6B45836",
             mainnet: process.env["MAINNET_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             kovan: process.env["KOVAN_STRATEGY_ADMIN_ADDRESS"] || "0x0",
@@ -151,7 +148,7 @@ const config: HardhatUserConfig = {
             hardhat: "0x0000000000000000000000000000000000000000",
             goerli: process.env["GOERLI_STRATEGY_OPERATOR_ADDRESS"] || "0x0",
         },
-        mStrategyTreasury: {
+        strategyTreasury: {
             hardhat: "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",
             mainnet: process.env["MAINNET_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             kovan: process.env["KOVAN_STRATEGY_TREASURY_ADDRESS"] || "0x0",

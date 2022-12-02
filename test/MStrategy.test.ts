@@ -105,7 +105,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     erc20Vault: erc20Vault,
                     moneyVault: yearnVault,
                     fee: 3000,
-                    admin: this.mStrategyAdmin.address,
+                    admin: this.strategyAdmin.address,
                 };
 
                 const address = await mStrategy.callStatic.createStrategy(
@@ -156,7 +156,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     )
                 );
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .functions["multicall"](txs);
 
                 await combineVaults(
@@ -343,7 +343,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
     describe("#createStrategy", () => {
         it("creates a new strategy and initializes it", async () => {
             const address = await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .callStatic.createStrategy(
                     this.params.tokens,
                     this.params.erc20Vault,
@@ -356,7 +356,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
             await expect(
                 this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .createStrategy(
                         this.params.tokens,
                         this.params.erc20Vault,
@@ -578,7 +578,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
         it("sets new params for oracle", async () => {
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .setOracleParams(oracleParams);
             expect(
                 toObject(await this.subject.oracleParams())
@@ -589,7 +589,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             it("allowed: MStrategy admin", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams)
                 ).to.not.be.reverted;
             });
@@ -610,7 +610,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     params.maxSlippageD = BigNumber.from(10).pow(9).mul(2);
                     await expect(
                         this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .setOracleParams(params)
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -636,7 +636,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
         it("sets new ratio params", async () => {
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .setRatioParams(ratioParams);
             expect(await this.subject.ratioParams()).to.be.equivalent(
                 ratioParams
@@ -647,7 +647,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             it("allowed: MStrategy admin", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams)
                 ).to.not.be.reverted;
             });
@@ -669,7 +669,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     params.tickMax = 0;
                     await expect(
                         this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .setRatioParams(params)
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -680,7 +680,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     params.erc20MoneyRatioD = BigNumber.from(10).pow(9).mul(2);
                     await expect(
                         this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .setRatioParams(params)
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -696,7 +696,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .mul(2);
                     await expect(
                         this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .setRatioParams(params)
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -748,7 +748,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             let amountUSDCtoPull = randomInt(0, amountUSDC);
 
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .manualPull(
                     this.params.erc20Vault,
                     this.params.moneyVault,
@@ -774,7 +774,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             ).to.be.equal(BigNumber.from(amountUSDC - amountUSDCtoPull));
 
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .manualPull(
                     this.params.moneyVault,
                     this.params.erc20Vault,
@@ -821,7 +821,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             it("allowed: MStrategy admin", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .manualPull(
                             this.params.erc20Vault,
                             this.params.moneyVault,
@@ -852,7 +852,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 it("passes", async () => {
                     await expect(
                         this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .manualPull(
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
@@ -927,10 +927,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 );
 
                 await highRatioMStrategy
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setRatioParams(ratioParams);
                 await highRatioMStrategy
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setOracleParams(oracleParams);
 
                 let nftERC20Vault = await this.vaultRegistry.nftForVault(
@@ -994,7 +994,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
                 await expect(
                     highRatioMStrategy
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
@@ -1059,10 +1059,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 );
 
                 await lowRatioMStrategy
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setRatioParams(ratioParams);
                 await lowRatioMStrategy
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setOracleParams(oracleParams);
 
                 let nftERC20Vault = await this.vaultRegistry.nftForVault(
@@ -1129,7 +1129,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
                 await expect(
                     lowRatioMStrategy
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
@@ -1139,7 +1139,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             it("allowed: MStrategy admin", async () => {
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
@@ -1149,10 +1149,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 let operatorRole = await this.subject.OPERATOR();
                 let delegateRole = await this.subject.ADMIN_DELEGATE_ROLE();
                 await this.subject
-                    .connect(this.mStrategyAdmin)
-                    .grantRole(delegateRole, this.mStrategyAdmin.address);
+                    .connect(this.strategyAdmin)
+                    .grantRole(delegateRole, this.strategyAdmin.address);
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .grantRole(operatorRole, mStrategyOperator);
 
                 await withSigner(mStrategyOperator, async (signer) => {
@@ -1241,15 +1241,15 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     };
 
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams);
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -1318,10 +1318,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     };
 
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams);
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await mockUniswapV3Pool.setObserveTick(
@@ -1332,7 +1332,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -1410,17 +1410,17 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     );
 
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams);
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams);
 
                     let res = await subject.callStatic.getAverageTick();
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -1497,15 +1497,15 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     );
 
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams);
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -1513,7 +1513,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     ).to.not.be.reverted;
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -1582,10 +1582,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             );
 
             await subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .setRatioParams(ratioParams);
             await subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .setOracleParams(oracleParams);
 
             let res = await subject.callStatic.getAverageTick();
@@ -1891,7 +1891,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalancePools(
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
@@ -1995,15 +1995,15 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     };
 
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams);
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalancePools(
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
@@ -2117,15 +2117,15 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     };
 
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setRatioParams(ratioParams);
                     await subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
                         subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalancePools(
                                 this.params.erc20Vault,
                                 this.params.moneyVault,

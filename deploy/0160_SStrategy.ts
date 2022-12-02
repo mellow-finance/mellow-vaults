@@ -22,16 +22,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         approver,
         deployer,
         weth,
-        mStrategyTreasury,
-        mStrategyAdmin,
+        strategyTreasury,
+        strategyAdmin,
         uniswapV3Router,
         opynWeth,
         strategyOperator
     } = await getNamedAccounts();
     
-    let wethUsedByController = opynWeth == undefined ? weth : opynWeth;
+    let wethUsedBySqueethController = opynWeth == undefined ? weth : opynWeth;
 
-    const tokens = [wethUsedByController];
+    const tokens = [wethUsedBySqueethController];
 
     let vaultRegistry = await ethers.getContract("VaultRegistry");
     const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
@@ -79,11 +79,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         contract: "SStrategy",
         args: [
-            wethUsedByController,
+            wethUsedBySqueethController,
             erc20Vault,
             squeethVault,
             uniswapV3Router,
-            mStrategyAdmin],
+            deployer],
         log: true,
         autoMine: true,
         gasLimit: BigNumber.from(10).pow(6).mul(20),
@@ -91,16 +91,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     const sStrategy = await ethers.getContractAt("SStrategy", strategyDeployParams.address);
-
+    
     await combineVaults(
         hre,
         rootVaultNft,
         [erc20VaultNft, squeethVaultNft],
         sStrategy.address,
-        mStrategyTreasury,
+        strategyTreasury,
         {
             limits: undefined,
-            strategyPerformanceTreasuryAddress: mStrategyTreasury,
+            strategyPerformanceTreasuryAddress: strategyTreasury,
             tokenLimitPerAddress: BigNumber.from(10).pow(25),
             tokenLimit: BigNumber.from(10).pow(25),
             managementFee: 0,
@@ -109,26 +109,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "CyclicRootVault"
     );
 
-    await deployments.execute(
-        "CyclicRootVault",
-        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
-        "setCycleDuration(uint256)",
-        BigNumber.from(3600).mul(24).mul(5)
-    );
-
-    await deployments.execute(
-        "VaultRegistry",
-        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
-        "approve(address,uint256)",
-        sStrategy.address,
-        rootVaultNft
-    );
-    
-    const rootVault = await read(
+    const rootVaultAddress = await read(
         "VaultRegistry",
         "vaultForNft",
         rootVaultNft
     );
+    let rootVault = await ethers.getContractAt("CyclicRootVault", rootVaultAddress);
+
+    await rootVault.setCycleDuration(BigNumber.from(3600).mul(24).mul(5))
     
     const ADMIN_ROLE =
     "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
@@ -137,43 +125,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OPERATOR_ROLE =
         "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
     
-    await deployments.execute(
-        "SStrategy",
-        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
-        "grantRole(bytes32,address)",
-        ADMIN_ROLE,
-        deployer
-    );
-    await deployments.execute(
-        "SStrategy",
-        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
-        "grantRole(bytes32,address)",
-        ADMIN_DELEGATE_ROLE,
-        mStrategyAdmin
-    );
-    await deployments.execute(
-        "SStrategy",
-        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
-        "grantRole(bytes32,address)",
-        ADMIN_DELEGATE_ROLE,
-        deployer
-    );
-    await deployments.execute(
-        "SStrategy",
-        { from: mStrategyAdmin, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
-        "grantRole(bytes32,address)",
-        OPERATOR_ROLE,
-        strategyOperator
-    );
-
+    await sStrategy.grantRole(ADMIN_ROLE, strategyAdmin);
+    await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, strategyAdmin);
+    await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
+    await sStrategy.grantRole(OPERATOR_ROLE, strategyOperator);
+    
     await sStrategy.setRootVault(
-        rootVault
+        rootVault.address
     );
 
     await sStrategy.updateStrategyParams({
         lowerHedgingThresholdD9: BigNumber.from(10).pow(8).mul(5),
         upperHedgingThresholdD9: BigNumber.from(10).pow(9).mul(2),
-        cycleDuration: BigNumber.from(3600).mul(1),
     });
 
     await sStrategy.updateLiquidationParams({
@@ -187,9 +150,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         oracleObservationDelta: BigNumber.from(15 * 60),
     });
     
-    
     await sStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
     await sStrategy.revokeRole(ADMIN_ROLE, deployer);
+
+    await deployments.execute(
+        "VaultRegistry",
+        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
+        "transferFrom(address,address,uint256)",
+        deployer,
+        strategyAdmin,
+        rootVaultNft
+    );
 };
 
 export default func;

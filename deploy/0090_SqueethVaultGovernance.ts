@@ -14,10 +14,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth, opynWeth, squeethWethBorrowPool } = await getNamedAccounts();
     
-    let wethUsedByController = opynWeth == undefined ? weth : opynWeth;
+    let wethUsedBySqueethController = opynWeth == undefined ? weth : opynWeth;
     const { address: singleton } = await deploy("SqueethVault", {
         from: deployer,
-        args: [uniswapV3Factory, wethUsedByController],
+        args: [uniswapV3Factory, wethUsedBySqueethController],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS

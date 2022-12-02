@@ -290,7 +290,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         erc20Vault,
                         yearnVault,
                         UNIV3_FEE,
-                        this.mStrategyAdmin.address,
+                        this.strategyAdmin.address,
                     ];
                     const address = await mStrategy.callStatic.createStrategy(
                         ...params
@@ -337,7 +337,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         )
                     );
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .functions["multicall"](txs);
 
                     this.swapRouter = await ethers.getContractAt(
@@ -591,7 +591,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 []
             );
             await this.subject
-                .connect(this.mStrategyAdmin)
+                .connect(this.strategyAdmin)
                 .manualPull(
                     this.erc20Vault.address,
                     this.uniV3Vault.address,
@@ -724,7 +724,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     );
 
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .manualPull(
                         this.erc20Vault.address,
                         this.yearnVault.address,
@@ -755,7 +755,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         };
 
                         await this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .setRatioParams(ratioParams);
 
                         const currentVault = BigNumber.from(10).pow(12).mul(2);
@@ -765,7 +765,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
                         await pushPriceDown(currentVault);
                         await this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -818,7 +818,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
                     await pushPriceUp(deltaValue);
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .rebalance([BigNumber.from(0), BigNumber.from(0)], []);
                     pricesHistory[i - 1].push(await getSqrtPriceX96());
                 }
@@ -864,7 +864,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     );
 
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .manualPull(
                         this.erc20Vault.address,
                         this.yearnVault.address,
@@ -942,7 +942,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                     []
                                 );
                             await this.subject
-                                .connect(this.mStrategyAdmin)
+                                .connect(this.strategyAdmin)
                                 .manualPull(
                                     this.erc20Vault.address,
                                     this.uniV3Vault.address,
@@ -953,7 +953,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             currentUsdcChange = currentUsdcChange.mul(-1);
                             currentWethChange = currentWethChange.mul(-1);
                             await this.subject
-                                .connect(this.mStrategyAdmin)
+                                .connect(this.strategyAdmin)
                                 .manualPull(
                                     this.uniV3Vault.address,
                                     this.erc20Vault.address,
@@ -980,7 +980,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         );
                         await pushPriceDown(currentVault);
                         await this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -999,7 +999,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
                     await pushPriceUp(deltaValue);
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .rebalance([BigNumber.from(0), BigNumber.from(0)], []);
                     pricesHistory[i - 1].push(await getSqrtPriceX96());
                 }
@@ -1064,7 +1064,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 );
 
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .manualPull(
                         this.erc20Vault.address,
                         this.yearnVault.address,
@@ -1090,10 +1090,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 };
 
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setOracleParams(oracleParams);
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setRatioParams(ratioParams);
 
                 const getTokens = async () => {
@@ -1125,7 +1125,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         await this.subject.getAverageTick();
                     try {
                         await this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(
                                 [BigNumber.from(0), BigNumber.from(0)],
                                 []
@@ -1231,7 +1231,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 );
 
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .manualPull(
                         this.erc20Vault.address,
                         this.yearnVault.address,
@@ -1257,14 +1257,14 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 };
 
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setOracleParams(oracleParams);
                 await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .setRatioParams(ratioParams);
 
                 const { tokenAmounts, zeroToOne } = await this.subject
-                    .connect(this.mStrategyAdmin)
+                    .connect(this.strategyAdmin)
                     .callStatic.rebalance(
                         [BigNumber.from(0), BigNumber.from(0)],
                         []
@@ -1282,7 +1282,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 // must be processes without any exceptions
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .callStatic.rebalance(
                             minTokensAmount, // minTokensAmount
                             []
@@ -1298,7 +1298,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
                 await expect(
                     this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .callStatic.rebalance(
                             minTokensAmount, // minTokensAmount
                             []

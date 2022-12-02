@@ -192,7 +192,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         moneyVault: yearnVault,
                         uniV3Vault: uniV3Vault,
                         fee: 3000,
-                        admin: this.mStrategyAdmin.address,
+                        admin: this.strategyAdmin.address,
                         uniV3Helper: uniV3Helper,
                         hStrategyHelper: hStrategyHelper,
                     };
@@ -296,7 +296,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         )
                     );
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .functions["multicall"](txs);
 
                     await combineVaults(
@@ -431,7 +431,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     const domainUpperTick =
                         centralTick + (data[0] as number) - (centralTick % 600);
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateStrategyParams({
                             halfOfShortInterval: 60,
                             tickNeighborhood: 10,
@@ -486,7 +486,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         deadline: ethers.constants.MaxUint256,
                     } as RebalanceTokenAmountsStruct;
                     await this.subject
-                        .connect(this.mStrategyAdmin)
+                        .connect(this.strategyAdmin)
                         .updateRatioParams({
                             erc20CapitalRatioD: BigNumber.from(10)
                                 .pow(7)
@@ -683,7 +683,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
 
                         await sleep(this.governanceDelay);
                         await this.subject
-                            .connect(this.mStrategyAdmin)
+                            .connect(this.strategyAdmin)
                             .rebalance(restrictions, []);
                         if (!doFullRebalance) {
                             const tick = (await this.pool.slot0()).tick;
