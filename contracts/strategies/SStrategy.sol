@@ -263,7 +263,10 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _swapToToken(SwapParams memory params, bool isLiquidated) internal returns (uint256 amountIn, uint256 amountOut) {
+    function _swapToToken(SwapParams memory params, bool isLiquidated)
+        internal
+        returns (uint256 amountIn, uint256 amountOut)
+    {
         amountIn = IERC20(params.tokenIn).balanceOf(address(params.spender));
         uint256 sqrtPriceX96 = uint256(_getPriceAfterTickChecked(params.pool, isLiquidated));
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
