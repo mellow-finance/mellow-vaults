@@ -176,14 +176,8 @@ contract<SqueethVaultGovernance, DeployOptions, CustomContext>(
             describe("edge cases", () => {
                 describe("when controller address is 0", () => {
                     it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
-                        console.log("params: ");
-                        console.log(this.protocolParams);
                         await deployments.fixture();
 
-                        console.log("params: ");
-                        console.log(this.protocolParams);
-                        console.log("router: " + this.protocolParams.router);
-                        console.log("router: " + this.protocolParams["router"]);
                         await expect(
                             deployments.deploy("SqueethVaultGovernance", {
                                 from: this.deployer.address,

@@ -265,4 +265,4 @@ async function setUnitPrices(
 
 export default func;
 func.tags = ["Finalize", "core", ...ALL_NETWORKS];
-func.dependencies = ["ProtocolGovernance"];
+func.dependencies = ["ERC20Validator", "ProtocolGovernance"];

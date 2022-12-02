@@ -28,7 +28,8 @@ export const ALLOWED_APPROVE_LIST = {
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
             "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
-            "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // wPowerPerpPool
+            "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // squeethWPowerPerpPool
+            "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640", // squeethWethBorrowPool
         ],
         uniV2: [
             "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // SwapRouter
@@ -51,10 +52,9 @@ export const ALLOWED_APPROVE_LIST = {
     goerli: {
         uniV3: [
             "0xe592427a0aece92de3edee1f18e0157c05861564", // SwapRouter
-            "0x8875e9c9EB0909da889CB3Dc9c5E8856093CE6b0", // wethBorrowPool
-            "0xB583EA07699c5DEa4da084056273d6D70c2C3309", // wPowerPerpPool
-
-                 ],
+            "0xB583EA07699c5DEa4da084056273d6D70c2C3309", // squeethWPowerPerpPool
+            "0x8875e9c9EB0909da889CB3Dc9c5E8856093CE6b0", // squeethWethBorrowPool
+        ],
         erc20: [
             "0x6b03eD2C590A301E79E2DCe4ce38D7402dC6735a", // wPowerPerp
             "0x0719E63EC564259D1ce12dFFD1431269C7d88700", // opynWETH

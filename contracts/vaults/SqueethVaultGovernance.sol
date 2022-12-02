@@ -7,7 +7,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
-import "hardhat/console.sol";
 
 /// @notice Governance that manages all Squeeth Vaults params and can deploy a new Squeeth Vault.
 contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultGovernance {
@@ -32,7 +31,6 @@ contract SqueethVaultGovernance is ContractMeta, ISqueethVaultGovernance, VaultG
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        console.logBytes4(type(ISqueethVaultGovernance).interfaceId);
         return super.supportsInterface(interfaceId) || interfaceId == type(ISqueethVaultGovernance).interfaceId;
     }
 

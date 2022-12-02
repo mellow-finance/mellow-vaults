@@ -26,3 +26,4 @@ func.tags = [
     "arbitrum",
     "optimism",
 ];
+func.dependencies = ["ChainlinkOracle", "UniV3Oracle"];

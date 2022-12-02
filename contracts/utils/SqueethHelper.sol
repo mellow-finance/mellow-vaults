@@ -7,7 +7,6 @@ import "../interfaces/vaults/ISqueethVaultGovernance.sol";
 import "../interfaces/external/squeeth/IController.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/CommonLibrary.sol";
-import "hardhat/console.sol";
 
 contract SqueethHelper {
     uint256 public immutable D18 = 10**18;
@@ -87,9 +86,6 @@ contract SqueethHelper {
         ISqueethVaultGovernance.DelayedProtocolParams memory protocolParams = ISqueethVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
         uint256 wethFromCollateralWeiD9 = FullMath.mulDiv(spotPriceD18, D4 * D9, indexPriceNormalized);
-        console.log("depeg");
-        console.log(wethFromCollateralWeiD9);
-        console.log(protocolParams.maxDepegD9);
         if (wethFromCollateralWeiD9 <= protocolParams.maxDepegD9 + D9) {
             wethFromCollateralWeiD9 = FullMath.mulDiv(
                 wethFromCollateralWeiD9,

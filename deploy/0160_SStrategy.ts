@@ -10,10 +10,6 @@ import {
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
 import { BigNumber } from "ethers";
-import { map } from "ramda";
-import { TickMath } from "@uniswap/v3-sdk";
-import { sqrt } from "@uniswap/sdk-core";
-import JSBI from "jsbi";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -34,7 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const tokens = [wethUsedBySqueethController];
 
     let vaultRegistry = await ethers.getContract("VaultRegistry");
-    const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+    const startNft = (await vaultRegistry.vaultsCount()).toNumber() + 1;
 
     let erc20VaultNft = startNft;
     let squeethVaultNft = startNft + 1;
@@ -47,34 +43,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         createVaultArgs: [deployer],
     });
 
-    const erc20Vault = await read(
-        "VaultRegistry",
-        "vaultForNft",
-        erc20VaultNft
-    );
-    const squeethVault = await read(
-        "VaultRegistry",
-        "vaultForNft",
-        squeethVaultNft
-    );
-    
+    const erc20Vault = await vaultRegistry.vaultForNft(erc20VaultNft);
+    const squeethVault = await vaultRegistry.vaultForNft(squeethVaultNft);
+
     let rootVaultGovernance = await ethers.getContract("ERC20RootVaultGovernanceForCyclic");
 
     await deployments.execute(
         "VaultRegistry",
-        { from: deployer, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
         "approve(address,uint256)",
         rootVaultGovernance.address,
         erc20VaultNft
     );
     await deployments.execute(
         "VaultRegistry",
-        { from: deployer, autoMine: true, gasLimit: BigNumber.from(10).pow(7).mul(2), ...TRANSACTION_GAS_LIMITS },
+        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
         "approve(address,uint256)",
         rootVaultGovernance.address,
         squeethVaultNft
     );
-;
+
     let strategyDeployParams = await deploy("SStrategy", {
         from: deployer,
         contract: "SStrategy",
@@ -86,7 +74,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             deployer],
         log: true,
         autoMine: true,
-        gasLimit: BigNumber.from(10).pow(6).mul(20),
         ...TRANSACTION_GAS_LIMITS
     });
 
@@ -172,4 +159,6 @@ func.dependencies = [
     "ERC20RootVaultGovernanceForCyclic",
     "SqueethVaultGovernance",
     "ERC20VaultGovernance",
+    "AllowAllValidator",
+    "Finalize"
 ];

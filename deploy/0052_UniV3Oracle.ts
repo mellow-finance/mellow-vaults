@@ -6,7 +6,7 @@ import {ALL_NETWORKS, MAIN_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils"
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, execute } = deployments;
-    const { deployer, admin, uniswapV3Factory, usdc, wsteth, weth, wbtc, opynWeth, opynUsdc, squeethWethBorrowPool, squeethController} =
+    const { deployer, admin, uniswapV3Factory, usdc, wsteth, weth, wbtc, squeethWethBorrowPool, squeethController} =
         await getNamedAccounts();
     const factory = await hre.ethers.getContractAt(
         "IUniswapV3Factory",

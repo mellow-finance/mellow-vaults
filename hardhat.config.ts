@@ -59,11 +59,11 @@ const config: HardhatUserConfig = {
                 : undefined,
         },
         goerli: {
-                    url: process.env["GOERLI_RPC"],
-                    accounts: (process.env["GOERLI_DEPLOYER_PK"] && process.env["GOERLI_APPROVER_PK"] && process.env["GOERLI_STRATEGY_ADMIN_PK"])
-                        ? [process.env["GOERLI_DEPLOYER_PK"], process.env["GOERLI_APPROVER_PK"], process.env["GOERLI_STRATEGY_ADMIN_PK"]]
-                        : undefined,
-                },
+            url: process.env["GOERLI_RPC"],
+            accounts: (process.env["GOERLI_DEPLOYER_PK"] && process.env["GOERLI_APPROVER_PK"])
+                ? [process.env["GOERLI_DEPLOYER_PK"], process.env["GOERLI_APPROVER_PK"]]
+                : undefined,
+        },
         avalanche: {
             url:
                 process.env["AVALANCHE_RPC"] ||
@@ -146,6 +146,7 @@ const config: HardhatUserConfig = {
         },
         strategyOperator: {
             hardhat: "0x0000000000000000000000000000000000000000",
+            mainnet: process.env["MAINNET_STRATEGY_OPERATOR_ADDRESS"] || "0x0",
             goerli: process.env["GOERLI_STRATEGY_OPERATOR_ADDRESS"] || "0x0",
         },
         strategyTreasury: {
@@ -323,7 +324,7 @@ const config: HardhatUserConfig = {
         squeethController: {
             default: "0x64187ae08781B09368e6253F9E94951243A493D5",
             goerli: "0x2c60f986260c8412De7fA3384C7f0Bab1a4F72bf",
-            },
+        },
         squeethOracle: {
             default: "0x65D66c76447ccB45dAf1e8044e918fA786A483A1",
             goerli: "0x3A1B8e5D405F4080442C878aA114B17a1D60E14B",

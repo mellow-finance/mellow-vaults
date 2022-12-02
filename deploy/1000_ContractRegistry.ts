@@ -68,6 +68,5 @@ func.dependencies = [
     "UniV3VaultGovernance",
     "ERC20VaultGovernance",
     "ERC20RootVaultGovernance",
-    "ERC20RootVaultGovernanceForCyclic",
     "YearnVaultGovernance"
 ];

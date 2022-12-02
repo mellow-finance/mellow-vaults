@@ -55,4 +55,4 @@ func.tags = [
     "optimism",
     "polygon",
 ];
-func.dependencies = ["ProtocolGovernance", "VaultRegistry"];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry", "MellowOracle"];
