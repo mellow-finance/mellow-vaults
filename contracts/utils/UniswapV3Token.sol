@@ -3,12 +3,15 @@ pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/external/LiquidityAmounts.sol";
+import "../libraries/external/TickMath.sol";
 
 contract UniswapV3Token is IERC20 {
     INonfungiblePositionManager public immutable positionManager;
@@ -30,8 +33,8 @@ contract UniswapV3Token is IERC20 {
         int24 tickUpper_,
         uint24 fee_
     ) {
-        pool = IUniswapV3Pool(IUniswapV3Factory(positionManager_.factory()).getPool(token0_, token1_, fee_));
         require(tickLower_ < tickUpper_, ExceptionsLibrary.LIMIT_OVERFLOW);
+        pool = IUniswapV3Pool(IUniswapV3Factory(positionManager_.factory()).getPool(token0_, token1_, fee_));
         require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require((tickUpper_ - tickLower_) % pool.tickSpacing() == 0, ExceptionsLibrary.INVALID_VALUE);
 
@@ -50,6 +53,19 @@ contract UniswapV3Token is IERC20 {
         uint128 liquidity;
         (, , , , , , , liquidity, , , , ) = positionManager.positions(uniV3Nft);
         return uint256(liquidity);
+    }
+
+    function liquidityToTokenAmounts(uint128 liquidity) public view returns (uint256 amount0, uint256 amount1) {
+        if (liquidity == 0) return (0, 0);
+        uint160 lowerTickRatioX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 upperTickRatioX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+        (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            sqrtRatioX96,
+            lowerTickRatioX96,
+            upperTickRatioX96,
+            liquidity
+        );
     }
 
     /// @inheritdoc IERC20
