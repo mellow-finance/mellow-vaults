@@ -9,11 +9,7 @@ import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/OracleLibrary.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 
-// import "../interfaces/vaults-v2/IVault.sol";
-
-contract HStrategy {
-    // expected functions
-
+contract V2HStrategy {
     // check
     // startAuction
     // finishAuction
@@ -57,18 +53,8 @@ contract HStrategy {
         upperTick = centralTick + halfOfShortInterval;
     }
 
-    function calculateExpectedRatios()
-        public
-        view
-        returns (
-            address[] memory erc20Tokens,
-            uint256[] memory erc20TokensRatios,
-            address[] memory uniV3Tokens,
-            uint256[] memory uniV3TokensRatios
-        )
-    {
+    function calculateExpectedRatios() public view returns (IERC20[] memory tokens, uint256[] memory ratiosX96) {
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = uniswapToken.pool().slot0();
-        // calculate current and expected ratios
         uint128 totalLiquidity = calculateTotalLiquidityByCapital(sqrtPriceX96);
         (int24 lowerTick, int24 upperTick) = calculateNewShortTicks(spotTick);
 
@@ -90,14 +76,41 @@ contract HStrategy {
 
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256 capitalInToken0 = expectedTotalAmounts[0] + FullMath.mulDiv(expectedTotalAmounts[1], Q96, priceX96);
+        uint256 uniCpitalInToken0 = expectedUniV3Amounts[0] + FullMath.mulDiv(expectedUniV3Amounts[1], Q96, priceX96);
 
-        erc20Tokens = new address[](4);
-        for (uint256 i = 0; i < 2; i++) {
-            erc20Tokens[i] = address(depositTokens[i]);
-            erc20Tokens[i + 2] = address(yieldTokens[i]);
-        }
+        tokens = new IERC20[](5);
+        ratiosX96 = new uint256[](5);
 
-        erc20TokensRatios = new uint256[](4);
+        tokens[0] = uniswapToken;
+        ratiosX96[0] = FullMath.mulDiv(uniCpitalInToken0, Q96, capitalInToken0);
+
+        tokens[1] = depositTokens[0];
+        ratiosX96[1] = FullMath.mulDiv(
+            FullMath.mulDiv(expectedTotalAmounts[0] - expectedUniV3Amounts[0], erc20MoneyRatioD, DENOMINATOR),
+            Q96,
+            capitalInToken0
+        );
+
+        tokens[2] = depositTokens[1];
+        ratiosX96[2] = FullMath.mulDiv(
+            FullMath.mulDiv(expectedTotalAmounts[1] - expectedUniV3Amounts[1], erc20MoneyRatioD, DENOMINATOR),
+            Q96,
+            capitalInToken0
+        );
+
+        tokens[3] = yieldTokens[0];
+        ratiosX96[3] = FullMath.mulDiv(
+            FullMath.mulDiv(
+                expectedTotalAmounts[0] - expectedUniV3Amounts[0],
+                DENOMINATOR - erc20MoneyRatioD,
+                DENOMINATOR
+            ),
+            Q96,
+            capitalInToken0
+        );
+
+        tokens[4] = yieldTokens[1];
+        ratiosX96[4] = Q96 - ratiosX96[0] - ratiosX96[1] - ratiosX96[2] - ratiosX96[3];
     }
 
     function calculateTotalLiquidityByCapital(uint160 spotSqrtRatioX96) public view returns (uint128 liquidity) {
