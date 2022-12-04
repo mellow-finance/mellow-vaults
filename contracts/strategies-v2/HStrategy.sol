@@ -12,22 +12,18 @@ contract HStrategy {
     // startAuction
     // finishAuction
     // getCurrentRebalanceRestrictions
-    
+
     IERC20[] public yieldTokens;
     UniswapV3Token[] public uniswapTokens;
-    address immutable public vault;
+    address public immutable vault;
 
-    constructor (address vault_) {
+    constructor(address vault_) {
         vault = vault_;
-    }    
-
-    function calculateCurrentRatios() public view {
-        
     }
 
-    function rebalanceNeeded() public returns (bool isNeeded) {
-        // if current state deviates from expected more then needed -> rebalance positions and something else
-        // 
-    }    
+    function calculateCurrentRatios() public view {}
 
+    function rebalanceNeeded() public returns (bool isNeeded) {
+        
+    }
 }

@@ -13,7 +13,11 @@ contract UniswapV3Token is IERC721Receiver {
     bool public isPrivate;
     address[] public approvedList;
 
-    constructor (INonfungiblePositionManager positionManager_, IUniswapV3Pool pool_, bool isPrivate_) {
+    constructor(
+        INonfungiblePositionManager positionManager_,
+        IUniswapV3Pool pool_,
+        bool isPrivate_
+    ) {
         positionManager = positionManager_;
         pool = pool_;
         isPrivate = isPrivate_;
@@ -45,20 +49,15 @@ contract UniswapV3Token is IERC721Receiver {
             ExceptionsLibrary.INVALID_TOKEN
         );
 
-        require(
-            uniV3Nft == 0,
-            ExceptionsLibrary.INVALID_VALUE
-        );
-        
+        require(uniV3Nft == 0, ExceptionsLibrary.INVALID_VALUE);
+
         uniV3Nft = tokenId;
-        
+
         return this.onERC721Received.selector;
     }
 
-
     function totalSupply() public view returns (uint128 supply) {
         if (uniV3Nft == 0) return 0;
-        (,,,,,,, supply,,,,) = positionManager.positions(uniV3Nft);
+        (, , , , , , , supply, , , , ) = positionManager.positions(uniV3Nft);
     }
-
 }
