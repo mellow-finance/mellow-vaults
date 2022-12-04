@@ -15,8 +15,8 @@ contract V2HStrategy {
     // finishAuction
     // getCurrentRebalanceRestrictions
 
-    uint256 constant Q96 = 2**96;
-    uint256 constant DENOMINATOR = 10**9;
+    uint256 public constant Q96 = 2**96;
+    uint256 public constant DENOMINATOR = 10**9;
 
     uint24 public immutable fee;
     address public immutable token0;
@@ -25,6 +25,7 @@ contract V2HStrategy {
     address public immutable yieldToken0;
     address public immutable yieldToken1;
     UniswapV3Token[] public uniswapTokens;
+    uint256 public immutable positionsCount;
     address public immutable vault;
 
     IUniswapV3Pool public immutable pool;
@@ -35,6 +36,7 @@ contract V2HStrategy {
     int24 public domainUpperTick;
     int24 public halfOfShortInterval;
     uint256 public erc20MoneyRatioD;
+    uint256 public maxDeviationX96;
 
     constructor(
         address vault_,
@@ -64,34 +66,19 @@ contract V2HStrategy {
         fee = fee_;
         positionManager = positionManager_;
         pool = IUniswapV3Pool(IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee));
-        uint256 uniswapPositionsCount = (uint256(int256((domainUpperTick - domainLowerTick) / halfOfShortInterval)) +
-            1) / 2;
+
         // may be we need to make a common factory and create
         // this tokens using this factory
-        uniswapTokens = new UniswapV3Token[](uniswapPositionsCount);
-
-        // INonfungiblePositionManager positionManager_,
-        // address token0_,
-        // address token1_,
-        // int24 tickLower_,
-        // int24 tickUpper_,
-        // uint24 fee_
-        uint256 index = 0;
         for (
             int24 tick = domainLowerTick;
             tick + 2 * halfOfShortInterval <= domainUpperTick;
             tick += halfOfShortInterval
         ) {
-            uniswapTokens[index] = new UniswapV3Token(
-                positionManager,
-                token0,
-                token1,
-                tick,
-                tick + halfOfShortInterval * 2,
-                fee
+            uniswapTokens.push(
+                new UniswapV3Token(positionManager, token0, token1, tick, tick + halfOfShortInterval * 2, fee)
             );
-            ++index;
         }
+        positionsCount = uniswapTokens.length;
     }
 
     function getUniswapTokenIndex(int24 spotTick) public view returns (uint256 uniswapTokenIndex) {
@@ -103,25 +90,22 @@ contract V2HStrategy {
         } else {
             centralTick = upperTick;
         }
-        int24 lowerBorder = domainLowerTick + halfOfShortInterval;
-        if (centralTick < lowerBorder) {
-            centralTick = lowerBorder;
-        }
-        int24 upperBorder = domainUpperTick - halfOfShortInterval;
-        if (centralTick > upperBorder) {
-            centralTick = upperBorder;
-        }
-        lowerTick = centralTick - halfOfShortInterval;
-        upperTick = centralTick + halfOfShortInterval;
-        uniswapTokenIndex = type(uint256).max;
-        for (uint256 i = 0; i < uniswapTokens.length; i++) {
-            if (uniswapTokens[i].tickLower() == lowerTick && uniswapTokens[i].tickUpper() == upperTick) {
-                uniswapTokenIndex = i;
+
+        {
+            int24 lowerBorder = domainLowerTick + halfOfShortInterval;
+            if (centralTick < lowerBorder) {
+                centralTick = lowerBorder;
+            } else {
+                int24 upperBorder = domainUpperTick - halfOfShortInterval;
+                if (centralTick > upperBorder) {
+                    centralTick = upperBorder;
+                }
             }
         }
-        if (uniswapTokenIndex == type(uint256).max) {
-            revert(ExceptionsLibrary.INVALID_STATE);
-        }
+
+        lowerTick = centralTick - halfOfShortInterval;
+        upperTick = centralTick + halfOfShortInterval;
+        uniswapTokenIndex = uint256(int256((lowerTick - domainLowerTick) / halfOfShortInterval));
     }
 
     function calculateExpectedRatios() public view returns (address[] memory tokens, uint256[] memory ratiosX96) {
@@ -146,28 +130,31 @@ contract V2HStrategy {
         uint256 capitalInToken0 = expectedTotalAmounts[0] + FullMath.mulDiv(expectedTotalAmounts[1], Q96, priceX96);
         uint256 uniCpitalInToken0 = expectedUniV3Amounts[0] + FullMath.mulDiv(expectedUniV3Amounts[1], Q96, priceX96);
 
-        tokens = new address[](5);
-        ratiosX96 = new uint256[](5);
+        tokens = new address[](4 + positionsCount);
+        ratiosX96 = new uint256[](4 + positionsCount);
 
-        tokens[0] = address(uniswapToken);
-        ratiosX96[0] = FullMath.mulDiv(uniCpitalInToken0, Q96, capitalInToken0);
+        for (uint256 i = 0; i < positionsCount; i++) {
+            tokens[i] = address(uniswapTokens[i]);
+        }
 
-        tokens[1] = token0;
-        ratiosX96[1] = FullMath.mulDiv(
+        ratiosX96[uniswapTokenIndex] = FullMath.mulDiv(uniCpitalInToken0, Q96, capitalInToken0);
+
+        tokens[positionsCount] = token0;
+        ratiosX96[positionsCount] = FullMath.mulDiv(
             FullMath.mulDiv(expectedTotalAmounts[0] - expectedUniV3Amounts[0], erc20MoneyRatioD, DENOMINATOR),
             Q96,
             capitalInToken0
         );
 
-        tokens[2] = token1;
-        ratiosX96[2] = FullMath.mulDiv(
+        tokens[positionsCount + 1] = token1;
+        ratiosX96[positionsCount + 1] = FullMath.mulDiv(
             FullMath.mulDiv(expectedTotalAmounts[1] - expectedUniV3Amounts[1], erc20MoneyRatioD, DENOMINATOR),
             Q96,
             capitalInToken0
         );
 
-        tokens[3] = yieldToken0;
-        ratiosX96[3] = FullMath.mulDiv(
+        tokens[positionsCount + 2] = yieldToken0;
+        ratiosX96[positionsCount + 2] = FullMath.mulDiv(
             FullMath.mulDiv(
                 expectedTotalAmounts[0] - expectedUniV3Amounts[0],
                 DENOMINATOR - erc20MoneyRatioD,
@@ -177,8 +164,95 @@ contract V2HStrategy {
             capitalInToken0
         );
 
-        tokens[4] = yieldToken1;
-        ratiosX96[4] = Q96 - ratiosX96[0] - ratiosX96[1] - ratiosX96[2] - ratiosX96[3];
+        tokens[positionsCount + 3] = yieldToken1;
+        ratiosX96[positionsCount + 3] = Q96 - ratiosX96[0] - ratiosX96[1] - ratiosX96[2] - ratiosX96[3];
+    }
+
+    function calculateCurrentRatios() public view returns (address[] memory tokens, uint256[] memory ratiosX96) {
+        tokens = new address[](4 + positionsCount);
+        ratiosX96 = new uint256[](4 + positionsCount);
+        uint256 capitalInToken0 = getCapitalInToken0();
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        for (uint256 i = 0; i < positionsCount; i++) {
+            tokens[i] = address(uniswapTokens[i]);
+            uint128 liquidity = uint128(uniswapTokens[i].balanceOf(address(this)));
+            (uint256 amount0, uint256 amount1) = uniswapTokens[i].liquidityToTokenAmounts(liquidity);
+            ratiosX96[i] = FullMath.mulDiv(amount0 + FullMath.mulDiv(amount1, Q96, priceX96), Q96, capitalInToken0);
+        }
+
+        tokens[positionsCount] = token0;
+        ratiosX96[positionsCount] = FullMath.mulDiv(IERC20(token0).balanceOf(address(this)), Q96, capitalInToken0);
+        tokens[positionsCount + 1] = token1;
+        ratiosX96[positionsCount + 1] = FullMath.mulDiv(
+            FullMath.mulDiv(IERC20(token1).balanceOf(address(this)), Q96, priceX96),
+            Q96,
+            capitalInToken0
+        );
+
+        tokens[positionsCount + 2] = yieldToken0;
+        ratiosX96[positionsCount + 2] = FullMath.mulDiv(
+            IERC20(yieldToken0).balanceOf(address(this)), // convert to token0 with converter
+            Q96,
+            capitalInToken0
+        );
+        tokens[positionsCount + 3] = yieldToken1;
+        ratiosX96[positionsCount + 3] = FullMath.mulDiv(
+            FullMath.mulDiv(IERC20(yieldToken1).balanceOf(address(this)), Q96, priceX96), // convert to token1 with converter
+            Q96,
+            capitalInToken0
+        );
+    }
+
+    function startAuction() public {
+        (address[] memory currentTokens, uint256[] memory currentRatios) = calculateCurrentRatios();
+        (, uint256[] memory expectedRatios) = calculateCurrentRatios();
+        for (uint256 i = 0; i < currentTokens.length; i++) {
+            uint256 currentRatioX96 = currentRatios[i];
+            uint256 expectedRatioX96 = expectedRatios[i];
+            if (
+                expectedRatioX96 + maxDeviationX96 < currentRatioX96 ||
+                currentRatioX96 + maxDeviationX96 < expectedRatioX96
+            ) {
+                // vault.startAuction();
+            }
+        }
+    }
+
+    function stopAuction() public {
+        (address[] memory currentTokens, uint256[] memory currentRatios) = calculateCurrentRatios();
+        (, uint256[] memory expectedRatios) = calculateCurrentRatios();
+        for (uint256 i = 0; i < currentTokens.length; i++) {
+            uint256 currentRatioX96 = currentRatios[i];
+            uint256 expectedRatioX96 = expectedRatios[i];
+            if (
+                expectedRatioX96 + maxDeviationX96 < currentRatioX96 ||
+                currentRatioX96 + maxDeviationX96 < expectedRatioX96
+            ) {
+                revert(ExceptionsLibrary.INVALID_STATE);
+            }
+        }
+        // vault.stopAuction();
+    }
+
+    function getCapitalInToken0() public view returns (uint256 capitalInToken0) {
+        uint256 totalAmount0 = IERC20(token0).balanceOf(address(this));
+        uint256 totalAmount1 = IERC20(token1).balanceOf(address(this));
+        for (uint256 i = 0; i < positionsCount; i++) {
+            uint128 liquidity = uint128(uniswapTokens[i].balanceOf(address(this)));
+            (uint256 amount0, uint256 amount1) = uniswapTokens[i].liquidityToTokenAmounts(liquidity);
+            totalAmount0 += amount0;
+            totalAmount1 += amount1;
+        }
+
+        // TODO: add converter
+        // totalAmount0 += converter.convert(yieldToken0, token0, IERC20(yieldToken0).balanceOf(address(this)));
+        // totalAmount1 += converter.convert(yieldToken1, token1, IERC20(yieldToken1).balanceOf(address(this)));
+
+        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
+
+        capitalInToken0 = totalAmount0 + FullMath.mulDiv(totalAmount1, Q96, priceX96);
     }
 
     function calculateTotalLiquidityByCapital(uint160 spotSqrtRatioX96) public view returns (uint128 liquidity) {
@@ -186,7 +260,7 @@ contract V2HStrategy {
         uint160 upperRatioX96 = TickMath.getSqrtRatioAtTick(domainUpperTick);
         uint256 priceX96 = FullMath.mulDiv(spotSqrtRatioX96, spotSqrtRatioX96, Q96);
         // mb we need to call here vault `tvl` function
-        uint256 capital = calculateStrategyCapital(priceX96);
+        uint256 capital = getCapitalInToken0();
 
         (uint256 amount0, uint256 amount1) = uniV3Helper.getPositionTokenAmountsByCapitalOfToken0(
             lowerRatioX96,
@@ -202,22 +276,5 @@ contract V2HStrategy {
             amount0,
             amount1
         );
-    }
-
-    function calculateStrategyCapital(uint256 priceX96) public view returns (uint256 capital) {
-        uint256 totalAmount0 = IERC20(token0).balanceOf(address(this));
-        uint256 totalAmount1 = IERC20(token1).balanceOf(address(this));
-        for (uint256 i = 0; i < uniswapTokens.length; i++) {
-            UniswapV3Token token = uniswapTokens[i];
-            uint256 liquidity = token.balanceOf(address(this));
-            (uint256 amount0, uint256 amount1) = token.liquidityToTokenAmounts(uint128(liquidity));
-            totalAmount0 += amount0;
-            totalAmount1 += amount1;
-        }
-
-        // convert yield tokens to deposit tokens. Probably we could use a global converter of tokens for yield tokens like aave or yearn
-        // totalAmount0 += converter.convert(from: yieldToken0, to: token0, amount: yieldToken0.balanceOf(address(this)))
-        // totalAmount1 += converter.convert(yieldToken1, token1, yieldToken1.balanceOf(address(this)))
-        capital = totalAmount0 + FullMath.mulDiv(totalAmount1, Q96, priceX96);
     }
 }
