@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "IUniswapV3Factory",
         uniswapV3Factory
     );
-    const pools = [];
+    let pools = [];
     for (const tokens of [
         [usdc, weth],
         [wbtc, weth],
@@ -30,6 +30,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let controller = await hre.ethers.getContractAt("IController", squeethController);
     pools.push(await controller.wPowerPerpPool());
     pools.push(squeethWethBorrowPool);
+
+    pools = pools.filter((el) => {return el != hre.ethers.constants.AddressZero});
 
     await deploy("UniV3Oracle", {
         from: deployer,

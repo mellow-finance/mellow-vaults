@@ -17,17 +17,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const {
         approver,
         deployer,
-        weth,
         strategyTreasury,
         strategyAdmin,
         uniswapV3Router,
-        opynWeth,
+        squeethController,
         strategyOperator
     } = await getNamedAccounts();
     
-    let wethUsedBySqueethController = opynWeth == undefined ? weth : opynWeth;
-
-    const tokens = [wethUsedBySqueethController];
+    let controllerWeth = await (await hre.ethers.getContractAt("IController", squeethController)).weth();
+    const tokens = [controllerWeth];
 
     let vaultRegistry = await ethers.getContract("VaultRegistry");
     const startNft = (await vaultRegistry.vaultsCount()).toNumber() + 1;
@@ -67,7 +65,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         contract: "SStrategy",
         args: [
-            wethUsedBySqueethController,
+            controllerWeth,
             erc20Vault,
             squeethVault,
             uniswapV3Router,
@@ -96,7 +94,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }, 
         "CyclicRootVault"
     );
-
+    
     const rootVaultAddress = await read(
         "VaultRegistry",
         "vaultForNft",
@@ -104,7 +102,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     let rootVault = await ethers.getContractAt("CyclicRootVault", rootVaultAddress);
 
-    await rootVault.setCycleDuration(BigNumber.from(60).mul(10))
+    await (await rootVault.setCycleDuration(BigNumber.from(60).mul(10))).wait();
     
     const ADMIN_ROLE =
     "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
@@ -113,33 +111,33 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OPERATOR_ROLE =
         "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
     
-    await sStrategy.grantRole(ADMIN_ROLE, strategyAdmin);
-    await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, strategyAdmin);
-    await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
-    await sStrategy.grantRole(OPERATOR_ROLE, strategyOperator);
+    await (await sStrategy.grantRole(ADMIN_ROLE, strategyAdmin)).wait();
+    await (await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, strategyAdmin)).wait();
+    await (await sStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer)).wait();
+    await (await sStrategy.grantRole(OPERATOR_ROLE, strategyOperator)).wait();
     
-    await sStrategy.setRootVault(
+    await (await sStrategy.setRootVault(
         rootVault.address
-    );
+    )).wait();
 
-    await sStrategy.updateStrategyParams({
+    await (await sStrategy.updateStrategyParams({
         lowerHedgingThresholdD9: BigNumber.from(10).pow(8).mul(5),
         upperHedgingThresholdD9: BigNumber.from(10).pow(9).mul(2),
-    });
+    })).wait();
 
-    await sStrategy.updateLiquidationParams({
+    await (await sStrategy.updateLiquidationParams({
         lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(98), 
         upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(102),
-    });
+    })).wait();
 
-    await sStrategy.updateOracleParams({
+    await (await sStrategy.updateOracleParams({
         maxTickDeviation: BigNumber.from(100),
         slippageD9: BigNumber.from(10).pow(7),
         oracleObservationDelta: BigNumber.from(15 * 60),
-    });
+    })).wait();
     
-    await sStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
-    await sStrategy.revokeRole(ADMIN_ROLE, deployer);
+    await (await sStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer)).wait();
+    await (await sStrategy.revokeRole(ADMIN_ROLE, deployer)).wait();
 
     await deployments.execute(
         "VaultRegistry",
@@ -156,10 +154,10 @@ func.tags = ["SStrategy", ...MAIN_NETWORKS];
 func.dependencies = [
     "ProtocolGovernance",
     "VaultRegistry",
+    "AllowAllValidator",
     "MellowOracle",
+    "ERC20VaultGovernance",
     "ERC20RootVaultGovernanceForCyclic",
     "SqueethVaultGovernance",
-    "ERC20VaultGovernance",
-    "AllowAllValidator",
     "Finalize"
 ];

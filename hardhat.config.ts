@@ -133,6 +133,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
+            goerli: process.env["GOERLI_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
         },
         strategyAdmin: {
             hardhat: "0x1aD91ee08f21bE3dE0BA2ba6918E714dA6B45836",

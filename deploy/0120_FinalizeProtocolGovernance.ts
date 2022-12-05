@@ -135,7 +135,7 @@ async function registerTokens(
         "ProtocolGovernance"
     );
     const erc20Validator = await deployments.get("ERC20Validator");
-    const { weth, wbtc, usdc, dai, wsteth, opynWeth, squeethWPowerPerp } = await hre.getNamedAccounts();
+    const { weth, wbtc, usdc, dai, wsteth, squeethController, squeethWPowerPerp } = await hre.getNamedAccounts();
     const tokens = [weth, wbtc, usdc, dai, wsteth, squeethWPowerPerp].map((t) => t.toLowerCase()).sort();
     for (const token of tokens) {
         if (!token) {
@@ -156,10 +156,10 @@ async function registerTokens(
         );
         txDatas.push(tx.data);
     }
-    let wethUsedBySStrategy = opynWeth == undefined ? weth : opynWeth;
+    let controllerWeth = await (await hre.ethers.getContractAt("IController", squeethController)).weth();
     const allowAllValidator = await deployments.get("AllowAllValidator");
     let tx = await protocolGovernance.populateTransaction.stageValidator(
-        wethUsedBySStrategy,
+        controllerWeth,
         allowAllValidator.address
     );
     txDatas.push(tx.data);

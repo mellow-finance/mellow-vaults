@@ -12,12 +12,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, weth, opynWeth, squeethWethBorrowPool } = await getNamedAccounts();
+    const { deployer, squeethController, uniswapV3Router, uniswapV3Factory, squeethWethBorrowPool } = await getNamedAccounts();
     
-    let wethUsedBySqueethController = opynWeth == undefined ? weth : opynWeth;
+    let controllerWeth = await (await hre.ethers.getContractAt("IController", squeethController)).weth();
     const { address: singleton } = await deploy("SqueethVault", {
         from: deployer,
-        args: [uniswapV3Factory, wethUsedBySqueethController],
+        args: [uniswapV3Factory, controllerWeth],
         log: true,
         autoMine: true,
         gasLimit: BigNumber.from(10).pow(6).mul(6),
