@@ -21,7 +21,6 @@ import {
 } from "../deploy/0000_utils";
 import { Contract } from "@ethersproject/contracts";
 import { TickMath } from "@uniswap/v3-sdk";
-import { IUniswapV3Pool } from "./types/IUniswapV3Pool";
 
 import {
     ImmutableParamsStruct,
@@ -41,7 +40,6 @@ type CustomContext = {
     deployerUsdcAmount: BigNumber;
     swapRouter: SwapRouterInterface;
     params: any;
-    firstPool: IUniswapV3Pool;
     rebalancer: SinglePositionRebalancer;
 };
 
@@ -62,9 +60,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         .map((t) => t.toLowerCase())
                         .sort();
 
-                    /*
-                     * Configure & deploy subvaults
-                     */
                     const startNft =
                         (
                             await read("VaultRegistry", "vaultsCount")
@@ -106,6 +101,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                                 500,
                                 this.uniV3Helper.address,
                             ],
+                            delayedProtocolPerVaultParams: [2],
                         }
                     );
 
@@ -218,10 +214,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         this.swapRouter.address,
                         ethers.constants.MaxUint256
                     );
-
-                    /*
-                     * Configure oracles for the HStrategy
-                     */
 
                     await combineVaults(
                         hre,
@@ -450,13 +442,13 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     );
                     expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
                         expectedUniV3RatioD.toNumber(),
-                        1000000
+                        5000000
                     );
 
                     if (Math.random() > 0.5) {
-                        await push(BigNumber.from(10).pow(9), "USDC");
+                        await push(BigNumber.from(10).pow(12), "USDC");
                     } else {
-                        await push(BigNumber.from(10).pow(18), "WETH");
+                        await push(BigNumber.from(10).pow(21), "WETH");
                     }
                 }
             });
