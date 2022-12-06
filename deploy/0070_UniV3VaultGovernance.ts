@@ -23,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await deploy("UniV3Helper", {
         from: deployer,
         contract: "UniV3Helper",
-        args: [],
+        args: [uniswapV3PositionManager],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,

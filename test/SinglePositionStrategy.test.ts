@@ -82,10 +82,12 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         }
                     );
 
+                    const { uniswapV3PositionManager, uniswapV3Router } =
+                        await getNamedAccounts();
                     await deploy("UniV3Helper", {
                         from: this.deployer.address,
                         contract: "UniV3Helper",
-                        args: [],
+                        args: [uniswapV3PositionManager],
                         log: true,
                         autoMine: true,
                         ...TRANSACTION_GAS_LIMITS,
@@ -129,8 +131,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         uniV3Vault500
                     );
 
-                    const { uniswapV3PositionManager, uniswapV3Router } =
-                        await getNamedAccounts();
                     this.positionManager = await ethers.getContractAt(
                         INonfungiblePositionManager,
                         uniswapV3PositionManager
@@ -446,7 +446,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
 
                     expect(currentERC20RatioD.toNumber()).to.be.closeTo(
                         expectedERC20RatioD.toNumber(),
-                        1000000
+                        5000000
                     );
                     expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
                         expectedUniV3RatioD.toNumber(),
