@@ -118,21 +118,23 @@ library PositionValue {
             feeParams.tickUpper
         );
 
-        amount0 =
-            FullMath.mulDiv(
-                poolFeeGrowthInside0LastX128 - feeParams.positionFeeGrowthInside0LastX128,
-                feeParams.liquidity,
-                CommonLibrary.Q128
-            ) +
-            feeParams.tokensOwed0;
+        unchecked {
+            amount0 =
+                FullMath.mulDiv(
+                    poolFeeGrowthInside0LastX128 - feeParams.positionFeeGrowthInside0LastX128,
+                    feeParams.liquidity,
+                    CommonLibrary.Q128
+                ) +
+                feeParams.tokensOwed0;
 
-        amount1 =
-            FullMath.mulDiv(
-                poolFeeGrowthInside1LastX128 - feeParams.positionFeeGrowthInside1LastX128,
-                feeParams.liquidity,
-                CommonLibrary.Q128
-            ) +
-            feeParams.tokensOwed1;
+            amount1 =
+                FullMath.mulDiv(
+                    poolFeeGrowthInside1LastX128 - feeParams.positionFeeGrowthInside1LastX128,
+                    feeParams.liquidity,
+                    CommonLibrary.Q128
+                ) +
+                feeParams.tokensOwed1;
+        }
     }
 
     function _getFeeGrowthInside(
@@ -144,17 +146,19 @@ library PositionValue {
         (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
         (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
 
-        if (tickCurrent < tickLower) {
-            feeGrowthInside0X128 = lowerFeeGrowthOutside0X128 - upperFeeGrowthOutside0X128;
-            feeGrowthInside1X128 = lowerFeeGrowthOutside1X128 - upperFeeGrowthOutside1X128;
-        } else if (tickCurrent < tickUpper) {
-            uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
-            uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
-            feeGrowthInside0X128 = feeGrowthGlobal0X128 - lowerFeeGrowthOutside0X128 - upperFeeGrowthOutside0X128;
-            feeGrowthInside1X128 = feeGrowthGlobal1X128 - lowerFeeGrowthOutside1X128 - upperFeeGrowthOutside1X128;
-        } else {
-            feeGrowthInside0X128 = upperFeeGrowthOutside0X128 - lowerFeeGrowthOutside0X128;
-            feeGrowthInside1X128 = upperFeeGrowthOutside1X128 - lowerFeeGrowthOutside1X128;
+        unchecked {
+            if (tickCurrent < tickLower) {
+                feeGrowthInside0X128 = lowerFeeGrowthOutside0X128 - upperFeeGrowthOutside0X128;
+                feeGrowthInside1X128 = lowerFeeGrowthOutside1X128 - upperFeeGrowthOutside1X128;
+            } else if (tickCurrent < tickUpper) {
+                uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
+                uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
+                feeGrowthInside0X128 = feeGrowthGlobal0X128 - lowerFeeGrowthOutside0X128 - upperFeeGrowthOutside0X128;
+                feeGrowthInside1X128 = feeGrowthGlobal1X128 - lowerFeeGrowthOutside1X128 - upperFeeGrowthOutside1X128;
+            } else {
+                feeGrowthInside0X128 = upperFeeGrowthOutside0X128 - lowerFeeGrowthOutside0X128;
+                feeGrowthInside1X128 = upperFeeGrowthOutside1X128 - lowerFeeGrowthOutside1X128;
+            }
         }
     }
 }
