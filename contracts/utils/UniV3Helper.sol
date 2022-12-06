@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "../interfaces/external/univ3/IUniswapV3Pool.sol";
-import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/CommonLibrary.sol";
-import "../libraries/external/TickMath.sol";
-import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/OracleLibrary.sol";
+import "../libraries/external/PositionValue.sol";
 
 contract UniV3Helper {
+    INonfungiblePositionManager public immutable positionManager;
+
+    constructor(INonfungiblePositionManager positionManager_) {
+        require(address(positionManager_) != address(0));
+        positionManager = positionManager_;
+    }
+
     function liquidityToTokenAmounts(
         uint128 liquidity,
         IUniswapV3Pool pool,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager
+        uint256 uniV3Nft
     ) external view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
@@ -32,8 +35,7 @@ contract UniV3Helper {
     function tokenAmountsToLiquidity(
         uint256[] memory tokenAmounts,
         IUniswapV3Pool pool,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager
+        uint256 uniV3Nft
     ) external view returns (uint128 liquidity) {
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
@@ -49,108 +51,56 @@ contract UniV3Helper {
         );
     }
 
-    function _getFeeGrowthInside(
-        IUniswapV3Pool pool,
+    function tokenAmountsToMaximalLiquidity(
+        uint160 sqrtRatioX96,
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        uint256 feeGrowthGlobal0X128,
-        uint256 feeGrowthGlobal1X128
-    ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
-        unchecked {
-            (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(
-                tickLower
-            );
-            (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(
-                tickUpper
-            );
+        uint256 amount0,
+        uint256 amount1
+    ) external pure returns (uint128 liquidity) {
+        uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
 
-            // calculate fee growth below
-            uint256 feeGrowthBelow0X128;
-            uint256 feeGrowthBelow1X128;
-            if (tickCurrent >= tickLower) {
-                feeGrowthBelow0X128 = lowerFeeGrowthOutside0X128;
-                feeGrowthBelow1X128 = lowerFeeGrowthOutside1X128;
-            } else {
-                feeGrowthBelow0X128 = feeGrowthGlobal0X128 - lowerFeeGrowthOutside0X128;
-                feeGrowthBelow1X128 = feeGrowthGlobal1X128 - lowerFeeGrowthOutside1X128;
-            }
+        if (sqrtRatioX96 <= sqrtRatioAX96) {
+            liquidity = LiquidityAmounts.getLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
+        } else if (sqrtRatioX96 < sqrtRatioBX96) {
+            uint128 liquidity0 = LiquidityAmounts.getLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0);
+            uint128 liquidity1 = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1);
 
-            // calculate fee growth above
-            uint256 feeGrowthAbove0X128;
-            uint256 feeGrowthAbove1X128;
-            if (tickCurrent < tickUpper) {
-                feeGrowthAbove0X128 = upperFeeGrowthOutside0X128;
-                feeGrowthAbove1X128 = upperFeeGrowthOutside1X128;
-            } else {
-                feeGrowthAbove0X128 = feeGrowthGlobal0X128 - upperFeeGrowthOutside0X128;
-                feeGrowthAbove1X128 = feeGrowthGlobal1X128 - upperFeeGrowthOutside1X128;
-            }
-
-            feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
-            feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+            liquidity = liquidity0 > liquidity1 ? liquidity0 : liquidity1;
+        } else {
+            liquidity = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
         }
     }
 
-    function calculatePositionInfo(
-        INonfungiblePositionManager positionManager,
+    function tokenAmountsByMinMaxPrice(
+        uint256 uniV3Nft,
         IUniswapV3Pool pool,
-        uint256 uniV3Nft
+        uint256 minPriceX96,
+        uint256 maxPriceX96
     )
         external
         view
         returns (
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
+            uint256 amountMin0,
+            uint256 amountMin1,
+            uint256 amountMax0,
+            uint256 amountMax1
         )
     {
-        uint256 feeGrowthInside0LastX128;
-        uint256 feeGrowthInside1LastX128;
-        (
-            ,
-            ,
-            ,
-            ,
-            ,
-            tickLower,
-            tickUpper,
-            liquidity,
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128,
-            tokensOwed0,
-            tokensOwed1
-        ) = positionManager.positions(uniV3Nft);
+        (uint256 fee0, uint256 fee1) = PositionValue.fees(positionManager, uniV3Nft, pool);
+        uint160 minSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(minPriceX96));
+        uint160 maxSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(maxPriceX96));
+        (amountMin0, amountMin1) = PositionValue.principal(positionManager, uniV3Nft, minSqrtPriceX96);
+        (amountMax0, amountMax1) = PositionValue.principal(positionManager, uniV3Nft, maxSqrtPriceX96);
 
-        if (liquidity == 0) {
-            return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
-        }
+        if (amountMin0 > amountMax0) (amountMin0, amountMax0) = (amountMax0, amountMin0);
+        if (amountMin1 > amountMax1) (amountMin1, amountMax1) = (amountMax1, amountMin1);
 
-        uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
-        uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
-        (, int24 tick, , , , , ) = pool.slot0();
-
-        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = _getFeeGrowthInside(
-            pool,
-            tickLower,
-            tickUpper,
-            tick,
-            feeGrowthGlobal0X128,
-            feeGrowthGlobal1X128
-        );
-
-        uint256 feeGrowthInside0DeltaX128;
-        uint256 feeGrowthInside1DeltaX128;
-        unchecked {
-            feeGrowthInside0DeltaX128 = feeGrowthInside0X128 - feeGrowthInside0LastX128;
-            feeGrowthInside1DeltaX128 = feeGrowthInside1X128 - feeGrowthInside1LastX128;
-        }
-
-        tokensOwed0 += uint128(FullMath.mulDiv(feeGrowthInside0DeltaX128, liquidity, CommonLibrary.Q128));
-
-        tokensOwed1 += uint128(FullMath.mulDiv(feeGrowthInside1DeltaX128, liquidity, CommonLibrary.Q128));
+        amountMin0 += fee0;
+        amountMin1 += fee1;
+        amountMax0 += fee0;
+        amountMax1 += fee1;
     }
 
     function getTickDeviationForTimeSpan(
