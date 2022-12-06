@@ -13,12 +13,12 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     uint256 public constant DENOMINATOR = 1000_000_000;
     uint256 public constant MAX_MINTING_PARAMS = 1000_000_000;
 
-    /// @param tokens sorted array of length two with addresses of tokens of the strategy
-    /// @param erc20Vault erc20Vault of the root vault system
+    /// @param token0 first token of the strategy
+    /// @param token1 second token of the strategy
     /// @param router uniV3 router for swapping tokens
+    /// @param erc20Vault erc20Vault of the root vault system
+    /// @param uniV3Vault uniV3Vault of the root vault system
     /// @param rebalancer address of helper needed to process rebalance
-    /// @param uniV3Vaults array of uniV3Vault of the root vault system sorted by fees of pools
-    /// @param tickSpacing LCM of all tick spacings over all uniV3Vaults pools
     struct ImmutableParams {
         address token0;
         address token1;
@@ -29,11 +29,13 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     /// @param maxTickDeviation upper bound for an absolute deviation between the spot price and the price for a given number of seconds ago
+    /// @param tickSpacing spacing for positions to be minted. Must be dividable by tickSpacing of pool of uniV3Vault
+    /// @param swapFee fee of pool on which will be swap
     /// @param averageTickTimespan delta in seconds, passed to the oracle to get the average tick over the last averageTickTimespan seconds
     /// @param amount0ForMint amount of token0 is tried to be deposited on the new position
     /// @param amount1ForMint amount of token1 is tried to be deposited on the new position
     /// @param erc20CapitalRatioD ratio of tokens kept in the erc20 vault instead of univ3
-    /// @param swapPool uniswapV3 Pool needed to process swaps and for calculations of average tick
+    /// @param swapSlippageD slippage parameter, that needed to check resulting amount of swapped tokens
     struct MutableParams {
         int24 maxTickDeviation;
         int24 tickSpacing;
@@ -51,7 +53,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     // Mutable params
     MutableParams public mutableParams;
 
-    /// @notice current positions in uniV3Vaults
+    /// @notice current position in uniV3Vault
     SinglePositionRebalancer.Interval public interval;
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -124,6 +126,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
 
+    /// @notice returns needed for rebalance data
+    /// @param immutableParams_ immutable parameters of the strategy
     function getData(ImmutableParams memory immutableParams_)
         public
         view
@@ -175,15 +179,33 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
     /// @notice the function checks that mutableParams_ pass the necessary checks
     /// @param mutableParams_ params to be checked
-    function checkMutableParams(MutableParams memory mutableParams_) public pure {
+    function checkMutableParams(MutableParams memory mutableParams_) public view {
+        ImmutableParams memory immutableParams_ = immutableParams;
+        IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
+
         require(mutableParams_.maxTickDeviation > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(
+            mutableParams_.tickSpacing > 0 && mutableParams_.tickSpacing % pool.tickSpacing() == 0,
+            ExceptionsLibrary.INVALID_VALUE
+        );
+        require(
+            mutableParams_.swapFee == 100 ||
+                mutableParams_.swapFee == 500 ||
+                mutableParams_.swapFee == 3000 ||
+                mutableParams_.swapFee == 10000,
+            ExceptionsLibrary.INVALID_VALUE
+        );
+
         require(mutableParams_.averageTickTimespan > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(mutableParams_.erc20CapitalRatioD <= DENOMINATOR, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(mutableParams_.averageTickTimespan < 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
 
         require(mutableParams_.amount0ForMint > 0, ExceptionsLibrary.VALUE_ZERO);
         require(mutableParams_.amount0ForMint <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(mutableParams_.amount1ForMint > 0, ExceptionsLibrary.VALUE_ZERO);
         require(mutableParams_.amount1ForMint <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
+
+        require(mutableParams_.erc20CapitalRatioD <= DENOMINATOR, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(mutableParams_.swapSlippageD <= DENOMINATOR, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

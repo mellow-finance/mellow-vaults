@@ -22,18 +22,19 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
 
     INonfungiblePositionManager public immutable positionManager;
 
-    /// @param domainLowerTick lower tick of the domain uniV3 position
-    /// @param domainUpperTick upper tick of the domain uniV3 position
+    /// @param lowerTick lower tick of the uniV3 position
+    /// @param upperTick upper tick of the uniV3 position
     /// @param maxTickDeviation upper bound for an absolute deviation between the spot price and the price for a given number of seconds ago
+    /// @param tickSpacing spacing for positions to be minted. Must be dividable by tickSpacing of pool of uniV3Vault
+    /// @param swapFee fee of pool on which will be swap
     /// @param averageTickTimespan delta in seconds, passed to the oracle to get the average tick over the last averageTickTimespan seconds
     /// @param erc20Vault erc20Vault of the root vault system
     /// @param uniV3Vault uniV3Vault of the root vault system
-    // / @param s uniswapV3 Pool needed to process swaps and for calculations of average tick
     /// @param router uniV3 router for swapping tokens
     /// @param amount0ForMint amount of token0 is tried to be deposited on the new position
     /// @param amount1ForMint amount of token1 is tried to be deposited on the new position
     /// @param erc20CapitalRatioD ratio of tokens kept in the money vault instead of erc20. The ratio is maintained for each token
-    /// @param uniV3Weights array of weights for each uniV3Vault of uniV3Vault array, that shows the relative part of liquidity to be added in each uniV3Vault
+    /// @param swapSlippageD slippage parameter, that needed to check resulting amount of swapped tokens
     /// @param tokens sorted array of length two with addresses of tokens of the strategy
     struct StrategyData {
         int24 lowerTick;
@@ -52,19 +53,16 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
         address[] tokens;
     }
 
-    /// @param money spot tvl of moneyVault
     /// @param uniV3 spot tvls of uniV3Vaults
     /// @param erc20 tvl of erc20Vault
     /// @param total total spot tvl of rootVault system
-    /// @param totalUniV3 cumulative spot tvl over all uniV3Vault
     struct Tvls {
         uint256[] uniV3;
         uint256[] erc20;
         uint256[] total;
     }
 
-    /// @param newLowerTick expected lower tick of minted positions in UniV3Vault
-    /// @param newUpperTick expected upper tick of minted positions in UniV3Vault
+    /// @param newInterval expectede interval of position on uniV3Vault after rebalance
     /// @param swappedAmounts the expected amount of tokens swapped through the uniswap router
     /// @param drainedAmounts expected number of tokens transferred from uniV3Vault before burning positions
     /// @param pulledToUniV3 expected amount to be transferred to uniV3Vault
@@ -79,6 +77,8 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
         uint256 deadline;
     }
 
+    /// @param lowerTick lower tick of a position
+    /// @param upperTick upper tick of a position
     struct Interval {
         int24 lowerTick;
         int24 upperTick;
@@ -109,6 +109,7 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
     }
 
     /// @param data structure with all immutable, mutable and internal params of the strategy
+    /// @param tvls structure with tvl of rootVault, uniV3Vault and erc20Vault of rootVault systems
     function getTvls(StrategyData memory data) public returns (Tvls memory tvls) {
         (tvls.erc20, ) = IVault(data.erc20Vault).tvl();
 
@@ -128,6 +129,7 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
 
     /// @param data structure with all immutable, mutable and internal params of the strategy
     /// @param restrictions rebalance restrictions
+    /// @return actualAmounts actual transferred amounts and minted position
     function processRebalance(StrategyData memory data, Restrictions memory restrictions)
         external
         returns (Restrictions memory actualAmounts)
@@ -183,8 +185,13 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
 
     // --------------------  EXTERNAL, VIEW  ----------------------
 
+    /// @param data structure with all immutable, mutable and internal params of the strategy
+    /// @param priceX96 price X96 for spot tick of the pool of the uniV3Vault
+    /// @param sqrtSpotPriceX96 srqt of price X96 for spot tick of the pool of the uniV3Vault
     /// @param totalToken0 current actual amount of token 0 in the root vault system
     /// @param totalToken1 current actual amount of token 1 in the root vault system
+    /// @return uniV3Expected expected amounts of tokens on uniV3Vault after rebalance
+    /// @return expectedAmountOfToken0 expected amounts of token0 in rootVault system after rebalance
     function calculateExpectedAmounts(
         StrategyData memory data,
         uint256 priceX96,
@@ -220,15 +227,13 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
     }
 
     /// @param tick current spot tick of swapPool
+    /// @param tickSpacing tickSpacing for restricting borders of this interval
+    /// @param newInterval new interval that will be minted in the pool of uniV3Vault
     function checkNewInterval(
         int24 tickSpacing,
         int24 tick,
         Interval memory newInterval
     ) public pure {
-        // может быть мы здесь хотим сами передавать определённый тик?
-        // чтобы быть уверенным, что позиция отребалансирует более хорошо?..
-        // как можно это определить?
-
         require(newInterval.lowerTick % tickSpacing == 0, ExceptionsLibrary.INVALID_VALUE);
         require(newInterval.upperTick % tickSpacing == 0, ExceptionsLibrary.INVALID_VALUE);
         require(newInterval.lowerTick < newInterval.upperTick, ExceptionsLibrary.INVALID_VALUE);
@@ -241,6 +246,9 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
 
     /// @param data structure with all immutable, mutable and internal params of the strategy
     /// @param restrictions rebalance restrictions
+    /// @param newPositionMinted flag that is true only if new position minted
+    /// @param newInterval new minted interval
+    /// @param drainedAmounts drained amounts of tokens before buring old position
     function _positionsRebalance(StrategyData memory data, Restrictions memory restrictions)
         private
         returns (
@@ -306,6 +314,7 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
     /// @param restrictions rebalance restrictions
     /// @param currentAmountOfToken0 current actual amount of token0 in the root vault sytem
     /// @param expectedAmountOfToken0 expected amount of token0 in the root vault system after rebalance
+    /// @return swappedAmounts actual swapped amounts of tokens
     function _swapRebalance(
         StrategyData memory data,
         uint256 priceX96,
@@ -370,6 +379,11 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
         emit TokensSwapped(swapParams, amountOut);
     }
 
+    /// @param data structure with all immutable, mutable and internal params of the strategy
+    /// @param restrictions rebalance restrictions
+    /// @param expected expected tvl of uniV3Vault after rebalance
+    /// @param tvl current tvl of uniV3Vault
+    /// @return pulledFromUniV3 pulled extra amounts of tokens from uniV3Vault to erc20Vault
     function _pullExtraTokens(
         StrategyData memory data,
         Restrictions memory restrictions,
@@ -387,6 +401,11 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
         _compareAmounts(pulledFromUniV3, restrictions.pulledFromUniV3);
     }
 
+    /// @param data structure with all immutable, mutable and internal params of the strategy
+    /// @param restrictions rebalance restrictions
+    /// @param expected expected tvl of uniV3Vault after rebalance
+    /// @param tvl current tvl of uniV3Vault
+    /// @return pulledToUniV3 pulled missing amounts of tokens from erc20Vault to uniV3Vault
     function _pullMissingTokens(
         StrategyData memory data,
         Restrictions memory restrictions,
