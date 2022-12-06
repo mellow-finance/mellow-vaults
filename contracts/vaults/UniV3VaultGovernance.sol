@@ -55,10 +55,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     /// @inheritdoc IUniV3VaultGovernance
     function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
         if (_delayedProtocolPerVaultParams[nft].length == 0) {
-            return
-                DelayedProtocolPerVaultParams({
-                    safetyIndexiesSet: 0
-                });
+            return DelayedProtocolPerVaultParams({safetyIndexiesSet: 0});
         }
         return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
     }

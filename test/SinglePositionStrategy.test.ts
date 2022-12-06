@@ -1,11 +1,10 @@
 import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, sleep } from "./library/Helpers";
+import { mint } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
-    YearnVault,
     ERC20Vault,
     ProtocolGovernance,
     UniV3Vault,
@@ -26,9 +25,11 @@ import { IUniswapV3Pool } from "./types/IUniswapV3Pool";
 
 import {
     ImmutableParamsStruct,
+    IntervalStruct,
     MutableParamsStruct,
     RestrictionsStruct,
 } from "./types/SinglePositionStrategy";
+import { expect } from "chai";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -168,42 +169,30 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         "SinglePositionStrategy",
                         baseStrategyAddress
                     );
-                    this.weights = [1, 1, 1];
-                    this.firstPool = await ethers.getContractAt(
-                        "IUniswapV3Pool",
-                        await this.uniV3Vault500.pool()
-                    );
 
-                    this.uniV3Vaults = Array.from([
-                        this.uniV3Vault500.address,
-                        this.uniV3Vault3000.address,
-                        this.uniV3Vault10000.address,
-                    ]);
-
+                    this.tickSpacing = 60;
                     const mutableParams = {
-                        // halfOfShortInterval: 1800,
-                        // domainLowerTick: 190800,
-                        // domainUpperTick: 219600,
-                        // amount0ForMint: 10 ** 5,
-                        // amount1ForMint: 10 ** 9,
-                        // erc20CapitalRatioD: 5000000,
-                        // uniV3Weights: this.weights,
-                        // swapPool: this.firstPool.address,
-                        // maxTickDeviation: 100,
-                        // averageTickTimespan: 60,
+                        maxTickDeviation: 100,
+                        tickSpacing: this.tickSpacing,
+                        swapFee: 500,
+                        averageTickTimespan: 60,
+                        amount0ForMint: 10 ** 9,
+                        amount1ForMint: 10 ** 9,
+                        erc20CapitalRatioD: 10 ** 7,
+                        swapSlippageD: 10 ** 7,
                     } as MutableParamsStruct;
 
-                    this.tickSpacing = 600;
+                    let immutableParams = {
+                        token0: tokens[0],
+                        token1: tokens[1],
+                        router: this.swapRouter.address,
+                        erc20Vault: this.erc20Vault.address,
+                        uniV3Vault: this.uniV3Vault500.address,
+                        rebalancer: rebalancerAddress,
+                    } as ImmutableParamsStruct;
+
                     const params = [
-                        {
-                            // tokens: tokens,
-                            // erc20Vault: this.erc20Vault.address,
-                            // moneyVault: this.yearnVault.address,
-                            // router: this.swapRouter.address,
-                            // rebalancer: rebalancerAddress,
-                            // uniV3Vaults: this.uniV3Vaults,
-                            // tickSpacing: this.tickSpacing,
-                        } as ImmutableParamsStruct,
+                        immutableParams,
                         mutableParams,
                         this.mStrategyAdmin.address,
                     ];
@@ -215,8 +204,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         newStrategyAddress
                     );
 
-                    const immutableParams =
-                        await this.subject.immutableParams();
+                    immutableParams = await this.subject.immutableParams();
                     this.rebalancer = await ethers.getContractAt(
                         "SinglePositionRebalancer",
                         immutableParams.rebalancer
@@ -363,8 +351,115 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#rebalance", () => {
-            it("works correctly", async () => {});
+        describe("#constructor", () => {
+            it("creates contract", async () => {
+                expect(this.subject.address).not.eq(
+                    ethers.constants.AddressZero
+                );
+            });
+        });
+
+        const push = async (delta: BigNumber, tokenName: string) => {
+            const n = 20;
+            var from = "";
+            var to = "";
+            if (tokenName == "USDC") {
+                from = this.usdc.address;
+                to = this.weth.address;
+            } else {
+                from = this.weth.address;
+                to = this.usdc.address;
+            }
+
+            await mint(tokenName, this.deployer.address, delta);
+            for (var i = 0; i < n; i++) {
+                await this.swapRouter.exactInputSingle({
+                    tokenIn: from,
+                    tokenOut: to,
+                    fee: 500,
+                    recipient: this.deployer.address,
+                    deadline: ethers.constants.MaxUint256,
+                    amountIn: delta.div(n),
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0,
+                });
+            }
+        };
+
+        describe("#rebalance", () => {
+            it("works correctly", async () => {
+                const pool = await ethers.getContractAt(
+                    "IUniswapV3Pool",
+                    await this.uniV3Vault500.pool()
+                );
+                for (var i = 0; i < 10; i++) {
+                    const { sqrtPriceX96, tick } = await pool.slot0();
+                    const centerTick = tick - (tick % this.tickSpacing);
+                    const toLeft = Math.round(Math.random() * 100) + 1;
+                    const toRight = Math.round(Math.random() * 100) + 1;
+                    const interval = {
+                        lowerTick: centerTick - toLeft * this.tickSpacing,
+                        upperTick: centerTick + toRight * this.tickSpacing,
+                    } as IntervalStruct;
+
+                    await this.subject.connect(this.mStrategyAdmin).rebalance({
+                        newInterval: interval,
+                        swappedAmounts: [0, 0],
+                        drainedAmounts: [0, 0],
+                        pulledToUniV3: [0, 0],
+                        pulledFromUniV3: [0, 0],
+                        deadline: ethers.constants.MaxUint256,
+                    } as RestrictionsStruct);
+
+                    const mutableParams = await this.subject.mutableParams();
+                    const tvls = await this.rebalancer.callStatic.getTvls(
+                        await this.subject.getData(
+                            await this.subject.immutableParams()
+                        )
+                    );
+
+                    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(Q96);
+                    const totalCapital = tvls.total[0].add(
+                        tvls.total[1].mul(Q96).div(priceX96)
+                    );
+                    const erc20Capital = tvls.erc20[0].add(
+                        tvls.erc20[1].mul(Q96).div(priceX96)
+                    );
+                    const uniV3Capital = tvls.uniV3[0].add(
+                        tvls.uniV3[1].mul(Q96).div(priceX96)
+                    );
+                    const expectedErc20Capital = totalCapital
+                        .mul(mutableParams.erc20CapitalRatioD)
+                        .div(DENOMINATOR);
+                    const expectedUniV3Capital = totalCapital
+                        .mul(DENOMINATOR.sub(mutableParams.erc20CapitalRatioD))
+                        .div(DENOMINATOR);
+
+                    const currentERC20RatioD =
+                        DENOMINATOR.mul(erc20Capital).div(totalCapital);
+                    const currentUniV3RatioD =
+                        DENOMINATOR.mul(uniV3Capital).div(totalCapital);
+                    const expectedERC20RatioD =
+                        DENOMINATOR.mul(expectedErc20Capital).div(totalCapital);
+                    const expectedUniV3RatioD =
+                        DENOMINATOR.mul(expectedUniV3Capital).div(totalCapital);
+
+                    expect(currentERC20RatioD.toNumber()).to.be.closeTo(
+                        expectedERC20RatioD.toNumber(),
+                        1000000
+                    );
+                    expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
+                        expectedUniV3RatioD.toNumber(),
+                        1000000
+                    );
+
+                    if (Math.random() > 0.5) {
+                        await push(BigNumber.from(10).pow(9), "USDC");
+                    } else {
+                        await push(BigNumber.from(10).pow(18), "WETH");
+                    }
+                }
+            });
         });
     }
 );

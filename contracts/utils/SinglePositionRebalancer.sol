@@ -183,27 +183,25 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
 
     // --------------------  EXTERNAL, VIEW  ----------------------
 
-    /// @param sqrtPriceX96 sqrt prices X96 at lower and upper ticks of domain and short intervals
-    /// @param sqrtPriceX96 sqrt price X96 at current spot tick in swapPool
     /// @param totalToken0 current actual amount of token 0 in the root vault system
     /// @param totalToken1 current actual amount of token 1 in the root vault system
     function calculateExpectedAmounts(
         StrategyData memory data,
         uint256 priceX96,
-        uint160 sqrtPriceX96,
+        uint160 sqrtSpotPriceX96,
         uint256 totalToken0,
         uint256 totalToken1
     ) public pure returns (uint256[] memory uniV3Expected, uint256 expectedAmountOfToken0) {
         uint256 totalCapitalInToken0 = totalToken0 + FullMath.mulDiv(totalToken1, Q96, priceX96);
-        uint160 sqrtRatioLowerX96 = TickMath.getSqrtRatioAtTick(data.lowerTick);
-        uint160 sqrtRatioUpperX96 = TickMath.getSqrtRatioAtTick(data.upperTick);
+        uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(data.lowerTick);
+        uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(data.upperTick);
         uint256 ratioOfToken0D = FullMath.mulDiv(
             DENOMINATOR,
-            sqrtRatioUpperX96 - sqrtRatioLowerX96,
+            sqrtUpperPriceX96 - sqrtSpotPriceX96,
             2 *
-                sqrtRatioUpperX96 -
-                sqrtRatioLowerX96 -
-                FullMath.mulDiv(sqrtRatioLowerX96, sqrtRatioUpperX96, sqrtPriceX96)
+                sqrtUpperPriceX96 -
+                sqrtSpotPriceX96 -
+                FullMath.mulDiv(sqrtLowerPriceX96, sqrtUpperPriceX96, sqrtSpotPriceX96)
         );
 
         expectedAmountOfToken0 = FullMath.mulDiv(totalCapitalInToken0, ratioOfToken0D, DENOMINATOR);
@@ -361,9 +359,8 @@ contract SinglePositionRebalancer is DefaultAccessControlLateInit {
         // additional slippage check to make sure the swap was successful
         // possibly its fail if we use in swap and in uniV3Vault two different pools
         require(
-            restrictions.swappedAmounts[tokenInIndex ^ 1] >=
-                int256(FullMath.mulDiv(expectedAmountOut, data.swapSlippageD, DENOMINATOR)),
-            ExceptionsLibrary.LIMIT_OVERFLOW
+            amountOut >= FullMath.mulDiv(expectedAmountOut, data.swapSlippageD, DENOMINATOR),
+            ExceptionsLibrary.LIMIT_UNDERFLOW
         );
 
         swappedAmounts = new int256[](2);
