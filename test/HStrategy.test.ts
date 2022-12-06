@@ -1267,8 +1267,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         await this.uniV3Helper.liquidityToTokenAmounts(
                             positionParams.liquidity,
                             this.pool.address,
-                            await this.uniV3Vault.uniV3Nft(),
-                            this.positionManager.address
+                            await this.uniV3Vault.uniV3Nft()
                         );
                     const { uniV3Token0, uniV3Token1 } =
                         await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
