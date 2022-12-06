@@ -45,6 +45,9 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         {
             IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
                 .delayedProtocolParams();
+            IUniV3VaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IUniV3VaultGovernance(
+                address(_vaultGovernance)
+            ).delayedProtocolPerVaultParams(_nft);
             {
                 uint128 tokensOwed0;
                 uint128 tokensOwed1;
@@ -67,7 +70,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 uint256 amountMax1;
                 uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
                 uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-                (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle);
+                (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(
+                    params.oracle,
+                    vaultParams.safetyIndexiesSet
+                );
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -196,9 +202,13 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return false;
     }
 
-    function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], 0x2A);
-        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+    function _getMinMaxPrice(IOracle oracle, uint32 safetyIndexiesSet)
+        internal
+        view
+        returns (uint256 minPriceX96, uint256 maxPriceX96)
+    {
+        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndexiesSet);
+        require(prices.length >= 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];
         for (uint32 i = 1; i < prices.length; ++i) {

@@ -124,23 +124,18 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
 
-    /// @notice rebalance method. Need to be called if the new position is needed
-    /// @param restrictions the restrictions of the amount of tokens to be transferred and positions to be minted
-    /// @return actualAmounts actual transferred token amounts and minted positions
-    function rebalance(SinglePositionRebalancer.Restrictions memory restrictions)
-        external
-        returns (SinglePositionRebalancer.Restrictions memory actualAmounts)
+    function getData(ImmutableParams memory immutableParams_)
+        public
+        view
+        returns (SinglePositionRebalancer.StrategyData memory data)
     {
-        _requireAtLeastOperator();
         MutableParams memory mutableParams_ = mutableParams;
         SinglePositionRebalancer.Interval memory interval_ = interval;
-        ImmutableParams memory immutableParams_ = immutableParams;
 
         address[] memory tokens = new address[](2);
         tokens[0] = immutableParams_.token0;
         tokens[1] = immutableParams_.token1;
-
-        SinglePositionRebalancer.StrategyData memory data = SinglePositionRebalancer.StrategyData({
+        data = SinglePositionRebalancer.StrategyData({
             lowerTick: interval_.lowerTick,
             upperTick: interval_.upperTick,
             maxTickDeviation: mutableParams_.maxTickDeviation,
@@ -156,7 +151,18 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             swapSlippageD: mutableParams_.swapSlippageD,
             tokens: tokens
         });
+    }
 
+    /// @notice rebalance method. Need to be called if the new position is needed
+    /// @param restrictions the restrictions of the amount of tokens to be transferred and positions to be minted
+    /// @return actualAmounts actual transferred token amounts and minted positions
+    function rebalance(SinglePositionRebalancer.Restrictions memory restrictions)
+        external
+        returns (SinglePositionRebalancer.Restrictions memory actualAmounts)
+    {
+        _requireAtLeastOperator();
+        ImmutableParams memory immutableParams_ = immutableParams;
+        SinglePositionRebalancer.StrategyData memory data = getData(immutableParams_);
         actualAmounts = SinglePositionRebalancer(immutableParams_.rebalancer).processRebalance(data, restrictions);
         if (actualAmounts.newInterval.lowerTick < actualAmounts.newInterval.upperTick) {
             interval = actualAmounts.newInterval;
