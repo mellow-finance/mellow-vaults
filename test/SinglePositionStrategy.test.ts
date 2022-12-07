@@ -436,11 +436,11 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
 
                     expect(currentERC20RatioD.toNumber()).to.be.closeTo(
                         expectedERC20RatioD.toNumber(),
-                        5000000
+                        DENOMINATOR.div(100).toNumber()
                     );
                     expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
                         expectedUniV3RatioD.toNumber(),
-                        5000000
+                        DENOMINATOR.div(100).toNumber()
                     );
 
                     if (Math.random() > 0.5) {

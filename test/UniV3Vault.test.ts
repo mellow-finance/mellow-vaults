@@ -11,11 +11,12 @@ import {
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { ERC20RootVault, ERC20Vault, UniV3Vault } from "./types";
+import { ERC20RootVault, ERC20Vault, UniV3Helper, UniV3Vault } from "./types";
 import {
     combineVaults,
     PermissionIdsLibrary,
     setupVault,
+    TRANSACTION_GAS_LIMITS,
 } from "../deploy/0000_utils";
 import { ERC20 } from "./library/Types";
 import { integrationVaultBehavior } from "./behaviors/integrationVault";
@@ -28,6 +29,7 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
     curveRouter: string;
+    uniV3Helper: UniV3Helper;
     preparePush: () => any;
 };
 
@@ -40,7 +42,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
-                const { read } = deployments;
+                const { read, deploy } = deployments;
 
                 const {
                     uniswapV3PositionManager,
@@ -115,6 +117,14 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 let uniV3VaultNft = startNft;
                 let erc20VaultNft = startNft + 1;
 
+                await deploy("UniV3Helper", {
+                    from: this.deployer.address,
+                    contract: "UniV3Helper",
+                    args: [uniswapV3PositionManager],
+                    log: true,
+                    autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS,
+                });
                 this.uniV3Helper = await ethers.getContract("UniV3Helper");
 
                 await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
@@ -616,9 +626,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.subject.address,
                 "0x4", // address of _nft
             ]);
-            this.uniV3Helper = (
-                await ethers.getContract("UniV3Helper")
-            ).address;
 
             await ethers.provider.send("hardhat_setStorageAt", [
                 this.subject.address,
@@ -638,7 +645,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.nft,
                                 [this.usdc.address, this.weth.address],
                                 uniV3PoolFee,
-                                this.uniV3Helper
+                                this.uniV3Helper.address
                             )
                     ).to.emit(this.subject, "Initialized");
                 }
@@ -655,7 +662,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.nft,
                                 [this.usdc.address, this.weth.address],
                                 uniV3PoolFee,
-                                this.uniV3Helper
+                                this.uniV3Helper.address
                             )
                     ).to.not.be.reverted;
                 }
@@ -675,7 +682,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             this.nft,
                             [this.usdc.address, this.weth.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INIT);
                 });
@@ -687,7 +694,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             this.nft,
                             [this.weth.address, this.usdc.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -699,7 +706,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             this.nft,
                             [this.weth.address, this.weth.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -715,7 +722,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.weth.address,
                             ],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
@@ -727,7 +734,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             0,
                             [this.usdc.address, this.weth.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                 });
@@ -749,7 +756,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                         this.nft,
                                         [this.usdc.address, this.weth.address],
                                         uniV3PoolFee,
-                                        this.uniV3Helper
+                                        this.uniV3Helper.address
                                     )
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         }
