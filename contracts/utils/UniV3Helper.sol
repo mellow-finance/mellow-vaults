@@ -118,8 +118,8 @@ contract UniV3Helper {
 
         minTokenAmounts[0] = amountMin0 + fees0;
         maxTokenAmounts[0] = amountMax0 + fees0;
-        minTokenAmounts[1] = amountMin0 + fees1;
-        maxTokenAmounts[1] = amountMax0 + fees1;
+        minTokenAmounts[1] = amountMin1 + fees1;
+        maxTokenAmounts[1] = amountMax1 + fees1;
     }
 
     function getTickDeviationForTimeSpan(

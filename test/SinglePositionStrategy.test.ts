@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint } from "./library/Helpers";
+import { mint, sleep } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
@@ -448,6 +448,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     } else {
                         await push(BigNumber.from(10).pow(21), "WETH");
                     }
+                    await sleep(this.governanceDelay);
                 }
             });
         });
