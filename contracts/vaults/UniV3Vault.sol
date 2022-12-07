@@ -35,19 +35,18 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             return (new uint256[](2), new uint256[](2));
         }
 
-        minTokenAmounts = new uint256[](2);
-        maxTokenAmounts = new uint256[](2);
-        {
-            address vaultGovernance_ = address(_vaultGovernance);
-            IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(vaultGovernance_)
-                .delayedProtocolParams();
-            IUniV3VaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IUniV3VaultGovernance(
-                vaultGovernance_
-            ).delayedProtocolPerVaultParams(_nft);
-            (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle, vaultParams.safetyIndexiesSet);
-            (minTokenAmounts[0], maxTokenAmounts[0], minTokenAmounts[1], maxTokenAmounts[1]) = _uniV3Helper
-                .tokenAmountsByMinMaxPrice(uniV3Nft, pool, minPriceX96, maxPriceX96);
-        }
+        address vaultGovernance_ = address(_vaultGovernance);
+        IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(vaultGovernance_)
+            .delayedProtocolParams();
+        IUniV3VaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IUniV3VaultGovernance(vaultGovernance_)
+            .delayedProtocolPerVaultParams(_nft);
+        (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle, vaultParams.safetyIndexiesSet);
+        (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.tokenAmountsByMinMaxPrice(
+            uniV3Nft,
+            pool,
+            minPriceX96,
+            maxPriceX96
+        );
     }
 
     /// @inheritdoc IntegrationVault

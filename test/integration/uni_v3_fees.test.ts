@@ -219,9 +219,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.checkCalculation = async () => {
                     const { amount0, amount1 } =
                         await this.calculateTokensOwed();
-                    const positionInfo = await this.uniV3Helper.fees(
-                        await this.subject.uniV3Nft(),
-                        await this.subject.pool()
+                    const positionInfo = await this.uniV3Helper.getFeesByNft(
+                        await this.subject.uniV3Nft()
                     );
                     expect(amount0.sub(positionInfo.fees0).toNumber()).to.be.eq(
                         0

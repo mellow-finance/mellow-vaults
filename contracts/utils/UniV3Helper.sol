@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "../interfaces/external/univ3/IUniswapV3Factory.sol";
+
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/OracleLibrary.sol";
 import "../libraries/external/PositionValue.sol";
@@ -73,8 +75,27 @@ contract UniV3Helper {
         }
     }
 
-    function fees(uint256 uniV3Nft, IUniswapV3Pool pool) external view returns (uint256 fees0, uint256 fees1) {
-        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft, pool);
+    function getPoolByNft(uint256 uniV3Nft) public view returns (IUniswapV3Pool pool) {
+        (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(uniV3Nft);
+        pool = IUniswapV3Pool(IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee));
+    }
+
+    function getFeesByNft(uint256 uniV3Nft) external view returns (uint256 fees0, uint256 fees1) {
+        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft, getPoolByNft(uniV3Nft));
+    }
+
+    function tokenAmountsBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
+        public
+        view
+        returns (uint256[] memory tokenAmounts)
+    {
+        tokenAmounts = new uint256[](2);
+        (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(
+            positionManager,
+            uniV3Nft,
+            sqrtPriceX96,
+            getPoolByNft(uniV3Nft)
+        );
     }
 
     function tokenAmountsByMinMaxPrice(
@@ -82,29 +103,23 @@ contract UniV3Helper {
         IUniswapV3Pool pool,
         uint256 minPriceX96,
         uint256 maxPriceX96
-    )
-        external
-        view
-        returns (
-            uint256 amountMin0,
-            uint256 amountMax0,
-            uint256 amountMin1,
-            uint256 amountMax1
-        )
-    {
-        (uint256 fee0, uint256 fee1) = PositionValue.fees(positionManager, uniV3Nft, pool);
+    ) external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        minTokenAmounts = new uint256[](2);
+        maxTokenAmounts = new uint256[](2);
+        (uint256 fees0, uint256 fees1) = PositionValue.fees(positionManager, uniV3Nft, pool);
+
         uint160 minSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(minPriceX96));
         uint160 maxSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(maxPriceX96));
-        (amountMin0, amountMin1) = PositionValue.principal(positionManager, uniV3Nft, minSqrtPriceX96);
-        (amountMax0, amountMax1) = PositionValue.principal(positionManager, uniV3Nft, maxSqrtPriceX96);
+        (uint256 amountMin0, uint256 amountMin1) = PositionValue.principal(positionManager, uniV3Nft, minSqrtPriceX96);
+        (uint256 amountMax0, uint256 amountMax1) = PositionValue.principal(positionManager, uniV3Nft, maxSqrtPriceX96);
 
         if (amountMin0 > amountMax0) (amountMin0, amountMax0) = (amountMax0, amountMin0);
         if (amountMin1 > amountMax1) (amountMin1, amountMax1) = (amountMax1, amountMin1);
 
-        amountMin0 += fee0;
-        amountMin1 += fee1;
-        amountMax0 += fee0;
-        amountMax1 += fee1;
+        minTokenAmounts[0] = amountMin0 + fees0;
+        maxTokenAmounts[0] = amountMax0 + fees0;
+        minTokenAmounts[1] = amountMin0 + fees1;
+        maxTokenAmounts[1] = amountMax0 + fees1;
     }
 
     function getTickDeviationForTimeSpan(
