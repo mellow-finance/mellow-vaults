@@ -6,24 +6,14 @@ import {
     encodeToBytes,
     mint,
     mintUniV3Position_USDC_WETH,
-    mintUniV3Position_WBTC_WETH,
-    randomAddress,
     withSigner,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault, ERC20Vault, UniV3Vault } from "../types";
-import {
-    combineVaults,
-    PermissionIdsLibrary,
-    setupVault,
-} from "../../deploy/0000_utils";
+import { combineVaults, setupVault } from "../../deploy/0000_utils";
 import { ERC20 } from "../library/Types";
-import { integrationVaultBehavior } from "../behaviors/integrationVault";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-import { UNIV3_VAULT_INTERFACE_ID } from "../library/Constants";
-import Exceptions from "../library/Exceptions";
-import { TickMath } from "@uniswap/v3-sdk";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -229,20 +219,16 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.checkCalculation = async () => {
                     const { amount0, amount1 } =
                         await this.calculateTokensOwed();
-                    const positionManager =
-                        await this.subject.positionManager();
-                    const positionInfo =
-                        await this.uniV3Helper.calculatePositionInfo(
-                            positionManager,
-                            await this.subject.pool(),
-                            await this.subject.uniV3Nft()
-                        );
-                    expect(
-                        amount0.sub(positionInfo.tokensOwed0).toNumber()
-                    ).to.be.eq(0);
-                    expect(
-                        amount1.sub(positionInfo.tokensOwed1).toNumber()
-                    ).to.be.eq(0);
+                    const positionInfo = await this.uniV3Helper.fees(
+                        await this.subject.uniV3Nft(),
+                        await this.subject.pool()
+                    );
+                    expect(amount0.sub(positionInfo.fees0).toNumber()).to.be.eq(
+                        0
+                    );
+                    expect(amount1.sub(positionInfo.fees1).toNumber()).to.be.eq(
+                        0
+                    );
                 };
 
                 return this.subject;

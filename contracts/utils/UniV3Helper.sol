@@ -73,6 +73,10 @@ contract UniV3Helper {
         }
     }
 
+    function fees(uint256 uniV3Nft, IUniswapV3Pool pool) external view returns (uint256 fees0, uint256 fees1) {
+        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft, pool);
+    }
+
     function tokenAmountsByMinMaxPrice(
         uint256 uniV3Nft,
         IUniswapV3Pool pool,
@@ -83,8 +87,8 @@ contract UniV3Helper {
         view
         returns (
             uint256 amountMin0,
-            uint256 amountMin1,
             uint256 amountMax0,
+            uint256 amountMin1,
             uint256 amountMax1
         )
     {
