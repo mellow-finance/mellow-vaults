@@ -295,24 +295,11 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         .connect(this.deployer)
                         .deposit(
                             [
-                                BigNumber.from(10).pow(10),
-                                BigNumber.from(10).pow(18),
+                                BigNumber.from(10).pow(10).div(11),
+                                BigNumber.from(10).pow(18).div(11),
                             ],
                             0,
                             []
-                        );
-
-                    await this.usdc
-                        .connect(this.deployer)
-                        .transfer(
-                            this.subject.address,
-                            pullExistentials[0].mul(10)
-                        );
-                    await this.weth
-                        .connect(this.deployer)
-                        .transfer(
-                            this.subject.address,
-                            pullExistentials[1].mul(10)
                         );
 
                     await this.usdc
@@ -385,10 +372,21 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     await this.uniV3Vault500.pool()
                 );
                 for (var i = 0; i < 10; i++) {
+                    await this.erc20RootVault
+                        .connect(this.deployer)
+                        .deposit(
+                            [
+                                BigNumber.from(10).pow(10).div(11),
+                                BigNumber.from(10).pow(18).div(11),
+                            ],
+                            0,
+                            []
+                        );
+
                     const { sqrtPriceX96, tick } = await pool.slot0();
                     const centerTick = tick - (tick % this.tickSpacing);
-                    const toLeft = Math.round(Math.random() * 100) + 1;
-                    const toRight = Math.round(Math.random() * 100) + 1;
+                    const toLeft = Math.round(Math.random() * 10) + 1;
+                    const toRight = Math.round(Math.random() * 10) + 1;
                     const interval = {
                         lowerTick: centerTick - toLeft * this.tickSpacing,
                         upperTick: centerTick + toRight * this.tickSpacing,
