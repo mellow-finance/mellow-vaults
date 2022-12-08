@@ -14,6 +14,11 @@ interface IUniV3VaultGovernance is IVaultGovernance {
         IOracle oracle;
     }
 
+    /// @param safetyIndexiesSet Safety indices for oracle
+    struct DelayedProtocolPerVaultParams {
+        uint32 safetyIndexiesSet;
+    }
+
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
@@ -26,6 +31,27 @@ interface IUniV3VaultGovernance is IVaultGovernance {
 
     /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function commitDelayedProtocolParams() external;
+
+    /// @notice Delayed Protocol Per Vault Params staged for commit after delay.
+    /// @param nft VaultRegistry NFT of the vault
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory);
+
+    /// @notice Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param nft VaultRegistry NFT of the vault
+    function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory);
+
+    /// @notice Stage Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params
+    function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external;
+
+    /// @notice Commit Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @dev Can only be called after delayedProtocolPerVaultParamsTimestamp
+    /// @param nft VaultRegistry NFT of the vault
+    function commitDelayedProtocolPerVaultParams(uint256 nft) external;
 
     /// @notice Deploys a new vault.
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault

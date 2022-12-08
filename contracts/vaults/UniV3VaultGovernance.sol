@@ -40,6 +40,26 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IUniV3VaultGovernance
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory)
+    {
+        if (_stagedDelayedProtocolPerVaultParams[nft].length == 0) {
+            return DelayedProtocolPerVaultParams({safetyIndexiesSet: 0});
+        }
+        return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
+    function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
+        if (_delayedProtocolPerVaultParams[nft].length == 0) {
+            return DelayedProtocolPerVaultParams({safetyIndexiesSet: 0});
+        }
+        return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
+    }
+
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV3VaultGovernance).interfaceId == interfaceId;
@@ -66,6 +86,30 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     }
 
     /// @inheritdoc IUniV3VaultGovernance
+    function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
+        require(params.safetyIndexiesSet > 0, ExceptionsLibrary.VALUE_ZERO);
+        _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
+        emit StageDelayedProtocolPerVaultParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            params,
+            _delayedStrategyParamsTimestamp[nft]
+        );
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
+    function commitDelayedProtocolPerVaultParams(uint256 nft) external {
+        _commitDelayedProtocolPerVaultParams(nft);
+        emit CommitDelayedProtocolPerVaultParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams))
+        );
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
     function createVault(
         address[] memory vaultTokens_,
         address owner_,
@@ -86,7 +130,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.0.0");
+        return bytes32("1.1.0");
     }
 
     // --------------------------  EVENTS  --------------------------
@@ -107,4 +151,30 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
+
+    /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedProtocolPerVaultParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedProtocolPerVaultParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedProtocolPerVaultParams are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedProtocolPerVaultParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedProtocolPerVaultParams params
+    );
 }

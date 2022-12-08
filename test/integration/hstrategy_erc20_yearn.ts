@@ -97,10 +97,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         }
                     );
 
+                    const { uniswapV3PositionManager, uniswapV3Router } =
+                        await getNamedAccounts();
                     await deploy("UniV3Helper", {
                         from: this.deployer.address,
                         contract: "UniV3Helper",
-                        args: [],
+                        args: [uniswapV3PositionManager],
                         log: true,
                         autoMine: true,
                         ...TRANSACTION_GAS_LIMITS,
@@ -172,8 +174,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     /*
                      * Deploy HStrategy
                      */
-                    const { uniswapV3PositionManager, uniswapV3Router } =
-                        await getNamedAccounts();
                     this.positionManager = await ethers.getContractAt(
                         INonfungiblePositionManager,
                         uniswapV3PositionManager
