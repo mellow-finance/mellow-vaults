@@ -10,7 +10,6 @@ import {
     UniV3Vault,
     ISwapRouter as SwapRouterInterface,
     SinglePositionStrategy,
-    SinglePositionRebalancer,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -26,7 +25,6 @@ import {
     ImmutableParamsStruct,
     IntervalStruct,
     MutableParamsStruct,
-    RestrictionsStruct,
 } from "./types/SinglePositionStrategy";
 import { expect } from "chai";
 
@@ -40,7 +38,6 @@ type CustomContext = {
     deployerUsdcAmount: BigNumber;
     swapRouter: SwapRouterInterface;
     params: any;
-    rebalancer: SinglePositionRebalancer;
 };
 
 type DeployOptions = {};
@@ -137,24 +134,12 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         uniswapV3Router
                     );
 
-                    const { address: rebalancerAddress } = await deploy(
-                        "SinglePositionRebalancer",
-                        {
-                            from: this.deployer.address,
-                            contract: "SinglePositionRebalancer",
-                            args: [this.positionManager.address],
-                            log: true,
-                            autoMine: true,
-                            ...TRANSACTION_GAS_LIMITS,
-                        }
-                    );
-
                     const { address: baseStrategyAddress } = await deploy(
                         "SinglePositionStrategy",
                         {
                             from: this.deployer.address,
                             contract: "SinglePositionStrategy",
-                            args: [],
+                            args: [uniswapV3PositionManager],
                             log: true,
                             autoMine: true,
                             ...TRANSACTION_GAS_LIMITS,
@@ -167,8 +152,10 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     );
 
                     this.tickSpacing = 60;
+
                     const mutableParams = {
                         maxTickDeviation: 100,
+                        intervalWidthInTickSpacings: 100,
                         tickSpacing: this.tickSpacing,
                         swapFee: 500,
                         averageTickTimespan: 60,
@@ -179,12 +166,10 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     } as MutableParamsStruct;
 
                     let immutableParams = {
-                        token0: tokens[0],
-                        token1: tokens[1],
                         router: this.swapRouter.address,
+                        tokens: tokens,
                         erc20Vault: this.erc20Vault.address,
                         uniV3Vault: this.uniV3Vault500.address,
-                        rebalancer: rebalancerAddress,
                     } as ImmutableParamsStruct;
 
                     const params = [
@@ -200,12 +185,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         newStrategyAddress
                     );
 
-                    immutableParams = await this.subject.immutableParams();
-                    this.rebalancer = await ethers.getContractAt(
-                        "SinglePositionRebalancer",
-                        immutableParams.rebalancer
-                    );
-
                     await this.usdc.approve(
                         this.swapRouter.address,
                         ethers.constants.MaxUint256
@@ -219,7 +198,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         hre,
                         erc20RootVaultNft,
                         [erc20VaultNft, uniV3Vault500Nft],
-                        this.rebalancer.address,
+                        this.subject.address,
                         this.deployer.address
                     );
 
@@ -258,7 +237,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     );
 
                     for (let addr of [
-                        this.rebalancer.address,
                         this.subject.address,
                         this.erc20RootVault.address,
                     ]) {
@@ -305,13 +283,13 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     await this.usdc
                         .connect(this.deployer)
                         .transfer(
-                            this.rebalancer.address,
+                            this.subject.address,
                             pullExistentials[0].mul(10)
                         );
                     await this.weth
                         .connect(this.deployer)
                         .transfer(
-                            this.rebalancer.address,
+                            this.subject.address,
                             pullExistentials[1].mul(10)
                         );
 
@@ -383,30 +361,19 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                             []
                         );
 
-                    const { sqrtPriceX96, tick } = await pool.slot0();
-                    const centerTick = tick - (tick % this.tickSpacing);
-                    const toLeft = Math.round(Math.random() * 10) + 1;
-                    const toRight = Math.round(Math.random() * 10) + 1;
-                    const interval = {
-                        lowerTick: centerTick - toLeft * this.tickSpacing,
-                        upperTick: centerTick + toRight * this.tickSpacing,
-                    } as IntervalStruct;
+                    const { sqrtPriceX96 } = await pool.slot0();
 
-                    await this.subject.connect(this.mStrategyAdmin).rebalance({
-                        newInterval: interval,
-                        swappedAmounts: [0, 0],
-                        drainedAmounts: [0, 0],
-                        pulledToUniV3: [0, 0],
-                        pulledFromUniV3: [0, 0],
-                        deadline: ethers.constants.MaxUint256,
-                    } as RestrictionsStruct);
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalance(ethers.constants.MaxUint256);
 
+                    const immutableParams =
+                        await this.subject.immutableParams();
                     const mutableParams = await this.subject.mutableParams();
-                    const tvls = await this.rebalancer.callStatic.getTvls(
-                        await this.subject.getData(
-                            await this.subject.immutableParams()
-                        )
-                    );
+                    const tvls = await this.subject.callStatic.calculateTvls({
+                        ...immutableParams,
+                        tokens: [this.usdc.address, this.weth.address],
+                    });
 
                     const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(Q96);
                     const totalCapital = tvls.total[0].add(

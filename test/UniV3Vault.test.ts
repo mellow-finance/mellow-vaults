@@ -936,7 +936,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 {
                     let { sqrtPriceX96 } = await pool.slot0();
                     const calculatedAmounts =
-                        await this.uniV3Helper.tokenAmountsBySqrtPriceX96(
+                        await this.uniV3Helper.calculateTvlBySqrtPriceX96(
                             await this.subject.uniV3Nft(),
                             sqrtPriceX96
                         );
