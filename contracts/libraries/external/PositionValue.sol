@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity =0.8.9;
+pragma solidity >=0.6.8 <0.9.0;
 
 import "../../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../../interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "../CommonLibrary.sol";
 
-import "./TickMath.sol";
+import "./FixedPoint128.sol";
 import "./LiquidityAmounts.sol";
+import "./PoolAddress.sol";
+import "./TickMath.sol";
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
@@ -20,11 +21,10 @@ library PositionValue {
     function total(
         INonfungiblePositionManager positionManager,
         uint256 tokenId,
-        uint160 sqrtRatioX96,
-        IUniswapV3Pool pool
+        uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
         (uint256 amount0Principal, uint256 amount1Principal) = principal(positionManager, tokenId, sqrtRatioX96);
-        (uint256 amount0Fee, uint256 amount1Fee) = fees(positionManager, tokenId, pool);
+        (uint256 amount0Fee, uint256 amount1Fee) = fees(positionManager, tokenId);
         return (amount0Principal + amount0Fee, amount1Principal + amount1Fee);
     }
 
@@ -69,11 +69,11 @@ library PositionValue {
     /// @param tokenId The tokenId of the token for which to get the total fees owed
     /// @return amount0 The amount of fees owed in token0
     /// @return amount1 The amount of fees owed in token1
-    function fees(
-        INonfungiblePositionManager positionManager,
-        uint256 tokenId,
-        IUniswapV3Pool pool
-    ) internal view returns (uint256 amount0, uint256 amount1) {
+    function fees(INonfungiblePositionManager positionManager, uint256 tokenId)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
         (
             ,
             ,
@@ -91,6 +91,7 @@ library PositionValue {
 
         return
             _fees(
+                positionManager,
                 FeeParams({
                     token0: token0,
                     token1: token1,
@@ -102,18 +103,22 @@ library PositionValue {
                     positionFeeGrowthInside1LastX128: positionFeeGrowthInside1LastX128,
                     tokensOwed0: tokensOwed0,
                     tokensOwed1: tokensOwed1
-                }),
-                pool
+                })
             );
     }
 
-    function _fees(FeeParams memory feeParams, IUniswapV3Pool pool)
+    function _fees(INonfungiblePositionManager positionManager, FeeParams memory feeParams)
         private
         view
         returns (uint256 amount0, uint256 amount1)
     {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
-            pool,
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    positionManager.factory(),
+                    PoolAddress.PoolKey({token0: feeParams.token0, token1: feeParams.token1, fee: feeParams.fee})
+                )
+            ),
             feeParams.tickLower,
             feeParams.tickUpper
         );
@@ -123,7 +128,7 @@ library PositionValue {
                 FullMath.mulDiv(
                     poolFeeGrowthInside0LastX128 - feeParams.positionFeeGrowthInside0LastX128,
                     feeParams.liquidity,
-                    CommonLibrary.Q128
+                    FixedPoint128.Q128
                 ) +
                 feeParams.tokensOwed0;
 
@@ -131,7 +136,7 @@ library PositionValue {
                 FullMath.mulDiv(
                     poolFeeGrowthInside1LastX128 - feeParams.positionFeeGrowthInside1LastX128,
                     feeParams.liquidity,
-                    CommonLibrary.Q128
+                    FixedPoint128.Q128
                 ) +
                 feeParams.tokensOwed1;
         }
@@ -142,11 +147,15 @@ library PositionValue {
         int24 tickLower,
         int24 tickUpper
     ) private view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
-        (, int24 tickCurrent, , , , , ) = pool.slot0();
-        (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
-        (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
-
         unchecked {
+            (, int24 tickCurrent, , , , , ) = pool.slot0();
+            (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(
+                tickLower
+            );
+            (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(
+                tickUpper
+            );
+
             if (tickCurrent < tickLower) {
                 feeGrowthInside0X128 = lowerFeeGrowthOutside0X128 - upperFeeGrowthOutside0X128;
                 feeGrowthInside1X128 = lowerFeeGrowthOutside1X128 - upperFeeGrowthOutside1X128;
