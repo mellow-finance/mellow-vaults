@@ -101,7 +101,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                                 500,
                                 this.uniV3Helper.address,
                             ],
-                            delayedProtocolPerVaultParams: [2],
+                            delayedStrategyParams: [2],
                         }
                     );
 
