@@ -23,7 +23,6 @@ import { TickMath } from "@uniswap/v3-sdk";
 
 import {
     ImmutableParamsStruct,
-    IntervalStruct,
     MutableParamsStruct,
 } from "./types/SinglePositionStrategy";
 import { expect } from "chai";

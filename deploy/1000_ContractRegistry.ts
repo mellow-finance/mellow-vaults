@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
-import {ALL_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils";
+import { ALL_NETWORKS, TRANSACTION_GAS_LIMITS } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -27,20 +27,44 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const erc20VaultGovernance = await get("ERC20VaultGovernance");
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     const yearnVaultGovernance = await get("YearnVaultGovernance");
-    
+
     const multicallData = [
-        contractRegistry.interface.encodeFunctionData("registerContract", [contractRegistry.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [protocolGovernance.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [vaultRegistry.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [chainlinkOracle.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [uniV3Oracle.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [uniV2Oracle.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [mellowOracle_univ3.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [aaveVaultGovernance.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [uniV3VaultGovernance.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [erc20VaultGovernance.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [erc20RootVaultGovernance.address]),
-        contractRegistry.interface.encodeFunctionData("registerContract", [yearnVaultGovernance.address]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            contractRegistry.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            protocolGovernance.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            vaultRegistry.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            chainlinkOracle.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            uniV3Oracle.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            uniV2Oracle.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            mellowOracle_univ3.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            aaveVaultGovernance.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            uniV3VaultGovernance.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            erc20VaultGovernance.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            erc20RootVaultGovernance.address,
+        ]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [
+            yearnVaultGovernance.address,
+        ]),
     ];
 
     await execute(
@@ -49,7 +73,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             from: deployer,
             autoMine: true,
             log: true,
-            ...TRANSACTION_GAS_LIMITS
+            ...TRANSACTION_GAS_LIMITS,
         },
         "multicall",
         multicallData
@@ -68,5 +92,5 @@ func.dependencies = [
     "UniV3VaultGovernance",
     "ERC20VaultGovernance",
     "ERC20RootVaultGovernance",
-    "YearnVaultGovernance"
+    "YearnVaultGovernance",
 ];

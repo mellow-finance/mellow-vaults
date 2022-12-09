@@ -137,14 +137,14 @@ const setupStrategy = async (
     txs.push(
         mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
             adminRole,
-            mStrategyAdmin
+            mStrategyAdmin,
         ])
     );
 
     txs.push(
         mStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
             adminRole,
-            deployer
+            deployer,
         ])
     );
 

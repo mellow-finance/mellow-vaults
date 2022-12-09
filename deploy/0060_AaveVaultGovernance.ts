@@ -3,7 +3,11 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { BigNumber } from "ethers";
-import {ALL_NETWORKS, MAIN_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils";
+import {
+    ALL_NETWORKS,
+    MAIN_NETWORKS,
+    TRANSACTION_GAS_LIMITS,
+} from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -18,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [],
         log: true,
         autoMine: true,
-        ...TRANSACTION_GAS_LIMITS
+        ...TRANSACTION_GAS_LIMITS,
     });
     await deploy("AaveVaultGovernance", {
         from: deployer,
@@ -35,7 +39,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
         autoMine: true,
-        ...TRANSACTION_GAS_LIMITS
+        ...TRANSACTION_GAS_LIMITS,
     });
 };
 export default func;
