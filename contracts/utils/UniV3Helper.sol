@@ -75,16 +75,19 @@ contract UniV3Helper {
         }
     }
 
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
     function getPoolByNft(uint256 uniV3Nft) public view returns (IUniswapV3Pool pool) {
         (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(uniV3Nft);
         pool = IUniswapV3Pool(IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee));
     }
 
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
     function getFeesByNft(uint256 uniV3Nft) external view returns (uint256 fees0, uint256 fees1) {
         (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft);
     }
 
-    function tokenAmountsBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
+    function calculateTvlBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
         public
         view
         returns (uint256[] memory tokenAmounts)
@@ -93,7 +96,8 @@ contract UniV3Helper {
         (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96);
     }
 
-    function tokenAmountsByMinMaxPrice(
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
+    function calculateTvlByMinMaxPrices(
         uint256 uniV3Nft,
         uint256 minPriceX96,
         uint256 maxPriceX96

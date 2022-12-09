@@ -41,7 +41,11 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         IUniV3VaultGovernance.DelayedStrategyParams memory strategyParams = IUniV3VaultGovernance(vaultGovernance_)
             .delayedStrategyParams(_nft);
         (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle, strategyParams.safetyIndicesSet);
-        (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.tokenAmountsByMinMaxPrice(uniV3Nft, minPriceX96, maxPriceX96);
+        (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculateTvlByMinMaxPrices(
+            uniV3Nft,
+            minPriceX96,
+            maxPriceX96
+        );
     }
 
     /// @inheritdoc IntegrationVault
