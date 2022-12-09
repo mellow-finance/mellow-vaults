@@ -154,14 +154,14 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     this.tickSpacing = 60;
 
                     const mutableParams = {
-                        maxTickDeviation: 100,
                         intervalWidthInTickSpacings: 100,
                         tickSpacing: this.tickSpacing,
                         swapFee: 500,
-                        averageTickTimespan: 60,
+                        maxDeviationFromAverageTick: 100,
+                        timespanForAverageTick: 60,
                         amount0ForMint: 10 ** 9,
                         amount1ForMint: 10 ** 9,
-                        erc20CapitalRatioD: 10 ** 7,
+                        erc20CapitalRatioD: 2 * 10 ** 6,
                         swapSlippageD: 10 ** 7,
                     } as MutableParamsStruct;
 
@@ -403,11 +403,12 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
 
                     expect(currentERC20RatioD.toNumber()).to.be.closeTo(
                         expectedERC20RatioD.toNumber(),
-                        DENOMINATOR.div(100).toNumber()
+                        2 * 10 ** 6
                     );
+
                     expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
                         expectedUniV3RatioD.toNumber(),
-                        DENOMINATOR.div(100).toNumber()
+                        2 * 10 ** 6
                     );
 
                     if (Math.random() > 0.5) {

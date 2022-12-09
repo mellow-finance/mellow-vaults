@@ -134,9 +134,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         uniV3PoolFee,
                         this.uniV3Helper.address,
                     ],
-                    delayedProtocolPerVaultParams: {
-                        safetyIndexiesSet: 2,
-                    },
+                    delayedStrategyParams: [2],
                 });
                 await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
                     createVaultArgs: [tokens, this.deployer.address],

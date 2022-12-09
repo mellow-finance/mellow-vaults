@@ -36,11 +36,11 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     struct MutableParams {
-        int24 maxTickDeviation;
+        uint24 swapFee;
         int24 intervalWidthInTickSpacings;
         int24 tickSpacing;
-        uint24 swapFee;
-        uint32 averageTickTimespan;
+        int24 maxDeviationFromAverageTick;
+        uint32 timespanForAverageTick;
         uint256 amount0ForMint;
         uint256 amount1ForMint;
         uint256 erc20CapitalRatioD;
@@ -106,43 +106,13 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
 
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
-        Interval memory newInterval;
-        {
-            (int24 averageTick, , bool withFail) = OracleLibrary.consult(
-                address(pool),
-                mutableParams_.averageTickTimespan
-            );
-            require(!withFail, ExceptionsLibrary.INVALID_STATE);
-            int24 tickDelta = spotTick - averageTick;
-            if (tickDelta < 0) {
-                tickDelta = -tickDelta;
-            }
-            require(tickDelta < mutableParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+        checkAverageTickDeviation(mutableParams_, pool, spotTick);
 
-            (newInterval.lowerTick, newInterval.upperTick) = calculateNewInterval(
-                mutableParams_.intervalWidthInTickSpacings,
-                mutableParams_.tickSpacing,
-                spotTick
-            );
-            _positionsRebalance(immutableParams_, mutableParams_, newInterval);
-        }
-        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        Interval memory newInterval = _positionsRebalance(immutableParams_, mutableParams_, spotTick);
 
-        Tvls memory tvls = calculateTvls(immutableParams_);
-        (uint256[] memory uniV3Expected, uint256 expectedAmountOfToken0) = calculateExpectedAmounts(
-            newInterval,
-            mutableParams_,
-            priceX96,
-            sqrtPriceX96,
-            tvls.total[0],
-            tvls.total[1]
-        );
+        _capitalRebalance(immutableParams_, mutableParams_, newInterval, sqrtPriceX96);
 
-        _pullExtraTokens(immutableParams_, uniV3Expected, tvls.uniV3);
-        _swapRebalance(immutableParams_, mutableParams_, priceX96, tvls.total[0], expectedAmountOfToken0);
-        _pullMissingTokens(immutableParams_, uniV3Expected, tvls.uniV3);
-
-        emit Rebalance(msg.sender, tx.origin);
+        emit Rebalance(tx.origin, msg.sender);
     }
 
     function calculateTvls(ImmutableParams memory params) public view returns (Tvls memory tvls) {
@@ -206,7 +176,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         ImmutableParams memory immutableParams_ = immutableParams;
         IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
 
-        require(params.maxTickDeviation > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(params.maxDeviationFromAverageTick > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(
             params.tickSpacing > 0 &&
                 params.tickSpacing % pool.tickSpacing() == 0 &&
@@ -218,8 +188,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             ExceptionsLibrary.INVALID_VALUE
         );
 
-        require(params.averageTickTimespan > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(params.averageTickTimespan < 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
+        require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
+        require(params.timespanForAverageTick < 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
 
         require(params.amount0ForMint > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.amount0ForMint <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
@@ -254,14 +224,41 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         }
     }
 
+    function checkAverageTickDeviation(
+        MutableParams memory mutableParams_,
+        IUniswapV3Pool pool,
+        int24 spotTick
+    ) public view {
+        (int24 averageTick, , bool withFail) = OracleLibrary.consult(
+            address(pool),
+            mutableParams_.timespanForAverageTick
+        );
+        require(!withFail, ExceptionsLibrary.INVALID_STATE);
+        int24 tickDelta = spotTick - averageTick;
+        if (tickDelta < 0) {
+            tickDelta = -tickDelta;
+        }
+        require(tickDelta < mutableParams_.maxDeviationFromAverageTick, ExceptionsLibrary.LIMIT_OVERFLOW);
+    }
+
     function _positionsRebalance(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
-        Interval memory newInterval
-    ) private {
+        int24 spotTick
+    ) private returns (Interval memory newInterval) {
+        (newInterval.lowerTick, newInterval.upperTick) = calculateNewInterval(
+            mutableParams_.intervalWidthInTickSpacings,
+            mutableParams_.tickSpacing,
+            spotTick
+        );
         IUniV3Vault vault = immutableParams_.uniV3Vault;
         uint256 uniV3Nft = vault.uniV3Nft();
         if (uniV3Nft != 0) {
+            (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
+            if (newInterval.lowerTick == tickLower && newInterval.upperTick == tickUpper) {
+                // nothing to rebalance
+                return newInterval;
+            }
             vault.pull(
                 address(immutableParams_.erc20Vault),
                 immutableParams_.tokens,
@@ -290,6 +287,28 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         if (uniV3Nft != 0) {
             positionManager.burn(uniV3Nft);
         }
+    }
+
+    function _capitalRebalance(
+        ImmutableParams memory immutableParams_,
+        MutableParams memory mutableParams_,
+        Interval memory newInterval,
+        uint160 sqrtPriceX96
+    ) private {
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        Tvls memory tvls = calculateTvls(immutableParams_);
+        (uint256[] memory uniV3Expected, uint256 expectedAmountOfToken0) = calculateExpectedAmounts(
+            newInterval,
+            mutableParams_,
+            priceX96,
+            sqrtPriceX96,
+            tvls.total[0],
+            tvls.total[1]
+        );
+
+        _pullExtraTokens(immutableParams_, uniV3Expected, tvls.uniV3);
+        _swapRebalance(immutableParams_, mutableParams_, priceX96, tvls.total[0], expectedAmountOfToken0);
+        _pullMissingTokens(immutableParams_, uniV3Expected, tvls.uniV3);
     }
 
     function _swapRebalance(
@@ -346,7 +365,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         uint256 amountOut = abi.decode(routerResult, (uint256));
 
         require(
-            amountOut >= FullMath.mulDiv(expectedAmountOut, mutableParams_.swapSlippageD, DENOMINATOR),
+            amountOut >= FullMath.mulDiv(expectedAmountOut, DENOMINATOR - mutableParams_.swapSlippageD, DENOMINATOR),
             ExceptionsLibrary.LIMIT_UNDERFLOW
         );
 
@@ -399,5 +418,5 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
     event TokensSwapped(ISwapRouter.ExactInputSingleParams swapParams, uint256 amountOut);
     event UpdateMutableParams(address indexed origin, address indexed sender, MutableParams mutableParams);
-    event Rebalance(address indexed sender, address indexed origin);
+    event Rebalance(address indexed origin, address indexed sender);
 }
