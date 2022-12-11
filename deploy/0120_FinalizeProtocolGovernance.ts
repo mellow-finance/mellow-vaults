@@ -61,7 +61,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const params = {
         forceAllowMask: ALLOW_MASK,
         maxTokensPerVault: 10,
-        governanceDelay: 1,
+        governanceDelay: 86400,
         protocolTreasury,
         withdrawLimit: 200000,
     };

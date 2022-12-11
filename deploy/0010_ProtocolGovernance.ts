@@ -13,7 +13,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [deployer],
         log: true,
         autoMine: true,
-        gasLimit: BigNumber.from(10).pow(6).mul(3),
         ...TRANSACTION_GAS_LIMITS
     });
 };

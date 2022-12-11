@@ -20,7 +20,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [uniswapV3Factory, controllerWeth],
         log: true,
         autoMine: true,
-        gasLimit: BigNumber.from(10).pow(6).mul(6),
         ...TRANSACTION_GAS_LIMITS
     });
     const { address: mellowOracle } = await get("MellowOracle");
@@ -30,7 +29,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [squeethController],
         log: true,
         autoMine: true,
-        gasLimit: BigNumber.from(10).pow(6).mul(2),
         ...TRANSACTION_GAS_LIMITS
     });
 
@@ -55,7 +53,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
         autoMine: true,
-        gasLimit: BigNumber.from(10).pow(6).mul(2),
         ...TRANSACTION_GAS_LIMITS
     });
 };
@@ -65,4 +62,4 @@ func.tags = [
     "core",
     ...MAIN_NETWORKS
 ];
-func.dependencies = ["ProtocolGovernance", "VaultRegistry", "MellowOracle"];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry", "MellowOracle", "UniV3Validator"];

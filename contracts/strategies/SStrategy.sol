@@ -178,10 +178,14 @@ contract SStrategy is ContractMeta, DefaultAccessControl {
                 uint256(singleOptionProfitETH),
                 startingOptionPriceETH
             );
-            require(
-                IERC20(mainToken_).allowance(safe, address(squeethVault)) >= optionProfit,
-                ExceptionsLibrary.LIMIT_UNDERFLOW
-            );
+            if (!isLiquidated) {
+                require(
+                    IERC20(mainToken_).allowance(safe, address(squeethVault)) >= optionProfit,
+                    ExceptionsLibrary.LIMIT_UNDERFLOW
+                );
+            } else {
+                optionProfit = IERC20(mainToken_).allowance(safe, address(squeethVault));
+            }
             squeethVault.externalCall(mainToken_, TRANSFER_FROM_SELECTOR, abi.encode(safe, squeethVault, optionProfit));
         }
         rootVault.invokeExecution();

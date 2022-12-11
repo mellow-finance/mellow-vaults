@@ -72,7 +72,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             deployer],
         log: true,
         autoMine: true,
-        gasLimit: BigNumber.from(10).pow(6).mul(4),
         ...TRANSACTION_GAS_LIMITS
     });
 
@@ -102,7 +101,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     let rootVault = await ethers.getContractAt("CyclicRootVault", rootVaultAddress);
 
-    await (await rootVault.setCycleDuration(BigNumber.from(60).mul(10))).wait();
+    await (await rootVault.setCycleDuration(BigNumber.from(3600).mul(24).mul(5))).wait();
     
     const ADMIN_ROLE =
     "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
@@ -126,8 +125,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     })).wait();
 
     await (await sStrategy.updateLiquidationParams({
-        lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(98), 
-        upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(102),
+        lowerLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(50), 
+        upperLiquidationThresholdD9: BigNumber.from(10).pow(7).mul(180),
     })).wait();
 
     await (await sStrategy.updateOracleParams({
