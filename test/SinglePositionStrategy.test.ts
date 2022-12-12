@@ -151,6 +151,9 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     );
 
                     const mutableParams = {
+                        token0ToIntermediateSwapFeeTier: 3000,
+                        token1ToIntermediateSwapFeeTier: 3000,
+                        intermediateToken: this.wbtc.address,
                         intervalWidth: 600,
                         tickNeighborhood: 50,
                         maxDeviationFromAverageTick: 100,
@@ -162,10 +165,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     } as MutableParamsStruct;
 
                     let immutableParams = {
-                        token0ToIntermediateSwapFeeTier: 3000,
-                        token1ToIntermediateSwapFeeTier: 3000,
                         router: this.swapRouter.address,
-                        intermediateToken: this.wbtc.address,
                         tokens: tokens,
                         erc20Vault: this.erc20Vault.address,
                         uniV3Vault: this.uniV3Vault500.address,
@@ -174,13 +174,13 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     for (var poolData of [
                         [
                             tokens[0],
-                            immutableParams.intermediateToken,
-                            immutableParams.token0ToIntermediateSwapFeeTier,
+                            mutableParams.intermediateToken,
+                            mutableParams.token0ToIntermediateSwapFeeTier,
                         ],
                         [
                             tokens[1],
-                            immutableParams.intermediateToken,
-                            immutableParams.token1ToIntermediateSwapFeeTier,
+                            mutableParams.intermediateToken,
+                            mutableParams.token1ToIntermediateSwapFeeTier,
                         ],
                     ]) {
                         const factory = await ethers.getContractAt(
