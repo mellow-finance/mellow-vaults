@@ -23,7 +23,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     uint256 public constant MAX_MINTING_PARAMS = 10**9;
     uint256 public constant Q96 = 2**96;
 
-    bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector; // better than this 0x095ea7b3;
+    bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
 
     INonfungiblePositionManager public immutable positionManager;
@@ -36,9 +36,9 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     struct MutableParams {
-        uint24 swapFee;
-        int24 intervalWidthInTickSpacings;
-        int24 tickSpacing;
+        uint24 swapFeeTier;
+        int24 intervalWidth;
+        int24 tickNeighborhood;
         int24 maxDeviationFromAverageTick;
         uint32 timespanForAverageTick;
         uint256 amount0ForMint;
@@ -163,28 +163,61 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     function calculateNewInterval(
-        int24 intervalWidthInTickSpacings,
-        int24 tickSpacing,
-        int24 tick
-    ) public pure returns (int24 lowerTick, int24 upperTick) {
-        tick -= tick % tickSpacing;
-        lowerTick = tick - tickSpacing * intervalWidthInTickSpacings;
-        upperTick = tick + tickSpacing * intervalWidthInTickSpacings;
+        ImmutableParams memory immutableParams_,
+        MutableParams memory mutableParams_,
+        int24 tick,
+        uint256 uniV3Nft
+    )
+        public
+        view
+        returns (
+            bool needMintNewInterval,
+            int24 lowerTick,
+            int24 upperTick
+        )
+    {
+        if (uniV3Nft != 0) {
+            (, , , , , lowerTick, upperTick, , , , , ) = positionManager.positions(uniV3Nft);
+
+            if (
+                lowerTick + mutableParams_.tickNeighborhood <= tick &&
+                tick <= upperTick - mutableParams_.tickNeighborhood
+            ) {
+                return (false, lowerTick, upperTick);
+            }
+        }
+
+        IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
+        int24 tickSpacing = pool.tickSpacing();
+
+        int24 centralTick = tick - (tick % tickSpacing);
+        if (tick - centralTick > centralTick + tickSpacing - tick) {
+            centralTick += tickSpacing;
+        }
+
+        lowerTick = centralTick - mutableParams_.intervalWidth / 2;
+        upperTick = lowerTick + mutableParams_.intervalWidth;
+        needMintNewInterval = true;
     }
 
     function checkMutableParams(MutableParams memory params) public view {
         ImmutableParams memory immutableParams_ = immutableParams;
-        IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
+        int24 tickSpacing = immutableParams_.uniV3Vault.pool().tickSpacing();
+        require(params.intervalWidth > 0 && params.intervalWidth % tickSpacing == 0, ExceptionsLibrary.INVALID_VALUE);
+        require(params.intervalWidth % 2 == 0, ExceptionsLibrary.INVALID_VALUE);
+
+        require(
+            params.tickNeighborhood > TickMath.MIN_TICK / 2 && params.tickNeighborhood <= params.intervalWidth,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
 
         require(params.maxDeviationFromAverageTick > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
+
         require(
-            params.tickSpacing > 0 &&
-                params.tickSpacing % pool.tickSpacing() == 0 &&
-                params.tickSpacing < TickMath.MAX_TICK / 4,
-            ExceptionsLibrary.INVALID_VALUE
-        );
-        require(
-            params.swapFee == 100 || params.swapFee == 500 || params.swapFee == 3000 || params.swapFee == 10000,
+            params.swapFeeTier == 100 ||
+                params.swapFeeTier == 500 ||
+                params.swapFeeTier == 3000 ||
+                params.swapFeeTier == 10000,
             ExceptionsLibrary.INVALID_VALUE
         );
 
@@ -246,19 +279,23 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         MutableParams memory mutableParams_,
         int24 spotTick
     ) private returns (Interval memory newInterval) {
-        (newInterval.lowerTick, newInterval.upperTick) = calculateNewInterval(
-            mutableParams_.intervalWidthInTickSpacings,
-            mutableParams_.tickSpacing,
-            spotTick
-        );
         IUniV3Vault vault = immutableParams_.uniV3Vault;
+
         uint256 uniV3Nft = vault.uniV3Nft();
+        bool needMintNewInterval;
+        (needMintNewInterval, newInterval.lowerTick, newInterval.upperTick) = calculateNewInterval(
+            immutableParams_,
+            mutableParams_,
+            spotTick,
+            uniV3Nft
+        );
+
+        if (!needMintNewInterval) {
+            // equals to current position in uniV3Vault
+            return newInterval;
+        }
+
         if (uniV3Nft != 0) {
-            (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
-            if (newInterval.lowerTick == tickLower && newInterval.upperTick == tickUpper) {
-                // nothing to rebalance
-                return newInterval;
-            }
             vault.pull(
                 address(immutableParams_.erc20Vault),
                 immutableParams_.tokens,
@@ -339,7 +376,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
             tokenIn: immutableParams_.tokens[tokenInIndex],
             tokenOut: immutableParams_.tokens[tokenInIndex ^ 1],
-            fee: mutableParams_.swapFee,
+            fee: mutableParams_.swapFeeTier,
             recipient: address(immutableParams_.erc20Vault),
             deadline: block.timestamp + 1,
             amountIn: amountIn,

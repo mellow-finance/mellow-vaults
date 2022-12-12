@@ -83,6 +83,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
 
     /// @inheritdoc IUniV3VaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        require(params.safetyIndicesSet > 1, ExceptionsLibrary.LIMIT_UNDERFLOW);
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
