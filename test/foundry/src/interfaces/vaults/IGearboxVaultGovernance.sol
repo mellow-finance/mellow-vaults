@@ -96,7 +96,7 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param owner_ Owner of the vault NFT
     /// @param helper_ Gearbox helper contract address
-    function createVault(address[] memory vaultTokens_, address owner_, address helper_)
+    function createVault(address[] memory vaultTokens_, address owner_, address helper_, address helper2_)
         external
         returns (IGearboxVault vault, uint256 nft);
 }

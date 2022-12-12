@@ -115,10 +115,10 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRemained);
 
     /// @notice The function of invoking the execution of withdrawal orders and transfers corresponding funds to ERC20 vault
-    function invokeExecution() external;
+    function invokeExecution(uint256[] memory swapPricesX96, bool tryBalancing) external;
 
     /// @notice The function of invoking the emergency execution of withdrawal orders, transfers corresponding funds to ERC20 vault and stops deposits
-    function shutdown() external;
+    function shutdown(uint256[] memory swapPricesX96, bool tryBalancing) external;
 
     /// @notice The function of opening deposits back in case of a previous shutdown
     function reopen() external;

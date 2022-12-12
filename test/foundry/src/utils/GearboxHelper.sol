@@ -13,6 +13,7 @@ import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
+import "./GearboxCurveHelper.sol";
 
 contract GearboxHelper {
     using SafeERC20 for IERC20;
@@ -37,12 +38,15 @@ contract GearboxHelper {
 
     uint256 public vaultNft;
 
+    GearboxCurveHelper public curveHelper;
+
     function setParameters(
         ICreditFacade creditFacade_,
         ICreditManagerV2 creditManager_,
         address primaryToken_,
         address depositToken_,
-        uint256 nft_
+        uint256 nft_,
+        address helper_
     ) external {
         require(!parametersSet, ExceptionsLibrary.FORBIDDEN);
         creditFacade = creditFacade_;
@@ -53,6 +57,8 @@ contract GearboxHelper {
 
         parametersSet = true;
         gearboxVault = IGearboxVault(msg.sender);
+        curveHelper = GearboxCurveHelper(helper_);
+        curveHelper.setParameters();
     }
 
     function setAdapters(address curveAdapter_, address convexAdapter_) external {
@@ -415,7 +421,10 @@ contract GearboxHelper {
     function withdrawFromConvex(
         uint256 amount,
         address vaultGovernance,
-        int128 primaryIndex
+        int128 primaryIndex,
+        uint256[] memory swapPricesX96,
+        bool tryUniswapBalancing,
+        address creditAccount
     ) public {
         if (amount == 0) {
             return;
@@ -428,6 +437,10 @@ contract GearboxHelper {
         address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
             .delayedProtocolParams();
+
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolPerVaultParams(vaultNft);
 
         if (!is3crv) {
             uint256 rateRAY = calcRateRAY(curveLpToken, primaryToken);
@@ -483,27 +496,37 @@ contract GearboxHelper {
 
             gearboxVault_.multicall(calls);
         }
+
+        curveHelper.makeTokensUnbalanced(vaultParams.univ3Adapter, primaryToken, creditAccount, ICurveV1Adapter(curveAdapter), creditManager, is3crv, crv3Index, protocolParams.crv3Pool, swapPricesX96, tryUniswapBalancing);
     }
 
     function depositToConvex(
+        address vaultGovernance,
         MultiCall memory debtManagementCall,
+        address creditAccount,
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams,
         uint256 poolId,
-        int128 primaryIndex
+        int128 primaryIndex,
+        uint256[] memory swapPricesX96,
+        bool tryUniswapBalancing
     ) public {
         IGearboxVault gearboxVault_ = gearboxVault;
+
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IGearboxVaultGovernance(
+            vaultGovernance
+        ).delayedProtocolPerVaultParams(vaultNft);
 
         require(msg.sender == address(gearboxVault_), ExceptionsLibrary.FORBIDDEN);
         address curveLpToken = ICurveV1Adapter(curveAdapter).lp_token();
 
+        curveHelper.makeTokensBalanced(primaryToken, creditAccount, vaultParams.univ3Adapter, ICurveV1Adapter(curveAdapter), creditManager, is3crv, crv3Index, protocolParams.crv3Pool, debtManagementCall, swapPricesX96, tryUniswapBalancing);
+
         if (!is3crv) {
             uint256 rateRAY = calcRateRAY(primaryToken, curveLpToken);
 
-            MultiCall[] memory calls = new MultiCall[](3);
+            MultiCall[] memory calls = new MultiCall[](2);
 
-            calls[0] = debtManagementCall;
-
-            calls[1] = MultiCall({
+            calls[0] = MultiCall({
                 target: curveAdapter,
                 callData: abi.encodeWithSelector(
                     ICurveV1Adapter.add_all_liquidity_one_coin.selector,
@@ -512,7 +535,7 @@ contract GearboxHelper {
                 )
             });
 
-            calls[2] = MultiCall({
+            calls[1] = MultiCall({
                 target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
                 callData: abi.encodeWithSelector(IBooster.depositAll.selector, poolId, true)
             });
@@ -525,11 +548,9 @@ contract GearboxHelper {
             uint256 rateRAY1 = calcRateRAY(primaryToken, crv3Token);
             uint256 rateRAY2 = calcRateRAY(crv3Token, curveLpToken);
 
-            MultiCall[] memory calls = new MultiCall[](4);
+            MultiCall[] memory calls = new MultiCall[](3);
 
-            calls[0] = debtManagementCall;
-
-            calls[1] = MultiCall({
+            calls[0] = MultiCall({
                 target: address(crv3Adapter),
                 callData: abi.encodeWithSelector(
                     ICurveV1Adapter.add_all_liquidity_one_coin.selector,
@@ -538,7 +559,7 @@ contract GearboxHelper {
                 )
             });
 
-            calls[2] = MultiCall({
+            calls[1] = MultiCall({
                 target: curveAdapter,
                 callData: abi.encodeWithSelector(
                     ICurveV1Adapter.add_all_liquidity_one_coin.selector,
@@ -547,7 +568,7 @@ contract GearboxHelper {
                 )
             });
 
-            calls[3] = MultiCall({
+            calls[2] = MultiCall({
                 target: creditManager.contractToAdapter(IConvexV1BaseRewardPoolAdapter(convexAdapter).operator()),
                 callData: abi.encodeWithSelector(IBooster.depositAll.selector, poolId, true)
             });
@@ -564,7 +585,9 @@ contract GearboxHelper {
         int128 primaryIndex,
         uint256 poolId,
         address convexOutputToken,
-        address creditAccount_
+        address creditAccount_,
+        uint256[] memory swapPricesX96,
+        bool tryUniswapBalancing
     ) external {
         require(msg.sender == address(gearboxVault), ExceptionsLibrary.FORBIDDEN);
 
@@ -588,7 +611,7 @@ contract GearboxHelper {
                 callData: abi.encodeWithSelector(ICreditFacade.increaseDebt.selector, delta)
             });
 
-            depositToConvex(increaseDebtCall, protocolParams, poolId, primaryIndex);
+            depositToConvex(vaultGovernance, increaseDebtCall, creditAccount_, protocolParams, poolId, primaryIndex, swapPricesX96, tryUniswapBalancing);
         } else {
             uint256 delta = currentAllAssetsValue - expectedAllAssetsValue;
 
@@ -600,14 +623,14 @@ contract GearboxHelper {
                     callData: abi.encodeWithSelector(ICreditFacade.decreaseDebt.selector, delta)
                 });
 
-                depositToConvex(decreaseDebtCall, protocolParams, poolId, primaryIndex);
+                depositToConvex(vaultGovernance, decreaseDebtCall, creditAccount_, protocolParams, poolId, primaryIndex, swapPricesX96, tryUniswapBalancing);
             } else {
                 uint256 convexAmountToWithdraw = calcConvexTokensToWithdraw(
                     delta - currentPrimaryTokenAmount,
                     creditAccount_,
                     convexOutputToken
                 );
-                withdrawFromConvex(convexAmountToWithdraw, vaultGovernance, primaryIndex);
+                withdrawFromConvex(convexAmountToWithdraw, vaultGovernance, primaryIndex, swapPricesX96, tryUniswapBalancing, creditAccount_);
 
                 currentPrimaryTokenAmount = IERC20(primaryToken).balanceOf(creditAccount_);
                 if (currentPrimaryTokenAmount < delta) {

@@ -238,7 +238,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     /// @inheritdoc IGearboxRootVault
-    function invokeExecution() public {
+    function invokeExecution(uint256[] memory swapPricesX96, bool tryBalancing) public {
         IIntegrationVault gearboxVault_ = gearboxVault;
 
         IGearboxVaultGovernance governance = IGearboxVaultGovernance(address(IVault(gearboxVault_).vaultGovernance()));
@@ -251,7 +251,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
         lastEpochChangeTimestamp = block.timestamp;
 
-        IGearboxVault(address(gearboxVault_)).closeCreditAccount();
+        IGearboxVault(address(gearboxVault_)).closeCreditAccount(swapPricesX96, tryBalancing);
 
         (uint256[] memory minTokenAmounts, ) = gearboxVault_.tvl();
         _chargeFees(_nft, minTokenAmounts[0], totalSupply - totalLpTokensWaitingWithdrawal);
@@ -315,11 +315,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     /// @inheritdoc IGearboxRootVault
-    function shutdown() external {
+    function shutdown(uint256[] memory swapPricesX96, bool tryBalancing) external {
         _requireAtLeastStrategy();
         require(!isClosed, ExceptionsLibrary.DUPLICATE);
         isClosed = true;
-        invokeExecution();
+        invokeExecution(swapPricesX96, tryBalancing);
     }
 
     /// @inheritdoc IGearboxRootVault

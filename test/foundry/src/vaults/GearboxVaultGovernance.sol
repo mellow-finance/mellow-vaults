@@ -166,13 +166,14 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     function createVault(
         address[] memory vaultTokens_,
         address owner_,
-        address helper_
+        address helper_,
+        address helper2_
     ) external returns (IGearboxVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         IGearboxVault gearboxVault = IGearboxVault(vaddr);
 
-        gearboxVault.initialize(nft, vaultTokens_, helper_);
+        gearboxVault.initialize(nft, vaultTokens_, helper_, helper2_);
         vault = IGearboxVault(vaddr);
     }
 

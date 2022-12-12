@@ -58,11 +58,11 @@ interface IGearboxVault is IIntegrationVault {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param helper_ Address of helper
-    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_, address helper2_) external;
 
     /// @notice Updates marginalFactorD9 (can be successfully called only by an admin or a strategist)
     /// @param marginalFactorD_ New marginalFactorD9
-    function updateTargetMarginalFactor(uint256 marginalFactorD_) external;
+    function updateTargetMarginalFactor(uint256 marginalFactorD_, uint256[] memory swapPricesX96, bool tryUniswapBalancing) external;
 
     /// @notice Sets merkle tree parameters for claiming Gearbox V2 Degen NFT (can be successfully called only by an admin or a strategist)
     /// @param merkleIndex_ Required index
@@ -71,13 +71,13 @@ interface IGearboxVault is IIntegrationVault {
     function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) external;
 
     /// @notice Adjust a position (takes more debt or repays some, depending on the past performance) to achieve the required marginalFactorD9
-    function adjustPosition() external;
+    function adjustPosition(uint256[] memory swapPricesX96, bool tryUniswapBalancing) external;
 
     /// @notice Opens a new credit account on the address of the vault
     function openCreditAccount(address curveAdapter, address convexAdapter) external;
 
     /// @notice Closes existing credit account (only possible to be successfully called by the root vault)
-    function closeCreditAccount() external;
+    function closeCreditAccount(uint256[] memory swapPricesX96, bool tryUniswapBalancing) external;
 
     /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
     /// Can be successfully called only by the helper

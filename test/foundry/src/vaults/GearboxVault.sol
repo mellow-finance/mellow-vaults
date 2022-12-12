@@ -116,7 +116,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
-        address helper_
+        address helper_,
+        address helper2_
     ) external {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
@@ -133,7 +134,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
         helper = GearboxHelper(helper_);
-        helper.setParameters(creditFacade, creditManager, params.primaryToken, vaultTokens_[0], _nft);
+        helper.setParameters(creditFacade, creditManager, params.primaryToken, vaultTokens_[0], _nft, helper2_);
     }
 
     /// @inheritdoc IGearboxVault
@@ -164,7 +165,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function closeCreditAccount() external {
+    function closeCreditAccount(uint256[] memory swapPricesX96, bool tryUniswapBalancing) external {
         GearboxHelper helper_ = helper;
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -182,7 +183,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         helper_.withdrawFromConvex(
             IERC20(convexOutputToken).balanceOf(creditAccount_),
             address(_vaultGovernance),
-            primaryIndex
+            primaryIndex,
+            swapPricesX96, 
+            tryUniswapBalancing,
+            creditAccount_
         );
 
         (, , uint256 debtAmount) = creditManager.calcCreditAccountAccruedInterest(creditAccount_);
@@ -211,7 +215,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function adjustPosition() public {
+    function adjustPosition(uint256[] memory swapPricesX96, bool tryUniswapBalancing) public {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
 
@@ -235,7 +239,9 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             primaryIndex,
             poolId,
             convexOutputToken,
-            creditAccount
+            creditAccount,
+            swapPricesX96,
+            tryUniswapBalancing
         );
     }
 
@@ -252,18 +258,18 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function updateTargetMarginalFactor(uint256 marginalFactorD9_) external {
+    function updateTargetMarginalFactor(uint256 marginalFactorD9_, uint256[] memory swapPricesX96, bool tryUniswapBalancing) external {
         require(marginalFactorD9_ > D9, ExceptionsLibrary.INVALID_VALUE);
 
         marginalFactorD9 = marginalFactorD9_;
-        adjustPosition();
+        adjustPosition(swapPricesX96, tryUniswapBalancing);
 
         emit TargetMarginalFactorUpdated(tx.origin, msg.sender, marginalFactorD9_);
     }
 
     /// @inheritdoc IGearboxVault
     function multicall(MultiCall[] memory calls) external {
-        require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(helper) || msg.sender == address(helper.curveHelper()), ExceptionsLibrary.FORBIDDEN);
         creditFacade.multicall(calls);
     }
 
