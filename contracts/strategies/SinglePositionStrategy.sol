@@ -24,7 +24,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     uint256 public constant Q96 = 2**96;
 
     bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
-    bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
+    bytes4 public constant EXACT_INPUT_SELECTOR = ISwapRouter.exactInput.selector;
 
     INonfungiblePositionManager public immutable positionManager;
 
@@ -36,7 +36,9 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     struct MutableParams {
-        uint24 swapFeeTier;
+        uint24 token0ToIntermediateSwapFeeTier;
+        uint24 token1ToIntermediateSwapFeeTier;
+        address intermediateToken;
         int24 intervalWidth;
         int24 tickNeighborhood;
         int24 maxDeviationFromAverageTick;
@@ -72,12 +74,11 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         MutableParams memory mutableParams_,
         address admin
     ) external {
-        require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         checkImmutableParams(immutableParams_);
         immutableParams = immutableParams_;
         IERC20(immutableParams_.tokens[0]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
         IERC20(immutableParams_.tokens[1]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
-        checkMutableParams(mutableParams_);
+        checkMutableParams(mutableParams_, immutableParams_);
         mutableParams = mutableParams_;
         DefaultAccessControlLateInit.init(admin);
     }
@@ -93,7 +94,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
     function updateMutableParams(MutableParams memory mutableParams_) external {
         _requireAdmin();
-        checkMutableParams(mutableParams_);
+        checkMutableParams(mutableParams_, immutableParams);
         mutableParams = mutableParams_;
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
@@ -108,33 +109,33 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
         checkAverageTickDeviation(mutableParams_, pool, spotTick);
 
-        Interval memory newInterval = _positionsRebalance(immutableParams_, mutableParams_, spotTick);
-
-        _capitalRebalance(immutableParams_, mutableParams_, newInterval, sqrtPriceX96);
+        Interval memory interval = _positionsRebalance(immutableParams_, mutableParams_, spotTick);
+        _capitalRebalance(immutableParams_, mutableParams_, interval, sqrtPriceX96);
 
         emit Rebalance(tx.origin, msg.sender);
     }
 
     function calculateTvls(ImmutableParams memory params) public view returns (Tvls memory tvls) {
-        (tvls.erc20, ) = IVault(params.erc20Vault).tvl();
-        (tvls.uniV3, ) = IVault(params.uniV3Vault).tvl();
+        (tvls.erc20, ) = params.erc20Vault.tvl();
+        (tvls.uniV3, ) = params.uniV3Vault.tvl();
         tvls.total = new uint256[](2);
         tvls.total[0] = tvls.erc20[0] + tvls.uniV3[0];
         tvls.total[1] = tvls.erc20[1] + tvls.uniV3[1];
     }
 
-    function calculateExpectedAmounts(
-        Interval memory newInterval,
+    function calculateTargetAmounts(
+        Interval memory interval,
         MutableParams memory mutableParams_,
         uint256 priceX96,
         uint160 sqrtSpotPriceX96,
         uint256 totalToken0,
         uint256 totalToken1
-    ) public pure returns (uint256[] memory uniV3Expected, uint256 expectedAmountOfToken0) {
+    ) public pure returns (uint256[] memory targetUniV3TokenAmounts, uint256 targetAmountOfToken0) {
         uint256 totalCapitalInToken0 = totalToken0 + FullMath.mulDiv(totalToken1, Q96, priceX96);
-        uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(newInterval.lowerTick);
-        uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(newInterval.upperTick);
-        uint256 ratioOfToken0D = FullMath.mulDiv(
+        uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(interval.lowerTick);
+        uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(interval.upperTick);
+        // the derivation of the formula is available at the link: https://www.desmos.com/calculator/xdh2vj3cli
+        uint256 targetRatioOfToken0D = FullMath.mulDiv(
             DENOMINATOR,
             sqrtUpperPriceX96 - sqrtSpotPriceX96,
             2 *
@@ -143,17 +144,17 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
                 FullMath.mulDiv(sqrtLowerPriceX96, sqrtUpperPriceX96, sqrtSpotPriceX96)
         );
 
-        expectedAmountOfToken0 = FullMath.mulDiv(totalCapitalInToken0, ratioOfToken0D, DENOMINATOR);
+        targetAmountOfToken0 = FullMath.mulDiv(totalCapitalInToken0, targetRatioOfToken0D, DENOMINATOR);
 
-        uniV3Expected = new uint256[](2);
-        uniV3Expected[0] = FullMath.mulDiv(
-            expectedAmountOfToken0,
+        targetUniV3TokenAmounts = new uint256[](2);
+        targetUniV3TokenAmounts[0] = FullMath.mulDiv(
+            targetAmountOfToken0,
             DENOMINATOR - mutableParams_.erc20CapitalRatioD,
             DENOMINATOR
         );
-        uniV3Expected[1] = FullMath.mulDiv(
+        targetUniV3TokenAmounts[1] = FullMath.mulDiv(
             FullMath.mulDiv(
-                totalCapitalInToken0 - expectedAmountOfToken0,
+                totalCapitalInToken0 - targetAmountOfToken0,
                 DENOMINATOR - mutableParams_.erc20CapitalRatioD,
                 DENOMINATOR
             ),
@@ -165,28 +166,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     function calculateNewInterval(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
-        int24 tick,
-        uint256 uniV3Nft
-    )
-        public
-        view
-        returns (
-            bool needMintNewInterval,
-            int24 lowerTick,
-            int24 upperTick
-        )
-    {
-        if (uniV3Nft != 0) {
-            (, , , , , lowerTick, upperTick, , , , , ) = positionManager.positions(uniV3Nft);
-
-            if (
-                lowerTick + mutableParams_.tickNeighborhood <= tick &&
-                tick <= upperTick - mutableParams_.tickNeighborhood
-            ) {
-                return (false, lowerTick, upperTick);
-            }
-        }
-
+        int24 tick
+    ) public view returns (int24 lowerTick, int24 upperTick) {
         IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
         int24 tickSpacing = pool.tickSpacing();
 
@@ -197,32 +178,41 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
         lowerTick = centralTick - mutableParams_.intervalWidth / 2;
         upperTick = lowerTick + mutableParams_.intervalWidth;
-        needMintNewInterval = true;
     }
 
-    function checkMutableParams(MutableParams memory params) public view {
-        ImmutableParams memory immutableParams_ = immutableParams;
+    function checkMutableParams(MutableParams memory params, ImmutableParams memory immutableParams_) public view {
         int24 tickSpacing = immutableParams_.uniV3Vault.pool().tickSpacing();
-        require(params.intervalWidth > 0 && params.intervalWidth % tickSpacing == 0, ExceptionsLibrary.INVALID_VALUE);
-        require(params.intervalWidth % 2 == 0, ExceptionsLibrary.INVALID_VALUE);
-
         require(
-            params.tickNeighborhood > TickMath.MIN_TICK / 2 && params.tickNeighborhood <= params.intervalWidth,
-            ExceptionsLibrary.LIMIT_OVERFLOW
-        );
-
-        require(params.maxDeviationFromAverageTick > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
-
-        require(
-            params.swapFeeTier == 100 ||
-                params.swapFeeTier == 500 ||
-                params.swapFeeTier == 3000 ||
-                params.swapFeeTier == 10000,
+            params.intervalWidth > 0 && params.intervalWidth % (2 * tickSpacing) == 0,
             ExceptionsLibrary.INVALID_VALUE
         );
 
+        require(
+            params.tickNeighborhood >= -params.intervalWidth && params.tickNeighborhood <= params.intervalWidth / 2,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
+
+        require(params.intermediateToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+
+        require(
+            params.token0ToIntermediateSwapFeeTier == 100 ||
+                params.token0ToIntermediateSwapFeeTier == 500 ||
+                params.token0ToIntermediateSwapFeeTier == 3000 ||
+                params.token0ToIntermediateSwapFeeTier == 10000,
+            ExceptionsLibrary.INVALID_VALUE
+        );
+
+        require(
+            params.token1ToIntermediateSwapFeeTier == 100 ||
+                params.token1ToIntermediateSwapFeeTier == 500 ||
+                params.token1ToIntermediateSwapFeeTier == 3000 ||
+                params.token1ToIntermediateSwapFeeTier == 10000,
+            ExceptionsLibrary.INVALID_VALUE
+        );
+
+        require(params.maxDeviationFromAverageTick > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(params.timespanForAverageTick < 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
+        require(params.timespanForAverageTick < 7 * 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
 
         require(params.amount0ForMint > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.amount0ForMint <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
@@ -282,18 +272,24 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         IUniV3Vault vault = immutableParams_.uniV3Vault;
 
         uint256 uniV3Nft = vault.uniV3Nft();
-        bool needMintNewInterval;
-        (needMintNewInterval, newInterval.lowerTick, newInterval.upperTick) = calculateNewInterval(
+        if (uniV3Nft != 0) {
+            Interval memory currentPosition;
+            (, , , , , currentPosition.lowerTick, currentPosition.upperTick, , , , , ) = positionManager.positions(
+                uniV3Nft
+            );
+            if (
+                mutableParams_.tickNeighborhood + currentPosition.lowerTick <= spotTick &&
+                spotTick <= currentPosition.upperTick - mutableParams_.tickNeighborhood
+            ) {
+                return currentPosition;
+            }
+        }
+
+        (newInterval.lowerTick, newInterval.upperTick) = calculateNewInterval(
             immutableParams_,
             mutableParams_,
-            spotTick,
-            uniV3Nft
+            spotTick
         );
-
-        if (!needMintNewInterval) {
-            // equals to current position in uniV3Vault
-            return newInterval;
-        }
 
         if (uniV3Nft != 0) {
             vault.pull(
@@ -329,13 +325,13 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     function _capitalRebalance(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
-        Interval memory newInterval,
+        Interval memory interval,
         uint160 sqrtPriceX96
     ) private {
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         Tvls memory tvls = calculateTvls(immutableParams_);
-        (uint256[] memory uniV3Expected, uint256 expectedAmountOfToken0) = calculateExpectedAmounts(
-            newInterval,
+        (uint256[] memory targetUniV3TokenAmounts, uint256 targetAmountOfToken0) = calculateTargetAmounts(
+            interval,
             mutableParams_,
             priceX96,
             sqrtPriceX96,
@@ -343,9 +339,9 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             tvls.total[1]
         );
 
-        _pullExtraTokens(immutableParams_, uniV3Expected, tvls.uniV3);
-        _swapRebalance(immutableParams_, mutableParams_, priceX96, tvls.total[0], expectedAmountOfToken0);
-        _pullMissingTokens(immutableParams_, uniV3Expected, tvls.uniV3);
+        _pullExtraTokens(immutableParams_, targetUniV3TokenAmounts, tvls.uniV3);
+        _swapRebalance(immutableParams_, mutableParams_, priceX96, tvls.total[0], targetAmountOfToken0);
+        _pullMissingTokens(immutableParams_, targetUniV3TokenAmounts, tvls.uniV3);
     }
 
     function _swapRebalance(
@@ -353,18 +349,18 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         MutableParams memory mutableParams_,
         uint256 priceX96,
         uint256 currentAmountOfToken0,
-        uint256 expectedAmountOfToken0
+        uint256 targetAmountOfToken0
     ) private {
         uint256 tokenInIndex;
         uint256 amountIn;
         uint256 expectedAmountOut;
-        if (expectedAmountOfToken0 > currentAmountOfToken0) {
+        if (targetAmountOfToken0 > currentAmountOfToken0) {
             tokenInIndex = 1;
-            amountIn = FullMath.mulDiv(expectedAmountOfToken0 - currentAmountOfToken0, priceX96, Q96);
-            expectedAmountOut = expectedAmountOfToken0 - currentAmountOfToken0;
+            amountIn = FullMath.mulDiv(targetAmountOfToken0 - currentAmountOfToken0, priceX96, Q96);
+            expectedAmountOut = targetAmountOfToken0 - currentAmountOfToken0;
         } else {
             tokenInIndex = 0;
-            amountIn = currentAmountOfToken0 - expectedAmountOfToken0;
+            amountIn = currentAmountOfToken0 - targetAmountOfToken0;
             expectedAmountOut = FullMath.mulDiv(amountIn, priceX96, Q96);
         }
 
@@ -372,16 +368,32 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             return;
         }
 
+        bytes memory path;
+        if (tokenInIndex == 0) {
+            path = abi.encodePacked(
+                immutableParams_.tokens[0],
+                mutableParams_.token0ToIntermediateSwapFeeTier,
+                mutableParams_.intermediateToken,
+                mutableParams_.token1ToIntermediateSwapFeeTier,
+                immutableParams_.tokens[1]
+            );
+        } else {
+            path = abi.encodePacked(
+                immutableParams_.tokens[1],
+                mutableParams_.token1ToIntermediateSwapFeeTier,
+                mutableParams_.intermediateToken,
+                mutableParams_.token0ToIntermediateSwapFeeTier,
+                immutableParams_.tokens[0]
+            );
+        }
+
         bytes memory routerResult;
-        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: immutableParams_.tokens[tokenInIndex],
-            tokenOut: immutableParams_.tokens[tokenInIndex ^ 1],
-            fee: mutableParams_.swapFeeTier,
+        ISwapRouter.ExactInputParams memory swapParams = ISwapRouter.ExactInputParams({
+            path: path,
             recipient: address(immutableParams_.erc20Vault),
             deadline: block.timestamp + 1,
             amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
+            amountOutMinimum: 0
         });
 
         immutableParams_.erc20Vault.externalCall(
@@ -391,7 +403,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         );
         routerResult = immutableParams_.erc20Vault.externalCall(
             immutableParams_.router,
-            EXACT_INPUT_SINGLE_SELECTOR,
+            EXACT_INPUT_SELECTOR,
             abi.encode(swapParams)
         );
         immutableParams_.erc20Vault.externalCall(
@@ -411,12 +423,14 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
     function _pullExtraTokens(
         ImmutableParams memory immutableParams_,
-        uint256[] memory expected,
-        uint256[] memory tvl
+        uint256[] memory targetUniV3TokenAmounts,
+        uint256[] memory currentUniV3TokenAmounts
     ) private {
         uint256[] memory amountsToPull = new uint256[](2);
-        if (tvl[0] > expected[0]) amountsToPull[0] = tvl[0] - expected[0];
-        if (tvl[1] > expected[1]) amountsToPull[1] = tvl[1] - expected[1];
+        if (currentUniV3TokenAmounts[0] > targetUniV3TokenAmounts[0])
+            amountsToPull[0] = currentUniV3TokenAmounts[0] - targetUniV3TokenAmounts[0];
+        if (currentUniV3TokenAmounts[1] > targetUniV3TokenAmounts[1])
+            amountsToPull[1] = currentUniV3TokenAmounts[1] - targetUniV3TokenAmounts[1];
         if (amountsToPull[0] > 0 || amountsToPull[1] > 0) {
             immutableParams_.uniV3Vault.pull(
                 address(immutableParams_.erc20Vault),
@@ -429,12 +443,14 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
     function _pullMissingTokens(
         ImmutableParams memory immutableParams_,
-        uint256[] memory expected,
-        uint256[] memory tvl
+        uint256[] memory targetUniV3TokenAmounts,
+        uint256[] memory currentUniV3TokenAmounts
     ) private {
         uint256[] memory amountsToPull = new uint256[](2);
-        if (tvl[0] < expected[0]) amountsToPull[0] = expected[0] - tvl[0];
-        if (tvl[1] < expected[1]) amountsToPull[1] = expected[1] - tvl[1];
+        if (currentUniV3TokenAmounts[0] < targetUniV3TokenAmounts[0])
+            amountsToPull[0] = targetUniV3TokenAmounts[0] - currentUniV3TokenAmounts[0];
+        if (currentUniV3TokenAmounts[1] < targetUniV3TokenAmounts[1])
+            amountsToPull[1] = targetUniV3TokenAmounts[1] - currentUniV3TokenAmounts[1];
         if (amountsToPull[0] > 0 || amountsToPull[1] > 0) {
             immutableParams_.erc20Vault.pull(
                 address(immutableParams_.uniV3Vault),
@@ -453,7 +469,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         return bytes32("1.0.0");
     }
 
-    event TokensSwapped(ISwapRouter.ExactInputSingleParams swapParams, uint256 amountOut);
+    event TokensSwapped(ISwapRouter.ExactInputParams swapParams, uint256 amountOut);
     event UpdateMutableParams(address indexed origin, address indexed sender, MutableParams mutableParams);
     event Rebalance(address indexed origin, address indexed sender);
 }

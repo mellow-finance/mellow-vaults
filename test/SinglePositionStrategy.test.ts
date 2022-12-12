@@ -150,12 +150,9 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         baseStrategyAddress
                     );
 
-                    this.tickSpacing = 60;
-
                     const mutableParams = {
-                        intervalWidthInTickSpacings: 100,
-                        tickSpacing: this.tickSpacing,
-                        swapFee: 500,
+                        intervalWidth: 600,
+                        tickNeighborhood: 50,
                         maxDeviationFromAverageTick: 100,
                         timespanForAverageTick: 60,
                         amount0ForMint: 10 ** 9,
@@ -165,11 +162,45 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     } as MutableParamsStruct;
 
                     let immutableParams = {
+                        token0ToIntermediateSwapFeeTier: 3000,
+                        token1ToIntermediateSwapFeeTier: 3000,
                         router: this.swapRouter.address,
+                        intermediateToken: this.wbtc.address,
                         tokens: tokens,
                         erc20Vault: this.erc20Vault.address,
                         uniV3Vault: this.uniV3Vault500.address,
                     } as ImmutableParamsStruct;
+
+                    for (var poolData of [
+                        [
+                            tokens[0],
+                            immutableParams.intermediateToken,
+                            immutableParams.token0ToIntermediateSwapFeeTier,
+                        ],
+                        [
+                            tokens[1],
+                            immutableParams.intermediateToken,
+                            immutableParams.token1ToIntermediateSwapFeeTier,
+                        ],
+                    ]) {
+                        const factory = await ethers.getContractAt(
+                            "IUniswapV3Factory",
+                            await this.positionManager.factory()
+                        );
+                        const swapPool = await factory.getPool(
+                            poolData[0],
+                            poolData[1],
+                            poolData[2]
+                        );
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .stagePermissionGrants(swapPool, [4]);
+                    }
+
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitAllPermissionGrantsSurpassedDelay();
 
                     const params = [
                         immutableParams,
@@ -344,6 +375,73 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
 
         describe("#rebalance", () => {
             it("works correctly", async () => {
+                const pool = await ethers.getContractAt(
+                    "IUniswapV3Pool",
+                    await this.uniV3Vault500.pool()
+                );
+
+                await this.erc20RootVault
+                    .connect(this.deployer)
+                    .deposit(
+                        [
+                            BigNumber.from(10).pow(10).div(11),
+                            BigNumber.from(10).pow(18).div(11),
+                        ],
+                        0,
+                        []
+                    );
+
+                const { sqrtPriceX96 } = await pool.slot0();
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(ethers.constants.MaxUint256);
+
+                const immutableParams = await this.subject.immutableParams();
+                const mutableParams = await this.subject.mutableParams();
+                const tvls = await this.subject.callStatic.calculateTvls({
+                    ...immutableParams,
+                    tokens: [this.usdc.address, this.weth.address],
+                });
+
+                const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(Q96);
+                const totalCapital = tvls.total[0].add(
+                    tvls.total[1].mul(Q96).div(priceX96)
+                );
+                const erc20Capital = tvls.erc20[0].add(
+                    tvls.erc20[1].mul(Q96).div(priceX96)
+                );
+                const uniV3Capital = tvls.uniV3[0].add(
+                    tvls.uniV3[1].mul(Q96).div(priceX96)
+                );
+                const expectedErc20Capital = totalCapital
+                    .mul(mutableParams.erc20CapitalRatioD)
+                    .div(DENOMINATOR);
+                const expectedUniV3Capital = totalCapital
+                    .mul(DENOMINATOR.sub(mutableParams.erc20CapitalRatioD))
+                    .div(DENOMINATOR);
+
+                const currentERC20RatioD =
+                    DENOMINATOR.mul(erc20Capital).div(totalCapital);
+                const currentUniV3RatioD =
+                    DENOMINATOR.mul(uniV3Capital).div(totalCapital);
+                const expectedERC20RatioD =
+                    DENOMINATOR.mul(expectedErc20Capital).div(totalCapital);
+                const expectedUniV3RatioD =
+                    DENOMINATOR.mul(expectedUniV3Capital).div(totalCapital);
+
+                expect(currentERC20RatioD.toNumber()).to.be.closeTo(
+                    expectedERC20RatioD.toNumber(),
+                    2 * 10 ** 6
+                );
+
+                expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
+                    expectedUniV3RatioD.toNumber(),
+                    2 * 10 ** 6
+                );
+            });
+
+            xit("rebalance with multiple price moves correctly", async () => {
                 const pool = await ethers.getContractAt(
                     "IUniswapV3Pool",
                     await this.uniV3Vault500.pool()
