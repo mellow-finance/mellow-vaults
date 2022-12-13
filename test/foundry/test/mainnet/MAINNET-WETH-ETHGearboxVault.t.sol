@@ -566,12 +566,8 @@ contract GearboxWETHTest is Test {
         gearboxVault.adjustPosition();
 
         IBaseRewardPool kek = IBaseRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
-        console2.log(kek.rewardPerToken());
-
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         runRewarding(); // +1.63% on staking money
-
-        console2.log(kek.rewardPerToken());
 
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
         gearboxVault.adjustPosition();
@@ -646,7 +642,7 @@ contract GearboxWETHTest is Test {
         return true;
     }
 
-    function testVaultCloseWithoutOrdersButWithConvex() public {
+    function testVaultCloseWithoutOrdersButWithConvexWETH() public {
         deposit(FIRST_DEPOSIT, address(this));
         deposit(FIRST_DEPOSIT / 5 * 2, address(this));
         gearboxVault.adjustPosition();

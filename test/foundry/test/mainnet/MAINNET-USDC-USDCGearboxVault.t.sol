@@ -511,12 +511,12 @@ contract GearboxUSDCTest is Test {
         assertTrue(isClose(convexFantomBalanceFinal * 45, convexFantomBalanceAfter * 47, 100));
     }
 
-    function testTvlIsCloseToRealValue() public {
+    function testTvlIsCloseToRealValueUSDC() public {
         deposit(FIRST_DEPOSIT, address(this));
         gearboxVault.adjustPosition();
         uint256 currentTvl = tvl();
 
-        assertTrue(currentTvl >= FIRST_DEPOSIT * 10**6 * 998 / 1000 && currentTvl <= FIRST_DEPOSIT * 10**6 * 1002 / 1000); // ~0.2% deviation seems acceptable
+        assertTrue(currentTvl >= FIRST_DEPOSIT * 10**6 * 996 / 1000 && currentTvl <= FIRST_DEPOSIT * 10**6 * 1004 / 1000); // ~0.4% deviation is acceptable for current version
     }
 
     function runRewarding() public {
