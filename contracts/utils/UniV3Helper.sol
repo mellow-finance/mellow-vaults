@@ -75,38 +75,36 @@ contract UniV3Helper {
         }
     }
 
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
     function getPoolByNft(uint256 uniV3Nft) public view returns (IUniswapV3Pool pool) {
         (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(uniV3Nft);
         pool = IUniswapV3Pool(IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee));
     }
 
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
     function getFeesByNft(uint256 uniV3Nft) external view returns (uint256 fees0, uint256 fees1) {
-        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft, getPoolByNft(uniV3Nft));
+        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft);
     }
 
-    function tokenAmountsBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
+    function calculateTvlBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
         public
         view
         returns (uint256[] memory tokenAmounts)
     {
         tokenAmounts = new uint256[](2);
-        (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(
-            positionManager,
-            uniV3Nft,
-            sqrtPriceX96,
-            getPoolByNft(uniV3Nft)
-        );
+        (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96);
     }
 
-    function tokenAmountsByMinMaxPrice(
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
+    function calculateTvlByMinMaxPrices(
         uint256 uniV3Nft,
-        IUniswapV3Pool pool,
         uint256 minPriceX96,
         uint256 maxPriceX96
     ) external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         minTokenAmounts = new uint256[](2);
         maxTokenAmounts = new uint256[](2);
-        (uint256 fees0, uint256 fees1) = PositionValue.fees(positionManager, uniV3Nft, pool);
+        (uint256 fees0, uint256 fees1) = PositionValue.fees(positionManager, uniV3Nft);
 
         uint160 minSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(minPriceX96));
         uint160 maxSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(maxPriceX96));

@@ -31,22 +31,32 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        if (uniV3Nft == 0) {
+        uint256 uniV3Nft_ = uniV3Nft;
+        if (uniV3Nft_ == 0) {
             return (new uint256[](2), new uint256[](2));
         }
 
         address vaultGovernance_ = address(_vaultGovernance);
         IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(vaultGovernance_)
             .delayedProtocolParams();
-        IUniV3VaultGovernance.DelayedProtocolPerVaultParams memory vaultParams = IUniV3VaultGovernance(vaultGovernance_)
-            .delayedProtocolPerVaultParams(_nft);
-        (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle, vaultParams.safetyIndexiesSet);
-        (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.tokenAmountsByMinMaxPrice(
-            uniV3Nft,
-            pool,
-            minPriceX96,
-            maxPriceX96
-        );
+        IUniV3VaultGovernance.DelayedStrategyParams memory strategyParams = IUniV3VaultGovernance(vaultGovernance_)
+            .delayedStrategyParams(_nft);
+        // cheaper way to calculate tvl by spot price
+        if (strategyParams.safetyIndicesSet == 2) {
+            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+            minTokenAmounts = _uniV3Helper.calculateTvlBySqrtPriceX96(uniV3Nft_, sqrtPriceX96);
+            maxTokenAmounts = minTokenAmounts;
+        } else {
+            (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(
+                params.oracle,
+                strategyParams.safetyIndicesSet
+            );
+            (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculateTvlByMinMaxPrices(
+                uniV3Nft_,
+                minPriceX96,
+                maxPriceX96
+            );
+        }
     }
 
     /// @inheritdoc IntegrationVault
@@ -151,12 +161,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return false;
     }
 
-    function _getMinMaxPrice(IOracle oracle, uint32 safetyIndexiesSet)
+    function _getMinMaxPrice(IOracle oracle, uint32 safetyIndicesSet)
         internal
         view
         returns (uint256 minPriceX96, uint256 maxPriceX96)
     {
-        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndexiesSet);
+        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndicesSet);
         require(prices.length >= 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];

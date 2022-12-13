@@ -195,7 +195,12 @@ export const setupVault = async (
         // return;
     }
 
-    if (strategyTreasury && strategyTreasury !== delayedStrategyParams.strategyTreasury) {
+    if (
+        (strategyTreasury &&
+            strategyTreasury !== delayedStrategyParams.strategyTreasury) ||
+        (contractName == "UniV3VaultGovernance" &&
+            delayedStrategyParams.length > 0)
+    ) {
         log(`Setting delayed strategy params for ${contractName}`);
         log(delayedStrategyParams);
         await execute(
@@ -221,10 +226,6 @@ export const setupVault = async (
             "commitDelayedStrategyParams",
             expectedNft
         );
-    }
-
-    if (contractName === "UniV3VaultGovernance" && !delayedProtocolPerVaultParams) {
-        delayedProtocolPerVaultParams = {safetyIndexiesSet: 0x2};
     }
 
     if (delayedProtocolPerVaultParams) {

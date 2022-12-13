@@ -41,23 +41,19 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     }
 
     /// @inheritdoc IUniV3VaultGovernance
-    function stagedDelayedProtocolPerVaultParams(uint256 nft)
-        external
-        view
-        returns (DelayedProtocolPerVaultParams memory)
-    {
-        if (_stagedDelayedProtocolPerVaultParams[nft].length == 0) {
-            return DelayedProtocolPerVaultParams({safetyIndexiesSet: 0});
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({safetyIndicesSet: 0});
         }
-        return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
+        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
     /// @inheritdoc IUniV3VaultGovernance
-    function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
-        if (_delayedProtocolPerVaultParams[nft].length == 0) {
-            return DelayedProtocolPerVaultParams({safetyIndexiesSet: 0});
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_delayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({safetyIndicesSet: 0x2A});
         }
-        return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
+        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
     /// @inheritdoc IERC165
@@ -86,26 +82,20 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     }
 
     /// @inheritdoc IUniV3VaultGovernance
-    function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
-        require(params.safetyIndexiesSet > 0, ExceptionsLibrary.VALUE_ZERO);
-        _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
-        emit StageDelayedProtocolPerVaultParams(
-            tx.origin,
-            msg.sender,
-            nft,
-            params,
-            _delayedStrategyParamsTimestamp[nft]
-        );
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        require(params.safetyIndicesSet > 1, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
     /// @inheritdoc IUniV3VaultGovernance
-    function commitDelayedProtocolPerVaultParams(uint256 nft) external {
-        _commitDelayedProtocolPerVaultParams(nft);
-        emit CommitDelayedProtocolPerVaultParams(
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+        emit CommitDelayedStrategyParams(
             tx.origin,
             msg.sender,
             nft,
-            abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams))
+            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
         );
     }
 
@@ -152,29 +142,29 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 
-    /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
-    event StageDelayedProtocolPerVaultParams(
+    event StageDelayedStrategyParams(
         address indexed origin,
         address indexed sender,
         uint256 indexed nft,
-        DelayedProtocolPerVaultParams params,
+        DelayedStrategyParams params,
         uint256 when
     );
 
-    /// @notice Emitted when new DelayedProtocolPerVaultParams are committed
+    /// @notice Emitted when new DelayedStrategyParams are committed
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that are committed
-    event CommitDelayedProtocolPerVaultParams(
+    event CommitDelayedStrategyParams(
         address indexed origin,
         address indexed sender,
         uint256 indexed nft,
-        DelayedProtocolPerVaultParams params
+        DelayedStrategyParams params
     );
 }

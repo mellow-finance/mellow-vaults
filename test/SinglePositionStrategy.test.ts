@@ -10,7 +10,6 @@ import {
     UniV3Vault,
     ISwapRouter as SwapRouterInterface,
     SinglePositionStrategy,
-    SinglePositionRebalancer,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -24,9 +23,7 @@ import { TickMath } from "@uniswap/v3-sdk";
 
 import {
     ImmutableParamsStruct,
-    IntervalStruct,
     MutableParamsStruct,
-    RestrictionsStruct,
 } from "./types/SinglePositionStrategy";
 import { expect } from "chai";
 
@@ -38,9 +35,9 @@ type CustomContext = {
     protocolGovernance: ProtocolGovernance;
     deployerWethAmount: BigNumber;
     deployerUsdcAmount: BigNumber;
+    deployerDaiAmount: BigNumber;
     swapRouter: SwapRouterInterface;
     params: any;
-    rebalancer: SinglePositionRebalancer;
 };
 
 type DeployOptions = {};
@@ -55,8 +52,8 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
-                    const { deploy, get } = deployments;
-                    const tokens = [this.weth.address, this.usdc.address]
+                    const { deploy } = deployments;
+                    const tokens = [this.weth.address, this.dai.address]
                         .map((t) => t.toLowerCase())
                         .sort();
 
@@ -101,7 +98,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                                 500,
                                 this.uniV3Helper.address,
                             ],
-                            delayedProtocolPerVaultParams: [2],
+                            delayedStrategyParams: [2],
                         }
                     );
 
@@ -137,24 +134,12 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         uniswapV3Router
                     );
 
-                    const { address: rebalancerAddress } = await deploy(
-                        "SinglePositionRebalancer",
-                        {
-                            from: this.deployer.address,
-                            contract: "SinglePositionRebalancer",
-                            args: [this.positionManager.address],
-                            log: true,
-                            autoMine: true,
-                            ...TRANSACTION_GAS_LIMITS,
-                        }
-                    );
-
                     const { address: baseStrategyAddress } = await deploy(
                         "SinglePositionStrategy",
                         {
                             from: this.deployer.address,
                             contract: "SinglePositionStrategy",
-                            args: [],
+                            args: [uniswapV3PositionManager],
                             log: true,
                             autoMine: true,
                             ...TRANSACTION_GAS_LIMITS,
@@ -165,27 +150,58 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         "SinglePositionStrategy",
                         baseStrategyAddress
                     );
-
-                    this.tickSpacing = 60;
                     const mutableParams = {
-                        maxTickDeviation: 100,
-                        tickSpacing: this.tickSpacing,
-                        swapFee: 500,
-                        averageTickTimespan: 60,
-                        amount0ForMint: 10 ** 9,
-                        amount1ForMint: 10 ** 9,
-                        erc20CapitalRatioD: 10 ** 7,
-                        swapSlippageD: 10 ** 7,
+                        feeTierOfPoolOfAuxiliaryAnd0Tokens: 100,
+                        feeTierOfPoolOfAuxiliaryAnd1Tokens: 500,
+                        auxiliaryToken: this.usdc.address,
+                        intervalWidth: 600,
+                        tickNeighborhood: 10,
+                        maxDeviationForVaultPool: 100,
+                        maxDeviationForPoolOfAuxiliaryAnd0Tokens: 100,
+                        maxDeviationForPoolOfAuxiliaryAnd1Tokens: 100,
+                        timespanForAverageTick: 60,
+                        amount0Desired: 10 ** 9,
+                        amount1Desired: 10 ** 9,
+                        swapSlippageD: 7 * 10 ** 8,
                     } as MutableParamsStruct;
 
                     let immutableParams = {
-                        token0: tokens[0],
-                        token1: tokens[1],
                         router: this.swapRouter.address,
+                        tokens: tokens,
                         erc20Vault: this.erc20Vault.address,
                         uniV3Vault: this.uniV3Vault500.address,
-                        rebalancer: rebalancerAddress,
                     } as ImmutableParamsStruct;
+
+                    for (var poolData of [
+                        [
+                            tokens[0],
+                            mutableParams.auxiliaryToken,
+                            mutableParams.feeTierOfPoolOfAuxiliaryAnd0Tokens,
+                        ],
+                        [
+                            tokens[1],
+                            mutableParams.auxiliaryToken,
+                            mutableParams.feeTierOfPoolOfAuxiliaryAnd1Tokens,
+                        ],
+                    ]) {
+                        const factory = await ethers.getContractAt(
+                            "IUniswapV3Factory",
+                            await this.positionManager.factory()
+                        );
+                        const swapPool = await factory.getPool(
+                            poolData[0],
+                            poolData[1],
+                            poolData[2]
+                        );
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .stagePermissionGrants(swapPool, [4]);
+                    }
+
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitAllPermissionGrantsSurpassedDelay();
 
                     const params = [
                         immutableParams,
@@ -200,26 +216,11 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         newStrategyAddress
                     );
 
-                    immutableParams = await this.subject.immutableParams();
-                    this.rebalancer = await ethers.getContractAt(
-                        "SinglePositionRebalancer",
-                        immutableParams.rebalancer
-                    );
-
-                    await this.usdc.approve(
-                        this.swapRouter.address,
-                        ethers.constants.MaxUint256
-                    );
-                    await this.weth.approve(
-                        this.swapRouter.address,
-                        ethers.constants.MaxUint256
-                    );
-
                     await combineVaults(
                         hre,
                         erc20RootVaultNft,
                         [erc20VaultNft, uniV3Vault500Nft],
-                        this.rebalancer.address,
+                        this.subject.address,
                         this.deployer.address
                     );
 
@@ -239,30 +240,16 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.deployerUsdcAmount = BigNumber.from(10)
-                        .pow(9)
-                        .mul(3000);
-                    this.deployerWethAmount = BigNumber.from(10)
-                        .pow(18)
-                        .mul(4000);
-
-                    await mint(
-                        "USDC",
-                        this.deployer.address,
-                        this.deployerUsdcAmount
-                    );
-                    await mint(
-                        "WETH",
-                        this.deployer.address,
-                        this.deployerWethAmount
-                    );
-
                     for (let addr of [
-                        this.rebalancer.address,
                         this.subject.address,
                         this.erc20RootVault.address,
+                        this.swapRouter.address,
                     ]) {
                         await this.weth.approve(
+                            addr,
+                            ethers.constants.MaxUint256
+                        );
+                        await this.dai.approve(
                             addr,
                             ethers.constants.MaxUint256
                         );
@@ -272,47 +259,73 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         );
                     }
 
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        BigNumber.from(10).pow(18).mul(1000)
+                    );
+
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        BigNumber.from(10)
+                            .pow(6)
+                            .mul(10 ** 9)
+                    );
+
+                    await this.swapRouter.exactInputSingle({
+                        tokenIn: this.usdc.address,
+                        tokenOut: this.weth.address,
+                        fee: 3000,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                        amountIn: BigNumber.from(10)
+                            .pow(6)
+                            .mul(10 ** 8),
+                        amountOutMinimum: 0,
+                        sqrtPriceLimitX96: 0,
+                    });
+
+                    await this.swapRouter.exactInputSingle({
+                        tokenIn: this.weth.address,
+                        tokenOut: this.dai.address,
+                        fee: 3000,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                        amountIn: BigNumber.from(10).pow(18).mul(500),
+                        amountOutMinimum: 0,
+                        sqrtPriceLimitX96: 0,
+                    });
+
+                    this.deployerWethAmount = await this.weth.balanceOf(
+                        this.deployer.address
+                    );
+                    this.deployerUsdcAmount = await this.usdc.balanceOf(
+                        this.deployer.address
+                    );
+                    this.deployerDaiAmount = await this.dai.balanceOf(
+                        this.deployer.address
+                    );
+
                     this.positionManager = await ethers.getContractAt(
                         INonfungiblePositionManager,
                         uniswapV3PositionManager
                     );
 
-                    const pullExistentials =
+                    this.pullExistentials =
                         await this.erc20Vault.pullExistentials();
 
-                    await this.erc20RootVault
-                        .connect(this.deployer)
-                        .deposit(
-                            [
-                                pullExistentials[0].mul(10),
-                                pullExistentials[1].mul(10),
-                            ],
-                            0,
-                            []
-                        );
-
-                    await this.erc20RootVault
-                        .connect(this.deployer)
-                        .deposit(
-                            [
-                                BigNumber.from(10).pow(10).div(11),
-                                BigNumber.from(10).pow(18).div(11),
-                            ],
-                            0,
-                            []
-                        );
-
-                    await this.usdc
+                    await this.dai
                         .connect(this.deployer)
                         .transfer(
-                            this.rebalancer.address,
-                            pullExistentials[0].mul(10)
+                            this.subject.address,
+                            this.pullExistentials[0].mul(10)
                         );
                     await this.weth
                         .connect(this.deployer)
                         .transfer(
-                            this.rebalancer.address,
-                            pullExistentials[1].mul(10)
+                            this.subject.address,
+                            this.pullExistentials[1].mul(10)
                         );
 
                     this.getSqrtRatioAtTick = (tick: number) => {
@@ -321,6 +334,166 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         );
                     };
 
+                    const factory = await ethers.getContractAt(
+                        "IUniswapV3Factory",
+                        await this.positionManager.factory()
+                    );
+
+                    this.poolUsdcWeth = await ethers.getContractAt(
+                        "IUniswapV3Pool",
+                        await factory.getPool(
+                            this.usdc.address,
+                            this.weth.address,
+                            500
+                        )
+                    );
+                    this.poolDaiWeth = await ethers.getContractAt(
+                        "IUniswapV3Pool",
+                        await factory.getPool(
+                            this.dai.address,
+                            this.weth.address,
+                            500
+                        )
+                    );
+                    this.poolUsdcDai = await ethers.getContractAt(
+                        "IUniswapV3Pool",
+                        await factory.getPool(
+                            this.usdc.address,
+                            this.dai.address,
+                            100
+                        )
+                    );
+
+                    this.stabilizePrices = async () => {
+                        // dai - usdc = 1 usdc wei = 1e12 dai wei
+                        {
+                            let targetDaiUsdcTick = -276324; // log(1e-12) / log(1.0001)
+                            let denominator = 1;
+                            for (var i = 0; i < 20; i++) {
+                                let currentTick = (
+                                    await this.poolUsdcDai.slot0()
+                                ).tick;
+                                if (currentTick == targetDaiUsdcTick) break;
+                                if (currentTick > targetDaiUsdcTick) {
+                                    await this.swapRouter.exactInputSingle({
+                                        tokenIn: this.usdc.address,
+                                        tokenOut: this.dai.address,
+                                        fee: 100,
+                                        recipient: this.deployer.address,
+                                        deadline: ethers.constants.MaxUint256,
+                                        amountIn: BigNumber.from(10)
+                                            .pow(6)
+                                            .mul(BigNumber.from(500 * 100))
+                                            .div(denominator),
+                                        amountOutMinimum: 0,
+                                        sqrtPriceLimitX96: 0,
+                                    });
+                                } else {
+                                    await this.swapRouter.exactInputSingle({
+                                        tokenIn: this.dai.address,
+                                        tokenOut: this.usdc.address,
+                                        fee: 100,
+                                        recipient: this.deployer.address,
+                                        deadline: ethers.constants.MaxUint256,
+                                        amountIn: BigNumber.from(10)
+                                            .pow(18)
+                                            .mul(BigNumber.from(500 * 100))
+                                            .div(denominator),
+                                        amountOutMinimum: 0,
+                                        sqrtPriceLimitX96: 0,
+                                    });
+                                }
+                                denominator *= 2;
+                            }
+                        }
+
+                        // usdc - weth
+                        // daiToWeth tick + 276324
+                        {
+                            let targetUsdcWethTick =
+                                (await this.poolDaiWeth.slot0()).tick + 276324;
+                            let divider = 1;
+                            for (var i = 0; i < 30; i++) {
+                                let currentTick = (
+                                    await this.poolUsdcWeth.slot0()
+                                ).tick;
+                                if (currentTick == targetUsdcWethTick) break;
+                                if (currentTick > targetUsdcWethTick) {
+                                    await this.swapRouter.exactInputSingle({
+                                        tokenIn: this.usdc.address,
+                                        tokenOut: this.weth.address,
+                                        fee: 500,
+                                        recipient: this.deployer.address,
+                                        deadline: ethers.constants.MaxUint256,
+                                        amountIn: BigNumber.from(10)
+                                            .pow(6)
+                                            .mul(BigNumber.from(10000000))
+                                            .div(divider),
+                                        amountOutMinimum: 0,
+                                        sqrtPriceLimitX96: 0,
+                                    });
+                                } else {
+                                    await this.swapRouter.exactInputSingle({
+                                        tokenIn: this.weth.address,
+                                        tokenOut: this.usdc.address,
+                                        fee: 500,
+                                        recipient: this.deployer.address,
+                                        deadline: ethers.constants.MaxUint256,
+                                        amountIn: BigNumber.from(10)
+                                            .pow(18)
+                                            .mul(BigNumber.from(10000))
+                                            .div(divider),
+                                        amountOutMinimum: 0,
+                                        sqrtPriceLimitX96: 0,
+                                    });
+                                }
+                                divider *= 2;
+                            }
+                        }
+                    };
+
+                    this.movePrices = async (index: number) => {
+                        if (index < 3) {
+                            await this.swapRouter.exactInputSingle({
+                                tokenIn: this.dai.address,
+                                tokenOut: this.weth.address,
+                                fee: 500,
+                                recipient: this.deployer.address,
+                                deadline: ethers.constants.MaxUint256,
+                                amountIn: BigNumber.from(10)
+                                    .pow(18)
+                                    .mul(100000),
+                                amountOutMinimum: 0,
+                                sqrtPriceLimitX96: 0,
+                            });
+                        } else {
+                            await this.swapRouter.exactInputSingle({
+                                tokenIn: this.weth.address,
+                                tokenOut: this.dai.address,
+                                fee: 500,
+                                recipient: this.deployer.address,
+                                deadline: ethers.constants.MaxUint256,
+                                amountIn: BigNumber.from(10).pow(18).mul(100),
+                                amountOutMinimum: 0,
+                                sqrtPriceLimitX96: 0,
+                            });
+                        }
+                    };
+
+                    this.printTicks = async () => {
+                        // const { tick: usdcWethTick } =
+                        //     await this.poolUsdcWeth.slot0();
+                        // const { tick: daiWethTick } =
+                        //     await this.poolDaiWeth.slot0();
+                        // const { tick: usdcDaiTick } =
+                        //     await this.poolUsdcDai.slot0();
+                        // console.log("usdc-weth:", usdcWethTick);
+                        // console.log("dai-weth:", daiWethTick);
+                        // console.log("usdc-dai:", usdcDaiTick);
+                        // let targetUsdcWethTick = daiWethTick + 276324;
+                        // console.log("Target usdc-weth:", targetUsdcWethTick);
+                        // console.log("Target usdc-dai:", -276324);
+                    };
                     return this.subject;
                 }
             );
@@ -338,76 +511,53 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        const push = async (delta: BigNumber, tokenName: string) => {
-            const n = 20;
-            var from = "";
-            var to = "";
-            if (tokenName == "USDC") {
-                from = this.usdc.address;
-                to = this.weth.address;
-            } else {
-                from = this.weth.address;
-                to = this.usdc.address;
-            }
-
-            await mint(tokenName, this.deployer.address, delta);
-            for (var i = 0; i < n; i++) {
-                await this.swapRouter.exactInputSingle({
-                    tokenIn: from,
-                    tokenOut: to,
-                    fee: 500,
-                    recipient: this.deployer.address,
-                    deadline: ethers.constants.MaxUint256,
-                    amountIn: delta.div(n),
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                });
-            }
-        };
-
         describe("#rebalance", () => {
             it("works correctly", async () => {
+                await this.erc20RootVault
+                    .connect(this.deployer)
+                    .deposit(
+                        [
+                            this.pullExistentials[0].mul(10),
+                            this.pullExistentials[1].mul(10),
+                        ],
+                        0,
+                        []
+                    );
+
+                await this.erc20RootVault
+                    .connect(this.deployer)
+                    .deposit(
+                        [
+                            BigNumber.from(10).pow(18),
+                            BigNumber.from(10).pow(18),
+                        ],
+                        0,
+                        []
+                    );
                 const pool = await ethers.getContractAt(
                     "IUniswapV3Pool",
                     await this.uniV3Vault500.pool()
                 );
-                for (var i = 0; i < 10; i++) {
-                    await this.erc20RootVault
-                        .connect(this.deployer)
-                        .deposit(
-                            [
-                                BigNumber.from(10).pow(10).div(11),
-                                BigNumber.from(10).pow(18).div(11),
-                            ],
-                            0,
-                            []
-                        );
 
-                    const { sqrtPriceX96, tick } = await pool.slot0();
-                    const centerTick = tick - (tick % this.tickSpacing);
-                    const toLeft = Math.round(Math.random() * 10) + 1;
-                    const toRight = Math.round(Math.random() * 10) + 1;
-                    const interval = {
-                        lowerTick: centerTick - toLeft * this.tickSpacing,
-                        upperTick: centerTick + toRight * this.tickSpacing,
-                    } as IntervalStruct;
+                await this.printTicks();
+                for (let i = 0; i < 6; i++) {
+                    await this.movePrices(i);
+                    await this.stabilizePrices();
+                    await sleep(this.governanceDelay);
+                    await this.printTicks();
 
-                    await this.subject.connect(this.mStrategyAdmin).rebalance({
-                        newInterval: interval,
-                        swappedAmounts: [0, 0],
-                        drainedAmounts: [0, 0],
-                        pulledToUniV3: [0, 0],
-                        pulledFromUniV3: [0, 0],
-                        deadline: ethers.constants.MaxUint256,
-                    } as RestrictionsStruct);
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalance(ethers.constants.MaxUint256);
 
-                    const mutableParams = await this.subject.mutableParams();
-                    const tvls = await this.rebalancer.callStatic.getTvls(
-                        await this.subject.getData(
-                            await this.subject.immutableParams()
-                        )
-                    );
+                    const immutableParams =
+                        await this.subject.immutableParams();
+                    const tvls = await this.subject.callStatic.calculateTvls({
+                        ...immutableParams,
+                        tokens: [this.dai.address, this.weth.address],
+                    });
 
+                    const { sqrtPriceX96 } = await pool.slot0();
                     const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(Q96);
                     const totalCapital = tvls.total[0].add(
                         tvls.total[1].mul(Q96).div(priceX96)
@@ -415,40 +565,16 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     const erc20Capital = tvls.erc20[0].add(
                         tvls.erc20[1].mul(Q96).div(priceX96)
                     );
-                    const uniV3Capital = tvls.uniV3[0].add(
-                        tvls.uniV3[1].mul(Q96).div(priceX96)
-                    );
-                    const expectedErc20Capital = totalCapital
-                        .mul(mutableParams.erc20CapitalRatioD)
-                        .div(DENOMINATOR);
-                    const expectedUniV3Capital = totalCapital
-                        .mul(DENOMINATOR.sub(mutableParams.erc20CapitalRatioD))
-                        .div(DENOMINATOR);
 
                     const currentERC20RatioD =
                         DENOMINATOR.mul(erc20Capital).div(totalCapital);
-                    const currentUniV3RatioD =
-                        DENOMINATOR.mul(uniV3Capital).div(totalCapital);
-                    const expectedERC20RatioD =
-                        DENOMINATOR.mul(expectedErc20Capital).div(totalCapital);
-                    const expectedUniV3RatioD =
-                        DENOMINATOR.mul(expectedUniV3Capital).div(totalCapital);
 
-                    expect(currentERC20RatioD.toNumber()).to.be.closeTo(
-                        expectedERC20RatioD.toNumber(),
-                        DENOMINATOR.div(100).toNumber()
-                    );
-                    expect(currentUniV3RatioD.toNumber()).to.be.closeTo(
-                        expectedUniV3RatioD.toNumber(),
-                        DENOMINATOR.div(100).toNumber()
-                    );
-
-                    if (Math.random() > 0.5) {
-                        await push(BigNumber.from(10).pow(12), "USDC");
-                    } else {
-                        await push(BigNumber.from(10).pow(21), "WETH");
-                    }
-                    await sleep(this.governanceDelay);
+                    // console.log(
+                    //     (currentERC20RatioD.toNumber() * 100) /
+                    //         DENOMINATOR.toNumber(),
+                    //     "%"
+                    // );
+                    expect(currentERC20RatioD.lte(6 * 10 ** 5)).to.be.true; // at most = 0.006% on ERC20Vault
                 }
             });
         });
