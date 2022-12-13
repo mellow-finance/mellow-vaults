@@ -24,9 +24,6 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     uint256 public constant MAX_MINTING_PARAMS = 10**9;
     uint256 public constant Q96 = 2**96;
 
-    bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
-    bytes4 public constant EXACT_INPUT_SELECTOR = ISwapRouter.exactInput.selector;
-
     INonfungiblePositionManager public immutable positionManager;
 
     struct ImmutableParams {
@@ -83,7 +80,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             try
                 immutableParams_.erc20Vault.externalCall(
                     immutableParams_.tokens[i],
-                    APPROVE_SELECTOR,
+                    IERC20.approve.selector,
                     abi.encode(immutableParams_.router, type(uint256).max)
                 )
             returns (bytes memory) {} catch {}
@@ -420,7 +417,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
         routerResult = immutableParams_.erc20Vault.externalCall(
             immutableParams_.router,
-            EXACT_INPUT_SELECTOR,
+            ISwapRouter.exactInput.selector,
             abi.encode(swapParams)
         );
 
