@@ -31,7 +31,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        if (uniV3Nft == 0) {
+        uint256 uniV3Nft_ = uniV3Nft;
+        if (uniV3Nft_ == 0) {
             return (new uint256[](2), new uint256[](2));
         }
 
@@ -40,12 +41,22 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             .delayedProtocolParams();
         IUniV3VaultGovernance.DelayedStrategyParams memory strategyParams = IUniV3VaultGovernance(vaultGovernance_)
             .delayedStrategyParams(_nft);
-        (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle, strategyParams.safetyIndicesSet);
-        (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculateTvlByMinMaxPrices(
-            uniV3Nft,
-            minPriceX96,
-            maxPriceX96
-        );
+        // cheaper way to calculate tvl by spot price
+        if (strategyParams.safetyIndicesSet == 2) {
+            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+            minTokenAmounts = _uniV3Helper.calculateTvlBySqrtPriceX96(uniV3Nft_, sqrtPriceX96);
+            maxTokenAmounts = minTokenAmounts;
+        } else {
+            (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(
+                params.oracle,
+                strategyParams.safetyIndicesSet
+            );
+            (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculateTvlByMinMaxPrices(
+                uniV3Nft_,
+                minPriceX96,
+                maxPriceX96
+            );
+        }
     }
 
     /// @inheritdoc IntegrationVault
