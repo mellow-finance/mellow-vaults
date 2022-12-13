@@ -80,6 +80,20 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         immutableParams = immutableParams_;
         IERC20(immutableParams_.tokens[0]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
         IERC20(immutableParams_.tokens[1]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
+        try
+            immutableParams_.erc20Vault.externalCall(
+                immutableParams_.tokens[0],
+                APPROVE_SELECTOR,
+                abi.encode(immutableParams_.router, type(uint256).max)
+            )
+        returns (bytes memory) {} catch {}
+        try
+            immutableParams_.erc20Vault.externalCall(
+                immutableParams_.tokens[1],
+                APPROVE_SELECTOR,
+                abi.encode(immutableParams_.router, type(uint256).max)
+            )
+        returns (bytes memory) {} catch {}
         checkMutableParams(mutableParams_, immutableParams_);
         mutableParams = mutableParams_;
         DefaultAccessControlLateInit.init(admin);
@@ -260,8 +274,6 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         IUniV3Vault vault = immutableParams_.uniV3Vault;
         uint256 uniV3Nft = vault.uniV3Nft();
         if (uniV3Nft != 0) {
-            // best position to call this position in most efficient way
-            vault.collectEarnings();
             Interval memory currentPosition;
             (, , , , , currentPosition.lowerTick, currentPosition.upperTick, , , , , ) = positionManager.positions(
                 uniV3Nft
@@ -270,6 +282,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
                 mutableParams_.tickNeighborhood + currentPosition.lowerTick <= spotTick &&
                 spotTick <= currentPosition.upperTick - mutableParams_.tickNeighborhood
             ) {
+                vault.collectEarnings();
                 return currentPosition;
             }
         }
@@ -411,21 +424,12 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             amountOutMinimum: 0
         });
 
-        immutableParams_.erc20Vault.externalCall(
-            immutableParams_.tokens[tokenInIndex],
-            APPROVE_SELECTOR,
-            abi.encode(immutableParams_.router, amountIn)
-        );
         routerResult = immutableParams_.erc20Vault.externalCall(
             immutableParams_.router,
             EXACT_INPUT_SELECTOR,
             abi.encode(swapParams)
         );
-        immutableParams_.erc20Vault.externalCall(
-            immutableParams_.tokens[tokenInIndex],
-            APPROVE_SELECTOR,
-            abi.encode(immutableParams_.router, 0)
-        );
+
         uint256 amountOut = abi.decode(routerResult, (uint256));
 
         require(

@@ -210,18 +210,19 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     ];
                     const newStrategyAddress =
                         await baseStrategy.callStatic.createStrategy(...params);
-                    await baseStrategy.createStrategy(...params);
-                    this.subject = await ethers.getContractAt(
-                        "SinglePositionStrategy",
-                        newStrategyAddress
-                    );
 
                     await combineVaults(
                         hre,
                         erc20RootVaultNft,
                         [erc20VaultNft, uniV3Vault500Nft],
-                        this.subject.address,
+                        newStrategyAddress,
                         this.deployer.address
+                    );
+
+                    await baseStrategy.createStrategy(...params);
+                    this.subject = await ethers.getContractAt(
+                        "SinglePositionStrategy",
+                        newStrategyAddress
                     );
 
                     this.erc20RootVaultNft = erc20RootVaultNft;
@@ -241,7 +242,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         .addDepositorsToAllowlist([this.deployer.address]);
 
                     for (let addr of [
-                        this.subject.address,
+                        newStrategyAddress,
                         this.erc20RootVault.address,
                         this.swapRouter.address,
                     ]) {
