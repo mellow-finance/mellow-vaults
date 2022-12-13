@@ -78,22 +78,16 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     ) external {
         checkImmutableParams(immutableParams_);
         immutableParams = immutableParams_;
-        IERC20(immutableParams_.tokens[0]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
-        IERC20(immutableParams_.tokens[1]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
-        try
-            immutableParams_.erc20Vault.externalCall(
-                immutableParams_.tokens[0],
-                APPROVE_SELECTOR,
-                abi.encode(immutableParams_.router, type(uint256).max)
-            )
-        returns (bytes memory) {} catch {}
-        try
-            immutableParams_.erc20Vault.externalCall(
-                immutableParams_.tokens[1],
-                APPROVE_SELECTOR,
-                abi.encode(immutableParams_.router, type(uint256).max)
-            )
-        returns (bytes memory) {} catch {}
+        for (uint256 i = 0; i < 2; i++) {
+            IERC20(immutableParams_.tokens[i]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
+            try
+                immutableParams_.erc20Vault.externalCall(
+                    immutableParams_.tokens[i],
+                    APPROVE_SELECTOR,
+                    abi.encode(immutableParams_.router, type(uint256).max)
+                )
+            returns (bytes memory) {} catch {}
+        }
         checkMutableParams(mutableParams_, immutableParams_);
         mutableParams = mutableParams_;
         DefaultAccessControlLateInit.init(admin);
