@@ -53,7 +53,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
                     const { deploy } = deployments;
-                    const tokens = [this.weth.address, this.dai.address]
+                    const tokens = [this.dai.address, this.weth.address]
                         .map((t) => t.toLowerCase())
                         .sort();
 
@@ -153,6 +153,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     const mutableParams = {
                         feeTierOfPoolOfAuxiliaryAnd0Tokens: 100,
                         feeTierOfPoolOfAuxiliaryAnd1Tokens: 500,
+                        priceImpactD6: 0,
                         auxiliaryToken: this.usdc.address,
                         intervalWidth: 600,
                         tickNeighborhood: 10,
@@ -216,7 +217,19 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         erc20RootVaultNft,
                         [erc20VaultNft, uniV3Vault500Nft],
                         newStrategyAddress,
-                        this.deployer.address
+                        this.deployer.address,
+                        {
+                            limits: [
+                                ethers.constants.MaxUint256,
+                                ethers.constants.MaxUint256,
+                            ],
+                            strategyPerformanceTreasuryAddress:
+                                ethers.constants.AddressZero,
+                            tokenLimitPerAddress: ethers.constants.MaxUint256,
+                            tokenLimit: ethers.constants.MaxUint256,
+                            managementFee: BigNumber.from(0),
+                            performanceFee: BigNumber.from(0),
+                        }
                     );
 
                     await baseStrategy.createStrategy(...params);
@@ -320,13 +333,13 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         .connect(this.deployer)
                         .transfer(
                             this.subject.address,
-                            this.pullExistentials[0].mul(10)
+                            this.pullExistentials[0].mul(100)
                         );
                     await this.weth
                         .connect(this.deployer)
                         .transfer(
                             this.subject.address,
-                            this.pullExistentials[1].mul(10)
+                            this.pullExistentials[1].mul(100)
                         );
 
                     this.getSqrtRatioAtTick = (tick: number) => {
@@ -454,7 +467,7 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     };
 
                     this.movePrices = async (index: number) => {
-                        if (index < 3) {
+                        if (index < 2) {
                             await this.swapRouter.exactInputSingle({
                                 tokenIn: this.dai.address,
                                 tokenOut: this.weth.address,
@@ -481,20 +494,16 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         }
                     };
 
-                    this.printTicks = async () => {
-                        // const { tick: usdcWethTick } =
-                        //     await this.poolUsdcWeth.slot0();
-                        // const { tick: daiWethTick } =
-                        //     await this.poolDaiWeth.slot0();
-                        // const { tick: usdcDaiTick } =
-                        //     await this.poolUsdcDai.slot0();
-                        // console.log("usdc-weth:", usdcWethTick);
-                        // console.log("dai-weth:", daiWethTick);
-                        // console.log("usdc-dai:", usdcDaiTick);
-                        // let targetUsdcWethTick = daiWethTick + 276324;
-                        // console.log("Target usdc-weth:", targetUsdcWethTick);
-                        // console.log("Target usdc-dai:", -276324);
-                    };
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageUnitPrice(
+                            this.dai.address,
+                            BigNumber.from(10).pow(18)
+                        );
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitUnitPrice(this.dai.address);
                     return this.subject;
                 }
             );
@@ -513,12 +522,22 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
         });
 
         describe("#rebalance", () => {
+            const updateIntervalWidth = async (width: number) => {
+                let mutableParams = await this.subject.mutableParams();
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateMutableParams({
+                        ...mutableParams,
+                        intervalWidth: width,
+                    });
+            };
+
             it("works correctly", async () => {
                 await this.erc20RootVault
                     .connect(this.deployer)
                     .deposit(
                         [
-                            this.pullExistentials[0].mul(10),
+                            this.pullExistentials[0].mul(13000),
                             this.pullExistentials[1].mul(10),
                         ],
                         0,
@@ -529,8 +548,8 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     .connect(this.deployer)
                     .deposit(
                         [
-                            BigNumber.from(10).pow(18),
-                            BigNumber.from(10).pow(18),
+                            BigNumber.from(10).pow(18).mul(1300),
+                            BigNumber.from(10).pow(18).mul(1),
                         ],
                         0,
                         []
@@ -540,42 +559,63 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     await this.uniV3Vault500.pool()
                 );
 
-                await this.printTicks();
-                for (let i = 0; i < 6; i++) {
-                    await this.movePrices(i);
-                    await this.stabilizePrices();
-                    await sleep(this.governanceDelay);
-                    await this.printTicks();
+                for (let intervalWidth of [20, 200, 2000, 20000]) {
+                    await updateIntervalWidth(intervalWidth);
+                    for (let i = 0; i < 4; i++) {
+                        if (i % 2 == 0) {
+                            await this.erc20RootVault
+                                .connect(this.deployer)
+                                .deposit(
+                                    [
+                                        BigNumber.from(10).pow(18).mul(1300),
+                                        BigNumber.from(10).pow(18).mul(1),
+                                    ],
+                                    0,
+                                    []
+                                );
+                        }
+                        await this.movePrices(i);
+                        await this.stabilizePrices();
+                        await sleep(this.governanceDelay);
 
-                    await this.subject
-                        .connect(this.mStrategyAdmin)
-                        .rebalance(ethers.constants.MaxUint256);
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(ethers.constants.MaxUint256);
 
-                    const immutableParams =
-                        await this.subject.immutableParams();
-                    const tvls = await this.subject.callStatic.calculateTvls({
-                        ...immutableParams,
-                        tokens: [this.dai.address, this.weth.address],
-                    });
+                        const erc20 = (await this.erc20Vault.tvl())
+                            .minTokenAmounts;
+                        const total = (await this.erc20RootVault.tvl())
+                            .minTokenAmounts;
 
-                    const { sqrtPriceX96 } = await pool.slot0();
-                    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(Q96);
-                    const totalCapital = tvls.total[0].add(
-                        tvls.total[1].mul(Q96).div(priceX96)
-                    );
-                    const erc20Capital = tvls.erc20[0].add(
-                        tvls.erc20[1].mul(Q96).div(priceX96)
-                    );
+                        const { sqrtPriceX96 } = await pool.slot0();
+                        const priceX96 = sqrtPriceX96
+                            .mul(sqrtPriceX96)
+                            .div(Q96);
+                        const totalCapital = total[0].add(
+                            total[1].mul(Q96).div(priceX96)
+                        );
+                        const erc20Capital = erc20[0].add(
+                            erc20[1].mul(Q96).div(priceX96)
+                        );
 
-                    const currentERC20RatioD =
-                        DENOMINATOR.mul(erc20Capital).div(totalCapital);
+                        const currentERC20RatioD =
+                            DENOMINATOR.mul(erc20Capital).div(totalCapital);
+                        expect(currentERC20RatioD.lte(50000)).to.be.true; // at most = 0.005% on ERC20Vault
 
-                    // console.log(
-                    //     (currentERC20RatioD.toNumber() * 100) /
-                    //         DENOMINATOR.toNumber(),
-                    //     "%"
-                    // );
-                    expect(currentERC20RatioD.lte(6 * 10 ** 5)).to.be.true; // at most = 0.006% on ERC20Vault
+                        if (i % 2 == 1) {
+                            const balance = await this.erc20RootVault.balanceOf(
+                                this.deployer.address
+                            );
+                            await this.erc20RootVault
+                                .connect(this.deployer)
+                                .withdraw(
+                                    this.deployer.address,
+                                    balance.div(2),
+                                    [0, 0],
+                                    [[], []]
+                                );
+                        }
+                    }
                 }
             });
         });
