@@ -36,8 +36,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         address[] tokens;
     }
 
-    /// @param feeTierOfPoolOfAuxiliaryAnd0Tokens fee tier of pool of auxiliary token and token 0
-    /// @param feeTierOfPoolOfAuxiliaryAnd1Tokens fee tier of pool of auxiliary token and token 1
+    /// @param feeTierOfPoolOfAuxiliaryAnd0Tokens fee tier of the pool of auxiliary token and token 0
+    /// @param feeTierOfPoolOfAuxiliaryAnd1Tokens fee tier of the pool of auxiliary token and token 1
     /// @param priceImpactD6 coefficient to take into account the impact of changing the price during tokens swaps
     /// @param intervalWidth uniswap position interval width
     /// @param tickNeighborhood if the spot tick is inside [lowerTick + tickNeighborhood, upperTick - tickNeighborhood], then the position will not be rebalanced
@@ -72,7 +72,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         int24 upperTick;
     }
 
-    /// @dev structre with all immutable params of the strategy
+    /// @dev structure with all immutable params of the strategy
     ImmutableParams public immutableParams;
     /// @dev structure with all mutable params of the strategy
     MutableParams public mutableParams;
@@ -113,7 +113,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     /// @param immutableParams_ structure with all immutable params of the strategy
     /// @param mutableParams_ structure with all mutable params of the strategy
     /// @param admin admin of the strategy
-    /// @return strategy new created strategy
+    /// @return strategy newly created strategy
     function createStrategy(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -259,7 +259,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     /// @dev checks deviation of spot ticks of all pools in strategy from corresponding average ticks.
-    /// If any deviation large than maxDevation parameter for pool, then the transaction will be reverted with an LIMIT_OVERFLOW error.
+    /// If any deviation is large than maxDevation parameter for the pool, then the transaction will be reverted with a LIMIT_OVERFLOW error.
     /// If there are no observations 10 seconds ago in any of the considered pools, then the transaction will be reverted with an INVALID_STATE error.
     /// @param immutableParams_ structure with all immutable params of the strategy
     /// @param mutableParams_ structure with all mutable params of the strategy
