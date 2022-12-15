@@ -10,8 +10,6 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 
-import "../libraries/external/FullMath.sol";
-import "../libraries/external/TickMath.sol";
 import "../libraries/external/OracleLibrary.sol";
 
 import "../utils/ContractMeta.sol";
@@ -27,6 +25,10 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
 
     INonfungiblePositionManager public immutable positionManager;
 
+    /// @param router uniswap router to process swaps on UniswapV3 pools
+    /// @param erc20Vault buffer vault of rootVault system
+    /// @param uniV3Vault vault containing a uniswap position, allowing to add and withdraw liquidity from it
+    /// @param tokens array of length 2 with strategy and vaults tokens
     struct ImmutableParams {
         address router;
         IERC20Vault erc20Vault;
@@ -34,6 +36,19 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         address[] tokens;
     }
 
+    /// @param feeTierOfPoolOfAuxiliaryAnd0Tokens fee tier of pool of auxiliary token and token 0
+    /// @param feeTierOfPoolOfAuxiliaryAnd1Tokens fee tier of pool of auxiliary token and token 1
+    /// @param priceImpactD6 coefficient to take into account the impact of changing the price during tokens swaps
+    /// @param intervalWidth uniswap position interval width
+    /// @param tickNeighborhood if the spot tick is inside [lowerTick + tickNeighborhood, upperTick - tickNeighborhood], then the position will not be rebalanced
+    /// @param maxDeviationForVaultPool maximum deviation of the spot tick from the average tick for the pool of token 0 and token 1
+    /// @param maxDeviationForPoolOfAuxiliaryAnd0Tokens maximum deviation of the spot tick from the average tick for the pool of auxiliary token and token 0
+    /// @param maxDeviationForPoolOfAuxiliaryAnd1Tokens maximum deviation of the spot tick from the average tick for the pool of auxiliary token and token 1
+    /// @param timespanForAverageTick time interval on which average ticks in pools are determined
+    /// @param auxiliaryToken intermediate token for swaps through pools with more liquidity
+    /// @param amount0Desired amount of token 0 to mint position on UniswapV3Pool
+    /// @param amount1Desired amount of token 1 to mint position on UniswapV3Pool
+    /// @param swapSlippageD coefficient to protect against price slippage when swapping tokens
     struct MutableParams {
         uint24 feeTierOfPoolOfAuxiliaryAnd0Tokens;
         uint24 feeTierOfPoolOfAuxiliaryAnd1Tokens;
@@ -50,20 +65,28 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         uint256 swapSlippageD;
     }
 
+    /// @param lowerTick lower tick of an interval
+    /// @param upperTick upper tick of an interval
     struct Interval {
         int24 lowerTick;
         int24 upperTick;
     }
 
+    /// @dev structre with all immutable params of the strategy
     ImmutableParams public immutableParams;
+    /// @dev structure with all mutable params of the strategy
     MutableParams public mutableParams;
 
+    /// @param positionManager_ Uniswap v3 NonfungiblePositionManager
     constructor(INonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
         DefaultAccessControlLateInit.init(address(this));
     }
 
+    /// @param immutableParams_ structure with all immutable params of the strategy
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param admin admin of the strategy
     function initialize(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -86,6 +109,11 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         DefaultAccessControlLateInit.init(admin);
     }
 
+    /// @dev clones current contract to new address and setup immutable and mutable parameters and admin for it
+    /// @param immutableParams_ structure with all immutable params of the strategy
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param admin admin of the strategy
+    /// @return strategy new created strategy
     function createStrategy(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -95,6 +123,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         strategy.initialize(immutableParams_, mutableParams_, admin);
     }
 
+    /// @dev updates mutable params of the strategy. Only the admin can call the function
+    /// @param mutableParams_ new params to set
     function updateMutableParams(MutableParams memory mutableParams_) external {
         _requireAdmin();
         checkMutableParams(mutableParams_, immutableParams);
@@ -102,6 +132,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
 
+    /// @dev updates mutable params of the strategy. Admin or operator can call the function
+    /// @param deadline timestamp before which the transaction must be completed
     function rebalance(uint256 deadline) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
@@ -118,6 +150,12 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         emit Rebalance(tx.origin, msg.sender);
     }
 
+    /// @dev calculates a new interval according to the mutable params, the tickSpacing of the pool and the spot tick
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param tick current spot tick of the pool
+    /// @param pool the UniV3Vault pool where the new position will be minted
+    /// @return lowerTick lower tick of the new interval
+    /// @return upperTick upper tick of the new interval
     function calculateNewInterval(
         MutableParams memory mutableParams_,
         int24 tick,
@@ -134,6 +172,9 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         upperTick = centralTick + mutableParams_.intervalWidth / 2;
     }
 
+    /// @dev checks mutable params according to strategy restrictions
+    /// @param params mutable parameters to be checked
+    /// @param immutableParams_ structure with all immutable params of the strategy
     function checkMutableParams(MutableParams memory params, ImmutableParams memory immutableParams_) public view {
         int24 tickSpacing = immutableParams_.uniV3Vault.pool().tickSpacing();
         require(
@@ -191,6 +232,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         );
     }
 
+    /// @dev checks immutable params according to strategy restrictions
+    /// @param params immutable parameters to be checked
     function checkImmutableParams(ImmutableParams memory params) public view {
         require(params.tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(params.tokens[0] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -215,6 +258,12 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         }
     }
 
+    /// @dev checks deviation of spot ticks of all pools in strategy from corresponding average ticks.
+    /// If any deviation large than maxDevation parameter for pool, then the transaction will be reverted with an LIMIT_OVERFLOW error.
+    /// If there are no observations 10 seconds ago in any of the considered pools, then the transaction will be reverted with an INVALID_STATE error.
+    /// @param immutableParams_ structure with all immutable params of the strategy
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param vaultPool UniswapV3Pool of uniV3Vault
     function checkTickDeviations(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -252,6 +301,15 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         }
     }
 
+    /// @dev The function rebalances the position on the uniswap pool. If there was a position in the uniV3Vault,
+    /// and the current tick is inside this position, taking into account the tickNeighborhood, then the position will not be rebalanced.
+    /// Otherwise, if there is a position in the uniV3Vault, then all tokens will be sent to erc20Vault, the new position will be mined,
+    /// and the old one will be burned.
+    /// @param immutableParams_ structure with all immutable params of the strategy
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param spotTick current spot tick of UniswapV3Pool of uniV3Vault
+    /// @param pool UniswapV3Pool of uniV3Vault
+    /// @return newInterval The position on the uniV3Vault after the function is executed.
     function _positionsRebalance(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -304,6 +362,11 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         }
     }
 
+    /// @dev calculate target ratio of token 1 to total capital after rebalance
+    /// @param interval current interval on uniV3Vault
+    /// @param sqrtSpotPriceX96 sqrt price X96 of spot tick
+    /// @param spotPriceX96 price X96 of spot tick
+    /// @return targetRatioOfToken1X96 ratio of token 1 multiplied by 2^96
     function calculateTargetRatioOfToken1(
         Interval memory interval,
         uint160 sqrtSpotPriceX96,
@@ -330,6 +393,13 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     }
 
     /// @dev notion link: https://www.notion.so/mellowprotocol/Swap-formula-53807cbf5c5641eda937dd1847d70f43
+    /// calculates the token that needs to be swapped and its amount to get the target ratio of tokens in the erc20Vault.
+    /// @param immutableParams_ structure with all immutable params of the strategy
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param priceX96 price X96 of spot tick
+    /// @param targetRatioOfToken1X96 target ratio of token 1 to total capital after rebalance
+    /// @return tokenInIndex swap token index
+    /// @return amountIn number of tokens to swap
     function calculateAmountsForSwap(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -381,6 +451,11 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         }
     }
 
+    /// @dev calculates the target ratio of tokens and swaps them
+    /// @param immutableParams_ structure with all immutable params of the strategy
+    /// @param mutableParams_ structure with all mutable params of the strategy
+    /// @param interval current interval on uniV3Vault
+    /// @param sqrtSpotPriceX96 sqrt price X96 of spot tick
     function _swapToTarget(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -442,6 +517,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         emit TokensSwapped(swapParams, abi.decode(routerResult, (uint256)));
     }
 
+    /// @dev pushed maximal possible amounts of tokens from erc20Vault to uniV3Vault
+    /// @param immutableParams_ structure with all immutable params of the strategy
     function _pushIntoUniswap(ImmutableParams memory immutableParams_) private {
         (uint256[] memory tokenAmounts, ) = immutableParams_.erc20Vault.tvl();
         if (tokenAmounts[0] > 0 || tokenAmounts[1] > 0) {
@@ -462,7 +539,19 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         return bytes32("1.0.0");
     }
 
+    /// @notice Emitted after a successful token swap
+    /// @param swapParams structure with different parameters for handling swap via swapRouter
+    /// @param amountOut the actual amount received from the swapRouter during swaps
     event TokensSwapped(ISwapRouter.ExactInputParams swapParams, uint256 amountOut);
+
+    /// @notice Emited when mutable parameters are successfully updated
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param mutableParams Updated parameters
     event UpdateMutableParams(address indexed origin, address indexed sender, MutableParams mutableParams);
+
+    /// @notice Emited when the rebalance is successfully completed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     event Rebalance(address indexed origin, address indexed sender);
 }
