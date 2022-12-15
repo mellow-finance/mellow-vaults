@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 
-import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
+import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 
+import "../libraries/external/FullMath.sol";
 import "../libraries/external/OracleLibrary.sol";
+import "../libraries/external/TickMath.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
@@ -132,8 +134,13 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
 
-    /// @dev updates mutable params of the strategy. Admin or operator can call the function
-    /// @param deadline timestamp before which the transaction must be completed
+    /// @dev Rebalancing goes like this:
+    /// 1. Function checks the current states of the pools, and if the volatility is significant, the transaction reverts.
+    /// 2. If necessary, a new position is minted on uniV3Vault, and the previous one is burned.
+    /// 3. Tokens on erc20Vault are swapped via swapRouter so that the proportion matches the tokens on uniV3Vault.
+    /// 4. The strategy transfers all possible tokens from erc20Vault to uniV3Vault.
+    /// Only users with administrator or operator roles can call the function.
+    /// @param deadline Timestamp by which the transaction must be completed
     function rebalance(uint256 deadline) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
