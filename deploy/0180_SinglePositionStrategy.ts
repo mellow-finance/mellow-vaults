@@ -134,6 +134,7 @@ const buildSinglePositionStrategy = async (
         "SinglePositionStrategy",
         newStrategyAddress
     );
+    console.log("Strategy address:", newStrategyAddress);
     await deployments.save(deploymentName, {
         abi: (await deployments.get("SinglePositionStrategy")).abi,
         address: newStrategyAddress,
