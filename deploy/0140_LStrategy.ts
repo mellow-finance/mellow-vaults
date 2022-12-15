@@ -22,6 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployer,
         uniswapV3PositionManager,
         cowswap,
+        cowswapRelayer,
         weth,
         wsteth,
         mStrategyTreasury,
@@ -171,13 +172,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [
             uniswapV3PositionManager,
             cowswap,
+            cowswapRelayer,
             erc20Vault,
             uniV3LowerVault,
             uniV3UpperVault,
             strategyOrderHelper.address,
             deployer,
             120,
-            intervalWidthInTicks,
         ],
         log: true,
         autoMine: true,
@@ -229,7 +230,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await lStrategy.updateOtherParams({
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
-        rebalanceDeadline: BigNumber.from(86400 * 30),
+        secondsBetweenRebalances: 600,
     });
 
     const ADMIN_ROLE =

@@ -29,8 +29,6 @@ import { randomBytes } from "ethers/lib/utils";
 import { TickMath } from "@uniswap/v3-sdk";
 import { sqrt } from "@uniswap/sdk-core";
 import JSBI from "jsbi";
-import { uintToBytes32 } from "../tasks/base";
-import { T } from "ramda";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -302,6 +300,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     contract: "LStrategy",
                     args: [
                         uniswapV3PositionManager,
+                        cowswapDeployParams.address,
                         cowswapDeployParams.address,
                         this.erc20Vault.address,
                         this.uniV3LowerVault.address,
@@ -609,7 +608,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     let erc20Tvl = await this.erc20Vault.tvl();
                     let tokens = [this.wsteth, this.weth];
                     let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
-
                     if (delta.lt(BigNumber.from(-1))) {
                         await this.swapTokens(
                             this.erc20Vault.address,
@@ -785,7 +783,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await this.subject.connect(this.admin).updateOtherParams({
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
-                    rebalanceDeadline: BigNumber.from(10).pow(6),
+                    secondsBetweenRebalances: BigNumber.from(10).pow(6),
                 });
 
                 return this.subject;
@@ -851,6 +849,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
                     .pow(7)
                     .div(2),
+            });
+
+            await this.subject.connect(this.admin).updateOtherParams({
+                minToken0ForOpening: BigNumber.from(10).pow(6),
+                minToken1ForOpening: BigNumber.from(10).pow(6),
+                secondsBetweenRebalances: BigNumber.from(0),
             });
         });
 
@@ -1085,11 +1089,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 describe("erc20 rebalance", () => {
                     describe("when pulling from erc 20 to uni v3", () => {
                         it("works", async () => {
+                            await this.balanceERC20();
                             let ratioParams = {
                                 erc20UniV3CapitalRatioD:
-                                    this.baseParams.erc20UniV3CapitalRatioD.div(
-                                        2
-                                    ),
+                                    this.baseParams.erc20UniV3CapitalRatioD
+                                        .mul(3)
+                                        .div(4),
                                 erc20TokenRatioD:
                                     this.baseParams.erc20TokenRatioD,
                                 minErc20UniV3CapitalRatioDeviationD:
@@ -1439,6 +1444,16 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(lowerVaultLiquidity).to.be.eq(0);
                     expect(upperVaultLiquidity).to.be.eq(0);
 
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceERC20UniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            )
+                    ).not.to.be.reverted;
+                    await this.trySwapERC20();
                     await expect(
                         this.subject
                             .connect(this.admin)
@@ -1865,7 +1880,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 this.baseParams = {
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
-                    rebalanceDeadline: BigNumber.from(86400 * 30),
+                    secondsBetweenRebalances: BigNumber.from(86400 * 30),
                 };
             });
 
@@ -1880,7 +1895,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 expect(returnedParams.minToken1ForOpening).eq(
                     BigNumber.from(10).pow(6)
                 );
-                expect(returnedParams.rebalanceDeadline).eq(
+                expect(returnedParams.secondsBetweenRebalances).eq(
                     BigNumber.from(86400 * 30)
                 );
             });
@@ -1941,10 +1956,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ).to.be.revertedWith(Exceptions.INVARIANT);
                     });
                 });
-                describe("when rebalanceDeadline is incorrect", () => {
+                describe("when secondsBetweenRebalances is incorrect", () => {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
-                        params.rebalanceDeadline = BigNumber.from(86400 * 31);
+                        params.secondsBetweenRebalances = BigNumber.from(
+                            86400 * 31
+                        );
                         await expect(
                             this.subject
                                 .connect(this.admin)
@@ -3170,7 +3187,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
                         await ethers.provider.send("hardhat_setStorageAt", [
                             this.subject.address,
-                            "0x5", // address of orderDeadline
+                            "0x7", // address of orderDeadline
                             "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                         ]);
                         await expect(
@@ -3533,173 +3550,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 )
                         ).to.be.reverted;
                     });
-                });
-            });
-        });
-
-        describe("#depositCallback", () => {
-            it("calls rebalance inside", async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await expect(this.subject.connect(this.admin).depositCallback())
-                    .to.not.be.reverted;
-            });
-            describe("access control:", () => {
-                beforeEach(async () => {
-                    await this.grantPermissions();
-                    await this.preparePush({ vault: this.uniV3LowerVault });
-                    await this.preparePush({ vault: this.uniV3UpperVault });
-                });
-
-                it("allowed: admin", async () => {
-                    await expect(
-                        this.subject.connect(this.admin).depositCallback()
-                    ).to.not.be.reverted;
-                });
-                it("allowed: operator", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await this.subject
-                            .connect(this.admin)
-                            .grantRole(
-                                await this.subject.ADMIN_DELEGATE_ROLE(),
-                                signer.address
-                            );
-                        await expect(
-                            this.subject.connect(signer).depositCallback()
-                        ).to.not.be.reverted;
-                    });
-                });
-                it("not allowed: any address", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject.connect(signer).depositCallback()
-                        ).to.be.reverted;
-                    });
-                });
-            });
-        });
-        describe("#withdrawCallback", () => {
-            it("calls rebalance inside", async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await expect(
-                    this.subject.connect(this.admin).withdrawCallback()
-                ).to.not.be.reverted;
-            });
-            describe("access control:", () => {
-                beforeEach(async () => {
-                    await this.grantPermissions();
-                    await this.preparePush({ vault: this.uniV3LowerVault });
-                    await this.preparePush({ vault: this.uniV3UpperVault });
-                });
-
-                it("allowed: admin", async () => {
-                    await expect(
-                        this.subject.connect(this.admin).withdrawCallback()
-                    ).to.not.be.reverted;
-                });
-                it("allowed: operator", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await this.subject
-                            .connect(this.admin)
-                            .grantRole(
-                                await this.subject.ADMIN_DELEGATE_ROLE(),
-                                signer.address
-                            );
-                        await expect(
-                            this.subject.connect(signer).withdrawCallback()
-                        ).to.not.be.reverted;
-                    });
-                });
-                it("not allowed: any address", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject.connect(signer).withdrawCallback()
-                        ).to.be.reverted;
-                    });
-                });
-            });
-        });
-    });
-    describe("#depositCallback", () => {
-        it("calls rebalance inside", async () => {
-            await this.grantPermissions();
-            await this.preparePush({ vault: this.uniV3LowerVault });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            await expect(this.subject.connect(this.admin).depositCallback()).to
-                .not.be.reverted;
-        });
-        describe("access control:", () => {
-            beforeEach(async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-            });
-
-            it("allowed: admin", async () => {
-                await expect(this.subject.connect(this.admin).depositCallback())
-                    .to.not.be.reverted;
-            });
-            it("allowed: operator", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .grantRole(
-                            await this.subject.ADMIN_DELEGATE_ROLE(),
-                            signer.address
-                        );
-                    await expect(this.subject.connect(signer).depositCallback())
-                        .to.not.be.reverted;
-                });
-            });
-            it("not allowed: any address", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(this.subject.connect(signer).depositCallback())
-                        .to.be.reverted;
-                });
-            });
-        });
-    });
-    describe("#withdrawCallback", () => {
-        it("calls rebalance inside", async () => {
-            await this.grantPermissions();
-            await this.preparePush({ vault: this.uniV3LowerVault });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            await expect(this.subject.connect(this.admin).withdrawCallback()).to
-                .not.be.reverted;
-        });
-        describe("access control:", () => {
-            beforeEach(async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-            });
-
-            it("allowed: admin", async () => {
-                await expect(
-                    this.subject.connect(this.admin).withdrawCallback()
-                ).to.not.be.reverted;
-            });
-            it("allowed: operator", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .grantRole(
-                            await this.subject.ADMIN_DELEGATE_ROLE(),
-                            signer.address
-                        );
-                    await expect(
-                        this.subject.connect(signer).withdrawCallback()
-                    ).to.not.be.reverted;
-                });
-            });
-            it("not allowed: any address", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).withdrawCallback()
-                    ).to.be.reverted;
                 });
             });
         });

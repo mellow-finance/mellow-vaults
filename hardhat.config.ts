@@ -18,16 +18,20 @@ const config: HardhatUserConfig = {
             forking: process.env["MAINNET_RPC"]
                 ? {
                       url: process.env["MAINNET_RPC"],
-                      blockNumber: 13268999,
+                      blockNumber: 15000000,
                   }
                 : undefined,
 
-            accounts: process.env["MAINNET_DEPLOYER_PK"]
+            accounts: (process.env["MAINNET_DEPLOYER_PK"] && process.env["MAINNET_APPROVER_PK"])
                 ? [
                       {
                           privateKey: process.env["MAINNET_DEPLOYER_PK"],
                           balance: (10 ** 20).toString(),
                       },
+                      {
+                          privateKey: process.env["MAINNET_APPROVER_PK"],
+                          balance: (10 ** 20).toString(),
+                      }
                   ]
                 : undefined,
         },
@@ -289,6 +293,9 @@ const config: HardhatUserConfig = {
         },
         cowswap: {
             default: "0x9008D19f58AAbD9eD0D60971565AA8510560ab41",
+        },
+        cowswapRelayer: {
+            default: "0xC92E8bdf79f0507f65a392b0ab4667716BFE0110",
         },
         curveRouter: {
             default: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",

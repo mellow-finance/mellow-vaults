@@ -11,6 +11,7 @@ jobs:
       cancel-in-progress: true
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
+      GOERLI_RPC: ${{ secrets.goerli_rpc }}
     steps:
       - uses: actions/checkout@v1
 
@@ -40,7 +41,7 @@ jobs:
             ~/.vvm
             ~/cache
           key: compiler-cache
-
+          
       - name: Install yarn dependencies
         run: yarn
 
@@ -55,6 +56,15 @@ jobs:
 
       - name: Run coverage
         run: yarn coverage:fast
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run foundry tests
+        run: cd test/foundry && forge install && forge build --sizes && forge test -vv --fork-block-number=15867000 --fork-url=${{secrets.MAINNET_RPC}} --match-path='test/mainnet/*.sol'
+        id: test
 
       - name: Count LOC
         run: find contracts -name "*.sol" | xargs wc -l

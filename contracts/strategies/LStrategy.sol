@@ -7,16 +7,14 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
-import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/utils/ILStrategyHelper.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is DefaultAccessControl, ILpCallback {
+contract LStrategy is DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -28,13 +26,16 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     INonfungiblePositionManager public immutable positionManager;
     ILStrategyHelper public immutable orderHelper;
     uint24 public immutable poolFee;
-    address public immutable cowswap;
+    address public immutable cowswapSettlement;
+    address public immutable cowswapVaultRelayer;
     uint16 public immutable intervalWidthInTicks;
 
     // INTERNAL STATE
 
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
+    uint256 public lastRebalanceERC20UniV3VaultsTimestamp;
+    uint256 public lastRebalanceUniV3VaultsTimestamp;
     uint256 public orderDeadline;
     uint256[] internal _pullExistentials;
 
@@ -60,7 +61,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     struct OtherParams {
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
-        uint256 rebalanceDeadline;
+        uint256 secondsBetweenRebalances;
     }
 
     struct PreOrder {
@@ -88,7 +89,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     // @param vault2_ Reference to Uniswap V3 Vault 2
     constructor(
         INonfungiblePositionManager positionManager_,
-        address cowswap_,
+        address cowswapSettlement_,
+        address cowswapVaultRelayer_,
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,
         IUniV3Vault vault2_,
@@ -102,7 +104,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 (address(vault1_) != address(0)) &&
                 (address(vault2_) != address(0)) &&
                 (address(erc20vault_) != address(0)) &&
-                (cowswap_ != address(0)),
+                (cowswapVaultRelayer_ != address(0)) &&
+                (cowswapSettlement_ != address(0)),
             ExceptionsLibrary.ADDRESS_ZERO
         );
 
@@ -115,7 +118,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         tokens = vault1_.vaultTokens();
         poolFee = vault1_.pool().fee();
         _pullExistentials = vault1_.pullExistentials();
-        cowswap = cowswap_;
+        cowswapSettlement = cowswapSettlement_;
+        cowswapVaultRelayer = cowswapVaultRelayer_;
         orderHelper = orderHelper_;
         intervalWidthInTicks = intervalWidthInTicks_;
     }
@@ -179,6 +183,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         )
     {
         _requireAtLeastOperator();
+        require(
+            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
+            ExceptionsLibrary.TIMESTAMP
+        );
+        lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
         uint128 lowerVaultLiquidity;
@@ -288,6 +297,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         )
     {
         _requireAtLeastOperator();
+        require(
+            block.timestamp >= lastRebalanceUniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
+            ExceptionsLibrary.TIMESTAMP
+        );
+        lastRebalanceUniV3VaultsTimestamp = block.timestamp;
         LiquidityParams memory liquidityParams;
 
         {
@@ -434,14 +448,14 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             erc20Vault.externalCall(
                 address(order.sellToken),
                 APPROVE_SELECTOR,
-                abi.encode(cowswap, order.sellAmount + order.feeAmount)
+                abi.encode(cowswapVaultRelayer, order.sellAmount + order.feeAmount)
             );
-            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
+            erc20Vault.externalCall(cowswapSettlement, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
             orderDeadline = order.validTo;
             delete preOrder;
             emit OrderSigned(tx.origin, msg.sender, uuid, order, preOrder, signed);
         } else {
-            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, false));
+            erc20Vault.externalCall(cowswapSettlement, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, false));
         }
     }
 
@@ -449,7 +463,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param tokenNumber The number of token in LStrategy
     function resetCowswapAllowance(uint8 tokenNumber) external {
         _requireAtLeastOperator();
-        bytes memory approveData = abi.encode(cowswap, uint256(0));
+        bytes memory approveData = abi.encode(cowswapVaultRelayer, uint256(0));
         erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, approveData);
         emit CowswapAllowanceReset(tx.origin, msg.sender);
     }
@@ -531,29 +545,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 (newOtherParams.minToken1ForOpening > 0) &&
                 (newOtherParams.minToken0ForOpening <= 1000000000) &&
                 (newOtherParams.minToken1ForOpening <= 1000000000) &&
-                (newOtherParams.rebalanceDeadline <= 86400 * 30),
+                (newOtherParams.secondsBetweenRebalances <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         otherParams = newOtherParams;
         emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
-    }
-
-    /// @notice Callback function called after for ERC20RootVault::deposit
-    function depositCallback() external {
-        rebalanceERC20UniV3Vaults(
-            _pullExistentials,
-            _pullExistentials,
-            block.timestamp + otherParams.rebalanceDeadline
-        );
-    }
-
-    /// @notice Callback function called after for ERC20RootVault::withdraw
-    function withdrawCallback() external {
-        rebalanceERC20UniV3Vaults(
-            _pullExistentials,
-            _pullExistentials,
-            block.timestamp + otherParams.rebalanceDeadline
-        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

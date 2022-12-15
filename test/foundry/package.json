@@ -1,0 +1,23 @@
+{
+    "name": "mellow-foundry-tests",
+    "license": "BSL-1.1",
+    "version": "1.0.0",
+    "files": [
+      "src/**/*.sol"
+    ],
+    "repository": "https://github.com/mellow-finance/mellow-vaults",
+    "devDependencies": {
+      "prettier": "^2.3.1",
+      "prettier-plugin-solidity": "^1.0.0-beta.13"
+    },
+    "scripts": {
+      "prettier": "prettier --write **.sol",
+      "prettier:check": "prettier --check **.sol",
+      "test:goerli": "forge test -vvvv --rpc-url $(grep GOERLI_RPC_URL .env | cut -d '=' -f2) --fork-block-number 7630000 --match-path 'test/goerli/*.sol'",
+      "test:mainnet": "forge test -vv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15867000 --match-path 'test/mainnet/*.sol'",
+      "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+      "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+      "compile": "forge build",
+      "size": "forge build --sizes --force --via-ir"
+    }
+  }
