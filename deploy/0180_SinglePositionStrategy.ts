@@ -245,8 +245,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         feeTierOfPoolOfAuxiliaryAnd0Tokens: 500, // weth-usdc 0.05%
         feeTierOfPoolOfAuxiliaryAnd1Tokens: 100, // bob-usdc 0.01%
         priceImpactD6: 0,
-        intervalWidth: 600,
-        tickNeighborhood: 100,
+        intervalWidth: 1600,
+        tickNeighborhood: 50,
         maxDeviationForVaultPool: 50,
         maxDeviationForPoolOfAuxiliaryAnd0Tokens: 50, // weth-usdc 0.05%
         maxDeviationForPoolOfAuxiliaryAnd1Tokens: 25, // bob-usdc 0.01%
