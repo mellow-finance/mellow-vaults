@@ -332,7 +332,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             );
             if (
                 mutableParams_.tickNeighborhood + currentPosition.lowerTick <= spotTick &&
-                spotTick <= currentPosition.upperTick - mutableParams_.tickNeighborhood
+                spotTick <= currentPosition.upperTick - mutableParams_.tickNeighborhood &&
+                mutableParams_.intervalWidth == currentPosition.upperTick - currentPosition.lowerTick
             ) {
                 vault.collectEarnings();
                 return currentPosition;
