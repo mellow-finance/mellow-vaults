@@ -46,11 +46,11 @@ contract MainnetDeployment is Script {
         governance = ProtocolGovernance(0xDc9C17662133fB865E7bA3198B67c53a617B2153);
         registry = VaultRegistry(0xFD23F971696576331fCF96f80a20B4D3b31ca5b2);
 
-        rootVault = GearboxRootVault(0xE7c742c2D2d8Fa47aED99596633E695BBA567Be7);
-        gearboxVault = GearboxVault(0x1802CD8a33156709DDdF0730b02b868223d31ED1);
+        rootVault = new GearboxRootVault();
+        gearboxVault = new GearboxVault();
 
-      //  console2.log("Mock Gearbox Root Vault: ", address(rootVault));
-       // console2.log("Mock Gearbox Vault: ", address(gearboxVault));
+        console2.log("Mock Gearbox Root Vault: ", address(rootVault));
+        console2.log("Mock Gearbox Vault: ", address(gearboxVault));
         
         IVaultGovernance.InternalParams memory internalParamsA = IVaultGovernance.InternalParams({
             protocolGovernance: governance,
@@ -69,7 +69,7 @@ contract MainnetDeployment is Script {
             crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
             cvx: cvx,
             maxSlippageD9: 10000000,
-            maxSmallPoolsSlippageD9: 20000000,
+            maxSmallPoolsSlippageD9: 40000000,
             maxCurveSlippageD9: 30000000,
             uniswapRouter: 0xE592427A0AEce92De3Edee1F18E0157C05861564
         });
@@ -81,14 +81,15 @@ contract MainnetDeployment is Script {
             oracle: IOracle(0x9d992650B30C6FB7a83E7e7a430b4e015433b838)
         });
         
-        governanceA = ERC20RootVaultGovernance(0x844cb31Bc4990EE14F6C31ec4293656C3AB5Eda4); // => GEARBOX ROOT VAULT GOVERNANCE
+        governanceA = new ERC20RootVaultGovernance(internalParamsA, delayedParamsA, helper); // => GEARBOX ROOT VAULT GOVERNANCE
         governanceB = ERC20VaultGovernance(0x0bf7B603389795E109a13140eCb07036a1534573);
-        governanceC = GearboxVaultGovernance(0x97EB91e466c09aa9ae673E2AD18445CF1B8afEA0);
+        governanceC = new GearboxVaultGovernance(internalParamsB, delayedParamsB);
 
-       // console2.log("Gearbox Governance: ", address(governanceC));
-       // console2.log("Gearbox Root Governance: ", address(governanceA));
+        console2.log("Gearbox Governance: ", address(governanceC));
+        console2.log("Gearbox Root Governance: ", address(governanceA));
 
-       // vm.stopBroadcast();
+        vm.stopBroadcast();
+        return;
 /*    
     /////////////////////////////////////////////// UP TO SIGN IN 24H
         uint8[] memory args = new uint8[](1);
