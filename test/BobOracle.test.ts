@@ -70,7 +70,7 @@ contract<BobOracle, DeployOptions, CustomContext>("BobOracle", function () {
         await this.deploymentFixture();
     });
 
-    describe.only("#latestRoundData", () => {
+    describe("#latestRoundData", () => {
         it("#check correctness", async () => {
             const initialPrice = (
                 await this.subject.latestRoundData()
