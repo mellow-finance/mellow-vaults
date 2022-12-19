@@ -1,36 +1,22 @@
-import hre from "hardhat";
-import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import {
-    encodeToBytes,
-    mint,
-    randomAddress,
-    sleep,
-    withSigner,
-} from "./library/Helpers";
+import { mint } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { ERC20RootVault, ERC20Vault, BobOracle } from "./types";
 import {
-    combineVaults,
-    PermissionIdsLibrary,
-    setupVault,
-    TRANSACTION_GAS_LIMITS,
-} from "../deploy/0000_utils";
-import { integrationVaultBehavior } from "./behaviors/integrationVault";
-import {
-    AAVE_VAULT_INTERFACE_ID,
-    INTEGRATION_VAULT_INTERFACE_ID,
-} from "./library/Constants";
-import Exceptions from "./library/Exceptions";
-import { timeStamp } from "console";
-import { uint256 } from "./library/property";
+    BobOracle,
+    IUniswapV3Pool,
+    ISwapRouter as SwapRouterInterface,
+    ERC20Token,
+} from "./types";
+import { TRANSACTION_GAS_LIMITS } from "../deploy/0000_utils";
+import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
+import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
+import { expect } from "chai";
 
 type CustomContext = {
-    erc20Vault: ERC20Vault;
-    erc20RootVault: ERC20RootVault;
-    curveRouter: string;
-    preparePush: () => any;
+    pool: IUniswapV3Pool;
+    swapRouter: SwapRouterInterface;
+    bob: ERC20Token;
 };
 
 type DeployOptions = {};
@@ -41,17 +27,40 @@ contract<BobOracle, DeployOptions, CustomContext>("BobOracle", function () {
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
                 const { deploy } = deployments;
-                const { deployer } = await getNamedAccounts();
+                const { deployer, usdc, bob, uniswapV3Router } =
+                    await getNamedAccounts();
+                const factory = await ethers.getContractAt(
+                    "IUniswapV3Factory",
+                    "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+                );
+
+                const poolAddress = await factory.getPool(usdc, bob, 100);
+
+                this.pool = await ethers.getContractAt(
+                    "IUniswapV3Pool",
+                    poolAddress
+                );
+
                 await deploy("BobOracle", {
                     from: deployer,
                     args: [
-                        "0xC0D19f4FAE83EB51B2adb59EB649c7BC2b19B2f6",
+                        usdc,
+                        bob,
+                        this.pool.address,
                         "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6",
                     ],
                     log: true,
                     autoMine: true,
                     ...TRANSACTION_GAS_LIMITS,
                 });
+
+                this.bob = await ethers.getContractAt("ERC20Token", bob);
+                this.subject = await ethers.getContract("BobOracle");
+
+                this.swapRouter = await ethers.getContractAt(
+                    ISwapRouter,
+                    uniswapV3Router
+                );
                 return this.subject;
             }
         );
@@ -63,7 +72,57 @@ contract<BobOracle, DeployOptions, CustomContext>("BobOracle", function () {
 
     describe.only("#latestRoundData", () => {
         it("#check correctness", async () => {
-            console.log((await this.subject.latestRoundData()).answer);
+            const initialPrice = (
+                await this.subject.latestRoundData()
+            ).answer.toNumber();
+
+            await mint(
+                "USDC",
+                this.deployer.address,
+                BigNumber.from(10).pow(15)
+            );
+            await this.usdc.approve(
+                this.swapRouter.address,
+                ethers.constants.MaxUint256
+            );
+
+            // increase bob token price
+            await this.swapRouter.exactInputSingle({
+                tokenIn: this.usdc.address,
+                tokenOut: this.bob.address,
+                fee: 100,
+                recipient: this.deployer.address,
+                deadline: ethers.constants.MaxUint256,
+                amountIn: BigNumber.from(10).pow(6).mul(100000),
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+            });
+            const bobPricePlus = (
+                await this.subject.latestRoundData()
+            ).answer.toNumber();
+
+            await this.bob.approve(
+                this.swapRouter.address,
+                ethers.constants.MaxUint256
+            );
+            // decrease bob token price
+            await this.swapRouter.exactInputSingle({
+                tokenIn: this.bob.address,
+                tokenOut: this.usdc.address,
+                fee: 100,
+                recipient: this.deployer.address,
+                deadline: ethers.constants.MaxUint256,
+                amountIn: BigNumber.from(10).pow(18).mul(95000),
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+            });
+            const bobPriceMinus = (
+                await this.subject.latestRoundData()
+            ).answer.toNumber();
+
+            expect(initialPrice).to.be.closeTo(10 ** 8, 10 ** 5);
+            expect(initialPrice).to.be.lt(bobPricePlus);
+            expect(bobPricePlus).to.be.gt(bobPriceMinus);
         });
     });
 });

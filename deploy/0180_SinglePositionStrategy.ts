@@ -239,8 +239,9 @@ type ImmutableParamsStruct = {
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { getNamedAccounts } = hre;
     const { weth, bob, usdc } = await getNamedAccounts();
-
-    if (!bob) return;
+    if ((await hre.getChainId()) != "137") {
+        return;
+    }
     await deployStrategy(hre);
     await buildSinglePositionStrategy(hre, [weth, bob], {
         feeTierOfPoolOfAuxiliaryAnd0Tokens: 500, // weth-usdc 0.05%

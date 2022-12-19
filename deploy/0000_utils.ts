@@ -345,7 +345,7 @@ export const combineVaults = async (
             const [operator] = await hre.ethers.getSigners();
             const txResp = await operator.sendTransaction({
                 ...tx, 
-                ...TRANSACTION_GAS_LIMITS
+                // ...TRANSACTION_GAS_LIMITS
             });
             log(
                 `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`

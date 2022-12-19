@@ -18,7 +18,7 @@ const config: HardhatUserConfig = {
             forking: process.env["MAINNET_RPC"]
                 ? {
                       url: process.env["MAINNET_RPC"],
-                      blockNumber: 15000000,
+                      blockNumber: 16000000,
                   }
                 : undefined,
 
@@ -260,7 +260,7 @@ const config: HardhatUserConfig = {
             rinkeby: "0xc778417e063141139fce010982780140aa0cd5ab",
         },
         bob: {
-            polygon: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B",
+            default: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B",
         },
         wsteth: {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",

@@ -10,17 +10,24 @@ contract BobOracle is IAggregatorV3 {
     uint256 public constant version = 1;
     uint256 public constant Q96 = 2**96;
     string public constant description = "BOB / USD";
-    address public constant USDC = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
-    address public constant BOB = 0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B;
+    address public immutable usdc;
+    address public immutable bob;
 
     IAggregatorV3 public immutable usdcUsdOracle;
     IUniswapV3Pool public immutable pool;
     uint8 public immutable decimals;
 
-    constructor(IUniswapV3Pool pool_, IAggregatorV3 usdcUsdOracle_) {
+    constructor(
+        address usdc_,
+        address bob_,
+        IUniswapV3Pool pool_,
+        IAggregatorV3 usdcUsdOracle_
+    ) {
         pool = pool_;
-        require(pool.token0() == USDC && pool.token1() == BOB);
+        usdc = usdc_;
+        bob = bob_;
 
+        require(pool.token0() == usdc && pool.token1() == bob);
         usdcUsdOracle = usdcUsdOracle_;
         decimals = usdcUsdOracle.decimals();
     }
@@ -55,7 +62,7 @@ contract BobOracle is IAggregatorV3 {
         priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
 
         (, int256 usdcPrice, , , ) = usdcUsdOracle.latestRoundData();
-        uint256 denominator = Q96 * 10**(IERC20Metadata(BOB).decimals() - IERC20Metadata(USDC).decimals());
+        uint256 denominator = Q96 / 10**(IERC20Metadata(bob).decimals() - IERC20Metadata(usdc).decimals());
         answer = int256(FullMath.mulDiv(priceX96, uint256(usdcPrice), denominator));
     }
 }
