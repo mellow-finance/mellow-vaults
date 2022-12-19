@@ -61,9 +61,6 @@ contract<DataCollector, DeployOptions, CustomContext>(
                     });
 
                     const uniV3Helper = await ethers.getContract("UniV3Helper");
-                    const rootVaultGovernance = await ethers.getContract(
-                        "ERC20RootVaultGovernance"
-                    );
                     this.vaultRegistry = await ethers.getContract(
                         "VaultRegistry"
                     );
@@ -72,7 +69,6 @@ contract<DataCollector, DeployOptions, CustomContext>(
                         args: [
                             usdc,
                             uniswapV3PositionManager,
-                            rootVaultGovernance.address,
                             this.vaultRegistry.address,
                             uniV3Helper.address,
                         ],

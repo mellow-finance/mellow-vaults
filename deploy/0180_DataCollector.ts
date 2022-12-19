@@ -10,9 +10,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer, uniswapV3PositionManager, usdc } =
         await getNamedAccounts();
 
-    const rootVaultGovernance = await hre.ethers.getContract(
-        "ERC20RootVaultGovernance"
-    );
     const vaultRegistry = await hre.ethers.getContract("VaultRegistry");
     const uniV3Helper = await hre.ethers.getContract("UniV3Helper");
 
@@ -21,7 +18,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [
             usdc,
             uniswapV3PositionManager,
-            rootVaultGovernance.address,
             vaultRegistry.address,
             uniV3Helper.address,
         ],

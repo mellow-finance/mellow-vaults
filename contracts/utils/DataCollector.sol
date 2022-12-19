@@ -14,7 +14,6 @@ import "./UniV3Helper.sol";
 
 contract DataCollector {
     INonfungiblePositionManager public immutable positionManager;
-    IERC20RootVaultGovernance public immutable rootVaultGovernance;
     IVaultRegistry public immutable vaultRegistry;
     IUniswapV3Factory public immutable factory;
     address public immutable usdc;
@@ -49,20 +48,17 @@ contract DataCollector {
     constructor(
         address usdc_,
         INonfungiblePositionManager positionManager_,
-        IERC20RootVaultGovernance rootVaultGovernance_,
         IVaultRegistry vaultRegistry_,
         UniV3Helper uniV3Helper_
     ) {
         require(
             usdc_ != address(0) &&
                 address(positionManager_) != address(0) &&
-                address(rootVaultGovernance_) != address(0) &&
                 address(vaultRegistry_) != address(0) &&
                 address(uniV3Helper_) != address(0)
         );
         usdc = usdc_;
         positionManager = positionManager_;
-        rootVaultGovernance = rootVaultGovernance_;
         vaultRegistry = vaultRegistry_;
         uniV3Helper = uniV3Helper_;
         factory = IUniswapV3Factory(positionManager_.factory());
@@ -89,8 +85,11 @@ contract DataCollector {
                 }
             }
 
+            IERC20RootVault rootVault = IERC20RootVault(vaultRegistry.vaultForNft(request.rootVaultNft));
+            IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(
+                address(rootVault.vaultGovernance())
+            );
             {
-                IERC20RootVault rootVault = IERC20RootVault(vaultRegistry.vaultForNft(request.rootVaultNft));
                 (response.rootVaultTvl, ) = rootVault.tvl();
                 response.rootVaultSpotTvl = response.rootVaultTvl;
                 response.totalSupply = rootVault.totalSupply();
