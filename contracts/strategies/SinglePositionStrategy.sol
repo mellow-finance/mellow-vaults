@@ -51,8 +51,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     /// @param amount0Desired amount of token 0 to mint position on UniswapV3Pool
     /// @param amount1Desired amount of token 1 to mint position on UniswapV3Pool
     /// @param swapSlippageD coefficient to protect against price slippage when swapping tokens
-    /// @param minSwapAmount0 threshold that cuts off swap of an insignificant amount of token 0
-    /// @param minSwapAmount1 threshold that cuts off swap of an insignificant amount of token 1
+    /// @param minSwapAmounts thresholds that cut off swap of an insignificant amount of tokens
     struct MutableParams {
         uint24 feeTierOfPoolOfAuxiliaryAnd0Tokens;
         uint24 feeTierOfPoolOfAuxiliaryAnd1Tokens;
