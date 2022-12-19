@@ -51,6 +51,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     /// @param amount0Desired amount of token 0 to mint position on UniswapV3Pool
     /// @param amount1Desired amount of token 1 to mint position on UniswapV3Pool
     /// @param swapSlippageD coefficient to protect against price slippage when swapping tokens
+    /// @param minSwapAmount0 threshold that cuts off swap of an insignificant amount of token 0
+    /// @param minSwapAmount1 threshold that cuts off swap of an insignificant amount of token 1
     struct MutableParams {
         uint24 feeTierOfPoolOfAuxiliaryAnd0Tokens;
         uint24 feeTierOfPoolOfAuxiliaryAnd1Tokens;
@@ -65,6 +67,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         uint256 amount0Desired;
         uint256 amount1Desired;
         uint256 swapSlippageD;
+        uint256[] minSwapAmounts;
     }
 
     /// @param lowerTick lower tick of an interval
@@ -230,6 +233,10 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         require(params.amount0Desired <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(params.amount1Desired > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.amount1Desired <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
+
+        require(params.minSwapAmounts.length == 2, ExceptionsLibrary.INVALID_LENGTH);
+        require(params.minSwapAmounts[0] > 0, ExceptionsLibrary.VALUE_ZERO);
+        require(params.minSwapAmounts[1] > 0, ExceptionsLibrary.VALUE_ZERO);
 
         require(params.swapSlippageD <= DENOMINATOR, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(
@@ -478,7 +485,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             priceX96,
             targetRatioOfToken1X96
         );
-        if (amountIn == 0) {
+
+        if (amountIn < mutableParams_.minSwapAmounts[tokenInIndex]) {
             return;
         }
 

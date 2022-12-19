@@ -164,6 +164,10 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         amount0Desired: 10 ** 9,
                         amount1Desired: 10 ** 9,
                         swapSlippageD: 7 * 10 ** 8,
+                        minSwapAmounts: [
+                            BigNumber.from(10).pow(13),
+                            BigNumber.from(10).pow(15),
+                        ],
                     } as MutableParamsStruct;
 
                     let immutableParams = {
@@ -528,6 +532,10 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     .connect(this.mStrategyAdmin)
                     .updateMutableParams({
                         ...mutableParams,
+                        minSwapAmounts: [
+                            BigNumber.from(10).pow(13),
+                            BigNumber.from(10).pow(15),
+                        ],
                         intervalWidth: width,
                     });
             };

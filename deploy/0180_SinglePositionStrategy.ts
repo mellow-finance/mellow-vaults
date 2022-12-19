@@ -7,7 +7,7 @@ import {
     setupVault,
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
-import { BigNumberish } from "ethers";
+import { BigNumberish, BigNumber } from "ethers";
 
 const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -226,6 +226,7 @@ type MutableParamsStruct = {
     amount0Desired: BigNumberish;
     amount1Desired: BigNumberish;
     swapSlippageD: BigNumberish;
+    minSwapAmounts: BigNumberish[];
 };
 
 type ImmutableParamsStruct = {
@@ -255,6 +256,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         amount0Desired: 10 ** 9, // weth
         amount1Desired: 10 ** 9, // bob
         swapSlippageD: 10 ** 7,
+        minSwapAmounts: [BigNumber.from(10).pow(13), BigNumber.from(10).pow(15)]
     } as MutableParamsStruct);
 };
 
