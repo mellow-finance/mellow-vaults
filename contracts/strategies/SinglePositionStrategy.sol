@@ -234,8 +234,6 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         require(params.amount1Desired <= MAX_MINTING_PARAMS, ExceptionsLibrary.LIMIT_OVERFLOW);
 
         require(params.minSwapAmounts.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(params.minSwapAmounts[0] > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(params.minSwapAmounts[1] > 0, ExceptionsLibrary.VALUE_ZERO);
 
         require(params.swapSlippageD <= DENOMINATOR, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(
