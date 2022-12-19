@@ -27,7 +27,7 @@ contract BobOracle is IAggregatorV3 {
         usdc = usdc_;
         bob = bob_;
 
-        require(pool.token0() == usdc && pool.token1() == bob);
+        require((pool.token0() == usdc && pool.token1() == bob) || (pool.token0() == bob && pool.token1() == usdc));
         usdcUsdOracle = usdcUsdOracle_;
         decimals = usdcUsdOracle.decimals();
     }
