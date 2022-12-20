@@ -85,17 +85,11 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     constructor(INonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
-        DefaultAccessControlLateInit.init(address(this));
     }
 
     /// @param immutableParams_ structure with all immutable params of the strategy
-    /// @param mutableParams_ structure with all mutable params of the strategy
     /// @param admin admin of the strategy
-    function initialize(
-        ImmutableParams memory immutableParams_,
-        MutableParams memory mutableParams_,
-        address admin
-    ) external {
+    function initialize(ImmutableParams memory immutableParams_, address admin) external {
         checkImmutableParams(immutableParams_);
         immutableParams = immutableParams_;
         for (uint256 i = 0; i < 2; i++) {
@@ -108,23 +102,7 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
                 )
             returns (bytes memory) {} catch {}
         }
-        checkMutableParams(mutableParams_, immutableParams_);
-        mutableParams = mutableParams_;
         DefaultAccessControlLateInit.init(admin);
-    }
-
-    /// @dev clones current contract to new address and setup immutable and mutable parameters and admin for it
-    /// @param immutableParams_ structure with all immutable params of the strategy
-    /// @param mutableParams_ structure with all mutable params of the strategy
-    /// @param admin admin of the strategy
-    /// @return strategy newly created strategy
-    function createStrategy(
-        ImmutableParams memory immutableParams_,
-        MutableParams memory mutableParams_,
-        address admin
-    ) external returns (SinglePositionStrategy strategy) {
-        strategy = SinglePositionStrategy(Clones.clone(address(this)));
-        strategy.initialize(immutableParams_, mutableParams_, admin);
     }
 
     /// @dev updates mutable params of the strategy. Only the admin can call the function

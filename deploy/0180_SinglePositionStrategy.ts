@@ -23,14 +23,6 @@ const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
         ...TRANSACTION_GAS_LIMITS,
     });
 
-    await deploy("SinglePositionStrategy", {
-        from: deployer,
-        contract: "SinglePositionStrategy",
-        args: [uniswapV3PositionManager],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-    });
 };
 
 const buildSinglePositionStrategy = async (
@@ -39,8 +31,8 @@ const buildSinglePositionStrategy = async (
     mutableParams: MutableParamsStruct
 ) => {
     const { deployments, getNamedAccounts } = hre;
-    const { log, read, execute, get } = deployments;
-    const { deployer, mStrategyTreasury, uniswapV3Router, mStrategyAdmin } =
+    const { log, read, execute, get, deploy } = deployments;
+    const { deployer, mStrategyTreasury, uniswapV3Router, uniswapV3PositionManager } =
         await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
@@ -77,19 +69,39 @@ const buildSinglePositionStrategy = async (
     );
 
     const deploymentName = "SinglePositionStrategy_BOB_WETH_500";
-
     const immutableParams = {
-        tokens: tokens,
         router: uniswapV3Router,
-        uniV3Vault: uniV3Vault500,
         erc20Vault: erc20Vault,
+        uniV3Vault: uniV3Vault500,
+        tokens: tokens,
     } as ImmutableParamsStruct;
 
-    const baseStrategy = await hre.ethers.getContract("SinglePositionStrategy");
 
-    const newStrategyAddress = await baseStrategy
-        .connect(deployer)
-        .callStatic.createStrategy(immutableParams, mutableParams, deployer);
+    console.log("ImmutableParams:", immutableParams.toString());
+    console.log("MutableParams:", mutableParams.toString());
+
+    await deploy(deploymentName, {
+        from: deployer,
+        contract: "SinglePositionStrategy",
+        args: [uniswapV3PositionManager],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
+
+    const strategy = await hre.ethers.getContract(deploymentName);
+    const { address: proxyAddress } = await deploy("TransparentUpgradeableProxy_SinglePositionStrategy", {
+        from: deployer,
+        contract: "TransparentUpgradeableProxy",
+        args: [
+            strategy.address,
+            deployer,
+            []
+        ],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
 
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     for (let nft of [erc20VaultNft, uniV3VaultNft500]) {
@@ -112,62 +124,38 @@ const buildSinglePositionStrategy = async (
         hre,
         erc20RootVaultNft,
         [erc20VaultNft, uniV3VaultNft500],
-        newStrategyAddress,
+        proxyAddress,
         mStrategyTreasury
     );
 
-    await execute(
-        "SinglePositionStrategy",
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
-            ...TRANSACTION_GAS_LIMITS,
-        },
-        "createStrategy",
-        immutableParams,
-        mutableParams,
-        deployer
-    );
+    // const txs: string[] = [];
+    // const adminRole = await baseStrategy.ADMIN_ROLE();
+    // const adminDelegateRole = await baseStrategy.ADMIN_DELEGATE_ROLE();
+    // const operatorRole = await baseStrategy.OPERATOR();
 
-    const strategy = await hre.ethers.getContractAt(
-        "SinglePositionStrategy",
-        newStrategyAddress
-    );
-    console.log("Strategy address:", newStrategyAddress);
-    await deployments.save(deploymentName, {
-        abi: (await deployments.get("SinglePositionStrategy")).abi,
-        address: newStrategyAddress,
-    });
+    // txs.push(
+    //     strategy.interface.encodeFunctionData("grantRole", [
+    //         adminDelegateRole,
+    //         deployer,
+    //     ])
+    // );
 
-    const txs: string[] = [];
-    const adminRole = await baseStrategy.ADMIN_ROLE();
-    const adminDelegateRole = await baseStrategy.ADMIN_DELEGATE_ROLE();
-    const operatorRole = await baseStrategy.OPERATOR();
+    // txs.push(
+    //     strategy.interface.encodeFunctionData("grantRole", [
+    //         adminRole,
+    //         mStrategyAdmin,
+    //     ])
+    // );
 
-    txs.push(
-        strategy.interface.encodeFunctionData("grantRole", [
-            adminDelegateRole,
-            deployer,
-        ])
-    );
-
-    txs.push(
-        strategy.interface.encodeFunctionData("grantRole", [
-            adminRole,
-            mStrategyAdmin,
-        ])
-    );
-
-    const strategyOperator = "0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E";
-    if (strategyOperator.length > 0) {
-        txs.push(
-            strategy.interface.encodeFunctionData("grantRole", [
-                operatorRole,
-                strategyOperator,
-            ])
-        );
-    }
+    // const strategyOperator = "0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E";
+    // if (strategyOperator.length > 0) {
+    //     txs.push(
+    //         strategy.interface.encodeFunctionData("grantRole", [
+    //             operatorRole,
+    //             strategyOperator,
+    //         ])
+    //     );
+    // }
 
     // renounce roles
     // txs.push(
@@ -191,25 +179,25 @@ const buildSinglePositionStrategy = async (
     //     ])
     // );
 
-    while (true) {
-        try {
-            await execute(
-                deploymentName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS,
-                },
-                "multicall",
-                txs
-            );
-            break;
-        } catch {
-            log("trying to do multicall again");
-            continue;
-        }
-    }
+    // while (true) {
+    //     try {
+    //         await execute(
+    //             deploymentName,
+    //             {
+    //                 from: deployer,
+    //                 log: true,
+    //                 autoMine: true,
+    //                 ...TRANSACTION_GAS_LIMITS,
+    //             },
+    //             "multicall",
+    //             txs
+    //         );
+    //         break;
+    //     } catch {
+    //         log("trying to do multicall again");
+    //         continue;
+    //     }
+    // }
 };
 
 type MutableParamsStruct = {
