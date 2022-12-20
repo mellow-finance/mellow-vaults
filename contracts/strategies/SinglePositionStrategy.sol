@@ -369,8 +369,10 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         );
         positionManager.safeTransferFrom(address(this), address(vault), newNft);
 
+        emit PositionMinted(newNft);
         if (uniV3Nft != 0) {
             positionManager.burn(uniV3Nft);
+            emit PositionBurned(uniV3Nft);
         }
     }
 
@@ -567,4 +569,12 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     event Rebalance(address indexed origin, address indexed sender);
+
+    /// @notice Emited when a new uniswap position is created
+    /// @param tokenId nft of new uniswap position
+    event PositionMinted(uint256 tokenId);
+
+    /// @notice Emited when a uniswap position is burned
+    /// @param tokenId nft of uniswap position
+    event PositionBurned(uint256 tokenId);
 }
