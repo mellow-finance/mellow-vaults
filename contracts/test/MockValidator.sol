@@ -1,12 +1,8 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/PermissionIdsLibrary.sol";
-import "../libraries/ExceptionsLibrary.sol";
 import "../validators/Validator.sol";
 
 contract MockValidator is Validator {

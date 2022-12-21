@@ -33,6 +33,7 @@ import {
     MellowOracle,
     MStrategy,
     LStrategy,
+    HStrategy,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
@@ -52,6 +53,7 @@ export interface TestContext<T, F> extends Suite {
     mellowOracle: MellowOracle;
     mStrategy: MStrategy;
     lStrategy: LStrategy;
+    hStrategy: HStrategy;
 
     usdc: ERC20;
     weth: ERC20;
@@ -159,6 +161,15 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         this.mStrategy = mStrategy;
     }
     this.lStrategy = await ethers.getContract("LStrategy");
+
+    const hStrategy: HStrategy | null = await ethers.getContractOrNull(
+        "HStrategyAave"
+    );
+    if (!hStrategy) {
+        this.hStrategy = await ethers.getContract("HStrategyYearn");
+    } else {
+        this.hStrategy = hStrategy;
+    }
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
