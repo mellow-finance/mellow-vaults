@@ -598,18 +598,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                             await this.erc20RootVault
                                 .connect(this.deployer)
                                 .deposit([amount0, amount1], 0, []);
-                            console.log(
-                                "erc20 tvl:",
-                                (
-                                    await this.erc20Vault.tvl()
-                                ).minTokenAmounts.toString()
-                            );
-                            console.log(
-                                "univ3 tvl:",
-                                (
-                                    await this.uniV3Vault500.tvl()
-                                ).minTokenAmounts.toString()
-                            );
                         }
                         await this.movePrices(i);
                         await this.stabilizePrices();
@@ -637,10 +625,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
 
                         const currentERC20RatioD =
                             DENOMINATOR.mul(erc20Capital).div(totalCapital);
-                        console.log(
-                            "Current erc20Ratio:",
-                            currentERC20RatioD.toString()
-                        );
                         expect(currentERC20RatioD.lte(50000)).to.be.true; // at most = 0.005% on ERC20Vault
 
                         if (i % 2 == 1) {
