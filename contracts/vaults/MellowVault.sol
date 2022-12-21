@@ -71,7 +71,7 @@ contract MellowVault is IMellowVault, IntegrationVault {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(_vaultTokens[i]).safeIncreaseAllowance(address(vault), tokenAmounts[i]);
         }
-        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, "");
+        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, "", "");
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(_vaultTokens[i]).safeApprove(address(vault), 0);
         }

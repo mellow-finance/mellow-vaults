@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../../libraries/external/GPv2Order.sol";
+import "../vaults/IVault.sol";
 
 interface ILStrategyHelper {
     function checkOrder(
@@ -17,4 +18,6 @@ interface ILStrategyHelper {
     ) external;
 
     function tickFromPriceX96(uint256 priceX96) external pure returns (int24);
+
+    function calculateTokenAmounts(IVault lowerVault, IVault upperVault, IVault erc20Vault, uint256 priceX96, uint256 amount0, uint256 amount1) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts);
 }

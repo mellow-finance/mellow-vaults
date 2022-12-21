@@ -7,10 +7,14 @@ import "../libraries/external/GPv2Order.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/FullMath.sol";
+import "../interfaces/vaults/IVault.sol";
+
 
 contract LStrategyHelper is ILStrategyHelper {
     // IMMUTABLES
     address public immutable cowswap;
+    uint256 public constant DENOMINATOR = 10**9;
 
     constructor(address cowswap_) {
         cowswap = cowswap_;
@@ -49,5 +53,40 @@ contract LStrategyHelper is ILStrategyHelper {
     function tickFromPriceX96(uint256 priceX96) external pure returns (int24) {
         uint256 sqrtPriceX96 = CommonLibrary.sqrtX96(priceX96);
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
+    }
+
+    function calculateTokenAmounts(IVault lowerVault, IVault upperVault, IVault erc20Vault, uint256 priceX96, uint256 amount0, uint256 amount1) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) {
+        
+        (uint256[] memory lowerVaultTvl, ) = lowerVault.tvl();
+        (uint256[] memory upperVaultTvl, ) = upperVault.tvl();
+        (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
+        
+        uint256 minRatioD = type(uint256).max;
+        if (lowerVaultTvl[0] + upperVaultTvl[0] > 0) {
+            uint256 upperBoundRatioD = FullMath.mulDiv(amount0, DENOMINATOR, lowerVaultTvl[0] + upperVaultTvl[0]);
+            if (upperBoundRatioD < minRatioD) {
+                minRatioD = upperBoundRatioD;
+            }
+        }
+
+        if (lowerVaultTvl[1] + upperVaultTvl[1] > 0) {
+            uint256 upperBoundRatioD = FullMath.mulDiv(amount1, DENOMINATOR, lowerVaultTvl[1] + upperVaultTvl[1]);
+            if (upperBoundRatioD < minRatioD) {
+                minRatioD = upperBoundRatioD;
+            }
+        }
+
+        uint256 lowerCapital = FullMath.mulDiv(lowerVaultTvl[0], priceX96, CommonLibrary.Q96) + lowerVaultTvl[1];
+        uint256 upperCapital = FullMath.mulDiv(upperVaultTvl[0], priceX96, CommonLibrary.Q96) + upperVaultTvl[1];
+        uint256 erc20Capital = FullMath.mulDiv(erc20VaultTvl[0], priceX96, CommonLibrary.Q96) + erc20VaultTvl[1];
+
+        minRatioD = FullMath.mulDiv(minRatioD, lowerCapital + upperCapital, lowerCapital + upperCapital + erc20Capital);
+
+        lowerAmounts = new uint256[](2);
+        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], minRatioD, DENOMINATOR);
+        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl[1], minRatioD, DENOMINATOR);
+        upperAmounts = new uint256[](2);
+        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl[0], minRatioD, DENOMINATOR);
+        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl[1], minRatioD, DENOMINATOR);
     }
 }

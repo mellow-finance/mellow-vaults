@@ -84,7 +84,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
-        bytes memory vaultOptions
+        bytes memory vaultOptions,
+        bytes memory depositCallbackOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
@@ -101,9 +102,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 );
             }
         }
-        (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
+        uint256[] memory maxTvl;
         uint256 thisNft = _nft;
-        _chargeFees(thisNft, minTvl, supply, tokens);
+        {
+            uint256[] memory minTvl;
+            (minTvl, maxTvl) = tvl();
+            _chargeFees(thisNft, minTvl, supply, tokens);
+        }
         supply = totalSupply;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
@@ -112,9 +117,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
-        uint256 preLpAmount;
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         {
+            uint256 preLpAmount;
             bool isSignificantTvl;
             (preLpAmount, isSignificantTvl) = _getLpAmount(maxTvl, tokenAmounts, supply);
             for (uint256 i = 0; i < tokens.length; ++i) {
@@ -150,8 +155,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
 
+        bytes memory depositInfo = abi.encode(actualTokenAmounts[0], actualTokenAmounts[1]);
+
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(vaultOptions) {} catch Error(
+            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(bytes.concat(depositCallbackOptions, depositInfo)) {} catch Error(
                 string memory reason
             ) {
                 emit DepositCallbackLog(reason);

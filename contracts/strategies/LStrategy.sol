@@ -39,7 +39,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     uint256 public lastRebalanceUniV3VaultsTimestamp;
     uint256 public orderDeadline;
     uint256[] internal _pullExistentials;
-    bool internal _flagCallback;
 
     // MUTABLE PARAMS
 
@@ -186,11 +185,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     {
         _requireAtLeastOperator();
         require(
-            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances ||
-                _flagCallback,
-            ExceptionsLibrary.TIMESTAMP
+            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances, ExceptionsLibrary.TIMESTAMP
         );
-        _flagCallback = false;
         lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
@@ -648,29 +644,26 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     // -------------------  INTERNAL, MUTATING  -------------------
 
     /// @inheritdoc ILpCallback
-    function depositCallback(bytes memory vaultOptions) external {
-        require(vaultOptions.length == 32 * 4, ExceptionsLibrary.INVALID_VALUE);
+    function depositCallback(bytes memory depositOptions) external {
+        require(depositOptions.length == 32 * 4, ExceptionsLibrary.INVALID_VALUE);
         (
             uint256 minLowerVaultToken0,
             uint256 minLowerVaultToken1,
             uint256 minUpperVaultToken0,
-            uint256 minUpperVaultToken1
-        ) = abi.decode(vaultOptions, (uint256, uint256, uint256, uint256));
+            uint256 minUpperVaultToken1,
+            uint256 amount0,
+            uint256 amount1
+        ) = abi.decode(depositOptions, (uint256, uint256, uint256, uint256, uint256, uint256));
 
-        uint256[] memory minLowerVaultTokenAmounts = new uint256[](2);
-        uint256[] memory minUpperVaultTokenAmounts = new uint256[](2);
+        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams);
 
-        minLowerVaultTokenAmounts[0] = minLowerVaultToken0;
-        minLowerVaultTokenAmounts[1] = minLowerVaultToken1;
-        minUpperVaultTokenAmounts[0] = minUpperVaultToken0;
-        minUpperVaultTokenAmounts[1] = minUpperVaultToken1;
+        (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(lowerVault, upperVault, erc20Vault, priceX96, amount0, amount1);
 
-        _flagCallback = true;
-        rebalanceERC20UniV3Vaults(minLowerVaultTokenAmounts, minUpperVaultTokenAmounts, block.timestamp + 1);
+        require(lowerAmounts[0] >= minLowerVaultToken0 && lowerAmounts[1] >= minLowerVaultToken1 && upperAmounts[0] >= minUpperVaultToken0 && upperAmounts[1] >= minUpperVaultToken1, ExceptionsLibrary.INVALID_VALUE);
+
+        erc20Vault.pull(address(lowerVault), tokens, lowerAmounts, "");
+        erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");        
     }
-
-    /// @inheritdoc ILpCallback
-    function depositCallback() external {}
 
     /// @inheritdoc ILpCallback
     function withdrawCallback() external {}

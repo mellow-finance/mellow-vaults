@@ -22,10 +22,13 @@ contract WhiteList is DefaultAccessControl {
         uint256[] calldata tokenAmounts,
         uint256 minLpTokens,
         bytes calldata vaultOptions,
+        bytes calldata depositCallbackOptions,
         bytes32[] calldata proof
     ) external returns (uint256[] memory actualTokenAmounts) {
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        require(MerkleProof.verify(proof, root, leaf), ExceptionsLibrary.FORBIDDEN);
+        {
+            bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
+            require(MerkleProof.verify(proof, root, leaf), ExceptionsLibrary.FORBIDDEN);
+        }
 
         address[] memory tokens = vault.vaultTokens();
         require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INVALID_LENGTH);
@@ -34,7 +37,7 @@ contract WhiteList is DefaultAccessControl {
             IERC20(tokens[i]).safeIncreaseAllowance(address(vault), tokenAmounts[i]);
         }
 
-        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions);
+        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions, depositCallbackOptions);
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(vault), 0);
             IERC20(tokens[i]).safeTransfer(msg.sender, IERC20(tokens[i]).balanceOf(address(this)));
