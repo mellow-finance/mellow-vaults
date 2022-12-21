@@ -7,6 +7,7 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/utils/ILStrategyHelper.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
@@ -14,7 +15,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is DefaultAccessControl {
+contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -38,6 +39,7 @@ contract LStrategy is DefaultAccessControl {
     uint256 public lastRebalanceUniV3VaultsTimestamp;
     uint256 public orderDeadline;
     uint256[] internal _pullExistentials;
+    bool internal _flagCallback;
 
     // MUTABLE PARAMS
 
@@ -184,9 +186,11 @@ contract LStrategy is DefaultAccessControl {
     {
         _requireAtLeastOperator();
         require(
-            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
+            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances ||
+                _flagCallback,
             ExceptionsLibrary.TIMESTAMP
         );
+        _flagCallback = false;
         lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
@@ -642,6 +646,34 @@ contract LStrategy is DefaultAccessControl {
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc ILpCallback
+    function depositCallback(bytes memory vaultOptions) external {
+        require(vaultOptions.length == 32 * 4, ExceptionsLibrary.INVALID_VALUE);
+        (
+            uint256 minLowerVaultToken0,
+            uint256 minLowerVaultToken1,
+            uint256 minUpperVaultToken0,
+            uint256 minUpperVaultToken1
+        ) = abi.decode(vaultOptions, (uint256, uint256, uint256, uint256));
+
+        uint256[] memory minLowerVaultTokenAmounts = new uint256[](2);
+        uint256[] memory minUpperVaultTokenAmounts = new uint256[](2);
+
+        minLowerVaultTokenAmounts[0] = minLowerVaultToken0;
+        minLowerVaultTokenAmounts[1] = minLowerVaultToken1;
+        minUpperVaultTokenAmounts[0] = minUpperVaultToken0;
+        minUpperVaultTokenAmounts[1] = minUpperVaultToken1;
+
+        _flagCallback = true;
+        rebalanceERC20UniV3Vaults(minLowerVaultTokenAmounts, minUpperVaultTokenAmounts, block.timestamp + 1);
+    }
+
+    /// @inheritdoc ILpCallback
+    function depositCallback() external {}
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback() external {}
 
     /// @notice Pull liquidity from `fromVault` and put into `toVault`
     /// @param fromVault The vault to pull liquidity from

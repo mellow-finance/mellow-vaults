@@ -151,7 +151,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
 
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback() {} catch Error(
+            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(vaultOptions) {} catch Error(
                 string memory reason
             ) {
                 emit DepositCallbackLog(reason);
