@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 
@@ -17,7 +18,7 @@ import "../libraries/external/TickMath.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
+contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
     uint256 public constant DENOMINATOR = 10**9;
@@ -523,6 +524,15 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
             );
         }
     }
+
+    /// @inheritdoc ILpCallback
+    function depositCallback() external {
+        // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
+        _pushIntoUniswap(immutableParams);
+    }
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback() external {}
 
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("SinglePositionStrategy");
