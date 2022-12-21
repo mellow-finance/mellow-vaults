@@ -95,8 +95,8 @@ contract LiquiditySwapped {
     }
 
     function test() public {
-        for (int24 positionWidth = 80; positionWidth <= 300; positionWidth += 20) {
-            for (int24 deviation = 5; deviation <= 40; deviation += 5) {
+        for (int24 positionWidth = 80; positionWidth <= 400; positionWidth += 20) {
+            for (int24 deviation = 5; deviation <= 60; deviation += 5) {
                 uint256 swappedCapitalD18 = execute(positionWidth, deviation);
                 console2.log("SWAP: ");
                 console2.log(uint24(positionWidth));

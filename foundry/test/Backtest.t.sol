@@ -1269,7 +1269,7 @@ contract Backtest is Test {
 
         uint256 prev_block = 0;
         uint256 lastRebalanceBlock;
-        for (uint256 i = 1; i < prices.length; i += 1) {
+        for (uint256 i = 1; i < prices.length; i += 12) {
             // addFees(stethAmounts[i], wethAmounts[i], curveLpSupply[i], curveLpSupply[i - 1]);
             int24 tick = getTick(stringToSqrtPriceX96(prices[i]));
             if (blocks[i] - prev_block > 604800 / 15) {

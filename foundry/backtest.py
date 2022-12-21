@@ -9,7 +9,7 @@ import numpy as np
 
 from backtest_analysis import plot_all
 
-INPUT_FILE = 'new_prices.csv'
+INPUT_FILE = 'price_data.csv'
 WETH = 1000
 WSTETH = 1000
 WIDTH = 100
@@ -17,13 +17,14 @@ MIN_DEVIATION = WIDTH // 20
 POOL_SCALE = 1
 
 
-def prepare_dataset(fname: str, apy: float, preview: str):
+def prepare_dataset(fname: str, apy: float, preview: str) -> int:
     df = pd.read_csv(fname)
-    blocks_in_year = 365 * 24 * 60 * 60 / 12 / 264
+    blocks_in_year = 365 * 24 * 60 * 60/ 12 / 22
     hw = np.power(apy, np.arange(len(df)) / blocks_in_year)
     df['hw'] = [int((10 ** 9) * x) for x in np.maximum.accumulate(hw)]
     df = df[['block_number', 'wsteth_eth', 'stETH_amount', 'ETH_amount', 'stEthPerToken', 'hw']]
     df.to_csv(preview + '/tmp.csv', index=False, float_format='%.27f')
+    return len(df)
 
 
 def prepare_feed(preview: str):
@@ -69,14 +70,14 @@ def run_backtest(
     width: int = WIDTH,
     min_deviation: int = MIN_DEVIATION,
 ):
-    prepare_dataset(fname, 1.15, preview)
+    l = prepare_dataset(fname, 1.15, preview)
     prepare_feed(preview)
 
     print('BACKTEST PREPARED')
     print('STARTING BACKTEST')
     try:
         subprocess.run(
-            [f'len={2318} wethAmount={weth_amount} wstethAmount={wsteth_amount} width={width} minDeviation={min_deviation} yarn test'],
+            [f'len={l} wethAmount={weth_amount} wstethAmount={wsteth_amount} width={width} minDeviation={min_deviation} yarn test'],
             stdout=file,
             check=True,
             shell=True,

@@ -531,9 +531,10 @@ def short_report(all_stats: List[State], final_state: State, all_swaps: List[Fee
         file.write(f'initial capital WETH: {round(initial_capital, 2)}\n')
         file.write(f'end capital WETH: {round(end_capital, 2)}\n')
         file.write(f'apr WETH: {round(100 * (end_capital / initial_capital) ** backtest_power - 100 , 2)}\n')
-        file.write(f'apr WSTETH: {round(100 * (end_capital / price[-1] / initial_capital * price[0] - 100, 2))}\n')
+        file.write(f'apr WSTETH: {round(100 * (end_capital / price[-1] / initial_capital * price[0]) ** backtest_power - 100, 2)}\n')
         file.write(f'neutral apr: {round(100 * (end_capital / end_capital_without_strategy) ** backtest_power - 100, 2)}\n')
         file.write(f'modified apr: {round(100 * (end_capital_modified / initial_capital) ** backtest_power - 100, 2)}\n')
+        file.write(f'annual IL: {round(il.annual_il(all_stats), 2)}\n')
 
 
 def plot_all(lines: List[str], preview: str):

@@ -1,6 +1,9 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import List
+
+import numpy as np
 
 
 @dataclass
@@ -199,3 +202,26 @@ def calculate_il(all_stats):
     )
     result[all_stats[-1].block_number] = lower_loss + upper_loss
     return result
+
+
+def annual_il(all_stats):
+    result = calculate_il(all_stats)
+    price = np.array([(x.sqrt_price_x96 / 2 ** 96) ** 2 for x in all_stats])
+    il_ = np.array([result[x.block_number] / 10 ** 18 for x in all_stats])
+    wsteth_amount = (
+        np.array([x.lower_wsteth for x in all_stats]) +
+        np.array([x.upper_wsteth for x in all_stats]) +
+        np.array([x.erc20_wsteth for x in all_stats])
+    ) / 10 ** 18
+    weth_amount = (
+        np.array([x.lower_weth for x in all_stats]) +
+        np.array([x.upper_weth for x in all_stats]) +
+        np.array([x.erc20_weth for x in all_stats])
+    ) / 10 ** 18
+    capital = wsteth_amount * price + weth_amount
+    capital = capital.astype('float64')
+    il_ = il_.astype('float64')
+    log_loss = np.log(capital - il_) - np.log(capital)
+    duration = 12 * (all_stats[-1].block_number - all_stats[0].block_number)
+    backtest_power = 365 * 24 * 60 * 60 / duration
+    return 100 - 100 * np.exp(np.sum(log_loss) * backtest_power)
