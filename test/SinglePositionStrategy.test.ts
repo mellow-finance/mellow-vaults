@@ -149,8 +149,8 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         amount1Desired: 10 ** 9,
                         swapSlippageD: 7 * 10 ** 8,
                         minSwapAmounts: [
-                            BigNumber.from(10).pow(13),
-                            BigNumber.from(10).pow(15),
+                            BigNumber.from(10).pow(0),
+                            BigNumber.from(10).pow(0),
                         ],
                     } as MutableParamsStruct;
 
@@ -254,6 +254,22 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         "ERC20RootVault",
                         erc20RootVault
                     );
+
+                    let delayedStrategyParams =
+                        await this.erc20RootVaultGovernance.delayedStrategyParams(
+                            erc20RootVaultNft
+                        );
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedStrategyParams(erc20RootVaultNft, {
+                            ...delayedStrategyParams,
+                            depositCallbackAddress: strategyAddress,
+                        });
+
+                    await sleep(this.governanceDelay);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedStrategyParams(erc20RootVaultNft);
 
                     await this.erc20RootVault
                         .connect(this.admin)
@@ -534,8 +550,8 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     .updateMutableParams({
                         ...mutableParams,
                         minSwapAmounts: [
-                            BigNumber.from(10).pow(13),
-                            BigNumber.from(10).pow(15),
+                            BigNumber.from(10).pow(0),
+                            BigNumber.from(10).pow(0),
                         ],
                         intervalWidth: width,
                     });
@@ -572,16 +588,28 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                     await updateIntervalWidth(intervalWidth);
                     for (let i = 0; i < 4; i++) {
                         if (i % 2 == 0) {
+                            const amount0 = BigNumber.from(10)
+                                .pow(18)
+                                .mul(1300);
+                            const amount1 = BigNumber.from(10)
+                                .pow(18)
+                                .mul(1300);
+
                             await this.erc20RootVault
                                 .connect(this.deployer)
-                                .deposit(
-                                    [
-                                        BigNumber.from(10).pow(18).mul(1300),
-                                        BigNumber.from(10).pow(18).mul(1),
-                                    ],
-                                    0,
-                                    []
-                                );
+                                .deposit([amount0, amount1], 0, []);
+                            console.log(
+                                "erc20 tvl:",
+                                (
+                                    await this.erc20Vault.tvl()
+                                ).minTokenAmounts.toString()
+                            );
+                            console.log(
+                                "univ3 tvl:",
+                                (
+                                    await this.uniV3Vault500.tvl()
+                                ).minTokenAmounts.toString()
+                            );
                         }
                         await this.movePrices(i);
                         await this.stabilizePrices();
@@ -609,6 +637,10 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
 
                         const currentERC20RatioD =
                             DENOMINATOR.mul(erc20Capital).div(totalCapital);
+                        console.log(
+                            "Current erc20Ratio:",
+                            currentERC20RatioD.toString()
+                        );
                         expect(currentERC20RatioD.lte(50000)).to.be.true; // at most = 0.005% on ERC20Vault
 
                         if (i % 2 == 1) {
