@@ -131,12 +131,13 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function getTargetPriceX96(
         address token0,
         address token1,
-        TradingParams memory tradingParams_
+        IOracle oracle,
+        uint256 safetyMask
     ) public view returns (uint256 priceX96) {
-        (uint256[] memory pricesX96, ) = tradingParams_.oracle.priceX96(
+        (uint256[] memory pricesX96, ) = oracle.priceX96(
             token0,
             token1,
-            tradingParams_.oracleSafetyMask
+            safetyMask
         );
         require(pricesX96.length > 0, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < pricesX96.length; i++) {
@@ -196,7 +197,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         totalPulledAmounts = new uint256[](2);
 
         {
-            uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams);
+            uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, tradingParams.oracleSafetyMask);
             uint256 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
 
             if (sumUniV3Capital == 0) {
@@ -305,7 +306,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         LiquidityParams memory liquidityParams;
 
         {
-            uint256 targetPriceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams);
+            uint256 targetPriceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, tradingParams.oracleSafetyMask);
             int24 targetTick = _tickFromPriceX96(targetPriceX96);
             (
                 liquidityParams.targetUniV3LiquidityRatioD,
@@ -390,7 +391,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
-        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams);
+        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, tradingParams.oracleSafetyMask);
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
             FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96),
             tvl[1],
@@ -655,7 +656,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             uint256 amount1
         ) = abi.decode(depositOptions, (uint256, uint256, uint256, uint256, uint256, uint256));
 
-        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams);
+        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
 
         (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(lowerVault, upperVault, erc20Vault, priceX96, amount0, amount1);
 
