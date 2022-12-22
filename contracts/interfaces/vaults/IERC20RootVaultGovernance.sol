@@ -18,6 +18,7 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         address strategyTreasury;
         address strategyPerformanceTreasury;
         bool privateVault;
+        bool callbacksAllowedToFail;
         uint256 managementFee;
         uint256 performanceFee;
         address depositCallbackAddress;

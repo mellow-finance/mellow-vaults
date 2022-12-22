@@ -22,7 +22,6 @@ contract WhiteList is DefaultAccessControl {
         uint256[] calldata tokenAmounts,
         uint256 minLpTokens,
         bytes calldata vaultOptions,
-        bytes calldata depositCallbackOptions,
         bytes32[] calldata proof
     ) external returns (uint256[] memory actualTokenAmounts) {
         {
@@ -37,7 +36,7 @@ contract WhiteList is DefaultAccessControl {
             IERC20(tokens[i]).safeIncreaseAllowance(address(vault), tokenAmounts[i]);
         }
 
-        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions, depositCallbackOptions);
+        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions);
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(vault), 0);
             IERC20(tokens[i]).safeTransfer(msg.sender, IERC20(tokens[i]).balanceOf(address(this)));

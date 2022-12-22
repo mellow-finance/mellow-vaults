@@ -84,8 +84,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
-        bytes memory vaultOptions,
-        bytes memory depositCallbackOptions
+        bytes memory vaultOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
@@ -158,12 +157,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         bytes memory depositInfo = abi.encode(actualTokenAmounts[0], actualTokenAmounts[1]);
 
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(bytes.concat(depositCallbackOptions, depositInfo)) {} catch Error(
-                string memory reason
-            ) {
-                emit DepositCallbackLog(reason);
-            } catch {
-                emit DepositCallbackLog("callback failed without reason");
+            if (!delayedStrategyParams.callbacksAllowedToFail) {
+                try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(bytes.concat(vaultOptions, depositInfo)) {} catch Error(
+                    string memory reason
+                ) {
+                    emit DepositCallbackLog(reason);
+                } catch {
+                    emit DepositCallbackLog("callback failed without reason");
+                }
+            }
+            else {
+                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(bytes.concat(vaultOptions, depositInfo));
             }
         }
 
@@ -217,12 +221,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         ).delayedStrategyParams(thisNft);
 
         if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
-                string memory reason
-            ) {
-                emit WithdrawCallbackLog(reason);
-            } catch {
-                emit WithdrawCallbackLog("callback failed without reason");
+            if (!delayedStrategyParams.callbacksAllowedToFail) {
+                try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
+                    string memory reason
+                ) {
+                    emit WithdrawCallbackLog(reason);
+                } catch {
+                    emit WithdrawCallbackLog("callback failed without reason");
+                }
+            }
+            else {
+                ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback();
             }
         }
 
