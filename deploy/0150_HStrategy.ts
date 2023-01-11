@@ -10,7 +10,7 @@ import {
 import { BigNumber } from "ethers";
 import { map } from "ramda";
 
-type MoneyVault = "Aave" | "Yearn";
+type MoneyVault = "Aave" | "AaveV3" | "Yearn";
 
 const setupCardinality = async function (
     hre: HardhatRuntimeEnvironment,
@@ -90,7 +90,8 @@ const setupStrategy = async (
     mintingParamToken0: BigNumber,
     mintingParamToken1: BigNumber,
     domainLowerTick: BigNumber,
-    domainUpperTick: BigNumber
+    domainUpperTick: BigNumber,
+    fee: 500 | 3000 | 10000
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
@@ -103,7 +104,6 @@ const setupStrategy = async (
         hStrategyAddress
     );
 
-    const fee = 3000;
     await setupCardinality(hre, tokens, fee);
     const params = [tokens, erc20Vault, moneyVault, uniV3Vault, fee, deployer];
     const address = await hStrategy.callStatic.createStrategy(...params);
@@ -162,9 +162,9 @@ const setupStrategy = async (
     );
 
     const ratioParams = {
-        erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-        minCapitalDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
-        minRebalanceDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
+        erc20CapitalRatioD: BigNumber.from(10).pow(6).mul(1), // 0.1%
+        minCapitalDeviationD: BigNumber.from(10).pow(6).mul(1), // 0.1%
+        minRebalanceDeviationD: BigNumber.from(10).pow(6).mul(1), // 0.05%
     };
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("updateRatioParams", [
@@ -277,7 +277,8 @@ const buildHStrategy = async (
     mintingParamToken0: BigNumber,
     mintingParamToken1: BigNumber,
     domainLowerTick: BigNumber,
-    domainUpperTick: BigNumber
+    domainUpperTick: BigNumber,
+    fee: 500 | 3000 | 10000
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get } = deployments;
@@ -291,7 +292,7 @@ const buildHStrategy = async (
     let uniV3VaultNft = startNft + 2;
     let erc20RootVaultNft = startNft + 3;
     const moneyGovernance =
-        kind === "Aave" ? "AaveVaultGovernance" : "YearnVaultGovernance";
+        kind === "Aave" ? "AaveVaultGovernance" : kind == "Yearn" ? "YearnVaultGovernance" : "AaveV3VaultGovernance";
 
     const { address: uniV3Helper } = await hre.ethers.getContract(
         "UniV3Helper"
@@ -306,7 +307,7 @@ const buildHStrategy = async (
     });
 
     await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
-        createVaultArgs: [tokens, deployer, 3000, uniV3Helper],
+        createVaultArgs: [tokens, deployer, fee, uniV3Helper],
     });
 
     const erc20Vault = await read(
@@ -335,7 +336,8 @@ const buildHStrategy = async (
         mintingParamToken0,
         mintingParamToken1,
         domainLowerTick,
-        domainUpperTick
+        domainUpperTick,
+        fee
     );
 
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
@@ -379,6 +381,7 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
             mintingParamToken1,
             domainLowerTick,
             domainUpperTick,
+            fee
         ] of [
             [
                 [weth, usdc],
@@ -387,6 +390,7 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
                 BigNumber.from("1000000000"), // weth
                 BigNumber.from(189000),
                 BigNumber.from(212400),
+                500,
             ],
             [
                 [weth, wbtc],
@@ -395,7 +399,8 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
                 BigNumber.from("1000000000"), // weth
                 BigNumber.from(252900),
                 BigNumber.from(257400),
-            ],
+                500
+            ]
         ]) {
             await buildHStrategy(
                 hre,
@@ -405,7 +410,8 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
                 mintingParamToken0 as BigNumber,
                 mintingParamToken1 as BigNumber,
                 domainLowerTick as BigNumber,
-                domainUpperTick as BigNumber
+                domainUpperTick as BigNumber,
+                fee as 500 | 3000 | 10000
             );
         }
     };

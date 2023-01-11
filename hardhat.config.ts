@@ -226,6 +226,9 @@ const config: HardhatUserConfig = {
             polygon: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
             avalanche: "0x4F01AeD16D97E3aB5ab2B501154DC9bb0F1A5A2C",
         },
+        aaveV3Pool: {
+            arbitrum: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+        },
         uniswapV3Factory: {
             default: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         },

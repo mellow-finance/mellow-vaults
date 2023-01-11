@@ -14,6 +14,7 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 
 // 2e10 for mainnet
 // 1e11 for polygon
+// 1e9 for arbitrum
 export const TRANSACTION_GAS_LIMITS = {
     maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
     maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
@@ -70,6 +71,23 @@ export const ALLOWED_APPROVE_LIST = {
             "0x2791bca1f2de4661ed88a30c99a7a9449aa84174", // USDC
             "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", // WBTC
             "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063", // DAI
+        ],
+    },
+    arbitrum: {
+        uniV3: [
+            "0xE592427A0AEce92De3Edee1F18E0157C05861564", // SwapRouter
+
+            "0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443", // USDC-ETH 0.05%
+            "0x2f5e87C9312fa29aed5c179E456625D79015299c", // WBTC-ETH 0.05%
+            "0x1aEEdD3727A6431b8F070C0aFaA81Cc74f273882", // GMX-ETH 0.3%
+        ],
+        uniV2: [],
+        curve: [],
+        erc20: [
+            "0x82af49447d8a07e3bd95bd0d56f35241523fbab1", // WETH
+            "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8", // USDC
+            "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f", // WBTC
+            "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a", // GMX
         ],
     },
 };
@@ -295,8 +313,8 @@ export const combineVaults = async (
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
         tokenLimit = ethers.constants.MaxUint256,
-        managementFee = 2 * 10 ** 7,
-        performanceFee = 20 * 10 ** 7,
+        managementFee = 0,
+        performanceFee = 0,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {

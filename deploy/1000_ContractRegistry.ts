@@ -23,6 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const uniV2Oracle = await get("UniV2Oracle");
     const mellowOracle_univ3 = await get("MellowOracle");
     const aaveVaultGovernance = await get("AaveVaultGovernance");
+    const aaveV3VaultGovernance = await get("AaveV3VaultGovernance");
     const uniV3VaultGovernance = await get("UniV3VaultGovernance");
     const erc20VaultGovernance = await get("ERC20VaultGovernance");
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
@@ -37,6 +38,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         contractRegistry.interface.encodeFunctionData("registerContract", [uniV2Oracle.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [mellowOracle_univ3.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [aaveVaultGovernance.address]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [aaveV3VaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [uniV3VaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [erc20VaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [erc20RootVaultGovernance.address]),
@@ -65,6 +67,7 @@ func.dependencies = [
     "UniV2Oracle",
     "MellowOracle",
     "AaveVaultGovernance",
+    "AaveV3VaultGovernance",
     "UniV3VaultGovernance",
     "ERC20VaultGovernance",
     "ERC20RootVaultGovernance",

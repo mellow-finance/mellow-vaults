@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
-import "../interfaces/vaults/IAaveVault.sol";
+import "../interfaces/vaults/IAaveV3Vault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -222,8 +222,8 @@ contract HStrategyHelper {
         );
 
         {
-            if (moneyVault.supportsInterface(type(IAaveVault).interfaceId)) {
-                IAaveVault(address(moneyVault)).updateTvls();
+            if (moneyVault.supportsInterface(type(IAaveV3Vault).interfaceId)) {
+                IAaveV3Vault(address(moneyVault)).updateTvls();
             }
             (uint256[] memory minMoneyTvl, ) = moneyVault.tvl();
             amounts.moneyToken0 = minMoneyTvl[0];

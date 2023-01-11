@@ -106,6 +106,7 @@ async function registerGovernances(
 
     for (const name of [
         "AaveVaultGovernance",
+        "AaveV3VaultGovernance",
         "UniV3VaultGovernance",
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
