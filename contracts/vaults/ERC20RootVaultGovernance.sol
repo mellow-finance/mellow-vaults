@@ -78,7 +78,6 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
                     privateVault: false,
-                    callbacksAllowedToFail: false,
                     managementFee: 0,
                     performanceFee: 0,
                     depositCallbackAddress: address(0),
@@ -104,7 +103,6 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
                     privateVault: false,
-                    callbacksAllowedToFail: false,
                     managementFee: 0,
                     performanceFee: 0,
                     depositCallbackAddress: address(0),
@@ -117,7 +115,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     /// @inheritdoc IERC20RootVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0});
+            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0, maxTimeOneRebalance: 0, minTimeBetweenRebalances: 3600});
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
@@ -174,6 +172,9 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
 
     /// @inheritdoc IERC20RootVaultGovernance
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
+        require(params.minTimeBetweenRebalances >= 3600);
+        require(params.minTimeBetweenRebalances <= 86400 * 7);
+        require(params.minTimeBetweenRebalances >= 2 * params.maxTimeOneRebalance);
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }

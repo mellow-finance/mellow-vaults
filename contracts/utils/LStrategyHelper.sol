@@ -14,7 +14,7 @@ import "../interfaces/vaults/IVault.sol";
 contract LStrategyHelper is ILStrategyHelper {
     // IMMUTABLES
     address public immutable cowswap;
-    uint256 public constant DENOMINATOR = 10**9;
+    uint256 public constant D18 = 10**18;
 
     constructor(address cowswap_) {
         cowswap = cowswap_;
@@ -60,33 +60,15 @@ contract LStrategyHelper is ILStrategyHelper {
         (uint256[] memory lowerVaultTvl, ) = lowerVault.tvl();
         (uint256[] memory upperVaultTvl, ) = upperVault.tvl();
         (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
-        
-        uint256 minRatioD = type(uint256).max;
-        if (lowerVaultTvl[0] + upperVaultTvl[0] > 0) {
-            uint256 upperBoundRatioD = FullMath.mulDiv(amount0, DENOMINATOR, lowerVaultTvl[0] + upperVaultTvl[0]);
-            if (upperBoundRatioD < minRatioD) {
-                minRatioD = upperBoundRatioD;
-            }
-        }
 
-        if (lowerVaultTvl[1] + upperVaultTvl[1] > 0) {
-            uint256 upperBoundRatioD = FullMath.mulDiv(amount1, DENOMINATOR, lowerVaultTvl[1] + upperVaultTvl[1]);
-            if (upperBoundRatioD < minRatioD) {
-                minRatioD = upperBoundRatioD;
-            }
-        }
-
-        uint256 lowerCapital = FullMath.mulDiv(lowerVaultTvl[0], priceX96, CommonLibrary.Q96) + lowerVaultTvl[1];
-        uint256 upperCapital = FullMath.mulDiv(upperVaultTvl[0], priceX96, CommonLibrary.Q96) + upperVaultTvl[1];
-        uint256 erc20Capital = FullMath.mulDiv(erc20VaultTvl[0], priceX96, CommonLibrary.Q96) + erc20VaultTvl[1];
-
-        minRatioD = FullMath.mulDiv(minRatioD, lowerCapital + upperCapital, lowerCapital + upperCapital + erc20Capital);
+        uint256 amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0];
+        uint256 amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1];
 
         lowerAmounts = new uint256[](2);
-        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], minRatioD, DENOMINATOR);
-        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl[1], minRatioD, DENOMINATOR);
+        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], amount0, amount0Total);
+        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl[1], amount1, amount1Total);
         upperAmounts = new uint256[](2);
-        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl[0], minRatioD, DENOMINATOR);
-        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl[1], minRatioD, DENOMINATOR);
+        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl[0], amount0, amount0Total);
+        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl[1], amount1, amount1Total);
     }
 }

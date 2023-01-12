@@ -18,7 +18,6 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         address strategyTreasury;
         address strategyPerformanceTreasury;
         bool privateVault;
-        bool callbacksAllowedToFail;
         uint256 managementFee;
         uint256 performanceFee;
         address depositCallbackAddress;
@@ -39,6 +38,8 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     struct StrategyParams {
         uint256 tokenLimitPerAddress;
         uint256 tokenLimit;
+        uint256 maxTimeOneRebalance;
+        uint256 minTimeBetweenRebalances;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.

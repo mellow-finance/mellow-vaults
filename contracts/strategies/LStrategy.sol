@@ -646,7 +646,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
     /// @inheritdoc ILpCallback
     function depositCallback(bytes memory depositOptions) external {
-        require(depositOptions.length == 32 * 4, ExceptionsLibrary.INVALID_VALUE);
+        require(depositOptions.length == 32 * 6, ExceptionsLibrary.INVALID_VALUE);
         (
             uint256 minLowerVaultToken0,
             uint256 minLowerVaultToken1,
@@ -667,7 +667,20 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @inheritdoc ILpCallback
-    function withdrawCallback() external {}
+    function withdrawCallback(bytes memory depositOptions) external {
+        require(depositOptions.length == 32 * 2, ExceptionsLibrary.INVALID_VALUE);
+        (
+            uint256 amount0,
+            uint256 amount1
+        ) = abi.decode(depositOptions, (uint256, uint256));
+
+        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
+
+        (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(lowerVault, upperVault, erc20Vault, priceX96, amount0, amount1);
+
+        lowerVault.pull(address(erc20Vault), tokens, lowerAmounts, "");
+        upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");        
+    }
 
     /// @notice Pull liquidity from `fromVault` and put into `toVault`
     /// @param fromVault The vault to pull liquidity from
