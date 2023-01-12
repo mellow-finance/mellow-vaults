@@ -42,6 +42,9 @@ contract MainnetDeployment is Script {
     address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
+    address approver = 0x974b9Ec2Bb4f90984B6AFc7b2136072186C1f471;
+
+    address depositor = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public wsteth = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -54,16 +57,16 @@ contract MainnetDeployment is Script {
     address public uniGovernance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
-    uint256 width = 140;
+    uint256 width = 280;
 
-    LStrategy lstrategy;
+    LStrategy lstrategy = LStrategy(0x8F2aE04A0e410599Cc36A7B6dF756B5239366A69);
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
         for (uint256 i = 0; i < nfts.length; ++i) {
             IVaultRegistry(registry).approve(rootGovernance, nfts[i]);
         }
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(lstrategy), nfts, address(this));
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(lstrategy), nfts, deployer);
         rootVault = address(w);
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -102,16 +105,24 @@ contract MainnetDeployment is Script {
                 fee: 500,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
-                amount0Desired: 10**9,
-                amount1Desired: 10**9,
+                amount0Desired: 10**10,
+                amount1Desired: 10**10,
                 amount0Min: 0,
                 amount1Min: 0,
-                recipient: deployer,
+                recipient: approver,
                 deadline: type(uint256).max
             })
         );
 
-        INonfungiblePositionManager(uniswapV3PositionManager).safeTransferFrom(deployer, address(vault), nft);
+       vm.stopBroadcast();
+       vm.startBroadcast(approver);
+
+       INonfungiblePositionManager(uniswapV3PositionManager).safeTransferFrom(approver, address(vault), nft);
+
+       //console2.log("NFT: ", address(vault), nft);
+
+       vm.stopBroadcast();
+       vm.startBroadcast(deployer);
     }
 
     function getPool() public returns (IUniswapV3Pool) {
@@ -141,7 +152,10 @@ contract MainnetDeployment is Script {
         IUniV3Vault lowerVault = lstrategy.lowerVault();
         IUniV3Vault upperVault = lstrategy.upperVault();
 
-        preparePush(lowerVault, tickLeftLower, tickLeftUpper);
+       // IVaultRegistry(registry).approve(approver, startNft);
+       // IVaultRegistry(registry).approve(approver, startNft + 1);
+
+      //  preparePush(lowerVault, tickLeftLower, tickLeftUpper);
         preparePush(upperVault, tickRightLower, tickRightUpper);
 
         {
@@ -159,8 +173,8 @@ contract MainnetDeployment is Script {
     }
 
     function setupSecondPhase(IWETH wethContract, IWSTETH wstethContract) public payable {
-        wstethContract.transfer(address(lstrategy), 3 * 10**17);
-        wethContract.transfer(address(lstrategy), 3 * 10**17);
+        wstethContract.transfer(address(lstrategy), 10**14);
+        wethContract.transfer(address(lstrategy), 10**14);
 
         lstrategy.updateTradingParams(
             LStrategy.TradingParams({
@@ -207,18 +221,41 @@ contract MainnetDeployment is Script {
 
         {
             IUniV3VaultGovernance uniV3VaultGovernance = IUniV3VaultGovernance(uniGovernance);
-            uniV3VaultGovernance.createVault(tokens, address(this), uint24(uniV3PoolFee), address(helper));
-            uniV3VaultGovernance.createVault(tokens, address(this), uint24(uniV3PoolFee), address(helper));
+            uniV3VaultGovernance.createVault(tokens, deployer, uint24(uniV3PoolFee), address(helper));
+            uniV3VaultGovernance.createVault(tokens, deployer, uint24(uniV3PoolFee), address(helper));
+
+            uniV3VaultGovernance.stageDelayedStrategyParams(
+                uniV3LowerVaultNft,
+                IUniV3VaultGovernance.DelayedStrategyParams({
+                    safetyIndicesSet: 0x02
+                })
+            );
+            uniV3VaultGovernance.stageDelayedStrategyParams(
+                uniV3LowerVaultNft + 1,
+                IUniV3VaultGovernance.DelayedStrategyParams({
+                    safetyIndicesSet: 0x02
+                })
+            );
+
+            uniV3VaultGovernance.commitDelayedStrategyParams(
+                uniV3LowerVaultNft
+            );
+            uniV3VaultGovernance.commitDelayedStrategyParams(
+                uniV3LowerVaultNft + 1
+            );
         }
 
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
-            erc20VaultGovernance.createVault(tokens, address(this));
+            erc20VaultGovernance.createVault(tokens, deployer);
         }
 
         IERC20Vault erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 2));
         IUniV3Vault uniV3LowerVault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft));
         IUniV3Vault uniV3UpperVault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 1));
+        console2.log("ERC20 Vault: ", address(erc20Vault));
+        console2.log("Lower Vault: ", address(uniV3LowerVault));
+        console2.log("Upper Vault: ", address(uniV3UpperVault));
         address cowswap = 0x9008D19f58AAbD9eD0D60971565AA8510560ab41;
         address relayer = 0xC92E8bdf79f0507f65a392b0ab4667716BFE0110;
         LStrategyHelper lStrategyHelper = new LStrategyHelper(cowswap);
@@ -231,7 +268,7 @@ contract MainnetDeployment is Script {
             uniV3LowerVault,
             uniV3UpperVault,
             ILStrategyHelper(address(lStrategyHelper)),
-            address(this),
+            deployer,
             uint16(width)
         );
 
@@ -243,13 +280,22 @@ contract MainnetDeployment is Script {
     }
 
     function run() external {
-        vm.startBroadcast();
+        vm.startBroadcast(deployer);
 
-        uint256 startNft = kek();
+       // uint256 startNft = kek();
+        uint256 startNft = 212;
         buildInitialPositions(width, startNft);
 
-        bytes32 ADMIN_ROLE =
-        bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
+        address[] memory depositors = new address[](1);
+        depositors[0] = depositor;
+
+        address erc20RootVault = IVaultRegistry(registry).vaultForNft(startNft + 3);
+
+        IERC20RootVault(erc20RootVault).addDepositorsToAllowlist(depositors);
+
+        IVaultRegistry(registry).transferFrom(deployer, sAdmin, startNft + 3);
+
+        bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
         bytes32 ADMIN_DELEGATE_ROLE =
             bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
         bytes32 OPERATOR_ROLE =
@@ -257,11 +303,13 @@ contract MainnetDeployment is Script {
 
         lstrategy.grantRole(ADMIN_ROLE, sAdmin);
         lstrategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
-        lstrategy.grantRole(ADMIN_DELEGATE_ROLE, address(this));
+        lstrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
         lstrategy.grantRole(OPERATOR_ROLE, sAdmin);
-        lstrategy.revokeRole(OPERATOR_ROLE, address(this));
-        lstrategy.revokeRole(ADMIN_DELEGATE_ROLE, address(this));
-        lstrategy.revokeRole(ADMIN_ROLE, address(this));
+        lstrategy.revokeRole(OPERATOR_ROLE, deployer);
+        lstrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
+        lstrategy.revokeRole(ADMIN_ROLE, deployer);
+        console2.log("Root Vault: ", address(erc20RootVault));
+        console2.log("Strategy: ", address(lstrategy));
         return;
 
         /*
