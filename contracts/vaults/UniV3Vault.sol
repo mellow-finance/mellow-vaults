@@ -59,15 +59,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         }
     }
 
-    function getSpotTvlWithoutFees() public view returns (uint256 amount0, uint256 amount1) {
-        uint256 uniV3Nft_ = uniV3Nft;
-        if (uniV3Nft_ == 0) {
-            return (0, 0);
-        }
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        (amount0, amount1) = _uniV3Helper.getPrincipal(uniV3Nft_, sqrtPriceX96);
-    }
-
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);

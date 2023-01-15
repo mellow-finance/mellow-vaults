@@ -87,11 +87,6 @@ contract UniV3Helper {
     }
 
     /// @dev returns with "Invalid Token ID" for non-existent nfts
-    function getPrincipal(uint256 uniV3Nft, uint160 sqrtPriceX96) external view returns (uint256 fees0, uint256 fees1) {
-        (fees0, fees1) = PositionValue.principal(positionManager, uniV3Nft, sqrtPriceX96);
-    }
-
-    /// @dev returns with "Invalid Token ID" for non-existent nfts
     function calculateTvlBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
         public
         view

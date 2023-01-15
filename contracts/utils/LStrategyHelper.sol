@@ -9,6 +9,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/vaults/IVault.sol";
+import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 
 
 contract LStrategyHelper is ILStrategyHelper {
@@ -55,20 +56,26 @@ contract LStrategyHelper is ILStrategyHelper {
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }
 
-    function calculateTokenAmounts(IUniV3Vault lowerVault, IUniV3Vault upperVault, IVault erc20Vault, uint256 priceX96, uint256 amount0, uint256 amount1) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) {
+    function calculateTokenAmounts(IUniV3Vault lowerVault, IUniV3Vault upperVault, IVault erc20Vault, uint256 priceX96, uint256 amount0, uint256 amount1, INonfungiblePositionManager positionManager) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) {
         
-        (uint256 lowerVaultTvl0, uint256 lowerVaultTvl1) = lowerVault.getSpotTvlWithoutFees();
-        (uint256 upperVaultTvl0, uint256 upperVaultTvl1) = upperVault.getSpotTvlWithoutFees();
+        (, , , , , , , uint128 liquidityLower, , , , ) = positionManager
+                .positions(lowerVault.uniV3Nft());
+
+        (, , , , , , , uint128 liquidityUpper, , , , ) = positionManager
+                .positions(upperVault.uniV3Nft());
+
+        (uint256[] memory lowerVaultTvl) = lowerVault.liquidityToTokenAmounts(liquidityLower);
+        (uint256[] memory upperVaultTvl) = upperVault.liquidityToTokenAmounts(liquidityUpper);
         (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
 
-        uint256 amount0Total = lowerVaultTvl0 + upperVaultTvl0 + erc20VaultTvl[0];
-        uint256 amount1Total = lowerVaultTvl1 + upperVaultTvl1 + erc20VaultTvl[1];
+        uint256 amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0];
+        uint256 amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1];
 
         lowerAmounts = new uint256[](2);
-        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl0, amount0, amount0Total);
-        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl1, amount1, amount1Total);
+        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], amount0, amount0Total);
+        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl[0], amount1, amount1Total);
         upperAmounts = new uint256[](2);
-        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl0, amount0, amount0Total);
-        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl1, amount1, amount1Total);
+        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl[0], amount0, amount0Total);
+        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl[1], amount1, amount1Total);
     }
 }

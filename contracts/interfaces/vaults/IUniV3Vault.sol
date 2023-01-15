@@ -47,6 +47,4 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
 
     /// @notice Collect UniV3 fees to zero vault.
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
-
-    function getSpotTvlWithoutFees() external view returns (uint256 amount0, uint256 amount1);
 }

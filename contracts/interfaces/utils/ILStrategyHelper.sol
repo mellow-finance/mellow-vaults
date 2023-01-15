@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../../libraries/external/GPv2Order.sol";
 import "../vaults/IVault.sol";
 import "../vaults/IUniV3Vault.sol";
+import "../external/univ3/INonfungiblePositionManager.sol";
 
 interface ILStrategyHelper {
     function checkOrder(
@@ -20,5 +21,5 @@ interface ILStrategyHelper {
 
     function tickFromPriceX96(uint256 priceX96) external pure returns (int24);
 
-    function calculateTokenAmounts(IUniV3Vault lowerVault, IUniV3Vault upperVault, IVault erc20Vault, uint256 priceX96, uint256 amount0, uint256 amount1) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts);
+    function calculateTokenAmounts(IUniV3Vault lowerVault, IUniV3Vault upperVault, IVault erc20Vault, uint256 priceX96, uint256 amount0, uint256 amount1, INonfungiblePositionManager positionManager) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts);
 }
