@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/vaults/IUniV3VaultGovernance.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../libraries/external/TickMath.sol";
-import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 import "../utils/UniV3Helper.sol";
@@ -32,65 +31,41 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        if (uniV3Nft == 0) {
+        uint256 uniV3Nft_ = uniV3Nft;
+        if (uniV3Nft_ == 0) {
             return (new uint256[](2), new uint256[](2));
         }
 
-        minTokenAmounts = new uint256[](2);
-        maxTokenAmounts = new uint256[](2);
-        int24 tickLower;
-        int24 tickUpper;
-        uint128 liquidity;
-        {
-            IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
-                .delayedProtocolParams();
-            {
-                uint128 tokensOwed0;
-                uint128 tokensOwed1;
-
-                (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1) = _uniV3Helper.calculatePositionInfo(
-                    _positionManager,
-                    pool,
-                    uniV3Nft
-                );
-
-                minTokenAmounts[0] = tokensOwed0;
-                maxTokenAmounts[0] = tokensOwed0;
-                minTokenAmounts[1] = tokensOwed1;
-                maxTokenAmounts[1] = tokensOwed1;
-            }
-            {
-                uint256 amountMin0;
-                uint256 amountMax0;
-                uint256 amountMin1;
-                uint256 amountMax1;
-                uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-                uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-                (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle);
-                {
-                    uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
-                    (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
-                        uint160(minSqrtPriceX96),
-                        sqrtPriceAX96,
-                        sqrtPriceBX96,
-                        liquidity
-                    );
-                }
-                {
-                    uint256 maxSqrtPriceX96 = CommonLibrary.sqrtX96(maxPriceX96);
-                    (amountMax0, amountMax1) = LiquidityAmounts.getAmountsForLiquidity(
-                        uint160(maxSqrtPriceX96),
-                        sqrtPriceAX96,
-                        sqrtPriceBX96,
-                        liquidity
-                    );
-                }
-                minTokenAmounts[0] += amountMin0 < amountMax0 ? amountMin0 : amountMax0;
-                minTokenAmounts[1] += amountMin1 < amountMax1 ? amountMin1 : amountMax1;
-                maxTokenAmounts[0] += amountMin0 < amountMax0 ? amountMax0 : amountMin0;
-                maxTokenAmounts[1] += amountMin1 < amountMax1 ? amountMax1 : amountMin1;
-            }
+        address vaultGovernance_ = address(_vaultGovernance);
+        IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(vaultGovernance_)
+            .delayedProtocolParams();
+        IUniV3VaultGovernance.DelayedStrategyParams memory strategyParams = IUniV3VaultGovernance(vaultGovernance_)
+            .delayedStrategyParams(_nft);
+        // cheaper way to calculate tvl by spot price
+        if (strategyParams.safetyIndicesSet == 2) {
+            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+            minTokenAmounts = _uniV3Helper.calculateTvlBySqrtPriceX96(uniV3Nft_, sqrtPriceX96);
+            maxTokenAmounts = minTokenAmounts;
+        } else {
+            (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(
+                params.oracle,
+                strategyParams.safetyIndicesSet
+            );
+            (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculateTvlByMinMaxPrices(
+                uniV3Nft_,
+                minPriceX96,
+                maxPriceX96
+            );
         }
+    }
+
+    function getSpotTvlWithoutFees() public view returns (uint256 amount0, uint256 amount1) {
+        uint256 uniV3Nft_ = uniV3Nft;
+        if (uniV3Nft_ == 0) {
+            return (0, 0);
+        }
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        (amount0, amount1) = _uniV3Helper.getPrincipal(uniV3Nft_, sqrtPriceX96);
     }
 
     /// @inheritdoc IntegrationVault
@@ -105,12 +80,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     /// @inheritdoc IUniV3Vault
     function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = _uniV3Helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft, _positionManager);
+        tokenAmounts = _uniV3Helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft);
     }
 
     /// @inheritdoc IUniV3Vault
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) public view returns (uint128 liquidity) {
-        liquidity = _uniV3Helper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft, _positionManager);
+        liquidity = _uniV3Helper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -195,9 +170,13 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return false;
     }
 
-    function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], 0x2A);
-        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+    function _getMinMaxPrice(IOracle oracle, uint32 safetyIndicesSet)
+        internal
+        view
+        returns (uint256 minPriceX96, uint256 maxPriceX96)
+    {
+        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndicesSet);
+        require(prices.length >= 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];
         for (uint32 i = 1; i < prices.length; ++i) {
@@ -266,27 +245,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         actualTokenAmounts[1] = amounts.a1;
     }
 
-    function _getMaximalLiquidityForAmounts(
-        uint160 sqrtRatioX96,
-        uint160 sqrtRatioAX96,
-        uint160 sqrtRatioBX96,
-        uint256 amount0,
-        uint256 amount1
-    ) internal pure returns (uint128 liquidity) {
-        if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
-
-        if (sqrtRatioX96 <= sqrtRatioAX96) {
-            liquidity = LiquidityAmounts.getLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
-        } else if (sqrtRatioX96 < sqrtRatioBX96) {
-            uint128 liquidity0 = LiquidityAmounts.getLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0);
-            uint128 liquidity1 = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1);
-
-            liquidity = liquidity0 > liquidity1 ? liquidity0 : liquidity1;
-        } else {
-            liquidity = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
-        }
-    }
-
     function _pullUniV3Nft(
         uint256[] memory tokenAmounts,
         address to,
@@ -299,12 +257,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 uniV3Nft
             );
             (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-            uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-            uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-            liquidityToPull = _getMaximalLiquidityForAmounts(
+            liquidityToPull = _uniV3Helper.tokenAmountsToMaximalLiquidity(
                 sqrtPriceX96,
-                sqrtPriceAX96,
-                sqrtPriceBX96,
+                tickLower,
+                tickUpper,
                 tokenAmounts[0],
                 tokenAmounts[1]
             );

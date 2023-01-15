@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -47,4 +47,6 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
 
     /// @notice Collect UniV3 fees to zero vault.
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
+
+    function getSpotTvlWithoutFees() external view returns (uint256 amount0, uint256 amount1);
 }

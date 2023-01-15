@@ -667,12 +667,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @inheritdoc ILpCallback
-    function withdrawCallback(bytes memory depositOptions) external {
-        require(depositOptions.length == 32 * 2, ExceptionsLibrary.INVALID_VALUE);
+    function withdrawCallback(bytes memory withdrawOptions) external {
+        require(withdrawOptions.length == 32 * 2, ExceptionsLibrary.INVALID_VALUE);
         (
             uint256 amount0,
             uint256 amount1
-        ) = abi.decode(depositOptions, (uint256, uint256));
+        ) = abi.decode(withdrawOptions, (uint256, uint256));
 
         uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
 
