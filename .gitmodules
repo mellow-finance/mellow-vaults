@@ -4,3 +4,6 @@
 # [submodule "test/foundry/lib/openzeppelin-contracts"]
 # 	path = test/foundry/lib/openzeppelin-contracts
 # 	url = https://github.com/Openzeppelin/openzeppelin-contracts
+[submodule "test/foundry/lib/openzeppelin-contracts"]
+	path = test/foundry/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
