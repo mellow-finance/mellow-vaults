@@ -10,6 +10,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
+import "../libraries/external/PositionValue.sol";
 
 contract LStrategyHelper is ILStrategyHelper {
     // IMMUTABLES
@@ -55,25 +56,49 @@ contract LStrategyHelper is ILStrategyHelper {
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }
 
+    /// @dev returns with "Invalid Token ID" for non-existent nfts
+    function getFeesByNft(INonfungiblePositionManager positionManager, uint256 uniV3Nft)
+        public
+        view
+        returns (uint256 fees0, uint256 fees1)
+    {
+        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft);
+    }
+
     function calculateTokenAmounts(
         IUniV3Vault lowerVault,
         IUniV3Vault upperVault,
         IVault erc20Vault,
-        uint256 priceX96,
         uint256 amount0,
         uint256 amount1,
         INonfungiblePositionManager positionManager
     ) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) {
-        (, , , , , , , uint128 liquidityLower, , , , ) = positionManager.positions(lowerVault.uniV3Nft());
+        uint256 lowerVaultNft = lowerVault.uniV3Nft();
+        uint256 upperVaultNft = upperVault.uniV3Nft();
 
-        (, , , , , , , uint128 liquidityUpper, , , , ) = positionManager.positions(upperVault.uniV3Nft());
+        uint256[] memory lowerVaultTvl;
+        uint256[] memory upperVaultTvl;
 
-        uint256[] memory lowerVaultTvl = lowerVault.liquidityToTokenAmounts(liquidityLower);
-        uint256[] memory upperVaultTvl = upperVault.liquidityToTokenAmounts(liquidityUpper);
+        {
+            (, , , , , , , uint128 liquidityLower, , , , ) = positionManager.positions(lowerVaultNft);
+            (, , , , , , , uint128 liquidityUpper, , , , ) = positionManager.positions(upperVaultNft);
+
+            lowerVaultTvl = lowerVault.liquidityToTokenAmounts(liquidityLower);
+            upperVaultTvl = upperVault.liquidityToTokenAmounts(liquidityUpper);
+        }
+
         (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
 
-        uint256 amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0];
-        uint256 amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1];
+        uint256 amount0Total;
+        uint256 amount1Total;
+
+        {
+            (uint256 fees0Lower, uint256 fees1Lower) = getFeesByNft(positionManager, lowerVaultNft);
+            (uint256 fees0Upper, uint256 fees1Upper) = getFeesByNft(positionManager, upperVaultNft);
+
+            amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0] + fees0Lower + fees0Upper;
+            amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1] + fees1Lower + fees1Upper;
+        }
 
         lowerAmounts = new uint256[](2);
         lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], amount0, amount0Total);

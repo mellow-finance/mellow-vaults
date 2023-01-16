@@ -668,16 +668,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             uint256 amount1
         ) = abi.decode(depositOptions, (uint256, uint256, uint256, uint256, uint256, uint256));
 
-        lowerVault.collectEarnings();
-        upperVault.collectEarnings();
-
         uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
 
         (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(
             lowerVault,
             upperVault,
             erc20Vault,
-            priceX96,
             amount0,
             amount1,
             positionManager
@@ -700,16 +696,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         require(withdrawOptions.length == 32 * 2, ExceptionsLibrary.INVALID_VALUE);
         (uint256 amount0, uint256 amount1) = abi.decode(withdrawOptions, (uint256, uint256));
 
-        lowerVault.collectEarnings();
-        upperVault.collectEarnings();
-
         uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
 
         (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(
             lowerVault,
             upperVault,
             erc20Vault,
-            priceX96,
             amount0,
             amount1,
             positionManager
