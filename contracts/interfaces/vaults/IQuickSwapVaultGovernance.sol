@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "../external/quickswap/IIncentiveKey.sol";
 import "./IQuickSwapVault.sol";
 import "./IVaultGovernance.sol";
 import "../oracles/IOracle.sol";
@@ -14,7 +15,7 @@ interface IQuickSwapVaultGovernance is IVaultGovernance {
     }
 
     struct DelayedStrategyParams {
-        uint256 tmp;
+        IIncentiveKey.IncentiveKey key;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
