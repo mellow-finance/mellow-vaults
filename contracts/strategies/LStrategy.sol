@@ -314,7 +314,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 tradingParams.oracle,
                 tradingParams.oracleSafetyMask
             );
-            int24 targetTick = _tickFromPriceX96(targetPriceX96);
+            int24 targetTick = orderHelper.tickFromPriceX96(targetPriceX96);
             (
                 liquidityParams.targetUniV3LiquidityRatioD,
                 liquidityParams.isNegativeLiquidityRatio
@@ -398,38 +398,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
-        uint256 priceX96 = getTargetPriceX96(
-            tokens[0],
-            tokens[1],
-            tradingParams.oracle,
-            tradingParams.oracleSafetyMask
-        );
-        (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
-            FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96),
-            tvl[1],
-            ratioParams.erc20TokenRatioD,
-            ratioParams.minErc20TokenRatioDeviationD
-        );
-        TradingParams memory tradingParams_ = tradingParams;
 
-        uint256 isNegativeInt = isNegative ? 1 : 0;
-        uint256[2] memory tokenValuesToTransfer = [
-            FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96),
-            tokenDelta
-        ];
-        uint256 amountOut = FullMath.mulDiv(
-            tokenValuesToTransfer[1 ^ isNegativeInt],
-            DENOMINATOR - tradingParams_.maxSlippageD,
-            DENOMINATOR
-        );
-        amountOut = amountOut > minAmountOut ? amountOut : minAmountOut;
-        preOrder_ = PreOrder({
-            tokenIn: tokens[isNegativeInt],
-            tokenOut: tokens[1 ^ isNegativeInt],
-            deadline: uint64(block.timestamp + tradingParams_.orderDeadline),
-            amountIn: tokenValuesToTransfer[isNegativeInt],
-            minAmountOut: amountOut
-        });
+        preOrder_ = orderHelper.getPreOrder(tvl, minAmountOut);
 
         preOrder = preOrder_;
         emit PreOrderPosted(tx.origin, msg.sender, preOrder_);
@@ -446,17 +416,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     ) external {
         _requireAtLeastOperator();
         if (signed) {
-            address sellToken = address(order.sellToken);
             orderHelper.checkOrder(
                 order,
                 uuid,
-                preOrder.tokenIn,
-                preOrder.tokenOut,
-                preOrder.amountIn,
-                preOrder.minAmountOut,
-                preOrder.deadline,
                 address(erc20Vault),
-                (sellToken == tokens[0] ? tradingParams.maxFee0 : tradingParams.maxFee1)
+                (address(order.sellToken) == tokens[0] ? tradingParams.maxFee0 : tradingParams.maxFee1)
             );
             erc20Vault.externalCall(
                 address(order.sellToken),
@@ -485,10 +449,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @return totalCollectedEarnings Total collected fees
     function collectUniFees() external returns (uint256[] memory totalCollectedEarnings) {
         _requireAtLeastOperator();
-        totalCollectedEarnings = new uint256[](2);
-        uint256[] memory collectedEarnings = new uint256[](2);
         totalCollectedEarnings = lowerVault.collectEarnings();
-        collectedEarnings = upperVault.collectEarnings();
+        uint256[] memory collectedEarnings = upperVault.collectEarnings();
         for (uint256 i = 0; i < 2; i++) {
             totalCollectedEarnings[i] += collectedEarnings[i];
         }
@@ -576,11 +538,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         return FullMath.mulDiv((minTvl[0] + maxTvl[0]) / 2, priceX96, CommonLibrary.Q96) + (minTvl[1] + maxTvl[1]) / 2;
     }
 
-    /// @notice Target tick based on mutable params
-    function _tickFromPriceX96(uint256 priceX96) internal view returns (int24) {
-        return orderHelper.tickFromPriceX96(priceX96);
-    }
-
     /// @notice The vault to get stats from
     /// @return tickLower Lower tick for the uniV3 poistion inside the vault
     /// @return tickUpper Upper tick for the uniV3 poistion inside the vault
@@ -615,20 +572,19 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             lowerLiquidity + upperLiquidity,
             DENOMINATOR
         );
-        if (minDeviation > 0) {
-            uint256 liquidityRatioD = FullMath.mulDiv(lowerLiquidity, DENOMINATOR, lowerLiquidity + upperLiquidity);
-            uint256 deviation = targetLiquidityRatioD > liquidityRatioD
-                ? targetLiquidityRatioD - liquidityRatioD
-                : liquidityRatioD - targetLiquidityRatioD;
-            if (deviation < minDeviation) {
-                return (0, false);
-            }
+
+        uint256 liquidityRatioD = FullMath.mulDiv(lowerLiquidity, DENOMINATOR, lowerLiquidity + upperLiquidity);
+        uint256 deviation = targetLiquidityRatioD > liquidityRatioD
+            ? targetLiquidityRatioD - liquidityRatioD
+            : liquidityRatioD - targetLiquidityRatioD;
+        if (deviation < minDeviation) {
+            return (0, false);
         }
+
         if (targetLowerLiquidity > lowerLiquidity) {
             isNegative = true;
             delta = targetLowerLiquidity - lowerLiquidity;
         } else {
-            isNegative = false;
             delta = lowerLiquidity - targetLowerLiquidity;
         }
     }

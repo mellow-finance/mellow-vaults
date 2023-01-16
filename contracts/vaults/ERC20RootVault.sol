@@ -195,7 +195,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         require(block.timestamp > lastRebalanceFlagSet + strategyParams.maxTimeOneRebalance);
 
         uint256 supply = totalSupply;
-        require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
@@ -239,7 +238,22 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 IERC20(tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
             }
         }
-        _updateWithdrawnAmounts(actualTokenAmounts);
+
+        {
+            IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+            if (uint64(block.timestamp) != totalWithdrawnAmountsTimestamp) {
+                totalWithdrawnAmountsTimestamp = uint64(block.timestamp);
+                totalWithdrawnAmounts = new uint256[](actualTokenAmounts.length);
+            }
+            for (uint256 i = 0; i < actualTokenAmounts.length; i++) {
+                totalWithdrawnAmounts[i] += actualTokenAmounts[i];
+                require(
+                    totalWithdrawnAmounts[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
+                    ExceptionsLibrary.LIMIT_OVERFLOW
+                );
+            }
+        }
+
         if (sufficientAmountRest) {
             _burn(msg.sender, lpTokenAmount);
         } else {
@@ -443,27 +457,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
-    }
-
-    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
-        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
-        uint64 timestamp = uint64(block.timestamp);
-        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        if (timestamp != totalWithdrawnAmountsTimestamp) {
-            totalWithdrawnAmountsTimestamp = timestamp;
-        } else {
-            for (uint256 i = 0; i < tokenAmounts.length; i++) {
-                withdrawn[i] = totalWithdrawnAmounts[i];
-            }
-        }
-        for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            withdrawn[i] += tokenAmounts[i];
-            require(
-                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
-            totalWithdrawnAmounts[i] = withdrawn[i];
-        }
     }
 
     // --------------------------  EVENTS  --------------------------
