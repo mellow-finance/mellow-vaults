@@ -9,7 +9,6 @@ import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/PermissionIdsLibrary.sol";
 import "./utils/ContractMeta.sol";
-import "forge-std/console2.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
@@ -144,7 +143,7 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         address,
         address,
         uint256 tokenId
-    ) internal view override {
+    ) internal view {
         require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
 

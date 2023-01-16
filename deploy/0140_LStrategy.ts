@@ -46,8 +46,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         vault: string,
         tickLower: number,
         tickUpper: number,
-        nft: number) => {
-
+        nft: number
+    ) => {
         const lStrategy = await ethers.getContract("LStrategy");
         const vaultRegistry = await ethers.getContract("VaultRegistry");
 
@@ -59,15 +59,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const wstethContract = await ethers.getContractAt("ERC20Token", wsteth);
         const amount = BigNumber.from(10).pow(12);
 
-        await wethContract.approve(
-            uniswapV3PositionManager,
-            amount
-        );
-        await wstethContract.approve(
-            uniswapV3PositionManager,
-            amount
-        );
-        
+        await wethContract.approve(uniswapV3PositionManager, amount);
+        await wstethContract.approve(uniswapV3PositionManager, amount);
+
         const mintParams = {
             token0: wsteth,
             token1: weth,
@@ -81,26 +75,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             recipient: approver,
             deadline: ethers.constants.MaxUint256,
         };
-        const result = await positionManager.callStatic.mint(
-            mintParams
-        );
+        const result = await positionManager.callStatic.mint(mintParams);
 
         await positionManager.mint(mintParams);
 
-        await positionManager.connect(signer).functions[
-            "safeTransferFrom(address,address,uint256)"
-        ](approver, vault, result.tokenId);
-        await wethContract.approve(
-            uniswapV3PositionManager,
-            0
-        );
-        await wstethContract.approve(
-            uniswapV3PositionManager,
-            0
-        );
+        await positionManager
+            .connect(signer)
+            .functions["safeTransferFrom(address,address,uint256)"](
+                approver,
+                vault,
+                result.tokenId
+            );
+        await wethContract.approve(uniswapV3PositionManager, 0);
+        await wstethContract.approve(uniswapV3PositionManager, 0);
 
         vaultRegistry.approve(lStrategy.address, nft);
-
     };
 
     const uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
@@ -132,17 +121,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
 
     const getUniV3Tick = async () => {
-
         const lStrategy = await ethers.getContract("LStrategy");
         const mellowOracle = await ethers.getContract("MellowOracle");
 
         const tradingParams = {
             oracle: mellowOracle.address,
             maxSlippageD: BigNumber.from(10).pow(7),
-            oracleSafetyMask: 0x2A,
+            oracleSafetyMask: 0x2a,
             orderDeadline: 86400 * 30,
             maxFee0: BigNumber.from(10).pow(15),
-            maxFee1: BigNumber.from(10).pow(15)
+            maxFee1: BigNumber.from(10).pow(15),
         };
 
         const priceX96 = await lStrategy.getTargetPriceX96(
@@ -151,10 +139,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             tradingParams
         );
 
-        const sqrtPriceX48 = BigNumber.from(sqrt(JSBI.BigInt(priceX96)).toString());
+        const sqrtPriceX48 = BigNumber.from(
+            sqrt(JSBI.BigInt(priceX96)).toString()
+        );
         const denominator = BigNumber.from(2).pow(48);
-        const tick = TickMath.getTickAtSqrtRatio(JSBI.BigInt(sqrtPriceX48.mul(denominator)));
-        
+        const tick = TickMath.getTickAtSqrtRatio(
+            JSBI.BigInt(sqrtPriceX48.mul(denominator))
+        );
+
         return BigNumber.from(tick);
     };
 
@@ -190,15 +182,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const currentTick = await getUniV3Tick();
     let tickLeftLower =
-        currentTick.div(semiPositionRange).mul(semiPositionRange)
-            .toNumber() - semiPositionRange;
+        currentTick.div(semiPositionRange).mul(semiPositionRange).toNumber() -
+        semiPositionRange;
     let tickLeftUpper = tickLeftLower + intervalWidthInTicks;
 
     let tickRightLower = tickLeftLower + semiPositionRange;
     let tickRightUpper = tickLeftUpper + semiPositionRange;
 
-    await preparePush(uniV3LowerVault, tickLeftLower, tickLeftUpper, uniV3LowerVaultNft);
-    await preparePush(uniV3UpperVault, tickRightLower, tickRightUpper, uniV3UpperVaultNft);
+    await preparePush(
+        uniV3LowerVault,
+        tickLeftLower,
+        tickLeftUpper,
+        uniV3LowerVaultNft
+    );
+    await preparePush(
+        uniV3UpperVault,
+        tickRightLower,
+        tickRightUpper,
+        uniV3UpperVaultNft
+    );
 
     await combineVaults(
         hre,
@@ -216,7 +218,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
         maxFee0: BigNumber.from(10).pow(15),
-        maxFee1: BigNumber.from(10).pow(15)
+        maxFee1: BigNumber.from(10).pow(15),
     });
 
     await lStrategy.updateRatioParams({
@@ -234,7 +236,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     const ADMIN_ROLE =
-    "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
+        "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
     const ADMIN_DELEGATE_ROLE =
         "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
     const OPERATOR_ROLE =

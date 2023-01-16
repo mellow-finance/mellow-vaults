@@ -40,6 +40,22 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IUniV3VaultGovernance
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({safetyIndicesSet: 0});
+        }
+        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_delayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({safetyIndicesSet: 0x2A});
+        }
+        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV3VaultGovernance).interfaceId == interfaceId;
@@ -66,6 +82,24 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     }
 
     /// @inheritdoc IUniV3VaultGovernance
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        require(params.safetyIndicesSet > 1, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+        emit CommitDelayedStrategyParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
+        );
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
     function createVault(
         address[] memory vaultTokens_,
         address owner_,
@@ -86,7 +120,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.0.0");
+        return bytes32("1.1.0");
     }
 
     // --------------------------  EVENTS  --------------------------
@@ -107,4 +141,30 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
+
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params
+    );
 }

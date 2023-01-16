@@ -11,11 +11,12 @@ import {
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { ERC20RootVault, ERC20Vault, UniV3Vault } from "./types";
+import { ERC20RootVault, ERC20Vault, UniV3Helper, UniV3Vault } from "./types";
 import {
     combineVaults,
     PermissionIdsLibrary,
     setupVault,
+    TRANSACTION_GAS_LIMITS,
 } from "../deploy/0000_utils";
 import { ERC20 } from "./library/Types";
 import { integrationVaultBehavior } from "./behaviors/integrationVault";
@@ -28,6 +29,7 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
     curveRouter: string;
+    uniV3Helper: UniV3Helper;
     preparePush: () => any;
 };
 
@@ -40,7 +42,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
-                const { read } = deployments;
+                const { read, deploy } = deployments;
 
                 const {
                     uniswapV3PositionManager,
@@ -115,6 +117,14 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 let uniV3VaultNft = startNft;
                 let erc20VaultNft = startNft + 1;
 
+                await deploy("UniV3Helper", {
+                    from: this.deployer.address,
+                    contract: "UniV3Helper",
+                    args: [uniswapV3PositionManager],
+                    log: true,
+                    autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS,
+                });
                 this.uniV3Helper = await ethers.getContract("UniV3Helper");
 
                 await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
@@ -124,6 +134,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         uniV3PoolFee,
                         this.uniV3Helper.address,
                     ],
+                    delayedStrategyParams: [2],
                 });
                 await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
                     createVaultArgs: [tokens, this.deployer.address],
@@ -273,48 +284,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     expect(result[amountsId][tokenId]).gt(0);
                 }
             }
-        });
-
-        it("tvl changes with fees changing", async () => {
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(18).mul(3000)
-            );
-            await mint(
-                "WETH",
-                this.subject.address,
-                BigNumber.from(10).pow(18).mul(3000)
-            );
-
-            await this.preparePush();
-            const resultPrev = await this.subject.tvl();
-
-            let poolAddress = await this.subject.pool();
-            const pool = await ethers.getContractAt(
-                "IUniswapV3Pool",
-                poolAddress
-            );
-
-            const prevState = await pool.slot0();
-            const tokens = [this.weth, this.usdc];
-            await this.swapTokens(
-                this.deployer.address,
-                this.deployer.address,
-                tokens[0],
-                tokens[1],
-                BigNumber.from(10).pow(15)
-            );
-
-            const curState = await pool.slot0();
-
-            expect(prevState.tick == curState.tick).to.be.true;
-
-            const resultCur = await this.subject.tvl();
-
-            expect(resultCur[0][1].add(resultCur[0][0])).to.be.gt(
-                resultPrev[0][1].add(resultPrev[0][0])
-            );
         });
 
         describe("edge cases:", () => {
@@ -655,9 +624,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.subject.address,
                 "0x4", // address of _nft
             ]);
-            this.uniV3Helper = (
-                await ethers.getContract("UniV3Helper")
-            ).address;
 
             await ethers.provider.send("hardhat_setStorageAt", [
                 this.subject.address,
@@ -677,7 +643,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.nft,
                                 [this.usdc.address, this.weth.address],
                                 uniV3PoolFee,
-                                this.uniV3Helper
+                                this.uniV3Helper.address
                             )
                     ).to.emit(this.subject, "Initialized");
                 }
@@ -694,7 +660,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.nft,
                                 [this.usdc.address, this.weth.address],
                                 uniV3PoolFee,
-                                this.uniV3Helper
+                                this.uniV3Helper.address
                             )
                     ).to.not.be.reverted;
                 }
@@ -714,7 +680,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             this.nft,
                             [this.usdc.address, this.weth.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INIT);
                 });
@@ -726,7 +692,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             this.nft,
                             [this.weth.address, this.usdc.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -738,7 +704,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             this.nft,
                             [this.weth.address, this.weth.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -754,7 +720,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.weth.address,
                             ],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
@@ -766,7 +732,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             0,
                             [this.usdc.address, this.weth.address],
                             uniV3PoolFee,
-                            this.uniV3Helper
+                            this.uniV3Helper.address
                         )
                     ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                 });
@@ -788,7 +754,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                         this.nft,
                                         [this.usdc.address, this.weth.address],
                                         uniV3PoolFee,
-                                        this.uniV3Helper
+                                        this.uniV3Helper.address
                                     )
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         }
@@ -945,61 +911,124 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             });
         });
 
-        describe("works correctly when current price is lower than tickPrice", () => {
+        describe("works correctly when spot tick inside interval", () => {
             it("works", async () => {
+                const pool = await ethers.getContractAt(
+                    "IUniswapV3Pool",
+                    await this.subject.pool()
+                );
+                let { tick } = await pool.slot0();
+                tick = tick - (tick % 60);
                 const result = await mintUniV3Position_USDC_WETH({
-                    fee: 3000,
-                    tickLower: 840000,
-                    tickUpper: 887220,
-                    usdcAmount: BigNumber.from(10),
-                    wethAmount: BigNumber.from(10),
+                    fee: await pool.fee(),
+                    tickLower: tick - 60 * 100,
+                    tickUpper: tick + 60 * 100,
+                    usdcAmount: BigNumber.from(10 ** 9),
+                    wethAmount: BigNumber.from(10 ** 9),
                 });
+
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
                 ](this.deployer.address, this.subject.address, result.tokenId);
-                const origTvl = await this.subject.tvl();
-                for (let tokenId = 0; tokenId < 2; ++tokenId) {
-                    expect(origTvl[0][tokenId]).deep.equal(origTvl[1][tokenId]);
+
+                {
+                    let { sqrtPriceX96 } = await pool.slot0();
+                    const calculatedAmounts =
+                        await this.uniV3Helper.calculateTvlBySqrtPriceX96(
+                            await this.subject.uniV3Nft(),
+                            sqrtPriceX96
+                        );
+                    const { minTokenAmounts, maxTokenAmounts } =
+                        await this.subject.tvl();
+                    expect(minTokenAmounts[0].toNumber()).to.be.eq(
+                        calculatedAmounts[0]
+                    );
+                    expect(minTokenAmounts[1].toNumber()).to.be.eq(
+                        calculatedAmounts[1]
+                    );
+                    expect(minTokenAmounts[0].eq(maxTokenAmounts[0])).to.be
+                        .true;
+                    expect(minTokenAmounts[1].eq(maxTokenAmounts[1])).to.be
+                        .true;
                 }
-                await this.subject.push(
-                    [this.usdc.address, this.weth.address],
-                    [BigNumber.from(10), BigNumber.from(10)],
-                    []
-                );
+
+                await this.subject
+                    .connect(this.deployer)
+                    .pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address, this.weth.address],
+                        [10 ** 9, 10 ** 9],
+                        []
+                    );
 
                 {
                     const { minTokenAmounts, maxTokenAmounts } =
                         await this.subject.tvl();
-                    const expectedTvl0 = 10 + origTvl[0][0].toNumber();
-                    const expectedTvl1 = 0;
-                    expect(minTokenAmounts[0].toNumber()).to.be.equal(
-                        expectedTvl0
+                    expect(minTokenAmounts[0].toNumber()).to.be.eq(0);
+                    expect(maxTokenAmounts[0].toNumber()).to.be.eq(0);
+                    expect(minTokenAmounts[1].toNumber()).to.be.eq(0);
+                    expect(maxTokenAmounts[1].toNumber()).to.be.eq(0);
+                }
+            });
+        });
+
+        describe("works correctly when spot tick lower interval", () => {
+            it("works", async () => {
+                const pool = await ethers.getContractAt(
+                    "IUniswapV3Pool",
+                    await this.subject.pool()
+                );
+                let { tick } = await pool.slot0();
+                tick = tick - (tick % 60);
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: await pool.fee(),
+                    tickLower: tick - 120 * 100,
+                    tickUpper: tick - 60 * 100,
+                    usdcAmount: BigNumber.from(10 ** 9),
+                    wethAmount: BigNumber.from(10 ** 9),
+                });
+
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](this.deployer.address, this.subject.address, result.tokenId);
+
+                {
+                    let { sqrtPriceX96 } = await pool.slot0();
+                    const calculatedAmounts =
+                        await this.uniV3Helper.calculateTvlBySqrtPriceX96(
+                            await this.subject.uniV3Nft(),
+                            sqrtPriceX96
+                        );
+                    const { minTokenAmounts, maxTokenAmounts } =
+                        await this.subject.tvl();
+                    expect(minTokenAmounts[0].toNumber()).to.be.eq(
+                        calculatedAmounts[0]
                     );
-                    expect(maxTokenAmounts[0].toNumber()).to.be.equal(
-                        expectedTvl0
+                    expect(minTokenAmounts[1].toNumber()).to.be.eq(
+                        calculatedAmounts[1]
                     );
-                    expect(minTokenAmounts[1].toNumber()).to.be.equal(
-                        expectedTvl1
-                    );
-                    expect(maxTokenAmounts[1].toNumber()).to.be.equal(
-                        expectedTvl1
-                    );
+                    expect(minTokenAmounts[0].eq(maxTokenAmounts[0])).to.be
+                        .true;
+                    expect(minTokenAmounts[1].eq(maxTokenAmounts[1])).to.be
+                        .true;
                 }
 
-                await this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address, this.weth.address],
-                    [BigNumber.from(10), BigNumber.from(10)],
-                    []
-                );
+                await this.subject
+                    .connect(this.deployer)
+                    .pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address, this.weth.address],
+                        [10 ** 9, 10 ** 9],
+                        []
+                    );
 
                 {
                     const { minTokenAmounts, maxTokenAmounts } =
                         await this.subject.tvl();
-                    expect(minTokenAmounts[0]).deep.equal(origTvl[0][0]);
-                    expect(maxTokenAmounts[0]).deep.equal(origTvl[0][0]);
-                    expect(minTokenAmounts[1].toNumber()).to.be.equal(0);
-                    expect(maxTokenAmounts[1].toNumber()).to.be.equal(0);
+                    expect(minTokenAmounts[0].toNumber()).to.be.eq(0);
+                    expect(maxTokenAmounts[0].toNumber()).to.be.eq(0);
+                    expect(minTokenAmounts[1].toNumber()).to.be.eq(0);
+                    expect(maxTokenAmounts[1].toNumber()).to.be.eq(0);
                 }
             });
         });

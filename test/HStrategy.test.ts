@@ -96,10 +96,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     createVaultArgs: [tokens, this.deployer.address],
                 });
 
+                const { uniswapV3PositionManager, uniswapV3Router } =
+                    await getNamedAccounts();
                 await deploy("UniV3Helper", {
                     from: this.deployer.address,
                     contract: "UniV3Helper",
-                    args: [],
+                    args: [uniswapV3PositionManager],
                     log: true,
                     autoMine: true,
                     ...TRANSACTION_GAS_LIMITS,
@@ -167,8 +169,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 /*
                  * Deploy HStrategy
                  */
-                const { uniswapV3PositionManager, uniswapV3Router } =
-                    await getNamedAccounts();
                 this.positionManager = await ethers.getContractAt(
                     INonfungiblePositionManager,
                     uniswapV3PositionManager
@@ -1267,8 +1267,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         await this.uniV3Helper.liquidityToTokenAmounts(
                             positionParams.liquidity,
                             this.pool.address,
-                            await this.uniV3Vault.uniV3Nft(),
-                            this.positionManager.address
+                            await this.uniV3Vault.uniV3Nft()
                         );
                     const { uniV3Token0, uniV3Token1 } =
                         await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
