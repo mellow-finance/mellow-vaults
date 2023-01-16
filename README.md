@@ -72,3 +72,7 @@ yarn deploy:hardhat
 yarn
 yarn size
 ```
+
+## Licensing
+
+The primary license for the mellow-finance/mellow-vaults is the Business Source License 1.1 (BUSL-1.1), see [LICENSE](https://github.com/mellow-finance/mellow-vaults/blob/main/licenses/LICENSE). The files which are NOT licensed under the BUSL-1.1 have appropriate SPDX headers.

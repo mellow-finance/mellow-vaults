@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
