@@ -56,15 +56,6 @@ contract LStrategyHelper is ILStrategyHelper {
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }
 
-    /// @dev returns with "Invalid Token ID" for non-existent nfts
-    function getFeesByNft(INonfungiblePositionManager positionManager, uint256 uniV3Nft)
-        public
-        view
-        returns (uint256 fees0, uint256 fees1)
-    {
-        (fees0, fees1) = PositionValue.fees(positionManager, uniV3Nft);
-    }
-
     function calculateTokenAmounts(
         IUniV3Vault lowerVault,
         IUniV3Vault upperVault,
@@ -93,8 +84,8 @@ contract LStrategyHelper is ILStrategyHelper {
         uint256 amount1Total;
 
         {
-            (uint256 fees0Lower, uint256 fees1Lower) = getFeesByNft(positionManager, lowerVaultNft);
-            (uint256 fees0Upper, uint256 fees1Upper) = getFeesByNft(positionManager, upperVaultNft);
+            (uint256 fees0Lower, uint256 fees1Lower) = PositionValue.fees(positionManager, lowerVaultNft);
+            (uint256 fees0Upper, uint256 fees1Upper) = PositionValue.fees(positionManager, upperVaultNft);
 
             amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0] + fees0Lower + fees0Upper;
             amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1] + fees1Lower + fees1Upper;

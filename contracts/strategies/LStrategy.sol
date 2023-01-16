@@ -668,8 +668,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             uint256 amount1
         ) = abi.decode(depositOptions, (uint256, uint256, uint256, uint256, uint256, uint256));
 
-        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
-
         (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(
             lowerVault,
             upperVault,
@@ -679,24 +677,29 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             positionManager
         );
 
+        uint256[] memory actualLowerAmunts = erc20Vault.pull(address(lowerVault), tokens, lowerAmounts, "");
+        uint256[] memory actualUpperAmunts = erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");
+
         require(
-            lowerAmounts[0] >= minLowerVaultToken0 &&
-                lowerAmounts[1] >= minLowerVaultToken1 &&
-                upperAmounts[0] >= minUpperVaultToken0 &&
-                upperAmounts[1] >= minUpperVaultToken1,
+            actualLowerAmunts[0] >= minLowerVaultToken0 &&
+                actualLowerAmunts[1] >= minLowerVaultToken1 &&
+                actualUpperAmunts[0] >= minUpperVaultToken0 &&
+                actualUpperAmunts[1] >= minUpperVaultToken1,
             ExceptionsLibrary.INVALID_VALUE
         );
-
-        erc20Vault.pull(address(lowerVault), tokens, lowerAmounts, "");
-        erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");
     }
 
     /// @inheritdoc ILpCallback
     function withdrawCallback(bytes memory withdrawOptions) external {
-        require(withdrawOptions.length == 32 * 2, ExceptionsLibrary.INVALID_VALUE);
-        (uint256 amount0, uint256 amount1) = abi.decode(withdrawOptions, (uint256, uint256));
-
-        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
+        require(withdrawOptions.length == 32 * 6, ExceptionsLibrary.INVALID_VALUE);
+        (
+            uint256 minLowerVaultToken0,
+            uint256 minLowerVaultToken1,
+            uint256 minUpperVaultToken0,
+            uint256 minUpperVaultToken1,
+            uint256 amount0,
+            uint256 amount1
+        ) = abi.decode(withdrawOptions, (uint256, uint256, uint256, uint256, uint256, uint256));
 
         (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(
             lowerVault,
@@ -707,8 +710,16 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             positionManager
         );
 
-        lowerVault.pull(address(erc20Vault), tokens, lowerAmounts, "");
-        upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");
+        uint256[] memory actualLowerAmunts = lowerVault.pull(address(erc20Vault), tokens, lowerAmounts, "");
+        uint256[] memory actualUpperAmunts = upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");
+
+        require(
+            actualLowerAmunts[0] >= minLowerVaultToken0 &&
+                actualLowerAmunts[1] >= minLowerVaultToken1 &&
+                actualUpperAmunts[0] >= minUpperVaultToken0 &&
+                actualUpperAmunts[1] >= minUpperVaultToken1,
+            ExceptionsLibrary.INVALID_VALUE
+        );
     }
 
     /// @notice Pull liquidity from `fromVault` and put into `toVault`
