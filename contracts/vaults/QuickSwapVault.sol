@@ -4,18 +4,20 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../interfaces/external/quickswap/IFarmingCenter.sol";
+import "../interfaces/external/quickswap/IAlgebraEternalFarming.sol";
+import "../interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IQuickSwapVault.sol";
 import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
 
-import "../libraries/external/LiquidityAmounts.sol";
-import "../libraries/external/TickMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import {PositionValue, LiquidityAmounts, TickMath} from "../interfaces/external/quickswap/PositionValue.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     using SafeERC20 for IERC20;
+    uint256 public constant Q128 = 2**128;
     uint256 public positionNft;
     IFarmingCenter public farmingCenter;
     INonfungiblePositionManager public positionManager;
@@ -60,8 +62,90 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         );
     }
 
+    function calculateCollectableRewards(IAlgebraEternalFarming farming, IIncentiveKey.IncentiveKey memory key)
+        public
+        view
+        returns (uint256 rewardAmount, uint256 bonusRewardAmount)
+    {
+        bytes32 incentiveId = keccak256(abi.encode(key));
+        (uint256 totalReward, , address virtualPoolAddress, , , , ) = farming.incentives(incentiveId);
+        if (totalReward == 0) {
+            return (0, 0);
+        }
+
+        IAlgebraEternalVirtualPool virtualPool = IAlgebraEternalVirtualPool(virtualPoolAddress);
+
+        (
+            uint128 liquidity,
+            int24 tickLower,
+            int24 tickUpper,
+            uint256 innerRewardGrowth0,
+            uint256 innerRewardGrowth1
+        ) = farming.farms(positionNft, incentiveId);
+        if (liquidity == 0) {
+            return (0, 0);
+        }
+
+        (uint256 virtualPoolInnerRewardGrowth0, uint256 virtualPoolInnerRewardGrowth1) = virtualPool
+            .getInnerRewardsGrowth(tickLower, tickUpper);
+
+        (rewardAmount, bonusRewardAmount) = (
+            FullMath.mulDiv(virtualPoolInnerRewardGrowth0 - innerRewardGrowth0, liquidity, Q128),
+            FullMath.mulDiv(virtualPoolInnerRewardGrowth1 - innerRewardGrowth1, liquidity, Q128)
+        );
+    }
+
+    function calculateClaimableRewards(IAlgebraEternalFarming farming, IIncentiveKey.IncentiveKey memory key)
+        public
+        view
+        returns (uint256 rewardAmount, uint256 bonusRewardAmount)
+    {
+        (rewardAmount, bonusRewardAmount) = calculateCollectableRewards(farming, key);
+        rewardAmount += farming.rewards(address(this), key.rewardToken);
+        bonusRewardAmount += farming.rewards(address(this), key.bonusRewardToken);
+    }
+
     /// @inheritdoc IVault
-    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {}
+    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        uint256 positionNft_ = positionNft;
+        if (positionNft_ == 0) {
+            return (new uint256[](2), new uint256[](2));
+        }
+        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams = IQuickSwapVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
+        IIncentiveKey.IncentiveKey memory key = strategyParams.key;
+        (uint160 sqrtRatioX96, , , , , , ) = key.pool.globalState();
+        (uint256 amount0, uint256 amount1) = PositionValue.total(positionManager, positionNft, sqrtRatioX96);
+
+        minTokenAmounts = new uint256[](2);
+        minTokenAmounts[0] = amount0;
+        minTokenAmounts[1] = amount1;
+
+        (uint256 rewardAmount, uint256 bonusRewardAmount) = calculateClaimableRewards(
+            farmingCenter.eternalFarming(),
+            key
+        );
+        address[] memory vaultTokens = _vaultTokens;
+
+        if (address(key.rewardToken) == vaultTokens[0]) {
+            minTokenAmounts[0] += rewardAmount;
+        } else if (address(key.rewardToken) == vaultTokens[1]) {
+            minTokenAmounts[1] += rewardAmount;
+        } else {}
+
+        if (address(key.bonusRewardToken) == vaultTokens[0]) {
+            minTokenAmounts[0] += bonusRewardAmount;
+        } else if (address(key.bonusRewardToken) == vaultTokens[1]) {
+            minTokenAmounts[1] += bonusRewardAmount;
+        } else {
+            // convert by oracle price  in token
+        }
+
+        maxTokenAmounts = minTokenAmounts;
+
+        // calculate all rewards
+    }
 
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
@@ -98,12 +182,19 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     function burnFarmingPosition() public {
         _isApprovedOrOwner(msg.sender);
         uint256 positionNft_ = positionNft;
-        farmingCenter.exitFarming(
+        IFarmingCenter farmingCenter_ = farmingCenter;
+        farmingCenter_.exitFarming(
             IQuickSwapVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft).key,
             positionNft_,
             false // eternal farming
         );
-        farmingCenter.withdrawToken(positionNft_, address(this), "");
+        IIncentiveKey.IncentiveKey memory key = IQuickSwapVaultGovernance(address(_vaultGovernance))
+            .delayedStrategyParams(_nft)
+            .key;
+        farmingCenter_.claimReward(key.rewardToken, address(erc20Vault), 0, type(uint256).max);
+        farmingCenter_.claimReward(key.bonusRewardToken, address(erc20Vault), 0, type(uint256).max);
+    
+        farmingCenter_.withdrawToken(positionNft_, address(this), "");
     }
 
     /// @inheritdoc IERC721Receiver
@@ -159,15 +250,27 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     }
 
     /// @dev collects all rewards from farming position and transfers to erc20Vault
-    function collectRewards() external nonReentrant returns (uint256 rewardToken, uint256 bonusToken) {
+    function collectRewards() public returns (uint256 rewardTokenAmount, uint256 bonusTokenAmount) {
         _isApprovedOrOwner(msg.sender);
         uint256 positionNft_ = positionNft;
         IFarmingCenter farmingCenter_ = farmingCenter;
         (uint256 farmingNft, , , ) = farmingCenter_.deposits(positionNft_);
         if (farmingNft != 0) {
-            (rewardToken, bonusToken) = farmingCenter_.collectRewards(
-                IQuickSwapVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft).key,
-                positionNft_
+            IIncentiveKey.IncentiveKey memory key = IQuickSwapVaultGovernance(address(_vaultGovernance))
+                .delayedStrategyParams(_nft)
+                .key;
+            (rewardTokenAmount, bonusTokenAmount) = calculateCollectableRewards(farmingCenter_.eternalFarming(), key);
+            if (rewardTokenAmount + bonusTokenAmount == 0) {
+                // nothing to collect
+                return (0, 0);
+            }
+            farmingCenter_.collectRewards(key, positionNft_);
+            rewardTokenAmount = farmingCenter_.claimReward(key.rewardToken, address(erc20Vault), 0, type(uint256).max);
+            bonusTokenAmount = farmingCenter_.claimReward(
+                key.bonusRewardToken,
+                address(erc20Vault),
+                0,
+                type(uint256).max
             );
         }
     }
@@ -244,6 +347,9 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         IFarmingCenter farmingCenter_ = farmingCenter;
         uint256 positionNft_ = positionNft;
+        if (positionNft_ == 0) {
+            return new uint256[](2);
+        }
         (uint256 farmingNft, , , ) = farmingCenter_.deposits(positionNft_);
 
         if (farmingNft != 0) {

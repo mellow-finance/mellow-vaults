@@ -4,12 +4,17 @@ pragma solidity >=0.7.6;
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import "./INonfungiblePositionManager.sol";
+import "./IAlgebraEternalFarming.sol";
 import "./IPeripheryPayments.sol";
 import "./IIncentiveKey.sol";
 
 interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
+    function virtualPoolAddresses(address) external view returns (address, address);
+
     /// @notice The nonfungible position manager with which this farming contract is compatible
     function nonfungiblePositionManager() external view returns (INonfungiblePositionManager);
+
+    function eternalFarming() external view returns (IAlgebraEternalFarming);
 
     function l2Nfts(uint256)
         external
