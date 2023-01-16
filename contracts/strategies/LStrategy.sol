@@ -134,11 +134,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         IOracle oracle,
         uint256 safetyMask
     ) public view returns (uint256 priceX96) {
-        (uint256[] memory pricesX96, ) = oracle.priceX96(
-            token0,
-            token1,
-            safetyMask
-        );
+        (uint256[] memory pricesX96, ) = oracle.priceX96(token0, token1, safetyMask);
         require(pricesX96.length > 0, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < pricesX96.length; i++) {
             priceX96 += pricesX96[i];
@@ -186,7 +182,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     {
         _requireAtLeastOperator();
         require(
-            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances, ExceptionsLibrary.TIMESTAMP
+            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
+            ExceptionsLibrary.TIMESTAMP
         );
         lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
         uint256[] memory lowerTokenAmounts;
@@ -197,7 +194,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         totalPulledAmounts = new uint256[](2);
 
         {
-            uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, tradingParams.oracleSafetyMask);
+            uint256 priceX96 = getTargetPriceX96(
+                tokens[0],
+                tokens[1],
+                tradingParams.oracle,
+                tradingParams.oracleSafetyMask
+            );
             uint256 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
 
             if (sumUniV3Capital == 0) {
@@ -306,7 +308,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         LiquidityParams memory liquidityParams;
 
         {
-            uint256 targetPriceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, tradingParams.oracleSafetyMask);
+            uint256 targetPriceX96 = getTargetPriceX96(
+                tokens[0],
+                tokens[1],
+                tradingParams.oracle,
+                tradingParams.oracleSafetyMask
+            );
             int24 targetTick = _tickFromPriceX96(targetPriceX96);
             (
                 liquidityParams.targetUniV3LiquidityRatioD,
@@ -391,7 +398,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
-        uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, tradingParams.oracleSafetyMask);
+        uint256 priceX96 = getTargetPriceX96(
+            tokens[0],
+            tokens[1],
+            tradingParams.oracle,
+            tradingParams.oracleSafetyMask
+        );
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
             FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96),
             tvl[1],
@@ -661,31 +673,50 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
         uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
 
-        (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(lowerVault, upperVault, erc20Vault, priceX96, amount0, amount1, positionManager);
+        (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(
+            lowerVault,
+            upperVault,
+            erc20Vault,
+            priceX96,
+            amount0,
+            amount1,
+            positionManager
+        );
 
-        require(lowerAmounts[0] >= minLowerVaultToken0 && lowerAmounts[1] >= minLowerVaultToken1 && upperAmounts[0] >= minUpperVaultToken0 && upperAmounts[1] >= minUpperVaultToken1, ExceptionsLibrary.INVALID_VALUE);
+        require(
+            lowerAmounts[0] >= minLowerVaultToken0 &&
+                lowerAmounts[1] >= minLowerVaultToken1 &&
+                upperAmounts[0] >= minUpperVaultToken0 &&
+                upperAmounts[1] >= minUpperVaultToken1,
+            ExceptionsLibrary.INVALID_VALUE
+        );
 
         erc20Vault.pull(address(lowerVault), tokens, lowerAmounts, "");
-        erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");        
+        erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");
     }
 
     /// @inheritdoc ILpCallback
     function withdrawCallback(bytes memory withdrawOptions) external {
         require(withdrawOptions.length == 32 * 2, ExceptionsLibrary.INVALID_VALUE);
-        (
-            uint256 amount0,
-            uint256 amount1
-        ) = abi.decode(withdrawOptions, (uint256, uint256));
+        (uint256 amount0, uint256 amount1) = abi.decode(withdrawOptions, (uint256, uint256));
 
         lowerVault.collectEarnings();
         upperVault.collectEarnings();
 
         uint256 priceX96 = getTargetPriceX96(tokens[0], tokens[1], tradingParams.oracle, 0x02);
 
-        (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(lowerVault, upperVault, erc20Vault, priceX96, amount0, amount1, positionManager);
+        (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) = orderHelper.calculateTokenAmounts(
+            lowerVault,
+            upperVault,
+            erc20Vault,
+            priceX96,
+            amount0,
+            amount1,
+            positionManager
+        );
 
         lowerVault.pull(address(erc20Vault), tokens, lowerAmounts, "");
-        upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");        
+        upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");
     }
 
     /// @notice Pull liquidity from `fromVault` and put into `toVault`

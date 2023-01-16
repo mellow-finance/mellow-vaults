@@ -174,7 +174,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         bytes memory depositInfo = abi.encode(actualTokenAmounts[0], actualTokenAmounts[1]);
 
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(bytes.concat(vaultOptions, depositInfo));
+            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(
+                bytes.concat(vaultOptions, depositInfo)
+            );
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -187,7 +189,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory minTokenAmounts,
         bytes[] memory vaultsOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-
         IERC20RootVaultGovernance.StrategyParams memory strategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).strategyParams(_nft);
