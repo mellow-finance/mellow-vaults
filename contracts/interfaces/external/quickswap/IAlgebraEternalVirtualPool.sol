@@ -2,7 +2,7 @@
 pragma solidity >=0.7.6;
 pragma abicoder v2;
 
-import './IAlgebraVirtualPoolBase.sol';
+import "./IAlgebraVirtualPoolBase.sol";
 
 interface IAlgebraEternalVirtualPool is IAlgebraVirtualPoolBase {
     /// @notice Change reward rates

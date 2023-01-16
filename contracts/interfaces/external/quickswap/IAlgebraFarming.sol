@@ -2,13 +2,13 @@
 pragma solidity >=0.7.6;
 pragma abicoder v2;
 
-import './IAlgebraPoolDeployer.sol';
-import './IAlgebraPool.sol';
-import './IERC20Minimal.sol';
-import './INonfungiblePositionManager.sol';
+import "./IAlgebraPoolDeployer.sol";
+import "./IAlgebraPool.sol";
+import "./IERC20Minimal.sol";
+import "./INonfungiblePositionManager.sol";
 
-import './IFarmingCenter.sol';
-import './IIncentiveKey.sol';
+import "./IFarmingCenter.sol";
+import "./IIncentiveKey.sol";
 
 /// @title Algebra Farming Interface
 /// @notice Allows farming nonfungible liquidity tokens in exchange for reward tokens

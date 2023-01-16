@@ -11,7 +11,8 @@ import "./TickMath.sol";
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
-    uint256 constant public Q128 = 2 ** 128;
+    uint256 public constant Q128 = 2**128;
+
     /// @notice Returns the total amounts of token0 and token1, i.e. the sum of fees and principal
     /// that a given nonfungible position manager token is worth
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager

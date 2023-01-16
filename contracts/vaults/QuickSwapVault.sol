@@ -11,7 +11,7 @@ import "../interfaces/vaults/IQuickSwapVault.sol";
 import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
-import {PositionValue, LiquidityAmounts, TickMath} from "../interfaces/external/quickswap/PositionValue.sol";
+import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
