@@ -193,7 +193,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
             .key;
         farmingCenter_.claimReward(key.rewardToken, address(erc20Vault), 0, type(uint256).max);
         farmingCenter_.claimReward(key.bonusRewardToken, address(erc20Vault), 0, type(uint256).max);
-    
+
         farmingCenter_.withdrawToken(positionNft_, address(this), "");
     }
 
