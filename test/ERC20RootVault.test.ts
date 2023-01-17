@@ -1067,6 +1067,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .setStrategyParams(nftIndex, {
                                     tokenLimitPerAddress: BigNumber.from(0),
                                     tokenLimit: BigNumber.from(0),
+                                    maxTimeOneRebalance: BigNumber.from(0),
+                                    minTimeBetweenRebalances:
+                                        BigNumber.from(3600),
                                 });
 
                             await expect(
@@ -1093,6 +1096,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     tokenLimitPerAddress:
                                         MIN_FIRST_DEPOSIT[0].mul(10),
                                     tokenLimit: BigNumber.from(0),
+                                    maxTimeOneRebalance: BigNumber.from(0),
+                                    minTimeBetweenRebalances:
+                                        BigNumber.from(3600),
                                 });
 
                             await expect(

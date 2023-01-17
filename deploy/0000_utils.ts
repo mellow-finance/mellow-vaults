@@ -320,6 +320,8 @@ export const combineVaults = async (
         strategyParams: {
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
             tokenLimit: BigNumber.from(tokenLimit),
+            maxTimeOneRebalance: BigNumber.from(0),
+            minTimeBetweenRebalances: BigNumber.from(3600)
         },
     });
     const rootVault = await deployments.read(
