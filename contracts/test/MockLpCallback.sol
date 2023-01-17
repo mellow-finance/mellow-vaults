@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/utils/ILpCallback.sol";
 
-abstract contract MockLpCallback is ILpCallback {
+contract MockLpCallback is ILpCallback {
     enum WithdrawCallbackMode {
         NO_ERROR,
         EMPTY_ERROR,
@@ -18,17 +18,12 @@ abstract contract MockLpCallback is ILpCallback {
     }
 
     /// @notice Callback function
-    function depositCallback() external {
-        emit DepositCallbackCalled();
-    }
-
-    /// @notice Callback function
     function depositCallback(bytes memory) external {
         emit DepositCallbackCalled();
     }
 
     /// @notice Callback function
-    function withdrawCallback() external {
+    function withdrawCallback(bytes memory) external {
         if (_mode == WithdrawCallbackMode.NO_ERROR) {
             emit WithdrawCallbackCalled();
         } else if (_mode == WithdrawCallbackMode.EMPTY_ERROR) {

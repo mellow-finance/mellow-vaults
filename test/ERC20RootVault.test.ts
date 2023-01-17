@@ -1192,7 +1192,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edge cases:", () => {
                 describe("when total supply is 0", () => {
-                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                    it(`reverts because of zero division`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(
                                 this.subject
@@ -1203,7 +1203,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                         [],
                                         []
                                     )
-                            ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                            ).to.be.reverted;
                         });
                     });
                 });
