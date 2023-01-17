@@ -4,32 +4,14 @@ pragma solidity 0.8.9;
 import "../external/quickswap/IIncentiveKey.sol";
 import "./IQuickSwapVault.sol";
 import "./IVaultGovernance.sol";
-import "../oracles/IOracle.sol";
 
 interface IQuickSwapVaultGovernance is IVaultGovernance {
-    /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
-    /// @param positionManager Reference to UniV3 INonfungiblePositionManager
-    struct DelayedProtocolParams {
-        INonfungiblePositionManager positionManager;
-        IOracle oracle;
-    }
-
     struct DelayedStrategyParams {
         IIncentiveKey.IncentiveKey key;
+        address bonusTokenToUnderlying;
+        address rewardTokenToUnderlying;
+        uint256 swapSlippageD;
     }
-
-    /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
-    function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
-
-    /// @notice Delayed Protocol Params staged for commit after delay.
-    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
-
-    /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
-    /// @param params New params
-    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external;
-
-    /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
-    function commitDelayedProtocolParams() external;
 
     /// @notice Delayed Strategy Params
     /// @param nft VaultRegistry NFT of the vault
