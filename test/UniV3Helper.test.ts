@@ -48,7 +48,7 @@ contract<UniV3Helper, DeployOptions, CustomContext>("UniV3Helper", function () {
                 await deploy("UniV3Helper", {
                     from: deployer,
                     contract: "UniV3Helper",
-                    args: [],
+                    args: [uniswapV3PositionManager],
                     log: true,
                     autoMine: true,
                     ...TRANSACTION_GAS_LIMITS,
@@ -311,15 +311,13 @@ contract<UniV3Helper, DeployOptions, CustomContext>("UniV3Helper", function () {
                 await this.subject.liquidityToTokenAmounts(
                     uint128Max,
                     this.pool.address,
-                    result.tokenId,
-                    uniswapV3PositionManager
+                    result.tokenId
                 );
             const tokenAmountsToLiquidityResponse =
                 await this.subject.tokenAmountsToLiquidity(
                     liquidityToTokenAmountsResponse,
                     this.pool.address,
-                    result.tokenId,
-                    uniswapV3PositionManager
+                    result.tokenId
                 );
 
             const delta = uint128Max.sub(tokenAmountsToLiquidityResponse);

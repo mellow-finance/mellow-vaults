@@ -191,10 +191,16 @@ export const setupVault = async (
         );
         strategyTreasury = data.strategyTreasury;
     } catch {
-        return;
+        strategyTreasury = undefined;
+        // return;
     }
 
-    if (strategyTreasury !== delayedStrategyParams.strategyTreasury) {
+    if (
+        (strategyTreasury &&
+            strategyTreasury !== delayedStrategyParams.strategyTreasury) ||
+        (contractName == "UniV3VaultGovernance" &&
+            delayedStrategyParams.length > 0)
+    ) {
         log(`Setting delayed strategy params for ${contractName}`);
         log(delayedStrategyParams);
         await execute(
@@ -221,6 +227,7 @@ export const setupVault = async (
             expectedNft
         );
     }
+
     if (delayedProtocolPerVaultParams) {
         const params = await read(
             contractName,
@@ -236,7 +243,7 @@ export const setupVault = async (
             await execute(
                 contractName,
                 {
-                    from: deployer,
+                    from: admin,
                     log: true,
                     autoMine: true,
                     ...TRANSACTION_GAS_LIMITS,
@@ -248,7 +255,7 @@ export const setupVault = async (
             await execute(
                 contractName,
                 {
-                    from: deployer,
+                    from: admin,
                     log: true,
                     autoMine: true,
                     ...TRANSACTION_GAS_LIMITS,
@@ -295,8 +302,8 @@ export const combineVaults = async (
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
         tokenLimit = ethers.constants.MaxUint256,
-        managementFee = 2 * 10 ** 7,
-        performanceFee = 20 * 10 ** 7,
+        managementFee = 0,
+        performanceFee = 0,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
@@ -336,7 +343,10 @@ export const combineVaults = async (
                     [admin]
                 );
             const [operator] = await hre.ethers.getSigners();
-            const txResp = await operator.sendTransaction(tx);
+            const txResp = await operator.sendTransaction({
+                ...tx, 
+                // ...TRANSACTION_GAS_LIMITS
+            });
             log(
                 `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
             );
