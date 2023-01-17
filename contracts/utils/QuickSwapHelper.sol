@@ -30,10 +30,8 @@ contract QuickSwapHelper {
         }
         IIncentiveKey.IncentiveKey memory key = strategyParams.key;
         (uint160 sqrtRatioX96, , , , , , ) = key.pool.globalState();
-        (uint256 amount0, uint256 amount1) = PositionValue.total(positionManager, nft, sqrtRatioX96);
         tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = amount0;
-        tokenAmounts[1] = amount1;
+        (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, nft, sqrtRatioX96);
 
         IAlgebraEternalFarming farming = farmingCenter.eternalFarming();
 
@@ -49,7 +47,7 @@ contract QuickSwapHelper {
         bonusRewardAmount = convertTokenToUnderlying(
             bonusRewardAmount,
             address(key.rewardToken),
-            strategyParams.rewardTokenToUnderlying
+            strategyParams.bonusTokenToUnderlying
         );
 
         if (address(strategyParams.rewardTokenToUnderlying) == token0) {
@@ -84,20 +82,17 @@ contract QuickSwapHelper {
     function tokenAmountsToLiquidity(
         uint256 nft,
         uint160 sqrtRatioX96,
-        uint256 amount0,
-        uint256 amount1
+        uint256[] memory amounts
     ) public view returns (uint128 liquidity) {
         (, , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(nft);
-
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtRatioX96,
             sqrtPriceAX96,
             sqrtPriceBX96,
-            amount0,
-            amount1
+            amounts[0],
+            amounts[1]
         );
     }
 
@@ -107,7 +102,6 @@ contract QuickSwapHelper {
         uint256[] memory amounts
     ) public view returns (uint128 liquidity) {
         (, , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(nft);
-
         uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
         if (sqrtRatioX96 <= sqrtRatioAX96) {
@@ -134,7 +128,6 @@ contract QuickSwapHelper {
         }
 
         IAlgebraEternalVirtualPool virtualPool = IAlgebraEternalVirtualPool(virtualPoolAddress);
-
         (
             uint128 liquidity,
             int24 tickLower,
@@ -160,7 +153,7 @@ contract QuickSwapHelper {
         address from,
         address to
     ) public view returns (uint256) {
-        if (from == to) return amount;
+        if (from == to || amount == 0) return amount;
         address poolDeployer = positionManager.poolDeployer();
         IAlgebraPool pool = IAlgebraPool(PoolAddress.computeAddress(poolDeployer, PoolAddress.getPoolKey(from, to)));
         (uint160 sqrtPriceX96, , , , , , ) = pool.globalState();

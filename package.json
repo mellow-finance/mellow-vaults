@@ -29,6 +29,7 @@
     "verify:rinkeby": "rm -rf artifacts && hardhat compile && hardhat --network rinkeby etherscan-verify --license None --force-license",
     "export": "hardhat export --export-all ./deployments/contracts.json",
     "test": "hardhat test --config hardhat.test.config.ts",
+    "test:polygon": "hardhat test --config hardhat.test-polygon.config.ts",
     "gastest": "hardhat test --config hardhat.gastest.config.ts",
     "coverage": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && hardhat coverage --config hardhat.test.config.ts",
     "coverage:fast": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && hardhat coverage --config hardhat.fast-test.config.ts",
