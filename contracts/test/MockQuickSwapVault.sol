@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+
 import "../interfaces/vaults/IQuickSwapVault.sol";
 import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/QuickSwapHelper.sol";
-import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces QuickSwap protocol in the integration layer.
-contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
+contract MockQuickSwapVault is IERC721Receiver {
     using SafeERC20 for IERC20;
     uint256 public constant Q96 = 2**96;
     uint256 public constant D9 = 10**9;
@@ -20,16 +22,20 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     address public immutable dQuickToken;
     address public immutable quickToken;
 
+    address[] _vaultTokens;
+
     IFarmingCenter public immutable farmingCenter;
     ISwapRouter public immutable swapRouter;
     INonfungiblePositionManager public immutable positionManager;
     IAlgebraFactory public immutable factory;
     QuickSwapHelper public immutable helper;
+    IQuickSwapVaultGovernance.DelayedStrategyParams public _delayedStrategyParams;
 
-    // -------------------  EXTERNAL, MUTATING  -------------------
+    function updateStrategyParams(IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams_) public {
+        _delayedStrategyParams = strategyParams_;
+    }
 
     modifier onlyStrategy() {
-        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _;
     }
 
@@ -39,7 +45,9 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         ISwapRouter swapRouter_,
         IFarmingCenter farmingCenter_,
         address dQuickToken_,
-        address quickToken_
+        address quickToken_,
+        address[] memory vaultTokens_,
+        address bufferAddress
     ) {
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());
@@ -48,17 +56,8 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         farmingCenter = farmingCenter_;
         dQuickToken = dQuickToken_;
         quickToken = quickToken_;
-    }
-
-    /// @inheritdoc IQuickSwapVault
-    function initialize(
-        uint256 nft_,
-        address erc20Vault_,
-        address[] memory vaultTokens_
-    ) external {
-        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
-        erc20Vault = erc20Vault_;
-        _initialize(vaultTokens_, nft_);
+        _vaultTokens = vaultTokens_;
+        erc20Vault = bufferAddress;
     }
 
     /// @inheritdoc IERC721Receiver
@@ -92,20 +91,18 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
-    /// @inheritdoc IQuickSwapVault
     function openFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) public onlyStrategy {
         positionManager.safeTransferFrom(address(this), address(farmingCenter_), nft);
         farmingCenter_.enterFarming(
-            delayedStrategyParams().key,
+            _delayedStrategyParams.key,
             nft,
             0,
             false // eternal farming
         );
     }
 
-    /// @inheritdoc IQuickSwapVault
     function burnFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) public onlyStrategy {
-        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams = delayedStrategyParams();
+        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams = _delayedStrategyParams;
         collectRewards(strategyParams);
         farmingCenter_.exitFarming(
             strategyParams.key,
@@ -115,7 +112,6 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         farmingCenter_.withdrawToken(nft, address(this), "");
     }
 
-    /// @inheritdoc IQuickSwapVault
     function collectEarnings() external returns (uint256[] memory collectedFees) {
         uint256 positionNft_ = positionNft;
         if (positionNft_ == 0) return new uint256[](2);
@@ -130,8 +126,6 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         );
     }
 
-    /// @dev collects all rewards from farming position, swaps into underlying tokens and transfers to erc20Vault
-    /// @inheritdoc IQuickSwapVault
     function collectRewards(IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams)
         public
         onlyStrategy
@@ -176,29 +170,10 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         }
     }
 
-    // -------------------   EXTERNAL, VIEW   -------------------
-
-    /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        minTokenAmounts = helper.calculateTvl(positionNft, delayedStrategyParams(), farmingCenter, _vaultTokens[0]);
+        minTokenAmounts = helper.calculateTvl(positionNft, _delayedStrategyParams, farmingCenter, _vaultTokens[0]);
         maxTokenAmounts = minTokenAmounts;
     }
-
-    /// @inheritdoc IntegrationVault
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IQuickSwapVault).interfaceId);
-    }
-
-    /// @inheritdoc IQuickSwapVault
-    function delayedStrategyParams()
-        public
-        view
-        returns (IQuickSwapVaultGovernance.DelayedStrategyParams memory params)
-    {
-        params = IQuickSwapVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft);
-    }
-
-    // -------------------  INTERNAL, MUTATING  -------------------
 
     /// @dev swaps amount of token `from` to token `to`
     /// @param amount amount to be swapped
@@ -226,7 +201,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
             priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
         }
         uint256 amountOutMinimum = FullMath.mulDiv(amount, priceX96, Q96);
-        amountOutMinimum = FullMath.mulDiv(amountOutMinimum, D9 - swapSlippageD, D9);
+        amountOutMinimum = FullMath.mulDiv(amountOutMinimum, swapSlippageD, D9);
         IERC20(from).safeIncreaseAllowance(address(swapRouter), amount);
         amountOut = swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -242,15 +217,14 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         IERC20(from).safeApprove(address(swapRouter), 0);
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        override
+    function push(uint256[] memory tokenAmounts, bytes memory options)
+        public
         returns (uint256[] memory actualTokenAmounts)
     {
         actualTokenAmounts = new uint256[](2);
         if (positionNft == 0) return actualTokenAmounts;
 
-        (uint160 sqrtRatioX96, , , , , , ) = delayedStrategyParams().key.pool.globalState();
+        (uint160 sqrtRatioX96, , , , , , ) = _delayedStrategyParams.key.pool.globalState();
         uint128 liquidity = helper.tokenAmountsToLiquidity(positionNft, sqrtRatioX96, tokenAmounts);
         if (liquidity == 0) return actualTokenAmounts;
         address[] memory tokens = _vaultTokens;
@@ -274,14 +248,14 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         }
     }
 
-    function _pull(
+    function pull(
         address to,
         uint256[] memory tokenAmounts,
         bytes memory options
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    ) public returns (uint256[] memory actualTokenAmounts) {
         IFarmingCenter farmingCenter_ = farmingCenter;
         uint256 positionNft_ = positionNft;
-        IIncentiveKey.IncentiveKey memory key = delayedStrategyParams().key;
+        IIncentiveKey.IncentiveKey memory key = _delayedStrategyParams.key;
         if (positionNft_ == 0) {
             return new uint256[](2);
         }
@@ -327,10 +301,8 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         }
     }
 
-    // -------------------  INTERNAL, VIEW  -------------------
-
     function _parseOptions(bytes memory options)
-        internal
+        public
         view
         returns (
             uint256,
@@ -341,13 +313,5 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         if (options.length == 0) return (0, 0, block.timestamp + 1);
         require(options.length == 32 * 3, ExceptionsLibrary.INVALID_VALUE);
         return abi.decode(options, (uint256, uint256, uint256));
-    }
-
-    function _isStrategy(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
-    }
-
-    function _isReclaimForbidden(address) internal pure override returns (bool) {
-        return false;
     }
 }

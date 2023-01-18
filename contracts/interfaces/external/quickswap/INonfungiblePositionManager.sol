@@ -9,7 +9,6 @@ import "./IPoolInitializer.sol";
 import "./IERC721Permit.sol";
 import "./IPeripheryPayments.sol";
 import "./IPeripheryImmutableState.sol";
-import "./PoolAddress.sol";
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Algebra positions in a non-fungible token interface which allows for them to be transferred

@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "../interfaces/external/quickswap/IAlgebraPool.sol";
-import "../interfaces/external/quickswap/INonfungiblePositionManager.sol";
 import "../interfaces/external/quickswap/IAlgebraEternalFarming.sol";
 import "../interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol";
+import "../interfaces/external/quickswap/IAlgebraFactory.sol";
+import "../interfaces/external/quickswap/IAlgebraPool.sol";
+import "../interfaces/external/quickswap/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
 
 import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
 
 contract QuickSwapHelper {
     INonfungiblePositionManager public immutable positionManager;
+    IAlgebraFactory public immutable factory;
     uint256 public constant Q128 = 2**128;
     uint256 public constant Q96 = 2**96;
 
     constructor(INonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
+        factory = IAlgebraFactory(positionManager.factory());
     }
 
     function calculateTvl(
@@ -154,8 +157,7 @@ contract QuickSwapHelper {
         address to
     ) public view returns (uint256) {
         if (from == to || amount == 0) return amount;
-        address poolDeployer = positionManager.poolDeployer();
-        IAlgebraPool pool = IAlgebraPool(PoolAddress.computeAddress(poolDeployer, PoolAddress.getPoolKey(from, to)));
+        IAlgebraPool pool = IAlgebraPool(factory.poolByPair(from, to));
         (uint160 sqrtPriceX96, , , , , , ) = pool.globalState();
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         if (pool.token0() == to) {

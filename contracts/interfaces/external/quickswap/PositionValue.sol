@@ -2,11 +2,11 @@
 pragma solidity >=0.6.8 <0.9.0;
 
 import "./IAlgebraPool.sol";
+import "./IAlgebraFactory.sol";
 import "./INonfungiblePositionManager.sol";
 
 import "./FixedPoint128.sol";
 import "./LiquidityAmounts.sol";
-import "./PoolAddress.sol";
 import "./TickMath.sol";
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
@@ -112,12 +112,7 @@ library PositionValue {
         returns (uint256 amount0, uint256 amount1)
     {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
-            IAlgebraPool(
-                PoolAddress.computeAddress(
-                    positionManager.factory(),
-                    PoolAddress.PoolKey({token0: feeParams.token0, token1: feeParams.token1})
-                )
-            ),
+            IAlgebraPool(IAlgebraFactory(positionManager.factory()).poolByPair(feeParams.token0, feeParams.token1)),
             feeParams.tickLower,
             feeParams.tickUpper
         );
