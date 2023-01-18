@@ -75,6 +75,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
             require(tokenId == positionNft, ExceptionsLibrary.FORBIDDEN);
             return this.onERC721Received.selector;
         }
+        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
 
         (, , address token0, address token1, , , , , , , ) = positionManager.positions(tokenId);
         require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1], ExceptionsLibrary.INVALID_TOKEN);
@@ -210,7 +211,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         address from,
         address to,
         uint256 swapSlippageD
-    ) public returns (uint256 amountOut) {
+    ) private returns (uint256 amountOut) {
         if (from == to || amount == 0) return amount;
         if (from == dQuickToken) {
             // unstake dQUICK to QUICK token
