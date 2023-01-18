@@ -25,8 +25,8 @@ contract MockQuickSwapVault is IERC721Receiver {
     address[] _vaultTokens;
 
     IFarmingCenter public immutable farmingCenter;
-    ISwapRouter public immutable swapRouter;
-    INonfungiblePositionManager public immutable positionManager;
+    IAlgebraSwapRouter public immutable swapRouter;
+    IAlgebraNonfungiblePositionManager public immutable positionManager;
     IAlgebraFactory public immutable factory;
     QuickSwapHelper public immutable helper;
     IQuickSwapVaultGovernance.DelayedStrategyParams public _delayedStrategyParams;
@@ -40,9 +40,9 @@ contract MockQuickSwapVault is IERC721Receiver {
     }
 
     constructor(
-        INonfungiblePositionManager positionManager_,
+        IAlgebraNonfungiblePositionManager positionManager_,
         QuickSwapHelper helper_,
-        ISwapRouter swapRouter_,
+        IAlgebraSwapRouter swapRouter_,
         IFarmingCenter farmingCenter_,
         address dQuickToken_,
         address quickToken_,
@@ -117,7 +117,7 @@ contract MockQuickSwapVault is IERC721Receiver {
         if (positionNft_ == 0) return new uint256[](2);
         collectedFees = new uint256[](2);
         (collectedFees[0], collectedFees[1]) = farmingCenter.collect(
-            INonfungiblePositionManager.CollectParams({
+            IAlgebraNonfungiblePositionManager.CollectParams({
                 tokenId: positionNft_,
                 recipient: erc20Vault,
                 amount0Max: type(uint128).max,
@@ -204,7 +204,7 @@ contract MockQuickSwapVault is IERC721Receiver {
         amountOutMinimum = FullMath.mulDiv(amountOutMinimum, swapSlippageD, D9);
         IERC20(from).safeIncreaseAllowance(address(swapRouter), amount);
         amountOut = swapRouter.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
+            IAlgebraSwapRouter.ExactInputSingleParams({
                 tokenIn: from,
                 tokenOut: to,
                 recipient: address(this),
@@ -234,7 +234,7 @@ contract MockQuickSwapVault is IERC721Receiver {
 
         (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
         (, actualTokenAmounts[0], actualTokenAmounts[1]) = positionManager.increaseLiquidity(
-            INonfungiblePositionManager.IncreaseLiquidityParams({
+            IAlgebraNonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: positionNft,
                 amount0Desired: tokenAmounts[0],
                 amount1Desired: tokenAmounts[1],
@@ -275,7 +275,7 @@ contract MockQuickSwapVault is IERC721Receiver {
         if (liquidityToPull != 0) {
             (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
             positionManager.decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
+                IAlgebraNonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: positionNft,
                     liquidity: liquidityToPull,
                     amount0Min: amount0Min,
@@ -285,7 +285,7 @@ contract MockQuickSwapVault is IERC721Receiver {
             );
         }
         (uint256 amount0Collected, uint256 amount1Collected) = positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
+            IAlgebraNonfungiblePositionManager.CollectParams({
                 tokenId: positionNft,
                 recipient: to,
                 amount0Max: type(uint128).max,

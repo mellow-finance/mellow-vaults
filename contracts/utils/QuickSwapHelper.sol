@@ -5,18 +5,18 @@ import "../interfaces/external/quickswap/IAlgebraEternalFarming.sol";
 import "../interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol";
 import "../interfaces/external/quickswap/IAlgebraFactory.sol";
 import "../interfaces/external/quickswap/IAlgebraPool.sol";
-import "../interfaces/external/quickswap/INonfungiblePositionManager.sol";
+import "../interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol";
 import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
 
 import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
 
 contract QuickSwapHelper {
-    INonfungiblePositionManager public immutable positionManager;
+    IAlgebraNonfungiblePositionManager public immutable positionManager;
     IAlgebraFactory public immutable factory;
     uint256 public constant Q128 = 2**128;
     uint256 public constant Q96 = 2**96;
 
-    constructor(INonfungiblePositionManager positionManager_) {
+    constructor(IAlgebraNonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());

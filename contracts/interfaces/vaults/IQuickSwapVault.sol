@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
 import "./IQuickSwapVaultGovernance.sol";
 
-import "../external/quickswap/INonfungiblePositionManager.sol";
+import "../external/quickswap/IAlgebraNonfungiblePositionManager.sol";
 import "../external/quickswap/IAlgebraEternalFarming.sol";
 import "../external/quickswap/IAlgebraFactory.sol";
 import "../external/quickswap/IFarmingCenter.sol";
-import "../external/quickswap/ISwapRouter.sol";
+import "../external/quickswap/IAlgebraSwapRouter.sol";
 import "../external/quickswap/IDragonLair.sol";
 
 interface IQuickSwapVault is IERC721Receiver, IIntegrationVault {

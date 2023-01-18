@@ -5,7 +5,7 @@ pragma abicoder v2;
 import "./IAlgebraPoolDeployer.sol";
 import "./IAlgebraPool.sol";
 import "./IERC20Minimal.sol";
-import "./INonfungiblePositionManager.sol";
+import "./IAlgebraNonfungiblePositionManager.sol";
 
 import "./IFarmingCenter.sol";
 import "./IIncentiveKey.sol";
@@ -14,7 +14,7 @@ import "./IIncentiveKey.sol";
 /// @notice Allows farming nonfungible liquidity tokens in exchange for reward tokens
 interface IAlgebraFarming is IIncentiveKey {
     /// @notice The nonfungible position manager with which this farming contract is compatible
-    function nonfungiblePositionManager() external view returns (INonfungiblePositionManager);
+    function nonfungiblePositionManager() external view returns (IAlgebraNonfungiblePositionManager);
 
     /// @notice The farming Center
     function farmingCenter() external view returns (IFarmingCenter);

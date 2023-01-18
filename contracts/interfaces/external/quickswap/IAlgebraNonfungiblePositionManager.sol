@@ -15,7 +15,7 @@ import "./IPeripheryImmutableState.sol";
 /// and authorized.
 /// @dev Credit to Uniswap Labs under GPL-2.0-or-later license:
 /// https://github.com/Uniswap/v3-periphery
-interface INonfungiblePositionManager is
+interface IAlgebraNonfungiblePositionManager is
     IPoolInitializer,
     IPeripheryPayments,
     IPeripheryImmutableState,

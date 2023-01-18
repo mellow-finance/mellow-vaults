@@ -3,7 +3,7 @@ pragma solidity >=0.7.6;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-import "./INonfungiblePositionManager.sol";
+import "./IAlgebraNonfungiblePositionManager.sol";
 import "./IAlgebraEternalFarming.sol";
 import "./IPeripheryPayments.sol";
 import "./IIncentiveKey.sol";
@@ -12,7 +12,7 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
     function virtualPoolAddresses(address) external view returns (address, address);
 
     /// @notice The nonfungible position manager with which this farming contract is compatible
-    function nonfungiblePositionManager() external view returns (INonfungiblePositionManager);
+    function nonfungiblePositionManager() external view returns (IAlgebraNonfungiblePositionManager);
 
     function eternalFarming() external view returns (IAlgebraEternalFarming);
 
@@ -72,7 +72,7 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
     /// amount1Max The maximum amount of token1 to collect
     /// @return amount0 The amount of fees collected in token0
     /// @return amount1 The amount of fees collected in token1
-    function collect(INonfungiblePositionManager.CollectParams calldata params)
+    function collect(IAlgebraNonfungiblePositionManager.CollectParams calldata params)
         external
         returns (uint256 amount0, uint256 amount1);
 
