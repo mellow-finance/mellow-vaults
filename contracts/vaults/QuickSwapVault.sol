@@ -5,7 +5,8 @@ import "../interfaces/vaults/IQuickSwapVault.sol";
 import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
-import "../utils/QuickSwapHelper.sol";
+import "../libraries/external/FullMath.sol";
+
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces QuickSwap protocol in the integration layer.
@@ -14,17 +15,26 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     uint256 public constant Q96 = 2**96;
     uint256 public constant D9 = 10**9;
 
+    /// @inheritdoc IQuickSwapVault
     uint256 public positionNft;
-    address public erc20Vault; // zero-vault
+    /// @inheritdoc IQuickSwapVault
+    address public erc20Vault;
 
+    /// @inheritdoc IQuickSwapVault
     address public immutable dQuickToken;
+    /// @inheritdoc IQuickSwapVault
     address public immutable quickToken;
 
+    /// @inheritdoc IQuickSwapVault
     IFarmingCenter public immutable farmingCenter;
+    /// @inheritdoc IQuickSwapVault
     IAlgebraSwapRouter public immutable swapRouter;
+    /// @inheritdoc IQuickSwapVault
     IAlgebraNonfungiblePositionManager public immutable positionManager;
+    /// @inheritdoc IQuickSwapVault
     IAlgebraFactory public immutable factory;
-    QuickSwapHelper public immutable helper;
+    /// @inheritdoc IQuickSwapVault
+    IQuickSwapHelper public immutable helper;
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
@@ -35,7 +45,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
 
     constructor(
         IAlgebraNonfungiblePositionManager positionManager_,
-        QuickSwapHelper helper_,
+        IQuickSwapHelper helper_,
         IAlgebraSwapRouter swapRouter_,
         IFarmingCenter farmingCenter_,
         address dQuickToken_,

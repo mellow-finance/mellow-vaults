@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "../interfaces/external/quickswap/IAlgebraEternalFarming.sol";
-import "../interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol";
-import "../interfaces/external/quickswap/IAlgebraFactory.sol";
-import "../interfaces/external/quickswap/IAlgebraPool.sol";
-import "../interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol";
-import "../interfaces/vaults/IQuickSwapVaultGovernance.sol";
-
 import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
+import "../interfaces/utils/IQuickSwapHelper.sol";
 
-contract QuickSwapHelper {
+contract QuickSwapHelper is IQuickSwapHelper {
     IAlgebraNonfungiblePositionManager public immutable positionManager;
     IAlgebraFactory public immutable factory;
     uint256 public constant Q128 = 2**128;
@@ -22,6 +16,7 @@ contract QuickSwapHelper {
         factory = IAlgebraFactory(positionManager.factory());
     }
 
+    /// @inheritdoc IQuickSwapHelper
     function calculateTvl(
         uint256 nft,
         IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams,
@@ -66,6 +61,7 @@ contract QuickSwapHelper {
         }
     }
 
+    /// @inheritdoc IQuickSwapHelper
     function liquidityToTokenAmounts(
         uint256 nft,
         uint160 sqrtRatioX96,
@@ -82,6 +78,7 @@ contract QuickSwapHelper {
         );
     }
 
+    /// @inheritdoc IQuickSwapHelper
     function tokenAmountsToLiquidity(
         uint256 nft,
         uint160 sqrtRatioX96,
@@ -99,6 +96,7 @@ contract QuickSwapHelper {
         );
     }
 
+    /// @inheritdoc IQuickSwapHelper
     function tokenAmountsToMaxLiquidity(
         uint256 nft,
         uint160 sqrtRatioX96,
@@ -119,6 +117,7 @@ contract QuickSwapHelper {
         }
     }
 
+    /// @inheritdoc IQuickSwapHelper
     function calculateCollectableRewards(
         IAlgebraEternalFarming farming,
         IIncentiveKey.IncentiveKey memory key,
@@ -151,6 +150,7 @@ contract QuickSwapHelper {
         );
     }
 
+    /// @inheritdoc IQuickSwapHelper
     function convertTokenToUnderlying(
         uint256 amount,
         address from,

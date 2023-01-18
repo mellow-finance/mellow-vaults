@@ -13,7 +13,36 @@ import "../external/quickswap/IFarmingCenter.sol";
 import "../external/quickswap/IAlgebraSwapRouter.sol";
 import "../external/quickswap/IDragonLair.sol";
 
+import "../utils/IQuickSwapHelper.sol";
+
 interface IQuickSwapVault is IERC721Receiver, IIntegrationVault {
+    /// @dev nft of position in algebra pool
+    function positionNft() external returns (uint256);
+    
+    /// @dev address of erc20Vault
+    function erc20Vault() external returns (address);
+    
+    /// @dev dragon-QUICK token address
+    function dQuickToken() external returns (address);
+    
+    /// @dev QUICK token address
+    function quickToken() external returns (address);
+    
+    /// @dev farming center contract
+    function farmingCenter() external returns (IFarmingCenter);
+    
+    /// @dev swap router to process swaps on algebra pools
+    function swapRouter() external returns (IAlgebraSwapRouter);
+
+    /// @dev position manager for positions in algebra pools
+    function positionManager() external returns (IAlgebraNonfungiblePositionManager);
+
+    /// @dev pool factory for algebra pools 
+    function factory() external returns (IAlgebraFactory);
+
+    /// @dev helper contract for QuickSwapVault
+    function helper() external returns (IQuickSwapHelper);
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
