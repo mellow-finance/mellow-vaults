@@ -44,7 +44,7 @@ interface IQuickSwapVault is IERC721Receiver, IIntegrationVault {
 
     /// @return params strategy params of the vault
     function delayedStrategyParams()
-        public
+        external
         view
-        returns (IQuickSwapVaultGovernance.DelayedStrategyParams memory params)
+        returns (IQuickSwapVaultGovernance.DelayedStrategyParams memory params);
 }
