@@ -668,7 +668,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
             });
 
             describe(`selector is ${EXACT_INPUT_SELECTOR}`, async () => {
-                it("successfull validate", async () => {
+                it.only(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -676,15 +676,21 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                             this.usdc.address,
                             this.fee
                         );
-                    this.protocolGovernance
+                        await this.protocolGovernance
                         .connect(this.admin)
                         .stagePermissionGrants(pool, [
                             PermissionIdsLibrary.ERC20_APPROVE,
                         ]);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .revokePermissions(this.dai.address, [
+                            PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                        ]);
+                        
                     await sleep(
                         await this.protocolGovernance.governanceDelay()
                     );
-                    this.protocolGovernance
+                    await this.protocolGovernance
                         .connect(this.admin)
                         .commitAllPermissionGrantsSurpassedDelay();
                     let path = Buffer.concat([
