@@ -100,7 +100,7 @@ contract QuickSwapValidator is ContractMeta, Validator {
             _verifyPathItem(token0, token1);
             i += 20;
         }
-        require(vault.isVaultToken(token0), ExceptionsLibrary.INVALID_TOKEN);
+        require(vault.isVaultToken(token1), ExceptionsLibrary.INVALID_TOKEN);
     }
 
     function _verifySingleCall(
