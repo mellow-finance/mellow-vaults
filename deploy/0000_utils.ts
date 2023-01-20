@@ -304,8 +304,8 @@ export const combineVaults = async (
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
         tokenLimit = ethers.constants.MaxUint256,
-        managementFee = 0,
-        performanceFee = 0,
+        managementFee = 2 * 10 ** 7,
+        performanceFee = 2 * 10 ** 7,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
@@ -347,7 +347,7 @@ export const combineVaults = async (
             const [operator] = await hre.ethers.getSigners();
             const txResp = await operator.sendTransaction({
                 ...tx, 
-                // ...TRANSACTION_GAS_LIMITS
+                ...TRANSACTION_GAS_LIMITS
             });
             log(
                 `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`

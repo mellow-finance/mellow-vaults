@@ -98,32 +98,19 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
             require(farmingNft == 0, ExceptionsLibrary.INVALID_VALUE);
             positionManager.safeTransferFrom(address(this), from, positionNft_);
         }
-        openFarmingPosition(tokenId, farmingCenter_);
+        _openFarmingPosition(tokenId, farmingCenter_);
         positionNft = tokenId;
         return this.onERC721Received.selector;
     }
 
     /// @inheritdoc IQuickSwapVault
     function openFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) public onlyStrategy {
-        positionManager.safeTransferFrom(address(this), address(farmingCenter_), nft);
-        farmingCenter_.enterFarming(
-            delayedStrategyParams().key,
-            nft,
-            0,
-            false // eternal farming
-        );
+        _openFarmingPosition(nft, farmingCenter_);
     }
 
     /// @inheritdoc IQuickSwapVault
     function burnFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) public onlyStrategy {
-        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams = delayedStrategyParams();
-        collectRewards(strategyParams);
-        farmingCenter_.exitFarming(
-            strategyParams.key,
-            nft,
-            false // eternal farming
-        );
-        farmingCenter_.withdrawToken(nft, address(this), "");
+        _burnFarmingPosition(nft, farmingCenter_);
     }
 
     /// @inheritdoc IQuickSwapVault
@@ -299,7 +286,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         (uint256 farmingNft, , , ) = farmingCenter_.deposits(positionNft_);
 
         if (farmingNft != 0) {
-            burnFarmingPosition(positionNft_, farmingCenter_);
+            _burnFarmingPosition(positionNft_, farmingCenter_);
         }
 
         uint128 liquidityToPull;
@@ -334,8 +321,29 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         actualTokenAmounts[1] = amount1Collected > tokenAmounts[1] ? tokenAmounts[1] : amount1Collected;
 
         if (farmingNft != 0) {
-            openFarmingPosition(positionNft_, farmingCenter_);
+            _openFarmingPosition(positionNft_, farmingCenter_);
         }
+    }
+
+    function _openFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) private {
+        positionManager.safeTransferFrom(address(this), address(farmingCenter_), nft);
+        farmingCenter_.enterFarming(
+            delayedStrategyParams().key,
+            nft,
+            0,
+            false // eternal farming
+        );
+    }
+
+    function _burnFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) private {
+        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams = delayedStrategyParams();
+        collectRewards(strategyParams);
+        farmingCenter_.exitFarming(
+            strategyParams.key,
+            nft,
+            false // eternal farming
+        );
+        farmingCenter_.withdrawToken(nft, address(this), "");
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

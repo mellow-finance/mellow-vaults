@@ -12,12 +12,12 @@ import { BigNumberish, BigNumber } from "ethers";
 const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
-    const { deployer, algebraPositionManager } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
 
     await deploy("SinglePositionStrategyHelper", {
         from: deployer,
         contract: "SinglePositionStrategyHelper",
-        args: [algebraPositionManager],
+        args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
@@ -58,19 +58,19 @@ const buildSinglePositionStrategy = async (
     );
 
     await setupVault(hre, quickSwapVaultNft, "QuickSwapVaultGovernance", {
-        createVaultArgs: [erc20Vault, tokens],
-        delayedStrategyParams: [{
-            key: {
-                rewardToken: '0x958d208cdf087843e9ad98d23823d32e17d723a1',
-                bonusRewardToken: '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
-                pool: '0x1f97c0260c6a18b26a9c2681f0faa93ac2182dbc',
-                startTime: 1669833619,
-                endTime: 4104559500
-            },
-            bonusTokenToUnderlying: '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
-            rewardTokenToUnderlying: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
-            swapSlippageD: BigNumber.from(10).pow(7) // 1%
-        }],
+        createVaultArgs: [tokens, deployer, erc20Vault],
+        delayedStrategyParams: [
+            [
+                '0x958d208cdf087843e9ad98d23823d32e17d723a1',
+                '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
+                '0x1f97c0260c6a18b26a9c2681f0faa93ac2182dbc',
+                1669833619,
+                4104559500,
+            ],
+            '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
+            '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
+            10000000
+        ],
     });
 
     const quickSwapVault = await read(
