@@ -34,6 +34,12 @@ interface IQuickSwapHelper {
         uint256[] memory amounts
     ) external view returns (uint128 liquidity);
 
+    function calculateLiquidityToPull(
+        uint256 nft,
+        uint160 sqrtRatioX96,
+        uint256[] memory tokenAmounts
+    ) external view returns (uint128 liquidity);
+
     function calculateCollectableRewards(
         IAlgebraEternalFarming farming,
         IIncentiveKey.IncentiveKey memory key,

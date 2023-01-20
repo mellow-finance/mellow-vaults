@@ -330,7 +330,7 @@ contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAcce
                 spotTick <= currentPosition.upperTick - mutableParams_.tickNeighborhood &&
                 mutableParams_.intervalWidth == currentPosition.upperTick - currentPosition.lowerTick
             ) {
-                vault.collectRewards(vault.delayedStrategyParams());
+                vault.collectRewards();
                 vault.collectEarnings();
                 return currentPosition;
             } else {

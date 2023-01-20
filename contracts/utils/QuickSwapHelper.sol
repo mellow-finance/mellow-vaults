@@ -44,7 +44,7 @@ contract QuickSwapHelper is IQuickSwapHelper {
         );
         bonusRewardAmount = convertTokenToUnderlying(
             bonusRewardAmount,
-            address(key.rewardToken),
+            address(key.bonusRewardToken),
             strategyParams.bonusTokenToUnderlying
         );
 
@@ -115,6 +115,17 @@ contract QuickSwapHelper is IQuickSwapHelper {
         } else {
             liquidity = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amounts[1]);
         }
+    }
+
+    /// @inheritdoc IQuickSwapHelper
+    function calculateLiquidityToPull(
+        uint256 nft,
+        uint160 sqrtRatioX96,
+        uint256[] memory tokenAmounts
+    ) public view returns (uint128 liquidity) {
+        (, , , , , , uint128 positionLiquidity, , , , ) = positionManager.positions(nft);
+        liquidity = tokenAmountsToMaxLiquidity(nft, sqrtRatioX96, tokenAmounts);
+        liquidity = liquidity < positionLiquidity ? liquidity : positionLiquidity;
     }
 
     /// @inheritdoc IQuickSwapHelper

@@ -64,12 +64,8 @@ interface IQuickSwapVault is IERC721Receiver, IIntegrationVault {
     /// @return collectedFees array of length 2 with amounts of collected and transferred fees from Quickswap position to ERC20Vault
     function collectEarnings() external returns (uint256[] memory collectedFees);
 
-    /// @param strategyParams mutable parameters of vault
-    /// @param rewardTokenAmount amount of collected reward token
-    /// @param bonusRewardTokenAmount amount of collected bonus reward token
-    function collectRewards(IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams)
-        external
-        returns (uint256 rewardTokenAmount, uint256 bonusRewardTokenAmount);
+    /// @param collectedRewards amount of collected tokes in underlying tokens
+    function collectRewards() external returns (uint256[] memory collectedRewards);
 
     /// @return params strategy params of the vault
     function delayedStrategyParams()
