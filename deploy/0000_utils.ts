@@ -15,8 +15,8 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 // 2e10 for mainnet
 // 1e11 for polygon
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
-    maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+    maxFeePerGas: ethers.BigNumber.from(100).mul(10 ** 9),
+    maxPriorityFeePerGas: ethers.BigNumber.from(100).mul(10 ** 9),
 };
 
 export const ALLOWED_APPROVE_LIST = {
@@ -199,7 +199,9 @@ export const setupVault = async (
         (strategyTreasury &&
             strategyTreasury !== delayedStrategyParams.strategyTreasury) ||
         (contractName == "UniV3VaultGovernance" &&
-            delayedStrategyParams.length > 0)
+            delayedStrategyParams.length > 0) ||
+            (contractName == "QuickSwapVaultGovernance" &&
+                delayedStrategyParams.length > 0)
     ) {
         log(`Setting delayed strategy params for ${contractName}`);
         log(delayedStrategyParams);
@@ -340,7 +342,7 @@ export const combineVaults = async (
             log("Adding admin to depositors");
             const tx =
                 await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
-                    [admin]
+                    [admin, deployer, '0xC6576F7F84E75B89DB0ad847d796760ba8Fda5f9']
                 );
             const [operator] = await hre.ethers.getSigners();
             const txResp = await operator.sendTransaction({
