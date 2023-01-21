@@ -246,7 +246,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         }
         uint256 amountOutMinimum = FullMath.mulDiv(amount, priceX96, Q96);
         amountOutMinimum = FullMath.mulDiv(amountOutMinimum, D9 - swapSlippageD, D9);
-        IERC20(from).safeApprove(address(swapRouter), type(uint256).max);
+        IERC20(from).safeIncreaseAllowance(address(swapRouter), amount);
         amountOut = swapRouter.exactInputSingle(
             IAlgebraSwapRouter.ExactInputSingleParams({
                 tokenIn: from,
@@ -258,6 +258,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
                 limitSqrtPrice: 0
             })
         );
+        IERC20(from).safeApprove(address(swapRouter), 0);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
