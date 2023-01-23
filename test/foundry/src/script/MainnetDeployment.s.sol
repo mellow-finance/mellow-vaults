@@ -16,6 +16,8 @@ import "../vaults/GearboxVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/ERC20RootVaultGovernance.sol";
 
+import "../utils/WstethToWethAggregator.sol";
+
 
 
 contract MainnetDeployment is Script {
@@ -42,6 +44,11 @@ contract MainnetDeployment is Script {
 
     function run() external {
         vm.startBroadcast();
+
+        AggregatorV3wstEth a = new AggregatorV3wstEth(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0, IAggregatorV3(0x86392dC19c0b719886221c78AB11eb8Cf5c52812), IAggregatorV3(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419));
+        console2.log("Address", address(a));
+
+        /*
 
         rootVault = new GearboxRootVault();
         erc20Vault = new ERC20Vault();
@@ -145,5 +152,6 @@ contract MainnetDeployment is Script {
 
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
         vm.stopBroadcast();
+        */
     }
 }
