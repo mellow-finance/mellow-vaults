@@ -12,7 +12,11 @@ contract AggregatorV3wstEth is IAggregatorV3 {
     bytes4 public constant TOKENS_PER_STETH_SELECTOR = 0x9576a0c8;
     uint256 public constant D18 = 10**18;
 
-    constructor(address wsteth_, IAggregatorV3 steth_eth_oracle_, IAggregatorV3 eth_oracle_) {
+    constructor(
+        address wsteth_,
+        IAggregatorV3 steth_eth_oracle_,
+        IAggregatorV3 eth_oracle_
+    ) {
         wsteth = wsteth_;
         steth_eth_oracle = steth_eth_oracle_;
         eth_oracle = eth_oracle_;
@@ -56,9 +60,9 @@ contract AggregatorV3wstEth is IAggregatorV3 {
             uint80
         )
     {
-        (, int256 answerSteth, , ,) = steth_eth_oracle.latestRoundData();
+        (, int256 answerSteth, , , ) = steth_eth_oracle.latestRoundData();
         (, answer, , , ) = eth_oracle.latestRoundData();
-        
+
         answer = _stethToWsteth(int256(FullMath.mulDiv(uint256(answer), uint256(answerSteth), D18)));
     }
 
