@@ -128,6 +128,79 @@ contract QuickSwapHelper is IQuickSwapHelper {
         liquidity = liquidity < positionLiquidity ? liquidity : positionLiquidity;
     }
 
+    function increaseCumulative(uint32 currentTimestamp, IAlgebraEternalVirtualPool virtualPool)
+        public
+        view
+        returns (uint256 deltaTotalRewardGrowth0, uint256 deltaTotalRewardGrowth1)
+    {
+        unchecked {
+            uint256 timeDelta = currentTimestamp - virtualPool.prevTimestamp(); // safe until timedelta > 136 years
+            if (timeDelta == 0) return (0, 0);
+
+            uint256 currentLiquidity = virtualPool.currentLiquidity(); // currentLiquidity is uint128
+
+            if (currentLiquidity > 0) {
+                uint256 rewardRate0 = virtualPool.rewardRate0();
+                uint256 rewardRate1 = virtualPool.rewardRate1();
+                uint256 rewardReserve0 = rewardRate0 > 0 ? virtualPool.rewardReserve0() : 0;
+                uint256 rewardReserve1 = rewardRate1 > 0 ? virtualPool.rewardReserve1() : 0;
+
+                if (rewardReserve0 > 0) {
+                    uint256 reward0 = rewardRate0 * timeDelta;
+                    if (reward0 > rewardReserve0) reward0 = rewardReserve0;
+                    deltaTotalRewardGrowth0 = FullMath.mulDiv(reward0, Q128, currentLiquidity);
+                }
+
+                if (rewardReserve1 > 0) {
+                    uint256 reward1 = rewardRate1 * timeDelta;
+                    if (reward1 > rewardReserve1) reward1 = rewardReserve1;
+                    deltaTotalRewardGrowth1 = FullMath.mulDiv(reward1, Q128, currentLiquidity);
+                }
+            }
+        }
+    }
+
+    function calculateInnerFeesGrow(
+        IAlgebraEternalVirtualPool virtualPool,
+        int24 tickLower,
+        int24 tickUpper
+    ) public view returns (uint256 virtualPoolInnerRewardGrowth0, uint256 virtualPoolInnerRewardGrowth1) {
+        (, , uint256 lowerOuterFeeGrowth0Token, uint256 lowerOuterFeeGrowth1Token, , , , ) = virtualPool.ticks(
+            tickLower
+        );
+
+        (, , uint256 upperOuterFeeGrowth0Token, uint256 upperOuterFeeGrowth1Token, , , , ) = virtualPool.ticks(
+            tickUpper
+        );
+
+        int24 currentTick = virtualPool.globalTick();
+
+        uint256 totalFeeGrowth0Token = virtualPool.totalRewardGrowth0();
+        uint256 totalFeeGrowth1Token = virtualPool.totalRewardGrowth1();
+        (uint256 deltaTotalFeeGrowth0Token, uint256 deltaTotalFeeGrowth1Token) = increaseCumulative(
+            uint32(block.timestamp),
+            virtualPool
+        );
+
+        totalFeeGrowth0Token += deltaTotalFeeGrowth0Token;
+        totalFeeGrowth1Token += deltaTotalFeeGrowth1Token;
+
+        if (currentTick < tickUpper) {
+            if (currentTick >= tickLower) {
+                virtualPoolInnerRewardGrowth0 = totalFeeGrowth0Token - lowerOuterFeeGrowth0Token;
+                virtualPoolInnerRewardGrowth1 = totalFeeGrowth1Token - lowerOuterFeeGrowth1Token;
+            } else {
+                virtualPoolInnerRewardGrowth0 = lowerOuterFeeGrowth0Token;
+                virtualPoolInnerRewardGrowth1 = lowerOuterFeeGrowth1Token;
+            }
+            virtualPoolInnerRewardGrowth0 -= upperOuterFeeGrowth0Token;
+            virtualPoolInnerRewardGrowth1 -= upperOuterFeeGrowth1Token;
+        } else {
+            virtualPoolInnerRewardGrowth0 = upperOuterFeeGrowth0Token - lowerOuterFeeGrowth0Token;
+            virtualPoolInnerRewardGrowth1 = upperOuterFeeGrowth1Token - lowerOuterFeeGrowth1Token;
+        }
+    }
+
     /// @inheritdoc IQuickSwapHelper
     function calculateCollectableRewards(
         IAlgebraEternalFarming farming,
@@ -152,8 +225,11 @@ contract QuickSwapHelper is IQuickSwapHelper {
             return (0, 0);
         }
 
-        (uint256 virtualPoolInnerRewardGrowth0, uint256 virtualPoolInnerRewardGrowth1) = virtualPool
-            .getInnerRewardsGrowth(tickLower, tickUpper);
+        (uint256 virtualPoolInnerRewardGrowth0, uint256 virtualPoolInnerRewardGrowth1) = calculateInnerFeesGrow(
+            virtualPool,
+            tickLower,
+            tickUpper
+        );
 
         (rewardAmount, bonusRewardAmount) = (
             FullMath.mulDiv(virtualPoolInnerRewardGrowth0 - innerRewardGrowth0, liquidity, Q128),
