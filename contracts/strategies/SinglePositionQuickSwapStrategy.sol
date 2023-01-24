@@ -543,7 +543,17 @@ contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAcce
     /// @inheritdoc ILpCallback
     function depositCallback() external {
         // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
-        _pushIntoQuickSwap(immutableParams);
+        ImmutableParams memory immutableParams_ = immutableParams;
+        uint256 positionNft = immutableParams_.quickSwapVault.positionNft();
+        IFarmingCenter farmingCenter = immutableParams_.quickSwapVault.farmingCenter();
+        (uint256 farmingNft, , , ) = farmingCenter.deposits(positionNft);
+        if (farmingNft != 0) {
+            immutableParams_.quickSwapVault.burnFarmingPosition(positionNft, farmingCenter);
+        }
+        _pushIntoQuickSwap(immutableParams_);
+        if (farmingNft != 0) {
+            immutableParams_.quickSwapVault.openFarmingPosition(positionNft, farmingCenter);
+        }
     }
 
     /// @inheritdoc ILpCallback
