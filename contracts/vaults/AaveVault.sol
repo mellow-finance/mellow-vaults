@@ -26,7 +26,8 @@ import "./IntegrationVault.sol";
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
 contract AaveVault is IAaveVault, IntegrationVault {
     using SafeERC20 for IERC20;
-    address[] internal _aTokens;
+
+    address[] public aTokens;
     uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
     ILendingPool private _lendingPool;
@@ -70,14 +71,33 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
         _lendingPool = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
-        _aTokens = new address[](vaultTokens_.length);
+        aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < vaultTokens_.length; ++i) {
             address aToken = _getAToken(vaultTokens_[i]);
             require(aToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-            _aTokens[i] = aToken;
+            aTokens[i] = aToken;
             _tvls.push(0);
         }
         _lastTvlUpdateTimestamp = block.timestamp;
+    }
+
+    function borrow(address token, uint256 amount) external {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _lendingPool.borrow(token, amount, 1, 0, address(this));
+    }
+
+    function repay(address token, uint256 amount) external {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
+        _lendingPool.repay(token, amount, 1, address(this));
+        IERC20(token).safeApprove(address(_lendingPool), 0);
+    }
+
+    function getDebt(uint256 index) external view returns (uint256 debt) {
+        require(index < _vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
+        address token = _vaultTokens[index];
+        DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
+        return IERC20(data.stableDebtTokenAddress).balanceOf(address(this));
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -88,9 +108,9 @@ contract AaveVault is IAaveVault, IntegrationVault {
     }
 
     function _isReclaimForbidden(address token) internal view override returns (bool) {
-        uint256 len = _aTokens.length;
+        uint256 len = aTokens.length;
         for (uint256 i = 0; i < len; ++i) {
-            if (_aTokens[i] == token) {
+            if (aTokens[i] == token) {
                 return true;
             }
         }
@@ -102,7 +122,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function _updateTvls() private {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
+            _tvls[i] = IERC20(aTokens[i]).balanceOf(address(this));
         }
         _lastTvlUpdateTimestamp = block.timestamp;
     }
@@ -118,7 +138,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
             referralCode = abi.decode(options, (uint256));
         }
 
-        for (uint256 i = 0; i < _aTokens.length; ++i) {
+        for (uint256 i = 0; i < aTokens.length; ++i) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
@@ -138,11 +158,11 @@ contract AaveVault is IAaveVault, IntegrationVault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
-        for (uint256 i = 0; i < _aTokens.length; ++i) {
+        for (uint256 i = 0; i < aTokens.length; ++i) {
             if ((_tvls[i] == 0) || (tokenAmounts[i] == 0)) {
                 continue;
             }
-            uint256 balance = IERC20(_aTokens[i]).balanceOf(address(this));
+            uint256 balance = IERC20(aTokens[i]).balanceOf(address(this));
             uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
             actualTokenAmounts[i] = _lendingPool.withdraw(tokens[i], amount, to);
         }

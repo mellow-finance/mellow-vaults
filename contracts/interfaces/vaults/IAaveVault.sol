@@ -16,4 +16,12 @@ interface IAaveVault is IIntegrationVault {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external;
+
+    function borrow(address token, uint256 amount) external;
+
+    function repay(address token, uint256 amount) external;
+
+    function getDebt(uint256 index) external view returns (uint256 debt);
+
+    function aTokens(uint256) external view returns (address);
 }
