@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/utils/ILpCallback.sol";
 
-contract MockLpCallback is ILpCallback {
+abstract contract MockLpCallback is ILpCallback {
     enum WithdrawCallbackMode {
         NO_ERROR,
         EMPTY_ERROR,

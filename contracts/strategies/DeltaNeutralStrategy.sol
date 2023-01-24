@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
+
+import "../interfaces/utils/ILpCallback.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
@@ -17,8 +20,11 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/OracleLibrary.sol";
 
-contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
+contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
 
+    using SafeERC20 for IERC20;
+
+    uint256 public constant D4 = 10**4;
     uint256 public constant D9 = 10**9;
     uint256 public constant Q96 = 1<<96;
 
@@ -39,9 +45,8 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     IUniswapV3Pool public pool;
 
     struct StrategyParams {
-        uint256 positionTickSize;
-        uint256 rebalanceTickDelta;
-        uint256 shareToGetBackD;
+        int24 positionTickSize;
+        int24 rebalanceTickDelta;
     }
 
     struct MintingParams {
@@ -70,11 +75,8 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         _requireAdmin();
         int24 tickSpacing = pool.tickSpacing();
         require(
-            newStrategyParams.positionTickSize % uint256(uint24(tickSpacing)) == 0 && newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta,
+            newStrategyParams.positionTickSize % tickSpacing == 0 && newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta && newStrategyParams.rebalanceTickDelta > 0 && newStrategyParams.rebalanceTickDelta <= 10000,
             ExceptionsLibrary.INVARIANT
-        );
-        require(
-            newStrategyParams.shareToGetBackD <= D9, ExceptionsLibrary.INVALID_VALUE
         );
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
@@ -121,13 +123,13 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         (int24 avgTick, , bool withFail) = OracleLibrary.consult(address(pool), oracleParams.averagePriceTimeSpan);
         require(!withFail, ExceptionsLibrary.INVALID_STATE);
 
-        uint256 maxDelta = oracleParams.maxTickDeviation;
+        int24 maxDelta = int24(oracleParams.maxTickDeviation);
 
-        if (spotTick < avgTick && uint256(uint24(avgTick - spotTick)) > maxDelta) {
+        if (spotTick < avgTick && avgTick - spotTick > maxDelta) {
             return (false, spotTick);
         }
 
-        if (avgTick < spotTick && uint256(uint24(spotTick - avgTick)) > maxDelta) {
+        if (avgTick < spotTick && spotTick - avgTick > maxDelta) {
             return (false, spotTick);
         }
 
@@ -153,12 +155,14 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         require(aaveTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(erc20Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(uniV3Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        for (uint256 i = 0; i < 2; i++) {
-            require(uniV3Tokens[i] == aaveTokens[i], ExceptionsLibrary.INVARIANT);
-            require(erc20Tokens[i] == aaveTokens[i], ExceptionsLibrary.INVARIANT);
-        }
 
-        tokens = erc20Tokens;
+        require(uniV3Tokens[0] == aaveTokens[0], ExceptionsLibrary.INVARIANT);
+        require(erc20Tokens[0] == aaveTokens[0], ExceptionsLibrary.INVARIANT);
+        require(uniV3Tokens[1] == aaveTokens[1], ExceptionsLibrary.INVARIANT);
+        require(erc20Tokens[1] == aaveTokens[1], ExceptionsLibrary.INVARIANT);
+        
+
+        tokens = uniV3Tokens;
         pool = uniV3Vault.pool();
         require(address(pool) != address(0), ExceptionsLibrary.INVALID_TARGET);
 
@@ -168,12 +172,12 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function rebalance() external {
         (bool deltaOkay, int24 spotTick) = isDeltaOkay();
         require(deltaOkay, ExceptionsLibrary.INVARIANT);
-        uint256 ticksDelta;
+        int24 ticksDelta;
         if (spotTick < lastRebalanceTick) {
-            ticksDelta = uint256(uint24(lastRebalanceTick - spotTick));
+            ticksDelta = lastRebalanceTick - spotTick;
         }
         else {
-            ticksDelta = uint256(uint24(spotTick - lastRebalanceTick));
+            ticksDelta = spotTick - lastRebalanceTick;
         }
         require(!wasRebalance || ticksDelta >= strategyParams.rebalanceTickDelta);
         _closePosition();
@@ -187,29 +191,16 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
             uniV3Vault.pull(address(erc20Vault), tokens, uniV3TokenAmounts, "");
         }
 
-        while (true) {
-            uint256 debt = aaveVault.getDebt(1);
-            if (debt == 0) {
-                break;
-            }
-
-            _getCoverage(debt);
-            uint256 balance = IERC20(tokens[1]).balanceOf(address(erc20Vault));
-            if (balance >= debt) {
-                aaveVault.repay(tokens[1], debt);
-            }
-            else {
-                uint256 shareD = FullMath.mulDiv(balance, D9, debt);
-                aaveVault.repay(tokens[1], balance);
-                uint256 oldBalance = IERC20(aaveVault.aTokens(0)).balanceOf(address(aaveVault));
-                uint256 balanceToUse = FullMath.mulDiv(oldBalance, FullMath.mulDiv(shareD, strategyParams.shareToGetBackD, D9), D9);
-
-                uint256[] memory tokenAmounts = new uint256[](2);
-                tokenAmounts[0] = balanceToUse;
-
-                aaveVault.pull(address(erc20Vault), tokens, tokenAmounts, "");
-            }
+        uint256 debt = aaveVault.getDebt(1);
+        if (debt == 0) {
+            return;
         }
+
+        _getCoverage(debt);
+        uint256 balance = IERC20(tokens[1]).balanceOf(address(erc20Vault));
+        erc20Vault.externalCall(tokens[1], APPROVE_SELECTOR, abi.encode(address(aaveVault), debt)); // approve
+        aaveVault.repay(tokens[1], address(erc20Vault), debt);
+        erc20Vault.externalCall(tokens[1], APPROVE_SELECTOR, abi.encode(address(aaveVault), 0)); // reset allowance
     }
 
     function _openPosition() internal {
@@ -217,45 +208,223 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         uint160 maxSqrtX96Delta = TickMath.getSqrtRatioAtTick(strategyParams.rebalanceTickDelta);
         uint256 maxX96Delta = FullMath.mulDiv(maxSqrtX96Delta, maxSqrtX96Delta, Q96);
 
+        uint256 ltvQ96 = FullMath.mulDiv(aaveVault.getLTV(tokens[0]), Q96, D4);
+
+        uint256 shareD = FullMath.mulDiv(ltvQ96, D9, ltvQ96 + maxX96Delta);
+        _swap(1, true, 0);
+
+        uint256 balance = IERC20(tokens[0]).balanceOf(address(erc20Vault));
+        uint256 toAave = FullMath.mulDiv(balance, D9 - shareD, D9);
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = toAave;
+
+        erc20Vault.pull(address(aaveVault), tokens, amounts, "");
+        uint256 amountToTake = _getSwapAmountOut(balance - toAave, 0, false);
+
+        aaveVault.borrow(tokens[1], address(erc20Vault), amountToTake);
+        (, int24 spotTick, , , , , ) = pool.slot0();
+        int24 lowerTick = (spotTick - strategyParams.positionTickSize / 2) % pool.tickSpacing();
+        int24 upperTick = lowerTick + strategyParams.positionTickSize;
+
+        uint256 fromNft = uniV3Vault.uniV3Nft();
+        uint256 nft = _mintNewNft(lowerTick, upperTick, block.timestamp + 1);
+
+        positionManager.safeTransferFrom(address(this), address(uniV3Vault), nft);
+        positionManager.burn(fromNft);
+
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
+        tokenAmounts[1] = IERC20(tokens[1]).balanceOf(address(erc20Vault));
+
+        erc20Vault.pull(address(uniV3Vault), tokens, tokenAmounts, "");
+    }
+
+    function _mintNewNft(
+        int24 lowerTick,
+        int24 upperTick,
+        uint256 deadline
+    ) internal returns (uint256 newNft) {
+        uint256 minToken0ForOpening = mintingParams.minToken0ForOpening;
+        uint256 minToken1ForOpening = mintingParams.minToken1ForOpening;
+        IERC20(tokens[0]).safeApprove(address(positionManager), minToken0ForOpening);
+        IERC20(tokens[1]).safeApprove(address(positionManager), minToken1ForOpening);
+        (newNft, , , ) = positionManager.mint(
+            INonfungiblePositionManager.MintParams({
+                token0: tokens[0],
+                token1: tokens[1],
+                fee: pool.fee(),
+                tickLower: lowerTick,
+                tickUpper: upperTick,
+                amount0Desired: minToken0ForOpening,
+                amount1Desired: minToken1ForOpening,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: address(this),
+                deadline: deadline
+            })
+        );
+        IERC20(tokens[0]).safeApprove(address(positionManager), 0);
+        IERC20(tokens[1]).safeApprove(address(positionManager), 0);
     }
 
     function _getCoverage(uint256 debt) internal {
         if (IERC20(tokens[1]).balanceOf(address(erc20Vault)) < debt) {
-            uint256 amountIn = IERC20(tokens[0]).balanceOf(address(erc20Vault));
-            if (amountIn > 0) {
-                ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
-                    tokenIn: tokens[0],
-                    tokenOut: tokens[1],
-                    fee: tradingParams.swapFee,
-                    recipient: address(erc20Vault),
-                    deadline: block.timestamp + 1,
-                    amountIn: amountIn,
-                    amountOutMinimum: _getSwapAmountOut(amountIn),
-                    sqrtPriceLimitX96: 0
-                });
-                bytes memory data = abi.encode(swapParams);
-                erc20Vault.externalCall(tokens[0], APPROVE_SELECTOR, abi.encode(address(router), amountIn)); // approve
-                erc20Vault.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data); // swap
-                erc20Vault.externalCall(tokens[0], APPROVE_SELECTOR, abi.encode(address(router), 0)); // reset allowance
-            }
+            _swap(0, true, 0);
         }
     }
 
-    function _getSwapAmountOut(uint256 amount) internal view returns (uint256) {
+    function _swap(uint256 index, bool swapAll, uint256 amount) internal {
+        uint256 amountIn = amount;
+        if (swapAll) {
+            amountIn = IERC20(tokens[index]).balanceOf(address(erc20Vault));
+        }
+        if (amountIn > 0) {
+            ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+                tokenIn: tokens[index],
+                tokenOut: tokens[1 - index],
+                fee: tradingParams.swapFee,
+                recipient: address(erc20Vault),
+                deadline: block.timestamp + 1,
+                amountIn: amountIn,
+                amountOutMinimum: _getSwapAmountOut(amountIn, index, true),
+                sqrtPriceLimitX96: 0
+            });
+            bytes memory data = abi.encode(swapParams);
+            erc20Vault.externalCall(tokens[index], APPROVE_SELECTOR, abi.encode(address(router), amountIn)); // approve
+            erc20Vault.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data); // swap
+            erc20Vault.externalCall(tokens[index], APPROVE_SELECTOR, abi.encode(address(router), 0)); // reset allowance
+        }
+    }
+
+    function _getSwapAmountOut(uint256 amount, uint256 index, bool takeSlippage) internal view returns (uint256) {
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
 
-        if (tokens[0] == pool.token0()) {
+        uint256 slippage = 0;
+        if (takeSlippage) {
+            slippage = tradingParams.maxSlippageD;
+        }
+
+        if (tokens[index] == pool.token0() && index == 0) {
             uint256 expectedAmount = FullMath.mulDiv(amount, priceX96, Q96);
-            return FullMath.mulDiv(expectedAmount, D9 - tradingParams.maxSlippageD, D9);
+            return FullMath.mulDiv(expectedAmount, D9 - slippage, D9);
         }
 
         else {
 
             uint256 expectedAmount = FullMath.mulDiv(amount, Q96, priceX96);
-            return FullMath.mulDiv(expectedAmount, D9 - tradingParams.maxSlippageD, D9);
+            return FullMath.mulDiv(expectedAmount, D9 - slippage, D9);
 
         }
+    }
+
+    function _checkCallbackPossible() internal {
+        (bool deltaOkay, int24 spotTick) = isDeltaOkay();
+        require(deltaOkay, ExceptionsLibrary.INVARIANT);
+        int24 ticksDelta;
+        if (spotTick < lastRebalanceTick) {
+            ticksDelta = lastRebalanceTick - spotTick;
+        }
+        else {
+            ticksDelta = spotTick - lastRebalanceTick;
+        }
+        require(wasRebalance && ticksDelta < strategyParams.rebalanceTickDelta);
+    }
+
+    function _rebalanceERC20Vault() internal {
+        uint256 token0OnERC20 = IERC20(tokens[0]).balanceOf(address(erc20Vault));
+        uint256 token0CapitalOnERC20 = _getSwapAmountOut(IERC20(tokens[1]).balanceOf(address(erc20Vault)), 1, false) + token0OnERC20;
+        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
+                uniV3Vault.uniV3Nft()
+            );
+
+        uint256[] memory totalOnUni = uniV3Vault.liquidityToTokenAmounts(liquidity);
+        uint256 token0CapitalOnUni = _getSwapAmountOut(totalOnUni[1], 1, false) + totalOnUni[0];
+
+        uint256 wantToHaveOnERC20 = FullMath.mulDiv(totalOnUni[0], token0CapitalOnERC20, token0CapitalOnUni);
+        if (wantToHaveOnERC20 < token0OnERC20) {
+            uint256 delta = token0OnERC20 - wantToHaveOnERC20;
+            _swap(0, false, delta);
+        }
+        else {
+            uint256 delta = wantToHaveOnERC20 - token0OnERC20;
+            uint256 toSwap = _getSwapAmountOut(delta, 0, false);
+            _swap(1, false, toSwap);
+        }
+    }
+
+    /// @inheritdoc ILpCallback
+    function depositCallback(bytes memory depositOptions) external {
+
+        _checkCallbackPossible();
+
+        require(depositOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
+        (
+            uint256 shareOfCapitalQ96
+        ) = abi.decode(depositOptions, (uint256));
+
+        uint256 balanceToken0 = IERC20(aaveVault.aTokens(0)).balanceOf(address(aaveVault));
+        uint256 debtToken1 = aaveVault.getDebt(1);
+
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = FullMath.mulDiv(balanceToken0, shareOfCapitalQ96, Q96);
+
+        erc20Vault.pull(address(aaveVault), tokens, tokenAmounts, "");
+        aaveVault.borrow(tokens[1], address(erc20Vault), FullMath.mulDiv(debtToken1, shareOfCapitalQ96, Q96));
+
+        _rebalanceERC20Vault();
+
+        tokenAmounts[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
+        tokenAmounts[1] = IERC20(tokens[1]).balanceOf(address(erc20Vault));
+
+        erc20Vault.pull(address(uniV3Vault), tokens, tokenAmounts, "");
+        
+    }
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback(bytes memory depositOptions) external {
+
+        _checkCallbackPossible();
+
+        require(depositOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
+        (
+            uint256 shareOfCapitalQ96
+        ) = abi.decode(depositOptions, (uint256));
+
+        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
+                uniV3Vault.uniV3Nft()
+            );
+
+        uniV3Vault.collectEarnings();
+
+        uint256 totalToken0 = FullMath.mulDiv(IERC20(tokens[0]).balanceOf(address(erc20Vault)), shareOfCapitalQ96, Q96);
+        uint256 totalToken1 = FullMath.mulDiv(IERC20(tokens[1]).balanceOf(address(erc20Vault)), shareOfCapitalQ96, Q96);
+
+        uint256[] memory pullFromUni = uniV3Vault.liquidityToTokenAmounts(uint128(FullMath.mulDiv(liquidity, shareOfCapitalQ96, Q96)));
+        pullFromUni = uniV3Vault.pull(address(erc20Vault), tokens, pullFromUni, "");
+
+        totalToken0 += pullFromUni[0];
+        totalToken1 += pullFromUni[1];
+
+        uint256 balanceToken0 = FullMath.mulDiv(IERC20(aaveVault.aTokens(0)).balanceOf(address(aaveVault)), shareOfCapitalQ96, Q96);
+        uint256 debtToken1 = FullMath.mulDiv(aaveVault.getDebt(1), shareOfCapitalQ96, Q96);
+
+        if (totalToken1 < debtToken1) {
+            _swap(0, true, 0);
+        }
+
+        erc20Vault.externalCall(tokens[1], APPROVE_SELECTOR, abi.encode(address(aaveVault), debtToken1)); // approve
+        aaveVault.repay(tokens[1], address(erc20Vault), debtToken1);
+        erc20Vault.externalCall(tokens[1], APPROVE_SELECTOR, abi.encode(address(aaveVault), 0)); // reset allowance
+
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = balanceToken0;
+
+        aaveVault.pull(address(erc20Vault), tokens, tokenAmounts, "");
+
+        _swap(1, true, 0);
+        
     }
 
     function createStrategy(address erc20Vault_, address uniV3Vault_, address aaveVault_, address admin) external returns (DeltaNeutralStrategy strategy) {

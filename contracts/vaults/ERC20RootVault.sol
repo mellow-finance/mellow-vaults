@@ -151,7 +151,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
 
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback() {} catch Error(
+            bytes memory q = new bytes(1);
+            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(q) {} catch Error(
                 string memory reason
             ) {
                 emit DepositCallbackLog(reason);
@@ -210,7 +211,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         ).delayedStrategyParams(thisNft);
 
         if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
+            bytes memory q = new bytes(1);
+            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback(q) {} catch Error(
                 string memory reason
             ) {
                 emit WithdrawCallbackLog(reason);

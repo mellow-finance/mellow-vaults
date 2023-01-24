@@ -81,13 +81,15 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    function borrow(address token, uint256 amount) external {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    function borrow(address token, address to, uint256 amount) external {
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _lendingPool.borrow(token, amount, 1, 0, address(this));
+        IERC20(token).safeTransfer(to, amount);
     }
 
-    function repay(address token, uint256 amount) external {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    function repay(address token, address from, uint256 amount) external {
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        IERC20(token).safeTransferFrom(from, address(this), amount);
         IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
         _lendingPool.repay(token, amount, 1, address(this));
         IERC20(token).safeApprove(address(_lendingPool), 0);
@@ -100,7 +102,17 @@ contract AaveVault is IAaveVault, IntegrationVault {
         return IERC20(data.stableDebtTokenAddress).balanceOf(address(this));
     }
 
+    function getLTV(address token) external view returns (uint256 ltv) {
+        DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
+        uint256 config = data.configuration.data;
+        return config % (1<<16);
+    }
+
     // -------------------  INTERNAL, VIEW  -------------------
+
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
 
     function _getAToken(address token) internal view returns (address) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
