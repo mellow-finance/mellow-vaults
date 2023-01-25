@@ -14,6 +14,7 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 
 // 2e10 for mainnet
 // 1e11 for polygon
+// gasPrice: BigNumber.from(10).pow(6), for optimism
 export const TRANSACTION_GAS_LIMITS = {
     maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
     maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
@@ -70,6 +71,31 @@ export const ALLOWED_APPROVE_LIST = {
             "0x2791bca1f2de4661ed88a30c99a7a9449aa84174", // USDC
             "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", // WBTC
             "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063", // DAI
+        ],
+    },
+    optimism: {
+        uniV3: [
+            "0xE592427A0AEce92De3Edee1F18E0157C05861564", // SwapRouter
+            
+            "0x85149247691df622eaF1a8Bd0CaFd40BC45154a9", // USDC-ETH 0.05%
+            "0x85C31FFA3706d1cce9d525a00f1C7D4A2911754c", // WBTC-ETH 0.05%
+            "0xA7BB0d95C6BA0ed0aCA70C503B34BC7108589A47", // WBTC-USDC 0.05%
+
+            "0x6432037739cCd0201987472604826097b55813e9", // BOB-USDC 0.05%
+            "0x1D751bc1A723AccF1942122ca9aa82d49D08d2AE", // USDC-OP 0.05%
+            "0x7f1C919A92BCe8790a85d6360B85cf21b997A6b5", // BOB-OP 0.05%
+        ],
+        uniV2: [
+        ],
+        curve: [
+        ],
+        erc20: [
+            "0x4200000000000000000000000000000000000006", // WETH
+            "0x7f5c764cbc14f9669b88837ca1490cca17c31607", // USDC
+            "0x68f180fcce6836688e9084f035309e29bf0a2095", // WBTC
+            "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1", // DAI
+            "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B", // BOB
+            "0x4200000000000000000000000000000000000042", // OP
         ],
     },
 };
@@ -385,6 +411,8 @@ export class PermissionIdsLibrary {
 export const USDC_PRICE = BigNumber.from(10).pow(6);
 export const WETH_PRICE = BigNumber.from(10).pow(18).div(3000);
 export const WBTC_PRICE = BigNumber.from(10).pow(18).div(45000);
+export const BOB_PRICE = BigNumber.from(10).pow(18);
+export const OP_PRICE = BigNumber.from(10).pow(18).div(2);
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;
