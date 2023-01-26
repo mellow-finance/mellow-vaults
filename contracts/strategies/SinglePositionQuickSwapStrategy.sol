@@ -529,6 +529,12 @@ contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAcce
     /// @dev pushed maximal possible amounts of tokens from erc20Vault to quickSwapVault
     /// @param immutableParams_ structure with all immutable params of the strategy
     function _pushIntoQuickSwap(ImmutableParams memory immutableParams_) private {
+        uint256 positionNft = immutableParams_.quickSwapVault.positionNft();
+        IFarmingCenter farmingCenter = immutableParams_.quickSwapVault.farmingCenter();
+        (uint256 farmingNft, , , ) = farmingCenter.deposits(positionNft);
+        if (farmingNft != 0) {
+            immutableParams_.quickSwapVault.burnFarmingPosition(positionNft, farmingCenter);
+        }
         (uint256[] memory tokenAmounts, ) = immutableParams_.erc20Vault.tvl();
         if (tokenAmounts[0] > 0 || tokenAmounts[1] > 0) {
             immutableParams_.erc20Vault.pull(
@@ -538,22 +544,15 @@ contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAcce
                 ""
             );
         }
+        if (farmingNft != 0) {
+            immutableParams_.quickSwapVault.openFarmingPosition(positionNft, farmingCenter);
+        }
     }
 
     /// @inheritdoc ILpCallback
     function depositCallback() external {
         // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
-        ImmutableParams memory immutableParams_ = immutableParams;
-        uint256 positionNft = immutableParams_.quickSwapVault.positionNft();
-        IFarmingCenter farmingCenter = immutableParams_.quickSwapVault.farmingCenter();
-        (uint256 farmingNft, , , ) = farmingCenter.deposits(positionNft);
-        if (farmingNft != 0) {
-            immutableParams_.quickSwapVault.burnFarmingPosition(positionNft, farmingCenter);
-        }
-        _pushIntoQuickSwap(immutableParams_);
-        if (farmingNft != 0) {
-            immutableParams_.quickSwapVault.openFarmingPosition(positionNft, farmingCenter);
-        }
+        _pushIntoQuickSwap(immutableParams);
     }
 
     /// @inheritdoc ILpCallback
