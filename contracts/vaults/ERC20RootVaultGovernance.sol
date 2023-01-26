@@ -8,6 +8,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
+import "forge-std/console2.log";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
@@ -240,7 +241,6 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                 }
             }
             require(subvaultTokenId == subvaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
-
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }

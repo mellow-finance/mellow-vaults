@@ -12,6 +12,7 @@ import "../../src/vaults/ERC20VaultGovernance.sol";
 import "../../src/vaults/UniV3VaultGovernance.sol";
 import "../../src/vaults/AaveVaultGovernance.sol";
 import "../../src/vaults/AaveVault.sol";
+import "../../src/vaults/ERC20DNRootVault.sol";
 import "../../src/utils/UniV3Helper.sol";
 
 uint256 constant width = 8000;
@@ -21,7 +22,11 @@ contract DeltaNeutralTest is Test {
 
     DeltaNeutralStrategy dstrategy;
 
-    address public rootVault;
+    IERC20RootVault rootVault;
+    IAaveVault aaveVault;
+    IUniV3Vault uniV3Vault;
+    IERC20Vault erc20Vault;
+    IERC20RootVaultGovernance rootVaultGovernance;
 
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
@@ -29,23 +34,32 @@ contract DeltaNeutralTest is Test {
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
+    address admin = 0x565766498604676D9916D4838455Cc5fED24a5B3;
+
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public uniswapV3Router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public uniswapV3PositionManager = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
     address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
     address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
-    address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
     address public uniGovernance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes memory
+    ) external returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
+
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-        IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
         for (uint256 i = 0; i < nfts.length; ++i) {
-            IVaultRegistry(registry).approve(rootGovernance, nfts[i]);
+            IVaultRegistry(registry).approve(address(rootVaultGovernance), nfts[i]);
         }
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(dstrategy), nfts, address(this));
-        rootVault = address(w);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(dstrategy), nfts, deployer);
+        rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
             IERC20RootVaultGovernance.StrategyParams({
@@ -61,7 +75,7 @@ contract DeltaNeutralTest is Test {
                 strategyPerformanceTreasury: protocolTreasury,
                 managementFee: 0,
                 performanceFee: 0,
-                privateVault: true,
+                privateVault: false,
                 depositCallbackAddress: address(0),
                 withdrawCallbackAddress: address(0)
             })
@@ -79,6 +93,8 @@ contract DeltaNeutralTest is Test {
             nfts[0] = startNft + 2;
             nfts[1] = startNft;
             nfts[2] = startNft + 1;
+
+            IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
             address[] memory tokens = new address[](2);
             tokens[0] = usdc;
@@ -123,8 +139,6 @@ contract DeltaNeutralTest is Test {
 
     function kek() public payable returns (uint256 startNft) {
 
-        uint256 uniV3PoolFee = 500;
-
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
 
         address[] memory tokens = new address[](2);
@@ -141,46 +155,110 @@ contract DeltaNeutralTest is Test {
         {
             IUniV3VaultGovernance uniV3VaultGovernance = IUniV3VaultGovernance(uniGovernance);
 
-            AaveVault aaveVault = new AaveVault();
+            IVaultGovernance.InternalParams memory internalParamsA;
+            IVaultGovernance.InternalParams memory internalParamsB;
 
-            IVaultGovernance.InternalParams memory internalParamsA = IVaultGovernance.InternalParams({
-                protocolGovernance: protocolGovernance,
-                registry: vaultRegistry,
-                singleton: aaveVault
-            });
+            {
+
+                AaveVault aaveVault = new AaveVault();
+                ERC20DNRootVault sampleRootVault = new ERC20DNRootVault();
+
+                internalParamsA = IVaultGovernance.InternalParams({
+                    protocolGovernance: protocolGovernance,
+                    registry: vaultRegistry,
+                    singleton: aaveVault
+                });
+
+                internalParamsB = IVaultGovernance.InternalParams({
+                    protocolGovernance: protocolGovernance,
+                    registry: vaultRegistry,
+                    singleton: sampleRootVault
+                });
+
+            }
 
             IAaveVaultGovernance.DelayedProtocolParams memory delayedParamsA = IAaveVaultGovernance.DelayedProtocolParams({
                 lendingPool: ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9),
                 estimatedAaveAPY: 10**7
             });
 
-            IAaveVaultGovernance aaveVaultGovernance = new AaveVaultGovernance(internalParamsA, delayedParamsA);
+            IERC20RootVaultGovernance.DelayedProtocolParams memory delayedParamsB = IERC20RootVaultGovernance.DelayedProtocolParams({
+                managementFeeChargeDelay: 0,
+                oracle: IOracle(0x9d992650B30C6FB7a83E7e7a430b4e015433b838)
+            });
 
-            uniV3VaultGovernance.createVault(tokens, address(this), uint24(uniV3PoolFee), address(helper));
-            aaveVaultGovernance.createVault(tokens, address(this));
+            IAaveVaultGovernance aaveVaultGovernance = new AaveVaultGovernance(internalParamsA, delayedParamsA);
+            rootVaultGovernance = new ERC20RootVaultGovernance(internalParamsB, delayedParamsB, IERC20RootVaultHelper(0xACEE4A703f27eA1EbCd550511aAE58ad012624CC));
+
+            {
+
+                vm.stopPrank();
+                vm.startPrank(admin);
+
+                uint8[] memory grants = new uint8[](1);
+
+                protocolGovernance.stagePermissionGrants(address(aaveVaultGovernance), grants);
+                protocolGovernance.stagePermissionGrants(address(rootVaultGovernance), grants);
+                vm.warp(block.timestamp + 86400);
+                protocolGovernance.commitPermissionGrants(address(aaveVaultGovernance));
+                protocolGovernance.commitPermissionGrants(address(rootVaultGovernance));
+
+                vm.stopPrank();
+                vm.startPrank(deployer);
+
+            }
+
+            uniV3VaultGovernance.createVault(tokens, deployer, 500, address(helper));
+            aaveVaultGovernance.createVault(tokens, deployer);
         }
 
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
-            erc20VaultGovernance.createVault(tokens, address(this));
+            erc20VaultGovernance.createVault(tokens, deployer);
         }
 
-        IERC20Vault erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 2));
-        IUniV3Vault uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft));
-        IAaveVault aaveVault = IAaveVault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 1));
+        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 2));
+        uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft));
+        aaveVault = IAaveVault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 1));
 
         dstrategy = new DeltaNeutralStrategy(
             positionManager,
             ISwapRouter(uniswapV3Router)
         );
 
-        dstrategy.initialize(address(erc20Vault), address(uniV3Vault), address(aaveVault), address(this));
+        dstrategy = dstrategy.createStrategy(address(erc20Vault), address(uniV3Vault), address(aaveVault), deployer);
 
         setupSecondPhase(usdc, weth);
         return uniV3LowerVaultNft;
     }
 
+    function firstDeposit() public {
+
+        deal(usdc, deployer, 10**4);
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 10**4;
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
+
+        rootVault.deposit(amounts, 0, "");
+    }
+
+    function deposit(uint256 amount) public {
+        if (rootVault.totalSupply() == 0) {
+            firstDeposit();
+        }
+
+        deal(usdc, deployer, amount * 10**6);
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = amount * 10**6;
+
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
+        rootVault.deposit(amounts, 0, "");
+    }
+
     function setUp() public {
+        vm.startPrank(deployer);
         uint256 startNft = kek();
         buildInitialPositions(startNft);
 /*
@@ -202,8 +280,8 @@ contract DeltaNeutralTest is Test {
         return;
     }
 
-    function test() public {
-
+    function testSimpleDeposit() public {
+        deposit(100);
     }
 
     

@@ -14,7 +14,7 @@
       "prettier": "prettier --write **.sol",
       "prettier:check": "prettier --check **.sol",
       "test:goerli": "forge test -vvvv --rpc-url $(grep GOERLI_RPC_URL .env | cut -d '=' -f2) --fork-block-number 7630000 --match-path 'test/goerli/*.sol'",
-      "test:mainnet": "forge test -vv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15867000 --match-path 'test/mainnet/*.sol'",
+      "test:mainnet": "forge test -vvvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 16357000 --match-path 'test/mainnet/*.sol'",
       "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "compile": "forge build",
