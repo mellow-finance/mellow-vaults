@@ -40,6 +40,9 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         tvl = new uint256[](2);
         int256 totalToken1Tvl = 0;
         for (uint256 i = 0; i < 3; ++i) {
+            if (i == 2) {
+                IAaveVault(IAggregateVault(address(this)).subvaultAt(i)).updateTvls();
+            }
             (uint256[] memory subvaultTvl, ) = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(i)).tvl();
             tvl[0] += subvaultTvl[0];
             if (i == 2) {
@@ -192,22 +195,19 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
 
         actualTokenAmounts = _push(tokenAmounts, vaultOptions);
 
-        {
+        if (supply > 0) {
 
             uint256 thisNft = _nft;
             IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
                 address(_vaultGovernance)
             ).delayedStrategyParams(thisNft);
 
+            uint256 shareX96 = FullMath.mulDiv(lpAmount, Q96, supply);
+
+            bytes memory q = abi.encode(shareX96);
+
             if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-                bytes memory q = new bytes(1);
-                try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback(q) {} catch Error(
-                    string memory reason
-                ) {
-                    emit WithdrawCallbackLog(reason);
-                } catch {
-                    emit WithdrawCallbackLog("callback failed without reason");
-                }
+                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(q);
             }
 
         }
@@ -243,15 +243,12 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
                 address(_vaultGovernance)
             ).delayedStrategyParams(thisNft);
 
+            uint256 shareX96 = FullMath.mulDiv(lpTokenAmount, Q96, supply);
+
+            bytes memory q = abi.encode(shareX96);
+
             if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
-                bytes memory q = new bytes(1);
-                try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback(q) {} catch Error(
-                    string memory reason
-                ) {
-                    emit WithdrawCallbackLog(reason);
-                } catch {
-                    emit WithdrawCallbackLog("callback failed without reason");
-                }
+                ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback(q);
             }
 
         }

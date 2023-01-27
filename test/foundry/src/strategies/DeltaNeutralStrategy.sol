@@ -19,6 +19,7 @@ import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/OracleLibrary.sol";
+import "forge-std/console2.sol";
 
 contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
 
@@ -78,6 +79,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
             newStrategyParams.positionTickSize % tickSpacing == 0 && newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta && newStrategyParams.rebalanceTickDelta > 0 && newStrategyParams.rebalanceTickDelta <= 10000,
             ExceptionsLibrary.INVARIANT
         );
+        strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
 
@@ -124,7 +126,6 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         require(!withFail, ExceptionsLibrary.INVALID_STATE);
 
         int24 maxDelta = int24(oracleParams.maxTickDeviation);
-
         if (spotTick < avgTick && avgTick - spotTick > maxDelta) {
             return (false, spotTick);
         }
@@ -224,14 +225,17 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
 
         aaveVault.borrow(tokens[1], address(erc20Vault), amountToTake);
         (, int24 spotTick, , , , , ) = pool.slot0();
-        int24 lowerTick = (spotTick - strategyParams.positionTickSize / 2) % pool.tickSpacing();
+        int24 lowerTick = spotTick - strategyParams.positionTickSize / 2;
+        lowerTick -= lowerTick % pool.tickSpacing();
         int24 upperTick = lowerTick + strategyParams.positionTickSize;
 
         uint256 fromNft = uniV3Vault.uniV3Nft();
         uint256 nft = _mintNewNft(lowerTick, upperTick, block.timestamp + 1);
 
         positionManager.safeTransferFrom(address(this), address(uniV3Vault), nft);
-        positionManager.burn(fromNft);
+        if (fromNft != 0) {
+            positionManager.burn(fromNft);
+        }
 
         uint256[] memory tokenAmounts = new uint256[](2);
         tokenAmounts[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
@@ -329,7 +333,9 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         else {
             ticksDelta = spotTick - lastRebalanceTick;
         }
-        require(wasRebalance && ticksDelta < strategyParams.rebalanceTickDelta);
+        if (wasRebalance) {
+            require(wasRebalance && ticksDelta < strategyParams.rebalanceTickDelta, ExceptionsLibrary.INVALID_STATE);
+        }
     }
 
     function _rebalanceERC20Vault() internal {
@@ -343,6 +349,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         uint256 token0CapitalOnUni = _getSwapAmountOut(totalOnUni[1], 1, false) + totalOnUni[0];
 
         uint256 wantToHaveOnERC20 = FullMath.mulDiv(totalOnUni[0], token0CapitalOnERC20, token0CapitalOnUni);
+
         if (wantToHaveOnERC20 < token0OnERC20) {
             uint256 delta = token0OnERC20 - wantToHaveOnERC20;
             _swap(0, false, delta);
@@ -378,7 +385,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         tokenAmounts[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
         tokenAmounts[1] = IERC20(tokens[1]).balanceOf(address(erc20Vault));
 
-        erc20Vault.pull(address(uniV3Vault), tokens, tokenAmounts, "");
+        uint256[] memory pulledAmounts = erc20Vault.pull(address(uniV3Vault), tokens, tokenAmounts, "");
         
     }
 

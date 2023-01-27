@@ -22,7 +22,7 @@ contract DeltaNeutralTest is Test {
 
     DeltaNeutralStrategy dstrategy;
 
-    IERC20RootVault rootVault;
+    ERC20DNRootVault rootVault;
     IAaveVault aaveVault;
     IUniV3Vault uniV3Vault;
     IERC20Vault erc20Vault;
@@ -59,7 +59,7 @@ contract DeltaNeutralTest is Test {
             IVaultRegistry(registry).approve(address(rootVaultGovernance), nfts[i]);
         }
         (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(dstrategy), nfts, deployer);
-        rootVault = w;
+        rootVault = ERC20DNRootVault(address(w));
         rootVaultGovernance.setStrategyParams(
             nft,
             IERC20RootVaultGovernance.StrategyParams({
@@ -76,8 +76,8 @@ contract DeltaNeutralTest is Test {
                 managementFee: 0,
                 performanceFee: 0,
                 privateVault: false,
-                depositCallbackAddress: address(0),
-                withdrawCallbackAddress: address(0)
+                depositCallbackAddress: address(dstrategy),
+                withdrawCallbackAddress: address(dstrategy)
             })
         );
 
@@ -210,6 +210,13 @@ contract DeltaNeutralTest is Test {
 
             uniV3VaultGovernance.createVault(tokens, deployer, 500, address(helper));
             aaveVaultGovernance.createVault(tokens, deployer);
+
+            IUniV3VaultGovernance.DelayedStrategyParams memory delayedStrategyParamsA = IUniV3VaultGovernance.DelayedStrategyParams({
+                safetyIndicesSet: 2
+            });
+
+            uniV3VaultGovernance.stageDelayedStrategyParams(uniV3LowerVaultNft, delayedStrategyParamsA);
+            uniV3VaultGovernance.commitDelayedStrategyParams(uniV3LowerVaultNft);
         }
 
         {
@@ -246,6 +253,7 @@ contract DeltaNeutralTest is Test {
     function deposit(uint256 amount) public {
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
+            dstrategy.rebalance();
         }
 
         deal(usdc, deployer, amount * 10**6);
@@ -280,8 +288,52 @@ contract DeltaNeutralTest is Test {
         return;
     }
 
-    function testSimpleDeposit() public {
-        deposit(100);
+    function testSimpleSmallDepositAndRebalance() public {
+        firstDeposit();
+        dstrategy.rebalance();
+
+        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = INonfungiblePositionManager(uniswapV3PositionManager).positions(
+                uniV3Vault.uniV3Nft()
+            );
+
+        (, int24 tick, , , , , ) = uniV3Vault.pool().slot0();
+
+        require(liquidity > 0);
+        require(tickUpper - tickLower == int24(uint24(width)));
+        require(tickLower <= tick);
+        require(tick <= tickUpper);
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 100); // 1%
+        require(erc20Tvl[1] <= 10**8);
+
+        (uint256[] memory aaveTvl, ) = aaveVault.tvl();
+        require(aaveTvl[0] >= 5000);
+        require(aaveTvl[1] >= 2*10**11 && aaveTvl[0] <= 5*10**11);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(totalTvl[0] >= 9999 && totalTvl[0] <= 10001);
+
+        vm.warp(block.timestamp + 86400 * 365); // aave debt - fees decreases tvl
+
+        uint256[] memory finalTotalTvl = rootVault.calcTvl();
+        require(finalTotalTvl[1] == 0);
+        require(finalTotalTvl[0] < 9900);
+    }
+
+    function testDepositCallbackWorks() public {
+        deposit(1000);
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(totalTvl[0] >= 9999*10**5 && totalTvl[0] <= 10001*10**5);
     }
 
     
