@@ -261,7 +261,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             tokenAmounts[0] = erc20VaultBalance;
         }
 
-        _pull(address(this), tokenAmounts, vaultsOptions);
+        _pull(to, tokenAmounts, vaultsOptions);
 
         _updateWithdrawnAmounts(actualTokenAmounts);
         _burn(msg.sender, lpTokenAmount);

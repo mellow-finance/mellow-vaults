@@ -45,6 +45,27 @@ contract DeltaNeutralTest is Test {
     address public uniGovernance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
+    function switchPrank(address newAddress) public {
+        vm.stopPrank();
+        vm.startPrank(newAddress);
+    }
+
+    function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
+        uint256 delta;
+        if (x < y) {
+            delta = y - x;
+        }
+        else {
+            delta = x - y;
+        }
+
+        delta = delta * measure;
+        if (delta <= x || delta <= y) {
+            return true;
+        }
+        return false;
+    }
+
     function onERC721Received(
         address operator,
         address from,
@@ -192,8 +213,7 @@ contract DeltaNeutralTest is Test {
 
             {
 
-                vm.stopPrank();
-                vm.startPrank(admin);
+                switchPrank(admin);
 
                 uint8[] memory grants = new uint8[](1);
 
@@ -203,8 +223,7 @@ contract DeltaNeutralTest is Test {
                 protocolGovernance.commitPermissionGrants(address(aaveVaultGovernance));
                 protocolGovernance.commitPermissionGrants(address(rootVaultGovernance));
 
-                vm.stopPrank();
-                vm.startPrank(deployer);
+                switchPrank(deployer);
 
             }
 
@@ -269,6 +288,20 @@ contract DeltaNeutralTest is Test {
         vm.startPrank(deployer);
         uint256 startNft = kek();
         buildInitialPositions(startNft);
+
+        switchPrank(admin);
+
+        uint8[] memory grants = new uint8[](2);
+        grants[0] = 4;
+        grants[1] = 5;
+
+        IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
+
+        protocolGovernance.stagePermissionGrants(address(aaveVault), grants);
+        vm.warp(block.timestamp + 86400);
+        protocolGovernance.commitPermissionGrants(address(aaveVault));
+
+        switchPrank(deployer);
 /*
         bytes32 ADMIN_ROLE =
         bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
@@ -328,12 +361,59 @@ contract DeltaNeutralTest is Test {
 
         (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
 
-        require(erc20Tvl[0] <= 10**6); // 1%
+        require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
         uint256[] memory totalTvl = rootVault.calcTvl();
         require(totalTvl[1] == 0);
-        require(totalTvl[0] >= 9999*10**5 && totalTvl[0] <= 10001*10**5);
+        require(isClose(totalTvl[0], 1000*10**6, 1000));
+    }
+
+    function testSimpleWithdrawWorks() public {
+        deposit(1000);
+        uint256 lpTokens = rootVault.balanceOf(deployer);
+
+        uint256[] memory minTokenAmounts = new uint256[](2);
+        bytes[] memory vaultsOptions = new bytes[](3);
+
+        uint256 oldBalance = IERC20(usdc).balanceOf(deployer);
+
+        rootVault.withdraw(deployer, lpTokens/2, minTokenAmounts, vaultsOptions);
+
+        uint256 newBalance = IERC20(usdc).balanceOf(deployer);
+        require(isClose(newBalance - oldBalance, 500*10**6, 1000));
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 0.1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(isClose(totalTvl[0], 500*10**6, 1000));
+
+        rootVault.withdraw(deployer, lpTokens/4, minTokenAmounts, vaultsOptions);
+        uint256 finalBalance = IERC20(usdc).balanceOf(deployer);
+
+        require(isClose(finalBalance, 750*10**6, 1000));
+    }
+
+    function testDepositWorksProportionally() public {
+        deposit(1000);
+        uint256 lpTokensBefore = rootVault.balanceOf(deployer);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(isClose(totalTvl[0], 1000*10**6, 1000));
+
+        deposit(3000);
+        uint256 lpTokensAfter = rootVault.balanceOf(deployer);
+
+        uint256[] memory totalTvlNew = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(isClose(totalTvlNew[0], 4000*10**6, 1000));
+
+        require(isClose(lpTokensBefore * 4, lpTokensAfter, 1000));
     }
 
     

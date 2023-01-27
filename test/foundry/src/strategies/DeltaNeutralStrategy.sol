@@ -76,7 +76,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         _requireAdmin();
         int24 tickSpacing = pool.tickSpacing();
         require(
-            newStrategyParams.positionTickSize % tickSpacing == 0 && newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta && newStrategyParams.rebalanceTickDelta > 0 && newStrategyParams.rebalanceTickDelta <= 10000,
+            newStrategyParams.positionTickSize % tickSpacing == 0 && newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta && newStrategyParams.rebalanceTickDelta >= 0 && newStrategyParams.rebalanceTickDelta <= 5000,
             ExceptionsLibrary.INVARIANT
         );
         strategyParams = newStrategyParams;
