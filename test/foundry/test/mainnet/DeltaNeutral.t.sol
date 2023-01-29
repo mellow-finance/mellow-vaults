@@ -549,5 +549,133 @@ contract DeltaNeutralTest is Test {
         deposit(1000);
     }
 
+    function testRebalanceWorksProperlyAfterPriceRise() public {
+        dstrategy.updateOracleParams(
+            DeltaNeutralStrategy.OracleParams({
+                averagePriceTimeSpan: 1800,
+                maxTickDeviation: 15000
+            })
+        );
+
+        deposit(1000);
+        changePrice(1800);
+        dstrategy.rebalance();
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 0.1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(totalTvl[0] >= 900*10**6 && totalTvl[0] <= 960*10**6);
+    }
+
+    function testRebalanceWorksProperlyAfterPricePlummets() public {
+        dstrategy.updateOracleParams(
+            DeltaNeutralStrategy.OracleParams({
+                averagePriceTimeSpan: 1800,
+                maxTickDeviation: 15000
+            })
+        );
+
+        deposit(1000);
+        changePrice(900);
+        dstrategy.rebalance();
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 0.1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(totalTvl[0] >= 900*10**6 && totalTvl[0] <= 960*10**6);
+    }
+
+    function testWithdrawWorks() public {
+
+        dstrategy.updateOracleParams(
+            DeltaNeutralStrategy.OracleParams({
+                averagePriceTimeSpan: 1800,
+                maxTickDeviation: 15000
+            })
+        );
+
+        deposit(1000);
+        changePrice(1600);
+        uint256 lpTokens = rootVault.balanceOf(deployer);
+
+        uint256[] memory minTokenAmounts = new uint256[](2);
+        bytes[] memory vaultsOptions = new bytes[](3);
+
+        uint256 oldBalance = IERC20(usdc).balanceOf(deployer);
+
+        rootVault.withdraw(deployer, lpTokens/2, minTokenAmounts, vaultsOptions);
+
+        uint256 newBalance = IERC20(usdc).balanceOf(deployer);
+        require(isClose(newBalance - oldBalance, 480*10**6, 10));
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 0.1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(isClose(totalTvl[0], 480*10**6, 10));
+
+        rootVault.withdraw(deployer, lpTokens/4, minTokenAmounts, vaultsOptions);
+        uint256 finalBalance = IERC20(usdc).balanceOf(deployer);
+
+        require(isClose(finalBalance, 720*10**6, 10));
+    }
+
+    function testALotOfActionsWork() public {
+
+        deposit(1000);
+
+        dstrategy.updateOracleParams(
+            DeltaNeutralStrategy.OracleParams({
+                averagePriceTimeSpan: 1800,
+                maxTickDeviation: 15000
+            })
+        );
+
+        changePrice(1600);
+        deposit(200);
+
+        changePrice(1400);
+        deposit(100);
+
+        changePrice(1200);
+
+        deposit(50);
+
+        uint256 lpTokens = rootVault.balanceOf(deployer);
+
+        uint256[] memory minTokenAmounts = new uint256[](2);
+        bytes[] memory vaultsOptions = new bytes[](3);
+
+        uint256 oldBalance = IERC20(usdc).balanceOf(deployer);
+
+        rootVault.withdraw(deployer, lpTokens/10, minTokenAmounts, vaultsOptions);
+
+        changePrice(1800);
+        dstrategy.rebalance();
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 0.1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(isClose(totalTvl[0], 1150*10**6, 10));
+
+
+
+    }
+
     
 }
