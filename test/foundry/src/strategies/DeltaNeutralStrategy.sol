@@ -183,6 +183,9 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         require(!wasRebalance || ticksDelta >= strategyParams.rebalanceTickDelta);
         _closePosition();
         _openPosition();
+
+        wasRebalance = true;
+        lastRebalanceTick = spotTick;
     }
 
     function _closePosition() internal {
@@ -334,7 +337,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
             ticksDelta = spotTick - lastRebalanceTick;
         }
         if (wasRebalance) {
-            require(wasRebalance && ticksDelta < strategyParams.rebalanceTickDelta, ExceptionsLibrary.INVALID_STATE);
+            require(ticksDelta < strategyParams.rebalanceTickDelta, ExceptionsLibrary.INVALID_STATE);
         }
     }
 

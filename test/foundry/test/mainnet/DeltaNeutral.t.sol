@@ -15,6 +15,9 @@ import "../../src/vaults/AaveVault.sol";
 import "../../src/vaults/ERC20DNRootVault.sol";
 import "../../src/utils/UniV3Helper.sol";
 
+import "../../src/interfaces/external/aave/AaveOracle.sol";
+import "../../src/MockAggregator.sol";
+
 uint256 constant width = 8000;
 uint256 constant stop = 3000;
 
@@ -44,6 +47,8 @@ contract DeltaNeutralTest is Test {
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
     address public uniGovernance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+
+    address oracleAdmin = 0xEE56e2B3D491590B5b31738cC34d5232F378a8D5;
 
     function switchPrank(address newAddress) public {
         vm.stopPrank();
@@ -414,6 +419,134 @@ contract DeltaNeutralTest is Test {
         require(isClose(totalTvlNew[0], 4000*10**6, 1000));
 
         require(isClose(lpTokensBefore * 4, lpTokensAfter, 1000));
+    }
+
+    function changePrice(uint256 newPrice) public {
+        IUniswapV3Pool pool = uniV3Vault.pool();
+
+        int24 needTick = TickMath.getTickAtSqrtRatio(uint160(CommonLibrary.sqrtX96(FullMath.mulDiv(1<<96, 10**12, newPrice))));
+
+        uint256 startEth = 5 * 10**22;
+        uint256 startUsd = 10**14;
+
+        uint256 pos = 0;
+
+        uint256 t = 0;
+
+        while (true) {
+            t += 1;
+            (, int24 tick, , , , , ) = uniV3Vault.pool().slot0();
+
+            if (tick < needTick && needTick - tick < 100) {
+                break;
+            }
+
+            if (tick > needTick && tick - needTick < 100) {
+                break;
+            }
+
+            if (tick > needTick) {
+                if (pos != 0) {
+                    pos = 1 - pos;
+                    startEth /= 2;
+                    startUsd /= 2;
+                }
+                bytes memory b = "";
+                deal(usdc, deployer, startUsd);
+
+                IERC20(usdc).approve(uniswapV3Router, startUsd);
+
+                ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+                    tokenIn: usdc,
+                    tokenOut: weth,
+                    fee: 500,
+                    recipient: deployer,
+                    deadline: block.timestamp + 1,
+                    amountIn: startUsd,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                });
+
+                ISwapRouter(uniswapV3Router).exactInputSingle(swapParams);
+            }
+
+            else {
+                if (pos != 1) {
+                    pos = 1 - pos;
+                    startEth /= 2;
+                    startUsd /= 2;
+                }
+                bytes memory b = "";
+                deal(weth, deployer, startEth);
+
+                IERC20(weth).approve(uniswapV3Router, startEth);
+
+                ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+                    tokenIn: weth,
+                    tokenOut: usdc,
+                    fee: 500,
+                    recipient: deployer,
+                    deadline: block.timestamp + 1,
+                    amountIn: startEth,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                });
+
+                ISwapRouter(uniswapV3Router).exactInputSingle(swapParams);
+            }
+        }
+
+        AaveOracle aaveOracle = AaveOracle(0xA50ba011c48153De246E5192C8f9258A2ba79Ca9);
+        switchPrank(oracleAdmin);
+
+        address[] memory addresses = new address[](1);
+        addresses[0] = usdc;
+
+        address[] memory oracles = new address[](1);
+        MockAggregator ma = new MockAggregator();
+
+        ma.updatePrice(10**18 / newPrice);
+        oracles[0] = address(ma);
+
+        aaveOracle.setAssetSources(addresses, oracles);
+
+        switchPrank(deployer);
+    }
+
+    function testDepositWorksWhenPriceChanges() public {
+
+        dstrategy.updateOracleParams(
+            DeltaNeutralStrategy.OracleParams({
+                averagePriceTimeSpan: 1800,
+                maxTickDeviation: 15000
+            })
+        );
+
+        deposit(1000);
+        changePrice(1600);
+        deposit(1000);
+
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        require(erc20Tvl[0] <= 10**6); // 0.1%
+        require(erc20Tvl[1] <= 10**14);
+
+        uint256[] memory totalTvl = rootVault.calcTvl();
+        require(totalTvl[1] == 0);
+        require(totalTvl[0] >= 1900*10**6 && totalTvl[0] <= 1980*10**6);
+    }
+
+    function testFailDepositWithoutRebalanceAfterPriceChange() public {
+        dstrategy.updateOracleParams(
+            DeltaNeutralStrategy.OracleParams({
+                averagePriceTimeSpan: 1800,
+                maxTickDeviation: 15000
+            })
+        );
+
+        deposit(1000);
+        changePrice(1800);
+        deposit(1000);
     }
 
     
