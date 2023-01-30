@@ -11,10 +11,7 @@ import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/external/FullMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
-
 contract DeltaNeutralStrategyHelper {
-
     using SafeERC20 for IERC20;
 
     uint32 constant D9 = 10**9;
@@ -29,7 +26,12 @@ contract DeltaNeutralStrategyHelper {
 
     address[] public tokens;
 
-    function setParams(IERC20Vault erc20Vault_, IUniV3Vault uniV3Vault_, IAaveVault aaveVault_, INonfungiblePositionManager positionManager_) external {
+    function setParams(
+        IERC20Vault erc20Vault_,
+        IUniV3Vault uniV3Vault_,
+        IAaveVault aaveVault_,
+        INonfungiblePositionManager positionManager_
+    ) external {
         erc20Vault = erc20Vault_;
         uniV3Vault = uniV3Vault_;
         aaveVault = aaveVault_;
@@ -50,10 +52,17 @@ contract DeltaNeutralStrategyHelper {
         owner = DeltaNeutralStrategy(msg.sender);
 
         tokens = uniV3Tokens;
-
     }
 
-    function calcWithdrawParams(bytes memory withdrawOptions) external returns (uint256 totalToken0, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) {
+    function calcWithdrawParams(bytes memory withdrawOptions)
+        external
+        returns (
+            uint256 totalToken0,
+            uint256 totalToken1,
+            uint256 balanceToken0,
+            uint256 debtToken1
+        )
+    {
         require(withdrawOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
         uint256 shareOfCapitalQ96 = abi.decode(withdrawOptions, (uint256));
 
@@ -81,7 +90,14 @@ contract DeltaNeutralStrategyHelper {
         debtToken1 = FullMath.mulDiv(aaveVault.getDebt(1), shareOfCapitalQ96, Q96);
     }
 
-    function calcDepositParams(bytes memory depositOptions) external returns (uint256 shareOfCapitalQ96, uint256 debtToken1, uint256[] memory tokenAmounts) {
+    function calcDepositParams(bytes memory depositOptions)
+        external
+        returns (
+            uint256 shareOfCapitalQ96,
+            uint256 debtToken1,
+            uint256[] memory tokenAmounts
+        )
+    {
         require(depositOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
         shareOfCapitalQ96 = abi.decode(depositOptions, (uint256));
 
@@ -91,11 +107,14 @@ contract DeltaNeutralStrategyHelper {
         tokenAmounts = new uint256[](2);
         tokenAmounts[0] = FullMath.mulDiv(balanceToken0, shareOfCapitalQ96, Q96);
     }
-    
+
     function calcERC20Params() external returns (uint256 token0OnERC20, uint256 wantToHaveOnERC20) {
         token0OnERC20 = IERC20(tokens[0]).balanceOf(address(erc20Vault));
-        uint256 token0CapitalOnERC20 = owner.getSwapAmountOut(IERC20(tokens[1]).balanceOf(address(erc20Vault)), 1, false) +
-            token0OnERC20;
+        uint256 token0CapitalOnERC20 = owner.getSwapAmountOut(
+            IERC20(tokens[1]).balanceOf(address(erc20Vault)),
+            1,
+            false
+        ) + token0OnERC20;
         (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(uniV3Vault.uniV3Nft());
 
         uint256[] memory totalOnUni = uniV3Vault.liquidityToTokenAmounts(liquidity);
@@ -103,5 +122,4 @@ contract DeltaNeutralStrategyHelper {
 
         wantToHaveOnERC20 = FullMath.mulDiv(totalOnUni[0], token0CapitalOnERC20, token0CapitalOnUni);
     }
-
 }

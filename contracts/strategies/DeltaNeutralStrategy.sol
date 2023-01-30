@@ -118,9 +118,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
         uint256 fee = newTradingParams.swapFee;
-        require(
-            (fee == 100 || fee == 500 || fee == 3000 || fee == 10000) && newTradingParams.maxSlippageD <= D9
-        );
+        require((fee == 100 || fee == 500 || fee == 3000 || fee == 10000) && newTradingParams.maxSlippageD <= D9);
         tradingParams = newTradingParams;
         emit UpdateTradingParams(tx.origin, msg.sender, tradingParams);
     }
@@ -142,8 +140,14 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         return (true, spotTick);
     }
 
-    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_, DeltaNeutralStrategyHelper helper_) {
-        require(address(positionManager_) != address(0) && address(router_) != address(0) && address(helper_) != address(0));
+    constructor(
+        INonfungiblePositionManager positionManager_,
+        ISwapRouter router_,
+        DeltaNeutralStrategyHelper helper_
+    ) {
+        require(
+            address(positionManager_) != address(0) && address(router_) != address(0) && address(helper_) != address(0)
+        );
         positionManager = positionManager_;
         router = router_;
         helper = helper_;
@@ -345,7 +349,6 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     }
 
     function _rebalanceERC20Vault() internal {
-
         (uint256 token0OnERC20, uint256 wantToHaveOnERC20) = helper.calcERC20Params();
 
         if (wantToHaveOnERC20 < token0OnERC20) {
@@ -362,7 +365,9 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function depositCallback(bytes memory depositOptions) external {
         _checkCallbackPossible();
 
-        (uint256 shareOfCapitalQ96, uint256 debtToken1, uint256[] memory tokenAmounts) = helper.calcDepositParams(depositOptions);
+        (uint256 shareOfCapitalQ96, uint256 debtToken1, uint256[] memory tokenAmounts) = helper.calcDepositParams(
+            depositOptions
+        );
 
         erc20Vault.pull(address(aaveVault), tokens, tokenAmounts, "");
         aaveVault.borrow(tokens[1], address(erc20Vault), FullMath.mulDiv(debtToken1, shareOfCapitalQ96, Q96));
@@ -379,7 +384,8 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function withdrawCallback(bytes memory depositOptions) external {
         _checkCallbackPossible();
 
-        (uint256 totalToken0, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper.calcWithdrawParams(depositOptions);
+        (uint256 totalToken0, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper
+            .calcWithdrawParams(depositOptions);
 
         if (totalToken1 < debtToken1) {
             _swap(0, true, 0);
