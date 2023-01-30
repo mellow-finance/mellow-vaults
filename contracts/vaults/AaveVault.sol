@@ -85,6 +85,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _lendingPool.borrow(token, amount, 1, 0, address(this));
         IERC20(token).safeTransfer(to, amount);
+        _updateTvls();
     }
 
     function repay(address token, address from, uint256 amount) external {
@@ -93,9 +94,10 @@ contract AaveVault is IAaveVault, IntegrationVault {
         IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
         _lendingPool.repay(token, amount, 1, address(this));
         IERC20(token).safeApprove(address(_lendingPool), 0);
+        _updateTvls();
     }
 
-    function getDebt(uint256 index) external view returns (uint256 debt) {
+    function getDebt(uint256 index) public view returns (uint256 debt) {
         require(index < _vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
         address token = _vaultTokens[index];
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
@@ -135,6 +137,9 @@ contract AaveVault is IAaveVault, IntegrationVault {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
             _tvls[i] = IERC20(aTokens[i]).balanceOf(address(this));
+            if (_tvls[i] == 0) {
+                _tvls[i] = getDebt(i);
+            }
         }
         _lastTvlUpdateTimestamp = block.timestamp;
     }

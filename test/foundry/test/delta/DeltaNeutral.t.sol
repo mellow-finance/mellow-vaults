@@ -14,6 +14,7 @@ import "../../src/vaults/AaveVaultGovernance.sol";
 import "../../src/vaults/AaveVault.sol";
 import "../../src/vaults/ERC20DNRootVault.sol";
 import "../../src/utils/UniV3Helper.sol";
+import "../../src/utils/DeltaNeutralStrategyHelper.sol";
 
 import "../../src/interfaces/external/aave/AaveOracle.sol";
 import "../../src/MockAggregator.sol";
@@ -137,7 +138,8 @@ contract DeltaNeutralTest is Test {
         dstrategy.updateStrategyParams(
             DeltaNeutralStrategy.StrategyParams({
                 positionTickSize: 8000,
-                rebalanceTickDelta: 3000
+                rebalanceTickDelta: 3000,
+                shiftFromLTVD: 10**9
             })
         );
 
@@ -252,9 +254,12 @@ contract DeltaNeutralTest is Test {
         uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft));
         aaveVault = IAaveVault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 1));
 
+        DeltaNeutralStrategyHelper dHelper = new DeltaNeutralStrategyHelper();
+
         dstrategy = new DeltaNeutralStrategy(
             positionManager,
-            ISwapRouter(uniswapV3Router)
+            ISwapRouter(uniswapV3Router),
+            dHelper
         );
 
         dstrategy = dstrategy.createStrategy(address(erc20Vault), address(uniV3Vault), address(aaveVault), deployer);

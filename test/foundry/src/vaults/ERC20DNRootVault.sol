@@ -23,7 +23,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes4 public constant SUPPORTS_INTERFACE_SELECTOR = AaveVault.supportsInterface.selector;
-    uint256 public constant Q96 = (1<<96);
+    uint256 public constant Q96 = (1 << 96);
 
     /// @inheritdoc IERC20RootVault
     uint64 public lastFeeCharge;
@@ -47,16 +47,14 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             tvl[0] += subvaultTvl[0];
             if (i == 2) {
                 totalToken1Tvl -= int256(subvaultTvl[1]);
-            }
-            else {
+            } else {
                 totalToken1Tvl += int256(subvaultTvl[1]);
             }
         }
 
         if (totalToken1Tvl < 0) {
             tvl[0] -= _getZeroTokenAmount(uint256(-totalToken1Tvl));
-        }
-        else {
+        } else {
             tvl[0] += _getZeroTokenAmount(uint256(totalToken1Tvl));
         }
     }
@@ -69,13 +67,10 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
 
         if (_vaultTokens[0] == pool.token1()) {
             expectedAmount = FullMath.mulDiv(amount, priceX96, Q96);
-        }
-
-        else {
+        } else {
             expectedAmount = FullMath.mulDiv(amount, Q96, priceX96);
         }
     }
-
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IERC20RootVault
@@ -124,8 +119,10 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         {
             address aaveVault = _vaultGovernance.internalParams().registry.vaultForNft(subvaultNfts_[2]);
-            (bool res, bytes memory returndata) = aaveVault.call{value: 0}(abi.encodePacked(SUPPORTS_INTERFACE_SELECTOR, abi.encode(type(IAaveVault).interfaceId)));
-            (bool ifSupports) = abi.decode(returndata, (bool));
+            (, bytes memory returndata) = aaveVault.call{value: 0}(
+                abi.encodePacked(SUPPORTS_INTERFACE_SELECTOR, abi.encode(type(IAaveVault).interfaceId))
+            );
+            bool ifSupports = abi.decode(returndata, (bool));
             require(ifSupports, ExceptionsLibrary.INVARIANT);
         }
         uint256 len = vaultTokens_.length;
@@ -141,8 +138,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         bytes memory vaultOptions
     ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts) {
         address vaultGovernance = address(_vaultGovernance);
-        require(tokenAmounts.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(tokenAmounts[1] == 0, ExceptionsLibrary.INVALID_VALUE);
+        tokenAmounts[1] = 0;
         require(
             !IERC20RootVaultGovernance(vaultGovernance).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
@@ -153,7 +149,10 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         if (totalSupply == 0) {
             uint256 pullExistentialsForToken = _pullExistentials[0];
             require(tokenAmounts[0] >= 10 * pullExistentialsForToken, ExceptionsLibrary.LIMIT_UNDERFLOW);
-            require(tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken, ExceptionsLibrary.LIMIT_OVERFLOW);
+            require(
+                tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken,
+                ExceptionsLibrary.LIMIT_OVERFLOW
+            );
         }
 
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
@@ -197,11 +196,6 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
 
         if (supply > 0) {
 
-            uint256 thisNft = _nft;
-            IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
-                address(_vaultGovernance)
-            ).delayedStrategyParams(thisNft);
-
             uint256 shareX96 = FullMath.mulDiv(lpAmount, Q96, supply);
 
             bytes memory q = abi.encode(shareX96);
@@ -209,7 +203,6 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             if (delayedStrategyParams.depositCallbackAddress != address(0)) {
                 ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(q);
             }
-
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -225,8 +218,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         uint256 supply = totalSupply;
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         require(minTokenAmounts[1] == 0, ExceptionsLibrary.INVALID_VALUE);
-        
-        address[] memory tokens = _vaultTokens;
+
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         uint256[] memory minTvl = calcTvl();
         _chargeFees(_nft, minTvl[0], supply);
@@ -237,7 +229,6 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         }
 
         {
-
             uint256 thisNft = _nft;
             IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
                 address(_vaultGovernance)
@@ -250,7 +241,6 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
                 ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback(q);
             }
-
         }
 
         tokenAmounts[0] = FullMath.mulDiv(lpTokenAmount, minTvl[0], supply);

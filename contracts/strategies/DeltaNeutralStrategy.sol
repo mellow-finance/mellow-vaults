@@ -11,6 +11,7 @@ import "../interfaces/utils/ILpCallback.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
+import "../utils/DeltaNeutralStrategyHelper.sol";
 import "../interfaces/vaults/IAaveVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
@@ -21,12 +22,11 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/OracleLibrary.sol";
 
 contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
-
     using SafeERC20 for IERC20;
 
     uint256 public constant D4 = 10**4;
     uint256 public constant D9 = 10**9;
-    uint256 public constant Q96 = 1<<96;
+    uint256 public constant Q96 = 1 << 96;
 
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
@@ -37,6 +37,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
 
     INonfungiblePositionManager public immutable positionManager;
     ISwapRouter public immutable router;
+    DeltaNeutralStrategyHelper public immutable helper;
 
     address[] public tokens;
 
@@ -47,6 +48,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     struct StrategyParams {
         int24 positionTickSize;
         int24 rebalanceTickDelta;
+        uint256 shiftFromLTVD;
     }
 
     struct MintingParams {
@@ -75,9 +77,14 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         _requireAdmin();
         int24 tickSpacing = pool.tickSpacing();
         require(
-            newStrategyParams.positionTickSize % tickSpacing == 0 && newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta && newStrategyParams.rebalanceTickDelta > 0 && newStrategyParams.rebalanceTickDelta <= 10000,
+            newStrategyParams.positionTickSize % tickSpacing == 0 &&
+                newStrategyParams.positionTickSize > newStrategyParams.rebalanceTickDelta &&
+                newStrategyParams.rebalanceTickDelta >= 0 &&
+                newStrategyParams.rebalanceTickDelta <= 5000 &&
+                newStrategyParams.shiftFromLTVD <= D9,
             ExceptionsLibrary.INVARIANT
         );
+        strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
 
@@ -111,8 +118,8 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
         uint256 fee = newTradingParams.swapFee;
-        require((fee == 100 || fee == 500 || fee == 3000 || fee == 10000) && newTradingParams.maxSlippageD <= D9,
-            ExceptionsLibrary.INVALID_VALUE
+        require(
+            (fee == 100 || fee == 500 || fee == 3000 || fee == 10000) && newTradingParams.maxSlippageD <= D9
         );
         tradingParams = newTradingParams;
         emit UpdateTradingParams(tx.origin, msg.sender, tradingParams);
@@ -121,10 +128,9 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function isDeltaOkay() public view returns (bool, int24) {
         (, int24 spotTick, , , , , ) = pool.slot0();
         (int24 avgTick, , bool withFail) = OracleLibrary.consult(address(pool), oracleParams.averagePriceTimeSpan);
-        require(!withFail, ExceptionsLibrary.INVALID_STATE);
+        require(!withFail);
 
         int24 maxDelta = int24(oracleParams.maxTickDeviation);
-
         if (spotTick < avgTick && avgTick - spotTick > maxDelta) {
             return (false, spotTick);
         }
@@ -136,33 +142,27 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         return (true, spotTick);
     }
 
-    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) {
-        require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(address(router_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_, DeltaNeutralStrategyHelper helper_) {
+        require(address(positionManager_) != address(0) && address(router_) != address(0) && address(helper_) != address(0));
         positionManager = positionManager_;
         router = router_;
+        helper = helper_;
         DefaultAccessControlLateInit.init(address(this));
     }
 
-    function initialize(address erc20Vault_, address uniV3Vault_, address aaveVault_, address admin) external {
+    function initialize(
+        address erc20Vault_,
+        address uniV3Vault_,
+        address aaveVault_,
+        address admin
+    ) external {
         erc20Vault = IERC20Vault(erc20Vault_);
         uniV3Vault = IUniV3Vault(uniV3Vault_);
         aaveVault = IAaveVault(aaveVault_);
 
-        address[] memory erc20Tokens = erc20Vault.vaultTokens();
-        address[] memory aaveTokens = aaveVault.vaultTokens();
-        address[] memory uniV3Tokens = uniV3Vault.vaultTokens();
-        require(aaveTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(erc20Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(uniV3Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
+        helper.setParams(erc20Vault, uniV3Vault, aaveVault, positionManager);
 
-        require(uniV3Tokens[0] == aaveTokens[0], ExceptionsLibrary.INVARIANT);
-        require(erc20Tokens[0] == aaveTokens[0], ExceptionsLibrary.INVARIANT);
-        require(uniV3Tokens[1] == aaveTokens[1], ExceptionsLibrary.INVARIANT);
-        require(erc20Tokens[1] == aaveTokens[1], ExceptionsLibrary.INVARIANT);
-        
-
-        tokens = uniV3Tokens;
+        tokens = uniV3Vault.vaultTokens();
         pool = uniV3Vault.pool();
         require(address(pool) != address(0), ExceptionsLibrary.INVALID_TARGET);
 
@@ -175,13 +175,15 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         int24 ticksDelta;
         if (spotTick < lastRebalanceTick) {
             ticksDelta = lastRebalanceTick - spotTick;
-        }
-        else {
+        } else {
             ticksDelta = spotTick - lastRebalanceTick;
         }
         require(!wasRebalance || ticksDelta >= strategyParams.rebalanceTickDelta);
         _closePosition();
         _openPosition();
+
+        wasRebalance = true;
+        lastRebalanceTick = spotTick;
     }
 
     function _closePosition() internal {
@@ -197,18 +199,20 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         }
 
         _getCoverage(debt);
-        uint256 balance = IERC20(tokens[1]).balanceOf(address(erc20Vault));
         erc20Vault.externalCall(tokens[1], APPROVE_SELECTOR, abi.encode(address(aaveVault), debt)); // approve
         aaveVault.repay(tokens[1], address(erc20Vault), debt);
         erc20Vault.externalCall(tokens[1], APPROVE_SELECTOR, abi.encode(address(aaveVault), 0)); // reset allowance
     }
 
     function _openPosition() internal {
-
         uint160 maxSqrtX96Delta = TickMath.getSqrtRatioAtTick(strategyParams.rebalanceTickDelta);
         uint256 maxX96Delta = FullMath.mulDiv(maxSqrtX96Delta, maxSqrtX96Delta, Q96);
 
-        uint256 ltvQ96 = FullMath.mulDiv(aaveVault.getLTV(tokens[0]), Q96, D4);
+        uint256 ltvQ96 = FullMath.mulDiv(
+            FullMath.mulDiv(aaveVault.getLTV(tokens[0]), Q96, D4),
+            strategyParams.shiftFromLTVD,
+            D9
+        );
 
         uint256 shareD = FullMath.mulDiv(ltvQ96, D9, ltvQ96 + maxX96Delta);
         _swap(1, true, 0);
@@ -220,18 +224,21 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         amounts[0] = toAave;
 
         erc20Vault.pull(address(aaveVault), tokens, amounts, "");
-        uint256 amountToTake = _getSwapAmountOut(balance - toAave, 0, false);
+        uint256 amountToTake = getSwapAmountOut(balance - toAave, 0, false);
 
         aaveVault.borrow(tokens[1], address(erc20Vault), amountToTake);
         (, int24 spotTick, , , , , ) = pool.slot0();
-        int24 lowerTick = (spotTick - strategyParams.positionTickSize / 2) % pool.tickSpacing();
+        int24 lowerTick = spotTick - strategyParams.positionTickSize / 2;
+        lowerTick -= lowerTick % pool.tickSpacing();
         int24 upperTick = lowerTick + strategyParams.positionTickSize;
 
         uint256 fromNft = uniV3Vault.uniV3Nft();
         uint256 nft = _mintNewNft(lowerTick, upperTick, block.timestamp + 1);
 
         positionManager.safeTransferFrom(address(this), address(uniV3Vault), nft);
-        positionManager.burn(fromNft);
+        if (fromNft != 0) {
+            positionManager.burn(fromNft);
+        }
 
         uint256[] memory tokenAmounts = new uint256[](2);
         tokenAmounts[0] = IERC20(tokens[0]).balanceOf(address(erc20Vault));
@@ -274,7 +281,11 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         }
     }
 
-    function _swap(uint256 index, bool swapAll, uint256 amount) internal {
+    function _swap(
+        uint256 index,
+        bool swapAll,
+        uint256 amount
+    ) internal {
         uint256 amountIn = amount;
         if (swapAll) {
             amountIn = IERC20(tokens[index]).balanceOf(address(erc20Vault));
@@ -287,7 +298,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
                 recipient: address(erc20Vault),
                 deadline: block.timestamp + 1,
                 amountIn: amountIn,
-                amountOutMinimum: _getSwapAmountOut(amountIn, index, true),
+                amountOutMinimum: getSwapAmountOut(amountIn, index, true),
                 sqrtPriceLimitX96: 0
             });
             bytes memory data = abi.encode(swapParams);
@@ -297,7 +308,11 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         }
     }
 
-    function _getSwapAmountOut(uint256 amount, uint256 index, bool takeSlippage) internal view returns (uint256) {
+    function getSwapAmountOut(
+        uint256 amount,
+        uint256 index,
+        bool takeSlippage
+    ) public view returns (uint256) {
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
 
@@ -309,66 +324,45 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         if (tokens[index] == pool.token0() && index == 0) {
             uint256 expectedAmount = FullMath.mulDiv(amount, priceX96, Q96);
             return FullMath.mulDiv(expectedAmount, D9 - slippage, D9);
-        }
-
-        else {
-
+        } else {
             uint256 expectedAmount = FullMath.mulDiv(amount, Q96, priceX96);
             return FullMath.mulDiv(expectedAmount, D9 - slippage, D9);
-
         }
     }
 
-    function _checkCallbackPossible() internal {
+    function _checkCallbackPossible() internal view {
         (bool deltaOkay, int24 spotTick) = isDeltaOkay();
         require(deltaOkay, ExceptionsLibrary.INVARIANT);
         int24 ticksDelta;
         if (spotTick < lastRebalanceTick) {
             ticksDelta = lastRebalanceTick - spotTick;
-        }
-        else {
+        } else {
             ticksDelta = spotTick - lastRebalanceTick;
         }
-        require(wasRebalance && ticksDelta < strategyParams.rebalanceTickDelta);
+        if (wasRebalance) {
+            require(ticksDelta < strategyParams.rebalanceTickDelta, ExceptionsLibrary.INVALID_STATE);
+        }
     }
 
     function _rebalanceERC20Vault() internal {
-        uint256 token0OnERC20 = IERC20(tokens[0]).balanceOf(address(erc20Vault));
-        uint256 token0CapitalOnERC20 = _getSwapAmountOut(IERC20(tokens[1]).balanceOf(address(erc20Vault)), 1, false) + token0OnERC20;
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
-                uniV3Vault.uniV3Nft()
-            );
 
-        uint256[] memory totalOnUni = uniV3Vault.liquidityToTokenAmounts(liquidity);
-        uint256 token0CapitalOnUni = _getSwapAmountOut(totalOnUni[1], 1, false) + totalOnUni[0];
+        (uint256 token0OnERC20, uint256 wantToHaveOnERC20) = helper.calcERC20Params();
 
-        uint256 wantToHaveOnERC20 = FullMath.mulDiv(totalOnUni[0], token0CapitalOnERC20, token0CapitalOnUni);
         if (wantToHaveOnERC20 < token0OnERC20) {
             uint256 delta = token0OnERC20 - wantToHaveOnERC20;
             _swap(0, false, delta);
-        }
-        else {
+        } else {
             uint256 delta = wantToHaveOnERC20 - token0OnERC20;
-            uint256 toSwap = _getSwapAmountOut(delta, 0, false);
+            uint256 toSwap = getSwapAmountOut(delta, 0, false);
             _swap(1, false, toSwap);
         }
     }
 
     /// @inheritdoc ILpCallback
     function depositCallback(bytes memory depositOptions) external {
-
         _checkCallbackPossible();
 
-        require(depositOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
-        (
-            uint256 shareOfCapitalQ96
-        ) = abi.decode(depositOptions, (uint256));
-
-        uint256 balanceToken0 = IERC20(aaveVault.aTokens(0)).balanceOf(address(aaveVault));
-        uint256 debtToken1 = aaveVault.getDebt(1);
-
-        uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = FullMath.mulDiv(balanceToken0, shareOfCapitalQ96, Q96);
+        (uint256 shareOfCapitalQ96, uint256 debtToken1, uint256[] memory tokenAmounts) = helper.calcDepositParams(depositOptions);
 
         erc20Vault.pull(address(aaveVault), tokens, tokenAmounts, "");
         aaveVault.borrow(tokens[1], address(erc20Vault), FullMath.mulDiv(debtToken1, shareOfCapitalQ96, Q96));
@@ -379,36 +373,13 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         tokenAmounts[1] = IERC20(tokens[1]).balanceOf(address(erc20Vault));
 
         erc20Vault.pull(address(uniV3Vault), tokens, tokenAmounts, "");
-        
     }
 
     /// @inheritdoc ILpCallback
     function withdrawCallback(bytes memory depositOptions) external {
-
         _checkCallbackPossible();
 
-        require(depositOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
-        (
-            uint256 shareOfCapitalQ96
-        ) = abi.decode(depositOptions, (uint256));
-
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
-                uniV3Vault.uniV3Nft()
-            );
-
-        uniV3Vault.collectEarnings();
-
-        uint256 totalToken0 = FullMath.mulDiv(IERC20(tokens[0]).balanceOf(address(erc20Vault)), shareOfCapitalQ96, Q96);
-        uint256 totalToken1 = FullMath.mulDiv(IERC20(tokens[1]).balanceOf(address(erc20Vault)), shareOfCapitalQ96, Q96);
-
-        uint256[] memory pullFromUni = uniV3Vault.liquidityToTokenAmounts(uint128(FullMath.mulDiv(liquidity, shareOfCapitalQ96, Q96)));
-        pullFromUni = uniV3Vault.pull(address(erc20Vault), tokens, pullFromUni, "");
-
-        totalToken0 += pullFromUni[0];
-        totalToken1 += pullFromUni[1];
-
-        uint256 balanceToken0 = FullMath.mulDiv(IERC20(aaveVault.aTokens(0)).balanceOf(address(aaveVault)), shareOfCapitalQ96, Q96);
-        uint256 debtToken1 = FullMath.mulDiv(aaveVault.getDebt(1), shareOfCapitalQ96, Q96);
+        (uint256 totalToken0, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper.calcWithdrawParams(depositOptions);
 
         if (totalToken1 < debtToken1) {
             _swap(0, true, 0);
@@ -424,12 +395,21 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         aaveVault.pull(address(erc20Vault), tokens, tokenAmounts, "");
 
         _swap(1, true, 0);
-        
     }
 
-    function createStrategy(address erc20Vault_, address uniV3Vault_, address aaveVault_, address admin) external returns (DeltaNeutralStrategy strategy) {
+    function createStrategy(
+        address erc20Vault_,
+        address uniV3Vault_,
+        address aaveVault_,
+        address admin
+    ) external returns (DeltaNeutralStrategy strategy) {
         strategy = DeltaNeutralStrategy(Clones.clone(address(this)));
         strategy.initialize(erc20Vault_, uniV3Vault_, aaveVault_, admin);
+    }
+
+    function pullFromUniswap(uint256[] memory tokenAmounts) external returns (uint256[] memory pulledAmounts) {
+        require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
+        pulledAmounts = uniV3Vault.pull(address(erc20Vault), tokens, tokenAmounts, "");
     }
 
     function _contractName() internal pure override returns (bytes32) {
@@ -459,5 +439,4 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     event UpdateOracleParams(address indexed origin, address indexed sender, OracleParams oracleParams);
 
     event UpdateTradingParams(address indexed origin, address indexed sender, TradingParams tradingParams);
-
 }
