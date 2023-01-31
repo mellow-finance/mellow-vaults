@@ -18,6 +18,7 @@
       "test:delta": "forge test -vvvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 16357000 --match-path 'test/delta/*.sol'",
       "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+      "deploy:polygon": "forge script src/script/PolygonDeployment.s.sol:PolygonDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_POLYGON .env | cut -d '=' -f2) --broadcast --slow --verify -vvvv",
       "compile": "forge build",
       "size": "forge build --sizes --force --via-ir"
     }
