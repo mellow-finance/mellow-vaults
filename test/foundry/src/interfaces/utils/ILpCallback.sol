@@ -2,9 +2,10 @@
 pragma solidity 0.8.9;
 
 interface ILpCallback {
+
     /// @notice Function, that ERC20RootVault calling after deposit
-    function depositCallback() external;
+    function depositCallback(bytes memory) external;
 
     /// @notice Function, that ERC20RootVault calling after withdraw
-    function withdrawCallback() external;
+    function withdrawCallback(bytes memory) external;
 }

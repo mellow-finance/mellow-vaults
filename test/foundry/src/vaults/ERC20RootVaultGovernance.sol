@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
@@ -116,7 +115,13 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     /// @inheritdoc IERC20RootVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0});
+            return
+                StrategyParams({
+                    tokenLimitPerAddress: 0,
+                    tokenLimit: 0,
+                    maxTimeOneRebalance: 0,
+                    minTimeBetweenRebalances: 3600
+                });
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
@@ -173,6 +178,9 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
 
     /// @inheritdoc IERC20RootVaultGovernance
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
+        require(params.minTimeBetweenRebalances > 0);
+        require(params.minTimeBetweenRebalances <= 86400 * 7);
+        require(params.minTimeBetweenRebalances >= 2 * params.maxTimeOneRebalance);
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
