@@ -19,5 +19,5 @@ interface ILStrategyHelper {
 
     function tickFromPriceX96(uint256 priceX96) external pure returns (int24);
 
-    function calculateTokenAmounts(IUniV3Vault lowerVault, IUniV3Vault upperVault, IVault erc20Vault, uint256 amount0, uint256 amount1, INonfungiblePositionManager positionManager) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts);
+    function calculateTokenAmounts(IUniV3Vault lowerVault, IUniV3Vault upperVault, IVault erc20Vault, uint256 amount0, uint256 amount1, INonfungiblePositionManager positionManager, bool isDeposit) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts);
 }

@@ -630,17 +630,18 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             erc20Vault,
             amount0,
             amount1,
-            positionManager
+            positionManager,
+            true
         );
 
-        uint256[] memory actualLowerAmunts = erc20Vault.pull(address(lowerVault), tokens, lowerAmounts, "");
-        uint256[] memory actualUpperAmunts = erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");
+        uint256[] memory actualLowerAmounts = erc20Vault.pull(address(lowerVault), tokens, lowerAmounts, "");
+        uint256[] memory actualUpperAmounts = erc20Vault.pull(address(upperVault), tokens, upperAmounts, "");
 
         require(
-            actualLowerAmunts[0] >= minLowerVaultToken0 &&
-                actualLowerAmunts[1] >= minLowerVaultToken1 &&
-                actualUpperAmunts[0] >= minUpperVaultToken0 &&
-                actualUpperAmunts[1] >= minUpperVaultToken1,
+            actualLowerAmounts[0] >= minLowerVaultToken0 &&
+                actualLowerAmounts[1] >= minLowerVaultToken1 &&
+                actualUpperAmounts[0] >= minUpperVaultToken0 &&
+                actualUpperAmounts[1] >= minUpperVaultToken1,
             ExceptionsLibrary.INVALID_VALUE
         );
     }
@@ -663,17 +664,18 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             erc20Vault,
             amount0,
             amount1,
-            positionManager
+            positionManager,
+            false
         );
 
-        uint256[] memory actualLowerAmunts = lowerVault.pull(address(erc20Vault), tokens, lowerAmounts, "");
-        uint256[] memory actualUpperAmunts = upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");
+        uint256[] memory actualLowerAmounts = lowerVault.pull(address(erc20Vault), tokens, lowerAmounts, "");
+        uint256[] memory actualUpperAmounts = upperVault.pull(address(erc20Vault), tokens, upperAmounts, "");
 
         require(
-            actualLowerAmunts[0] >= minLowerVaultToken0 &&
-                actualLowerAmunts[1] >= minLowerVaultToken1 &&
-                actualUpperAmunts[0] >= minUpperVaultToken0 &&
-                actualUpperAmunts[1] >= minUpperVaultToken1,
+            actualLowerAmounts[0] >= minLowerVaultToken0 &&
+                actualLowerAmounts[1] >= minLowerVaultToken1 &&
+                actualUpperAmounts[0] >= minUpperVaultToken0 &&
+                actualUpperAmounts[1] >= minUpperVaultToken1,
             ExceptionsLibrary.INVALID_VALUE
         );
     }

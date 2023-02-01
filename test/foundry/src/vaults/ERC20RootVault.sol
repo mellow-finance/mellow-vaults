@@ -13,7 +13,6 @@ import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
-import "forge-std/console2.sol"; 
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {

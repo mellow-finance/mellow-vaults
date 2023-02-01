@@ -14,7 +14,6 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
-import "forge-std/console2.sol";
 
 contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;

@@ -62,41 +62,54 @@ contract LStrategyHelper is ILStrategyHelper {
         IVault erc20Vault,
         uint256 amount0,
         uint256 amount1,
-        INonfungiblePositionManager positionManager
+        INonfungiblePositionManager positionManager,
+        bool isDeposit
     ) external view returns (uint256[] memory lowerAmounts, uint256[] memory upperAmounts) {
-        uint256 lowerVaultNft = lowerVault.uniV3Nft();
-        uint256 upperVaultNft = upperVault.uniV3Nft();
-
         uint256[] memory lowerVaultTvl;
         uint256[] memory upperVaultTvl;
-
-        {
-            (, , , , , , , uint128 liquidityLower, , , , ) = positionManager.positions(lowerVaultNft);
-            (, , , , , , , uint128 liquidityUpper, , , , ) = positionManager.positions(upperVaultNft);
-
-            lowerVaultTvl = lowerVault.liquidityToTokenAmounts(liquidityLower);
-            upperVaultTvl = upperVault.liquidityToTokenAmounts(liquidityUpper);
-        }
-
-        (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
 
         uint256 amount0Total;
         uint256 amount1Total;
 
         {
-            (uint256 fees0Lower, uint256 fees1Lower) = PositionValue.fees(positionManager, lowerVaultNft);
-            (uint256 fees0Upper, uint256 fees1Upper) = PositionValue.fees(positionManager, upperVaultNft);
+            uint256 lowerVaultNft = lowerVault.uniV3Nft();
+            uint256 upperVaultNft = upperVault.uniV3Nft();
 
-            amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0] + fees0Lower + fees0Upper;
-            amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1] + fees1Lower + fees1Upper;
+            {
+                (, , , , , , , uint128 liquidityLower, , , , ) = positionManager.positions(lowerVaultNft);
+                lowerVaultTvl = lowerVault.liquidityToTokenAmounts(liquidityLower);
+            }
+
+            {
+                (, , , , , , , uint128 liquidityUpper, , , , ) = positionManager.positions(upperVaultNft);
+                upperVaultTvl = upperVault.liquidityToTokenAmounts(liquidityUpper);
+            }
+
+            (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
+
+            {
+                (uint256 fees0Lower, uint256 fees1Lower) = PositionValue.fees(positionManager, lowerVaultNft);
+                (uint256 fees0Upper, uint256 fees1Upper) = PositionValue.fees(positionManager, upperVaultNft);
+
+                amount0Total = lowerVaultTvl[0] + upperVaultTvl[0] + erc20VaultTvl[0] + fees0Lower + fees0Upper;
+                amount1Total = lowerVaultTvl[1] + upperVaultTvl[1] + erc20VaultTvl[1] + fees1Lower + fees1Upper;
+            }
+        }
+
+        uint256 toSubtract0;
+        uint256 toSubtract1;
+        if (isDeposit) {
+            toSubtract0 = amount0;
+            toSubtract1 = amount1;
         }
 
         lowerAmounts = new uint256[](2);
-        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], amount0, amount0Total);
-        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl[1], amount1, amount1Total);
+        lowerAmounts[0] = FullMath.mulDiv(lowerVaultTvl[0], amount0, amount0Total - toSubtract0);
+        lowerAmounts[1] = FullMath.mulDiv(lowerVaultTvl[1], amount1, amount1Total - toSubtract1);
+
         upperAmounts = new uint256[](2);
-        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl[0], amount0, amount0Total);
-        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl[1], amount1, amount1Total);
+        upperAmounts[0] = FullMath.mulDiv(upperVaultTvl[0], amount0, amount0Total - toSubtract0);
+        upperAmounts[1] = FullMath.mulDiv(upperVaultTvl[1], amount1, amount1Total - toSubtract1);
     }
 
     function getPreOrder(uint256[] memory tvl, uint256 minAmountOut) external view returns (LStrategy.PreOrder memory) {

@@ -12,7 +12,6 @@ import "../interfaces/vaults/IVault.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/external/PositionValue.sol";
 import "../strategies/LStrategy.sol";
-import "forge-std/console2.sol";
 
 contract LStrategyHelper is ILStrategyHelper {
     // IMMUTABLES
