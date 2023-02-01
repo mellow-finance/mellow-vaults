@@ -157,11 +157,11 @@ contract PolygonDeployment is Script {
 
             {
 
-                AaveVault aaveVault = new AaveVault();
-                ERC20DNRootVault sampleRootVault = new ERC20DNRootVault();
+                AaveVault aaveVault = AaveVault(0xf5aEF1622DaaEa25bfD0672251A8Dbd74639a343);
+                ERC20DNRootVault sampleRootVault = ERC20DNRootVault(0xCfA896646719d4170C4F86d762ac9ea6d84600e5);
 
-                console2.log("mock aave", address(aaveVault));
-                console2.log("mock root", address(sampleRootVault));
+              //  console2.log("mock aave", address(aaveVault));
+              //  console2.log("mock root", address(sampleRootVault));
 
                 internalParamsA = IVaultGovernance.InternalParams({
                     protocolGovernance: protocolGovernance,
@@ -187,10 +187,11 @@ contract PolygonDeployment is Script {
                 oracle: IOracle(0x9d992650B30C6FB7a83E7e7a430b4e015433b838)
             });
 
-            IAaveVaultGovernance aaveVaultGovernance = new AaveVaultGovernance(internalParamsA, delayedParamsA);
-            console2.log("aaveGovernance", address(aaveVaultGovernance));
-            rootVaultGovernance = new ERC20RootVaultGovernance(internalParamsB, delayedParamsB, IERC20RootVaultHelper(0xACEE4A703f27eA1EbCd550511aAE58ad012624CC));
-            console2.log("rootGovernance", address(rootVaultGovernance));
+            IAaveVaultGovernance aaveVaultGovernance = AaveVaultGovernance(0xb73b54DF72eaF9d9A4b22F938214A3d92Ad38cBC);
+       //     console2.log("aaveGovernance", address(aaveVaultGovernance));
+            rootVaultGovernance = ERC20RootVaultGovernance(0x0467DE4D0824d57Cb1aF8680589E59048CA560Bc);
+         //   console2.log("rootGovernance", address(rootVaultGovernance));
+         /*
             {
 
                 uint8[] memory grants = new uint8[](1);
@@ -203,6 +204,7 @@ contract PolygonDeployment is Script {
                 protocolGovernance.commitPermissionGrants(address(aaveVaultGovernance));
                 protocolGovernance.commitPermissionGrants(address(rootVaultGovernance));
             }
+            */
 
             uniV3VaultGovernance.createVault(tokens, deployer, 500, address(helper));
             aaveVaultGovernance.createVault(tokens, deployer);
