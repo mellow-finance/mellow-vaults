@@ -11,12 +11,13 @@ import "../vaults/AaveVaultGovernance.sol";
 import "../vaults/AaveVault.sol";
 import "../vaults/ERC20DNRootVault.sol";
 import "../utils/UniV3Helper.sol";
+import "../utils/ERC20RootVaultHelper.sol";
 import "../utils/DeltaNeutralStrategyHelper.sol";
 
 import "../interfaces/external/aave/AaveOracle.sol";
 import "../MockAggregator.sol";
 
-uint256 constant width = 8200;
+uint256 constant width = 8000;
 uint256 constant stop = 2700;
 
 contract PolygonDeployment is Script {
@@ -42,6 +43,14 @@ contract PolygonDeployment is Script {
     address public erc20Governance = 0x05164eC2c3074A4E8eA20513Fbe98790FfE930A4;
     address public uniGovernance = 0x1832A9c3a578a0E6D02Cc4C19ecBD33FA88Cb183;
     address public sAdmin = 0x36B16e173C5CDE5ef9f43944450a7227D71B4E31;
+
+    address public lendingPool = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf;
+    address public mellowOracle = 0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836;
+
+    address public uniHelper = 0x4a523260e313453539BfCF8cF21FBE3118aBd77e;
+    address public mockAave = 0xf5aEF1622DaaEa25bfD0672251A8Dbd74639a343;
+    address public mockRoot = 0xCfA896646719d4170C4F86d762ac9ea6d84600e5;
+    address public rootHelper = 0xb1f69766991b64121c472B38607063A79bbEeb2a;
 
     function onERC721Received(
         address operator,
@@ -80,6 +89,8 @@ contract PolygonDeployment is Script {
         );
 
         rootVaultGovernance.commitDelayedStrategyParams(nft);
+
+        IVaultRegistry(registry).transferFrom(deployer, sAdmin, nft);
     }
 
     function buildInitialPositions(
@@ -147,7 +158,7 @@ contract PolygonDeployment is Script {
         uint256 uniV3LowerVaultNft = vaultRegistry.vaultsCount() + 1;
 
         INonfungiblePositionManager positionManager = INonfungiblePositionManager(uniswapV3PositionManager);
-        UniV3Helper helper = new UniV3Helper(positionManager);
+        UniV3Helper helper = UniV3Helper(uniHelper);
 
         {
             IUniV3VaultGovernance uniV3VaultGovernance = IUniV3VaultGovernance(uniGovernance);
@@ -157,11 +168,8 @@ contract PolygonDeployment is Script {
 
             {
 
-                AaveVault aaveVault = AaveVault(0xf5aEF1622DaaEa25bfD0672251A8Dbd74639a343);
-                ERC20DNRootVault sampleRootVault = ERC20DNRootVault(0xCfA896646719d4170C4F86d762ac9ea6d84600e5);
-
-              //  console2.log("mock aave", address(aaveVault));
-              //  console2.log("mock root", address(sampleRootVault));
+                AaveVault aaveVault = AaveVault(mockAave);
+                ERC20DNRootVault sampleRootVault = ERC20DNRootVault(mockRoot);
 
                 internalParamsA = IVaultGovernance.InternalParams({
                     protocolGovernance: protocolGovernance,
@@ -178,18 +186,24 @@ contract PolygonDeployment is Script {
             }
 
             IAaveVaultGovernance.DelayedProtocolParams memory delayedParamsA = IAaveVaultGovernance.DelayedProtocolParams({
-                lendingPool: ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9),
+                lendingPool: ILendingPool(lendingPool),
                 estimatedAaveAPY: 10**7
             });
 
             IERC20RootVaultGovernance.DelayedProtocolParams memory delayedParamsB = IERC20RootVaultGovernance.DelayedProtocolParams({
                 managementFeeChargeDelay: 0,
-                oracle: IOracle(0x9d992650B30C6FB7a83E7e7a430b4e015433b838)
+                oracle: IOracle(mellowOracle)
             });
 
-            IAaveVaultGovernance aaveVaultGovernance = AaveVaultGovernance(0xb73b54DF72eaF9d9A4b22F938214A3d92Ad38cBC);
+            IERC20RootVaultHelper helper2 = ERC20RootVaultHelper(rootHelper);
+            IAaveVaultGovernance aaveVaultGovernance = new AaveVaultGovernance(internalParamsA, delayedParamsA);
+            rootVaultGovernance = new ERC20RootVaultGovernance(internalParamsB, delayedParamsB, helper2);
+
+            console2.log("aaveGovernance", address(aaveVaultGovernance));
+            console2.log("rootGovernance", address(rootVaultGovernance));
+            vm.stopBroadcast();
+            return 0;
        //     console2.log("aaveGovernance", address(aaveVaultGovernance));
-            rootVaultGovernance = ERC20RootVaultGovernance(0x0467DE4D0824d57Cb1aF8680589E59048CA560Bc);
          //   console2.log("rootGovernance", address(rootVaultGovernance));
          /*
             {
