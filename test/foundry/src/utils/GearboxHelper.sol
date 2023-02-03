@@ -276,6 +276,29 @@ contract GearboxHelper {
             );
     }
 
+    function calculatePoolsFeeD(address creditAccount, address vaultGovernance) external view returns (uint256) {
+
+        if (creditAccount == address(0)) {
+            return 0;
+        }
+
+        uint256 totalFeeD = ICurveV1Adapter(curveAdapter).fee();
+        if (is3crv) {
+            IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
+            ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
+            totalFeeD += crv3Adapter.fee();
+        }
+
+        uint256 marginalFactorUsedD = gearboxVault.marginalFactorD9();
+        if (primaryToken != depositToken) {
+            marginalFactorUsedD -= D9;
+        }
+
+        return 2 * FullMath.mulDiv(totalFeeD / 10, marginalFactorUsedD, D9);
+
+    }
+
     function calcRateRAY(address tokenFrom, address tokenTo) public view returns (uint256) {
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
         return oracle.convert(D27, tokenFrom, tokenTo);

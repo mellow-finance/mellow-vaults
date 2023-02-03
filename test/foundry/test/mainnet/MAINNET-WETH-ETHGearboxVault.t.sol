@@ -264,6 +264,7 @@ contract GearboxWETHTest is Test {
         arr2[1] = 100;
 
         gearboxVault.addPoolsToAllowList(arr2);
+        rootVault.changeDepositCurveFeeBurdenShareD(5 * 10**8);
     }
 
     function setZeroFees() public {
@@ -322,6 +323,45 @@ contract GearboxWETHTest is Test {
         rootVault.deposit(amounts, 0, "");
         if (gearboxVault.getCreditAccount() == address(0)) {
             vm.stopPrank();
+            gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
+        }
+    }
+
+    function depositWithoutOpening(uint256 amount, address user) public {
+
+        uint256 subtract = 0;
+
+        if (rootVault.totalSupply() == 0) {
+            firstDeposit();
+            subtract = 10**10;
+        }
+
+        deal(weth, user, amount * weiofUsdc - subtract); 
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount * weiofUsdc - subtract;
+        IERC20(weth).approve(address(rootVault), type(uint256).max);
+
+        rootVault.deposit(amounts, 0, "");
+    }
+
+    function depositExactAmount(uint256 amount, address user) public {
+
+        if (rootVault.totalSupply() == 0) {
+            firstDeposit();
+        }
+
+        deal(weth, user, amount);
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount;
+
+        vm.startPrank(user);
+        IERC20(weth).approve(address(rootVault), type(uint256).max);
+        rootVault.deposit(amounts, 0, "");
+        vm.stopPrank();
+
+        if (gearboxVault.getCreditAccount() == address(0)) {
             gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
         }
     }
@@ -986,6 +1026,93 @@ contract GearboxWETHTest is Test {
         invokeExecution();
 
         gearboxVault.openCreditAccount(address(curveAdapter2), address(convexAdapter2));
+    }
+
+    function testLpTokensFeeWorksAsExpected() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        uint256 lpAmount = rootVault.balanceOf(address(this));
+        uint256 currentTvl = tvl();
+
+        depositExactAmount(currentTvl, address(this));
+
+        uint256 lpReceived = rootVault.balanceOf(address(this)) - lpAmount;
+        require(lpReceived * 1000 < lpAmount * 999); // 0.01% taken
+        require(lpReceived * 1000 > lpAmount * 997); // but < 0.03% taken
+    }
+
+    function testLpTokensFeeNotComingWithoutOpeningAccount() public {
+        depositWithoutOpening(FIRST_DEPOSIT, address(this));
+
+        uint256 lpAmount = rootVault.balanceOf(address(this));
+        uint256 currentTvl = tvl();
+
+        depositExactAmount(currentTvl, address(this));
+
+        uint256 lpReceived = rootVault.balanceOf(address(this)) - lpAmount;
+        require(isClose(lpReceived, lpAmount, 10000));
+    }
+
+    function testLpTokensFeeNotComingWithOpeningAccount() public {
+        deposit(FIRST_DEPOSIT, address(this));
+
+        uint256 lpAmount = rootVault.balanceOf(address(this));
+        uint256 currentTvl = tvl();
+
+        depositExactAmount(currentTvl, address(this));
+
+        uint256 lpReceived = rootVault.balanceOf(address(this)) - lpAmount;
+        require(isClose(lpReceived, lpAmount, 1000000));
+    }
+
+    function testLpTokensFeeNotComingAfterClosingAccount() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+        invokeExecution();
+
+        uint256 lpAmount = rootVault.balanceOf(address(this));
+        uint256 currentTvl = tvl();
+
+        depositExactAmount(currentTvl, address(this));
+
+        uint256 lpReceived = rootVault.balanceOf(address(this)) - lpAmount;
+        require(isClose(lpReceived, lpAmount, 1000000));
+    }
+
+    function testLpTokensFeeComingPartially() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        deposit(3*FIRST_DEPOSIT, address(this));
+
+        uint256 lpAmount = rootVault.balanceOf(address(this));
+        uint256 currentTvl = tvl();
+
+        depositExactAmount(currentTvl, address(this));
+
+        uint256 lpReceived = rootVault.balanceOf(address(this)) - lpAmount;
+        require(lpReceived * 100000 < lpAmount * 99975); // 0.0025% taken
+        require(lpReceived * 100000 > lpAmount * 99925); // but < 0.0075% taken
+    }
+
+    function testCurrentAmountWaitingWorksOkayAfterSeveralCycles() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        require(gearboxVault.tvlOnVaultItself() == 0);
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+
+        require(gearboxVault.tvlOnVaultItself() == 0);
+        for (uint256 i = 0; i < 5; ++i) {
+            vm.warp(block.timestamp + 86400 * 10);
+            invokeExecution();
+            gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
+        }
+        
+        require(isClose(gearboxVault.tvlOnVaultItself(), FIRST_DEPOSIT * 2 * weiofUsdc, 50));
+
     }
     
 }

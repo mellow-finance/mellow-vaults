@@ -73,6 +73,8 @@ interface IGearboxVault is IIntegrationVault {
     /// @notice Adjust a position (takes more debt or repays some, depending on the past performance) to achieve the required marginalFactorD9
     function adjustPosition() external;
 
+    function tvlOnVaultItself() external returns (uint256);
+
     /// @notice Opens a new credit account on the address of the vault
     function openCreditAccount(address curveAdapter, address convexAdapter) external;
 

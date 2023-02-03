@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
 import "./IIntegrationVault.sol";
+import "./IGearboxVault.sol";
 
 interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
@@ -20,11 +21,19 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
         address
     ) external;
 
+    /// @notice The current share of Curve fees the depositor pays from his deposit/withdraw (we reduce his share of LP tokens)
+    function depositCurveFeeBurdenShareD() external returns (uint256);
+
+    /// @notice Change the share of Curve fees the depositor pays from his deposit/withdraw
+    /// @param newDepositCurveFeeBurdenShareD New share of Curve fees the depositor pays from his deposit/withdraw
+    /// @dev The action can be done only by user with admins, owners or by approved rights
+    function changeDepositCurveFeeBurdenShareD(uint256 newDepositCurveFeeBurdenShareD) external;
+
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
 
     /// @notice Gearbox vault that is the second subvault of the system
-    function gearboxVault() external view returns (IIntegrationVault);
+    function gearboxVault() external view returns (IGearboxVault);
 
     /// @notice ERC20 vault that is the first subvault of the system
     function erc20Vault() external view returns (IIntegrationVault);
@@ -41,15 +50,21 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice List of addresses of depositors from which interaction with private vaults is allowed
     function depositorsAllowlist() external view returns (address[] memory);
 
+    function instantWithdrawersList() external view returns (address[] memory);
+
     /// @notice Add new depositors in the depositorsAllowlist
     /// @param depositors Array of new depositors
     /// @dev The action can be done only by user with admins, owners or by approved rights
     function addDepositorsToAllowlist(address[] calldata depositors) external;
 
+    function addInstantWithdrawersToAllowlist(address[] calldata withdrawers) external;
+
     /// @notice Remove depositors from the depositorsAllowlist
     /// @param depositors Array of depositors for remove
     /// @dev The action can be done only by user with admins, owners or by approved rights
     function removeDepositorsFromAllowlist(address[] calldata depositors) external;
+
+    function removeInstantWithdrawersFromAllowlist(address[] calldata withdrawers) external;
 
     /// @notice The function of depositing the amount of tokens in exchange
     /// @param tokenAmounts Array of amounts of tokens for deposit
