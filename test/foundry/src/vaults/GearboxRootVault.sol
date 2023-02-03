@@ -14,7 +14,6 @@ import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
-import "forge-std/console2.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, AggregateVault {
