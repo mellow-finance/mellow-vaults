@@ -13,12 +13,14 @@ import "../interfaces/external/gearbox/IUniswapV3Adapter.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
+import "../interfaces/oracles/IOracle.sol";
 
 contract GearboxHelper {
     using SafeERC20 for IERC20;
 
     uint256 public constant D9 = 10**9;
     uint256 public constant D27 = 10**27;
+    uint256 public constant Q96 = 2**96;
     bytes4 public constant GET_REWARD_SELECTOR = 0x7050ccd9;
 
     ICreditFacade public creditFacade;
@@ -34,8 +36,13 @@ contract GearboxHelper {
     int128 crv3Index;
 
     IGearboxVault public gearboxVault;
+    IOracle public mellowOracle;
 
     uint256 public vaultNft;
+
+    constructor(address mellowOracle_) {
+        mellowOracle = IOracle(mellowOracle_);
+    }
 
     function setParameters(
         ICreditFacade creditFacade_,
@@ -233,7 +240,11 @@ contract GearboxHelper {
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
             IRewards rewardsContract = IRewards(underlyingContract.extraRewards(i));
             uint256 valueEarned = rewardsContract.earned(creditAccount);
-            totalValue += oracle.convert(valueEarned, rewardsContract.rewardToken(), primaryToken);
+            address tokenEarned = rewardsContract.rewardToken();
+            (uint256[] memory pricesX96, ) = mellowOracle.priceX96(tokenEarned, primaryToken, 0x20);
+            if (pricesX96.length != 0) {
+                totalValue += FullMath.mulDiv(valueEarned, pricesX96[0], Q96);
+            }
         }
     }
 
@@ -299,9 +310,15 @@ contract GearboxHelper {
 
     }
 
-    function calcRateRAY(address tokenFrom, address tokenTo) public view returns (uint256) {
+    function calcRateRAY(address tokenFrom, address tokenTo) public view returns (uint256 rateRAY) {
         IPriceOracleV2 oracle = IPriceOracleV2(creditManager.priceOracle());
-        return oracle.convert(D27, tokenFrom, tokenTo);
+        rateRAY = oracle.convert(D27, tokenFrom, tokenTo);
+        if (rateRAY == 0) {
+            (uint256[] memory pricesX96, ) = mellowOracle.priceX96(tokenFrom, tokenTo, 0x20);
+            if (pricesX96.length != 0) {
+                rateRAY = FullMath.mulDiv(pricesX96[0], D27, Q96);
+            }
+        }
     }
 
     function calculateAmountInMaximum(

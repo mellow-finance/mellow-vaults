@@ -44,6 +44,7 @@ contract GearboxWBTCTest is Test {
     MockDegenDistributor distributor = new MockDegenDistributor();
     address configurator = 0xA7D5DDc1b8557914F158076b228AA91eF613f1D5;
     address cvx = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
+    address mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
     address creditAccount;
     uint256 nftStart;
@@ -232,7 +233,7 @@ contract GearboxWBTCTest is Test {
         address[] memory tokens = new address[](1);
         tokens[0] = wbtc; 
 
-        helper2 = new GearboxHelper();
+        helper2 = new GearboxHelper(mellowOracle);
 
         governanceB.createVault(tokens, address(this));
         governanceC.createVault(tokens, address(this), address(helper2));

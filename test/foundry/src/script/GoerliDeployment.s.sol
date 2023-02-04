@@ -170,7 +170,8 @@ contract GoerliDeployment is Script {
         address[] memory tokens = new address[](1);
         tokens[0] = usdc; 
 
-        GearboxHelper helper2 = new GearboxHelper();
+        address mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+        GearboxHelper helper2 = new GearboxHelper(mellowOracle);
 
         governanceB.createVault(tokens, admin);
         governanceC.createVault(tokens, admin, address(helper2));

@@ -7,6 +7,8 @@ import "forge-std/console2.sol";
 
 import "../../src/ProtocolGovernance.sol";
 import "../../src/MockOracle.sol";
+import "../../src/MockAggregator.sol";
+import "../../src/oracles/MellowOracle.sol";
 import "../helpers/MockRouter.t.sol";
 import "../../src/ERC20RootVaultHelper.sol";
 import "../../src/VaultRegistry.sol";
@@ -45,6 +47,7 @@ contract GearboxWETHTest is Test {
     MockDegenDistributor distributor = new MockDegenDistributor();
     address configurator = 0xA7D5DDc1b8557914F158076b228AA91eF613f1D5;
     address cvx = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
+    address mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
     address creditAccount;
     uint256 nftStart;
@@ -223,7 +226,7 @@ contract GearboxWETHTest is Test {
         address[] memory tokens = new address[](1);
         tokens[0] = weth; 
 
-        helper2 = new GearboxHelper();
+        helper2 = new GearboxHelper(mellowOracle);
 
         governanceB.createVault(tokens, address(this));
         governanceC.createVault(tokens, address(this), address(helper2));
@@ -404,6 +407,20 @@ contract GearboxWETHTest is Test {
             }
             rewardsPool2.queueNewRewards(10**18);
             vm.warp(block.timestamp + rewardsPool2.duration() + 1);
+        }
+        vm.stopPrank();
+    }
+
+    function placeLidoRewarding() public {
+        VirtualBalanceRewardPool rewardsPool2 = VirtualBalanceRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
+        vm.startPrank(rewardsPool2.operator());
+        for (uint256 i = 0; i < 1; ++i) {
+            uint256 multiplier = 1;
+            if (i == 0) {
+                multiplier = 1000;
+            }
+            rewardsPool2.queueNewRewards(10**18);
+            vm.warp(block.timestamp + 86400);
         }
         vm.stopPrank();
     }
@@ -1112,6 +1129,35 @@ contract GearboxWETHTest is Test {
         }
         
         require(isClose(gearboxVault.tvlOnVaultItself(), FIRST_DEPOSIT * 2 * weiofUsdc, 50));
+
+    }
+
+    function testLidoRewardsToBeCalculatedCorrectly() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        gearboxVault.adjustPosition();
+        placeLidoRewarding();
+
+        uint256 tvlBeforeOracleSetting = tvl();
+
+        IChainlinkOracle chainlink = MellowOracle(mellowOracle).chainlinkOracle();
+
+        MockAggregator agg = new MockAggregator();
+
+        address[] memory tokens = new address[](1);
+        address[] memory oracles = new address[](1);
+
+        tokens[0] = 0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32;
+        oracles[0] = address(agg);
+
+        vm.startPrank(admin);
+
+        chainlink.addChainlinkOracles(tokens, oracles);
+
+        vm.stopPrank();
+        uint256 tvlAfterOracleSetting = tvl();
+
+        assertTrue(tvlAfterOracleSetting > tvlBeforeOracleSetting);
+        assertTrue(999 * tvlAfterOracleSetting < 1000 * tvlBeforeOracleSetting); // < 0.1% fees for a day
 
     }
     

@@ -45,6 +45,7 @@ contract GearboxUSDCTest is Test {
     address cvx = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     MockDegenDistributor distributor = new MockDegenDistributor();
     address configurator = 0xA7D5DDc1b8557914F158076b228AA91eF613f1D5;
+    address mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
     address treasuryA;
     address treasuryB;
@@ -220,7 +221,7 @@ contract GearboxUSDCTest is Test {
 
         deal(usdc, address(governanceC), 5*10**8);
 
-        helper2 = new GearboxHelper();
+        helper2 = new GearboxHelper(mellowOracle);
 
         governanceB.createVault(tokens, address(this));
         governanceC.createVault(tokens, address(this), address(helper2));
