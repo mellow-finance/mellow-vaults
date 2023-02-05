@@ -1042,7 +1042,7 @@ contract GearboxUSDCTest is Test {
         assertTrue(gearboxVault.getCreditAccount() != address(0));
     }
 
-    function testFailDoubleShutdown() public {
+    function testNotFailDoubleShutdown() public {
         deposit(FIRST_DEPOSIT * 6 / 5, address(this));
         gearboxVault.adjustPosition();
 

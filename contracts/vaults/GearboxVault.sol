@@ -32,8 +32,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     address public depositToken;
 
     /// @inheritdoc IGearboxVault
-    int128 public primaryIndex;
-    /// @inheritdoc IGearboxVault
     uint256 public poolId;
     /// @inheritdoc IGearboxVault
     address public convexOutputToken;
@@ -136,7 +134,14 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         creditManager = ICreditManagerV2(creditFacade.creditManager());
 
         helper = GearboxHelper(helper_);
-        helper.setParameters(creditFacade, creditManager, params.primaryToken, vaultTokens_[0], _nft);
+        helper.setParameters(
+            creditFacade,
+            creditManager,
+            params.primaryToken,
+            vaultTokens_[0],
+            _nft,
+            address(_vaultGovernance)
+        );
     }
 
     /// @inheritdoc IGearboxVault
@@ -156,7 +161,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         helper.setAdapters(curveAdapter, convexAdapter);
-        (primaryIndex, convexOutputToken, poolId) = helper.verifyInstances(address(_vaultGovernance));
+        (convexOutputToken, poolId) = helper.verifyInstances(address(_vaultGovernance));
         require(_poolsAllowList.contains(poolId), ExceptionsLibrary.FORBIDDEN);
         helper.openCreditAccount(address(_vaultGovernance), marginalFactorD9);
 
@@ -181,12 +186,8 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        helper_.claimRewards(address(_vaultGovernance), creditAccount_, convexOutputToken);
-        helper_.withdrawFromConvex(
-            IERC20(convexOutputToken).balanceOf(creditAccount_),
-            address(_vaultGovernance),
-            primaryIndex
-        );
+        helper_.claimRewards(address(_vaultGovernance), creditAccount_);
+        helper_.withdrawFromConvex(IERC20(convexOutputToken).balanceOf(creditAccount_), address(_vaultGovernance));
 
         (, , uint256 debtAmount) = creditManager.calcCreditAccountAccruedInterest(creditAccount_);
         uint256 underlyingBalance = IERC20(primaryToken_).balanceOf(creditAccount_);
@@ -237,13 +238,36 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             currentAllAssetsValue,
             address(_vaultGovernance),
             marginalFactorD9_,
-            primaryIndex,
             poolId,
-            convexOutputToken,
             creditAccount
         );
 
         tvlOnVaultItself = 0;
+    }
+
+    /// @inheritdoc IGearboxVault
+    function calculatePoolsFeeD() external view returns (uint256) {
+        address creditAccount = getCreditAccount();
+
+        if (creditAccount == address(0)) {
+            return 0;
+        }
+
+        uint256 totalFeeD = ICurveV1Adapter(helper.curveAdapter()).fee();
+        if (helper.is3crv()) {
+            IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
+                address(_vaultGovernance)
+            ).delayedProtocolParams();
+            ICurveV1Adapter crv3Adapter = ICurveV1Adapter(creditManager.contractToAdapter(protocolParams.crv3Pool));
+            totalFeeD += crv3Adapter.fee();
+        }
+
+        uint256 marginalFactorUsedD = marginalFactorD9;
+        if (primaryToken != depositToken) {
+            marginalFactorUsedD -= D9;
+        }
+
+        return 2 * FullMath.mulDiv(totalFeeD / 10, marginalFactorUsedD, D9);
     }
 
     /// @inheritdoc IGearboxVault

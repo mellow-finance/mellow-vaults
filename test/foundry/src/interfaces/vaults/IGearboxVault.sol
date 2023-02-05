@@ -39,9 +39,6 @@ interface IGearboxVault is IIntegrationVault {
     /// @notice The index of the curve pool the vault invests into
     function poolId() external view returns (uint256);
 
-    /// @notice The index of the primary token in the used curve pool
-    function primaryIndex() external view returns (int128);
-
     /// @notice The address of the convex token we receive after staking Convex LPs
     function convexOutputToken() external view returns (address);
 
@@ -74,6 +71,8 @@ interface IGearboxVault is IIntegrationVault {
     function adjustPosition() external;
 
     function tvlOnVaultItself() external returns (uint256);
+
+    function calculatePoolsFeeD() external view returns (uint256);
 
     /// @notice Opens a new credit account on the address of the vault
     function openCreditAccount(address curveAdapter, address convexAdapter) external;
