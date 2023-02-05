@@ -262,9 +262,18 @@ contract PolygonDeployment is Script {
 
         vm.startBroadcast();
 
+        uint256 amount = 10**8 - 10**4;
+        uint256[] memory A = new uint256[](2);
+        A[0] = amount;
+
+        bytes memory B = bytes("0");
+        dstrategy.rebalance();
+        IERC20RootVault(0xBb5317A8Df6Cbc4BE7B5385ddA95075b9D49ff9d).deposit(A, 0, B);
+        return;
+
         uint256 startNft = 395;
         buildInitialPositions(startNft);
-
+/*
         uint8[] memory grants = new uint8[](2);
         grants[0] = 4;
         grants[1] = 5;
@@ -273,7 +282,7 @@ contract PolygonDeployment is Script {
 
         protocolGovernance.stagePermissionGrants(address(aaveVault), grants);
         protocolGovernance.commitPermissionGrants(address(aaveVault));
-
+*/
         bytes32 ADMIN_ROLE =
         bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
         bytes32 ADMIN_DELEGATE_ROLE =
@@ -283,11 +292,11 @@ contract PolygonDeployment is Script {
 
         dstrategy.grantRole(ADMIN_ROLE, sAdmin);
         dstrategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
-        dstrategy.grantRole(ADMIN_DELEGATE_ROLE, address(this));
+        dstrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
         dstrategy.grantRole(OPERATOR_ROLE, sAdmin);
-        dstrategy.revokeRole(OPERATOR_ROLE, address(this));
-        dstrategy.revokeRole(ADMIN_DELEGATE_ROLE, address(this));
-        dstrategy.revokeRole(ADMIN_ROLE, address(this));
+        dstrategy.revokeRole(OPERATOR_ROLE, deployer);
+        dstrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
+        dstrategy.revokeRole(ADMIN_ROLE, deployer);
         return;
     }
 
