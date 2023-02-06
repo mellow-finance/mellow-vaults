@@ -278,7 +278,16 @@ contract LStrategyDeployment is Script {
     }
 
     function run() external {
-        vm.startBroadcast(deployer);
+        vm.startBroadcast(operator);
+
+        rootVault = IERC20RootVault(0x13c7bCc2126d6892eEFd489Ad215A1a09F36AA9f);
+        uint256[] memory A = new uint256[](2);
+        A[0] = 5000000000000000;
+        A[1] = 5000000000000000;
+        uint256 Z = 0;
+        bytes memory B = abi.encode(Z, Z, Z, Z);
+        rootVault.deposit(A, 0, B);
+        return;
 
         uint256 startNft = kek();
         buildInitialPositions(width, startNft);
