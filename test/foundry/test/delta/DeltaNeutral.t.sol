@@ -241,8 +241,15 @@ contract DeltaNeutralTest is Test {
                 safetyIndicesSet: 2
             });
 
+            IAaveVaultGovernance.DelayedStrategyParams memory delayedStrategyParamsZ = IAaveVaultGovernance.DelayedStrategyParams({
+                rateMode: 1
+            });
+
             uniV3VaultGovernance.stageDelayedStrategyParams(uniV3LowerVaultNft, delayedStrategyParamsA);
             uniV3VaultGovernance.commitDelayedStrategyParams(uniV3LowerVaultNft);
+
+            aaveVaultGovernance.stageDelayedStrategyParams(uniV3LowerVaultNft + 1, delayedStrategyParamsZ);
+            aaveVaultGovernance.commitDelayedStrategyParams(uniV3LowerVaultNft + 1);
         }
 
         {

@@ -260,7 +260,30 @@ contract PolygonDeployment is Script {
 */
     function run() public {
 
+        IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
+        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
+
         vm.startBroadcast();
+
+        AaveVault aaveVault = new AaveVault();
+        console2.log("mockAave2", address(aaveVault));
+
+        IVaultGovernance.InternalParams memory internalParamsA;
+        internalParamsA = IVaultGovernance.InternalParams({
+            protocolGovernance: protocolGovernance,
+            registry: vaultRegistry,
+            singleton: aaveVault
+        });
+
+        IAaveVaultGovernance.DelayedProtocolParams memory delayedParamsA = IAaveVaultGovernance.DelayedProtocolParams({
+            lendingPool: ILendingPool(lendingPool),
+            estimatedAaveAPY: 10**7
+        });
+
+        IAaveVaultGovernance aaveVaultGovernance = new AaveVaultGovernance(internalParamsA, delayedParamsA);
+        console2.log("address", address(aaveVaultGovernance));
+
+        return;        
 
         uint256 amount = 10**8 - 10**4;
         uint256[] memory A = new uint256[](2);

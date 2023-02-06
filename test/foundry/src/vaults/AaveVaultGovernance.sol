@@ -44,6 +44,22 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IAaveVaultGovernance
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({rateMode: 0});
+        }
+        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc IAaveVaultGovernance
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_delayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({rateMode: 2});
+        }
+        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IAaveVaultGovernance
@@ -62,6 +78,23 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
             tx.origin,
             msg.sender,
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
+        );
+    }
+
+    /// @inheritdoc IAaveVaultGovernance
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
+    }
+
+    /// @inheritdoc IAaveVaultGovernance
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+        emit CommitDelayedStrategyParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
         );
     }
 
@@ -106,4 +139,30 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
+
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params
+    );
 }

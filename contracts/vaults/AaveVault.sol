@@ -81,22 +81,16 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    function borrow(
-        address token,
-        address to,
-        uint256 amount
-    ) external {
+    function borrow(address token, address to, uint256 amount) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _lendingPool.borrow(token, amount, 1, 0, address(this));
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
+            .delayedStrategyParams(_nft);
+        _lendingPool.borrow(token, amount, strategyParams.rateMode, 0, address(this));
         IERC20(token).safeTransfer(to, amount);
         _updateTvls();
     }
 
-    function repay(
-        address token,
-        address from,
-        uint256 amount
-    ) external {
+    function repay(address token, address from, uint256 amount) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IERC20(token).safeTransferFrom(from, address(this), amount);
         IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
@@ -115,7 +109,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function getLTV(address token) external view returns (uint256 ltv) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
         uint256 config = data.configuration.data;
-        return config % (1 << 16);
+        return config % (1<<16);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
