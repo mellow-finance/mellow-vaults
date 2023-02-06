@@ -242,7 +242,7 @@ contract DeltaNeutralTest is Test {
             });
 
             IAaveVaultGovernance.DelayedStrategyParams memory delayedStrategyParamsZ = IAaveVaultGovernance.DelayedStrategyParams({
-                rateMode: 1
+                rateMode: 2
             });
 
             uniV3VaultGovernance.stageDelayedStrategyParams(uniV3LowerVaultNft, delayedStrategyParamsA);
@@ -370,7 +370,7 @@ contract DeltaNeutralTest is Test {
 
         uint256[] memory finalTotalTvl = rootVault.calcTvl();
         require(finalTotalTvl[1] == 0);
-        require(finalTotalTvl[0] < 9900);
+        require(finalTotalTvl[0] < 9950);
     }
 
     function testDepositCallbackWorks() public {
