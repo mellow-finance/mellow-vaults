@@ -26,6 +26,8 @@ contract LStrategyDeployment is Script {
     IUniV3Vault uniV3LowerVault;
     IUniV3Vault uniV3UpperVault;
 
+    IERC20RootVaultGovernance rootVaultGovernance = ERC20RootVaultGovernance(0x1FaB5413B0DdC1e08025fc589415E699D9e892d1);
+
 
     uint256 nftStart;
     address sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
@@ -33,6 +35,9 @@ contract LStrategyDeployment is Script {
     address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
+    address approver = 0x974b9Ec2Bb4f90984B6AFc7b2136072186C1f471;
+
+    address depositor = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public wsteth = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -55,31 +60,9 @@ contract LStrategyDeployment is Script {
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
-        IERC20RootVaultGovernance.DelayedProtocolParams memory paramsB = IERC20RootVaultGovernance.DelayedProtocolParams({
-            managementFeeChargeDelay: 0,
-            oracle: IOracle(mellowOracle)
-        });
-
-        IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
-            protocolGovernance: protocolGovernance,
-            registry: vaultRegistry,
-            singleton: singleton
-        });
-
-        IERC20RootVaultHelper helper = new ERC20RootVaultHelper();
-
-        IERC20RootVaultGovernance rootVaultGovernance = new ERC20RootVaultGovernance(paramsA, paramsB, helper);
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
-
-        return;
-
-        uint8[] memory grant = new uint8[](1);
-        protocolGovernance.stagePermissionGrants(address(rootVaultGovernance), grant);
-        protocolGovernance.commitPermissionGrants(address(rootVaultGovernance));
-
-        return;
 
         (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(lstrategy), nfts, deployer);
         rootVault = w;
@@ -107,7 +90,6 @@ contract LStrategyDeployment is Script {
         );
 
         rootVaultGovernance.commitDelayedStrategyParams(nft);
-        vaultRegistry.transferFrom(deployer, sAdmin, nftStart);
 
     }
 
@@ -128,20 +110,18 @@ contract LStrategyDeployment is Script {
                 amount1Desired: 10**9,
                 amount0Min: 0,
                 amount1Min: 0,
-                recipient: operator,
+                recipient: approver,
                 deadline: type(uint256).max
             })
         );
 
-        IVaultRegistry(registry).approve(operator, vault.nft());
+        vm.stopBroadcast();
+        vm.startBroadcast(approver);
 
-        vm.stopPrank();
-        vm.startPrank(operator);
+        INonfungiblePositionManager(uniswapV3PositionManager).safeTransferFrom(approver, address(vault), nft);
 
-        INonfungiblePositionManager(uniswapV3PositionManager).safeTransferFrom(operator, address(vault), nft);
-
-        vm.stopPrank();
-        vm.startPrank(deployer);
+        vm.stopBroadcast();
+        vm.startBroadcast(deployer);
     }
 
     function getPool() public returns (IUniswapV3Pool) {
@@ -171,6 +151,9 @@ contract LStrategyDeployment is Script {
         IUniV3Vault lowerVault = lstrategy.lowerVault();
         IUniV3Vault upperVault = lstrategy.upperVault();
 
+        IVaultRegistry(registry).approve(approver, startNft);
+        IVaultRegistry(registry).approve(approver, startNft + 1);
+
         preparePush(lowerVault, tickLeftLower, tickLeftUpper);
         preparePush(upperVault, tickRightLower, tickRightUpper);
 
@@ -190,8 +173,8 @@ contract LStrategyDeployment is Script {
 
     function setupSecondPhase() public payable {
 
-        IERC20(weth).transfer(address(lstrategy), 10**12);
-        IERC20(wsteth).transfer(address(lstrategy), 10**12);
+        IERC20(weth).transfer(address(lstrategy), 10**14);
+        IERC20(wsteth).transfer(address(lstrategy), 10**14);
 
         lstrategy.updateTradingParams(
             LStrategy.TradingParams({
@@ -251,6 +234,10 @@ contract LStrategyDeployment is Script {
         uniV3LowerVault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft));
         uniV3UpperVault = IUniV3Vault(vaultRegistry.vaultForNft(uniV3LowerVaultNft + 1));
 
+        console2.log("ERC20 Vault: ", address(erc20Vault));
+        console2.log("Lower Vault: ", address(uniV3LowerVault));
+        console2.log("Upper Vault: ", address(uniV3UpperVault));
+
         IUniV3VaultGovernance.DelayedStrategyParams memory params = IUniV3VaultGovernance.DelayedStrategyParams({
             safetyIndicesSet: 2
         });
@@ -291,32 +278,20 @@ contract LStrategyDeployment is Script {
     }
 
     function run() external {
-        vm.startBroadcast();
-
-        ERC20RootVault singleton = new ERC20RootVault();
-
-        IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
-        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
-
-        IERC20RootVaultGovernance.DelayedProtocolParams memory paramsB = IERC20RootVaultGovernance.DelayedProtocolParams({
-            managementFeeChargeDelay: 0,
-            oracle: IOracle(mellowOracle)
-        });
-
-        IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
-            protocolGovernance: protocolGovernance,
-            registry: vaultRegistry,
-            singleton: singleton
-        });
-
-        IERC20RootVaultHelper helper = new ERC20RootVaultHelper();
-
-        IERC20RootVaultGovernance rootVaultGovernance = new ERC20RootVaultGovernance(paramsA, paramsB, helper);
-        console2.log(address(rootVaultGovernance));
-        return;
+        vm.startBroadcast(deployer);
 
         uint256 startNft = kek();
         buildInitialPositions(width, startNft);
+
+        address[] memory depositors = new address[](1);
+        depositors[0] = depositor;
+
+        address erc20RootVault = IVaultRegistry(registry).vaultForNft(startNft + 3);
+
+        IERC20RootVault(erc20RootVault).addDepositorsToAllowlist(depositors);
+
+        IVaultRegistry(registry).transferFrom(deployer, sAdmin, startNft + 3);
+
         bytes32 ADMIN_ROLE =
         bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
         bytes32 ADMIN_DELEGATE_ROLE =
@@ -326,11 +301,14 @@ contract LStrategyDeployment is Script {
 
         lstrategy.grantRole(ADMIN_ROLE, sAdmin);
         lstrategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
-        lstrategy.grantRole(ADMIN_DELEGATE_ROLE, address(this));
+        lstrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
         lstrategy.grantRole(OPERATOR_ROLE, sAdmin);
-        lstrategy.revokeRole(OPERATOR_ROLE, address(this));
-        lstrategy.revokeRole(ADMIN_DELEGATE_ROLE, address(this));
-        lstrategy.revokeRole(ADMIN_ROLE, address(this));
+        lstrategy.revokeRole(OPERATOR_ROLE, deployer);
+        lstrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
+        lstrategy.revokeRole(ADMIN_ROLE, deployer);
+
+        console2.log("Root Vault: ", address(erc20RootVault));
+        console2.log("Strategy: ", address(lstrategy));
     }
 
 }
