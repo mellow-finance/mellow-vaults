@@ -209,8 +209,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             );
         }
 
-        require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
+        require(lpAmount >= minLpTokens && lpAmount > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(vaultGovernance)
             .strategyParams(thisNft);
         require(
