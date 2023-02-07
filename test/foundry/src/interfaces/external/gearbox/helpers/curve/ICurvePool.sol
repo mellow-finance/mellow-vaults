@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 interface ICurvePool {
     function coins(uint256 i) external view returns (address);
 
+    function add_liquidity(uint256[2] memory, uint256) external payable;
+
     function underlying_coins(uint256 i) external view returns (address);
 
     function balances(uint256 i) external view returns (uint256);
@@ -43,6 +45,8 @@ interface ICurvePool {
     function get_virtual_price() external view returns (uint256);
 
     function token() external view returns (address);
+
+    function lp_token() external view returns (address);
 
     function remove_liquidity_one_coin(
         uint256 _token_amount,
