@@ -144,7 +144,7 @@ contract PolygonDeployment is Script {
             })
         );
     }
-/*
+
     function kek() public payable returns (uint256 startNft) {
 
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
@@ -196,7 +196,7 @@ contract PolygonDeployment is Script {
             });
 
             IERC20RootVaultHelper helper2 = ERC20RootVaultHelper(rootHelper);
-            IAaveVaultGovernance aaveVaultGovernance = AaveVaultGovernance(0x23cFd69D457C4a923705aadc02A4eb1C5f01A833);
+            IAaveVaultGovernance aaveVaultGovernance = AaveVaultGovernance(0xDAa3EA9b01B0De4eE093afe70B341417F54a7e46);
             rootVaultGovernance = ERC20RootVaultGovernance(0x737755012FF7a710DDA6Ce69dA1085186e07D338);
 
            // console2.log("aaveGovernance", address(aaveVaultGovernance));
@@ -205,6 +205,7 @@ contract PolygonDeployment is Script {
            // return 0;
        //     console2.log("aaveGovernance", address(aaveVaultGovernance));
          //   console2.log("rootGovernance", address(rootVaultGovernance));
+         /*
             {
 
                 uint8[] memory grants = new uint8[](1);
@@ -217,6 +218,7 @@ contract PolygonDeployment is Script {
                 protocolGovernance.commitPermissionGrants(address(aaveVaultGovernance));
                 protocolGovernance.commitPermissionGrants(address(rootVaultGovernance));
             }
+            */
 
             uniV3VaultGovernance.createVault(tokens, deployer, 500, address(helper));
             aaveVaultGovernance.createVault(tokens, deployer);
@@ -257,9 +259,12 @@ contract PolygonDeployment is Script {
         setupSecondPhase(usdc, weth);
         return uniV3LowerVaultNft;
     }
-*/
+
     function run() public {
 
+        vm.startBroadcast();
+
+/*
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
@@ -293,8 +298,12 @@ contract PolygonDeployment is Script {
         dstrategy.rebalance();
         IERC20RootVault(0xBb5317A8Df6Cbc4BE7B5385ddA95075b9D49ff9d).deposit(A, 0, B);
         return;
+*/
+        uint256 startNft = kek();
+        console2.log(startNft);
 
-        uint256 startNft = 395;
+        return;
+
         buildInitialPositions(startNft);
 /*
         uint8[] memory grants = new uint8[](2);
