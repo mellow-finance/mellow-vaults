@@ -19,6 +19,7 @@ import "../../src/vaults/ERC20VaultGovernance.sol";
 import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
 import "../../src/utils/GearboxHelper.sol";
+import "../../src/utils/GearboxDepositHelper.sol";
 
 import "../../src/external/ConvexBaseRewardPool.sol";
 
@@ -1377,6 +1378,36 @@ contract GearboxUSDCTest is Test {
         console2.log(IERC20(usdc).balanceOf(address(this)));
 
         assertTrue(IERC20(usdc).balanceOf(address(this)) == 0);
+    }
+
+    function testNewHelperWorks() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        GearboxDepositHelper h = new GearboxDepositHelper(address(this));
+
+        h.changeMaxDeltaD(3*10**9);
+
+        deal(usdc, address(this), 10**6);
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 10**6;
+
+        IERC20(usdc).approve(address(h), type(uint256).max);
+        h.deposit(IGearboxRootVault(rootVault), amounts, 0, "");
+    }
+
+    function testFailNewHelperWithTooSmallFactor() public {
+        deposit(FIRST_DEPOSIT, address(this));
+        GearboxDepositHelper h = new GearboxDepositHelper(address(this));
+
+        h.changeMaxDeltaD(11*10**8);
+
+        deal(usdc, address(this), 10**6);
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 10**6;
+
+        IERC20(usdc).approve(address(h), type(uint256).max);
+        h.deposit(IGearboxRootVault(rootVault), amounts, 0, "");
     }
 
 

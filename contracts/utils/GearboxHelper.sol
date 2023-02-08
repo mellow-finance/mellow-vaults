@@ -140,7 +140,7 @@ contract GearboxHelper {
         }
     }
 
-    function verifyInstances(address vaultGovernance) external returns (address, uint256) {
+    function verifyInstances() external returns (address, uint256) {
         require(msg.sender == address(gearboxVault), ExceptionsLibrary.FORBIDDEN);
 
         ICurveV1Adapter curveAdapter_ = ICurveV1Adapter(curveAdapter);
@@ -235,8 +235,6 @@ contract GearboxHelper {
             protocolParams.cvx,
             primaryToken
         );
-
-        uint256 valueExtraToUsd = 0;
 
         IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {

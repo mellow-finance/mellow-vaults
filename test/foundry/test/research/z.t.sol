@@ -34,6 +34,7 @@ contract Z is Test {
     address gusd = 0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd;
 
     function test() public {
+        /*
         ICurvePool pool = ICurvePool(0x4f062658EaAF2C1ccf8C8e36D6824CDf41167956);
         uint256 use = 10**22;
         deal(gusd, address(this), use);
@@ -48,6 +49,7 @@ contract Z is Test {
 
         console2.log(use);
         console2.log(G);
+        */
     }
         
 

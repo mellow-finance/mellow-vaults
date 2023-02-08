@@ -161,7 +161,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         helper.setAdapters(curveAdapter, convexAdapter);
-        (convexOutputToken, poolId) = helper.verifyInstances(address(_vaultGovernance));
+        (convexOutputToken, poolId) = helper.verifyInstances();
         require(_poolsAllowList.contains(poolId), ExceptionsLibrary.FORBIDDEN);
         helper.openCreditAccount(address(_vaultGovernance), marginalFactorD9);
 

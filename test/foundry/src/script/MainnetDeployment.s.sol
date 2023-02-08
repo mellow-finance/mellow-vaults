@@ -280,7 +280,12 @@ contract MainnetDeployment is Script {
     }
 
     function run() external {
-        vm.startBroadcast(deployer);
+        vm.startBroadcast(0x136348814f89fcbF1a0876Ca853D48299AFB8b3c);
+
+        IGearboxVault x = IGearboxVault(0xd3899b49B007128Ce5A0CA002ac1a62e679AacA5);
+        x.updateTargetMarginalFactor(86 * 10**8);
+
+        return;
 
        // uint256 startNft = kek();
         uint256 startNft = 212;
