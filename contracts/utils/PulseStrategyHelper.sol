@@ -77,7 +77,7 @@ contract PulseStrategyHelper {
         }
 
         uint256 tokenInIndex;
-        (amount, tokenInIndex) = strategy.calculateAmountsForSwap(
+        (tokenInIndex, amount) = strategy.calculateAmountsForSwap(
             immutableParams,
             mutableParams,
             priceX96,

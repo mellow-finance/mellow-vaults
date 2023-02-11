@@ -266,6 +266,9 @@ const config: HardhatUserConfig = {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
             rinkeby: "0x2ca788280fb10384946d3ecc838d94deca505cf4",
         },
+        aggregationRouterV5: {
+            default: "0x1111111254eeb25477b68fb85ed929f73a960582",
+        },
         dai: {
             default: "0x6b175474e89094c44da98b954eedeac495271d0f",
             kovan: "0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa",
