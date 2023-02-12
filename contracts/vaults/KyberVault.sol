@@ -28,37 +28,17 @@ contract KyberVault is IKyberVault, IntegrationVault {
     KyberHelper private _kyberHelper;
 
     // -------------------  EXTERNAL, VIEW  -------------------
-/*
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        uint256 uniV3Nft_ = uniV3Nft;
-        if (uniV3Nft_ == 0) {
+        if (kyberNft == 0) {
             return (new uint256[](2), new uint256[](2));
         }
 
-        address vaultGovernance_ = address(_vaultGovernance);
-        IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(vaultGovernance_)
-            .delayedProtocolParams();
-        IUniV3VaultGovernance.DelayedStrategyParams memory strategyParams = IUniV3VaultGovernance(vaultGovernance_)
-            .delayedStrategyParams(_nft);
-        // cheaper way to calculate tvl by spot price
-        if (strategyParams.safetyIndicesSet == 2) {
-            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-            minTokenAmounts = _uniV3Helper.calculateTvlBySqrtPriceX96(uniV3Nft_, sqrtPriceX96);
-            maxTokenAmounts = minTokenAmounts;
-        } else {
-            (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(
-                params.oracle,
-                strategyParams.safetyIndicesSet
-            );
-            (minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculateTvlByMinMaxPrices(
-                uniV3Nft_,
-                minPriceX96,
-                maxPriceX96
-            );
-        }
+        (uint160 sqrtPriceX96, , ,) = pool.getPoolState();
+        minTokenAmounts = _kyberHelper.calculateTvlBySqrtPriceX96(kyberNft, sqrtPriceX96);
     }
-*/
+
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IKyberVault).interfaceId);
@@ -71,12 +51,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     /// @inheritdoc IKyberVault
     function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = _kyberHelper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft);
+        tokenAmounts = _kyberHelper.liquidityToTokenAmounts(liquidity, pool, kyberNft);
     }
 
     /// @inheritdoc IKyberVault
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) public view returns (uint128 liquidity) {
-        liquidity = _kyberHelper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft);
+        liquidity = _kyberHelper.tokenAmountsToLiquidity(tokenAmounts, pool, kyberNft);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -106,17 +86,17 @@ contract KyberVault is IKyberVault, IntegrationVault {
     ) external returns (bytes4) {
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
-        (, , address token0, address token1, uint24 fee, , , , , , , ) = _positionManager.positions(tokenId);
+        (, IBasePositionManager.PoolInfo memory poolInfo) = _positionManager.positions(tokenId);
+
         // new position should have vault tokens
         require(
-            token0 == _vaultTokens[0] && token1 == _vaultTokens[1] && fee == pool.fee(),
+            poolInfo.token0 == _vaultTokens[0] && poolInfo.token1 == _vaultTokens[1] && poolInfo.fee == pool.swapFeeUnits(),
             ExceptionsLibrary.INVALID_TOKEN
         );
 
         if (kyberNft != 0) {
-            (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = _positionManager
-                .positions(kyberNft);
-            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.INVALID_VALUE);
+            (IBasePositionManager.Position memory position, ) = _positionManager.positions(tokenId);
+            require(position.liquidity == 0 && position.rTokenOwed == 0, ExceptionsLibrary.INVALID_VALUE);
             // return previous uni v3 position nft
             _positionManager.transferFrom(address(this), from, kyberNft);
         }
@@ -131,14 +111,16 @@ contract KyberVault is IKyberVault, IntegrationVault {
         address owner = registry.ownerOf(_nft);
         address to = _root(registry, _nft, owner).subvaultAt(0);
         collectedEarnings = new uint256[](2);
-        (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: uniV3Nft,
-                recipient: to,
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
+
+        (, uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager.burnRTokens(
+            IBasePositionManager.BurnRTokenParams({
+                tokenId: kyberNft,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp + 1
             })
         );
+        
         collectedEarnings[0] = collectedEarnings0;
         collectedEarnings[1] = collectedEarnings1;
         emit CollectedEarnings(tx.origin, msg.sender, to, collectedEarnings0, collectedEarnings1);
@@ -161,24 +143,6 @@ contract KyberVault is IKyberVault, IntegrationVault {
         return false;
     }
 
-    function _getMinMaxPrice(IOracle oracle, uint32 safetyIndicesSet)
-        internal
-        view
-        returns (uint256 minPriceX96, uint256 maxPriceX96)
-    {
-        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndicesSet);
-        require(prices.length >= 1, ExceptionsLibrary.INVARIANT);
-        minPriceX96 = prices[0];
-        maxPriceX96 = prices[0];
-        for (uint32 i = 1; i < prices.length; ++i) {
-            if (prices[i] < minPriceX96) {
-                minPriceX96 = prices[i];
-            } else if (prices[i] > maxPriceX96) {
-                maxPriceX96 = prices[i];
-            }
-        }
-    }
-
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -187,7 +151,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         returns (uint256[] memory actualTokenAmounts)
     {
         actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0) return actualTokenAmounts;
+        if (kyberNft == 0) return actualTokenAmounts;
 
         uint128 liquidity = tokenAmountsToLiquidity(tokenAmounts);
 
@@ -201,9 +165,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
             Options memory opts = _parseOptions(options);
             Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
             Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-            (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
-                INonfungiblePositionManager.IncreaseLiquidityParams({
-                    tokenId: uniV3Nft,
+            (, uint256 amount0, uint256 amount1, ) = _positionManager.addLiquidity(
+                IBasePositionManager.IncreaseLiquidityParams({
+                    tokenId: kyberNft,
                     amount0Desired: amounts.a0,
                     amount1Desired: amounts.a1,
                     amount0Min: minAmounts.a0,
@@ -228,40 +192,39 @@ contract KyberVault is IKyberVault, IntegrationVault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         // UniV3Vault should have strictly 2 vault tokens
         actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0) return actualTokenAmounts;
+        if (kyberNft == 0) return actualTokenAmounts;
 
         Options memory opts = _parseOptions(options);
-        Pair memory amounts = _pullUniV3Nft(tokenAmounts, to, opts);
+        Pair memory amounts = _pullUniV3Nft(to, tokenAmounts, opts);
         actualTokenAmounts[0] = amounts.a0;
         actualTokenAmounts[1] = amounts.a1;
     }
 
     function _pullUniV3Nft(
+        address to, 
         uint256[] memory tokenAmounts,
-        address to,
         Options memory opts
     ) internal returns (Pair memory) {
         uint128 liquidityToPull;
         // scope the code below to avoid stack-too-deep exception
         {
-            (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager.positions(
-                uniV3Nft
-            );
-            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-            liquidityToPull = _uniV3Helper.tokenAmountsToMaximalLiquidity(
+            (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
+
+            (uint160 sqrtPriceX96, , ,) = pool.getPoolState();
+            liquidityToPull = _kyberHelper.tokenAmountsToMaximalLiquidity(
                 sqrtPriceX96,
-                tickLower,
-                tickUpper,
+                position.tickLower,
+                position.tickUpper,
                 tokenAmounts[0],
                 tokenAmounts[1]
             );
-            liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
+            liquidityToPull = position.liquidity < liquidityToPull ? position.liquidity : liquidityToPull;
         }
         if (liquidityToPull != 0) {
             Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-            _positionManager.decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
-                    tokenId: uniV3Nft,
+            _positionManager.removeLiquidity(
+                IBasePositionManager.RemoveLiquidityParams({
+                    tokenId: kyberNft,
                     liquidity: liquidityToPull,
                     amount0Min: minAmounts.a0,
                     amount1Min: minAmounts.a1,
@@ -269,14 +232,19 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 })
             );
         }
-        (uint256 amount0Collected, uint256 amount1Collected) = _positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: uniV3Nft,
-                recipient: to,
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
+
+        (, uint256 amount0Collected, uint256 amount1Collected) = _positionManager.burnRTokens(
+            IBasePositionManager.BurnRTokenParams({
+                tokenId: kyberNft,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp + 1
             })
         );
+
+        IERC20(_vaultTokens[0]).safeTransferFrom(address(this), to, amount0Collected);
+        IERC20(_vaultTokens[1]).safeTransferFrom(address(this), to, amount1Collected);
+
         amount0Collected = amount0Collected > tokenAmounts[0] ? tokenAmounts[0] : amount0Collected;
         amount1Collected = amount1Collected > tokenAmounts[1] ? tokenAmounts[1] : amount1Collected;
         return Pair({a0: amount0Collected, a1: amount1Collected});
