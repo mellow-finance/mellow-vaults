@@ -48,7 +48,6 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     /// @inheritdoc IKyberVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
         require(address(params.positionManager) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(address(params.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
