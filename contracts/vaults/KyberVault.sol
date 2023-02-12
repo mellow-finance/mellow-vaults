@@ -35,7 +35,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
             return (new uint256[](2), new uint256[](2));
         }
 
-        (uint160 sqrtPriceX96, , ,) = pool.getPoolState();
+        (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
         minTokenAmounts = _kyberHelper.calculateTvlBySqrtPriceX96(kyberNft, sqrtPriceX96);
     }
 
@@ -70,9 +70,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
         _positionManager = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
-        pool = IPool(
-            IFactory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
-        );
+        pool = IPool(IFactory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_));
         _kyberHelper = KyberHelper(kyberHepler_);
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
@@ -90,7 +88,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
         // new position should have vault tokens
         require(
-            poolInfo.token0 == _vaultTokens[0] && poolInfo.token1 == _vaultTokens[1] && poolInfo.fee == pool.swapFeeUnits(),
+            poolInfo.token0 == _vaultTokens[0] &&
+                poolInfo.token1 == _vaultTokens[1] &&
+                poolInfo.fee == pool.swapFeeUnits(),
             ExceptionsLibrary.INVALID_TOKEN
         );
 
@@ -120,7 +120,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 deadline: block.timestamp + 1
             })
         );
-        
+
         collectedEarnings[0] = collectedEarnings0;
         collectedEarnings[1] = collectedEarnings1;
         emit CollectedEarnings(tx.origin, msg.sender, to, collectedEarnings0, collectedEarnings1);
@@ -201,7 +201,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
     }
 
     function _pullUniV3Nft(
-        address to, 
+        address to,
         uint256[] memory tokenAmounts,
         Options memory opts
     ) internal returns (Pair memory) {
@@ -210,7 +210,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         {
             (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
 
-            (uint160 sqrtPriceX96, , ,) = pool.getPoolState();
+            (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
             liquidityToPull = _kyberHelper.tokenAmountsToMaximalLiquidity(
                 sqrtPriceX96,
                 position.tickLower,

@@ -30,10 +30,7 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     /// @inheritdoc IKyberVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return
-                DelayedProtocolParams({
-                    positionManager: IBasePositionManager(address(0))
-                });
+            return DelayedProtocolParams({positionManager: IBasePositionManager(address(0))});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
