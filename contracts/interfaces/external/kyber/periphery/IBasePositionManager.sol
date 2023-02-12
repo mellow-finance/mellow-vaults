@@ -6,7 +6,7 @@ import {IRouterTokenHelper} from './IRouterTokenHelper.sol';
 import {IBasePositionManagerEvents} from './base_position_manager/IBasePositionManagerEvents.sol';
 import {IERC721Permit} from './IERC721Permit.sol';
 
-interface IBasePositionManager is IRouterTokenHelper, IBasePositionManagerEvents {
+interface IBasePositionManager is IRouterTokenHelper, IBasePositionManagerEvents, IERC721Permit {
   struct Position {
     // the nonce for permits
     uint96 nonce;
@@ -166,6 +166,8 @@ interface IBasePositionManager is IRouterTokenHelper, IBasePositionManagerEvents
   function addressToPoolId(address pool) external view returns (uint80);
 
   function isRToken(address token) external view returns (bool);
+
+  function factory() external view returns (address);
 
   function nextPoolId() external view returns (uint80);
 
