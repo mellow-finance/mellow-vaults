@@ -116,6 +116,10 @@ library QtyDeltaMath {
     return FullMath.mulDivFloor(liquidity, sqrtP, C.TWO_POW_96);
   }
 
+  function getQtysFromBurnRTokens(uint160 sqrtP, uint256 liquidity) internal pure returns (uint256, uint256) {
+    return (getQty0FromBurnRTokens(sqrtP, liquidity), getQty1FromBurnRTokens(sqrtP, liquidity));
+  }
+
   /// @notice Returns ceil(x / y)
   /// @dev division by 0 has unspecified behavior, and must be checked externally
   /// @param x The dividend

@@ -104,6 +104,10 @@ contract KyberHelper {
             position.liquidity,
             false
         );
+
+        (uint256 feeAmount0, uint256 feeAmount1) = QtyDeltaMath.getQtysFromBurnRTokens(sqrtPriceX96, position.liquidity);
+        tokenAmounts[0] += feeAmount0;
+        tokenAmounts[1] += feeAmount1;
     }
     
 }
