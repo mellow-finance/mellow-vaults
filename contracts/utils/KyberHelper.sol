@@ -11,7 +11,6 @@ import "../libraries/external/QtyDeltaMath.sol";
 import "../libraries/external/TickMath.sol";
 
 contract KyberHelper {
-    
     IBasePositionManager public immutable positionManager;
 
     constructor(IBasePositionManager positionManager_) {
@@ -28,7 +27,7 @@ contract KyberHelper {
 
         (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
 
-        (uint160 sqrtPriceX96, , ,) = pool.getPoolState();
+        (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -46,10 +45,9 @@ contract KyberHelper {
         IPool pool,
         uint256 kyberNft
     ) external view returns (uint128 liquidity) {
-
         (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
 
-        (uint160 sqrtPriceX96, , ,) = pool.getPoolState();
+        (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(position.tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(position.tickUpper);
 
@@ -105,9 +103,11 @@ contract KyberHelper {
             false
         );
 
-        (uint256 feeAmount0, uint256 feeAmount1) = QtyDeltaMath.getQtysFromBurnRTokens(sqrtPriceX96, position.liquidity);
+        (uint256 feeAmount0, uint256 feeAmount1) = QtyDeltaMath.getQtysFromBurnRTokens(
+            sqrtPriceX96,
+            position.liquidity
+        );
         tokenAmounts[0] += feeAmount0;
         tokenAmounts[1] += feeAmount1;
     }
-    
 }
