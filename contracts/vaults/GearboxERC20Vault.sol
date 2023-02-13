@@ -5,10 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import "./IntegrationVault.sol";
+
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "./IntegrationVault.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
+import "../interfaces/external/gearbox/helpers/curve/ICurvePool.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
@@ -16,7 +18,9 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
     uint256 public constant EMPTY = 0;
     uint256 public constant PARTIAL = 1; 
     uint256 public constant FULL = 2;  
+
     uint256 public constant D9 = 10**9;
+    uint256 public constant Q96 = 2**96;
 
     uint256 public constant MAX_LENGTH = 126;
 
@@ -109,6 +113,11 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         }
     }
 
+    function _getTvl(address vault) internal {
+        (uint256[] memory vaultTvls, ) = IGearboxVault.tvl();
+        return vaultTvls[0];
+    }
+
     function _depositTo(uint256 index, uint256 mask, uint256 amount, uint256 status) internal returns (uint256, uint256) {
 
         IGearboxVault vault = IGearboxVault(subvaultsList[index]);
@@ -121,9 +130,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
             }
         }
 
-        (uint256[] tvlsList, ) = IGearboxVault(subvaultsList[index]).tvl();
-
-        uint256 vaultTvl = tvlsList[0];
+        uint256 vaultTvl = _getTvl(subvaultsList[index]);
         uint256 limit = limitsList.at(index);
 
         if (vaultTvl >= limit) {
@@ -173,6 +180,69 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
 
         totalDeposited = remainingDeposited;
         subvaultsStatusMask = mask;
+    }
+
+    function withdraw(uint256 tvlBefore, uint256 shareD) external returns (uint256 withdrawn) {
+        uint256 vaultCount = subvaultsList.length;
+
+        uint256 toWithdraw = FullMath.mulDiv(tvlBefore, shareD, D9);
+        uint256 mask = subvaultsStatusMask;
+
+        if (totalDeposited > toWithdraw) {
+            totalDeposited -= toWithdraw;
+            return toWithdraw;
+        }
+
+        toWithdraw -= totalDeposited;
+
+        totalDeposited = 0;
+
+        for (uint256 helpI = 0; helpI < 2 * vaultCount && toWithdraw > 0; ++helpI) {
+
+            uint256 i = helpI;
+            if (helpI >= vaultCount) {
+                i = 2*vaultCount - helpI - 1;
+            }
+
+            if (limitsList[i] < toWithdraw) {
+                continue;
+            }
+            uint256 status = (mask & (3 << (2 * i))) >> (2 * i);
+            if (status == PARTIAL) {
+                uint256 partialVaultTvl = _getTvl(subvaultsList[i]);
+                if (partialVaultTvl < toWithdraw) {
+                    continue;
+                }
+                mask ^= (1 << (2 * i));
+            }
+            mask ^= (1 << (2 * i + 1));
+            IGearboxVault(subvaultsList[i]).closeCreditAccount();
+
+            uint256 vaultTvl = _getTvl(subvaultsList[i]);
+
+            uint256[] tokenAmounts = new uint256[](1);
+            tokenAmounts[0] = vaultTvl;
+            IGearboxVault(subvaultsList[i]).pull(address(this), _vaultTokens, tokenAmounts, "");
+
+            if (vaultTvl <= toWithdraw) {
+                toWithdraw -= vaultTvl;
+            }
+
+            else {
+                toWithdraw = 0;
+            }
+        }
+
+        uint256 newTvl = tvlBefore; ////////// CHANGE!!!
+        uint256 loss = 0;
+
+        if (newTvl < tvlBefore) {
+            loss = tvlBefore - newTvl;
+        }
+
+        subvaultsStatusMask = mask;
+
+        return FullMath.mulDiv(tvlBefore, shareD, D9) - loss;
     }
 
     function setAdapters(address curveAdapter_, address convexAdapter_) external {

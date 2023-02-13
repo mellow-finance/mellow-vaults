@@ -175,8 +175,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     function closeCreditAccount() external {
         GearboxHelper helper_ = helper;
 
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(registry.ownerOf(_nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
