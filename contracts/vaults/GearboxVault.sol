@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
 import "../interfaces/external/gearbox/helpers/IDegenDistributor.sol";
+import "../interfaces/vaults/IAggregateVault.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
@@ -388,7 +389,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     function _isERC20Vault(address addr) internal returns (bool) {
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address rootVault = registry.ownerOf(nft_);
+        address rootVault = registry.ownerOf(_nft);
         address erc20Vault = IAggregateVault(rootVault).subvaultAt(0);
         
         return (erc20Vault == addr);

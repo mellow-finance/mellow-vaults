@@ -8,12 +8,12 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./IntegrationVault.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
-import "../interfaces/vaults/IERC20Vault.sol";
+import "../interfaces/vaults/IGearboxERC20Vault.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/external/gearbox/helpers/curve/ICurvePool.sol";
 
 /// @notice Vault that stores ERC20 tokens.
-contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
+contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     uint256 public constant EMPTY = 0;
     uint256 public constant PARTIAL = 1; 
@@ -29,14 +29,22 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
     address[] public subvaultsList;
     uint256[] public limitsList;
     
+    /// @inheritdoc IGearboxERC20Vault
     uint256 public subvaultsStatusMask;
+
+    /// @inheritdoc IGearboxERC20Vault
     uint256 public totalDeposited;
 
+    /// @inheritdoc IGearboxERC20Vault
     address public curveAdapter;
+
+    /// @inheritdoc IGearboxERC20Vault
     address public convexAdapter;
 
-    uint256 totalLimit;
+    /// @inheritdoc IGearboxERC20Vault
+    uint256 public totalLimit;
 
+    /// @inheritdoc IGearboxERC20Vault
     function adjustAllPositions() external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
@@ -45,6 +53,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         }
     }
 
+    /// @inheritdoc IGearboxERC20Vault
     function addSubvault(address addr, uint256 limit) external {
 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
@@ -66,6 +75,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         _makeSorted();
     }
 
+    /// @inheritdoc IGearboxERC20Vault
     function changeLimit(uint256 index, uint256 limit) public {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(index < subvaultsList.length, ExceptionsLibrary.INVALID_TARGET);
@@ -87,6 +97,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         _makeSorted();
     }
 
+    /// @inheritdoc IGearboxERC20Vault
     function changeLimitAndFactor(uint256 index, uint256 limit, uint256 factor) external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
@@ -113,8 +124,8 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         }
     }
 
-    function _getTvl(address vault) internal {
-        (uint256[] memory vaultTvls, ) = IGearboxVault.tvl();
+    function _getTvl(address vault) internal returns (uint256) {
+        (uint256[] memory vaultTvls, ) = IGearboxVault(vault).tvl();
         return vaultTvls[0];
     }
 
@@ -131,7 +142,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         }
 
         uint256 vaultTvl = _getTvl(subvaultsList[index]);
-        uint256 limit = limitsList.at(index);
+        uint256 limit = limitsList[index];
 
         if (vaultTvl >= limit) {
             return (mask, amount);
@@ -147,6 +158,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         vault.adjustPosition();
     }
 
+    /// @inheritdoc IGearboxERC20Vault
     function distributeDeposits() external {
 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
@@ -182,6 +194,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         subvaultsStatusMask = mask;
     }
 
+    /// @inheritdoc IGearboxERC20Vault
     function withdraw(uint256 tvlBefore, uint256 shareD) external returns (uint256 withdrawn) {
         uint256 vaultCount = subvaultsList.length;
 
@@ -220,7 +233,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
 
             uint256 vaultTvl = _getTvl(subvaultsList[i]);
 
-            uint256[] tokenAmounts = new uint256[](1);
+            uint256[] memory tokenAmounts = new uint256[](1);
             tokenAmounts[0] = vaultTvl;
             IGearboxVault(subvaultsList[i]).pull(address(this), _vaultTokens, tokenAmounts, "");
 
@@ -245,6 +258,7 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         return FullMath.mulDiv(tvlBefore, shareD, D9) - loss;
     }
 
+    /// @inheritdoc IGearboxERC20Vault
     function setAdapters(address curveAdapter_, address convexAdapter_) external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
@@ -252,21 +266,23 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
         convexAdapter = convexAdapter_;
     }
 
+    /// @inheritdoc IGearboxERC20Vault
+    function calculatePoolsFeeD() external returns (uint256) {
+        return IGearboxVault(subvaultsList[0]).calculatePoolsFeeD();
+    }
+
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        address[] memory tokens = _vaultTokens;
-        uint256 len = tokens.length;
-        minTokenAmounts = new uint256[](len);
-        for (uint256 i = 0; i < len; ++i) {
-            minTokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
-        }
+        minTokenAmounts = new uint256[](1);
+        minTokenAmounts[0] = IERC20(_vaultTokens[0]).balanceOf(address(this));
+
         maxTokenAmounts = minTokenAmounts;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-    /// @inheritdoc IERC20Vault
+    /// @inheritdoc IGearboxERC20Vault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
     }
@@ -332,6 +348,6 @@ contract GearboxERC20Vault is IERC20Vault, IntegrationVault {
 
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IGearboxERC20Vault).interfaceId);
     }
 }

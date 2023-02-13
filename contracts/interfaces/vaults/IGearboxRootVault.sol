@@ -32,9 +32,6 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
 
-    /// @notice Gearbox vault that is the second subvault of the system
-    function gearboxVault() external view returns (IGearboxVault);
-
     /// @notice ERC20 vault that is the first subvault of the system
     function erc20Vault() external view returns (IIntegrationVault);
 
