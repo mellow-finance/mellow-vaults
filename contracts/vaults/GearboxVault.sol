@@ -146,7 +146,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function openCreditAccount(address curveAdapter, address convexAdapter) external {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
         require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 
@@ -218,7 +218,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function adjustPosition() public {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
 
         if (creditAccount == address(0)) {
@@ -384,6 +384,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         creditFacade_.multicall(calls);
         token.safeApprove(creditManagerAddress, 0);
+    }
+
+    function _isERC20Vault(address addr) internal returns (bool) {
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        address rootVault = registry.ownerOf(nft_);
+        address erc20Vault = IAggregateVault(rootVault).subvaultAt(0);
+        
+        return (erc20Vault == addr);
     }
 
     // --------------------------  EVENTS  --------------------------

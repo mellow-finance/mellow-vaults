@@ -33,8 +33,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     EnumerableSet.AddressSet private _instantWithdrawersList;
 
     /// @inheritdoc IGearboxRootVault
-    IGearboxVault public gearboxVault;
-    /// @inheritdoc IGearboxRootVault
     IIntegrationVault public erc20Vault;
     /// @inheritdoc IGearboxRootVault
     address public primaryToken;
@@ -144,7 +142,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
 
         erc20Vault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(0));
-        gearboxVault = IGearboxVault(IAggregateVault(address(this)).subvaultAt(1));
         primaryToken = vaultTokens_[0];
 
         currentEpoch = 1;
@@ -225,7 +222,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             _mint(msg.sender, lpAmount);
         }
 
-        actualTokenAmounts = _pushIntoGearbox(tokenAmounts[0], vaultOptions);
+        actualTokenAmounts = _push(tokenAmounts[0], vaultOptions);
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
@@ -469,21 +466,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         withdrawalRequests[addr] = 0;
         latestRequestEpoch[addr] = 0;
-    }
-
-    function _pushIntoGearbox(uint256 amount, bytes memory vaultOptions)
-        internal
-        returns (uint256[] memory actualTokenAmounts)
-    {
-        IIntegrationVault gearboxVault_ = gearboxVault;
-        address primaryToken_ = primaryToken;
-
-        uint256[] memory tokenAmounts = new uint256[](1);
-        tokenAmounts[0] = amount;
-
-        IERC20(primaryToken_).safeIncreaseAllowance(address(gearboxVault_), amount);
-        actualTokenAmounts = gearboxVault_.transferAndPush(address(this), _vaultTokens, tokenAmounts, vaultOptions);
-        IERC20(primaryToken_).safeApprove(address(gearboxVault_), 0);
     }
 
     function _makeWithdraw(
