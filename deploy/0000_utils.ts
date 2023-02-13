@@ -15,8 +15,8 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 // 2e10 for mainnet
 // 1e11 for polygon
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: ethers.BigNumber.from(100).mul(10 ** 9),
-    maxPriorityFeePerGas: ethers.BigNumber.from(100).mul(10 ** 9),
+    maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+    maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
 };
 
 export const ALLOWED_APPROVE_LIST = {
@@ -304,8 +304,8 @@ export const combineVaults = async (
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
         tokenLimit = ethers.constants.MaxUint256,
-        managementFee = 2 * 10 ** 7,
-        performanceFee = 2 * 10 ** 7,
+        managementFee = 0,
+        performanceFee = 0,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
@@ -342,7 +342,7 @@ export const combineVaults = async (
             log("Adding admin to depositors");
             const tx =
                 await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
-                    [admin, deployer, '0xC6576F7F84E75B89DB0ad847d796760ba8Fda5f9']
+                    [admin]
                 );
             const [operator] = await hre.ethers.getSigners();
             const txResp = await operator.sendTransaction({
