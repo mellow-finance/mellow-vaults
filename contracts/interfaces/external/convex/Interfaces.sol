@@ -72,6 +72,7 @@ interface IRewards{
     function queueNewRewards(uint256) external;
     function notifyRewardAmount(uint256) external;
     function addExtraReward(address) external;
+    function rewardPerToken() external view returns (uint256);
     function stakingToken() external view returns (address);
     function rewardToken() external view returns(address);
     function earned(address account) external view returns (uint256);

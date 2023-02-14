@@ -11,6 +11,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxERC20Vault.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/external/gearbox/helpers/curve/ICurvePool.sol";
+import "../interfaces/external/gearbox/helpers/IPoolService.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
@@ -20,6 +21,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     uint256 public constant FULL = 2;  
 
     uint256 public constant D9 = 10**9;
+    uint256 public constant D27 = 10**27;
     uint256 public constant Q96 = 2**96;
 
     uint256 public constant MAX_LENGTH = 126;
@@ -57,8 +59,12 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     function addSubvault(address addr, uint256 limit) external {
 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-
         IGearboxVault vault = IGearboxVault(addr);
+        if (subvaultsList.length > 0) {
+            bool statusGeneric = (IGearboxVault(subvaultsList[0]).primaryToken() == IGearboxVault(subvaultsList[0]).depositToken());
+            bool statusNew = (vault.primaryToken() == vault.depositToken());
+            require(statusGeneric == statusNew, ExceptionsLibrary.INVARIANT);
+        }
 
         require(subvaultsList.length < MAX_LENGTH, ExceptionsLibrary.INVALID_LENGTH);
 
@@ -273,10 +279,103 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    uint256 totalConvexLpTokens;
+
+    uint256 cumulativeSumRAY;
+    uint256 totalBorrowedAmount;
+
+    uint256 totalEarnedCRV;
+    uint256 cumulativeSumCRVRay;
+
+    uint256 totalEarnedLDO;
+    uint256 cumulativeSumLDORay;
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         minTokenAmounts = new uint256[](1);
-        minTokenAmounts[0] = IERC20(_vaultTokens[0]).balanceOf(address(this));
+
+        IERC20 token = IERC20(_vaultTokens[0]);
+        if (subvaultsList.length == 0) {
+            return (minTokenAmounts, maxTokenAmounts);
+        }
+
+        IGearboxVault sampleVault = IGearboxVault(subvaultsList[0]);
+        ICreditManagerV2 creditManager = sampleVault.creditManager();
+        GearboxHelper helper = sampleVault.helper();
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(address(sampleVault.vaultGovernance())).delayedProtocolParams();
+        IPriceOracleV2 oracle = helper.oracle();
+        address primaryToken = sampleVault.primaryToken();
+        address depositToken = address(token);
+        IOracle mellowOracle = helper.mellowOracle();
+
+        uint256 totalPrimaryTokenAmount;
+
+        {
+
+            if (depositToken != primaryToken) {
+                for (uint256 i = 0; i < subvaultsList.length; ++i) {
+                    address ca = IGearboxVault(subvaultsList[i]).getCreditAccount();
+                    if (ca != address(0)) {
+                        minTokenAmounts[0] += token.balanceOf(ca);
+                    }
+                }
+            }
+
+        }
+
+        {
+
+            totalPrimaryTokenAmount += helper.calcTotalWithdraw(totalConvexLpTokens);
+
+        }
+
+        {
+        
+            uint256 totalBorrowedWithInterest = FullMath.mulDiv(cumulativeSumRAY, IPoolService(creditManager.pool()).calcLinearCumulative_RAY(), D27);
+            (uint16 feeInterest, , , ,) = creditManager.fees();
+            totalPrimaryTokenAmount += FullMath.mulDiv(totalBorrowedWithInterest - totalBorrowedAmount, uint256(feeInterest), 10000);
+
+        }
+
+        {
+
+            uint256 totalCRV = totalEarnedCRV;
+            address convexAdapter = helper.convexAdapter();
+            uint256 rewardPerToken = IConvexV1BaseRewardPoolAdapter(convexAdapter).rewardPerToken();
+            totalCRV += FullMath.mulDiv(cumulativeSumCRVRay, rewardPerToken, D27);
+            totalPrimaryTokenAmount += oracle.convert(totalCRV, protocolParams.crv, primaryToken);
+
+            {
+                uint256 totalCVX = helper.calculateEarnedCvxAmountByEarnedCrvAmount(totalCRV, protocolParams.cvx);
+                totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.crv, primaryToken);
+            }
+
+        }
+
+            {
+
+            IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
+            if (underlyingContract.extraRewardsLength() > 0) {
+                IRewards rewardsContract = IRewards(underlyingContract.extraRewards(0));
+                uint256 rewardPerTokenLDO = rewardsContract.rewardPerToken();
+                uint256 totalLDO = FullMath.mulDiv(cumulativeSumLDORay, rewardPerTokenLDO, D27);
+
+                (uint256[] memory pricesX96, ) = mellowOracle.priceX96(rewardsContract.rewardToken(), primaryToken, 0x20);
+                if (pricesX96.length != 0) {
+                    totalPrimaryTokenAmount += FullMath.mulDiv(totalLDO, pricesX96[0], Q96);
+                }
+
+            }
+
+        }
+
+        if (depositToken != primaryToken) {
+            minTokenAmounts[0] += oracle.convert(totalPrimaryTokenAmount, primaryToken, depositToken);
+        }
+        else {
+            minTokenAmounts[0] += totalPrimaryTokenAmount;
+        }
+
 
         maxTokenAmounts = minTokenAmounts;
     }

@@ -85,7 +85,17 @@ contract GearboxHelper {
         if (amount == 0) {
             return 0;
         }
-        return ICurveV1Adapter(adapter).calc_withdraw_one_coin(amount, index);
+        return FullMath.mulDiv(ICurveV1Adapter(adapter).calc_withdraw_one_coin(10**16, index), amount, 10**16);
+    }
+
+    function calcTotalWithdraw(uint256 balance) public view returns (uint256) {
+        if (!is3crv) {
+            return calcWithdrawOneCoin(curveAdapter, balance, primaryIndex);
+        } else {
+            uint256 crv3LpBalance = calcWithdrawOneCoin(curveAdapter, balance, crv3Index);
+            address crv3Adapter = creditManager.contractToAdapter(crv3Pool);
+            return calcWithdrawOneCoin(crv3Adapter, crv3LpBalance, primaryIndex);
+        }
     }
 
     function calcTotalValue(address creditAccount, address vaultGovernance)
@@ -98,14 +108,7 @@ contract GearboxHelper {
 
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
 
-        if (!is3crv) {
-            currentAllAssetsValue += calcWithdrawOneCoin(curveAdapter, balance, primaryIndex);
-        } else {
-            uint256 crv3LpBalance = calcWithdrawOneCoin(curveAdapter, balance, crv3Index);
-            address crv3Adapter = creditManager.contractToAdapter(crv3Pool);
-            currentAllAssetsValue += calcWithdrawOneCoin(crv3Adapter, crv3LpBalance, primaryIndex);
-        }
-
+        currentAllAssetsValue += calcTotalWithdraw(balance);
         currentAllAssetsValue -= oracle.convert(balance, convexOutputToken, primaryToken);
     }
 
