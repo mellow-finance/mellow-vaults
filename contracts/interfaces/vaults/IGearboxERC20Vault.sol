@@ -34,6 +34,6 @@ interface IGearboxERC20Vault is IIntegrationVault {
 
     function convexAdapter() external returns (address);
 
-    function calculatePoolsFeeD() external returns (uint256);
+    function calculatePoolsFeeD() external view returns (uint256);
 
 }

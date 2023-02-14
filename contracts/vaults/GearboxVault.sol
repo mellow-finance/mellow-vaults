@@ -162,7 +162,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         helper.setAdapters(curveAdapter, convexAdapter);
-        (convexOutputToken, poolId) = helper.verifyInstances(address(_vaultGovernance));
+        (convexOutputToken, poolId) = helper.verifyInstances();
         require(_poolsAllowList.contains(poolId), ExceptionsLibrary.FORBIDDEN);
         helper.openCreditAccount(address(_vaultGovernance), marginalFactorD9);
 
@@ -386,7 +386,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         token.safeApprove(creditManagerAddress, 0);
     }
 
-    function _isERC20Vault(address addr) internal returns (bool) {
+    function _isERC20Vault(address addr) internal view returns (bool) {
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address rootVault = registry.ownerOf(_nft);
