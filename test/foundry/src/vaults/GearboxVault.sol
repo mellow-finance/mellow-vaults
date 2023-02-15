@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
 import "../interfaces/IDegenDistributor.sol";
+import "../interfaces/vaults/IAggregateVault.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
@@ -146,7 +147,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function openCreditAccount(address curveAdapter, address convexAdapter) external {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
         require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 
@@ -161,7 +162,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         }
 
         helper.setAdapters(curveAdapter, convexAdapter);
-        (convexOutputToken, poolId) = helper.verifyInstances(address(_vaultGovernance));
+        (convexOutputToken, poolId) = helper.verifyInstances();
         require(_poolsAllowList.contains(poolId), ExceptionsLibrary.FORBIDDEN);
         helper.openCreditAccount(address(_vaultGovernance), marginalFactorD9);
 
@@ -175,8 +176,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     function closeCreditAccount() external {
         GearboxHelper helper_ = helper;
 
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(registry.ownerOf(_nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
         address depositToken_ = depositToken;
         address primaryToken_ = primaryToken;
@@ -218,7 +218,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function adjustPosition() public {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
 
         if (creditAccount == address(0)) {
@@ -336,6 +336,16 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
+    function manualPush(uint256 amount) external {
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        address creditAccount = getCreditAccount();
+
+        if (creditAccount != address(0)) {
+            _addDepositTokenAsCollateral();
+        }
+        tvlOnVaultItself += amount;
+    }
+
     function _push(uint256[] memory tokenAmounts, bytes memory) internal override returns (uint256[] memory) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         address creditAccount = getCreditAccount();
@@ -384,6 +394,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         creditFacade_.multicall(calls);
         token.safeApprove(creditManagerAddress, 0);
+    }
+
+    function _isERC20Vault(address addr) internal view returns (bool) {
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        address rootVault = registry.ownerOf(_nft);
+        address erc20Vault = IAggregateVault(rootVault).subvaultAt(0);
+        
+        return (erc20Vault == addr);
     }
 
     // --------------------------  EVENTS  --------------------------

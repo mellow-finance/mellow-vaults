@@ -65,7 +65,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     primaryToken: address(0),
                     univ3Adapter: address(0),
                     facade: address(0),
-                    withdrawDelay: 0,
                     initialMarginalValueD9: 0,
                     referralCode: 0
                 });
@@ -89,7 +88,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
                     primaryToken: address(0),
                     univ3Adapter: address(0),
                     facade: address(0),
-                    withdrawDelay: 0,
                     initialMarginalValueD9: 0,
                     referralCode: 0
                 });
@@ -126,7 +124,6 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.primaryToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
         require(params.initialMarginalValueD9 >= D9, ExceptionsLibrary.INVALID_VALUE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(

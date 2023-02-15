@@ -57,6 +57,8 @@ interface IGearboxVault is IIntegrationVault {
     /// @param helper_ Address of helper
     function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
 
+    function manualPush(uint256 amount) external;
+
     /// @notice Updates marginalFactorD9 (can be successfully called only by an admin or a strategist)
     /// @param marginalFactorD_ New marginalFactorD9
     function updateTargetMarginalFactor(uint256 marginalFactorD_) external;

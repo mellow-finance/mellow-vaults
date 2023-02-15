@@ -85,7 +85,17 @@ contract GearboxHelper {
         if (amount == 0) {
             return 0;
         }
-        return ICurveV1Adapter(adapter).calc_withdraw_one_coin(amount, index);
+        return FullMath.mulDiv(ICurveV1Adapter(adapter).calc_withdraw_one_coin(10**16, index), amount, 10**16);
+    }
+
+    function calcTotalWithdraw(uint256 balance) public view returns (uint256) {
+        if (!is3crv) {
+            return calcWithdrawOneCoin(curveAdapter, balance, primaryIndex);
+        } else {
+            uint256 crv3LpBalance = calcWithdrawOneCoin(curveAdapter, balance, crv3Index);
+            address crv3Adapter = creditManager.contractToAdapter(crv3Pool);
+            return calcWithdrawOneCoin(crv3Adapter, crv3LpBalance, primaryIndex);
+        }
     }
 
     function calcTotalValue(address creditAccount, address vaultGovernance)
@@ -98,14 +108,7 @@ contract GearboxHelper {
 
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
 
-        if (!is3crv) {
-            currentAllAssetsValue += calcWithdrawOneCoin(curveAdapter, balance, primaryIndex);
-        } else {
-            uint256 crv3LpBalance = calcWithdrawOneCoin(curveAdapter, balance, crv3Index);
-            address crv3Adapter = creditManager.contractToAdapter(crv3Pool);
-            currentAllAssetsValue += calcWithdrawOneCoin(crv3Adapter, crv3LpBalance, primaryIndex);
-        }
-
+        currentAllAssetsValue += calcTotalWithdraw(balance);
         currentAllAssetsValue -= oracle.convert(balance, convexOutputToken, primaryToken);
     }
 
@@ -140,7 +143,7 @@ contract GearboxHelper {
         }
     }
 
-    function verifyInstances(address vaultGovernance) external returns (address, uint256) {
+    function verifyInstances() external returns (address, uint256) {
         require(msg.sender == address(gearboxVault), ExceptionsLibrary.FORBIDDEN);
 
         ICurveV1Adapter curveAdapter_ = ICurveV1Adapter(curveAdapter);
@@ -236,13 +239,11 @@ contract GearboxHelper {
             primaryToken
         );
 
-        uint256 valueExtraToUsd = 0;
-
         IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
-            IRewards rewardsContract = IRewards(underlyingContract.extraRewards(i));
+            IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(i));
             uint256 valueEarned = rewardsContract.earned(creditAccount);
-            address tokenEarned = rewardsContract.rewardToken();
+            address tokenEarned = address(rewardsContract.rewardToken());
             (uint256[] memory pricesX96, ) = mellowOracle.priceX96(tokenEarned, primaryToken, 0x20);
             if (pricesX96.length != 0) {
                 totalValue += FullMath.mulDiv(valueEarned, pricesX96[0], Q96);
@@ -394,7 +395,7 @@ contract GearboxHelper {
         }
 
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
-            address rewardToken = address(IRewards(underlyingContract.extraRewards(i)).rewardToken());
+            address rewardToken = address(IBaseRewardPool(underlyingContract.extraRewards(i)).rewardToken());
             if (rewardToken != depositToken && rewardToken != primaryToken_ && rewardToken != weth) {
                 callsCount += 1;
             }
@@ -426,7 +427,7 @@ contract GearboxHelper {
         uint256 pointer = 3;
 
         for (uint256 i = 2; i < 2 + underlyingContract.extraRewardsLength(); ++i) {
-            address rewardToken = address(IRewards(underlyingContract.extraRewards(i - 2)).rewardToken());
+            address rewardToken = address(IBaseRewardPool(underlyingContract.extraRewards(i - 2)).rewardToken());
             if (rewardToken != depositToken && rewardToken != primaryToken_ && rewardToken != weth) {
                 calls[pointer] = createUniswapMulticall(
                     rewardToken,

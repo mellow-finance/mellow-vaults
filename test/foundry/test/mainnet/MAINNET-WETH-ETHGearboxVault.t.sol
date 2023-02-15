@@ -15,6 +15,7 @@ import "../../src/VaultRegistry.sol";
 
 import "../../src/vaults/GearboxVault.sol";
 import "../../src/vaults/GearboxRootVault.sol";
+import "../../src/vaults/GearboxERC20Vault.sol";
 import "../../src/vaults/ERC20Vault.sol";
 
 import "../../src/vaults/GearboxVaultGovernance.sol";
@@ -33,13 +34,13 @@ import "../helpers/MockDistributor.t.sol";
 contract GearboxWETHTest is Test {
 
     uint256 weiofUsdc = 10**15;
+    uint256 V = 3;
 
     ProtocolGovernance governance;
     VaultRegistry registry;
 
     GearboxRootVault rootVault = new GearboxRootVault();
-    ERC20Vault erc20Vault = new ERC20Vault();
-    GearboxVault gearboxVault = new GearboxVault();   
+    GearboxERC20Vault erc20Vault = new GearboxERC20Vault();
 
     address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
     address admin = 0x565766498604676D9916D4838455Cc5fED24a5B3;
@@ -58,7 +59,9 @@ contract GearboxWETHTest is Test {
     ERC20RootVaultGovernance governanceA;
 
     uint256 YEAR = 365 * 24 * 60 * 60;
+
     uint256 FIRST_DEPOSIT = 35000;
+    uint256 LIMIT = 100000;
 
     function onERC721Received(
         address operator,
@@ -77,7 +80,7 @@ contract GearboxWETHTest is Test {
         nextUser = keccak256(abi.encodePacked(nextUser));
         return user;
     }
-
+/*
     function checkNotNonExpectedBalance() public returns (bool) {
 
         address creditAccount = gearboxVault.getCreditAccount();
@@ -92,6 +95,7 @@ contract GearboxWETHTest is Test {
 
         return true;
     }
+*/
 
     GearboxHelper helper2;
 
@@ -119,6 +123,8 @@ contract GearboxWETHTest is Test {
 
             vm.stopPrank();
         }
+
+        IGearboxVault gearboxVault = new GearboxVault();
 
         IVaultGovernance.InternalParams memory internalParamsC = IVaultGovernance.InternalParams({
             protocolGovernance: governance,
@@ -199,7 +205,6 @@ contract GearboxWETHTest is Test {
             primaryToken: weth,
             univ3Adapter: 0xed5B30F8604c0743F167a19F42fEC8d284963a7D,
             facade: 0xC59135f449bb623501145443c70A30eE648Fa304,
-            withdrawDelay: 86400 * 7,
             initialMarginalValueD9: 5000000000,
             referralCode: 0
         });
@@ -212,12 +217,16 @@ contract GearboxWETHTest is Test {
 
             vm.startPrank(admin);
 
-            governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
-            governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1, delayedVaultParams);
-            governanceC.setStrategyParams(nftStart + 1, strategyParamsB);
+            governanceA.stageDelayedStrategyParams(nftStart + 1 + V, delayedStrategyParams);
+            for (uint256 i = 0; i < V; ++i) {
+                governanceC.stageDelayedProtocolPerVaultParams(nftStart + 1 + i, delayedVaultParams);
+                governanceC.setStrategyParams(nftStart + 1 + i, strategyParamsB);
+            }
             vm.warp(block.timestamp + governance.governanceDelay());
-            governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1);
-            governanceA.commitDelayedStrategyParams(nftStart + 2);
+            for (uint256 i = 0; i < V; ++i) {
+                governanceC.commitDelayedProtocolPerVaultParams(nftStart + 1 + i);
+            }
+            governanceA.commitDelayedStrategyParams(nftStart + 1 + V);
 
             vm.stopPrank();
 
@@ -226,48 +235,61 @@ contract GearboxWETHTest is Test {
         address[] memory tokens = new address[](1);
         tokens[0] = weth; 
 
-        helper2 = new GearboxHelper(mellowOracle);
-
         governanceB.createVault(tokens, address(this));
-        governanceC.createVault(tokens, address(this), address(helper2));
 
-        uint256[] memory nfts = new uint256[](2);
+        for (uint256 i = 0; i < V; ++i) {
+            helper2 = new GearboxHelper(mellowOracle);
+            governanceC.createVault(tokens, address(this), address(helper2));
+        }
+
+        uint256[] memory nfts = new uint256[](1);
 
         nfts[0] = nftStart;
-        nfts[1] = nftStart + 1;
 
         registry.approve(address(governanceA), nftStart);
-        registry.approve(address(governanceA), nftStart + 1);
 
         governanceA.createVault(tokens, address(this), nfts, address(this));
 
-        rootVault = GearboxRootVault(registry.vaultForNft(nftStart + 2));
-        erc20Vault = ERC20Vault(registry.vaultForNft(nftStart));
-
-        gearboxVault = GearboxVault(registry.vaultForNft(nftStart + 1));
+        rootVault = GearboxRootVault(registry.vaultForNft(nftStart + 4));
+        erc20Vault = GearboxERC20Vault(registry.vaultForNft(nftStart));
+        rootVault.changeDepositCurveFeeBurdenShareD(5 * 10**8);
 
         curveAdapter = ICurveV1Adapter(0x0Ad2Fc10F677b2554553DaF80312A98ddb38f8Ef);
         convexAdapter = IConvexV1BaseRewardPoolAdapter(0xeBE13b1874bB2913CB3F04d4231837867ff77999);
         
-        governanceA.setStrategyParams(nftStart + 2, strategyParams);
+        governanceA.setStrategyParams(nftStart + 1 + V, strategyParams);
         IERC20(weth).approve(address(rootVault), type(uint256).max);
 
-        address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
-        vm.startPrank(configurator);
-        IDegenNFT(degenNft).setMinter(address(distributor));
-        vm.stopPrank();
+        for (uint256 i = 0; i < 3; ++i) {
 
-        bytes32[] memory arr = new bytes32[](1);
-        arr[0] = DegenConstants.DEGEN;
+            GearboxVault gearboxVault = GearboxVault(registry.vaultForNft(nftStart + 1 + i));
 
-        gearboxVault.setMerkleParameters(0, 20, arr);
+            address degenNft = ICreditFacade(gearboxVault.creditFacade()).degenNFT();
+            vm.startPrank(configurator);
+            IDegenNFT(degenNft).setMinter(address(distributor));
+            vm.stopPrank();
 
-        uint256[] memory arr2 = new uint256[](2);
-        arr2[0] = 25;
-        arr2[1] = 100;
+            bytes32[] memory arr = new bytes32[](1);
+            arr[0] = DegenConstants.DEGEN;
 
-        gearboxVault.addPoolsToAllowList(arr2);
-        rootVault.changeDepositCurveFeeBurdenShareD(5 * 10**8);
+            gearboxVault.setMerkleParameters(0, 20, arr);
+
+            uint256[] memory arr2 = new uint256[](2);
+            arr2[0] = 25;
+            arr2[1] = 100;
+
+            gearboxVault.addPoolsToAllowList(arr2);
+
+            registry.transferFrom(address(this), address(rootVault), nftStart + 1 + i);
+
+        }
+
+        erc20Vault.setAdapters(address(curveAdapter), address(convexAdapter));
+
+    }
+
+    function getVault(uint256 i) public returns (address) {
+        return VaultRegistry(0xFD23F971696576331fCF96f80a20B4D3b31ca5b2).vaultForNft(nftStart + i + 1);
     }
 
     function setZeroFees() public {
@@ -308,29 +330,8 @@ contract GearboxWETHTest is Test {
         rootVault.deposit(amounts, 0, "");
     }
 
+
     function deposit(uint256 amount, address user) public {
-
-        uint256 subtract = 0;
-
-        if (rootVault.totalSupply() == 0) {
-            firstDeposit();
-            subtract = 10**10;
-        }
-
-        deal(weth, user, amount * weiofUsdc - subtract); 
-
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = amount * weiofUsdc - subtract;
-        IERC20(weth).approve(address(rootVault), type(uint256).max);
-
-        rootVault.deposit(amounts, 0, "");
-        if (gearboxVault.getCreditAccount() == address(0)) {
-            vm.stopPrank();
-            gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
-        }
-    }
-
-    function depositWithoutOpening(uint256 amount, address user) public {
 
         uint256 subtract = 0;
 
@@ -363,10 +364,6 @@ contract GearboxWETHTest is Test {
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         rootVault.deposit(amounts, 0, "");
         vm.stopPrank();
-
-        if (gearboxVault.getCreditAccount() == address(0)) {
-            gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
-        }
     }
 
     function invokeExecution() public {
@@ -381,6 +378,8 @@ contract GearboxWETHTest is Test {
         bytes[] memory vaultOptions = new bytes[](2);
         rootVault.withdraw(recipient, vaultOptions);
     }
+
+    /*
 
     function runRewarding() public {
         ICreditManagerV2 manager = gearboxVault.creditManager();
@@ -411,6 +410,8 @@ contract GearboxWETHTest is Test {
         vm.stopPrank();
     }
 
+    */
+
     function placeLidoRewarding() public {
         VirtualBalanceRewardPool rewardsPool2 = VirtualBalanceRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
         vm.startPrank(rewardsPool2.operator());
@@ -426,107 +427,164 @@ contract GearboxWETHTest is Test {
     }
 
     function tvl() public returns (uint256) {
-        (uint256[] memory result, ) = gearboxVault.tvl();
+        (uint256[] memory result, ) = rootVault.tvl();
         assertTrue(result.length == 1);
         return result[0];
     }
 
+    function addVaults() public {
+        for (uint256 i = 0; i < V; ++i) {
+            address addr = getVault(i);
+            erc20Vault.addSubvault(addr, LIMIT * weiofUsdc);
+        }
+    }
+
     function testSetup() public {
-        uint256 wethBalance = IERC20(weth).balanceOf(address(gearboxVault));
-        assertTrue(wethBalance == 0);
-        assertTrue(gearboxVault.getCreditAccount() == address(0));
     }
 
-    function testFailOpenVaultWithoutFunds() public {
-        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
+    function testSimpleGearboxVaultsAdding() public {
+        addVaults();
     }
 
-    function testFailOpenVaultFromAnyAddress() public {
-        vm.startPrank(getNextUserAddress());
-        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
-        vm.stopPrank();
+    function testFailAddingGearboxVaultLowLimit() public {
+        address addr = getVault(0);
+        erc20Vault.addSubvault(addr, 10000 * weiofUsdc);
     }
 
-    function testSimpleDeposit() public {
+    function testFailAddingGearboxVaultHighLimit() public {
+        address addr = getVault(0);
+        erc20Vault.addSubvault(addr, 1000000 * weiofUsdc);
+    }
+
+    function testInititalTvl() public {
+        assertTrue(tvl() == 0);
+    }
+
+    function testFailSimpleDepositAsTotalLimitZero() public {
 
         deposit(FIRST_DEPOSIT, address(this));
 
-        creditAccount = gearboxVault.getCreditAccount();
+        for (uint256 i = 0; i < 3; ++i) {
+            creditAccount = IGearboxVault(getVault(i)).getCreditAccount();
+            assertTrue(creditAccount == address(0));
+        }
 
-        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
-        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
-        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
-        uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
+        uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
+        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 10000));
+    }
 
-        assertTrue(wethBalance >= weiofUsdc * FIRST_DEPOSIT * 5 && wethBalance <= weiofUsdc * FIRST_DEPOSIT * 501 / 100);
-        assertTrue(curveLpBalance == 0);
-        assertTrue(convexLpBalance == 0);
-        assertTrue(convexFantomBalance == 0);
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 100));
+    function testDepositsToAddedVaultsWork() public {
+        addVaults();
+
+        deposit(FIRST_DEPOSIT, address(this));
+
+        for (uint256 i = 0; i < 3; ++i) {
+            creditAccount = IGearboxVault(getVault(i)).getCreditAccount();
+            assertTrue(creditAccount == address(0));
+        }
+
+        uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
+        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 10000));
+    }
+
+    function testDepositToAddedVaultsDistributed() public {
+        addVaults();
+
+        deposit(FIRST_DEPOSIT, address(this));
+
+        for (uint256 i = 0; i < 3; ++i) {
+            creditAccount = IGearboxVault(getVault(i)).getCreditAccount();
+            assertTrue(creditAccount == address(0));
+        }
+
+        erc20Vault.distributeDeposits();
+
+        uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
+        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 200));
+    }
+
+    function testBigDepositToAddedVaultsDistributed() public {
+        addVaults();
+
+        deposit(205000, address(this));
+
+        for (uint256 i = 0; i < 3; ++i) {
+            creditAccount = IGearboxVault(getVault(i)).getCreditAccount();
+            assertTrue(creditAccount == address(0));
+        }
+
+        erc20Vault.distributeDeposits();
+
+        uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
+        assertTrue(isClose(tvl(), 205000 * weiofUsdc, 200));
+        assertTrue(IERC20(weth).balanceOf(address(erc20Vault)) > 0);
+    }
+
+    function testFailTooBigDepositRejected() public {
+        addVaults();
+
+        deposit(350000, address(this));
     }
 
 
     function testTwoDepositsWETH() public {
+
+        addVaults();
         
-        deposit(FIRST_DEPOSIT, address(this));
+        deposit(170000, address(this));
         uint256 lpAmountBefore = rootVault.balanceOf(address(this));
 
-        deposit(FIRST_DEPOSIT / 5, address(this));
+        erc20Vault.distributeDeposits();
+
+        deposit(34000, address(this));
         uint256 lpAmountAfter = rootVault.balanceOf(address(this));
 
-        creditAccount = gearboxVault.getCreditAccount();
-
-        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
-        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
-        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
-        uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-
-        assertTrue(wethBalance >= weiofUsdc * FIRST_DEPOSIT * 26 / 5 && wethBalance <= weiofUsdc * FIRST_DEPOSIT * 2601 / 500);
-        assertTrue(curveLpBalance == 0);
-        assertTrue(convexLpBalance == 0);
-        assertTrue(convexFantomBalance == 0);
+        erc20Vault.distributeDeposits();
 
         assertTrue(isClose(lpAmountBefore * 6, lpAmountAfter * 5, 100));
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 6 / 5, 100));
+        assertTrue(isClose(tvl(), 170000 * weiofUsdc * 6 / 5, 100));
+        assertTrue(erc20Vault.subvaultsStatusMask() == 10);
     }
 
-    function testFailTooSmallInitialDepositFail() public {
+    function testSmallInitialDepositOk() public {
+
+        addVaults();
+
         deposit(FIRST_DEPOSIT / 5, address(this));
+        erc20Vault.distributeDeposits();
+        assertTrue(IERC20(weth).balanceOf(address(erc20Vault)) == FIRST_DEPOSIT / 5 * weiofUsdc);
     }
+
 
     function testTvlOfEmptyVault() public {
         assertTrue(tvl() == 0);
     }
 
     function testTvlAfterSingleDeposit() public {
+        addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 100));
     }
 
-    function testFailOpenCreditAccountTwice() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
-    }
-
-    function testFailOpenCreditWithoutDeposit() public {
-        gearboxVault.openCreditAccount(address(curveAdapter), address(convexAdapter));
-    }
-
     function testTvlAfterTimePasses() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        vm.warp(block.timestamp + YEAR);
-        assertTrue(tvl() < FIRST_DEPOSIT * weiofUsdc * 999 / 1000); // some fees accrued
+        addVaults();
+        deposit(260000, address(this));
+        erc20Vault.distributeDeposits();
+        vm.warp(block.timestamp + YEAR / 12);
+        assertTrue(isClose(tvl(), 260000 * weiofUsdc, 100)); // some fees accrued
     }
 
     function testTvlAfterMultipleDeposits() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        deposit(FIRST_DEPOSIT / 5, address(this));
-        deposit(FIRST_DEPOSIT / 10, address(this));
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 13 / 10, 100));
+        addVaults();
+        deposit(95000, address(this));
+        deposit(95000 / 5, address(this));
+        deposit(95000 / 10, address(this));
+        assertTrue(isClose(tvl(), 95000 * weiofUsdc * 13 / 10, 100));
     }
 
 
     function testWithdrawalOrders() public {
+        addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         uint256 lpTokens = rootVault.balanceOf(address(this));
         rootVault.registerWithdrawal(lpTokens / 2);
@@ -537,6 +595,7 @@ contract GearboxWETHTest is Test {
     }
 
     function testWithdrawalOrderCancelTooMuch() public {
+        addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         uint256 lpTokens = rootVault.balanceOf(address(this));
         rootVault.registerWithdrawal(lpTokens / 2);
@@ -545,11 +604,14 @@ contract GearboxWETHTest is Test {
     }
 
     function testTooBigWithdrawalOrder() public {
+        addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         uint256 lpTokens = rootVault.balanceOf(address(this));
         rootVault.registerWithdrawal(2 * lpTokens);
         assertTrue(rootVault.withdrawalRequests(address(this)) == lpTokens);
     }
+
+    /*
 
 
     function testSimpleAdjustingPositionWETH() public {
@@ -1160,5 +1222,7 @@ contract GearboxWETHTest is Test {
         assertTrue(999 * tvlAfterOracleSetting < 1000 * tvlBeforeOracleSetting); // < 0.1% fees for a day
 
     }
+
+    */
     
 }

@@ -28,14 +28,12 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param primaryToken Primary token of the vault (i.e. the token of the Gearbox Credit Account)
     /// @param univ3Adapter Address of the Uniswap V3 Adapter by Gearbox used by the system
     /// @param facade Address of the Gearbox CreditFacade contract used by the vault
-    /// @param withdrawDelay The minimal time to pass between two consecutive withdrawal orders execution
     /// @param initialMarginalValueD9 Initial value of marginal factor of the vault
     /// @param referralCode The referral code to be used when depositing to Gearbox
     struct DelayedProtocolPerVaultParams {
         address primaryToken;
         address univ3Adapter;
         address facade;
-        uint256 withdrawDelay;
         uint256 initialMarginalValueD9;
         uint16 referralCode;
     }
