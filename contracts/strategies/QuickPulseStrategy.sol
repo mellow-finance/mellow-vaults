@@ -1,47 +1,49 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 
+import "../interfaces/external/quickswap/IAlgebraFactory.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/vaults/IUniV3Vault.sol";
+import "../interfaces/vaults/IQuickSwapVault.sol";
 
 import "../libraries/external/FullMath.sol";
-import "../libraries/external/OracleLibrary.sol";
 import "../libraries/external/TickMath.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
+import "../utils/SinglePositionStrategyHelper.sol";
 
-contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
+contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
     uint256 public constant D6 = 10**6;
     uint256 public constant D9 = 10**9;
     uint256 public constant Q96 = 2**96;
 
-    INonfungiblePositionManager public immutable positionManager;
+    IAlgebraNonfungiblePositionManager public immutable positionManager;
 
     /// @param router 1inch router to process swaps with optimal routing && smallest possible slippage
     /// @param erc20Vault buffer vault of rootVault system
-    /// @param uniV3Vault vault containing a uniswap position, allowing to add and withdraw liquidity from it
+    /// @param quickSwapVault vault containing a algebra position, allowing to add and withdraw liquidity from it
     /// @param tokens array of length 2 with strategy and vaults tokens
     struct ImmutableParams {
         address router;
         IERC20Vault erc20Vault;
-        IUniV3Vault uniV3Vault;
+        IQuickSwapVault quickSwapVault;
         address[] tokens;
     }
 
     /// @param priceImpactD6 coefficient to take into account the impact of changing the price during tokens swaps
-    /// @param intervalWidth uniswap position interval width
+    /// @param intervalWidth algebra position interval width
     /// @param tickNeighborhood if the spot tick is inside [lowerTick + tickNeighborhood, upperTick - tickNeighborhood], then the position will not be rebalanced
     /// @param maxDeviationForVaultPool maximum deviation of the spot tick from the average tick for the pool of token 0 and token 1
     /// @param timespanForAverageTick time interval on which average ticks in pools are determined
-    /// @param amount0Desired amount of token 0 to mint position on UniswapV3Pool
-    /// @param amount1Desired amount of token 1 to mint position on UniswapV3Pool
+    /// @param amount0Desired amount of token 0 to mint position on AlgebraPool
+    /// @param amount1Desired amount of token 1 to mint position on AlgebraPool
     /// @param swapSlippageD coefficient to protect against price slippage when swapping tokens
     /// @param swappingAmountsCoefficientD coefficient of deviation of expected tokens for the swap and the actual number of exchanged tokens
     /// @param minSwapAmounts thresholds that cut off swap of an insignificant amount of tokens
@@ -65,13 +67,14 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         int24 upperTick;
     }
 
+    IAlgebraPool public algebraPool;
     /// @dev structure with all immutable params of the strategy
     ImmutableParams public immutableParams;
     /// @dev structure with all mutable params of the strategy
     MutableParams public mutableParams;
 
-    /// @param positionManager_ Uniswap v3 NonfungiblePositionManager
-    constructor(INonfungiblePositionManager positionManager_) {
+    /// @param positionManager_ Algebra NonfungiblePositionManager
+    constructor(IAlgebraNonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
     }
@@ -91,6 +94,9 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
                 )
             returns (bytes memory) {} catch {}
         }
+        algebraPool = IAlgebraPool(
+            immutableParams_.quickSwapVault.factory().poolByPair(immutableParams_.tokens[0], immutableParams_.tokens[1])
+        );
         DefaultAccessControlLateInit.init(admin);
     }
 
@@ -98,16 +104,16 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// @param mutableParams_ new params to set
     function updateMutableParams(MutableParams memory mutableParams_) external {
         _requireAdmin();
-        checkMutableParams(mutableParams_, immutableParams);
+        checkMutableParams(mutableParams_);
         mutableParams = mutableParams_;
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
 
     /// @dev Rebalancing goes like this:
     /// 1. Function checks the current states of the pools, and if the volatility is significant, the transaction reverts.
-    /// 2. If necessary, a new position is minted on uniV3Vault, and the previous one is burned.
-    /// 3. Tokens on erc20Vault are swapped via AggregationRouterV5 so that the proportion matches the tokens on uniV3Vault.
-    /// 4. The strategy transfers all possible tokens from erc20Vault to uniV3Vault.
+    /// 2. If necessary, a new position is minted on quickSwapVault, and the previous one is burned.
+    /// 3. Tokens on erc20Vault are swapped via AggregationRouterV5 so that the proportion matches the tokens on quickSwapVault.
+    /// 4. The strategy transfers all possible tokens from erc20Vault to quickSwapVault.
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
@@ -116,22 +122,21 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
         MutableParams memory mutableParams_ = mutableParams;
-        IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
+        IAlgebraPool pool = algebraPool;
         checkTickDeviation(mutableParams_, pool);
 
-        (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
+        (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.globalState();
         Interval memory interval = _positionsRebalance(immutableParams_, mutableParams_, spotTick, pool);
         _swapToTarget(immutableParams_, mutableParams_, interval, sqrtPriceX96, swapData);
-        _pushIntoUniswap(immutableParams_);
+        _pushIntoQuickSwap(immutableParams_);
 
         emit Rebalance(tx.origin, msg.sender);
     }
 
     /// @dev checks mutable params according to strategy restrictions
     /// @param params mutable parameters to be checked
-    /// @param immutableParams_ structure with all immutable params of the strategy
-    function checkMutableParams(MutableParams memory params, ImmutableParams memory immutableParams_) public view {
-        int24 tickSpacing = immutableParams_.uniV3Vault.pool().tickSpacing();
+    function checkMutableParams(MutableParams memory params) public view {
+        int24 tickSpacing = algebraPool.tickSpacing();
         require(
             params.intervalWidth > 0 && params.intervalWidth % (2 * tickSpacing) == 0,
             ExceptionsLibrary.INVALID_VALUE
@@ -174,11 +179,11 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         }
 
         {
-            require(address(params.uniV3Vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-            address[] memory uniV3VaultTokens = params.uniV3Vault.vaultTokens();
-            require(uniV3VaultTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-            require(uniV3VaultTokens[0] == params.tokens[0], ExceptionsLibrary.INVARIANT);
-            require(uniV3VaultTokens[1] == params.tokens[1], ExceptionsLibrary.INVARIANT);
+            require(address(params.quickSwapVault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+            address[] memory quickSwapVaultTokens = params.quickSwapVault.vaultTokens();
+            require(quickSwapVaultTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
+            require(quickSwapVaultTokens[0] == params.tokens[0], ExceptionsLibrary.INVARIANT);
+            require(quickSwapVaultTokens[1] == params.tokens[1], ExceptionsLibrary.INVARIANT);
         }
     }
 
@@ -186,9 +191,9 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// If any deviation is large than maxDevation parameter for the pool, then the transaction will be reverted with a LIMIT_OVERFLOW error.
     /// If there are no observations 10 seconds ago in any of the considered pools, then the transaction will be reverted with an INVALID_STATE error.
     /// @param mutableParams_ structure with all mutable params of the strategy
-    /// @param vaultPool UniswapV3Pool of uniV3Vault
-    function checkTickDeviation(MutableParams memory mutableParams_, IUniswapV3Pool vaultPool) public view {
-        (, int24 spotTick, , , , , ) = vaultPool.slot0();
+    /// @param vaultPool pool of quickSwapVault
+    function checkTickDeviation(MutableParams memory mutableParams_, IAlgebraPool vaultPool) public view {
+        (, int24 spotTick, , , , , ) = vaultPool.globalState();
         (int24 averageTick, , bool withFail) = OracleLibrary.consult(
             address(vaultPool),
             mutableParams_.timespanForAverageTick
@@ -202,21 +207,21 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     }
 
     /// @param mutableParams_ structure with all mutable params of the strategy
-    /// @param spotTick current spot tick of UniswapV3Pool of uniV3Vault
-    /// @param pool UniswapV3Pool of uniV3Vault
-    /// @param uniV3Nft Nft of uniswap position
+    /// @param spotTick current spot tick of AlgebraPool of quickSwapVault
+    /// @param pool AlgebraPool of quickSwapVault
+    /// @param positionNft Nft of algebra position
     /// @return newInterval expected interval after reblance
     /// @return neededNewInterval flag that is true if it is needed to mint new interval
     function calculateNewPosition(
         MutableParams memory mutableParams_,
         int24 spotTick,
-        IUniswapV3Pool pool,
-        uint256 uniV3Nft
+        IAlgebraPool pool,
+        uint256 positionNft
     ) public view returns (Interval memory newInterval, bool neededNewInterval) {
-        if (uniV3Nft != 0) {
+        if (positionNft != 0) {
             Interval memory currentInterval;
-            (, , , , , currentInterval.lowerTick, currentInterval.upperTick, , , , , ) = positionManager.positions(
-                uniV3Nft
+            (, , , , currentInterval.lowerTick, currentInterval.upperTick, , , , , ) = positionManager.positions(
+                positionNft
             );
             if (
                 mutableParams_.tickNeighborhood + currentInterval.lowerTick <= spotTick &&
@@ -238,47 +243,50 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         neededNewInterval = true;
     }
 
-    /// @dev The function rebalances the position on the uniswap pool. If there was a position in the uniV3Vault,
+    /// @dev The function rebalances the position on the algebra pool. If there was a position in the quickSwapVault,
     /// and the current tick is inside this position, taking into account the tickNeighborhood, then the position will not be rebalanced.
-    /// Otherwise, if there is a position in the uniV3Vault, then all tokens will be sent to erc20Vault, the new position will be mined,
+    /// Otherwise, if there is a position in the quickSwapVault, then all tokens will be sent to erc20Vault, the new position will be mined,
     /// and the old one will be burned.
     /// @param immutableParams_ structure with all immutable params of the strategy
     /// @param mutableParams_ structure with all mutable params of the strategy
-    /// @param spotTick current spot tick of UniswapV3Pool of uniV3Vault
-    /// @param pool UniswapV3Pool of uniV3Vault
-    /// @return Interval The position on the uniV3Vault after the function is executed.
+    /// @param spotTick current spot tick of algebraPool of quickSwapVault
+    /// @param pool algebraPool of quickSwapVault
+    /// @return Interval The position on the quickSwapVault after the function is executed.
     function _positionsRebalance(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
         int24 spotTick,
-        IUniswapV3Pool pool
+        IAlgebraPool pool
     ) private returns (Interval memory) {
-        IUniV3Vault vault = immutableParams_.uniV3Vault;
-        uint256 uniV3Nft = vault.uniV3Nft();
+        IQuickSwapVault vault = immutableParams_.quickSwapVault;
+        uint256 positionNft = vault.positionNft();
         (Interval memory interval, bool neededNewInterval) = calculateNewPosition(
             mutableParams_,
             spotTick,
             pool,
-            uniV3Nft
+            positionNft
         );
 
         if (!neededNewInterval) {
+            vault.collectRewards();
             vault.collectEarnings();
             return interval;
-        } else if (uniV3Nft != 0) {
-            vault.pull(
-                address(immutableParams_.erc20Vault),
-                immutableParams_.tokens,
-                vault.liquidityToTokenAmounts(type(uint128).max),
-                ""
+        } else if (positionNft != 0) {
+            vault.burnFarmingPosition(positionNft, vault.farmingCenter());
+            (uint160 sqrtRatioX96, , , , , , ) = pool.globalState();
+            uint256[] memory tokenAmounts = new uint256[](2);
+            (tokenAmounts[0], tokenAmounts[1]) = vault.helper().liquidityToTokenAmounts(
+                positionNft,
+                sqrtRatioX96,
+                type(uint128).max
             );
+            vault.pull(address(immutableParams_.erc20Vault), immutableParams_.tokens, tokenAmounts, "");
         }
 
         (uint256 newNft, , , ) = positionManager.mint(
-            INonfungiblePositionManager.MintParams({
+            IAlgebraNonfungiblePositionManager.MintParams({
                 token0: immutableParams_.tokens[0],
                 token1: immutableParams_.tokens[1],
-                fee: pool.fee(),
                 tickLower: interval.lowerTick,
                 tickUpper: interval.upperTick,
                 amount0Desired: mutableParams_.amount0Desired,
@@ -292,15 +300,15 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         positionManager.safeTransferFrom(address(this), address(vault), newNft);
 
         emit PositionMinted(newNft);
-        if (uniV3Nft != 0) {
-            positionManager.burn(uniV3Nft);
-            emit PositionBurned(uniV3Nft);
+        if (positionNft != 0) {
+            positionManager.burn(positionNft);
+            emit PositionBurned(positionNft);
         }
         return interval;
     }
 
     /// @dev calculate target ratio of token 1 to total capital after rebalance
-    /// @param interval current interval on uniV3Vault
+    /// @param interval current interval on quickSwapVault
     /// @param sqrtSpotPriceX96 sqrt price X96 of spot tick
     /// @param spotPriceX96 price X96 of spot tick
     /// @return targetRatioOfToken1X96 ratio of token 1 multiplied by 2^96
@@ -381,7 +389,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// @dev calculates the target ratio of tokens and swaps them
     /// @param immutableParams_ structure with all immutable params of the strategy
     /// @param mutableParams_ structure with all mutable params of the strategy
-    /// @param interval current interval on uniV3Vault
+    /// @param interval current interval on quickSwapVault
     /// @param sqrtSpotPriceX96 sqrt price X96 of spot tick
     function _swapToTarget(
         ImmutableParams memory immutableParams_,
@@ -435,31 +443,40 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         emit TokensSwapped(actualAmountIn, actualAmountOut, tokenInIndex);
     }
 
-    /// @dev pushed maximal possible amounts of tokens from erc20Vault to uniV3Vault
+    /// @dev pushed maximal possible amounts of tokens from erc20Vault to quickSwapVault
     /// @param immutableParams_ structure with all immutable params of the strategy
-    function _pushIntoUniswap(ImmutableParams memory immutableParams_) private {
+    function _pushIntoQuickSwap(ImmutableParams memory immutableParams_) private {
+        uint256 positionNft = immutableParams_.quickSwapVault.positionNft();
+        IFarmingCenter farmingCenter = immutableParams_.quickSwapVault.farmingCenter();
+        (uint256 farmingNft, , , ) = farmingCenter.deposits(positionNft);
+        if (farmingNft != 0) {
+            immutableParams_.quickSwapVault.burnFarmingPosition(positionNft, farmingCenter);
+        }
         (uint256[] memory tokenAmounts, ) = immutableParams_.erc20Vault.tvl();
         if (tokenAmounts[0] > 0 || tokenAmounts[1] > 0) {
             immutableParams_.erc20Vault.pull(
-                address(immutableParams_.uniV3Vault),
+                address(immutableParams_.quickSwapVault),
                 immutableParams_.tokens,
                 tokenAmounts,
                 ""
             );
         }
+        if (farmingNft != 0) {
+            immutableParams_.quickSwapVault.openFarmingPosition(positionNft, farmingCenter);
+        }
     }
 
     /// @inheritdoc ILpCallback
     function depositCallback() external {
-        // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
-        _pushIntoUniswap(immutableParams);
+        // pushes all tokens from erc20Vault to quickSwapVault to prevent possible attacks
+        _pushIntoQuickSwap(immutableParams);
     }
 
     /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
 
     function _contractName() internal pure override returns (bytes32) {
-        return bytes32("PulseStrategy");
+        return bytes32("QuickPulseStrategy");
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
@@ -483,11 +500,11 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// @param sender Sender of the call (msg.sender)
     event Rebalance(address indexed origin, address indexed sender);
 
-    /// @notice Emited when a new uniswap position is created
-    /// @param tokenId nft of new uniswap position
+    /// @notice Emited when a new algebra position is created
+    /// @param tokenId nft of new algebra position
     event PositionMinted(uint256 tokenId);
 
-    /// @notice Emited when a uniswap position is burned
-    /// @param tokenId nft of uniswap position
+    /// @notice Emited when a algebra position is burned
+    /// @param tokenId nft of algebra position
     event PositionBurned(uint256 tokenId);
 }
