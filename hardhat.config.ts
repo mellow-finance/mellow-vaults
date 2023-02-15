@@ -287,6 +287,9 @@ const config: HardhatUserConfig = {
             polygon: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
             avalanche: "0x4F01AeD16D97E3aB5ab2B501154DC9bb0F1A5A2C",
         },
+        algebraPositionManager: {
+            polygon: "0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6",
+        },
         uniswapV3Factory: {
             default: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
         },
