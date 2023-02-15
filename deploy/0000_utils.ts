@@ -15,6 +15,7 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 // 2e10 for mainnet
 // 1e11 for polygon
 export const TRANSACTION_GAS_LIMITS = {
+    // gasPrice: ethers.BigNumber.from(10).pow(6),
     maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
     maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
 };

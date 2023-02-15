@@ -180,6 +180,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
+            optimism: process.env["OPTIMISM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
         },
         mStrategyAdmin: {
             hardhat: "0x1aD91ee08f21bE3dE0BA2ba6918E714dA6B45836",
@@ -189,6 +190,7 @@ const config: HardhatUserConfig = {
             polygon: process.env["POLYGON_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
+            optimism: process.env["OPTIMISM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
         },
         mStrategyTreasury: {
             hardhat: "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",
@@ -200,6 +202,7 @@ const config: HardhatUserConfig = {
             rinkeby: process.env["RINKEBY_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             arbitrum:
                 process.env["ARBITRUM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
+            optimism: process.env["OPTIMISM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
         },
         protocolTreasury: {
             hardhat: "0x00192Fb10dF37c9FB26829eb2CC623cd1BF599E8",
@@ -211,6 +214,7 @@ const config: HardhatUserConfig = {
             rinkeby: process.env["RINKEBY_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             arbitrum:
                 process.env["ARBITRUM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
+            optimism: process.env["OPTIMISM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
         },
         test: {
             default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
@@ -259,8 +263,12 @@ const config: HardhatUserConfig = {
             optimism: "0x4200000000000000000000000000000000000006",
             rinkeby: "0xc778417e063141139fce010982780140aa0cd5ab",
         },
+        op: {
+            optimism: "0x4200000000000000000000000000000000000042",
+        },
         bob: {
             polygon: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B",
+            optimism: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B",
         },
         wsteth: {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
@@ -349,8 +357,11 @@ const config: HardhatUserConfig = {
             bsc: "0x51597f405303C4377E36123cBc172b13269EA163",
             xdai: "0x26C31ac71010aF62E6B486D1132E266D6298857D",
             arbitrum: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
-            optimism: "0x",
+            optimism: "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3",
             rinkeby: "0xa24de01df22b63d23Ebc1882a5E3d4ec0d907bFB",
+        },
+        chainlinkOp: {
+            optimism: "0x0D276FC14719f9292D5C1eA2198673d1f4269246",
         },
         cowswap: {
             default: "0x9008D19f58AAbD9eD0D60971565AA8510560ab41",
