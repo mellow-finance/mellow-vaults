@@ -98,7 +98,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     /// @inheritdoc IGearboxERC20Vault
     function changeLimit(uint256 index, uint256 limit) public {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isApprovedOrOwner(msg.sender) || msg.sender == address(this), ExceptionsLibrary.FORBIDDEN);
         require(index < subvaultsList.length, ExceptionsLibrary.INVALID_TARGET);
         uint256 status = (subvaultsStatusMask & (3 << (2 * index))) >> (2 * index);
         require(status == EMPTY || msg.sender == address(this), ExceptionsLibrary.FORBIDDEN);
@@ -417,9 +417,11 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         {
         
             uint256 totalBorrowedWithInterest = FullMath.mulDiv(cumulativeSumRAY, IPoolService(creditManager.pool()).calcLinearCumulative_RAY(), D27);
+            console2.log("BB", totalBorrowedWithInterest);
+            console2.log("BA", totalBorrowedAmount);
             (uint16 feeInterest, , , ,) = creditManager.fees();
             if (totalBorrowedWithInterest > totalBorrowedAmount) {
-                totalPrimaryTokenAmount += FullMath.mulDiv(totalBorrowedWithInterest - totalBorrowedAmount, uint256(feeInterest), 10000);
+                totalPrimaryTokenAmount -= FullMath.mulDiv(totalBorrowedWithInterest - totalBorrowedAmount, uint256(feeInterest), 10000);
             }
 
             totalPrimaryTokenAmount -= totalBorrowedWithInterest;
@@ -434,10 +436,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             uint256 rewardPerToken = IConvexV1BaseRewardPoolAdapter(convexAdapter).rewardPerToken();
             totalCRV += (cumulativeSumCRV * rewardPerToken - cumulativeSubCRV) / 10**18;
             totalPrimaryTokenAmount += oracle.convert(totalCRV, protocolParams.crv, primaryToken);
-
+            console2.log(totalPrimaryTokenAmount);
             {
                 uint256 totalCVX = helper.calculateEarnedCvxAmountByEarnedCrvAmount(totalCRV, protocolParams.cvx);
-                totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.crv, primaryToken);
+                totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.cvx, primaryToken);
             }
             console2.log(totalPrimaryTokenAmount);
 

@@ -80,22 +80,6 @@ contract GearboxWETHTest is Test {
         nextUser = keccak256(abi.encodePacked(nextUser));
         return user;
     }
-/*
-    function checkNotNonExpectedBalance() public returns (bool) {
-
-        address creditAccount = gearboxVault.getCreditAccount();
-
-        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
-        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
-        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
-
-        if (wethBalance > 1 || curveLpBalance > 1 || convexLpBalance > 1) {
-            return false;
-        }
-
-        return true;
-    }
-*/
 
     GearboxHelper helper2;
 
@@ -379,10 +363,8 @@ contract GearboxWETHTest is Test {
         rootVault.withdraw(recipient, vaultOptions);
     }
 
-    /*
-
     function runRewarding() public {
-        ICreditManagerV2 manager = gearboxVault.creditManager();
+        ICreditManagerV2 manager = IGearboxVault(getVault(0)).creditManager();
         address cont = manager.adapterToContract(address(convexAdapter));
 
         BaseRewardPool rewardsPool = BaseRewardPool(cont);
@@ -409,8 +391,6 @@ contract GearboxWETHTest is Test {
         }
         vm.stopPrank();
     }
-
-    */
 
     function placeLidoRewarding() public {
         VirtualBalanceRewardPool rewardsPool2 = VirtualBalanceRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
@@ -471,6 +451,7 @@ contract GearboxWETHTest is Test {
 
         uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 10000));
+        _checkTvlsAreEqual();
     }
 
     function testDepositsToAddedVaultsWork() public {
@@ -485,6 +466,7 @@ contract GearboxWETHTest is Test {
 
         uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 10000));
+        _checkTvlsAreEqual();
     }
 
     function testDepositToAddedVaultsDistributed() public {
@@ -501,6 +483,7 @@ contract GearboxWETHTest is Test {
 
         uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 200));
+        _checkTvlsAreEqual();
     }
 
     function testBigDepositToAddedVaultsDistributed() public {
@@ -518,6 +501,7 @@ contract GearboxWETHTest is Test {
         uint256 wethBalance = IERC20(weth).balanceOf(address(erc20Vault));
         assertTrue(isClose(tvl(), 205000 * weiofUsdc, 200));
         assertTrue(IERC20(weth).balanceOf(address(erc20Vault)) > 0);
+        _checkTvlsAreEqual();
     }
 
     function testFailTooBigDepositRejected() public {
@@ -544,6 +528,7 @@ contract GearboxWETHTest is Test {
         assertTrue(isClose(lpAmountBefore * 6, lpAmountAfter * 5, 100));
         assertTrue(isClose(tvl(), 170000 * weiofUsdc * 6 / 5, 100));
         assertTrue(erc20Vault.subvaultsStatusMask() == 10);
+        _checkTvlsAreEqual();
     }
 
     function testSmallInitialDepositOk() public {
@@ -611,96 +596,149 @@ contract GearboxWETHTest is Test {
         assertTrue(rootVault.withdrawalRequests(address(this)) == lpTokens);
     }
 
-    /*
+    function checkNotNonExpectedBalance(IGearboxVault gearboxVault) public returns (bool) {
 
+        address creditAccount = gearboxVault.getCreditAccount();
+
+        uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
+        uint256 curveLpBalance = IERC20(curveAdapter.lp_token()).balanceOf(creditAccount);
+        uint256 convexLpBalance = IERC20(convexAdapter.stakingToken()).balanceOf(creditAccount);
+
+        if (wethBalance > 1 || curveLpBalance > 1 || convexLpBalance > 1) {
+            return false;
+        }
+
+        return true;
+    }
 
     function testSimpleAdjustingPositionWETH() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.adjustPosition();
+        addVaults();
+        deposit(80000, address(this));
+        erc20Vault.distributeDeposits();
 
-        creditAccount = gearboxVault.getCreditAccount();
+        creditAccount = IGearboxVault(getVault(0)).getCreditAccount();
 
-        assertTrue(checkNotNonExpectedBalance());
+        assertTrue(checkNotNonExpectedBalance(IGearboxVault(getVault(0))));
         uint256 convexFantomBalance = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         assertTrue(convexFantomBalance > 0);
 
-        deposit(FIRST_DEPOSIT / 5, address(this));
-        gearboxVault.adjustPosition();
+        deposit(16000, address(this));
+        erc20Vault.distributeDeposits();
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
         assertTrue(IERC20(weth).balanceOf(creditAccount) <= 1);
         assertTrue(isClose(convexFantomBalance * 6, convexFantomBalanceAfter * 5, 100));
+        _checkTvlsAreEqual();
     }
 
     function testSimpleAdjustingPositionAndTvlWETH() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.adjustPosition();
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc, 80));
+        addVaults();
+        deposit(75000, address(this));
+        erc20Vault.distributeDeposits();
+        assertTrue(isClose(tvl(), 75000 * weiofUsdc, 80));
+        _checkTvlsAreEqual();
     }
 
-    function testFailAdjustingPositionFromSomeAddress() public {
+    function testFailDistributeDepositsFromSomeAddress() public {
+        addVaults();
         address addr = getNextUserAddress();
-        deposit(FIRST_DEPOSIT, address(this));
+        deposit(90000, address(this));
         vm.prank(addr);
-        gearboxVault.adjustPosition();
+        erc20Vault.distributeDeposits();
     }
 
     function testFailChangingMarginalFactorFromSomeAddress() public {
+        addVaults();
         address addr = getNextUserAddress();
         deposit(FIRST_DEPOSIT, address(this));
         vm.prank(addr);
-        gearboxVault.updateTargetMarginalFactor(4000000000);
+        erc20Vault.changeLimitAndFactor(0, 90000 * weiofUsdc, 4000000000);
     }
 
     function testFailChangingMarginalFactorLowerThanOne() public {
+        addVaults();
         address addr = getNextUserAddress();
         deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.updateTargetMarginalFactor(400000000);
+        erc20Vault.changeLimitAndFactor(0, 90000 * weiofUsdc, 400000000);
     }
 
     function testSeveralAdjustingPositionAfterChangeInMarginalFactorWETH() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        deposit(FIRST_DEPOSIT / 5 * 2, address(this)); // 700% in staking
-        creditAccount = gearboxVault.getCreditAccount();
-        gearboxVault.adjustPosition();
+        addVaults();
+        deposit(60000, address(this));
+        deposit(24000, address(this)); // 700% in staking
+        erc20Vault.distributeDeposits();
+
+        creditAccount = IGearboxVault(getVault(0)).getCreditAccount();
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
-        gearboxVault.updateTargetMarginalFactor(4500000000); // 630% in staking
+        erc20Vault.changeLimitAndFactor(0, 90000 * weiofUsdc, 4500000000); // 630% in staking
+
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         assertTrue(isClose(convexFantomBalanceBefore * 630, convexFantomBalanceAfter * 700, 100));
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT / 5 * 7 * weiofUsdc, 100));
+        assertTrue(isClose(tvl(), 60000 / 5 * 7 * weiofUsdc, 100));
 
-        gearboxVault.updateTargetMarginalFactor(4700000000); // 658% in staking
-        assertTrue(checkNotNonExpectedBalance());
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT / 5 * 7 * weiofUsdc, 100));
+        erc20Vault.changeLimitAndFactor(0, 90000 * weiofUsdc, 4700000000); // 630% in staking
+
+        assertTrue(checkNotNonExpectedBalance(IGearboxVault(getVault(0))));
+        assertTrue(isClose(tvl(), 60000 / 5 * 7 * weiofUsdc, 100));
         uint256 convexFantomBalanceFinal = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         assertTrue(isClose(convexFantomBalanceFinal * 630, convexFantomBalanceAfter * 658, 100));
+        _checkTvlsAreEqual();
+    }
+
+    function _getTvl(address vault) internal view returns (uint256) {
+        (uint256[] memory vaultTvls, ) = IGearboxVault(vault).tvl();
+        return vaultTvls[0];
+    }
+
+    function _checkTvlsAreEqual() internal {
+        uint256 oldSchoolTvl = IERC20(weth).balanceOf(address(erc20Vault));
+        for (uint256 i = 0; i < V; ++i) {
+            oldSchoolTvl += _getTvl(getVault(i));
+        }
+
+        uint256 newSchoolTvl = tvl();
+        assertTrue(isClose(oldSchoolTvl, newSchoolTvl, 100000));
+
     }
 
     function testEarnedRewardsWETH() public {
+        addVaults();
+        deposit(120000, address(this));
+        deposit(48000, address(this)); // 700% in staking
+        erc20Vault.distributeDeposits();
 
-        deposit(FIRST_DEPOSIT, address(this));
-        deposit(FIRST_DEPOSIT / 5 * 2, address(this)); // 700% in staking
-
-        creditAccount = gearboxVault.getCreditAccount();
-        gearboxVault.adjustPosition();
+        creditAccount = IGearboxVault(getVault(0)).getCreditAccount();
 
         IBaseRewardPool kek = IBaseRewardPool(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8);
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         runRewarding(); // +1.63% on staking money
 
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
-        gearboxVault.adjustPosition();
-        assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
+        uint256 S = _getTvl(getVault(0)) + _getTvl(getVault(1));
+        console2.log("?????", S);
+
+        console2.log("T", tvl());
+        console2.log(120000 * weiofUsdc * 151 / 100);
+
+        assertTrue(isClose(tvl(), 120000 * weiofUsdc * 151 / 100, 100));
+        erc20Vault.adjustAllPositions();
+        console2.log("T", tvl());
+        console2.log(120000 * weiofUsdc * 151 / 100);
+        assertTrue(isClose(tvl(), 120000 * weiofUsdc * 151 / 100, 100));
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
+        console2.log(convexFantomBalanceBefore * 1081);
+        console2.log(convexFantomBalanceAfter * 1000);
+
         assertTrue(isClose(convexFantomBalanceBefore * 1081, convexFantomBalanceAfter * 1000, 100));
+        _checkTvlsAreEqual();
     }
 
     function testMultipleDepositsAndRewardsAndAdjustmentsTvlCorrectnessWETH() public {
+        addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         deposit(FIRST_DEPOSIT / 5 * 2, address(this));
-        gearboxVault.adjustPosition();
+        erc20Vault.distributeDeposits();
         runRewarding(); // +1.63% on staking money
 
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
@@ -708,32 +746,36 @@ contract GearboxWETHTest is Test {
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 171 / 100, 100));
         deposit(FIRST_DEPOSIT / 50 * 3, address(this));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 177 / 100, 100));
-        gearboxVault.adjustPosition();
+        erc20Vault.distributeDeposits();
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 177 / 100, 100));
-        gearboxVault.updateTargetMarginalFactor(4000000000);
+        erc20Vault.changeLimitAndFactor(0, 100000 * weiofUsdc, 4000000000);
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 177 / 100, 100));
         deposit(FIRST_DEPOSIT / 10, address(this));
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 187 / 100, 100));
-        gearboxVault.updateTargetMarginalFactor(5555555555);
+        erc20Vault.changeLimitAndFactor(0, 100000 * weiofUsdc, 5555555555);
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 187 / 100, 100));
     }
 
     function testWithValueFallingAndRewardsCovering() public {
+        addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         deposit(FIRST_DEPOSIT / 5 * 2, address(this)); // 700% in convex
-        creditAccount = gearboxVault.getCreditAccount();
-        gearboxVault.adjustPosition();
+        erc20Vault.distributeDeposits();
+
+        creditAccount = IGearboxVault(getVault(0)).getCreditAccount();
 
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
         runRewarding(); // +1.63% on staking money => 11.4% earned => 757% in convex
 
-        gearboxVault.updateTargetMarginalFactor(4500000000); // 681% in convex
+        erc20Vault.changeLimitAndFactor(0, 100000 * weiofUsdc, 4500000000); // 681% in convex
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
         assertTrue(isClose(convexFantomBalanceAfter*700, convexFantomBalanceBefore*681, 100));
     }
+
+    /*
 
     function testVaultCloseWithoutOrdersAndConvexWETH() public {
         deposit(FIRST_DEPOSIT, address(this));
