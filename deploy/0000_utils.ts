@@ -199,7 +199,9 @@ export const setupVault = async (
         (strategyTreasury &&
             strategyTreasury !== delayedStrategyParams.strategyTreasury) ||
         (contractName == "UniV3VaultGovernance" &&
-            delayedStrategyParams.length > 0)
+            delayedStrategyParams.length > 0) ||
+            (contractName == "QuickSwapVaultGovernance" &&
+                delayedStrategyParams.length > 0)
     ) {
         log(`Setting delayed strategy params for ${contractName}`);
         log(delayedStrategyParams);
