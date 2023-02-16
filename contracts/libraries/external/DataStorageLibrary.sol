@@ -29,7 +29,8 @@ library DataStorageLibrary {
                 arithmeticMeanTick = int24(tickCumulativesDelta / int56(uint56(period)));
 
                 // Always round to negative infinity
-                if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(uint56(period)) != 0)) arithmeticMeanTick--;
+                if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(uint56(period)) != 0))
+                    arithmeticMeanTick--;
             } catch {
                 return (0, true);
             }
