@@ -10,7 +10,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 import "../utils/KyberHelper.sol";
 
-/// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
+/// @notice Vault that interfaces Kyber protocol in the integration layer.
 contract KyberVault is IKyberVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
@@ -31,10 +31,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        if (kyberNft == 0) {
-            return (new uint256[](2), new uint256[](2));
-        }
-
+        if (kyberNft == 0) return (new uint256[](2), new uint256[](2));
         (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
         minTokenAmounts = _kyberHelper.calculateTvlBySqrtPriceX96(kyberNft, sqrtPriceX96);
     }
@@ -70,7 +67,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
         _positionManager = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
-        pool = IPool(IFactory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_));
+        pool = IPool(IFactory(_positionManager.factory()).getPool(vaultTokens_[0], vaultTokens_[1], fee_));
         _kyberHelper = KyberHelper(kyberHepler_);
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
@@ -97,12 +94,26 @@ contract KyberVault is IKyberVault, IntegrationVault {
         if (kyberNft != 0) {
             (IBasePositionManager.Position memory position, ) = _positionManager.positions(tokenId);
             require(position.liquidity == 0 && position.rTokenOwed == 0, ExceptionsLibrary.INVALID_VALUE);
-            // return previous uni v3 position nft
+            // return previous kyber position nft
             _positionManager.transferFrom(address(this), from, kyberNft);
         }
 
         kyberNft = tokenId;
         return this.onERC721Received.selector;
+    }
+
+    function _burnRTokens() private returns (uint256 amount0, uint256 amount1) {
+        (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
+        if (position.rTokenOwed > 0) {
+            (, amount0, amount1) = _positionManager.burnRTokens(
+                IBasePositionManager.BurnRTokenParams({
+                    tokenId: kyberNft,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp + 1
+                })
+            );
+        }
     }
 
     /// @inheritdoc IKyberVault
@@ -111,19 +122,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
         address owner = registry.ownerOf(_nft);
         address to = _root(registry, _nft, owner).subvaultAt(0);
         collectedEarnings = new uint256[](2);
+        (collectedEarnings[0], collectedEarnings[1]) = _burnRTokens();
 
-        (, uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager.burnRTokens(
-            IBasePositionManager.BurnRTokenParams({
-                tokenId: kyberNft,
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp + 1
-            })
-        );
-
-        collectedEarnings[0] = collectedEarnings0;
-        collectedEarnings[1] = collectedEarnings1;
-        emit CollectedEarnings(tx.origin, msg.sender, to, collectedEarnings0, collectedEarnings1);
+        address[] memory tokens = _vaultTokens;
+        IERC20(tokens[0]).safeTransfer(to, collectedEarnings[0]);
+        IERC20(tokens[1]).safeTransfer(to, collectedEarnings[1]);
+        emit CollectedEarnings(tx.origin, msg.sender, to, collectedEarnings[0], collectedEarnings[1]);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -139,8 +143,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
-    function _isReclaimForbidden(address) internal pure override returns (bool) {
-        return false;
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+        address[] memory tokens = _vaultTokens;
+        if (token == tokens[0] || token == tokens[1]) {
+            return false;
+        }
+        return true;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -154,34 +162,31 @@ contract KyberVault is IKyberVault, IntegrationVault {
         if (kyberNft == 0) return actualTokenAmounts;
 
         uint128 liquidity = tokenAmountsToLiquidity(tokenAmounts);
-
         if (liquidity == 0) return actualTokenAmounts;
-        else {
-            address[] memory tokens = _vaultTokens;
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
-            }
 
-            Options memory opts = _parseOptions(options);
-            Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
-            Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-            (, uint256 amount0, uint256 amount1, ) = _positionManager.addLiquidity(
-                IBasePositionManager.IncreaseLiquidityParams({
-                    tokenId: kyberNft,
-                    amount0Desired: amounts.a0,
-                    amount1Desired: amounts.a1,
-                    amount0Min: minAmounts.a0,
-                    amount1Min: minAmounts.a1,
-                    deadline: opts.deadline
-                })
-            );
+        address[] memory tokens = _vaultTokens;
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
+        }
 
-            actualTokenAmounts[0] = amount0;
-            actualTokenAmounts[1] = amount1;
+        Options memory opts = _parseOptions(options);
+        Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
+        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
+        (, uint256 amount0, uint256 amount1, ) = _positionManager.addLiquidity(
+            IBasePositionManager.IncreaseLiquidityParams({
+                tokenId: kyberNft,
+                amount0Desired: amounts.a0,
+                amount1Desired: amounts.a1,
+                amount0Min: minAmounts.a0,
+                amount1Min: minAmounts.a1,
+                deadline: opts.deadline
+            })
+        );
 
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
-            }
+        actualTokenAmounts[0] = amount0;
+        actualTokenAmounts[1] = amount1;
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
         }
     }
 
@@ -190,17 +195,17 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        // UniV3Vault should have strictly 2 vault tokens
+        // KyberVault should have strictly 2 vault tokens
         actualTokenAmounts = new uint256[](2);
         if (kyberNft == 0) return actualTokenAmounts;
 
         Options memory opts = _parseOptions(options);
-        Pair memory amounts = _pullUniV3Nft(to, tokenAmounts, opts);
+        Pair memory amounts = _pullKyberNft(to, tokenAmounts, opts);
         actualTokenAmounts[0] = amounts.a0;
         actualTokenAmounts[1] = amounts.a1;
     }
 
-    function _pullUniV3Nft(
+    function _pullKyberNft(
         address to,
         uint256[] memory tokenAmounts,
         Options memory opts
@@ -233,18 +238,10 @@ contract KyberVault is IKyberVault, IntegrationVault {
             );
         }
 
-        (, uint256 amount0Collected, uint256 amount1Collected) = _positionManager.burnRTokens(
-            IBasePositionManager.BurnRTokenParams({
-                tokenId: kyberNft,
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp + 1
-            })
-        );
-
-        IERC20(_vaultTokens[0]).safeTransferFrom(address(this), to, amount0Collected);
-        IERC20(_vaultTokens[1]).safeTransferFrom(address(this), to, amount1Collected);
-
+        (uint256 amount0Collected, uint256 amount1Collected) = _burnRTokens();
+        address[] memory tokens = _vaultTokens;
+        IERC20(tokens[0]).safeTransfer(to, amount0Collected);
+        IERC20(tokens[1]).safeTransfer(to, amount1Collected);
         amount0Collected = amount0Collected > tokenAmounts[0] ? tokenAmounts[0] : amount0Collected;
         amount1Collected = amount1Collected > tokenAmounts[1] ? tokenAmounts[1] : amount1Collected;
         return Pair({a0: amount0Collected, a1: amount1Collected});
