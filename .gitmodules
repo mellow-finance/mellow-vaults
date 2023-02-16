@@ -4,3 +4,5 @@
 [submodule "test/foundry/lib/openzeppelin-contracts"]
 	path = test/foundry/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "lib/openzeppelin-contracts"]
+	branch = v4.8.1
