@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "../strategies/QuickPulseStrategy.sol";
 
-contract PulseStrategyHelper {
+contract QuickPulseStrategyHelper {
     uint256 public constant Q96 = 2**96;
 
     function getStrategyParams(QuickPulseStrategy strategy)
@@ -123,13 +123,17 @@ contract PulseStrategyHelper {
                 pool,
                 vault.positionNft()
             );
-            
+
             (delta, ) = vault.tvl();
             if (!neededNewInterval) {
                 (delta, ) = vault.tvl();
                 IQuickSwapHelper helper = vault.helper();
                 (, , , , , , uint128 liquidity, , , , ) = vault.positionManager().positions(vault.positionNft());
-                (uint256 amount0, uint256 amount1) = helper.liquidityToTokenAmounts(vault.positionNft(), sqrtPriceX96, liquidity);
+                (uint256 amount0, uint256 amount1) = helper.liquidityToTokenAmounts(
+                    vault.positionNft(),
+                    sqrtPriceX96,
+                    liquidity
+                );
                 delta[0] -= amount0;
                 delta[1] -= amount1;
             }

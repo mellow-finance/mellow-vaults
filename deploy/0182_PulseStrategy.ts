@@ -9,6 +9,7 @@ import {
 } from "./0000_utils";
 import { BigNumberish, BigNumber } from "ethers";
 
+const deploymentName = "PulseStrategy";
 const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
@@ -17,6 +18,15 @@ const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
     await deploy("UniV3Helper", {
         from: deployer,
         contract: "UniV3Helper",
+        args: [uniswapV3PositionManager],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
+
+    await deploy(deploymentName, {
+        from: deployer,
+        contract: "PulseStrategy",
         args: [uniswapV3PositionManager],
         log: true,
         autoMine: true,
@@ -67,7 +77,6 @@ const buildSinglePositionStrategy = async (
         uniV3VaultNft500
     );
 
-    const deploymentName = "PulseStrategy";
     const immutableParams = {
         router: aggregationRouterV5,
         erc20Vault: erc20Vault,
@@ -225,6 +234,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (!bob) return;
     await deployStrategy(hre);
+    return;
     await buildSinglePositionStrategy(hre, [weth, bob], {
         priceImpactD6: 0,
         intervalWidth: 4200,

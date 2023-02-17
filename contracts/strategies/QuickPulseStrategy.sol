@@ -12,10 +12,10 @@ import "../interfaces/vaults/IQuickSwapVault.sol";
 
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/DataStorageLibrary.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
-import "../utils/SinglePositionStrategyHelper.sol";
 
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
@@ -194,7 +194,7 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     /// @param vaultPool pool of quickSwapVault
     function checkTickDeviation(MutableParams memory mutableParams_, IAlgebraPool vaultPool) public view {
         (, int24 spotTick, , , , , ) = vaultPool.globalState();
-        (int24 averageTick, , bool withFail) = OracleLibrary.consult(
+        (int24 averageTick, bool withFail) = DataStorageLibrary.consult(
             address(vaultPool),
             mutableParams_.timespanForAverageTick
         );
