@@ -245,19 +245,21 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     /// @inheritdoc IGearboxERC20Vault
     function withdraw(uint256 tvlBefore, uint256 shareD) external returns (uint256 withdrawn) {
+
         uint256 vaultCount = subvaultsList.length;
 
         uint256 toWithdraw = FullMath.mulDiv(tvlBefore, shareD, D9);
+        uint256 claimed = 0;
         uint256 mask = subvaultsStatusMask;
 
-        if (totalDeposited > toWithdraw) {
+        if (totalDeposited >= toWithdraw) {
             totalDeposited -= toWithdraw;
             return toWithdraw;
         }
 
         toWithdraw -= totalDeposited;
 
-        totalDeposited = 0;
+        console2.log("TO WITHDRAW:", toWithdraw);
 
         for (uint256 helpI = 0; helpI < 2 * vaultCount && toWithdraw > 0; ++helpI) {
 
@@ -266,27 +268,31 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                 i = 2*vaultCount - helpI - 1;
             }
 
-            if (limitsList[i] < toWithdraw) {
+            if (helpI < vaultCount && limitsList[i] < toWithdraw) {
                 continue;
             }
+            
             uint256 status = (mask & (3 << (2 * i))) >> (2 * i);
+            if (status == EMPTY) {
+                continue;
+            }
+
             if (status == PARTIAL) {
                 uint256 partialVaultTvl = _getTvl(subvaultsList[i]);
-                if (partialVaultTvl < toWithdraw) {
+                if (helpI < vaultCount && partialVaultTvl < toWithdraw) {
                     continue;
                 }
-                mask |= (1 << (2 * i));
             }
-            mask |= (1 << (2 * i + 1));
-            adjustParameters(subvaultsList[i], -1);
 
+            mask ^= (status << (2 * i));
+
+            adjustParameters(subvaultsList[i], -1);
             IGearboxVault(subvaultsList[i]).closeCreditAccount();
 
             uint256 vaultTvl = _getTvl(subvaultsList[i]);
+            IGearboxVault(subvaultsList[i]).claim();
 
-            uint256[] memory tokenAmounts = new uint256[](1);
-            tokenAmounts[0] = vaultTvl;
-            IGearboxVault(subvaultsList[i]).pull(address(this), _vaultTokens, tokenAmounts, "");
+            claimed += vaultTvl;
 
             if (vaultTvl <= toWithdraw) {
                 toWithdraw -= vaultTvl;
@@ -297,16 +303,26 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             }
         }
 
-        uint256 newTvl = tvlBefore; ////////// CHANGE!!!
+        (uint256[] memory newTvlMin, ) = tvl();
+
+        uint256 newTvl = newTvlMin[0] + claimed;
         uint256 loss = 0;
 
         if (newTvl < tvlBefore) {
             loss = tvlBefore - newTvl;
         }
 
-        subvaultsStatusMask = mask;
+        console2.log("W:", FullMath.mulDiv(tvlBefore, shareD, D9));
+        console2.log("LOSS:", loss);
 
-        return FullMath.mulDiv(tvlBefore, shareD, D9) - loss;
+        subvaultsStatusMask = mask;
+        totalDeposited = 0;
+
+        uint256 finalWithdraw = FullMath.mulDiv(tvlBefore, shareD, D9) - loss;
+        totalDeposited = totalDeposited + claimed - finalWithdraw;
+
+        return finalWithdraw;
+
     }
 
     /// @inheritdoc IGearboxERC20Vault
@@ -319,10 +335,18 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     /// @inheritdoc IGearboxERC20Vault
     function calculatePoolsFeeD() external view returns (uint256) {
-        if (subvaultsList.length == 0) {
+        uint256 mask = subvaultsStatusMask;
+        if (mask == 0) {
             return 0;
         }
-        return IGearboxVault(subvaultsList[0]).calculatePoolsFeeD();
+
+        uint256 index = 0;
+        while (mask & 3 == 0) {
+            mask >>= 2;
+            index += 1;
+        }
+
+        return IGearboxVault(subvaultsList[index]).calculatePoolsFeeD();
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -375,7 +399,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         minTokenAmounts = new uint256[](1);
 
         IERC20 token = IERC20(_vaultTokens[0]);
-        minTokenAmounts[0] = token.balanceOf(address(this));
+        minTokenAmounts[0] = totalDeposited;
 
         if (subvaultsList.length == 0) {
             return (minTokenAmounts, minTokenAmounts);
@@ -400,7 +424,12 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                     if (ca != address(0)) {
                         minTokenAmounts[0] += token.balanceOf(ca);
                     }
+                    minTokenAmounts[0] += token.balanceOf(subvaultsList[i]);
                 }
+            }
+
+            for (uint256 i = 0; i < subvaultsList.length; ++i) {
+                totalPrimaryTokenAmount += IERC20(primaryToken).balanceOf(subvaultsList[i]);
             }
 
             console2.log(totalPrimaryTokenAmount);

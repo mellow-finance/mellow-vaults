@@ -459,7 +459,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         withdrawalRequests[addr] = 0;
         latestRequestEpoch[addr] = 0;
     }
-
+    
     function _makeWithdraw(
         address user,
         address to,
