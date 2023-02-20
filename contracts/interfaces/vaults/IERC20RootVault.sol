@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
 import "../utils/IERC20RootVaultHelper.sol";
-import "../external/synthetix/IFarmingPool.sol";
 
 interface IERC20RootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
@@ -70,10 +69,4 @@ interface IERC20RootVault is IAggregateVault, IERC20 {
         uint256[] memory minTokenAmounts,
         bytes[] memory vaultsOptions
     ) external returns (uint256[] memory actualTokenAmounts);
-
-    function setRebalance() external;
-
-    function setDuration(uint256 duration) external;
-
-    function setFarm(IFarmingPool pool_) external;
 }

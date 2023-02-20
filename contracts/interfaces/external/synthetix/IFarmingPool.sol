@@ -21,11 +21,13 @@ interface IFarmingPool {
 
     function getReward() external;
 
-    function stake(address to, uint256 amount) external;
+    function stake(uint256 amount) external;
 
-    function withdraw(address to, uint256 amount) external;
+    function withdraw(uint256 amount) external;
 
     function setRewardsDuration(uint256 duration) external;
 
     function notifyRewardAmount(uint256 amount) external;
+
+    function exit() external;
 }

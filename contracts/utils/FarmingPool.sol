@@ -82,22 +82,20 @@ contract FarmingPool is IFarmingPool, RewardsDistributionRecipient, ReentrancyGu
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(address to, uint256 amount) external onlyOwner nonReentrant notPaused updateReward(to) {
-        if (amount == 0) {
-            return;
-        }
+    function stake(uint256 amount) external nonReentrant notPaused updateReward(msg.sender) {
+        require(amount > 0, "Cannot stake 0");
         _totalSupply = _totalSupply.add(amount);
-        _balances[to] = _balances[to].add(amount);
+        _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        emit Staked(msg.sender, amount);
     }
 
-    function withdraw(address to, uint256 amount) public onlyOwner nonReentrant updateReward(to) {
-        if (amount == 0) {
-            return;
-        }
+    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+        require(amount > 0, "Cannot withdraw 0");
         _totalSupply = _totalSupply.sub(amount);
-        _balances[to] = _balances[to].sub(amount);
+        _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
     }
 
     function getReward() public nonReentrant updateReward(msg.sender) {
@@ -109,9 +107,14 @@ contract FarmingPool is IFarmingPool, RewardsDistributionRecipient, ReentrancyGu
         }
     }
 
+    function exit() external {
+        withdraw(_balances[msg.sender]);
+        getReward();
+    }
+
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(uint256 reward) external override onlyRewardsDistribution updateReward(address(0)) {
+    function notifyRewardAmount(uint256 reward) external onlyRewardsDistribution updateReward(address(0)) {
         if (block.timestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
         } else {

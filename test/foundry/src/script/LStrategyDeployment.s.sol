@@ -9,6 +9,7 @@ import "../../src/ERC20RootVaultHelper.sol";
 import "../../src/MockOracle.sol";
 
 import "../../src/utils/UniV3Helper.sol";
+import "../../src/utils/FarmingPool.sol";
 import "../../src/utils/LStrategyHelper.sol";
 import "../../src/vaults/ERC20Vault.sol";
 import "../../src/vaults/ERC20RootVault.sol";
@@ -278,15 +279,10 @@ contract LStrategyDeployment is Script {
     }
 
     function run() external {
+        
         vm.startBroadcast(operator);
-
-        rootVault = IERC20RootVault(0x13c7bCc2126d6892eEFd489Ad215A1a09F36AA9f);
-        uint256[] memory A = new uint256[](2);
-        A[0] = 5000000000000000;
-        A[1] = 5000000000000000;
-        uint256 Z = 0;
-        bytes memory B = abi.encode(Z, Z, Z, Z);
-        rootVault.deposit(A, 0, B);
+        FarmingPool p = new FarmingPool(operator, operator, 0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32, 0x13c7bCc2126d6892eEFd489Ad215A1a09F36AA9f);
+        console2.log(address(p));
         return;
 
         uint256 startNft = kek();

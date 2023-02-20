@@ -13,6 +13,7 @@ import "../../src/MockOracle.sol";
 import "../../src/utils/UniV3Helper.sol";
 import "../../src/utils/LStrategyHelper.sol";
 import "../../src/utils/FarmingPool.sol";
+import "../../src/utils/FarmWrapper.sol";
 import "../../src/vaults/ERC20Vault.sol";
 import "../../src/vaults/ERC20RootVault.sol";
 
@@ -51,6 +52,9 @@ contract FarmingTest is Test {
 
     uint256 width = 280;
 
+    FarmingPool pool;
+    FarmWrapper wrapper;
+
     function firstDeposit() public {
 
         deal(weth, deployer, 10**10);
@@ -76,12 +80,12 @@ contract FarmingTest is Test {
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount * 10**15;
 
-        IERC20(weth).approve(address(rootVault), type(uint256).max);
+        IERC20(weth).approve(address(wrapper), type(uint256).max);
 
         uint256 x = 0;
         bytes memory depositInfo = abi.encode(x, x, x, x);
 
-        rootVault.deposit(amounts, 0, depositInfo);
+        wrapper.depositAndStake(rootVault, amounts, 0, depositInfo);
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
@@ -170,8 +174,6 @@ contract FarmingTest is Test {
         }
     }
 
-    FarmingPool pool;
-
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
         uint256 delta;
         if (x < y) {
@@ -194,10 +196,13 @@ contract FarmingTest is Test {
 
         uint256 startNft = kek();
 
-        pool = new FarmingPool(address(rootVault), deployer, weth, address(rootVault));
-        rootVault.setFarm(pool);
+        BatchCall b = new BatchCall();
+        wrapper = new FarmWrapper(deployer, deployer, weth, address(rootVault), deployer, address(b));
+
+        wrapper.addNewStrategy(address(rootVault), address(rootVault), false, wrapper);
+        pool = FarmingPool(address(wrapper));
+        pool.setRewardsDuration(86400);
         deal(weth, operator, 10**20);
-        rootVault.setDuration(86400);
     }
 
     uint256 day = 86400;
@@ -207,6 +212,8 @@ contract FarmingTest is Test {
         IERC20(weth).transfer(address(pool), 10**18);
         pool.notifyRewardAmount(10**18);
 
+        rootVault.approve(address(pool), type(uint256).max);
+
         deposit(1000);
         vm.warp(block.timestamp + day);
 
@@ -215,7 +222,7 @@ contract FarmingTest is Test {
         uint256 newBalance = IERC20(weth).balanceOf(deployer);
         require(isClose(newBalance - oldBalance, 10**18, 1000));
         require(pool.balanceOf(deployer) > 0);
-        require(rootVault.balanceOf(deployer) == pool.balanceOf(deployer));
+        require(rootVault.balanceOf(deployer) == 0);
     }
 
     function testFarmingProportionalToDeposits() public {
@@ -224,9 +231,12 @@ contract FarmingTest is Test {
         IERC20(weth).transfer(address(pool), 10**18);
         pool.notifyRewardAmount(10**18);
 
+        rootVault.approve(address(pool), type(uint256).max);
+
         deposit(1000);
         vm.stopPrank();
         vm.startPrank(operator);
+        rootVault.approve(address(pool), type(uint256).max);
         deposit(500);
         vm.stopPrank();
         vm.startPrank(deployer);
@@ -250,12 +260,15 @@ contract FarmingTest is Test {
         IERC20(weth).transfer(address(pool), 10**18);
         pool.notifyRewardAmount(10**18);
 
+        rootVault.approve(address(pool), type(uint256).max);
+
         deposit(1000);
         vm.warp(block.timestamp + day / 2);
         console2.log(pool.earned(deployer));
         console2.log(pool.earned(operator));
         vm.stopPrank();
         vm.startPrank(operator);
+        rootVault.approve(address(pool), type(uint256).max);
         deposit(1000);
         vm.stopPrank();
         vm.startPrank(deployer);
@@ -279,10 +292,12 @@ contract FarmingTest is Test {
         require(isClose(newBalance - oldBalance, 3 * (newBalanceO - oldBalanceO), 100000));
     }
 
-    function testTransferIsOkayWhenFarming() public {
+    function testFailTransferIsOkayWhenFarming() public {
         deal(weth, deployer, 10**18);
         IERC20(weth).transfer(address(pool), 10**18);
         pool.notifyRewardAmount(10**18);
+
+        rootVault.approve(address(pool), type(uint256).max);
 
         deposit(1000);
         vm.warp(block.timestamp + day / 2);
@@ -295,53 +310,29 @@ contract FarmingTest is Test {
         require(pool.balanceOf(operator) == 10**17);
     }
 
-    function testFailNobodyCanStakeFarmingTokens() public {
+    function testFailNobodyCanStakeMissingFarmingTokens() public {
         deal(weth, deployer, 10**18);
         IERC20(weth).transfer(address(pool), 10**18);
         pool.notifyRewardAmount(10**18);
 
+        rootVault.approve(address(pool), type(uint256).max);
+
         deposit(1000);
         vm.warp(block.timestamp + day / 2);
 
-        pool.stake(deployer, 10**17);
+        pool.stake(10**17);
     }
 
-    function testFailNobodyCanWithdrawFarmingTokens() public {
+    function testOneCanWithdrawFarmingTokens() public {
         deal(weth, deployer, 10**18);
         IERC20(weth).transfer(address(pool), 10**18);
         pool.notifyRewardAmount(10**18);
 
-        deposit(1000);
-        vm.warp(block.timestamp + day / 2);
-
-        pool.withdraw(deployer, 10**17);
-    }
-
-    function testWithdrawZeroesFarming() public {
-        deal(weth, deployer, 10**18);
-        IERC20(weth).transfer(address(pool), 10**18);
-        pool.notifyRewardAmount(10**18);
+        rootVault.approve(address(pool), type(uint256).max);
 
         deposit(1000);
-        uint256 oldBalance = IERC20(weth).balanceOf(deployer);
         vm.warp(block.timestamp + day / 2);
 
-        {
-
-            uint256 lpTokens = rootVault.balanceOf(deployer);
-
-            uint256[] memory minTokenAmounts = new uint256[](1);
-            bytes[] memory bytesArray = new bytes[](1);
-
-            rootVault.withdraw(deployer, lpTokens, minTokenAmounts, bytesArray);
-
-        }
-
-        vm.warp(block.timestamp + day / 2);
-        pool.getReward();
-        uint256 newBalance = IERC20(weth).balanceOf(deployer);
-        require(isClose(newBalance - oldBalance, 5*10**17 + 10**18, 1000));
-        require(pool.balanceOf(deployer) == 0);
-        require(rootVault.balanceOf(deployer) == pool.balanceOf(deployer));
+        pool.withdraw(10**17);
     }
  }
