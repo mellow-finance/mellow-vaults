@@ -182,14 +182,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        minTokenAmounts = helper.calculateTvl(
-            positionNft,
-            strategyParams(),
-            farmingCenter,
-            _vaultTokens[0],
-            dQuickToken,
-            quickToken
-        );
+        minTokenAmounts = helper.calculateTvl(positionNft, strategyParams(), farmingCenter, _vaultTokens[0]);
         maxTokenAmounts = minTokenAmounts;
     }
 

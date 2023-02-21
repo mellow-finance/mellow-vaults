@@ -12,13 +12,23 @@ import "../libraries/external/DataStorageLibrary.sol";
 contract QuickSwapHelper is IQuickSwapHelper {
     IAlgebraNonfungiblePositionManager public immutable positionManager;
     IAlgebraFactory public immutable factory;
+
+    address public immutable quickToken;
+    address public immutable dQuickToken;
+
     uint256 public constant Q128 = 2**128;
     uint256 public constant Q96 = 2**96;
 
-    constructor(IAlgebraNonfungiblePositionManager positionManager_) {
+    constructor(
+        IAlgebraNonfungiblePositionManager positionManager_,
+        address quickToken_,
+        address dQuickToken_
+    ) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());
+        quickToken = quickToken_;
+        dQuickToken = dQuickToken_;
     }
 
     /// @inheritdoc IQuickSwapHelper
@@ -26,9 +36,7 @@ contract QuickSwapHelper is IQuickSwapHelper {
         uint256 nft,
         IQuickSwapVaultGovernance.StrategyParams memory strategyParams,
         IFarmingCenter farmingCenter,
-        address token0,
-        address dQuickToken,
-        address quickToken
+        address token0
     ) public view returns (uint256[] memory tokenAmounts) {
         if (nft == 0) {
             return new uint256[](2);
@@ -48,17 +56,13 @@ contract QuickSwapHelper is IQuickSwapHelper {
             rewardAmount,
             address(key.rewardToken),
             strategyParams.rewardTokenToUnderlying,
-            strategyParams.rewardPoolTimespan,
-            dQuickToken,
-            quickToken
+            strategyParams.rewardPoolTimespan
         );
         bonusRewardAmount = convertTokenToUnderlying(
             bonusRewardAmount,
             address(key.bonusRewardToken),
             strategyParams.bonusTokenToUnderlying,
-            strategyParams.rewardPoolTimespan,
-            dQuickToken,
-            quickToken
+            strategyParams.rewardPoolTimespan
         );
 
         if (address(strategyParams.rewardTokenToUnderlying) == token0) {
@@ -255,9 +259,7 @@ contract QuickSwapHelper is IQuickSwapHelper {
         uint256 amount,
         address from,
         address to,
-        uint32 timespan,
-        address dQuickToken,
-        address quickToken
+        uint32 timespan
     ) public view returns (uint256) {
         if (from == to || amount == 0) return amount;
         if (from == dQuickToken) {

@@ -13,9 +13,7 @@ interface IQuickSwapHelper {
         uint256 nft,
         IQuickSwapVaultGovernance.StrategyParams memory strategyParams,
         IFarmingCenter farmingCenter,
-        address token0,
-        address dQuickToken,
-        address quickToken
+        address token0
     ) external view returns (uint256[] memory tokenAmounts);
 
     function liquidityToTokenAmounts(
@@ -52,8 +50,6 @@ interface IQuickSwapHelper {
         uint256 amount,
         address from,
         address to,
-        uint32 timespan,
-        address dQuickToken,
-        address quickToken
+        uint32 timespan
     ) external view returns (uint256);
 }
