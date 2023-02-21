@@ -17,12 +17,11 @@ contract QuickSwapHelper is IQuickSwapHelper {
     }
 
     /// @inheritdoc IQuickSwapHelper
-    function calculateTvl(
-        uint256 nft,
-        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams,
-        IFarmingCenter farmingCenter,
-        address token0
-    ) public view returns (uint256[] memory tokenAmounts) {
+    function calculateTvl(uint256 nft, IQuickSwapVaultGovernance.StrategyParams memory strategyParams)
+        public
+        view
+        returns (uint256[] memory tokenAmounts)
+    {
         if (nft == 0) {
             return new uint256[](2);
         }
@@ -30,35 +29,6 @@ contract QuickSwapHelper is IQuickSwapHelper {
         (uint160 sqrtRatioX96, , , , , , ) = key.pool.globalState();
         tokenAmounts = new uint256[](2);
         (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, nft, sqrtRatioX96);
-
-        IAlgebraEternalFarming farming = farmingCenter.eternalFarming();
-
-        (uint256 rewardAmount, uint256 bonusRewardAmount) = calculateCollectableRewards(farming, key, nft);
-        rewardAmount += farming.rewards(address(this), key.rewardToken);
-        bonusRewardAmount += farming.rewards(address(this), key.bonusRewardToken);
-
-        rewardAmount = convertTokenToUnderlying(
-            rewardAmount,
-            address(key.rewardToken),
-            strategyParams.rewardTokenToUnderlying
-        );
-        bonusRewardAmount = convertTokenToUnderlying(
-            bonusRewardAmount,
-            address(key.bonusRewardToken),
-            strategyParams.bonusTokenToUnderlying
-        );
-
-        if (address(strategyParams.rewardTokenToUnderlying) == token0) {
-            tokenAmounts[0] += rewardAmount;
-        } else {
-            tokenAmounts[1] += rewardAmount;
-        }
-
-        if (address(strategyParams.bonusTokenToUnderlying) == token0) {
-            tokenAmounts[0] += bonusRewardAmount;
-        } else {
-            tokenAmounts[1] += bonusRewardAmount;
-        }
     }
 
     /// @inheritdoc IQuickSwapHelper
@@ -181,23 +151,24 @@ contract QuickSwapHelper is IQuickSwapHelper {
             uint32(block.timestamp),
             virtualPool
         );
+        unchecked {
+            totalFeeGrowth0Token += deltaTotalFeeGrowth0Token;
+            totalFeeGrowth1Token += deltaTotalFeeGrowth1Token;
 
-        totalFeeGrowth0Token += deltaTotalFeeGrowth0Token;
-        totalFeeGrowth1Token += deltaTotalFeeGrowth1Token;
-
-        if (currentTick < tickUpper) {
-            if (currentTick >= tickLower) {
-                virtualPoolInnerRewardGrowth0 = totalFeeGrowth0Token - lowerOuterFeeGrowth0Token;
-                virtualPoolInnerRewardGrowth1 = totalFeeGrowth1Token - lowerOuterFeeGrowth1Token;
+            if (currentTick < tickUpper) {
+                if (currentTick >= tickLower) {
+                    virtualPoolInnerRewardGrowth0 = totalFeeGrowth0Token - lowerOuterFeeGrowth0Token;
+                    virtualPoolInnerRewardGrowth1 = totalFeeGrowth1Token - lowerOuterFeeGrowth1Token;
+                } else {
+                    virtualPoolInnerRewardGrowth0 = lowerOuterFeeGrowth0Token;
+                    virtualPoolInnerRewardGrowth1 = lowerOuterFeeGrowth1Token;
+                }
+                virtualPoolInnerRewardGrowth0 -= upperOuterFeeGrowth0Token;
+                virtualPoolInnerRewardGrowth1 -= upperOuterFeeGrowth1Token;
             } else {
-                virtualPoolInnerRewardGrowth0 = lowerOuterFeeGrowth0Token;
-                virtualPoolInnerRewardGrowth1 = lowerOuterFeeGrowth1Token;
+                virtualPoolInnerRewardGrowth0 = upperOuterFeeGrowth0Token - lowerOuterFeeGrowth0Token;
+                virtualPoolInnerRewardGrowth1 = upperOuterFeeGrowth1Token - lowerOuterFeeGrowth1Token;
             }
-            virtualPoolInnerRewardGrowth0 -= upperOuterFeeGrowth0Token;
-            virtualPoolInnerRewardGrowth1 -= upperOuterFeeGrowth1Token;
-        } else {
-            virtualPoolInnerRewardGrowth0 = upperOuterFeeGrowth0Token - lowerOuterFeeGrowth0Token;
-            virtualPoolInnerRewardGrowth1 = upperOuterFeeGrowth1Token - lowerOuterFeeGrowth1Token;
         }
     }
 
@@ -230,26 +201,11 @@ contract QuickSwapHelper is IQuickSwapHelper {
             tickLower,
             tickUpper
         );
-
-        (rewardAmount, bonusRewardAmount) = (
-            FullMath.mulDiv(virtualPoolInnerRewardGrowth0 - innerRewardGrowth0, liquidity, Q128),
-            FullMath.mulDiv(virtualPoolInnerRewardGrowth1 - innerRewardGrowth1, liquidity, Q128)
-        );
-    }
-
-    /// @inheritdoc IQuickSwapHelper
-    function convertTokenToUnderlying(
-        uint256 amount,
-        address from,
-        address to
-    ) public view returns (uint256) {
-        if (from == to || amount == 0) return amount;
-        IAlgebraPool pool = IAlgebraPool(factory.poolByPair(from, to));
-        (uint160 sqrtPriceX96, , , , , , ) = pool.globalState();
-        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-        if (pool.token0() == to) {
-            priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
+        unchecked {
+            (rewardAmount, bonusRewardAmount) = (
+                FullMath.mulDiv(virtualPoolInnerRewardGrowth0 - innerRewardGrowth0, liquidity, Q128),
+                FullMath.mulDiv(virtualPoolInnerRewardGrowth1 - innerRewardGrowth1, liquidity, Q128)
+            );
         }
-        return FullMath.mulDiv(amount, priceX96, Q96);
     }
 }

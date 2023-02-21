@@ -11,9 +11,7 @@ import "../vaults/IQuickSwapVaultGovernance.sol";
 interface IQuickSwapHelper {
     function calculateTvl(
         uint256 nft,
-        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams,
-        IFarmingCenter farmingCenter,
-        address token0
+        IQuickSwapVaultGovernance.StrategyParams memory strategyParams
     ) external view returns (uint256[] memory tokenAmounts);
 
     function liquidityToTokenAmounts(
@@ -45,10 +43,4 @@ interface IQuickSwapHelper {
         IIncentiveKey.IncentiveKey memory key,
         uint256 nft
     ) external view returns (uint256 rewardAmount, uint256 bonusRewardAmount);
-
-    function convertTokenToUnderlying(
-        uint256 amount,
-        address from,
-        address to
-    ) external view returns (uint256);
 }
