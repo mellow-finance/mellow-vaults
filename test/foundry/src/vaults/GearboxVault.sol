@@ -330,7 +330,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function manualPush(uint256 amount) external {
+    function manualPush() external {
         require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address creditAccount = getCreditAccount();
 

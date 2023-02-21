@@ -21,7 +21,7 @@ interface ICurvePool {
         int128 j,
         uint256 dx,
         uint256 min_dy
-    ) external;
+    ) external payable;
 
     function exchange_underlying(
         int128 i,

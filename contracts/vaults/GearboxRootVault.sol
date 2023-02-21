@@ -13,6 +13,7 @@ import "../interfaces/vaults/IGearboxRootVault.sol";
 import "../interfaces/vaults/IGearboxERC20Vault.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
+import "../interfaces/external/chainlink/IAggregatorV3.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
@@ -67,7 +68,13 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @inheritdoc IGearboxRootVault
     uint256 public lastEpochChangeTimestamp;
 
-    uint256 withdrawDelay;
+    struct Params {
+        uint256 withdrawDelay;
+        address priceFeed;
+        uint256 minPoolDeltaD18;
+    }
+
+    Params operatingParams;
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IGearboxRootVault
@@ -108,9 +115,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
     }
 
-    function setWithdrawDelay(uint256 newDelay) external {
+    function setParams(Params memory newParams) external {
         _requireAtLeastStrategy();
-        withdrawDelay = newDelay;
+        require(newParams.minPoolDeltaD18 <= D18);
+        operatingParams = newParams;
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -170,6 +178,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             !IERC20RootVaultGovernance(vaultGovernance).operatorParams().disableDeposit && !isClosed,
             ExceptionsLibrary.FORBIDDEN
         );
+        _checkIsPoolOkay();
 
         uint256 thisNft = _nft;
 
@@ -284,7 +293,14 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     function invokeExecution() public {
         IGearboxERC20Vault erc20Vault_ = IGearboxERC20Vault(address(erc20Vault));
 
-        require(lastEpochChangeTimestamp + withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
+        require(
+            lastEpochChangeTimestamp + operatingParams.withdrawDelay <= block.timestamp || isClosed,
+            ExceptionsLibrary.INVARIANT
+        );
+        if (lastEpochChangeTimestamp + 2 * operatingParams.withdrawDelay > block.timestamp && !isClosed) {
+            _requireAtLeastStrategy();
+            _checkIsPoolOkay();
+        }
         lastEpochChangeTimestamp = block.timestamp;
 
         (uint256[] memory minTokenAmounts, ) = tvl();
@@ -499,6 +515,30 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         emit Withdraw(user, actualTokenAmounts, lpTokensToBurn);
+    }
+
+    function _checkIsPoolOkay() internal {
+        if (operatingParams.priceFeed == address(0)) {
+            return;
+        }
+
+        address curveAdapter = IGearboxERC20Vault(address(erc20Vault)).curveAdapter();
+        (, int256 priceAI, , , ) = IAggregatorV3(operatingParams.priceFeed).latestRoundData();
+        uint256 priceA = uint256(priceAI);
+        uint256 priceB;
+
+        for (uint256 i = 0; i < 2; ++i) {
+            address tokenI = ICurvePool(curveAdapter).coins(i);
+            if (tokenI == _vaultTokens[0]) {
+                priceB = ICurvePool(curveAdapter).get_dy(int128(uint128(1 - i)), int128(uint128(i)), 10**18);
+            }
+        }
+
+        if (priceA < priceB) {
+            require(priceA * D18 > priceB * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
+        } else {
+            require(priceB * D18 > priceA * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
+        }
     }
 
     // --------------------------  EVENTS  --------------------------

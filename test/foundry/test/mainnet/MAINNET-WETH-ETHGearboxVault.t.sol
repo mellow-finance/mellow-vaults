@@ -269,7 +269,14 @@ contract GearboxWETHTest is Test {
         }
 
         erc20Vault.setAdapters(address(curveAdapter), address(convexAdapter));
-        rootVault.setWithdrawDelay(86400 * 7);
+
+        GearboxRootVault.Params memory params = GearboxRootVault.Params({
+            withdrawDelay: 86400 * 7,
+            priceFeed: 0x86392dC19c0b719886221c78AB11eb8Cf5c52812,
+            minPoolDeltaD18: 99 * 10**16
+        });
+
+        rootVault.setParams(params);
 
     }
 
@@ -1542,11 +1549,17 @@ contract GearboxWETHTest is Test {
         require(lpReceived * 1000 > lpAmount * 997); // but < 0.03% taken
     }
 
-    /*
+    function testFailDepositIfPoolDisbalanced() public {
+        deal(weth, address(this), 3 * 10**23);
+        ICurvePool(0xDC24316b9AE028F1497c275EB9192a3Ea0f67022).exchange{value: 3*10**23}(0, 1, 3 * 10**23, 0);
+        addVaults();
+        deposit(100000, address(this));
+    }
 
     function testLidoRewardsToBeCalculatedCorrectly() public {
-        deposit(FIRST_DEPOSIT, address(this));
-        gearboxVault.adjustPosition();
+        addVaults();
+        deposit(100000, address(this));
+        erc20Vault.distributeDeposits();
         placeLidoRewarding();
 
         uint256 tvlBeforeOracleSetting = tvl();
@@ -1571,8 +1584,8 @@ contract GearboxWETHTest is Test {
         assertTrue(tvlAfterOracleSetting > tvlBeforeOracleSetting);
         assertTrue(999 * tvlAfterOracleSetting < 1000 * tvlBeforeOracleSetting); // < 0.1% fees for a day
 
-    }
+        _checkTvlsAreEqual();
 
-    */
+    }
     
 }

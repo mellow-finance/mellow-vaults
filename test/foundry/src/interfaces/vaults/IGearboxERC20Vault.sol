@@ -36,4 +36,26 @@ interface IGearboxERC20Vault is IIntegrationVault {
 
     function calculatePoolsFeeD() external view returns (uint256);
 
+    function totalConvexLpTokens() external view returns (uint256);
+
+    function cumulativeSumRAY() external view returns (uint256);
+
+    function totalBorrowedAmount() external view returns (uint256);
+
+    function totalEarnedCRV() external view returns (uint256);
+
+    function cumulativeSumCRV() external view returns (uint256);
+
+    function cumulativeSubCRV() external view returns (uint256);
+
+    function totalEarnedLDO() external view returns (uint256);
+
+    function cumulativeSumLDO() external view returns (uint256);
+
+    function cumulativeSubLDO() external view returns (uint256);
+
+    function subvaultsList(uint256) external view returns (address);
+
+    function limitsList(uint256) external view returns (uint256);
+
 }
