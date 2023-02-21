@@ -209,7 +209,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         MultiCall[] memory noCalls = new MultiCall[](0);
         creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
-
     }
 
     /// @inheritdoc IGearboxVault
@@ -393,11 +392,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     function _isERC20Vault(address addr) internal view returns (bool) {
-
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address rootVault = registry.ownerOf(_nft);
         address erc20Vault = IAggregateVault(rootVault).subvaultAt(0);
-        
+
         return (erc20Vault == addr);
     }
 

@@ -206,13 +206,13 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             supply = totalSupply - totalLpTokensWaitingWithdrawal;
 
             uint256 multiplierD = D9 -
-                FullMath.mulDiv(IGearboxERC20Vault(address(erc20Vault)).calculatePoolsFeeD(), depositCurveFeeBurdenShareD, D9);
+                FullMath.mulDiv(
+                    IGearboxERC20Vault(address(erc20Vault)).calculatePoolsFeeD(),
+                    depositCurveFeeBurdenShareD,
+                    D9
+                );
 
-            lpAmount = FullMath.mulDiv(
-                supply,
-                FullMath.mulDiv(tokenAmounts[0], multiplierD, D9),
-                minTvl[0]
-            );
+            lpAmount = FullMath.mulDiv(supply, FullMath.mulDiv(tokenAmounts[0], multiplierD, D9), minTvl[0]);
         }
 
         require(lpAmount >= minLpTokens && lpAmount > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -223,7 +223,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress && lpAmount + supply <= params.tokenLimit,
             ExceptionsLibrary.LIMIT_OVERFLOW
         );
-        require(minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(), ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(
+            minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(),
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
 
         IERC20(primaryToken).safeTransferFrom(msg.sender, address(this), tokenAmounts[0]);
 
@@ -290,8 +293,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 withdrawn;
 
         if (totalCurrentEpochLpWitdrawalRequests > 0) {
-
-            uint256 shareD27 = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, D27, totalSupply - totalLpTokensWaitingWithdrawal);
+            uint256 shareD27 = FullMath.mulDiv(
+                totalCurrentEpochLpWitdrawalRequests,
+                D27,
+                totalSupply - totalLpTokensWaitingWithdrawal
+            );
             withdrawn = erc20Vault_.withdraw(minTokenAmounts[0], shareD27);
 
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests;
@@ -460,7 +466,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         withdrawalRequests[addr] = 0;
         latestRequestEpoch[addr] = 0;
     }
-    
+
     function _makeWithdraw(
         address user,
         address to,
