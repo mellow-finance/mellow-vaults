@@ -11,6 +11,7 @@ interface IQuickSwapVaultGovernance is IVaultGovernance {
         address bonusTokenToUnderlying;
         address rewardTokenToUnderlying;
         uint256 swapSlippageD;
+        uint32 rewardPoolTimespan;
     }
 
     /// @notice Delayed Strategy Params

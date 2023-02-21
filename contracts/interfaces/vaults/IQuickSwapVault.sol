@@ -68,8 +68,5 @@ interface IQuickSwapVault is IERC721Receiver, IIntegrationVault {
     function collectRewards() external returns (uint256[] memory collectedRewards);
 
     /// @return params strategy params of the vault
-    function strategyParams()
-        external
-        view
-        returns (IQuickSwapVaultGovernance.StrategyParams memory params);
+    function strategyParams() external view returns (IQuickSwapVaultGovernance.StrategyParams memory params);
 }

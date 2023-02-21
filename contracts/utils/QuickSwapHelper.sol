@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
 import "../interfaces/utils/IQuickSwapHelper.sol";
+import "../interfaces/external/quickswap/IDragonLair.sol";
+
+import "../libraries/external/DataStorageLibrary.sol";
 
 contract QuickSwapHelper is IQuickSwapHelper {
     IAlgebraNonfungiblePositionManager public immutable positionManager;
@@ -17,11 +22,14 @@ contract QuickSwapHelper is IQuickSwapHelper {
     }
 
     /// @inheritdoc IQuickSwapHelper
-    function calculateTvl(uint256 nft, IQuickSwapVaultGovernance.StrategyParams memory strategyParams)
-        public
-        view
-        returns (uint256[] memory tokenAmounts)
-    {
+    function calculateTvl(
+        uint256 nft,
+        IQuickSwapVaultGovernance.StrategyParams memory strategyParams,
+        IFarmingCenter farmingCenter,
+        address token0,
+        address dQuickToken,
+        address quickToken
+    ) public view returns (uint256[] memory tokenAmounts) {
         if (nft == 0) {
             return new uint256[](2);
         }
@@ -29,6 +37,41 @@ contract QuickSwapHelper is IQuickSwapHelper {
         (uint160 sqrtRatioX96, , , , , , ) = key.pool.globalState();
         tokenAmounts = new uint256[](2);
         (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, nft, sqrtRatioX96);
+
+        IAlgebraEternalFarming farming = farmingCenter.eternalFarming();
+
+        (uint256 rewardAmount, uint256 bonusRewardAmount) = calculateCollectableRewards(farming, key, nft);
+        rewardAmount += farming.rewards(address(this), key.rewardToken);
+        bonusRewardAmount += farming.rewards(address(this), key.bonusRewardToken);
+
+        rewardAmount = convertTokenToUnderlying(
+            rewardAmount,
+            address(key.rewardToken),
+            strategyParams.rewardTokenToUnderlying,
+            strategyParams.rewardPoolTimespan,
+            dQuickToken,
+            quickToken
+        );
+        bonusRewardAmount = convertTokenToUnderlying(
+            bonusRewardAmount,
+            address(key.bonusRewardToken),
+            strategyParams.bonusTokenToUnderlying,
+            strategyParams.rewardPoolTimespan,
+            dQuickToken,
+            quickToken
+        );
+
+        if (address(strategyParams.rewardTokenToUnderlying) == token0) {
+            tokenAmounts[0] += rewardAmount;
+        } else {
+            tokenAmounts[1] += rewardAmount;
+        }
+
+        if (address(strategyParams.bonusTokenToUnderlying) == token0) {
+            tokenAmounts[0] += bonusRewardAmount;
+        } else {
+            tokenAmounts[1] += bonusRewardAmount;
+        }
     }
 
     /// @inheritdoc IQuickSwapHelper
@@ -151,24 +194,23 @@ contract QuickSwapHelper is IQuickSwapHelper {
             uint32(block.timestamp),
             virtualPool
         );
-        unchecked {
-            totalFeeGrowth0Token += deltaTotalFeeGrowth0Token;
-            totalFeeGrowth1Token += deltaTotalFeeGrowth1Token;
 
-            if (currentTick < tickUpper) {
-                if (currentTick >= tickLower) {
-                    virtualPoolInnerRewardGrowth0 = totalFeeGrowth0Token - lowerOuterFeeGrowth0Token;
-                    virtualPoolInnerRewardGrowth1 = totalFeeGrowth1Token - lowerOuterFeeGrowth1Token;
-                } else {
-                    virtualPoolInnerRewardGrowth0 = lowerOuterFeeGrowth0Token;
-                    virtualPoolInnerRewardGrowth1 = lowerOuterFeeGrowth1Token;
-                }
-                virtualPoolInnerRewardGrowth0 -= upperOuterFeeGrowth0Token;
-                virtualPoolInnerRewardGrowth1 -= upperOuterFeeGrowth1Token;
+        totalFeeGrowth0Token += deltaTotalFeeGrowth0Token;
+        totalFeeGrowth1Token += deltaTotalFeeGrowth1Token;
+
+        if (currentTick < tickUpper) {
+            if (currentTick >= tickLower) {
+                virtualPoolInnerRewardGrowth0 = totalFeeGrowth0Token - lowerOuterFeeGrowth0Token;
+                virtualPoolInnerRewardGrowth1 = totalFeeGrowth1Token - lowerOuterFeeGrowth1Token;
             } else {
-                virtualPoolInnerRewardGrowth0 = upperOuterFeeGrowth0Token - lowerOuterFeeGrowth0Token;
-                virtualPoolInnerRewardGrowth1 = upperOuterFeeGrowth1Token - lowerOuterFeeGrowth1Token;
+                virtualPoolInnerRewardGrowth0 = lowerOuterFeeGrowth0Token;
+                virtualPoolInnerRewardGrowth1 = lowerOuterFeeGrowth1Token;
             }
+            virtualPoolInnerRewardGrowth0 -= upperOuterFeeGrowth0Token;
+            virtualPoolInnerRewardGrowth1 -= upperOuterFeeGrowth1Token;
+        } else {
+            virtualPoolInnerRewardGrowth0 = upperOuterFeeGrowth0Token - lowerOuterFeeGrowth0Token;
+            virtualPoolInnerRewardGrowth1 = upperOuterFeeGrowth1Token - lowerOuterFeeGrowth1Token;
         }
     }
 
@@ -201,11 +243,39 @@ contract QuickSwapHelper is IQuickSwapHelper {
             tickLower,
             tickUpper
         );
-        unchecked {
-            (rewardAmount, bonusRewardAmount) = (
-                FullMath.mulDiv(virtualPoolInnerRewardGrowth0 - innerRewardGrowth0, liquidity, Q128),
-                FullMath.mulDiv(virtualPoolInnerRewardGrowth1 - innerRewardGrowth1, liquidity, Q128)
-            );
+
+        (rewardAmount, bonusRewardAmount) = (
+            FullMath.mulDiv(virtualPoolInnerRewardGrowth0 - innerRewardGrowth0, liquidity, Q128),
+            FullMath.mulDiv(virtualPoolInnerRewardGrowth1 - innerRewardGrowth1, liquidity, Q128)
+        );
+    }
+
+    /// @inheritdoc IQuickSwapHelper
+    function convertTokenToUnderlying(
+        uint256 amount,
+        address from,
+        address to,
+        uint32 timespan,
+        address dQuickToken,
+        address quickToken
+    ) public view returns (uint256) {
+        if (from == to || amount == 0) return amount;
+        if (from == dQuickToken) {
+            // unstake dQUICK to QUICK token
+            amount = IDragonLair(dQuickToken).dQUICKForQUICK(amount);
+            from = quickToken;
+            if (from == to || amount == 0) return amount;
         }
+
+        IAlgebraPool pool = IAlgebraPool(factory.poolByPair(from, to));
+        (int24 averageTick, bool withFail) = DataStorageLibrary.consult(address(pool), timespan);
+        require(!withFail, "Not enough observations in reward pool");
+
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(averageTick);
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        if (pool.token0() == to) {
+            priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
+        }
+        return FullMath.mulDiv(amount, priceX96, Q96);
     }
 }

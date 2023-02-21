@@ -29,7 +29,8 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
                     }),
                     bonusTokenToUnderlying: address(0),
                     rewardTokenToUnderlying: address(0),
-                    swapSlippageD: 0
+                    swapSlippageD: 0,
+                    rewardPoolTimespan: 0
                 });
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
@@ -52,6 +53,7 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
         require(address(params.key.pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.key.startTime > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.key.endTime > 0, ExceptionsLibrary.VALUE_ZERO);
+        require(params.rewardPoolTimespan > 0, ExceptionsLibrary.VALUE_ZERO);
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
