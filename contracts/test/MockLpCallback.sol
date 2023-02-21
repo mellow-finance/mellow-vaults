@@ -17,6 +17,8 @@ contract MockLpCallback is ILpCallback {
         _mode = mode_;
     }
 
+    function depositCallback() external {}
+
     /// @notice Callback function
     function depositCallback(bytes memory) external {
         emit DepositCallbackCalled();

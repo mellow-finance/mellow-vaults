@@ -612,6 +612,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
+    function depositCallback() external {}
+
     /// @inheritdoc ILpCallback
     function depositCallback(bytes memory depositOptions) external {
         require(depositOptions.length == 32 * 6, ExceptionsLibrary.INVALID_VALUE);

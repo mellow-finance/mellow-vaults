@@ -555,6 +555,8 @@ contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAcce
         _pushIntoQuickSwap(immutableParams);
     }
 
+    function depositCallback() external {}
+
     /// @inheritdoc ILpCallback
     function withdrawCallback(bytes memory) external {}
 

@@ -525,6 +525,8 @@ contract SinglePositionStrategy is ContractMeta, Multicall, DefaultAccessControl
         }
     }
 
+    function depositCallback() external {}
+
     /// @inheritdoc ILpCallback
     function depositCallback(bytes memory) external {
         // pushes all tokens from erc20Vault to uniswap to prevent possible attacks

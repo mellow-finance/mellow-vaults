@@ -12,10 +12,8 @@ import "./BatchCall.sol";
 import "./FarmingPool.sol";
 
 import "./DefaultAccessControl.sol";
-import "forge-std/console2.sol";
 
 contract FarmWrapper is FarmingPool, DefaultAccessControl {
-
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20RootVault;
 
@@ -25,14 +23,15 @@ contract FarmWrapper is FarmingPool, DefaultAccessControl {
         IFarmingPool farm;
     }
 
-    BatchCall batchCall;
-
     mapping(address => StrategyInfo) public depositInfo;
 
-    constructor(address owner, address rewardsDistribution, address rewardsToken, address stakingToken, address admin, address batchCall_) FarmingPool(owner, rewardsDistribution, rewardsToken, stakingToken) DefaultAccessControl(admin) {
-        require(batchCall_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        batchCall = BatchCall(batchCall_);
-    }
+    constructor(
+        address owner,
+        address rewardsDistribution,
+        address rewardsToken,
+        address stakingToken,
+        address admin
+    ) FarmingPool(owner, rewardsDistribution, rewardsToken, stakingToken) DefaultAccessControl(admin) {}
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
@@ -59,20 +58,19 @@ contract FarmWrapper is FarmingPool, DefaultAccessControl {
         vault.safeTransfer(msg.sender, lpReceived);
 
         {
-
             bytes memory data = abi.encodePacked(IFarmingPool.stake.selector, abi.encode(lpReceived));
             Address.functionDelegateCall(address(strategyInfo.farm), data);
-
         }
 
         if (strategyInfo.needToCallCallback) {
-            bytes memory info = bytes("");
-            ILpCallback(strategyInfo.strategy).depositCallback(info);
+            ILpCallback(strategyInfo.strategy).depositCallback();
         }
 
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(vault), 0);
-            IERC20(tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+            if (tokenAmounts[i] > actualTokenAmounts[i]) {
+                IERC20(tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+            }
         }
 
         emit Deposit(msg.sender, address(vault), tokens, actualTokenAmounts, lpReceived);

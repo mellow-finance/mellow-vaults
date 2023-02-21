@@ -196,8 +196,7 @@ contract FarmingTest is Test {
 
         uint256 startNft = kek();
 
-        BatchCall b = new BatchCall();
-        wrapper = new FarmWrapper(deployer, deployer, weth, address(rootVault), deployer, address(b));
+        wrapper = new FarmWrapper(deployer, deployer, weth, address(rootVault), deployer);
 
         wrapper.addNewStrategy(address(rootVault), address(rootVault), false, wrapper);
         pool = FarmingPool(address(wrapper));

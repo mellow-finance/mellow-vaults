@@ -69,13 +69,14 @@ contract FarmWrapper is FarmingPool, DefaultAccessControl {
         }
 
         if (strategyInfo.needToCallCallback) {
-            bytes memory info = bytes("");
-            ILpCallback(strategyInfo.strategy).depositCallback(info);
+            ILpCallback(strategyInfo.strategy).depositCallback();
         }
 
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(vault), 0);
-            IERC20(tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+            if (tokenAmounts[i] > actualTokenAmounts[i]) {
+                IERC20(tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+            }
         }
 
         emit Deposit(msg.sender, address(vault), tokens, actualTokenAmounts, lpReceived);
