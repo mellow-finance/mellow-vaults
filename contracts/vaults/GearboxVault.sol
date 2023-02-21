@@ -46,9 +46,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     /// @inheritdoc IGearboxVault
     uint256 public merkleTotalAmount;
 
-    /// @inheritdoc IGearboxVault
-    uint256 public tvlOnVaultItself;
-
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function approvedPools() external view returns (uint256[] memory) {
@@ -213,7 +210,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         MultiCall[] memory noCalls = new MultiCall[](0);
         creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
 
-        tvlOnVaultItself = IERC20(depositToken).balanceOf(address(this));
     }
 
     /// @inheritdoc IGearboxVault
@@ -241,8 +237,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             poolId,
             creditAccount
         );
-
-        tvlOnVaultItself = 0;
     }
 
     /// @inheritdoc IGearboxVault
@@ -336,6 +330,21 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
+    function manualPush(uint256 amount) external {
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        address creditAccount = getCreditAccount();
+
+        if (creditAccount != address(0)) {
+            _addDepositTokenAsCollateral();
+        }
+    }
+
+    function claim() external {
+        require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        uint256 balance = IERC20(depositToken).balanceOf(address(this));
+        IERC20(depositToken).transfer(msg.sender, balance);
+    }
+
     function _push(uint256[] memory tokenAmounts, bytes memory) internal override returns (uint256[] memory) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         address creditAccount = getCreditAccount();
@@ -343,7 +352,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         if (creditAccount != address(0)) {
             _addDepositTokenAsCollateral();
         }
-        tvlOnVaultItself += tokenAmounts[0];
 
         return tokenAmounts;
     }
@@ -354,8 +362,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
-
-        tvlOnVaultItself -= tokenAmounts[0];
 
         IERC20(depositToken).safeTransfer(to, tokenAmounts[0]);
         actualTokenAmounts = tokenAmounts;

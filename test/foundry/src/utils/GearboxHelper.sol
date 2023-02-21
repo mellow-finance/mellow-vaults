@@ -14,7 +14,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
 import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
 import "../interfaces/oracles/IOracle.sol";
-import "forge-std/console2.sol";
 
 contract GearboxHelper {
     using SafeERC20 for IERC20;
@@ -133,7 +132,6 @@ contract GearboxHelper {
             if (currentAllAssetsValue >= borrowAmountWithInterestAndFees) {
                 primaryTokenAmount += currentAllAssetsValue - borrowAmountWithInterestAndFees;
             }
-            console2.log("BORROW_INTEREST:", borrowAmountWithInterestAndFees);
         }
 
         if (primaryToken_ == depositToken_) {
@@ -235,18 +233,11 @@ contract GearboxHelper {
             .delayedProtocolParams();
 
         totalValue = oracle.convert(earnedCrvAmount, protocolParams.crv, primaryToken);
-        console2.log("CRV:", oracle.convert(earnedCrvAmount, protocolParams.crv, primaryToken));
         totalValue += oracle.convert(
             calculateEarnedCvxAmountByEarnedCrvAmount(earnedCrvAmount, protocolParams.cvx),
             protocolParams.cvx,
             primaryToken
         );
-
-        console2.log("CVX:", oracle.convert(
-            calculateEarnedCvxAmountByEarnedCrvAmount(earnedCrvAmount, protocolParams.cvx),
-            protocolParams.cvx,
-            primaryToken
-        ));
 
         IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {

@@ -241,9 +241,9 @@ contract GearboxHelper {
 
         IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
-            IRewards rewardsContract = IRewards(underlyingContract.extraRewards(i));
+            IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(i));
             uint256 valueEarned = rewardsContract.earned(creditAccount);
-            address tokenEarned = rewardsContract.rewardToken();
+            address tokenEarned = address(rewardsContract.rewardToken());
             (uint256[] memory pricesX96, ) = mellowOracle.priceX96(tokenEarned, primaryToken, 0x20);
             if (pricesX96.length != 0) {
                 totalValue += FullMath.mulDiv(valueEarned, pricesX96[0], Q96);
@@ -395,7 +395,7 @@ contract GearboxHelper {
         }
 
         for (uint256 i = 0; i < underlyingContract.extraRewardsLength(); ++i) {
-            address rewardToken = address(IRewards(underlyingContract.extraRewards(i)).rewardToken());
+            address rewardToken = address(IBaseRewardPool(underlyingContract.extraRewards(i)).rewardToken());
             if (rewardToken != depositToken && rewardToken != primaryToken_ && rewardToken != weth) {
                 callsCount += 1;
             }
@@ -427,7 +427,7 @@ contract GearboxHelper {
         uint256 pointer = 3;
 
         for (uint256 i = 2; i < 2 + underlyingContract.extraRewardsLength(); ++i) {
-            address rewardToken = address(IRewards(underlyingContract.extraRewards(i - 2)).rewardToken());
+            address rewardToken = address(IBaseRewardPool(underlyingContract.extraRewards(i - 2)).rewardToken());
             if (rewardToken != depositToken && rewardToken != primaryToken_ && rewardToken != weth) {
                 calls[pointer] = createUniswapMulticall(
                     rewardToken,

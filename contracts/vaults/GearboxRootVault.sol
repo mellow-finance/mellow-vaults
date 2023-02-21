@@ -23,6 +23,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     uint256 public constant D9 = 10**9;
     uint256 public constant D18 = 10**18;
+    uint256 public constant D27 = 10**27;
 
     /// @inheritdoc IGearboxRootVault
     uint64 public lastFeeCharge;
@@ -217,10 +218,12 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         require(lpAmount >= minLpTokens && lpAmount > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(vaultGovernance)
             .strategyParams(thisNft);
+
         require(
             lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress && lpAmount + supply <= params.tokenLimit,
             ExceptionsLibrary.LIMIT_OVERFLOW
         );
+        require(minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(), ExceptionsLibrary.LIMIT_OVERFLOW);
 
         IERC20(primaryToken).safeTransferFrom(msg.sender, address(this), tokenAmounts[0]);
 
@@ -288,8 +291,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         if (totalCurrentEpochLpWitdrawalRequests > 0) {
 
-            uint256 shareD = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, D9, totalSupply - totalLpTokensWaitingWithdrawal);
-            withdrawn = erc20Vault_.withdraw(minTokenAmounts[0], shareD);
+            uint256 shareD27 = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, D27, totalSupply - totalLpTokensWaitingWithdrawal);
+            withdrawn = erc20Vault_.withdraw(minTokenAmounts[0], shareD27);
 
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests;
             epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(
@@ -457,7 +460,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         withdrawalRequests[addr] = 0;
         latestRequestEpoch[addr] = 0;
     }
-
+    
     function _makeWithdraw(
         address user,
         address to,

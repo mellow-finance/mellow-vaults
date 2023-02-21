@@ -57,6 +57,8 @@ interface IGearboxVault is IIntegrationVault {
     /// @param helper_ Address of helper
     function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
 
+    function manualPush(uint256 amount) external;
+
     /// @notice Updates marginalFactorD9 (can be successfully called only by an admin or a strategist)
     /// @param marginalFactorD_ New marginalFactorD9
     function updateTargetMarginalFactor(uint256 marginalFactorD_) external;
@@ -70,9 +72,9 @@ interface IGearboxVault is IIntegrationVault {
     /// @notice Adjust a position (takes more debt or repays some, depending on the past performance) to achieve the required marginalFactorD9
     function adjustPosition() external;
 
-    function tvlOnVaultItself() external returns (uint256);
-
     function calculatePoolsFeeD() external view returns (uint256);
+
+    function claim() external;
 
     /// @notice Opens a new credit account on the address of the vault
     function openCreditAccount(address curveAdapter, address convexAdapter) external;

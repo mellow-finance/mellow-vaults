@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./IntegrationVault.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IGearboxERC20Vault.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
 import "../interfaces/external/gearbox/helpers/curve/ICurvePool.sol";
@@ -63,6 +64,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     function addSubvault(address addr, uint256 limit) external {
 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(registry.ownerOf(IVault(addr).nft()) == registry.ownerOf(_nft), ExceptionsLibrary.FORBIDDEN);
+
         IGearboxVault vault = IGearboxVault(addr);
         uint256 currentTvl = _getTvl(addr);
 
@@ -91,7 +96,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     /// @inheritdoc IGearboxERC20Vault
     function changeLimit(uint256 index, uint256 limit) public {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isApprovedOrOwner(msg.sender) || msg.sender == address(this), ExceptionsLibrary.FORBIDDEN);
         require(index < subvaultsList.length, ExceptionsLibrary.INVALID_TARGET);
         uint256 status = (subvaultsStatusMask & (3 << (2 * index))) >> (2 * index);
         require(status == EMPTY || msg.sender == address(this), ExceptionsLibrary.FORBIDDEN);
@@ -162,6 +167,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             }
         }
 
+        else {
+            mask ^= (PARTIAL << (2 * index));
+        }
+
         uint256 vaultTvl = _getTvl(subvaultsList[index]);
         uint256 limit = limitsList[index];
 
@@ -170,8 +179,12 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         }
 
         uint256 toDeposit = limit - vaultTvl;
-        IERC20(_vaultTokens[0]).safeTransfer(address(vault), toDeposit);
+        if (amount < toDeposit) {
+            toDeposit = amount;
+        }
 
+        IERC20(_vaultTokens[0]).safeTransfer(address(vault), toDeposit);
+        vault.manualPush(toDeposit);
         if (status == EMPTY) {
             vault.openCreditAccount(curveAdapter, convexAdapter);
         }
@@ -179,12 +192,12 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         vault.adjustPosition();
 
         adjustParameters(subvaultsList[index], 1);
-        if (amount >= limit) {
-            mask &= (FULL << (2 * index));
-            return (mask, amount - limit);
+        if (toDeposit == limit - vaultTvl) {
+            mask |= (FULL << (2 * index));
+            return (mask, amount - toDeposit);
         }
 
-        mask &= (PARTIAL << (2 * index));
+        mask |= (PARTIAL << (2 * index));
         return (mask, 0);
     }
 
@@ -225,20 +238,24 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxERC20Vault
-    function withdraw(uint256 tvlBefore, uint256 shareD) external returns (uint256 withdrawn) {
+    function withdraw(uint256 tvlBefore, uint256 shareD27) external returns (uint256 withdrawn) {
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(registry.ownerOf(_nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
+
         uint256 vaultCount = subvaultsList.length;
 
-        uint256 toWithdraw = FullMath.mulDiv(tvlBefore, shareD, D9);
+        uint256 toWithdraw = FullMath.mulDiv(tvlBefore, shareD27, D27);
+        uint256 claimed = 0;
         uint256 mask = subvaultsStatusMask;
 
-        if (totalDeposited > toWithdraw) {
+        if (totalDeposited >= toWithdraw) {
             totalDeposited -= toWithdraw;
             return toWithdraw;
         }
 
         toWithdraw -= totalDeposited;
 
-        totalDeposited = 0;
 
         for (uint256 helpI = 0; helpI < 2 * vaultCount && toWithdraw > 0; ++helpI) {
 
@@ -247,27 +264,31 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                 i = 2*vaultCount - helpI - 1;
             }
 
-            if (limitsList[i] < toWithdraw) {
+            if (helpI < vaultCount && limitsList[i] < toWithdraw) {
                 continue;
             }
+            
             uint256 status = (mask & (3 << (2 * i))) >> (2 * i);
+            if (status == EMPTY) {
+                continue;
+            }
+
             if (status == PARTIAL) {
                 uint256 partialVaultTvl = _getTvl(subvaultsList[i]);
-                if (partialVaultTvl < toWithdraw) {
+                if (helpI < vaultCount && partialVaultTvl < toWithdraw) {
                     continue;
                 }
-                mask ^= (1 << (2 * i));
             }
-            mask ^= (1 << (2 * i + 1));
-            adjustParameters(subvaultsList[i], -1);
 
+            mask ^= (status << (2 * i));
+
+            adjustParameters(subvaultsList[i], -1);
             IGearboxVault(subvaultsList[i]).closeCreditAccount();
 
             uint256 vaultTvl = _getTvl(subvaultsList[i]);
+            IGearboxVault(subvaultsList[i]).claim();
 
-            uint256[] memory tokenAmounts = new uint256[](1);
-            tokenAmounts[0] = vaultTvl;
-            IGearboxVault(subvaultsList[i]).pull(address(this), _vaultTokens, tokenAmounts, "");
+            claimed += vaultTvl;
 
             if (vaultTvl <= toWithdraw) {
                 toWithdraw -= vaultTvl;
@@ -278,7 +299,9 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             }
         }
 
-        uint256 newTvl = tvlBefore; ////////// CHANGE!!!
+        (uint256[] memory newTvlMin, ) = tvl();
+
+        uint256 newTvl = newTvlMin[0] + claimed;
         uint256 loss = 0;
 
         if (newTvl < tvlBefore) {
@@ -286,8 +309,13 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         }
 
         subvaultsStatusMask = mask;
+        totalDeposited = 0;
 
-        return FullMath.mulDiv(tvlBefore, shareD, D9) - loss;
+        uint256 finalWithdraw = FullMath.mulDiv(tvlBefore, shareD27, D27) - loss;
+        totalDeposited = totalDeposited + claimed - finalWithdraw;
+
+        return finalWithdraw;
+
     }
 
     /// @inheritdoc IGearboxERC20Vault
@@ -300,7 +328,18 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     /// @inheritdoc IGearboxERC20Vault
     function calculatePoolsFeeD() external view returns (uint256) {
-        return IGearboxVault(subvaultsList[0]).calculatePoolsFeeD();
+        uint256 mask = subvaultsStatusMask;
+        if (mask == 0) {
+            return 0;
+        }
+
+        uint256 index = 0;
+        while (mask & 3 == 0) {
+            mask >>= 2;
+            index += 1;
+        }
+
+        return IGearboxVault(subvaultsList[index]).calculatePoolsFeeD();
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -324,6 +363,9 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         GearboxHelper helper = vault.helper();
 
         ICreditAccount ca = ICreditAccount(vault.getCreditAccount());
+        if (address(ca) == address(0)) {
+            return;
+        }
         IConvexV1BaseRewardPoolAdapter convexAdapterContract = IConvexV1BaseRewardPoolAdapter(convexAdapter);
 
         totalConvexLpTokens = uint256(int256(totalConvexLpTokens) + sign * int256(IERC20(helper.convexOutputToken()).balanceOf(address(ca))));
@@ -334,16 +376,15 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
         totalEarnedCRV = uint256(int256(totalEarnedCRV) + sign * int256(convexAdapterContract.rewards(address(ca))));
         cumulativeSumCRV = uint256(int256(cumulativeSumCRV) + sign * int256(convexAdapterContract.balanceOf(address(ca))));
-        cumulativeSubCRV = uint256(int256(cumulativeSumCRV) + sign * int256(convexAdapterContract.balanceOf(address(ca)) * convexAdapterContract.userRewardPerTokenPaid(address(ca))));
+        cumulativeSubCRV = uint256(int256(cumulativeSubCRV) + sign * int256(convexAdapterContract.balanceOf(address(ca)) * convexAdapterContract.userRewardPerTokenPaid(address(ca))));
 
         IBaseRewardPool underlyingContract = IBaseRewardPool(vault.creditManager().adapterToContract(convexAdapter));
         if (underlyingContract.extraRewardsLength() > 0) {
-            IRewards rewardsContract = IRewards(underlyingContract.extraRewards(0));
+            IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(0));
             totalEarnedLDO = uint256(int256(totalEarnedLDO) + sign * int256(rewardsContract.rewards(address(ca))));
             cumulativeSumLDO = uint256(int256(cumulativeSumLDO) + sign * int256(rewardsContract.balanceOf(address(ca))));
-            cumulativeSubLDO = uint256(int256(cumulativeSumLDO) + sign * int256(rewardsContract.balanceOf(address(ca)) * rewardsContract.userRewardPerTokenPaid(address(ca))));
+            cumulativeSubLDO = uint256(int256(cumulativeSubLDO) + sign * int256(rewardsContract.balanceOf(address(ca)) * rewardsContract.userRewardPerTokenPaid(address(ca))));
         }
-
     }
 
     /// @inheritdoc IVault
@@ -351,8 +392,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         minTokenAmounts = new uint256[](1);
 
         IERC20 token = IERC20(_vaultTokens[0]);
+        minTokenAmounts[0] = totalDeposited;
+
         if (subvaultsList.length == 0) {
-            return (minTokenAmounts, maxTokenAmounts);
+            return (minTokenAmounts, minTokenAmounts);
         }
 
         IGearboxVault sampleVault = IGearboxVault(subvaultsList[0]);
@@ -374,8 +417,14 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                     if (ca != address(0)) {
                         minTokenAmounts[0] += token.balanceOf(ca);
                     }
+                    minTokenAmounts[0] += token.balanceOf(subvaultsList[i]);
                 }
             }
+
+            for (uint256 i = 0; i < subvaultsList.length; ++i) {
+                totalPrimaryTokenAmount += IERC20(primaryToken).balanceOf(subvaultsList[i]);
+            }
+
 
         }
 
@@ -389,7 +438,11 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         
             uint256 totalBorrowedWithInterest = FullMath.mulDiv(cumulativeSumRAY, IPoolService(creditManager.pool()).calcLinearCumulative_RAY(), D27);
             (uint16 feeInterest, , , ,) = creditManager.fees();
-            totalPrimaryTokenAmount += FullMath.mulDiv(totalBorrowedWithInterest - totalBorrowedAmount, uint256(feeInterest), 10000);
+            if (totalBorrowedWithInterest > totalBorrowedAmount) {
+                totalPrimaryTokenAmount -= FullMath.mulDiv(totalBorrowedWithInterest - totalBorrowedAmount, uint256(feeInterest), 10000);
+            }
+
+            totalPrimaryTokenAmount -= totalBorrowedWithInterest;
 
         }
 
@@ -399,10 +452,9 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             uint256 rewardPerToken = IConvexV1BaseRewardPoolAdapter(convexAdapter).rewardPerToken();
             totalCRV += (cumulativeSumCRV * rewardPerToken - cumulativeSubCRV) / 10**18;
             totalPrimaryTokenAmount += oracle.convert(totalCRV, protocolParams.crv, primaryToken);
-
             {
                 uint256 totalCVX = helper.calculateEarnedCvxAmountByEarnedCrvAmount(totalCRV, protocolParams.cvx);
-                totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.crv, primaryToken);
+                totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.cvx, primaryToken);
             }
 
         }
@@ -411,11 +463,11 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
             IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
             if (underlyingContract.extraRewardsLength() > 0) {
-                IRewards rewardsContract = IRewards(underlyingContract.extraRewards(0));
+                IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(0));
                 uint256 rewardPerTokenLDO = rewardsContract.rewardPerToken();
                 uint256 totalLDO = totalEarnedLDO + (cumulativeSumLDO * rewardPerTokenLDO - cumulativeSubLDO) / 10**18;
 
-                (uint256[] memory pricesX96, ) = mellowOracle.priceX96(rewardsContract.rewardToken(), primaryToken, 0x20);
+                (uint256[] memory pricesX96, ) = mellowOracle.priceX96(address(rewardsContract.rewardToken()), primaryToken, 0x20);
                 if (pricesX96.length != 0) {
                     totalPrimaryTokenAmount += FullMath.mulDiv(totalLDO, pricesX96[0], Q96);
                 }
@@ -455,11 +507,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
-        pure
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-        // no-op, tokens are already on balance
+        totalDeposited += tokenAmounts[0];
         return tokenAmounts;
     }
 
@@ -501,6 +552,6 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IGearboxERC20Vault).interfaceId);
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IGearboxERC20Vault).interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
 }

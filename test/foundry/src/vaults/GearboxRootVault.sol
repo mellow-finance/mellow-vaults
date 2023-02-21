@@ -23,6 +23,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     uint256 public constant D9 = 10**9;
     uint256 public constant D18 = 10**18;
+    uint256 public constant D27 = 10**27;
 
     /// @inheritdoc IGearboxRootVault
     uint64 public lastFeeCharge;
@@ -290,8 +291,8 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         if (totalCurrentEpochLpWitdrawalRequests > 0) {
 
-            uint256 shareD = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, D9, totalSupply - totalLpTokensWaitingWithdrawal);
-            withdrawn = erc20Vault_.withdraw(minTokenAmounts[0], shareD);
+            uint256 shareD27 = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, D27, totalSupply - totalLpTokensWaitingWithdrawal);
+            withdrawn = erc20Vault_.withdraw(minTokenAmounts[0], shareD27);
 
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests;
             epochToPriceForLpTokenD18[currentEpoch] = FullMath.mulDiv(

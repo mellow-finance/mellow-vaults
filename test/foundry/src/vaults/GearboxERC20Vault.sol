@@ -15,8 +15,6 @@ import "../interfaces/external/gearbox/helpers/curve/ICurvePool.sol";
 import "../interfaces/external/gearbox/helpers/IPoolService.sol";
 import "../interfaces/external/gearbox/helpers/ICreditAccount.sol";
 
-import "forge-std/console2.sol";
-
 /// @notice Vault that stores ERC20 tokens.
 contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
@@ -224,8 +222,6 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             }
         }
 
-        console2.log("SPECIAL", specialVault);
-
         if (specialVault != 0) {
             (mask, remainingDeposited) = _depositTo(specialVault - 1, mask, remainingDeposited, PARTIAL);
         }
@@ -237,18 +233,19 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             }
         }
 
-        console2.log("MASK", mask);
-
         totalDeposited = remainingDeposited;
         subvaultsStatusMask = mask;
     }
 
     /// @inheritdoc IGearboxERC20Vault
-    function withdraw(uint256 tvlBefore, uint256 shareD) external returns (uint256 withdrawn) {
+    function withdraw(uint256 tvlBefore, uint256 shareD27) external returns (uint256 withdrawn) {
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(registry.ownerOf(_nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
 
         uint256 vaultCount = subvaultsList.length;
 
-        uint256 toWithdraw = FullMath.mulDiv(tvlBefore, shareD, D9);
+        uint256 toWithdraw = FullMath.mulDiv(tvlBefore, shareD27, D27);
         uint256 claimed = 0;
         uint256 mask = subvaultsStatusMask;
 
@@ -259,7 +256,6 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
         toWithdraw -= totalDeposited;
 
-        console2.log("TO WITHDRAW:", toWithdraw);
 
         for (uint256 helpI = 0; helpI < 2 * vaultCount && toWithdraw > 0; ++helpI) {
 
@@ -312,13 +308,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             loss = tvlBefore - newTvl;
         }
 
-        console2.log("W:", FullMath.mulDiv(tvlBefore, shareD, D9));
-        console2.log("LOSS:", loss);
-
         subvaultsStatusMask = mask;
         totalDeposited = 0;
 
-        uint256 finalWithdraw = FullMath.mulDiv(tvlBefore, shareD, D9) - loss;
+        uint256 finalWithdraw = FullMath.mulDiv(tvlBefore, shareD27, D27) - loss;
         totalDeposited = totalDeposited + claimed - finalWithdraw;
 
         return finalWithdraw;
@@ -432,30 +425,24 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                 totalPrimaryTokenAmount += IERC20(primaryToken).balanceOf(subvaultsList[i]);
             }
 
-            console2.log(totalPrimaryTokenAmount);
 
         }
 
         {
 
             totalPrimaryTokenAmount += helper.calcTotalWithdraw(totalConvexLpTokens);
-            console2.log(totalPrimaryTokenAmount);
 
         }
 
         {
         
             uint256 totalBorrowedWithInterest = FullMath.mulDiv(cumulativeSumRAY, IPoolService(creditManager.pool()).calcLinearCumulative_RAY(), D27);
-            console2.log("BB", totalBorrowedWithInterest);
-            console2.log("BA", totalBorrowedAmount);
             (uint16 feeInterest, , , ,) = creditManager.fees();
             if (totalBorrowedWithInterest > totalBorrowedAmount) {
                 totalPrimaryTokenAmount -= FullMath.mulDiv(totalBorrowedWithInterest - totalBorrowedAmount, uint256(feeInterest), 10000);
             }
 
             totalPrimaryTokenAmount -= totalBorrowedWithInterest;
-
-            console2.log(totalPrimaryTokenAmount);
 
         }
 
@@ -465,12 +452,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             uint256 rewardPerToken = IConvexV1BaseRewardPoolAdapter(convexAdapter).rewardPerToken();
             totalCRV += (cumulativeSumCRV * rewardPerToken - cumulativeSubCRV) / 10**18;
             totalPrimaryTokenAmount += oracle.convert(totalCRV, protocolParams.crv, primaryToken);
-            console2.log(totalPrimaryTokenAmount);
             {
                 uint256 totalCVX = helper.calculateEarnedCvxAmountByEarnedCrvAmount(totalCRV, protocolParams.cvx);
                 totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.cvx, primaryToken);
             }
-            console2.log(totalPrimaryTokenAmount);
 
         }
 
@@ -487,7 +472,6 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                     totalPrimaryTokenAmount += FullMath.mulDiv(totalLDO, pricesX96[0], Q96);
                 }
             }
-            console2.log(totalPrimaryTokenAmount);
 
         }
 
