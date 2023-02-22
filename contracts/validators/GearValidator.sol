@@ -30,14 +30,12 @@ contract GearValidator is ContractMeta, Validator {
         if (selector == CLAIM_SELECTOR) {
             require(value == 0, ExceptionsLibrary.INVALID_VALUE);
             require(addr == gearAirdrop, ExceptionsLibrary.INVALID_TARGET);
-        }
-        else if (selector == SWAP_SELECTOR) {
+        } else if (selector == SWAP_SELECTOR) {
             require(value == 0, ExceptionsLibrary.INVALID_VALUE);
             require(addr == pool, ExceptionsLibrary.INVALID_TARGET);
-            (uint256 i, , ,) = abi.decode(data, (uint256, uint256, uint256, uint256));
+            (uint256 i, , , ) = abi.decode(data, (uint256, uint256, uint256, uint256));
             require(i == 0, ExceptionsLibrary.INVARIANT);
-        } 
-        else {
+        } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
     }
