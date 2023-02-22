@@ -16,10 +16,10 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IQuickSwapVaultGovernance
-    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
-        if (_stagedDelayedStrategyParams[nft].length == 0) {
+    function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
+        if (_strategyParams[nft].length == 0) {
             return
-                DelayedStrategyParams({
+                StrategyParams({
                     key: IIncentiveKey.IncentiveKey({
                         rewardToken: IERC20Minimal(address(0)),
                         bonusRewardToken: IERC20Minimal(address(0)),
@@ -29,30 +29,11 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
                     }),
                     bonusTokenToUnderlying: address(0),
                     rewardTokenToUnderlying: address(0),
-                    swapSlippageD: 0
+                    swapSlippageD: 0,
+                    rewardPoolTimespan: 0
                 });
         }
-        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
-    }
-
-    /// @inheritdoc IQuickSwapVaultGovernance
-    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
-        if (_delayedStrategyParams[nft].length == 0) {
-            return
-                DelayedStrategyParams({
-                    key: IIncentiveKey.IncentiveKey({
-                        rewardToken: IERC20Minimal(address(0)),
-                        bonusRewardToken: IERC20Minimal(address(0)),
-                        pool: IAlgebraPool(address(0)),
-                        startTime: 0,
-                        endTime: 0
-                    }),
-                    bonusTokenToUnderlying: address(0),
-                    rewardTokenToUnderlying: address(0),
-                    swapSlippageD: 0
-                });
-        }
-        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
+        return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
     /// @inheritdoc IERC165
@@ -63,7 +44,7 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IQuickSwapVaultGovernance
-    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+    function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         require(params.bonusTokenToUnderlying != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.rewardTokenToUnderlying != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.swapSlippageD < 10**9, ExceptionsLibrary.LIMIT_OVERFLOW);
@@ -72,19 +53,9 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
         require(address(params.key.pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.key.startTime > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.key.endTime > 0, ExceptionsLibrary.VALUE_ZERO);
-        _stageDelayedStrategyParams(nft, abi.encode(params));
-        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
-    }
-
-    /// @inheritdoc IQuickSwapVaultGovernance
-    function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft);
-        emit CommitDelayedStrategyParams(
-            tx.origin,
-            msg.sender,
-            nft,
-            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
-        );
+        require(params.rewardPoolTimespan > 0, ExceptionsLibrary.VALUE_ZERO);
+        _setStrategyParams(nft, abi.encode(params));
+        emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
     /// @inheritdoc IQuickSwapVaultGovernance
@@ -107,33 +78,14 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.0.0");
+        return bytes32("1.1.0");
     }
 
     // --------------------------  EVENTS  --------------------------
-    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @notice Emitted when new StrategyParams are set
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
-    /// @param params New params that were staged for commit
-    /// @param when When the params could be committed
-    event StageDelayedStrategyParams(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        DelayedStrategyParams params,
-        uint256 when
-    );
-
-    /// @notice Emitted when new DelayedStrategyParams are committed
-    /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender)
-    /// @param nft VaultRegistry NFT of the vault
-    /// @param params New params that are committed
-    event CommitDelayedStrategyParams(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        DelayedStrategyParams params
-    );
+    /// @param params New set params
+    event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
 }
