@@ -30,21 +30,22 @@ contract GearValidator is ContractMeta, Validator {
         bytes calldata data
     ) external view {
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-        else if (selector == APPROVE_SELECTOR) {
-            (address spender, uint256 value) = abi.decode(data, (address, uint256));
-            require(value < Q96 || value == type(uint256).max, ExceptionsLibrary.INVARIANT);
+        if (selector == APPROVE_SELECTOR) {
+            (address spender, uint256 valueToApprove) = abi.decode(data, (address, uint256));
+            require(valueToApprove < Q96 || valueToApprove == type(uint256).max, ExceptionsLibrary.INVARIANT);
 
-            require(ICurvePool(spender).coins(uint256(0)) == addr || ICurvePool(spender).coins(uint256(1)) == addr, ExceptionsLibrary.INVALID_TARGET);
-        }
-        else if (selector == EXCHANGE_SELECTOR) {
-            (uint256 i, , ,) = abi.decode(data, (uint256, uint256, uint256, uint256));
+            require(
+                ICurvePool(spender).coins(uint256(0)) == addr || ICurvePool(spender).coins(uint256(1)) == addr,
+                ExceptionsLibrary.INVALID_TARGET
+            );
+        } else if (selector == EXCHANGE_SELECTOR) {
+            (uint256 i, , , ) = abi.decode(data, (uint256, uint256, uint256, uint256));
 
             address tokenFrom = ICurvePool(addr).coins(i);
             address primaryToken = IGearboxVault(msg.sender).primaryToken();
 
             require(tokenFrom != primaryToken, ExceptionsLibrary.FORBIDDEN);
-        } 
-        else if (selector != CLAIM_SELECTOR) {
+        } else if (selector != CLAIM_SELECTOR) {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
     }
