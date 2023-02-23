@@ -69,8 +69,8 @@ contract ValidatorTest is Test {
         data = abi.encode(address(0x0E9B5B092caD6F1c5E6bc7f89Ffe1abb5c95F1C2), uint256(34383455536135262260435));
         IntegrationVault(vault).externalCall(0xBa3335588D9403515223F109EdC4eB7269a9Ab5D, 0x095ea7b3, data);
 
-        data = abi.encode(uint256(0), uint256(1), uint256(34383455536135262260435), uint256(0), bool(false));
-        IntegrationVault(vault).externalCall(0x0E9B5B092caD6F1c5E6bc7f89Ffe1abb5c95F1C2, 0x394747c5, data);
+        data = abi.encode(uint256(0), uint256(1), uint256(34383455536135262260435), uint256(0));
+        IntegrationVault(vault).externalCall(0x0E9B5B092caD6F1c5E6bc7f89Ffe1abb5c95F1C2, 0x5b41b908, data);
 
     }
         

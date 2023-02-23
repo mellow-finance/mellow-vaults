@@ -12,8 +12,10 @@ import "./Validator.sol";
 
 contract GearValidator is ContractMeta, Validator {
     bytes4 public constant CLAIM_SELECTOR = 0x2e7ba6ef;
-    bytes4 public constant SWAP_SELECTOR = 0x394747c5;
+    bytes4 public constant EXCHANGE_SELECTOR = 0x5b41b908;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
+
+    uint256 public constant Q96 = 2**96;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
@@ -27,22 +29,22 @@ contract GearValidator is ContractMeta, Validator {
         bytes4 selector,
         bytes calldata data
     ) external view {
-        if (selector == CLAIM_SELECTOR) {
-            require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-        } else if (selector == APPROVE_SELECTOR) {
-            require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-            (address spender, ) = abi.decode(data, (address, uint256));
+        require(value == 0, ExceptionsLibrary.INVALID_VALUE);
+        else if (selector == APPROVE_SELECTOR) {
+            (address spender, uint256 value) = abi.decode(data, (address, uint256));
+            require(value < Q96 || value == type(uint256).max, ExceptionsLibrary.INVARIANT);
 
-            require(ICurvePool(spender).coins(uint256(0)) == addr || ICurvePool(spender).coins(uint256(1)) == addr);
-        } else if (selector == SWAP_SELECTOR) {
-            require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-            (uint256 i, , , , ) = abi.decode(data, (uint256, uint256, uint256, uint256, bool));
+            require(ICurvePool(spender).coins(uint256(0)) == addr || ICurvePool(spender).coins(uint256(1)) == addr, ExceptionsLibrary.INVALID_TARGET);
+        }
+        else if (selector == EXCHANGE_SELECTOR) {
+            (uint256 i, , ,) = abi.decode(data, (uint256, uint256, uint256, uint256));
 
             address tokenFrom = ICurvePool(addr).coins(i);
             address primaryToken = IGearboxVault(msg.sender).primaryToken();
 
             require(tokenFrom != primaryToken, ExceptionsLibrary.FORBIDDEN);
-        } else {
+        } 
+        else if (selector != CLAIM_SELECTOR) {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
     }

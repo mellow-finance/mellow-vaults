@@ -14,6 +14,8 @@ import "../vaults/GearboxVault.sol";
 import "../vaults/GearboxRootVault.sol";
 import "../vaults/ERC20Vault.sol";
 
+import "../validators/GearValidator.sol";
+
 import "../vaults/GearboxVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/UniV3VaultGovernance.sol";
@@ -281,6 +283,11 @@ contract MainnetDeployment is Script {
 
     function run() external {
         vm.startBroadcast(deployer);
+
+        ProtocolGovernance governance = ProtocolGovernance(0xDc9C17662133fB865E7bA3198B67c53a617B2153);
+        GearValidator g = new GearValidator(governance);
+
+        return;
 
        // uint256 startNft = kek();
         uint256 startNft = 212;
