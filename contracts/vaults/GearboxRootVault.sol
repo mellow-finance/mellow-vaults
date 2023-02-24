@@ -127,7 +127,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         for (uint256 i = 0; i < depositors.length; i++) {
             _depositorsAllowlist.add(depositors[i]);
         }
-        emit DepositorsAdded(msg.sender, depositors);
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -136,7 +135,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         for (uint256 i = 0; i < depositors.length; i++) {
             _depositorsAllowlist.remove(depositors[i]);
         }
-        emit DepositorsRemoved(msg.sender, depositors);
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -173,7 +171,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         bytes memory vaultOptions
     ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts, uint256 lpAmount) {
         address vaultGovernance = address(_vaultGovernance);
-        require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         require(
             !IERC20RootVaultGovernance(vaultGovernance).operatorParams().disableDeposit && !isClosed,
             ExceptionsLibrary.FORBIDDEN
@@ -229,11 +226,9 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             .strategyParams(thisNft);
 
         require(
-            lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress && lpAmount + supply <= params.tokenLimit,
-            ExceptionsLibrary.LIMIT_OVERFLOW
-        );
-        require(
-            minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(),
+            lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress &&
+                lpAmount + supply <= params.tokenLimit &&
+                minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(),
             ExceptionsLibrary.LIMIT_OVERFLOW
         );
 
@@ -523,8 +518,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         address curveAdapter = IGearboxERC20Vault(address(erc20Vault)).curveAdapter();
-        (, int256 priceAI, , , ) = IAggregatorV3(operatingParams.priceFeed).latestRoundData();
-        uint256 priceA = uint256(priceAI);
+        (, int256 priceA, , , ) = IAggregatorV3(operatingParams.priceFeed).latestRoundData();
         uint256 priceB;
 
         for (uint256 i = 0; i < 2; ++i) {
@@ -534,10 +528,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             }
         }
 
-        if (priceA < priceB) {
-            require(priceA * D18 > priceB * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
+        if (uint256(priceA) < priceB) {
+            require(uint256(priceA) * D18 > priceB * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
         } else {
-            require(priceB * D18 > priceA * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
+            require(priceB * D18 > uint256(priceA) * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
         }
     }
 
@@ -588,14 +582,4 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
-
-    /// @notice Emitted when depositors added into the allow list
-    /// @param sender Sender of the call (msg.sender)
-    /// @param depositors Array of depositors added into the allow list
-    event DepositorsAdded(address indexed sender, address[] depositors);
-
-    /// @notice Emitted when depositors removed from the allow list
-    /// @param sender Sender of the call (msg.sender)
-    /// @param depositors Array of depositors removed from the allow list
-    event DepositorsRemoved(address indexed sender, address[] depositors);
 }

@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./IIntegrationVault.sol";
+import "../utils/IGearboxERC20Helper.sol";
 
 interface IGearboxERC20Vault is IIntegrationVault {
     /// @notice Initialized a new contract.
@@ -11,6 +12,8 @@ interface IGearboxERC20Vault is IIntegrationVault {
     function initialize(uint256 nft_, address[] memory vaultTokens_) external;
 
     function adjustAllPositions() external;
+
+    function helper() external view returns (IGearboxERC20Helper);
 
     function addSubvault(address addr, uint256 limit) external;
 
@@ -28,11 +31,11 @@ interface IGearboxERC20Vault is IIntegrationVault {
 
     function subvaultsStatusMask() external returns (uint256);
 
-    function totalDeposited() external returns (uint256);
+    function totalDeposited() external view returns (uint256);
 
     function curveAdapter() external returns (address);
 
-    function convexAdapter() external returns (address);
+    function convexAdapter() external view returns (address);
 
     function calculatePoolsFeeD() external view returns (uint256);
 
@@ -57,5 +60,7 @@ interface IGearboxERC20Vault is IIntegrationVault {
     function subvaultsList(uint256) external view returns (address);
 
     function limitsList(uint256) external view returns (uint256);
+
+    function vaultsCount() external view returns (uint256);
 
 }

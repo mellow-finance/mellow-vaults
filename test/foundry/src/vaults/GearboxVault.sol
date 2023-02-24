@@ -71,24 +71,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         return creditManager.creditAccounts(address(this));
     }
 
-    /// @inheritdoc IGearboxVault
-    function getAllAssetsOnCreditAccountValue() external view returns (uint256 currentAllAssetsValue) {
-        address creditAccount = getCreditAccount();
-        if (creditAccount == address(0)) {
-            return 0;
-        }
-        (currentAllAssetsValue, ) = creditFacade.calcTotalValue(creditAccount);
-    }
-
-    /// @inheritdoc IGearboxVault
-    function getClaimableRewardsValue() external view returns (uint256) {
-        address creditAccount = getCreditAccount();
-        if (creditAccount == address(0)) {
-            return 0;
-        }
-        return helper.calculateClaimableRewards(creditAccount, address(_vaultGovernance));
-    }
-
     function getMerkleProof() external view returns (bytes32[] memory) {
         return _merkleProof;
     }
@@ -145,8 +127,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     /// @inheritdoc IGearboxVault
     function openCreditAccount(address curveAdapter, address convexAdapter) external {
         require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        address creditAccount = getCreditAccount();
-        require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 
         address degenNft = creditFacade.degenNFT();
 
@@ -171,36 +151,32 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
     /// @inheritdoc IGearboxVault
     function closeCreditAccount() external {
-        GearboxHelper helper_ = helper;
-
         require(_isERC20Vault(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
-        address depositToken_ = depositToken;
-        address primaryToken_ = primaryToken;
         address creditAccount_ = getCreditAccount();
 
         if (creditAccount_ == address(0)) {
             return;
         }
 
-        helper_.claimRewards(address(_vaultGovernance), creditAccount_);
-        helper_.withdrawFromConvex(IERC20(convexOutputToken).balanceOf(creditAccount_), address(_vaultGovernance));
+        helper.claimRewards(address(_vaultGovernance), creditAccount_);
+        helper.withdrawFromConvex(IERC20(convexOutputToken).balanceOf(creditAccount_), address(_vaultGovernance));
 
         (, , uint256 debtAmount) = creditManager.calcCreditAccountAccruedInterest(creditAccount_);
-        uint256 underlyingBalance = IERC20(primaryToken_).balanceOf(creditAccount_);
+        uint256 underlyingBalance = IERC20(primaryToken).balanceOf(creditAccount_);
 
         if (underlyingBalance < debtAmount + 1) {
-            helper_.swapExactOutput(
-                depositToken_,
-                primaryToken_,
+            helper.swapExactOutput(
+                depositToken,
+                primaryToken,
                 debtAmount + 1 - underlyingBalance,
                 address(_vaultGovernance),
                 creditAccount_
             );
-        } else if (primaryToken_ != depositToken_) {
-            helper_.swapExactInput(
-                primaryToken_,
-                depositToken_,
+        } else if (primaryToken != depositToken) {
+            helper.swapExactInput(
+                primaryToken,
+                depositToken,
                 underlyingBalance - (debtAmount + 1),
                 address(_vaultGovernance),
                 creditAccount_
@@ -209,7 +185,6 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
 
         MultiCall[] memory noCalls = new MultiCall[](0);
         creditFacade.closeCreditAccount(address(this), 0, false, noCalls);
-
     }
 
     /// @inheritdoc IGearboxVault
@@ -221,19 +196,16 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
             return;
         }
 
-        uint256 marginalFactorD9_ = marginalFactorD9;
-        GearboxHelper helper_ = helper;
-
-        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = helper_.calculateDesiredTotalValue(
+        (uint256 expectedAllAssetsValue, uint256 currentAllAssetsValue) = helper.calculateDesiredTotalValue(
             creditAccount,
             address(_vaultGovernance),
-            marginalFactorD9_
+            marginalFactorD9
         );
-        helper_.adjustPosition(
+        helper.adjustPosition(
             expectedAllAssetsValue,
             currentAllAssetsValue,
             address(_vaultGovernance),
-            marginalFactorD9_,
+            marginalFactorD9,
             poolId,
             creditAccount
         );
@@ -310,16 +282,15 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
         require(msg.sender == address(helper), ExceptionsLibrary.FORBIDDEN);
 
         address creditManagerAddress = address(creditManager);
-        IERC20 primaryToken_ = IERC20(primaryToken);
 
-        primaryToken_.safeIncreaseAllowance(creditManagerAddress, currentPrimaryTokenAmount);
+        IERC20(primaryToken).safeIncreaseAllowance(creditManagerAddress, currentPrimaryTokenAmount);
         creditFacade.openCreditAccount(
             currentPrimaryTokenAmount,
             address(this),
             uint16((marginalFactorD9 - D9) / D7),
             referralCode
         );
-        primaryToken_.safeApprove(creditManagerAddress, 0);
+        IERC20(primaryToken).safeApprove(creditManagerAddress, 0);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -393,11 +364,10 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     function _isERC20Vault(address addr) internal view returns (bool) {
-
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address rootVault = registry.ownerOf(_nft);
         address erc20Vault = IAggregateVault(rootVault).subvaultAt(0);
-        
+
         return (erc20Vault == addr);
     }
 

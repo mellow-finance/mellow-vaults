@@ -23,6 +23,7 @@ import "../../src/vaults/ERC20VaultGovernance.sol";
 import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
 import "../../src/utils/GearboxHelper.sol";
+import "../../src/utils/GearboxERC20Helper.sol";
 
 import "../../src/external/ConvexBaseRewardPool.sol";
 import "../../src/external/VirtualPool.sol";
@@ -38,6 +39,8 @@ contract GearboxWETHTest is Test {
 
     ProtocolGovernance governance;
     VaultRegistry registry;
+
+    GearboxERC20Helper gHelper = new GearboxERC20Helper();
 
     GearboxRootVault rootVault = new GearboxRootVault();
     GearboxERC20Vault erc20Vault = new GearboxERC20Vault();
@@ -269,6 +272,7 @@ contract GearboxWETHTest is Test {
         }
 
         erc20Vault.setAdapters(address(curveAdapter), address(convexAdapter));
+        erc20Vault.setHelper(address(gHelper));
 
         GearboxRootVault.Params memory params = GearboxRootVault.Params({
             withdrawDelay: 86400 * 7,

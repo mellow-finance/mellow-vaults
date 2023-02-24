@@ -11,6 +11,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IGearboxERC20Vault.sol";
 import "../interfaces/vaults/IGearboxVault.sol";
+import "../interfaces/utils/IGearboxERC20Helper.sol";
 import "../interfaces/external/gearbox/helpers/curve/ICurvePool.sol";
 import "../interfaces/external/gearbox/helpers/IPoolService.sol";
 import "../interfaces/external/gearbox/helpers/ICreditAccount.sol";
@@ -73,6 +74,9 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     /// @inheritdoc IGearboxERC20Vault
     uint256 public cumulativeSubLDO;
 
+    /// @inheritdoc IGearboxERC20Vault
+    IGearboxERC20Helper public helper;
+
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IGearboxERC20Vault
@@ -91,104 +95,14 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         return IGearboxVault(subvaultsList[index]).calculatePoolsFeeD();
     }
 
+    /// @inheritdoc IGearboxERC20Vault
+    function vaultsCount() external view returns (uint256) {
+        return subvaultsList.length;
+    }
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        minTokenAmounts = new uint256[](1);
-
-        IERC20 token = IERC20(_vaultTokens[0]);
-        minTokenAmounts[0] = totalDeposited;
-
-        if (subvaultsList.length == 0) {
-            return (minTokenAmounts, minTokenAmounts);
-        }
-
-        IGearboxVault sampleVault = IGearboxVault(subvaultsList[0]);
-        ICreditManagerV2 creditManager = sampleVault.creditManager();
-        GearboxHelper helper = sampleVault.helper();
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(
-            address(sampleVault.vaultGovernance())
-        ).delayedProtocolParams();
-        IPriceOracleV2 oracle = helper.oracle();
-        address primaryToken = sampleVault.primaryToken();
-        address depositToken = address(token);
-        IOracle mellowOracle = helper.mellowOracle();
-
-        uint256 totalPrimaryTokenAmount;
-
-        {
-            if (depositToken != primaryToken) {
-                for (uint256 i = 0; i < subvaultsList.length; ++i) {
-                    address ca = IGearboxVault(subvaultsList[i]).getCreditAccount();
-                    if (ca != address(0)) {
-                        minTokenAmounts[0] += token.balanceOf(ca);
-                    }
-                    minTokenAmounts[0] += token.balanceOf(subvaultsList[i]);
-                }
-            }
-
-            for (uint256 i = 0; i < subvaultsList.length; ++i) {
-                totalPrimaryTokenAmount += IERC20(primaryToken).balanceOf(subvaultsList[i]);
-            }
-        }
-
-        {
-            totalPrimaryTokenAmount += helper.calcTotalWithdraw(totalConvexLpTokens);
-        }
-
-        {
-            uint256 totalBorrowedWithInterest = FullMath.mulDiv(
-                cumulativeSumRAY,
-                IPoolService(creditManager.pool()).calcLinearCumulative_RAY(),
-                D27
-            );
-            (uint16 feeInterest, , , , ) = creditManager.fees();
-            if (totalBorrowedWithInterest > totalBorrowedAmount) {
-                totalPrimaryTokenAmount -= FullMath.mulDiv(
-                    totalBorrowedWithInterest - totalBorrowedAmount,
-                    uint256(feeInterest),
-                    10000
-                );
-            }
-
-            totalPrimaryTokenAmount -= totalBorrowedWithInterest;
-        }
-
-        {
-            uint256 totalCRV = totalEarnedCRV;
-            uint256 rewardPerToken = IConvexV1BaseRewardPoolAdapter(convexAdapter).rewardPerToken();
-            totalCRV += (cumulativeSumCRV * rewardPerToken - cumulativeSubCRV) / 10**18;
-            totalPrimaryTokenAmount += oracle.convert(totalCRV, protocolParams.crv, primaryToken);
-            {
-                uint256 totalCVX = helper.calculateEarnedCvxAmountByEarnedCrvAmount(totalCRV, protocolParams.cvx);
-                totalPrimaryTokenAmount += oracle.convert(totalCVX, protocolParams.cvx, primaryToken);
-            }
-        }
-
-        {
-            IBaseRewardPool underlyingContract = IBaseRewardPool(creditManager.adapterToContract(convexAdapter));
-            if (underlyingContract.extraRewardsLength() > 0) {
-                IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(0));
-                uint256 rewardPerTokenLDO = rewardsContract.rewardPerToken();
-                uint256 totalLDO = totalEarnedLDO + (cumulativeSumLDO * rewardPerTokenLDO - cumulativeSubLDO) / 10**18;
-
-                (uint256[] memory pricesX96, ) = mellowOracle.priceX96(
-                    address(rewardsContract.rewardToken()),
-                    primaryToken,
-                    0x20
-                );
-                if (pricesX96.length != 0) {
-                    totalPrimaryTokenAmount += FullMath.mulDiv(totalLDO, pricesX96[0], Q96);
-                }
-            }
-        }
-
-        if (depositToken != primaryToken) {
-            minTokenAmounts[0] += oracle.convert(totalPrimaryTokenAmount, primaryToken, depositToken);
-        } else {
-            minTokenAmounts[0] += totalPrimaryTokenAmount;
-        }
-
-        maxTokenAmounts = minTokenAmounts;
+        return helper.calcTvl(_vaultTokens);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -266,6 +180,11 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
         _makeSorted();
         _adjustParameters(subvaultsList[index], 1);
+    }
+
+    function setHelper(address helper_) external {
+        require(helper_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        helper = IGearboxERC20Helper(helper_);
     }
 
     /// @inheritdoc IGearboxERC20Vault
@@ -432,13 +351,10 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory options
+        bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
-        uint256[] memory pushTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address owner = registry.ownerOf(_nft);
 
         for (uint256 i = 0; i < tokenAmounts.length; ++i) {
             IERC20 vaultToken = IERC20(tokens[i]);
@@ -446,28 +362,12 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
             uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
             IERC20(tokens[i]).safeTransfer(to, amount);
             actualTokenAmounts[i] = amount;
-            if (owner != to) {
-                // this will equal to amounts pulled + any accidental prior balances on `to`;
-                pushTokenAmounts[i] = IERC20(tokens[i]).balanceOf(to);
-            }
-        }
-        if (owner != to) {
-            // if we pull as a strategy, make sure everything is pushed
-            IIntegrationVault(to).push(tokens, pushTokenAmounts, options);
-            // any accidental prior balances + push leftovers
-            uint256[] memory reclaimed = IIntegrationVault(to).reclaimTokens(tokens);
-            for (uint256 i = 0; i < tokenAmounts.length; i++) {
-                // equals to exactly how much is pushed
-                actualTokenAmounts[i] = actualTokenAmounts[i] >= reclaimed[i]
-                    ? actualTokenAmounts[i] - reclaimed[i]
-                    : 0;
-            }
         }
     }
 
     function _adjustParameters(address addr, int256 sign) internal {
         IGearboxVault vault = IGearboxVault(addr);
-        GearboxHelper helper = vault.helper();
+        GearboxHelper gearboxHelper = vault.helper();
 
         ICreditAccount ca = ICreditAccount(vault.getCreditAccount());
         if (address(ca) == address(0)) {
@@ -476,7 +376,9 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         IConvexV1BaseRewardPoolAdapter convexAdapterContract = IConvexV1BaseRewardPoolAdapter(convexAdapter);
 
         totalConvexLpTokens = uint256(
-            int256(totalConvexLpTokens) + sign * int256(IERC20(helper.convexOutputToken()).balanceOf(address(ca)))
+            int256(totalConvexLpTokens) +
+                sign *
+                int256(IERC20(gearboxHelper.convexOutputToken()).balanceOf(address(ca)))
         );
 
         uint256 borrowedAmount = ca.borrowedAmount();
@@ -566,17 +468,14 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
 
     function _makeSorted() internal {
         uint256 len = subvaultsList.length;
-        for (uint256 i = 1; i < len; ++i) {
+        for (uint256 I = 1; I < 2 * len - 1; ++I) {
+            uint256 i = I;
+            if (I >= len) {
+                i = len - (I - len + 1);
+            }
             if (limitsList[i] < limitsList[i - 1]) {
                 (limitsList[i - 1], limitsList[i]) = (limitsList[i], limitsList[i - 1]);
                 (subvaultsList[i - 1], subvaultsList[i]) = (subvaultsList[i], subvaultsList[i - 1]);
-            }
-        }
-
-        for (uint256 i = len; i > 1; --i) {
-            if (limitsList[i - 1] < limitsList[i - 2]) {
-                (limitsList[i - 1], limitsList[i - 2]) = (limitsList[i - 2], limitsList[i - 1]);
-                (subvaultsList[i - 1], subvaultsList[i - 2]) = (subvaultsList[i - 2], subvaultsList[i - 1]);
             }
         }
     }

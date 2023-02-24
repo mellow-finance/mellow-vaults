@@ -89,12 +89,6 @@ interface IGearboxVault is IIntegrationVault {
     /// @notice Returns an address of the credit account connected to the address of the vault
     function getCreditAccount() external view returns (address);
 
-    /// @notice Returns value of all assets located on the vault, including taken with leverage (nominated in primary tokens)
-    function getAllAssetsOnCreditAccountValue() external view returns (uint256 currentAllAssetsValue);
-
-    /// @notice Returns value of rewards (CRV, CVX) we can obtain from Convex (nominated in primary tokens)
-    function getClaimableRewardsValue() external view returns (uint256);
-
     /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
     /// Can be successfully called only by the helper
     function multicall(MultiCall[] memory calls) external;
