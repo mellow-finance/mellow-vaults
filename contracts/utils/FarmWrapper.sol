@@ -23,8 +23,6 @@ contract FarmWrapper is FarmingPool, DefaultAccessControl {
         IFarmingPool farm;
     }
 
-    BatchCall batchCall;
-
     mapping(address => StrategyInfo) public depositInfo;
 
     constructor(
@@ -32,12 +30,8 @@ contract FarmWrapper is FarmingPool, DefaultAccessControl {
         address rewardsDistribution,
         address rewardsToken,
         address stakingToken,
-        address admin,
-        address batchCall_
-    ) FarmingPool(owner, rewardsDistribution, rewardsToken, stakingToken) DefaultAccessControl(admin) {
-        require(batchCall_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        batchCall = BatchCall(batchCall_);
-    }
+        address admin
+    ) FarmingPool(owner, rewardsDistribution, rewardsToken, stakingToken) DefaultAccessControl(admin) {}
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
