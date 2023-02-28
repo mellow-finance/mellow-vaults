@@ -74,7 +74,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 minPoolDeltaD18;
     }
 
-    Params params;
+    Params operatingParams;
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IGearboxRootVault
@@ -118,7 +118,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     function setParams(Params memory newParams) external {
         _requireAtLeastStrategy();
         require(newParams.minPoolDeltaD18 <= D18);
-        params = newParams;
+        operatingParams = newParams;
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -127,7 +127,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         for (uint256 i = 0; i < depositors.length; i++) {
             _depositorsAllowlist.add(depositors[i]);
         }
-        emit DepositorsAdded(msg.sender, depositors);
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -136,7 +135,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         for (uint256 i = 0; i < depositors.length; i++) {
             _depositorsAllowlist.remove(depositors[i]);
         }
-        emit DepositorsRemoved(msg.sender, depositors);
     }
 
     /// @inheritdoc IGearboxRootVault
@@ -173,7 +171,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         bytes memory vaultOptions
     ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts, uint256 lpAmount) {
         address vaultGovernance = address(_vaultGovernance);
-        require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
         require(
             !IERC20RootVaultGovernance(vaultGovernance).operatorParams().disableDeposit && !isClosed,
             ExceptionsLibrary.FORBIDDEN
@@ -215,13 +212,13 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             supply = totalSupply - totalLpTokensWaitingWithdrawal;
 
             uint256 multiplierD = D9 -
-                FullMath.mulDiv(IGearboxERC20Vault(address(erc20Vault)).calculatePoolsFeeD(), depositCurveFeeBurdenShareD, D9);
+                FullMath.mulDiv(
+                    IGearboxERC20Vault(address(erc20Vault)).calculatePoolsFeeD(),
+                    depositCurveFeeBurdenShareD,
+                    D9
+                );
 
-            lpAmount = FullMath.mulDiv(
-                supply,
-                FullMath.mulDiv(tokenAmounts[0], multiplierD, D9),
-                minTvl[0]
-            );
+            lpAmount = FullMath.mulDiv(supply, FullMath.mulDiv(tokenAmounts[0], multiplierD, D9), minTvl[0]);
         }
 
         require(lpAmount >= minLpTokens && lpAmount > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -229,10 +226,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             .strategyParams(thisNft);
 
         require(
-            lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress && lpAmount + supply <= params.tokenLimit,
+            lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress &&
+                lpAmount + supply <= params.tokenLimit &&
+                minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(),
             ExceptionsLibrary.LIMIT_OVERFLOW
         );
-        require(minTvl[0] + tokenAmounts[0] <= IGearboxERC20Vault(address(erc20Vault)).totalLimit(), ExceptionsLibrary.LIMIT_OVERFLOW);
 
         IERC20(primaryToken).safeTransferFrom(msg.sender, address(this), tokenAmounts[0]);
 
@@ -290,8 +288,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     function invokeExecution() public {
         IGearboxERC20Vault erc20Vault_ = IGearboxERC20Vault(address(erc20Vault));
 
-        require(lastEpochChangeTimestamp + params.withdrawDelay <= block.timestamp || isClosed, ExceptionsLibrary.INVARIANT);
-        if (lastEpochChangeTimestamp + 2 * params.withdrawDelay > block.timestamp && !isClosed) {
+        require(
+            lastEpochChangeTimestamp + operatingParams.withdrawDelay <= block.timestamp || isClosed,
+            ExceptionsLibrary.INVARIANT
+        );
+        if (lastEpochChangeTimestamp + 2 * operatingParams.withdrawDelay > block.timestamp && !isClosed) {
             _requireAtLeastStrategy();
             _checkIsPoolOkay();
         }
@@ -303,8 +304,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 withdrawn;
 
         if (totalCurrentEpochLpWitdrawalRequests > 0) {
-
-            uint256 shareD27 = FullMath.mulDiv(totalCurrentEpochLpWitdrawalRequests, D27, totalSupply - totalLpTokensWaitingWithdrawal);
+            uint256 shareD27 = FullMath.mulDiv(
+                totalCurrentEpochLpWitdrawalRequests,
+                D27,
+                totalSupply - totalLpTokensWaitingWithdrawal
+            );
             withdrawn = erc20Vault_.withdraw(minTokenAmounts[0], shareD27);
 
             totalLpTokensWaitingWithdrawal += totalCurrentEpochLpWitdrawalRequests;
@@ -372,8 +376,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         address,
         uint256 amount
     ) internal view override {
-        uint256 senderBalance = balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from];
-        require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from] >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -394,14 +397,12 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         lastFeeCharge = uint64(block.timestamp);
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
-        uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
-        address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
 
         _chargeManagementFees(
             strategyParams.managementFee,
-            protocolFee,
+            vg.delayedProtocolPerVaultParams(thisNft).protocolFee,
             strategyParams.strategyTreasury,
-            protocolTreasury,
+            vg.internalParams().protocolGovernance.protocolTreasury(),
             elapsed,
             supply
         );
@@ -424,7 +425,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
             _mint(strategyTreasury, toMint);
-            emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
         if (protocolFee > 0) {
             uint256 toMint = FullMath.mulDiv(
@@ -433,7 +433,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
             _mint(protocolTreasury, toMint);
-            emit ProtocolFeesCharged(protocolTreasury, protocolFee, toMint);
         }
     }
 
@@ -461,7 +460,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
 
     function _processHangingWithdrawal(address addr) internal {
@@ -473,7 +471,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         withdrawalRequests[addr] = 0;
         latestRequestEpoch[addr] = 0;
     }
-    
+
     function _makeWithdraw(
         address user,
         address to,
@@ -509,13 +507,12 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     function _checkIsPoolOkay() internal {
-        if (params.priceFeed == address(0)) {
+        if (operatingParams.priceFeed == address(0)) {
             return;
         }
 
         address curveAdapter = IGearboxERC20Vault(address(erc20Vault)).curveAdapter();
-        (, int256 priceAI, , ,) = IAggregatorV3(params.priceFeed).latestRoundData();
-        uint256 priceA = uint256(priceAI);
+        (, int256 priceA, , , ) = IAggregatorV3(operatingParams.priceFeed).latestRoundData();
         uint256 priceB;
 
         for (uint256 i = 0; i < 2; ++i) {
@@ -525,22 +522,14 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
             }
         }
 
-        if (priceA < priceB) {
-            require(priceA * D18 > priceB * params.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
+        if (uint256(priceA) < priceB) {
+            require(uint256(priceA) * D18 > priceB * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
+        } else {
+            require(priceB * D18 > uint256(priceA) * operatingParams.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
         }
-        else {
-            require(priceB * D18 > priceA * params.minPoolDeltaD18, ExceptionsLibrary.INVARIANT);
-        }
-
     }
 
     // --------------------------  EVENTS  --------------------------
-
-    /// @notice Emitted when management fees are charged
-    /// @param treasury Treasury receiver of the fee
-    /// @param feeRate Fee percent applied denominated in 10 ** 9
-    /// @param amount Amount of lp token minted
-    event ManagementFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
 
     /// @notice Emitted when a witdrawal request registered
     /// @param sender Sender of the call (msg.sender)
@@ -557,18 +546,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param amountWithdrawnToERC20 Amount of vault tokens withdrawn from Gearbox to the ERC20 vault
     event ExecutionInvoked(address indexed sender, uint256 amountWithdrawnToERC20);
 
-    /// @notice Emitted when protocol fees are charged
-    /// @param treasury Treasury receiver of the fee
-    /// @param feeRate Fee percent applied denominated in 10 ** 9
-    /// @param amount Amount of lp token minted
-    event ProtocolFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
-
-    /// @notice Emitted when performance fees are charged
-    /// @param treasury Treasury receiver of the fee
-    /// @param feeRate Fee percent applied denominated in 10 ** 9
-    /// @param amount Amount of lp token minted
-    event PerformanceFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
-
     /// @notice Emitted when liquidity is deposited
     /// @param from The source address for the liquidity
     /// @param tokens ERC20 tokens deposited
@@ -581,14 +558,4 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
-
-    /// @notice Emitted when depositors added into the allow list
-    /// @param sender Sender of the call (msg.sender)
-    /// @param depositors Array of depositors added into the allow list
-    event DepositorsAdded(address indexed sender, address[] depositors);
-
-    /// @notice Emitted when depositors removed from the allow list
-    /// @param sender Sender of the call (msg.sender)
-    /// @param depositors Array of depositors removed from the allow list
-    event DepositorsRemoved(address indexed sender, address[] depositors);
 }

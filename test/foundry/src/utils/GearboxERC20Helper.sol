@@ -20,6 +20,39 @@ contract GearboxERC20Helper is IGearboxERC20Helper {
     uint256 public constant D27 = 10**27;
     uint256 public constant Q96 = 2**96;
 
+    uint256 public totalConvexLpTokens;
+    mapping (address => uint256) public convexLpTokensMapping;
+
+    uint256 public cumulativeSumRAY;
+    mapping (address => uint256) public sumRAYMapping;
+
+    uint256 public totalBorrowedAmount;
+    mapping (address => uint256) public borrowedAmountMapping;
+
+    uint256 public totalEarnedCRV;
+    mapping (address => uint256) public earnedCRVMapping;
+
+    uint256 public cumulativeSumCRV;
+    mapping (address => uint256) public sumCRVMapping;
+
+    uint256 public cumulativeSubCRV;
+    mapping (address => uint256) public subCRVMapping;
+
+    uint256 public totalEarnedLDO;
+    mapping (address => uint256) public earnedLDOMapping;
+
+    uint256 public cumulativeSumLDO;
+    mapping (address => uint256) public sumLDOMapping;
+
+    uint256 public cumulativeSubLDO;
+    mapping (address => uint256) public subLDOMapping;
+
+    address public admin;
+
+    constructor(address admin_) {
+        admin = admin_;
+    }   
+
     function calcTvl(address[] memory _vaultTokens) public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
 
         IGearboxERC20Vault vault = IGearboxERC20Vault(msg.sender);
@@ -73,19 +106,19 @@ contract GearboxERC20Helper is IGearboxERC20Helper {
         }
 
         {
-            totalPrimaryTokenAmount += helper.calcTotalWithdraw(vault.totalConvexLpTokens());
+            totalPrimaryTokenAmount += helper.calcTotalWithdraw(totalConvexLpTokens);
         }
 
         {
             uint256 totalBorrowedWithInterest = FullMath.mulDiv(
-                vault.cumulativeSumRAY(),
+                cumulativeSumRAY,
                 IPoolService(creditManager.pool()).calcLinearCumulative_RAY(),
                 D27
             );
             (uint16 feeInterest, , , , ) = creditManager.fees();
-            if (totalBorrowedWithInterest > vault.totalBorrowedAmount()) {
+            if (totalBorrowedWithInterest > totalBorrowedAmount) {
                 totalPrimaryTokenAmount -= FullMath.mulDiv(
-                    totalBorrowedWithInterest - vault.totalBorrowedAmount(),
+                    totalBorrowedWithInterest - totalBorrowedAmount,
                     uint256(feeInterest),
                     10000
                 );
@@ -96,9 +129,9 @@ contract GearboxERC20Helper is IGearboxERC20Helper {
 
         {
             IPriceOracleV2 oracle = helper.oracle();
-            uint256 totalCRV = vault.totalEarnedCRV();
+            uint256 totalCRV = totalEarnedCRV;
             uint256 rewardPerToken = IConvexV1BaseRewardPoolAdapter(vault.convexAdapter()).rewardPerToken();
-            totalCRV += (vault.cumulativeSumCRV() * rewardPerToken - vault.cumulativeSubCRV()) / 10**18;
+            totalCRV += (cumulativeSumCRV * rewardPerToken - cumulativeSubCRV) / 10**18;
             totalPrimaryTokenAmount += oracle.convert(totalCRV, protocolParams.crv, primaryToken);
             {
                 uint256 totalCVX = helper.calculateEarnedCvxAmountByEarnedCrvAmount(totalCRV, protocolParams.cvx);
@@ -111,7 +144,7 @@ contract GearboxERC20Helper is IGearboxERC20Helper {
             if (underlyingContract.extraRewardsLength() > 0) {
                 IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(0));
                 uint256 rewardPerTokenLDO = rewardsContract.rewardPerToken();
-                uint256 totalLDO = vault.totalEarnedLDO() + (vault.cumulativeSumLDO() * rewardPerTokenLDO - vault.cumulativeSubLDO()) / 10**18;
+                uint256 totalLDO = totalEarnedLDO + (cumulativeSumLDO * rewardPerTokenLDO - cumulativeSubLDO) / 10**18;
 
                 (uint256[] memory pricesX96, ) = mellowOracle.priceX96(
                     address(rewardsContract.rewardToken()),
@@ -133,6 +166,98 @@ contract GearboxERC20Helper is IGearboxERC20Helper {
         }
 
         maxTokenAmounts = minTokenAmounts;
+    }
+
+    function removeParameters(address addr) external {
+        require(msg.sender == admin, ExceptionsLibrary.FORBIDDEN);
+
+        totalConvexLpTokens -= convexLpTokensMapping[addr];
+        convexLpTokensMapping[addr] = 0;
+
+        cumulativeSumRAY -= sumRAYMapping[addr];
+        sumRAYMapping[addr] = 0;
+
+        totalBorrowedAmount -= borrowedAmountMapping[addr];
+        borrowedAmountMapping[addr] = 0;
+
+        totalEarnedCRV -= earnedCRVMapping[addr];
+        earnedCRVMapping[addr] = 0;
+
+        cumulativeSumCRV -= sumCRVMapping[addr];
+        sumCRVMapping[addr] = 0;
+
+        cumulativeSubCRV -= subCRVMapping[addr];
+        subCRVMapping[addr] = 0;
+
+        totalEarnedLDO -= earnedLDOMapping[addr];
+        earnedLDOMapping[addr] = 0;
+
+        cumulativeSumLDO -= sumLDOMapping[addr];
+        sumLDOMapping[addr] = 0;
+
+        cumulativeSubLDO -= subLDOMapping[addr];
+        subLDOMapping[addr] = 0;
+    }
+
+    function addParameters(address addr) external {
+        require(msg.sender == admin, ExceptionsLibrary.FORBIDDEN);
+
+        IGearboxERC20Vault parentVault = IGearboxERC20Vault(msg.sender);
+
+        uint256 W;
+
+        IGearboxVault vault = IGearboxVault(addr);
+        GearboxHelper gearboxHelper = vault.helper();
+
+        ICreditAccount ca = ICreditAccount(vault.getCreditAccount());
+        if (address(ca) == address(0)) {
+            return;
+        }
+
+        IConvexV1BaseRewardPoolAdapter convexAdapterContract = IConvexV1BaseRewardPoolAdapter(address(parentVault.convexAdapter()));
+
+        W = IERC20(gearboxHelper.convexOutputToken()).balanceOf(address(ca));
+        convexLpTokensMapping[addr] = W;
+        totalConvexLpTokens += W;
+
+        W = ca.borrowedAmount();
+        borrowedAmountMapping[addr] = W;
+        totalBorrowedAmount += W;
+
+        W = FullMath.mulDiv(W, D27, ca.cumulativeIndexAtOpen());
+        sumRAYMapping[addr] = W;
+        cumulativeSumRAY += W;
+
+        W = convexAdapterContract.rewards(address(ca));
+        earnedCRVMapping[addr] = W;
+        totalEarnedCRV += W;
+
+        W = convexAdapterContract.balanceOf(address(ca));
+        sumCRVMapping[addr] = W;
+        cumulativeSumCRV += W;
+
+        W = convexAdapterContract.balanceOf(address(ca)) *
+                        convexAdapterContract.userRewardPerTokenPaid(address(ca));
+        subCRVMapping[addr] = W;
+        cumulativeSubCRV += W;
+
+        IBaseRewardPool underlyingContract = IBaseRewardPool(vault.creditManager().adapterToContract(address(parentVault.convexAdapter())));
+        if (underlyingContract.extraRewardsLength() > 0) {
+            IBaseRewardPool rewardsContract = IBaseRewardPool(underlyingContract.extraRewards(0));
+
+            W = rewardsContract.rewards(address(ca));
+            earnedLDOMapping[addr] = W;
+            totalEarnedLDO += W;
+
+            W = rewardsContract.balanceOf(address(ca));
+            sumLDOMapping[addr] = W;
+            cumulativeSumLDO += W;
+
+            W = rewardsContract.balanceOf(address(ca)) * rewardsContract.userRewardPerTokenPaid(address(ca));
+            subLDOMapping[addr] = W;
+            cumulativeSubLDO += W;
+        }
+
     }
 
 }

@@ -40,7 +40,7 @@ contract GearboxWETHTest is Test {
     ProtocolGovernance governance;
     VaultRegistry registry;
 
-    GearboxERC20Helper gHelper = new GearboxERC20Helper();
+    GearboxERC20Helper gHelper;
 
     GearboxRootVault rootVault = new GearboxRootVault();
     GearboxERC20Vault erc20Vault = new GearboxERC20Vault();
@@ -272,6 +272,7 @@ contract GearboxWETHTest is Test {
         }
 
         erc20Vault.setAdapters(address(curveAdapter), address(convexAdapter));
+        gHelper = new GearboxERC20Helper(address(erc20Vault));
         erc20Vault.setHelper(address(gHelper));
 
         GearboxRootVault.Params memory params = GearboxRootVault.Params({
@@ -724,6 +725,8 @@ contract GearboxWETHTest is Test {
         }
 
         uint256 newSchoolTvl = tvl();
+        console2.log("T1", oldSchoolTvl);
+        console2.log("T2", newSchoolTvl);
         require(isClose(oldSchoolTvl, newSchoolTvl, 100000));
 
     }
@@ -752,12 +755,35 @@ contract GearboxWETHTest is Test {
         _checkTvlsAreEqual();
     }
 
+    function testRewardingSpoilering() public {
+        addVaults();
+        deposit(80000, address(this));
+
+        erc20Vault.distributeDeposits();
+        runRewarding(); 
+
+        ICreditManagerV2 manager = IGearboxVault(getVault(0)).creditManager();
+        address cont = manager.adapterToContract(address(convexAdapter));
+
+        BaseRewardPool rewardsPool = BaseRewardPool(cont);
+
+        deal(address(rewardsPool.stakingToken()), address(this), 10**18);
+        rewardsPool.stakingToken().approve(address(rewardsPool), 10**18);
+        rewardsPool.stakeFor(IGearboxVault(getVault(0)).getCreditAccount(), 10**18);
+
+        erc20Vault.adjustAllPositions();
+        tvl();
+
+    }
+
     function testMultipleDepositsAndRewardsAndAdjustmentsTvlCorrectnessWETH() public {
         addVaults();
         deposit(FIRST_DEPOSIT, address(this));
         deposit(FIRST_DEPOSIT / 5 * 2, address(this));
         erc20Vault.distributeDeposits();
         runRewarding(); // +1.63% on staking money
+
+        erc20Vault.adjustAllPositions();
 
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
         deposit(FIRST_DEPOSIT / 5, address(this));
@@ -786,6 +812,8 @@ contract GearboxWETHTest is Test {
         uint256 convexFantomBalanceBefore = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
         runRewarding(); // +1.63% on staking money => 11.4% earned => 757% in convex
+
+        erc20Vault.adjustAllPositions();
 
         erc20Vault.changeLimitAndFactor(0, 100000 * weiofUsdc, 4500000000); // 681% in convex
         assertTrue(isClose(tvl(), FIRST_DEPOSIT * weiofUsdc * 151 / 100, 100));
@@ -990,7 +1018,10 @@ contract GearboxWETHTest is Test {
         deposit(FIRST_DEPOSIT, address(this));
         deposit(FIRST_DEPOSIT * 2 / 5, address(this));
         erc20Vault.distributeDeposits();
+        _checkTvlsAreEqual();
         erc20Vault.changeLimitAndFactor(0, 100000 * weiofUsdc, 4000000000);
+
+        console2.log("???");
 
         _checkTvlsAreEqual();
 

@@ -376,8 +376,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         address,
         uint256 amount
     ) internal view override {
-        uint256 senderBalance = balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from];
-        require(senderBalance >= amount, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(
+            balanceOf[from] - lpTokensWaitingForClaim[from] - withdrawalRequests[from] >= amount,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -398,14 +400,12 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
         lastFeeCharge = uint64(block.timestamp);
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
-        uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
-        address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
 
         _chargeManagementFees(
             strategyParams.managementFee,
-            protocolFee,
+            vg.delayedProtocolPerVaultParams(thisNft).protocolFee,
             strategyParams.strategyTreasury,
-            protocolTreasury,
+            vg.internalParams().protocolGovernance.protocolTreasury(),
             elapsed,
             supply
         );
@@ -428,7 +428,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
             _mint(strategyTreasury, toMint);
-            emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
         if (protocolFee > 0) {
             uint256 toMint = FullMath.mulDiv(
@@ -437,7 +436,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
             _mint(protocolTreasury, toMint);
-            emit ProtocolFeesCharged(protocolTreasury, protocolFee, toMint);
         }
     }
 
@@ -465,7 +463,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
 
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
 
     function _processHangingWithdrawal(address addr) internal {
@@ -537,12 +534,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     // --------------------------  EVENTS  --------------------------
 
-    /// @notice Emitted when management fees are charged
-    /// @param treasury Treasury receiver of the fee
-    /// @param feeRate Fee percent applied denominated in 10 ** 9
-    /// @param amount Amount of lp token minted
-    event ManagementFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
-
     /// @notice Emitted when a witdrawal request registered
     /// @param sender Sender of the call (msg.sender)
     /// @param lpAmountRegistered Amount of lp tokens registered for the withdrawal
@@ -557,18 +548,6 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @param sender Sender of the call (msg.sender)
     /// @param amountWithdrawnToERC20 Amount of vault tokens withdrawn from Gearbox to the ERC20 vault
     event ExecutionInvoked(address indexed sender, uint256 amountWithdrawnToERC20);
-
-    /// @notice Emitted when protocol fees are charged
-    /// @param treasury Treasury receiver of the fee
-    /// @param feeRate Fee percent applied denominated in 10 ** 9
-    /// @param amount Amount of lp token minted
-    event ProtocolFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
-
-    /// @notice Emitted when performance fees are charged
-    /// @param treasury Treasury receiver of the fee
-    /// @param feeRate Fee percent applied denominated in 10 ** 9
-    /// @param amount Amount of lp token minted
-    event PerformanceFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
 
     /// @notice Emitted when liquidity is deposited
     /// @param from The source address for the liquidity
