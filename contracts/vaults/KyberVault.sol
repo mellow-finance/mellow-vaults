@@ -43,7 +43,6 @@ contract KyberVault is IKyberVault, IntegrationVault {
         minTokenAmounts = _kyberHelper.calculateTvlBySqrtPriceX96(kyberNft, sqrtPriceX96);
 
         if (address(farm) != address(0)) {
-
             uint256 pointer = 0;
 
             (, , , , , , , address[] memory rewardTokens, ) = farm.getPoolInfo(pid);
@@ -58,7 +57,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
                     }
                 }
                 if (!exists) {
-                    bytes memory path = IKyberVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft).paths[pointer];
+                    bytes memory path = IKyberVaultGovernance(address(_vaultGovernance))
+                        .delayedStrategyParams(_nft)
+                        .paths[pointer];
                     address lastToken = _toAddress(path, path.length - 20);
 
                     (uint256[] memory pricesX96, ) = mellowOracle.priceX96(rewardTokens[i], lastToken, 0x20);
@@ -74,15 +75,14 @@ contract KyberVault is IKyberVault, IntegrationVault {
                     pointer += 1;
                 }
             }
-
         }
 
         maxTokenAmounts = minTokenAmounts;
     }
 
     function _toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
-        require(_start + 20 >= _start, 'toAddress_overflow');
-        require(_bytes.length >= _start + 20, 'toAddress_outOfBounds');
+        require(_start + 20 >= _start, "toAddress_overflow");
+        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
         address tempAddress;
 
         assembly {
@@ -158,7 +158,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         if (address(farm) == address(0) || kyberNft == 0) {
             return;
         }
-        
+
         uint256[] memory nftIds = new uint256[](1);
         nftIds[0] = kyberNft;
 
@@ -181,13 +181,13 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 }
             }
             if (!exists) {
-                bytes memory path = IKyberVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft).paths[pointer];
+                bytes memory path = IKyberVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft).paths[
+                    pointer
+                ];
                 // add swap on path here
             }
             pointer += 1;
         }
-
-
     }
 
     /// @inheritdoc IERC721Receiver
