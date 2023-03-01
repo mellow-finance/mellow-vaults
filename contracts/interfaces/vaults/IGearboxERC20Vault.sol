@@ -11,7 +11,7 @@ interface IGearboxERC20Vault is IIntegrationVault {
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external;
 
-    function adjustAllPositions() external;
+    function adjustPositions(uint256[] memory indexes) external;
 
     function helper() external view returns (IGearboxERC20Helper);
 

@@ -89,11 +89,13 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxERC20Vault
-    function adjustAllPositions() external {
+    function adjustPositions(uint256[] memory indices) external {
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
-        for (uint256 i = 0; i < subvaultsList.length; ++i) {
-            address vault = subvaultsList[i];
+        for (uint256 i = 0; i < indices.length; ++i) {
+            uint256 index = indices[i];
+            require(index < subvaultsList.length, ExceptionsLibrary.INVALID_TARGET);
+            address vault = subvaultsList[index];
             helper.removeParameters(vault);
             IGearboxVault(vault).adjustPosition();
             helper.addParameters(vault);
