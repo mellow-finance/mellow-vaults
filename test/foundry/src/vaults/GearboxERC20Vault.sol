@@ -113,10 +113,11 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         require(currentTvl == 0, ExceptionsLibrary.INVALID_STATE);
 
         if (subvaultsList.length > 0) {
-            bool statusGeneric = (IGearboxVault(subvaultsList[0]).primaryToken() ==
-                IGearboxVault(subvaultsList[0]).depositToken());
-            bool statusNew = (vault.primaryToken() == vault.depositToken());
-            require(statusGeneric == statusNew, ExceptionsLibrary.INVARIANT);
+            require(
+                IGearboxVault(subvaultsList[0]).primaryToken() == vault.primaryToken() &&
+                    IGearboxVault(subvaultsList[0]).depositToken() == vault.depositToken(),
+                ExceptionsLibrary.INVARIANT
+            );
         }
 
         require(subvaultsList.length < MAX_LENGTH, ExceptionsLibrary.INVALID_LENGTH);
@@ -138,7 +139,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
     function changeLimit(uint256 index, uint256 limit) public {
         require(_isApprovedOrOwner(msg.sender) || msg.sender == address(this), ExceptionsLibrary.FORBIDDEN);
         require(index < subvaultsList.length, ExceptionsLibrary.INVALID_TARGET);
-        uint256 status = (subvaultsStatusMask & (3 << (2 * index))) >> (2 * index);
+        uint256 status = (subvaultsStatusMask >> (2 * index)) & 3;
         require(status == EMPTY || msg.sender == address(this), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVault vault = IGearboxVault(subvaultsList[index]);
@@ -194,7 +195,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         uint256 specialVault = 0;
 
         for (uint256 i = 0; i < vaultCount; ++i) {
-            uint256 status = (mask & (3 << (2 * i))) >> (2 * i);
+            uint256 status = (subvaultsStatusMask >> (2 * i)) & 3;
             if (status == PARTIAL) {
                 specialVault = i + 1;
             }
@@ -205,7 +206,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
         }
 
         for (uint256 i = 0; i < vaultCount && totalDeposited > 0; ++i) {
-            uint256 status = (mask & (3 << (2 * i))) >> (2 * i);
+            uint256 status = (subvaultsStatusMask >> (2 * i)) & 3;
             if (status == EMPTY) {
                 (mask, remainingDeposited) = _depositTo(i, mask, remainingDeposited, status);
             }
@@ -243,7 +244,7 @@ contract GearboxERC20Vault is IGearboxERC20Vault, IntegrationVault {
                 continue;
             }
 
-            uint256 status = (mask & (3 << (2 * i))) >> (2 * i);
+            uint256 status = (subvaultsStatusMask >> (2 * i)) & 3;
             if (status == EMPTY) {
                 continue;
             }
