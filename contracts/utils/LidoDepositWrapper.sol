@@ -5,6 +5,7 @@ import "../interfaces/external/univ2/periphery/IWETH.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/curve/I3Pool.sol";
 import "../interfaces/external/lido/IWSTETH.sol";
+import "../interfaces/external/lido/ISTETH.sol";
 import "../libraries/external/FullMath.sol";
 import "./FarmWrapper.sol";
 
@@ -16,6 +17,9 @@ contract LidoDepositWrapper {
     uint256 public constant WETH_OPTION = 1;
     uint256 public constant STETH_OPTION = 2;
     uint256 public constant WSTETH_OPTION = 3;
+
+    uint256 public constant SWAP_OPTION = 0;
+    uint256 public constant STAKE_OPTION = 0;
 
     uint256 public constant D18 = 10**18;
     uint256 public constant Q96 = 2**96;
@@ -34,6 +38,7 @@ contract LidoDepositWrapper {
     function deposit(
         IERC20RootVault rootVault,
         uint256 option,
+        uint256 stakeOption,
         uint256 amount,
         uint256 minLpTokens,
         bytes calldata vaultOptions
@@ -55,10 +60,10 @@ contract LidoDepositWrapper {
         if (option == ETH_OPTION) {
             uint256 ethAmount = msg.value;
             _ethToWeth(FullMath.mulDiv(ethAmount, wethShareD18, D18));
-            _ethToWsteth(FullMath.mulDiv(ethAmount, D18 - wethShareD18, D18));
+            _ethToWsteth(FullMath.mulDiv(ethAmount, D18 - wethShareD18, D18), stakeOption);
         } else if (option == WETH_OPTION) {
             IERC20(weth).safeTransferFrom(msg.sender, address(this), amount);
-            _wethToWsteth(FullMath.mulDiv(amount, D18 - wethShareD18, D18));
+            _wethToWsteth(FullMath.mulDiv(amount, D18 - wethShareD18, D18), stakeOption);
         } else if (option == STETH_OPTION) {
             IERC20(steth).safeTransferFrom(msg.sender, address(this), amount);
             _stethToWeth(FullMath.mulDiv(amount, wethShareD18, D18));
@@ -92,17 +97,21 @@ contract LidoDepositWrapper {
         IWETH(weth).deposit{value: amount}();
     }
 
-    function _ethToWsteth(uint256 amount) internal {
-        I3Pool(curvePool).exchange{value: amount}(0, 1, amount, 0);
+    function _ethToWsteth(uint256 amount, uint256 stakeOption) internal {
+        if (stakeOption == SWAP_OPTION) {
+            I3Pool(curvePool).exchange{value: amount}(0, 1, amount, 0);
+        } else {
+            ISTETH(steth).submit{value: amount}(address(this));
+        }
 
         uint256 stethAmount = IERC20(steth).balanceOf(address(this));
         IERC20(steth).safeIncreaseAllowance(address(wsteth), stethAmount);
         IwstETH(wsteth).wrap(stethAmount);
     }
 
-    function _wethToWsteth(uint256 amount) internal {
+    function _wethToWsteth(uint256 amount, uint256 stakeOption) internal {
         IWETH(weth).withdraw(amount);
-        _ethToWsteth(amount);
+        _ethToWsteth(amount, stakeOption);
     }
 
     function _stethToWsteth(uint256 amount) internal {

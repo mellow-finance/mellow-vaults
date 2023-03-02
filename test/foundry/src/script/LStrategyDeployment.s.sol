@@ -11,6 +11,7 @@ import "../../src/MockOracle.sol";
 import "../../src/utils/UniV3Helper.sol";
 import "../../src/utils/FarmingPool.sol";
 import "../../src/utils/FarmWrapper.sol";
+import "../../src/utils/LidoDepositWrapper.sol";
 import "../../src/utils/LStrategyHelper.sol";
 import "../../src/vaults/ERC20Vault.sol";
 import "../../src/vaults/ERC20RootVault.sol";
@@ -283,9 +284,8 @@ contract LStrategyDeployment is Script {
         
         vm.startBroadcast(operator);
 
-        FarmWrapper wrapper = new FarmWrapper(operator, operator, 0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32, 0x13c7bCc2126d6892eEFd489Ad215A1a09F36AA9f, operator);
-        wrapper.addNewStrategy(address(rootVault), address(rootVault), false, wrapper);
-        console2.log(address(wrapper));
+        LidoDepositWrapper w = new LidoDepositWrapper();
+        console2.log(address(w));
         return;
 
         uint256 startNft = kek();

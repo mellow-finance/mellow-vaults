@@ -216,7 +216,33 @@ contract LidoDepositingTest is Test {
         deal(deployer, 10**20);
         uint256 x = 0;
         bytes memory depositInfo = abi.encode(x, x, x, x);
-        wrapper.deposit{value:10**20}(rootVault, 0, 10**20, 0, depositInfo);
+        wrapper.deposit{value:10**20}(rootVault, 0, 0, 10**20, 0, depositInfo);
+
+        uint256 depositedAmount = 10**20;
+
+        uint256 oldBalance0 = IERC20(wsteth).balanceOf(deployer);
+        uint256 oldBalance1 = IERC20(weth).balanceOf(deployer);
+
+        uint256[] memory minAmounts = new uint256[](2);
+        bytes[] memory bb = new bytes[](1);
+        bb[0] = depositInfo;
+        rootVault.withdraw(deployer, rootVault.balanceOf(deployer), minAmounts, bb);
+
+        uint256 newBalance0 = IERC20(wsteth).balanceOf(deployer);
+        uint256 newBalance1 = IERC20(weth).balanceOf(deployer);
+
+        (uint256 sqrtPriceX96, , , , , ,) = IUniswapV3Pool(0xD340B57AAcDD10F96FC1CF10e15921936F41E29c).slot0();
+        uint256 priceX96 = sqrtPriceX96 * sqrtPriceX96 / 2**96;
+        uint256 withdrawnAmount = (newBalance1 - oldBalance1) + priceX96 * (newBalance0 - oldBalance0) / 2**96;
+
+        require(isClose(depositedAmount, withdrawnAmount, 500)); // <0.2% loss 
+    }
+
+    function testEth2() external {
+        deal(deployer, 1008 * 10**17);
+        uint256 x = 0;
+        bytes memory depositInfo = abi.encode(x, x, x, x);
+        wrapper.deposit{value:1008 * 10**17}(rootVault, 0, 1, 1008 * 10**17, 0, depositInfo);
 
         uint256 depositedAmount = 10**20;
 
@@ -244,7 +270,35 @@ contract LidoDepositingTest is Test {
 
         uint256 x = 0;
         bytes memory depositInfo = abi.encode(x, x, x, x);
-        wrapper.deposit(rootVault, 1, 10**20, 0, depositInfo);
+        wrapper.deposit(rootVault, 1, 0, 10**20, 0, depositInfo);
+
+        uint256 depositedAmount = 10**20;
+
+        uint256 oldBalance0 = IERC20(wsteth).balanceOf(deployer);
+        uint256 oldBalance1 = IERC20(weth).balanceOf(deployer);
+
+        uint256[] memory minAmounts = new uint256[](2);
+        bytes[] memory bb = new bytes[](1);
+        bb[0] = depositInfo;
+        rootVault.withdraw(deployer, rootVault.balanceOf(deployer), minAmounts, bb);
+
+        uint256 newBalance0 = IERC20(wsteth).balanceOf(deployer);
+        uint256 newBalance1 = IERC20(weth).balanceOf(deployer);
+
+        (uint256 sqrtPriceX96, , , , , ,) = IUniswapV3Pool(0xD340B57AAcDD10F96FC1CF10e15921936F41E29c).slot0();
+        uint256 priceX96 = sqrtPriceX96 * sqrtPriceX96 / 2**96;
+        uint256 withdrawnAmount = (newBalance1 - oldBalance1) + priceX96 * (newBalance0 - oldBalance0) / 2**96;
+
+        require(isClose(depositedAmount, withdrawnAmount, 500)); // <0.2% loss 
+    }
+
+    function testWeth2() external {
+        deal(weth, deployer, 1008 * 10**17);
+        IERC20(weth).approve(address(wrapper), type(uint256).max);
+
+        uint256 x = 0;
+        bytes memory depositInfo = abi.encode(x, x, x, x);
+        wrapper.deposit(rootVault, 1, 1, 1008 * 10**17, 0, depositInfo);
 
         uint256 depositedAmount = 10**20;
 
@@ -273,7 +327,7 @@ contract LidoDepositingTest is Test {
 
         uint256 x = 0;
         bytes memory depositInfo = abi.encode(x, x, x, x);
-        wrapper.deposit(rootVault, 2, IERC20(steth).balanceOf(deployer), 0, depositInfo);
+        wrapper.deposit(rootVault, 2, 0, IERC20(steth).balanceOf(deployer), 0, depositInfo);
 
         uint256 depositedAmount = 10**20;
 
@@ -306,7 +360,7 @@ contract LidoDepositingTest is Test {
 
         uint256 x = 0;
         bytes memory depositInfo = abi.encode(x, x, x, x);
-        wrapper.deposit(rootVault, 3, IERC20(wsteth).balanceOf(deployer), 0, depositInfo);
+        wrapper.deposit(rootVault, 3, 0, IERC20(wsteth).balanceOf(deployer), 0, depositInfo);
 
         uint256 depositedAmount = 10**20;
 
