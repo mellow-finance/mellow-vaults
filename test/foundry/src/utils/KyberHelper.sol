@@ -10,6 +10,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/LiquidityMath.sol";
 import "../libraries/external/QtyDeltaMath.sol";
 import "../libraries/external/TickMath.sol";
+import "forge-std/console2.sol";
 
 contract KyberHelper {
     IBasePositionManager public immutable positionManager;
@@ -86,11 +87,11 @@ contract KyberHelper {
     }
 
     /// @dev returns with "Invalid Token ID" for non-existent nfts
-    function calculateTvlBySqrtPriceX96(
-        IPool pool,
-        uint256 kyberNft,
-        uint160 sqrtPriceX96
-    ) public view returns (uint256[] memory tokenAmounts) {
+    function calculateTvlBySqrtPriceX96(IPool pool, uint256 kyberNft, uint160 sqrtPriceX96)
+        public
+        view
+        returns (uint256[] memory tokenAmounts)
+    {
         tokenAmounts = new uint256[](2);
 
         (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
