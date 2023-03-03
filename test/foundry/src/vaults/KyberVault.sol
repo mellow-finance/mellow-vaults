@@ -200,17 +200,17 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 uint256 toSwap = IERC20(rewardTokens[i]).balanceOf(address(this));
 
                 if (toSwap > 0) {
-                    router.swapExactInput(
-                        IRouter.ExactInputParams({
-                            path: path,
-                            recipient: address(this),
-                            deadline: block.timestamp + 1,
-                            amountIn: IERC20(rewardTokens[i]).balanceOf(address(this)),
-                            minAmountOut: 0
-                        })
-                    );
-                }
 
+                    router.swapExactInput(IRouter.ExactInputParams({
+                        path: path, 
+                        recipient: address(this),
+                        deadline: block.timestamp + 1,
+                        amountIn: IERC20(rewardTokens[i]).balanceOf(address(this)),
+                        minAmountOut: 0
+                    }));
+
+                }
+                
                 pointer += 1;
             }
         }
@@ -306,6 +306,8 @@ contract KyberVault is IKyberVault, IntegrationVault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
+        console2.log("W1", IERC20(_vaultTokens[0]).balanceOf(address(this)));
+        console2.log("W2", IERC20(_vaultTokens[1]).balanceOf(address(this)));
         actualTokenAmounts = new uint256[](2);
         if (kyberNft == 0) return actualTokenAmounts;
 
@@ -340,6 +342,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
         }
 
         _depositIntoFarm();
+
+        console2.log("W3", IERC20(_vaultTokens[0]).balanceOf(address(this)));
+        console2.log("W4", IERC20(_vaultTokens[1]).balanceOf(address(this)));
     }
 
     function _pull(
@@ -399,7 +404,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         (uint256 amount0Collected, uint256 amount1Collected) = _burnRTokens();
 
         amount0Collected += amount0;
-        amount1Collected += amount1;
+        amount1Collected += amount1;   
 
         address[] memory tokens = _vaultTokens;
         IERC20(tokens[0]).safeTransfer(to, amount0Collected);
