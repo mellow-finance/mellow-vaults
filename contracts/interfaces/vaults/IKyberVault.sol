@@ -6,6 +6,9 @@ import "./IIntegrationVault.sol";
 import "../external/kyber/periphery/IBasePositionManager.sol";
 import "../external/kyber/IPool.sol";
 
+import "../oracles/IOracle.sol";
+import "../external/kyber/IKyberSwapElasticLM.sol";
+
 interface IKyberVault is IERC721Receiver, IIntegrationVault {
     struct Options {
         uint256 amount0Min;
@@ -49,4 +52,10 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
 
     function updateFarmInfo() external;
+
+    function farm() external view returns (IKyberSwapElasticLM);
+
+    function mellowOracle() external view returns (IOracle);
+
+    function pid() external view returns (uint256);
 }

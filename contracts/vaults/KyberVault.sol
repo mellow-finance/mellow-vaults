@@ -10,8 +10,9 @@ import "../interfaces/vaults/IAggregateVault.sol";
 import "../interfaces/vaults/IKyberVault.sol";
 import "../interfaces/oracles/IOracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/external/FullMath.sol";
 import "./IntegrationVault.sol";
-import "../utils/KyberHelper.sol";
+import "../interfaces/utils/IKyberHelper.sol";
 
 /// @notice Vault that interfaces Kyber protocol in the integration layer.
 contract KyberVault is IKyberVault, IntegrationVault {
@@ -27,8 +28,8 @@ contract KyberVault is IKyberVault, IntegrationVault {
     /// @inheritdoc IKyberVault
     uint256 public kyberNft;
 
-    IBasePositionManager private _positionManager;
-    KyberHelper public kyberHelper;
+    IBasePositionManager public positionManager;
+    IKyberHelper public kyberHelper;
     IRouter public router;
 
     IKyberSwapElasticLM public farm;
@@ -42,67 +43,13 @@ contract KyberVault is IKyberVault, IntegrationVault {
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         if (kyberNft == 0) return (new uint256[](2), new uint256[](2));
-        (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
-        minTokenAmounts = kyberHelper.calculateTvlBySqrtPriceX96(pool, kyberNft, sqrtPriceX96);
+        (minTokenAmounts, maxTokenAmounts) = kyberHelper.calcTvl();
 
-        if (address(farm) != address(0)) {
-            uint256 pointer = 0;
-
-            (, , , , , , , address[] memory rewardTokens, ) = farm.getPoolInfo(pid);
-            (, uint256[] memory rewardsPending, ) = farm.getUserInfo(kyberNft, pid);
-
-            for (uint256 i = 0; i < rewardTokens.length; ++i) {
-                bool exists = false;
-                for (uint256 j = 0; j < _vaultTokens.length; ++j) {
-                    if (rewardTokens[i] == _vaultTokens[j]) {
-                        exists = true;
-                        minTokenAmounts[j] += rewardsPending[i];
-                    }
-                }
-                if (!exists) {
-                    bytes memory path = IKyberVaultGovernance(address(_vaultGovernance))
-                        .delayedStrategyParams(_nft)
-                        .paths[pointer];
-                    address lastToken = _toAddress(path, path.length - 20);
-
-                    (uint256[] memory pricesX96, ) = mellowOracle.priceX96(rewardTokens[i], lastToken, 0x20);
-                    if (pricesX96[0] != 0) {
-                        uint256 amount = FullMath.mulDiv(rewardsPending[i], pricesX96[0], 2**96);
-                        for (uint256 j = 0; j < _vaultTokens.length; ++j) {
-                            if (lastToken == _vaultTokens[j]) {
-                                minTokenAmounts[j] += amount;
-                            }
-                        }
-                    }
-
-                    pointer += 1;
-                }
-            }
-        }
-
-        maxTokenAmounts = minTokenAmounts;
-    }
-
-    function _toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
-        require(_start + 20 >= _start, "toAddress_overflow");
-        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
-        address tempAddress;
-
-        assembly {
-            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
-        }
-
-        return tempAddress;
     }
 
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IKyberVault).interfaceId);
-    }
-
-    /// @inheritdoc IKyberVault
-    function positionManager() external view returns (IBasePositionManager) {
-        return _positionManager;
     }
 
     /// @inheritdoc IKyberVault
@@ -125,13 +72,13 @@ contract KyberVault is IKyberVault, IntegrationVault {
     ) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
-        _positionManager = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
+        positionManager = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
         farm = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().farm;
         router = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().router;
         pid = IKyberVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(nft_).pid;
         mellowOracle = IKyberVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().mellowOracle;
-        pool = IPool(IFactory(_positionManager.factory()).getPool(vaultTokens_[0], vaultTokens_[1], fee_));
-        kyberHelper = KyberHelper(kyberHepler_);
+        pool = IPool(IFactory(positionManager.factory()).getPool(vaultTokens_[0], vaultTokens_[1], fee_));
+        kyberHelper = IKyberHelper(kyberHepler_);
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
 
@@ -145,12 +92,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
             return;
         }
 
-        (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
+        (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
         if (position.liquidity == 0) {
             return;
         }
 
-        _positionManager.approve(address(farm), kyberNft);
+        positionManager.approve(address(farm), kyberNft);
 
         uint256[] memory nftIds = new uint256[](1);
         nftIds[0] = kyberNft;
@@ -177,7 +124,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         nftIds[0] = kyberNft;
 
         uint256[] memory liqs = new uint256[](1);
-        (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
+        (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
         liqs[0] = position.liquidity;
 
         farm.exit(pid, nftIds, liqs);
@@ -205,7 +152,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 if (toSwap > 0) {
                     IERC20(rewardTokens[i]).approve(address(router), toSwap);
 
-                    address lastToken = _toAddress(path, path.length - 20);
+                    address lastToken = kyberHelper.toAddress(path, path.length - 20);
                     uint256 oldBalance = IERC20(lastToken).balanceOf(address(this));
 
                     router.swapExactInput(
@@ -235,9 +182,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint256 tokenId,
         bytes memory
     ) external returns (bytes4) {
-        require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(positionManager), ExceptionsLibrary.FORBIDDEN);
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
-        (, IBasePositionManager.PoolInfo memory poolInfo) = _positionManager.positions(tokenId);
+        (, IBasePositionManager.PoolInfo memory poolInfo) = positionManager.positions(tokenId);
 
         // new position should have vault tokens
         require(
@@ -249,10 +196,10 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
         if (kyberNft != 0) {
             _withdrawFromFarm(_erc20Vault());
-            (IBasePositionManager.Position memory position, ) = _positionManager.positions(tokenId);
+            (IBasePositionManager.Position memory position, ) = positionManager.positions(tokenId);
             require(position.liquidity == 0 && position.rTokenOwed == 0, ExceptionsLibrary.INVALID_VALUE);
             // return previous kyber position nft
-            _positionManager.transferFrom(address(this), from, kyberNft);
+            positionManager.transferFrom(address(this), from, kyberNft);
         }
 
         kyberNft = tokenId;
@@ -263,9 +210,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
     }
 
     function _burnRTokens() private returns (uint256 amount0, uint256 amount1) {
-        (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
+        (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
         if (position.rTokenOwed > 0) {
-            (, amount0, amount1) = _positionManager.burnRTokens(
+            (, amount0, amount1) = positionManager.burnRTokens(
                 IBasePositionManager.BurnRTokenParams({
                     tokenId: kyberNft,
                     amount0Min: 0,
@@ -278,9 +225,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     /// @inheritdoc IKyberVault
     function collectEarnings() external nonReentrant returns (uint256[] memory collectedEarnings) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address owner = registry.ownerOf(_nft);
-        address to = _root(registry, _nft, owner).subvaultAt(0);
+        address to = _erc20Vault();
         collectedEarnings = new uint256[](2);
         (collectedEarnings[0], collectedEarnings[1]) = _burnRTokens();
 
@@ -328,19 +273,18 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; ++i) {
-            IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(positionManager), tokenAmounts[i]);
         }
 
         Options memory opts = _parseOptions(options);
-        Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
-        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-        (, uint256 amount0, uint256 amount1, ) = _positionManager.addLiquidity(
+
+        (, uint256 amount0, uint256 amount1, ) = positionManager.addLiquidity(
             IBasePositionManager.IncreaseLiquidityParams({
                 tokenId: kyberNft,
-                amount0Desired: amounts.a0,
-                amount1Desired: amounts.a1,
-                amount0Min: minAmounts.a0,
-                amount1Min: minAmounts.a1,
+                amount0Desired: tokenAmounts[0],
+                amount1Desired: tokenAmounts[1],
+                amount0Min: opts.amount0Min,
+                amount1Min: opts.amount1Min,
                 deadline: opts.deadline
             })
         );
@@ -348,7 +292,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
         for (uint256 i = 0; i < tokens.length; ++i) {
-            IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
+            IERC20(tokens[i]).safeApprove(address(positionManager), 0);
         }
 
         _depositIntoFarm();
@@ -379,7 +323,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint128 liquidityToPull;
         // scope the code below to avoid stack-too-deep exception
         {
-            (IBasePositionManager.Position memory position, ) = _positionManager.positions(kyberNft);
+            (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
 
             (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
             liquidityToPull = kyberHelper.tokenAmountsToMaximalLiquidity(
@@ -396,7 +340,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint256 amount1;
 
         if (liquidityToPull != 0) {
-            Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
+
             bytes[] memory data = new bytes[](3);
 
             uint256 oldBalance0 = IERC20(_vaultTokens[0]).balanceOf(address(this));
@@ -404,7 +348,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
             data[0] = abi.encodePacked(
                 IBasePositionManager.removeLiquidity.selector,
-                abi.encode(kyberNft, liquidityToPull, minAmounts.a0, minAmounts.a1, opts.deadline)
+                abi.encode(kyberNft, liquidityToPull, opts.amount0Min, opts.amount1Min, opts.deadline)
             );
             data[1] = abi.encodePacked(
                 IRouterTokenHelper.transferAllTokens.selector,
@@ -415,7 +359,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 abi.encode(_vaultTokens[1], uint256(0), address(this))
             );
 
-            _positionManager.multicall(data);
+            positionManager.multicall(data);
 
             uint256 newBalance0 = IERC20(_vaultTokens[0]).balanceOf(address(this));
             uint256 newBalance1 = IERC20(_vaultTokens[1]).balanceOf(address(this));
