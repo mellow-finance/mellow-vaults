@@ -170,6 +170,8 @@ interface IBasePositionManager is IRouterTokenHelper, IBasePositionManagerEvents
 
     function nextTokenId() external view returns (uint256);
 
+    function multicall(bytes[] calldata) external payable returns (bytes[] memory);
+
     /**
      * @dev Returns true if this contract implements the interface defined by
      * `interfaceId`. See the corresponding

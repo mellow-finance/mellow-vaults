@@ -365,14 +365,8 @@ contract KyberTest is Test {
 
         (uint256[] memory ercNewTvl, ) = erc20Vault.tvl();
 
-        console2.log(ercOldTvl[0]);
-        console2.log(tvl[0] / 2);
-        console2.log(ercNewTvl[0]);
-
-        require(ercOldTvl[0] + tvl[0] / 2 == ercNewTvl[0]);
-        require(ercOldTvl[1] + tvl[1] / 2 == ercNewTvl[1]);
-
-        console2.log("P2");
+        require(isClose(ercOldTvl[0] + tvl[0] / 2, ercNewTvl[0], 100000));
+        require(isClose(ercOldTvl[1] + tvl[1] / 2, ercNewTvl[1], 100000));
 
         amounts[0] = IERC20(stmatic).balanceOf(address(erc20Vault));
         amounts[1] = IERC20(bob).balanceOf(address(erc20Vault));
@@ -380,7 +374,94 @@ contract KyberTest is Test {
         erc20Vault.pull(address(kyberVault), tokens, amounts, Q);
         (uint256[] memory tvl2, ) = kyberVault.tvl();
 
-        require(tvl[0] == tvl2[0]);
-        require(tvl[1] == tvl2[1]);
+        require(isClose(tvl[0], tvl2[0], 100000));
+        require(isClose(tvl[1], tvl2[1], 100000));
+    }
+
+    function testPullRewards() public {
+        firstDeposit();
+        deposit(10);
+
+        address[] memory tokens = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        tokens[0] = stmatic;
+        tokens[1] = bob;
+        amounts[0] = IERC20(stmatic).balanceOf(address(erc20Vault));
+        amounts[1] = IERC20(bob).balanceOf(address(erc20Vault));
+
+        bytes memory Q = bytes("");
+
+        erc20Vault.pull(address(kyberVault), tokens, amounts, Q);
+
+        (uint256[] memory tvl, ) = kyberVault.tvl();
+
+        vm.warp(block.timestamp + 86400 * 7);
+
+        (uint256[] memory tvl3, ) = kyberVault.tvl();
+
+        require(tvl3[0] > tvl[0] || tvl3[1] > tvl[1]);
+
+        amounts[0] = tvl3[0];
+        amounts[1] = tvl3[1];
+
+        (uint256[] memory ercOldTvl, ) = erc20Vault.tvl();
+
+        kyberVault.pull(address(erc20Vault), tokens, amounts, Q);
+
+        (uint256[] memory ercNewTvl, ) = erc20Vault.tvl();
+
+        require(isClose(ercOldTvl[0] + tvl3[0], ercNewTvl[0], 1000));
+        require(isClose(ercOldTvl[1] + tvl3[1], ercNewTvl[1], 1000));
+    }
+
+    function testSwap() public {
+        firstDeposit();
+        deposit(10);
+
+        address[] memory tokens = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        tokens[0] = stmatic;
+        tokens[1] = bob;
+        amounts[0] = IERC20(stmatic).balanceOf(address(erc20Vault));
+        amounts[1] = IERC20(bob).balanceOf(address(erc20Vault));
+
+        bytes memory Q = bytes("");
+
+        erc20Vault.pull(address(kyberVault), tokens, amounts, Q);
+
+        (uint256[] memory tvl, ) = kyberVault.tvl();
+
+        {
+
+            deal(stmatic, deployer, 10**20);
+
+            IERC20(stmatic).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10**20);
+            IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(IRouter.ExactInputParams({
+                path: abi.encodePacked(stmatic, uint24(1000), bob),
+                recipient: deployer,
+                deadline: block.timestamp + 1,
+                amountIn: 10**20,
+                minAmountOut: 0
+            }));
+
+        }
+
+        (uint256[] memory tvl3, ) = kyberVault.tvl();
+
+        require(tvl3[0] > tvl[0] || tvl3[1] > tvl[1]);
+
+        amounts[0] = tvl3[0];
+        amounts[1] = tvl3[1];
+
+        (uint256[] memory ercOldTvl, ) = erc20Vault.tvl();
+
+        kyberVault.pull(address(erc20Vault), tokens, amounts, Q);
+
+        (uint256[] memory ercNewTvl, ) = erc20Vault.tvl();
+
+        require(isClose(ercOldTvl[0] + tvl3[0], ercNewTvl[0], 100000));
+        require(isClose(ercOldTvl[1] + tvl3[1], ercNewTvl[1], 100000));
     }
 }

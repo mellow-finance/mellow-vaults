@@ -169,6 +169,8 @@ contract KyberVault is IKyberVault, IntegrationVault {
             return;
         }
 
+        (, uint256[] memory rewardsPending, ) = farm.getUserInfo(kyberNft, pid);
+
         isLiquidityInFarm = false;
 
         uint256[] memory nftIds = new uint256[](1);
@@ -190,6 +192,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
             for (uint256 j = 0; j < _vaultTokens.length; ++j) {
                 if (rewardTokens[i] == _vaultTokens[j]) {
                     exists = true;
+                    IERC20(rewardTokens[i]).transfer(to, rewardsPending[i]);
                 }
             }
             if (!exists) {
@@ -200,15 +203,24 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 uint256 toSwap = IERC20(rewardTokens[i]).balanceOf(address(this));
 
                 if (toSwap > 0) {
+                    IERC20(rewardTokens[i]).approve(address(router), toSwap);
+
+                    address lastToken = _toAddress(path, path.length - 20);
+                    uint256 oldBalance = IERC20(lastToken).balanceOf(address(this));
+
                     router.swapExactInput(
                         IRouter.ExactInputParams({
                             path: path,
                             recipient: address(this),
                             deadline: block.timestamp + 1,
-                            amountIn: IERC20(rewardTokens[i]).balanceOf(address(this)),
+                            amountIn: toSwap,
                             minAmountOut: 0
                         })
                     );
+
+                    uint256 newBalance = IERC20(lastToken).balanceOf(address(this));
+
+                    IERC20(lastToken).transfer(to, newBalance - oldBalance);
                 }
 
                 pointer += 1;
@@ -385,15 +397,31 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
         if (liquidityToPull != 0) {
             Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-            (amount0, amount1, ) = _positionManager.removeLiquidity(
-                IBasePositionManager.RemoveLiquidityParams({
-                    tokenId: kyberNft,
-                    liquidity: liquidityToPull,
-                    amount0Min: minAmounts.a0,
-                    amount1Min: minAmounts.a1,
-                    deadline: opts.deadline
-                })
+            bytes[] memory data = new bytes[](3);
+
+            uint256 oldBalance0 = IERC20(_vaultTokens[0]).balanceOf(address(this));
+            uint256 oldBalance1 = IERC20(_vaultTokens[1]).balanceOf(address(this));
+
+            data[0] = abi.encodePacked(
+                IBasePositionManager.removeLiquidity.selector,
+                abi.encode(kyberNft, liquidityToPull, minAmounts.a0, minAmounts.a1, opts.deadline)
             );
+            data[1] = abi.encodePacked(
+                IRouterTokenHelper.transferAllTokens.selector,
+                abi.encode(_vaultTokens[0], uint256(0), address(this))
+            );
+            data[2] = abi.encodePacked(
+                IRouterTokenHelper.transferAllTokens.selector,
+                abi.encode(_vaultTokens[1], uint256(0), address(this))
+            );
+
+            _positionManager.multicall(data);
+
+            uint256 newBalance0 = IERC20(_vaultTokens[0]).balanceOf(address(this));
+            uint256 newBalance1 = IERC20(_vaultTokens[1]).balanceOf(address(this));
+
+            amount0 = newBalance0 - oldBalance0;
+            amount1 = newBalance1 - oldBalance1;
         }
 
         (uint256 amount0Collected, uint256 amount1Collected) = _burnRTokens();
