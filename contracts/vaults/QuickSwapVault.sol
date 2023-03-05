@@ -118,21 +118,20 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         uint256 positionNft_ = positionNft;
         if (positionNft_ == 0) return new uint256[](2);
         collectedFees = new uint256[](2);
-        address erc20Vault_ = erc20Vault;
         (collectedFees[0], collectedFees[1]) = farmingCenter.collect(
             IAlgebraNonfungiblePositionManager.CollectParams({
                 tokenId: positionNft_,
-                recipient: erc20Vault_,
+                recipient: erc20Vault,
                 amount0Max: type(uint128).max,
                 amount1Max: type(uint128).max
             })
         );
-        emit CollectedEarnings(tx.origin, msg.sender, erc20Vault_, collectedFees[0], collectedFees[1]);
+        emit CollectedEarnings(tx.origin, msg.sender, collectedFees[0], collectedFees[1]);
     }
 
     /// @inheritdoc IQuickSwapVault
     function collectRewards() public returns (uint256[] memory collectedRewards) {
-        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams = delayedStrategyParams();
+        IQuickSwapVaultGovernance.StrategyParams memory _strategyParams = strategyParams();
         uint256 positionNft_ = positionNft;
         IFarmingCenter farmingCenter_ = farmingCenter;
         (uint256 farmingNft, , , ) = farmingCenter_.deposits(positionNft_);
@@ -140,7 +139,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         if (farmingNft == 0) {
             return collectedRewards;
         }
-        IIncentiveKey.IncentiveKey memory key = strategyParams.key;
+        IIncentiveKey.IncentiveKey memory key = _strategyParams.key;
         (uint256 rewardTokenAmount, uint256 bonusRewardTokenAmount) = helper.calculateCollectableRewards(
             farmingCenter_.eternalFarming(),
             key,
@@ -158,48 +157,32 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
             collectedRewards[0] = _swapTokenToUnderlying(
                 rewardTokenAmount,
                 address(key.rewardToken),
-                strategyParams.rewardTokenToUnderlying,
-                strategyParams.swapSlippageD
+                _strategyParams.rewardTokenToUnderlying,
+                _strategyParams.swapSlippageD
             );
             if (collectedRewards[0] > 0) {
-                IERC20(strategyParams.rewardTokenToUnderlying).safeTransfer(erc20Vault_, collectedRewards[0]);
+                IERC20(_strategyParams.rewardTokenToUnderlying).safeTransfer(erc20Vault_, collectedRewards[0]);
             }
         }
         {
             collectedRewards[1] = _swapTokenToUnderlying(
                 bonusRewardTokenAmount,
                 address(key.bonusRewardToken),
-                strategyParams.bonusTokenToUnderlying,
-                strategyParams.swapSlippageD
+                _strategyParams.bonusTokenToUnderlying,
+                _strategyParams.swapSlippageD
             );
             if (collectedRewards[1] > 0) {
-                IERC20(strategyParams.bonusTokenToUnderlying).safeTransfer(erc20Vault_, collectedRewards[1]);
+                IERC20(_strategyParams.bonusTokenToUnderlying).safeTransfer(erc20Vault_, collectedRewards[1]);
             }
         }
-
-        address token0 = _vaultTokens[0];
-        uint256 collectedToken0 = 0;
-        uint256 collectedToken1 = 0;
-        if (strategyParams.rewardTokenToUnderlying == token0) {
-            collectedToken0 += collectedRewards[0];
-        } else {
-            collectedToken1 += collectedRewards[0];
-        }
-
-        if (strategyParams.bonusTokenToUnderlying == token0) {
-            collectedToken0 += collectedRewards[1];
-        } else {
-            collectedToken1 += collectedRewards[1];
-        }
-
-        emit CollectedRewards(tx.origin, msg.sender, erc20Vault_, collectedToken0, collectedToken1);
+        emit CollectedRewards(tx.origin, msg.sender, collectedRewards[0], collectedRewards[1]);
     }
 
     // -------------------   EXTERNAL, VIEW   -------------------
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        minTokenAmounts = helper.calculateTvl(positionNft, delayedStrategyParams(), farmingCenter, _vaultTokens[0]);
+        minTokenAmounts = helper.calculateTvl(positionNft, strategyParams(), farmingCenter, _vaultTokens[0]);
         maxTokenAmounts = minTokenAmounts;
     }
 
@@ -209,17 +192,12 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     }
 
     /// @inheritdoc IQuickSwapVault
-    function delayedStrategyParams()
-        public
-        view
-        returns (IQuickSwapVaultGovernance.DelayedStrategyParams memory params)
-    {
-        params = IQuickSwapVaultGovernance(address(_vaultGovernance)).delayedStrategyParams(_nft);
+    function strategyParams() public view returns (IQuickSwapVaultGovernance.StrategyParams memory params) {
+        params = IQuickSwapVaultGovernance(address(_vaultGovernance)).strategyParams(_nft);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    /// @dev swaps amount of token `from` to token `to`
     /// @param amount amount to be swapped
     /// @param from src token
     /// @param to dst token
@@ -269,7 +247,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         actualTokenAmounts = new uint256[](2);
         uint256 positionNft_ = positionNft;
         if (positionNft_ == 0) return actualTokenAmounts;
-        (uint160 sqrtRatioX96, , , , , , ) = delayedStrategyParams().key.pool.globalState();
+        (uint160 sqrtRatioX96, , , , , , ) = strategyParams().key.pool.globalState();
         uint128 liquidity = helper.tokenAmountsToLiquidity(positionNft_, sqrtRatioX96, tokenAmounts);
         if (liquidity == 0) return actualTokenAmounts;
         (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
@@ -301,7 +279,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
             _burnFarmingPosition(positionNft_, farmingCenter_);
         }
 
-        (uint160 sqrtRatioX96, , , , , , ) = delayedStrategyParams().key.pool.globalState();
+        (uint160 sqrtRatioX96, , , , , , ) = strategyParams().key.pool.globalState();
         uint128 liquidityToPull = helper.calculateLiquidityToPull(positionNft_, sqrtRatioX96, tokenAmounts);
 
         if (liquidityToPull != 0) {
@@ -336,7 +314,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     function _openFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) private {
         positionManager.safeTransferFrom(address(this), address(farmingCenter_), nft);
         farmingCenter_.enterFarming(
-            delayedStrategyParams().key,
+            strategyParams().key,
             nft,
             0,
             false // eternal farming
@@ -346,7 +324,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     function _burnFarmingPosition(uint256 nft, IFarmingCenter farmingCenter_) private {
         collectRewards();
         farmingCenter_.exitFarming(
-            delayedStrategyParams().key,
+            strategyParams().key,
             nft,
             false // eternal farming
         );
@@ -380,28 +358,14 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     /// @notice Emitted when earnings are collected
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    /// @param to Receiver of the fees
     /// @param amount0 Amount of token0 collected
     /// @param amount1 Amount of token1 collected
-    event CollectedEarnings(
-        address indexed origin,
-        address indexed sender,
-        address indexed to,
-        uint256 amount0,
-        uint256 amount1
-    );
+    event CollectedEarnings(address indexed origin, address indexed sender, uint256 amount0, uint256 amount1);
 
     /// @notice Emitted when rewards are collected
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    /// @param to Receiver of the fees
-    /// @param amount0 Amount of token0 collected
-    /// @param amount1 Amount of token1 collected
-    event CollectedRewards(
-        address indexed origin,
-        address indexed sender,
-        address indexed to,
-        uint256 amount0,
-        uint256 amount1
-    );
+    /// @param amount0 Amount of collected rewardTokenToUnderlying
+    /// @param amount1 Amount of collected bonusTokenToUnderlying
+    event CollectedRewards(address indexed origin, address indexed sender, uint256 amount0, uint256 amount1);
 }

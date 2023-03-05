@@ -1,25 +1,40 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
 import "../interfaces/utils/IQuickSwapHelper.sol";
+import "../interfaces/external/quickswap/IDragonLair.sol";
+
+import "../libraries/external/DataStorageLibrary.sol";
 
 contract QuickSwapHelper is IQuickSwapHelper {
     IAlgebraNonfungiblePositionManager public immutable positionManager;
     IAlgebraFactory public immutable factory;
+
+    address public immutable quickToken;
+    address public immutable dQuickToken;
+
     uint256 public constant Q128 = 2**128;
     uint256 public constant Q96 = 2**96;
 
-    constructor(IAlgebraNonfungiblePositionManager positionManager_) {
+    constructor(
+        IAlgebraNonfungiblePositionManager positionManager_,
+        address quickToken_,
+        address dQuickToken_
+    ) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());
+        quickToken = quickToken_;
+        dQuickToken = dQuickToken_;
     }
 
     /// @inheritdoc IQuickSwapHelper
     function calculateTvl(
         uint256 nft,
-        IQuickSwapVaultGovernance.DelayedStrategyParams memory strategyParams,
+        IQuickSwapVaultGovernance.StrategyParams memory strategyParams,
         IFarmingCenter farmingCenter,
         address token0
     ) public view returns (uint256[] memory tokenAmounts) {
@@ -40,12 +55,14 @@ contract QuickSwapHelper is IQuickSwapHelper {
         rewardAmount = convertTokenToUnderlying(
             rewardAmount,
             address(key.rewardToken),
-            strategyParams.rewardTokenToUnderlying
+            strategyParams.rewardTokenToUnderlying,
+            strategyParams.rewardPoolTimespan
         );
         bonusRewardAmount = convertTokenToUnderlying(
             bonusRewardAmount,
             address(key.bonusRewardToken),
-            strategyParams.bonusTokenToUnderlying
+            strategyParams.bonusTokenToUnderlying,
+            strategyParams.rewardPoolTimespan
         );
 
         if (address(strategyParams.rewardTokenToUnderlying) == token0) {
@@ -241,11 +258,22 @@ contract QuickSwapHelper is IQuickSwapHelper {
     function convertTokenToUnderlying(
         uint256 amount,
         address from,
-        address to
+        address to,
+        uint32 timespan
     ) public view returns (uint256) {
         if (from == to || amount == 0) return amount;
+        if (from == dQuickToken) {
+            // unstake dQUICK to QUICK token
+            amount = IDragonLair(dQuickToken).dQUICKForQUICK(amount);
+            from = quickToken;
+            if (from == to || amount == 0) return amount;
+        }
+
         IAlgebraPool pool = IAlgebraPool(factory.poolByPair(from, to));
-        (uint160 sqrtPriceX96, , , , , , ) = pool.globalState();
+        (int24 averageTick, bool withFail) = DataStorageLibrary.consult(address(pool), timespan);
+        require(!withFail, "Not enough observations in reward pool");
+
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(averageTick);
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         if (pool.token0() == to) {
             priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
