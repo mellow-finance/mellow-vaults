@@ -37,9 +37,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        
         (minTokenAmounts, maxTokenAmounts) = kyberHelper.calcTvl();
-
     }
 
     /// @inheritdoc IntegrationVault
@@ -269,7 +267,6 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         Options memory opts
     ) internal returns (uint256, uint256) {
-
         uint256 amount0Collected;
         uint256 amount1Collected;
 
