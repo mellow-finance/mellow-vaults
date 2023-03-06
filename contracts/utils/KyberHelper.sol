@@ -120,7 +120,6 @@ contract KyberHelper is IKyberHelper {
     }
 
     function calcTvl() external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-
         IKyberVault vault = IKyberVault(msg.sender);
 
         uint256 kyberNft = vault.kyberNft();
@@ -128,14 +127,12 @@ contract KyberHelper is IKyberHelper {
         IKyberSwapElasticLM farm = vault.farm();
 
         address[] memory _vaultTokens = vault.vaultTokens();
-        
-        {
 
+        {
             IPool pool = vault.pool();
             uint160 sqrtPriceX96;
             (sqrtPriceX96, , , ) = pool.getPoolState();
             minTokenAmounts = calculateTvlBySqrtPriceX96(pool, kyberNft, sqrtPriceX96);
-
         }
 
         if (address(farm) != address(0)) {
@@ -145,11 +142,9 @@ contract KyberHelper is IKyberHelper {
             uint256[] memory rewardsPending;
 
             {
-
                 uint256 pid = vault.pid();
                 (, , , , , , , rewardTokens, ) = farm.getPoolInfo(pid);
                 (, rewardsPending, ) = farm.getUserInfo(kyberNft, pid);
-
             }
 
             for (uint256 i = 0; i < rewardTokens.length; ++i) {
@@ -161,7 +156,6 @@ contract KyberHelper is IKyberHelper {
                     }
                 }
                 if (!exists) {
-
                     address lastToken;
 
                     {
@@ -207,8 +201,11 @@ contract KyberHelper is IKyberHelper {
         return tempAddress;
     }
 
-    function getBytesToMulticall(uint256[] memory tokenAmounts, IKyberVault.Options memory opts) external view returns (bytes[] memory data) {
-
+    function getBytesToMulticall(uint256[] memory tokenAmounts, IKyberVault.Options memory opts)
+        external
+        view
+        returns (bytes[] memory data)
+    {
         IKyberVault vault = IKyberVault(msg.sender);
 
         uint256 kyberNft = vault.kyberNft();
@@ -236,7 +233,6 @@ contract KyberHelper is IKyberHelper {
         }
 
         if (ticksManager.getTotalRTokensOwedToPosition(positionManager, pool, kyberNft) > 0) {
-
             data = new bytes[](4);
 
             data[0] = abi.encodePacked(
@@ -257,10 +253,7 @@ contract KyberHelper is IKyberHelper {
                 IRouterTokenHelper.transferAllTokens.selector,
                 abi.encode(_vaultTokens[1], uint256(0), msg.sender)
             );
-
-        }
-
-        else {
+        } else {
             data = new bytes[](3);
 
             data[0] = abi.encodePacked(
@@ -277,6 +270,5 @@ contract KyberHelper is IKyberHelper {
                 abi.encode(_vaultTokens[1], uint256(0), msg.sender)
             );
         }
-
     }
 }
