@@ -339,7 +339,7 @@ contract KyberTest is Test {
         require(isClose(newTvl[1] * oldTvl[0], newTvl[0] * oldTvl[1], 100));
     }
 
-    function testPull() public {
+    function testPullQ() public {
         firstDeposit();
         deposit(10);
 
@@ -435,14 +435,23 @@ contract KyberTest is Test {
 
         {
 
-            deal(stmatic, deployer, 10**20);
+            deal(stmatic, deployer, 10**24);
 
-            IERC20(stmatic).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10**20);
-            IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(IRouter.ExactInputParams({
+            IERC20(stmatic).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10**24);
+            IERC20(bob).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10**25);
+            uint256 A = IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(IRouter.ExactInputParams({
                 path: abi.encodePacked(stmatic, uint24(1000), bob),
                 recipient: deployer,
                 deadline: block.timestamp + 1,
-                amountIn: 10**20,
+                amountIn: 10**24,
+                minAmountOut: 0
+            }));
+
+            IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(IRouter.ExactInputParams({
+                path: abi.encodePacked(bob, uint24(1000), stmatic),
+                recipient: deployer,
+                deadline: block.timestamp + 1,
+                amountIn: A,
                 minAmountOut: 0
             }));
 
@@ -450,12 +459,14 @@ contract KyberTest is Test {
 
         (uint256[] memory tvl3, ) = kyberVault.tvl();
 
-        require(tvl3[0] > tvl[0] || tvl3[1] > tvl[1]);
+        require(tvl3[0] > tvl[0] && tvl3[1] > tvl[1]);
 
         amounts[0] = tvl3[0];
         amounts[1] = tvl3[1];
 
         (uint256[] memory ercOldTvl, ) = erc20Vault.tvl();
+
+        vm.warp(block.timestamp + 360);
 
         kyberVault.pull(address(erc20Vault), tokens, amounts, Q);
 
