@@ -72,7 +72,7 @@ contract KyberHelper is IKyberHelper {
         int24 tickUpper,
         uint256 amount0,
         uint256 amount1
-    ) external pure returns (uint128 liquidity) {
+    ) public pure returns (uint128 liquidity) {
         uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
 
@@ -124,6 +124,7 @@ contract KyberHelper is IKyberHelper {
         IKyberVault vault = IKyberVault(msg.sender);
 
         uint256 kyberNft = vault.kyberNft();
+        if (kyberNft == 0) return (new uint256[](2), new uint256[](2));
         IKyberSwapElasticLM farm = vault.farm();
 
         address[] memory _vaultTokens = vault.vaultTokens();
@@ -204,5 +205,78 @@ contract KyberHelper is IKyberHelper {
         }
 
         return tempAddress;
+    }
+
+    function getBytesToMulticall(uint256[] memory tokenAmounts, IKyberVault.Options memory opts) external view returns (bytes[] memory data) {
+
+        IKyberVault vault = IKyberVault(msg.sender);
+
+        uint256 kyberNft = vault.kyberNft();
+        IPool pool = vault.pool();
+        address[] memory _vaultTokens = vault.vaultTokens();
+
+        uint128 liquidityToPull;
+        // scope the code below to avoid stack-too-deep exception
+        {
+            (IBasePositionManager.Position memory position, ) = positionManager.positions(kyberNft);
+
+            (uint160 sqrtPriceX96, , , ) = pool.getPoolState();
+            liquidityToPull = tokenAmountsToMaximalLiquidity(
+                sqrtPriceX96,
+                position.tickLower,
+                position.tickUpper,
+                tokenAmounts[0],
+                tokenAmounts[1]
+            );
+            liquidityToPull = position.liquidity < liquidityToPull ? position.liquidity : liquidityToPull;
+        }
+
+        if (liquidityToPull == 0) {
+            return new bytes[](0);
+        }
+
+        if (ticksManager.getTotalRTokensOwedToPosition(positionManager, pool, kyberNft) > 0) {
+
+            data = new bytes[](4);
+
+            data[0] = abi.encodePacked(
+                IBasePositionManager.removeLiquidity.selector,
+                abi.encode(kyberNft, liquidityToPull, opts.amount0Min, opts.amount1Min, opts.deadline)
+            );
+
+            data[1] = abi.encodePacked(
+                IBasePositionManager.burnRTokens.selector,
+                abi.encode(kyberNft, 0, 0, block.timestamp + 1)
+            );
+
+            data[2] = abi.encodePacked(
+                IRouterTokenHelper.transferAllTokens.selector,
+                abi.encode(_vaultTokens[0], uint256(0), msg.sender)
+            );
+            data[3] = abi.encodePacked(
+                IRouterTokenHelper.transferAllTokens.selector,
+                abi.encode(_vaultTokens[1], uint256(0), msg.sender)
+            );
+
+        }
+
+        else {
+            data = new bytes[](3);
+
+            data[0] = abi.encodePacked(
+                IBasePositionManager.removeLiquidity.selector,
+                abi.encode(kyberNft, liquidityToPull, opts.amount0Min, opts.amount1Min, opts.deadline)
+            );
+
+            data[1] = abi.encodePacked(
+                IRouterTokenHelper.transferAllTokens.selector,
+                abi.encode(_vaultTokens[0], uint256(0), msg.sender)
+            );
+            data[2] = abi.encodePacked(
+                IRouterTokenHelper.transferAllTokens.selector,
+                abi.encode(_vaultTokens[1], uint256(0), msg.sender)
+            );
+        }
+
     }
 }
