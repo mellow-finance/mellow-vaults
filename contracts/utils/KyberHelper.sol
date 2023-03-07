@@ -88,7 +88,6 @@ contract KyberHelper is IKyberHelper {
         }
     }
 
-    /// @dev returns with "Invalid Token ID" for non-existent nfts
     function calculateTvlBySqrtPriceX96(
         IPool pool,
         uint256 kyberNft,
@@ -135,7 +134,7 @@ contract KyberHelper is IKyberHelper {
             minTokenAmounts = calculateTvlBySqrtPriceX96(pool, kyberNft, sqrtPriceX96);
         }
 
-        if (address(farm) != address(0)) {
+        if (vault.isLiquidityInFarm()) {
             uint256 pointer = 0;
 
             address[] memory rewardTokens;
@@ -160,7 +159,7 @@ contract KyberHelper is IKyberHelper {
 
                     {
                         bytes memory path = IKyberVaultGovernance(address(vault.vaultGovernance()))
-                            .delayedStrategyParams(vault.nft())
+                            .strategyParams(vault.nft())
                             .paths[pointer];
                         lastToken = toAddress(path, path.length - 20);
                     }
