@@ -30,12 +30,10 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param fee_ Fee of the Kyber pool
-    /// @param kyberHelper_ address of helper for Kyber arithmetic with ticks
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
-        uint24 fee_,
-        address kyberHelper_
+        uint24 fee_
     ) external;
 
     function updateFarmInfo() external;
@@ -45,4 +43,6 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
     function mellowOracle() external view returns (IOracle);
 
     function pid() external view returns (uint256);
+
+    function isLiquidityInFarm() external view returns (bool);
 }
