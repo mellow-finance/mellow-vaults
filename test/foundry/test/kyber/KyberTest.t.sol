@@ -215,7 +215,10 @@ contract KyberTest is Test {
 
         {
 
-            KyberVault k = new KyberVault();
+            MockOracle mockOracle = new MockOracle();
+            mockOracle.updatePrice(6507009 * 10**22);
+
+            KyberVault k = new KyberVault(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83), kyberHelper, IOracle(address(mockOracle)));
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
                 protocolGovernance: IProtocolGovernance(0x8Ff3148CE574B8e135130065B188960bA93799c6),
@@ -223,17 +226,7 @@ contract KyberTest is Test {
                 singleton: k
             });
 
-            MockOracle mockOracle = new MockOracle();
-            mockOracle.updatePrice(6507009 * 10**22);
-
-            IKyberVaultGovernance.DelayedProtocolParams memory paramsB = IKyberVaultGovernance.DelayedProtocolParams({
-                positionManager: IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8),
-                farm: IKyberSwapElasticLM(0xBdEc4a045446F583dc564C0A227FFd475b329bf0),
-                mellowOracle: IOracle(address(mockOracle)),
-                router: IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83)
-            });
-
-            IKyberVaultGovernance kyberVaultGovernance = new KyberVaultGovernance(paramsA, paramsB);
+            IKyberVaultGovernance kyberVaultGovernance = new KyberVaultGovernance(paramsA);
 
             {
 
@@ -259,23 +252,24 @@ contract KyberTest is Test {
             bytes[] memory P = new bytes[](1);
             P[0] = abi.encodePacked(knc, uint24(1000), usdc, uint24(8), bob);
 
-            IKyberVaultGovernance.DelayedStrategyParams memory paramsC = IKyberVaultGovernance.DelayedStrategyParams({
+            IKyberVaultGovernance.StrategyParams memory paramsC = IKyberVaultGovernance.StrategyParams({
+                farm: IKyberSwapElasticLM(0xBdEc4a045446F583dc564C0A227FFd475b329bf0),
                 paths: P,
                 pid: 117
             });
 
-            kyberVaultGovernance.stageDelayedStrategyParams(erc20VaultNft + 1, paramsC);
-            vm.warp(block.timestamp + 86400);
-            kyberVaultGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
+            kyberVaultGovernance.setStrategyParams(erc20VaultNft + 1, paramsC);
 
             vm.stopPrank();
             vm.startPrank(deployer);
 
-            kyberVaultGovernance.createVault(tokens, deployer, 1000, address(kyberHelper));
+            kyberVaultGovernance.createVault(tokens, deployer, 1000);
         }
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         kyberVault = IKyberVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
+
+        kyberVault.updateFarmInfo();
 
         preparePush(address(kyberVault));
 
@@ -399,6 +393,11 @@ contract KyberTest is Test {
         vm.warp(block.timestamp + 86400 * 7);
 
         (uint256[] memory tvl3, ) = kyberVault.tvl();
+
+        console2.log(tvl[0]);
+        console2.log(tvl[1]);
+        console2.log(tvl3[0]);
+        console2.log(tvl3[1]);
 
         require(tvl3[0] > tvl[0] || tvl3[1] > tvl[1]);
 
