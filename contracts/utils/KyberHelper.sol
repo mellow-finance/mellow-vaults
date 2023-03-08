@@ -161,7 +161,7 @@ contract KyberHelper is IKyberHelper {
                         bytes memory path = IKyberVaultGovernance(address(vault.vaultGovernance()))
                             .strategyParams(vault.nft())
                             .paths[pointer];
-                        lastToken = toAddress(path, path.length - 20);
+                        lastToken = CommonLibrary.toAddress(path, path.length - 20);
                     }
 
                     uint256[] memory pricesX96;
@@ -186,18 +186,6 @@ contract KyberHelper is IKyberHelper {
         }
 
         maxTokenAmounts = minTokenAmounts;
-    }
-
-    function toAddress(bytes memory _bytes, uint256 _start) public pure returns (address) {
-        require(_start + 20 >= _start, "toAddress_overflow");
-        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
-        address tempAddress;
-
-        assembly {
-            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
-        }
-
-        return tempAddress;
     }
 
     function getBytesToMulticall(uint256[] memory tokenAmounts, IKyberVault.Options memory opts)

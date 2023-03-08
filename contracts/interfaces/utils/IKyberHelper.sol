@@ -36,8 +36,6 @@ interface IKyberHelper {
 
     function calcTvl() external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
-    function toAddress(bytes memory _bytes, uint256 _start) external pure returns (address);
-
     function getBytesToMulticall(uint256[] memory tokenAmounts, IKyberVault.Options memory opts) external view returns (bytes[] memory);
 
 }
