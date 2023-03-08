@@ -34,7 +34,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     bool public isLiquidityInFarm;
 
-    constructor(IBasePositionManager positionManager_, IRouter router_, IKyberHelper helper_, IOracle oracle_) {
+    constructor(
+        IBasePositionManager positionManager_,
+        IRouter router_,
+        IKyberHelper helper_,
+        IOracle oracle_
+    ) {
         positionManager = positionManager_;
         router = router_;
         kyberHelper = helper_;
@@ -275,7 +280,6 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         Options memory opts
     ) internal returns (uint256 amount0Collected, uint256 amount1Collected) {
-
         bytes[] memory data = kyberHelper.getBytesToMulticall(tokenAmounts, opts);
         uint256[] memory withdrawn = _withdrawFromFarm(to);
 
