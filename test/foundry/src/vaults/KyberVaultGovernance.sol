@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../interfaces/vaults/IKyberVaultGovernance.sol";
 import "../interfaces/vaults/IKyberVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
@@ -42,8 +43,11 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         require(address(params.farm) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
+        address vault = _internalParams.registry.vaultForNft(nft);
+
         for (uint256 i = 0; i < params.paths.length; ++i) {
-            address firstAddress = _toAddress(params.paths[i], 0);
+            address firstAddress = CommonLibrary.toAddress(params.paths[i], 0);
+            address lastAddress = CommonLibrary.toAddress(params.paths[i], params.paths[i].length - 20);
             (, , , , , , , address[] memory rewardTokens, ) = params.farm.getPoolInfo(params.pid);
 
             bool exists = false;
@@ -55,9 +59,22 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
             }
 
             require(exists, ExceptionsLibrary.INVARIANT);
+
+            exists = false;
+
+            address[] memory vaultTokens = IVault(vault).vaultTokens();
+
+            for (uint256 j = 0; j < vaultTokens.length; ++j) {
+                if (vaultTokens[j] == lastAddress) {
+                    exists = true;
+                }
+            }
+
+            require(exists, ExceptionsLibrary.INVARIANT);
         }
 
         _setStrategyParams(nft, abi.encode(params));
+        IKyberVault(vault).updateFarmInfo();
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
@@ -81,19 +98,7 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.1.0");
-    }
-
-    function _toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
-        require(_start + 20 >= _start, "toAddress_overflow");
-        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
-        address tempAddress;
-
-        assembly {
-            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
-        }
-
-        return tempAddress;
+        return bytes32("1.0.0");
     }
 
     // --------------------------  EVENTS  --------------------------

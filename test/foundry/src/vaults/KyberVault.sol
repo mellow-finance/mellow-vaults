@@ -9,6 +9,7 @@ import "../interfaces/vaults/IKyberVaultGovernance.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "../interfaces/vaults/IKyberVault.sol";
 import "../interfaces/oracles/IOracle.sol";
+import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "./IntegrationVault.sol";
@@ -134,9 +135,9 @@ contract KyberVault is IKyberVault, IntegrationVault {
                 uint256 toSwap = IERC20(rewardTokens[i]).balanceOf(address(this));
 
                 if (toSwap > 0) {
-                    IERC20(rewardTokens[i]).safeApprove(address(router), toSwap);
+                    IERC20(rewardTokens[i]).safeIncreaseAllowance(address(router), toSwap);
 
-                    address lastToken = kyberHelper.toAddress(path, path.length - 20);
+                    address lastToken = CommonLibrary.toAddress(path, path.length - 20);
 
                     uint256 received = router.swapExactInput(
                         IRouter.ExactInputParams({
@@ -147,6 +148,8 @@ contract KyberVault is IKyberVault, IntegrationVault {
                             minAmountOut: 0
                         })
                     );
+
+                    IERC20(rewardTokens[i]).safeApprove(address(router), 0);
 
                     IERC20(lastToken).safeTransfer(to, received);
                     for (uint256 j = 0; j < _vaultTokens.length; ++j) {

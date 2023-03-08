@@ -258,18 +258,18 @@ contract KyberTest is Test {
                 pid: 117
             });
 
-            kyberVaultGovernance.setStrategyParams(erc20VaultNft + 1, paramsC);
-
             vm.stopPrank();
             vm.startPrank(deployer);
 
             kyberVaultGovernance.createVault(tokens, deployer, 1000);
+
+            kyberVaultGovernance.setStrategyParams(erc20VaultNft + 1, paramsC);
         }
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         kyberVault = IKyberVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        kyberVault.updateFarmInfo();
+     //   kyberVault.updateFarmInfo();
 
         preparePush(address(kyberVault));
 
