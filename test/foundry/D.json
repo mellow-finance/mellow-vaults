@@ -1,0 +1,167 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "contract IUniV2Oracle",
+                "name": "univ2Oracle_",
+                "type": "address"
+            },
+            {
+                "internalType": "contract IUniV3Oracle",
+                "name": "univ3Oracle_",
+                "type": "address"
+            },
+            {
+                "internalType": "contract IChainlinkOracle",
+                "name": "chainlinkOracle_",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "chainlinkOracle",
+        "outputs": [
+            {
+                "internalType": "contract IChainlinkOracle",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "contractName",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "contractNameBytes",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "contractVersion",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "contractVersionBytes",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token0",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "token1",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "safetyIndicesSet",
+                "type": "uint256"
+            }
+        ],
+        "name": "priceX96",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "pricesX96",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "safetyIndices",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes4",
+                "name": "interfaceId",
+                "type": "bytes4"
+            }
+        ],
+        "name": "supportsInterface",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "univ2Oracle",
+        "outputs": [
+            {
+                "internalType": "contract IUniV2Oracle",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "univ3Oracle",
+        "outputs": [
+            {
+                "internalType": "contract IUniV3Oracle",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]

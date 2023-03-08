@@ -40,7 +40,7 @@ contract AggregateVault is IAggregateVault, Vault {
 
     /// @inheritdoc IVault
     function tvl()
-        public
+        public virtual
         view
         override(IVault, Vault)
         returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts)

@@ -362,13 +362,19 @@ contract DeltaNeutralTest is Test {
         require(aaveTvl[0] >= 5000);
         require(aaveTvl[1] >= 2*10**11 && aaveTvl[0] <= 5*10**11);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(totalTvl[0] >= 9999 && totalTvl[0] <= 10001);
 
         vm.warp(block.timestamp + 86400 * 365); // aave debt - fees decreases tvl
 
-        uint256[] memory finalTotalTvl = rootVault.calcTvl();
+        (uint256[] memory tvlA, uint256[] memory tvlB) = rootVault.tvl();
+        (uint256[] memory aTvlA, uint256[] memory aTvlB) = aaveVault.tvl();
+
+        require(tvlB[0] - tvlA[0] > aTvlB[0] - aTvlA[0]);
+
+        aaveVault.updateTvls();
+        (uint256[] memory finalTotalTvl, ) = rootVault.tvl();
         require(finalTotalTvl[1] == 0);
         require(finalTotalTvl[0] < 9950);
     }
@@ -381,7 +387,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(isClose(totalTvl[0], 1000*10**6, 1000));
     }
@@ -405,7 +411,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(isClose(totalTvl[0], 500*10**6, 1000));
 
@@ -419,14 +425,14 @@ contract DeltaNeutralTest is Test {
         deposit(1000);
         uint256 lpTokensBefore = rootVault.balanceOf(deployer);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(isClose(totalTvl[0], 1000*10**6, 1000));
 
         deposit(3000);
         uint256 lpTokensAfter = rootVault.balanceOf(deployer);
 
-        uint256[] memory totalTvlNew = rootVault.calcTvl();
+        (uint256[] memory totalTvlNew, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(isClose(totalTvlNew[0], 4000*10**6, 1000));
 
@@ -543,7 +549,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(totalTvl[0] >= 1900*10**6 && totalTvl[0] <= 1980*10**6);
     }
@@ -578,7 +584,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(totalTvl[0] >= 900*10**6 && totalTvl[0] <= 960*10**6);
     }
@@ -600,7 +606,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(totalTvl[0] >= 900*10**6 && totalTvl[0] <= 960*10**6);
     }
@@ -633,7 +639,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(isClose(totalTvl[0], 480*10**6, 10));
 
@@ -681,7 +687,7 @@ contract DeltaNeutralTest is Test {
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
 
-        uint256[] memory totalTvl = rootVault.calcTvl();
+        (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
         require(isClose(totalTvl[0], 1150*10**6, 10));
 

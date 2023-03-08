@@ -81,21 +81,31 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    function borrow(address token, address to, uint256 amount) external {
+    function borrow(
+        address token,
+        address to,
+        uint256 amount
+    ) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
         _lendingPool.borrow(token, amount, strategyParams.rateMode, 0, address(this));
         IERC20(token).safeTransfer(to, amount);
         _updateTvls();
     }
 
-    function repay(address token, address from, uint256 amount) external {
+    function repay(
+        address token,
+        address from,
+        uint256 amount
+    ) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IERC20(token).safeTransferFrom(from, address(this), amount);
         IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
-        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
         _lendingPool.repay(token, amount, strategyParams.rateMode, address(this));
         IERC20(token).safeApprove(address(_lendingPool), 0);
         _updateTvls();
@@ -105,12 +115,12 @@ contract AaveVault is IAaveVault, IntegrationVault {
         require(index < _vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
         address token = _vaultTokens[index];
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
-        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
-        if (strategyParams.rateMode == 1) { 
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
+        if (strategyParams.rateMode == 1) {
             return IERC20(data.stableDebtTokenAddress).balanceOf(address(this));
-        }
-        else {
+        } else {
             return IERC20(data.variableDebtTokenAddress).balanceOf(address(this));
         }
     }
@@ -118,7 +128,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function getLTV(address token) external view returns (uint256 ltv) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
         uint256 config = data.configuration.data;
-        return config % (1<<16);
+        return config % (1 << 16);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

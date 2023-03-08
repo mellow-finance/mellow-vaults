@@ -36,26 +36,43 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
     EnumerableSet.AddressSet private _depositorsAllowlist;
     IERC20RootVaultHelper public helper;
 
-    function calcTvl() public returns (uint256[] memory tvl) {
-        tvl = new uint256[](2);
-        int256 totalToken1Tvl = 0;
+    function tvl()
+        public
+        view
+        override(IVault, AggregateVault)
+        returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts)
+    {
+        minTokenAmounts = new uint256[](2);
+        maxTokenAmounts = new uint256[](2);
+
+        int256 totalToken1TvlMin = 0;
+        int256 totalToken1TvlMax = 0;
+
         for (uint256 i = 0; i < 3; ++i) {
+            (uint256[] memory minSubvaultTvl, uint256[] memory maxSubvaultTvl) = IIntegrationVault(
+                IAggregateVault(address(this)).subvaultAt(i)
+            ).tvl();
+            minTokenAmounts[0] += minSubvaultTvl[0];
+            maxTokenAmounts[0] += maxSubvaultTvl[0];
             if (i == 2) {
-                IAaveVault(IAggregateVault(address(this)).subvaultAt(i)).updateTvls();
-            }
-            (uint256[] memory subvaultTvl, ) = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(i)).tvl();
-            tvl[0] += subvaultTvl[0];
-            if (i == 2) {
-                totalToken1Tvl -= int256(subvaultTvl[1]);
+                totalToken1TvlMax -= int256(minSubvaultTvl[1]);
+                totalToken1TvlMin -= int256(maxSubvaultTvl[1]);
             } else {
-                totalToken1Tvl += int256(subvaultTvl[1]);
+                totalToken1TvlMin += int256(minSubvaultTvl[1]);
+                totalToken1TvlMax += int256(maxSubvaultTvl[1]);
             }
         }
 
-        if (totalToken1Tvl < 0) {
-            tvl[0] -= _getZeroTokenAmount(uint256(-totalToken1Tvl));
+        if (totalToken1TvlMin < 0) {
+            minTokenAmounts[0] -= _getZeroTokenAmount(uint256(-totalToken1TvlMin));
         } else {
-            tvl[0] += _getZeroTokenAmount(uint256(totalToken1Tvl));
+            minTokenAmounts[0] += _getZeroTokenAmount(uint256(totalToken1TvlMin));
+        }
+
+        if (totalToken1TvlMax < 0) {
+            maxTokenAmounts[0] -= _getZeroTokenAmount(uint256(-totalToken1TvlMax));
+        } else {
+            maxTokenAmounts[0] += _getZeroTokenAmount(uint256(totalToken1TvlMax));
         }
     }
 
@@ -163,8 +180,8 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             ExceptionsLibrary.FORBIDDEN
         );
 
-        uint256[] memory minTvl = calcTvl();
-        _chargeFees(thisNft, minTvl[0], totalSupply);
+        (, uint256[] memory maxTvl) = tvl();
+        _chargeFees(thisNft, maxTvl[0], totalSupply);
 
         uint256 supply = totalSupply;
         uint256 lpAmount;
@@ -172,7 +189,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         if (supply == 0) {
             lpAmount = tokenAmounts[0];
         } else {
-            uint256 tvl = minTvl[0];
+            uint256 tvl = maxTvl[0];
             lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], tvl);
             tokenAmounts[0] = FullMath.mulDiv(tvl, lpAmount, supply);
         }
@@ -219,7 +236,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         require(minTokenAmounts[1] == 0, ExceptionsLibrary.INVALID_VALUE);
 
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
-        uint256[] memory minTvl = calcTvl();
+        (uint256[] memory minTvl, ) = tvl();
         _chargeFees(_nft, minTvl[0], supply);
         supply = totalSupply;
         uint256 balance = balanceOf[msg.sender];
