@@ -147,7 +147,9 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
         DeltaNeutralStrategyHelper helper_
     ) {
         require(
-            address(positionManager_) != address(0) && address(swapHelper_) != address(0) && address(helper_) != address(0)
+            address(positionManager_) != address(0) &&
+                address(swapHelper_) != address(0) &&
+                address(helper_) != address(0)
         );
         positionManager = positionManager_;
         swapHelper = swapHelper_;
@@ -373,8 +375,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function withdrawCallback(bytes memory depositOptions) external {
         _checkCallbackPossible();
 
-        (, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper
-            .calcWithdrawParams(depositOptions);
+        (, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper.calcWithdrawParams(depositOptions);
 
         if (totalToken1 < debtToken1) {
             _swap(0, true, 0);

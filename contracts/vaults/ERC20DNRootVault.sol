@@ -323,7 +323,12 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             supply
         );
 
-        _chargePerformanceFees(supply, tvlValue, strategyParams.performanceFee, strategyParams.strategyPerformanceTreasury);
+        _chargePerformanceFees(
+            supply,
+            tvlValue,
+            strategyParams.performanceFee,
+            strategyParams.strategyPerformanceTreasury
+        );
     }
 
     function _chargeManagementFees(

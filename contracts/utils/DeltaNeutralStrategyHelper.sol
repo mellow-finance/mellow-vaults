@@ -64,6 +64,7 @@ contract DeltaNeutralStrategyHelper {
         )
     {
         require(withdrawOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
+        require(msg.sender == owner, ExceptionsLibrary.FORBIDDEN);
         uint256 shareOfCapitalQ96 = abi.decode(withdrawOptions, (uint256));
 
         (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(uniV3Vault.uniV3Nft());
@@ -91,7 +92,8 @@ contract DeltaNeutralStrategyHelper {
     }
 
     function calcDepositParams(bytes memory depositOptions)
-        external view
+        external
+        view
         returns (
             uint256 shareOfCapitalQ96,
             uint256 debtToken1,

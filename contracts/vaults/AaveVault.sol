@@ -169,8 +169,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         }
 
         return false;
-
-    }   
+    }
 
     // -------------------  INTERNAL, MUTATING  -------------------
 

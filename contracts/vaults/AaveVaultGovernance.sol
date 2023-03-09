@@ -89,7 +89,10 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
         _stageDelayedStrategyParams(nft, abi.encode(params));
 
         bool[] memory debtAllowed = params.isDebtAllowed;
-        require(debtAllowed.length == IVault(_internalParams.registry.vaultForNft(nft)).vaultTokens().length, ExceptionsLibrary.INVALID_LENGTH);
+        require(
+            debtAllowed.length == IVault(_internalParams.registry.vaultForNft(nft)).vaultTokens().length,
+            ExceptionsLibrary.INVALID_LENGTH
+        );
 
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
