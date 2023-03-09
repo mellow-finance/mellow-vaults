@@ -87,6 +87,8 @@ contract AaveVault is IAaveVault, IntegrationVault {
         uint256 amount
     ) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_isBorrowingAllowed(token), ExceptionsLibrary.FORBIDDEN);
+
         IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(_nft);
@@ -152,6 +154,24 @@ contract AaveVault is IAaveVault, IntegrationVault {
         return false;
     }
 
+    function _isBorrowingAllowed(address token) internal view returns (bool) {
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
+
+        address[] memory tokens = _vaultTokens;
+        bool[] memory isBorrowingAllowed = strategyParams.isDebtAllowed;
+
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            if (tokens[i] == token && isBorrowingAllowed[i]) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }   
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _updateTvls() private {
@@ -182,6 +202,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
             }
             address token = tokens[i];
             IERC20(token).safeIncreaseAllowance(address(_lendingPool), tokenAmounts[i]);
+            require(!_isBorrowingAllowed(token), ExceptionsLibrary.FORBIDDEN);
             _lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
             IERC20(token).safeApprove(address(_lendingPool), 0);
         }

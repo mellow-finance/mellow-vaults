@@ -16,6 +16,7 @@ interface IAaveVaultGovernance is IVaultGovernance {
 
     struct DelayedStrategyParams {
         uint32 rateMode;
+        bool[] isDebtAllowed;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "../interfaces/utils/ILpCallback.sol";
+import "../interfaces/utils/ISwapperHelper.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
@@ -36,7 +37,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     IAaveVault public aaveVault;
 
     INonfungiblePositionManager public immutable positionManager;
-    ISwapRouter public immutable router;
+    ISwapperHelper public immutable swapHelper;
     DeltaNeutralStrategyHelper public immutable helper;
 
     address[] public tokens;
@@ -142,14 +143,14 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
 
     constructor(
         INonfungiblePositionManager positionManager_,
-        ISwapRouter router_,
+        ISwapperHelper swapHelper_,
         DeltaNeutralStrategyHelper helper_
     ) {
         require(
-            address(positionManager_) != address(0) && address(router_) != address(0) && address(helper_) != address(0)
+            address(positionManager_) != address(0) && address(swapHelper_) != address(0) && address(helper_) != address(0)
         );
         positionManager = positionManager_;
-        router = router_;
+        swapHelper = swapHelper_;
         helper = helper_;
         DefaultAccessControlLateInit.init(address(this));
     }
@@ -295,20 +296,8 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
             amountIn = IERC20(tokens[index]).balanceOf(address(erc20Vault));
         }
         if (amountIn > 0) {
-            ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
-                tokenIn: tokens[index],
-                tokenOut: tokens[1 - index],
-                fee: tradingParams.swapFee,
-                recipient: address(erc20Vault),
-                deadline: block.timestamp + 1,
-                amountIn: amountIn,
-                amountOutMinimum: getSwapAmountOut(amountIn, index, true),
-                sqrtPriceLimitX96: 0
-            });
-            bytes memory data = abi.encode(swapParams);
-            erc20Vault.externalCall(tokens[index], APPROVE_SELECTOR, abi.encode(address(router), amountIn)); // approve
-            erc20Vault.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data); // swap
-            erc20Vault.externalCall(tokens[index], APPROVE_SELECTOR, abi.encode(address(router), 0)); // reset allowance
+            IERC20(tokens[index]).safeTransfer(address(swapHelper), amountIn);
+            swapHelper.swap(tokens[index], tokens[1 - index], amountIn, getSwapAmountOut(amountIn, index, true));
         }
     }
 
@@ -384,7 +373,7 @@ contract DeltaNeutralStrategy is ContractMeta, Multicall, DefaultAccessControlLa
     function withdrawCallback(bytes memory depositOptions) external {
         _checkCallbackPossible();
 
-        (uint256 totalToken0, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper
+        (, uint256 totalToken1, uint256 balanceToken0, uint256 debtToken1) = helper
             .calcWithdrawParams(depositOptions);
 
         if (totalToken1 < debtToken1) {

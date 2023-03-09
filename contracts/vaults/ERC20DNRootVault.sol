@@ -189,9 +189,9 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         if (supply == 0) {
             lpAmount = tokenAmounts[0];
         } else {
-            uint256 tvl = maxTvl[0];
-            lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], tvl);
-            tokenAmounts[0] = FullMath.mulDiv(tvl, lpAmount, supply);
+            uint256 tvlValue = maxTvl[0];
+            lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], tvlValue);
+            tokenAmounts[0] = FullMath.mulDiv(tvlValue, lpAmount, supply);
         }
 
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -299,7 +299,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
     /// fees are charged before the tokens transfer and change the balance of the lp tokens
     function _chargeFees(
         uint256 thisNft,
-        uint256 tvl,
+        uint256 tvlValue,
         uint256 supply
     ) internal {
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
@@ -323,7 +323,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             supply
         );
 
-        _chargePerformanceFees(supply, tvl, strategyParams.performanceFee, strategyParams.strategyPerformanceTreasury);
+        _chargePerformanceFees(supply, tvlValue, strategyParams.performanceFee, strategyParams.strategyPerformanceTreasury);
     }
 
     function _chargeManagementFees(
@@ -356,7 +356,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
 
     function _chargePerformanceFees(
         uint256 baseSupply,
-        uint256 tvl,
+        uint256 tvlValue,
         uint256 performanceFee,
         address treasury
     ) internal {
@@ -364,7 +364,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
             return;
         }
 
-        uint256 lpPriceD18 = FullMath.mulDiv(tvl, CommonLibrary.D18, baseSupply);
+        uint256 lpPriceD18 = FullMath.mulDiv(tvlValue, CommonLibrary.D18, baseSupply);
         uint256 hwmsD18 = lpPriceHighWaterMarkD18;
         if (lpPriceD18 <= hwmsD18) {
             return;

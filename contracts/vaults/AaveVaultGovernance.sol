@@ -47,7 +47,8 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     /// @inheritdoc IAaveVaultGovernance
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_stagedDelayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({rateMode: 0});
+            bool[] memory debtAllowed = new bool[](0);
+            return DelayedStrategyParams({rateMode: 0, isDebtAllowed: debtAllowed});
         }
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
     }
@@ -55,7 +56,9 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     /// @inheritdoc IAaveVaultGovernance
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({rateMode: 2});
+            uint256 len = IVault(_internalParams.registry.vaultForNft(nft)).vaultTokens().length;
+            bool[] memory debtAllowed = new bool[](len);
+            return DelayedStrategyParams({rateMode: 0, isDebtAllowed: debtAllowed});
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
@@ -84,6 +87,10 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     /// @inheritdoc IAaveVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
         _stageDelayedStrategyParams(nft, abi.encode(params));
+
+        bool[] memory debtAllowed = params.isDebtAllowed;
+        require(debtAllowed.length == IVault(_internalParams.registry.vaultForNft(nft)).vaultTokens().length, ExceptionsLibrary.INVALID_LENGTH);
+
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 

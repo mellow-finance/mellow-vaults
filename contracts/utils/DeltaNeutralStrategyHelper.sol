@@ -91,7 +91,7 @@ contract DeltaNeutralStrategyHelper {
     }
 
     function calcDepositParams(bytes memory depositOptions)
-        external
+        external view
         returns (
             uint256 shareOfCapitalQ96,
             uint256 debtToken1,
@@ -108,7 +108,7 @@ contract DeltaNeutralStrategyHelper {
         tokenAmounts[0] = FullMath.mulDiv(balanceToken0, shareOfCapitalQ96, Q96);
     }
 
-    function calcERC20Params() external returns (uint256 token0OnERC20, uint256 wantToHaveOnERC20) {
+    function calcERC20Params() external view returns (uint256 token0OnERC20, uint256 wantToHaveOnERC20) {
         token0OnERC20 = IERC20(tokens[0]).balanceOf(address(erc20Vault));
         uint256 token0CapitalOnERC20 = owner.getSwapAmountOut(
             IERC20(tokens[1]).balanceOf(address(erc20Vault)),
