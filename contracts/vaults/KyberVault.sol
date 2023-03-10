@@ -192,7 +192,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
             (IBasePositionManager.Position memory position, ) = positionManager.positions(tokenId);
             require(position.liquidity == 0 && position.rTokenOwed == 0, ExceptionsLibrary.INVALID_VALUE);
             // return previous kyber position nft
-            positionManager.safeTransferFrom(address(this), from, kyberNft);
+            positionManager.transferFrom(address(this), from, kyberNft);
         }
 
         kyberNft = tokenId;

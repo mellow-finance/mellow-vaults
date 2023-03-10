@@ -34,7 +34,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     bool public isLiquidityInFarm;
 
-    constructor(IBasePositionManager positionManager_, IRouter router_, IKyberHelper helper_, IOracle oracle_) {
+    constructor(
+        IBasePositionManager positionManager_,
+        IRouter router_,
+        IKyberHelper helper_,
+        IOracle oracle_
+    ) {
         positionManager = positionManager_;
         router = router_;
         kyberHelper = helper_;
@@ -187,7 +192,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
             (IBasePositionManager.Position memory position, ) = positionManager.positions(tokenId);
             require(position.liquidity == 0 && position.rTokenOwed == 0, ExceptionsLibrary.INVALID_VALUE);
             // return previous kyber position nft
-            positionManager.safeTransferFrom(address(this), from, kyberNft);
+            positionManager.transferFrom(address(this), from, kyberNft);
         }
 
         kyberNft = tokenId;
@@ -275,7 +280,6 @@ contract KyberVault is IKyberVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         Options memory opts
     ) internal returns (uint256 amount0Collected, uint256 amount1Collected) {
-
         bytes[] memory data = kyberHelper.getBytesToMulticall(tokenAmounts, opts);
         uint256[] memory withdrawn = _withdrawFromFarm(to);
 
