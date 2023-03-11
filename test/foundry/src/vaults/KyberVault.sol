@@ -123,10 +123,12 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
         uint256 pointer = 0;
 
+        address[] memory tokens = _vaultTokens;
+
         for (uint256 i = 0; i < rewardTokens.length; ++i) {
             bool exists = false;
-            for (uint256 j = 0; j < _vaultTokens.length; ++j) {
-                if (rewardTokens[i] == _vaultTokens[j]) {
+            for (uint256 j = 0; j < tokens.length; ++j) {
+                if (rewardTokens[i] == tokens[j]) {
                     exists = true;
                     IERC20(rewardTokens[i]).safeTransfer(to, rewardsPending[i]);
                     tokenAmounts[j] += rewardsPending[i];
@@ -157,8 +159,8 @@ contract KyberVault is IKyberVault, IntegrationVault {
                     IERC20(rewardTokens[i]).safeApprove(address(router), 0);
 
                     IERC20(lastToken).safeTransfer(to, received);
-                    for (uint256 j = 0; j < _vaultTokens.length; ++j) {
-                        if (_vaultTokens[j] == lastToken) {
+                    for (uint256 j = 0; j < tokens.length; ++j) {
+                        if (tokens[j] == lastToken) {
                             tokenAmounts[j] += received;
                         }
                     }
@@ -283,24 +285,27 @@ contract KyberVault is IKyberVault, IntegrationVault {
         bytes[] memory data = kyberHelper.getBytesToMulticall(tokenAmounts, opts);
         uint256[] memory withdrawn = _withdrawFromFarm(to);
 
-        amount0Collected = withdrawn[0];
-        amount1Collected = withdrawn[1];
+        address[] memory tokens = _vaultTokens;
 
         if (data.length > 0) {
-            uint256 oldBalance0 = IERC20(_vaultTokens[0]).balanceOf(address(this));
-            uint256 oldBalance1 = IERC20(_vaultTokens[1]).balanceOf(address(this));
+            uint256 oldBalance0 = IERC20(tokens[0]).balanceOf(address(this));
+            uint256 oldBalance1 = IERC20(tokens[1]).balanceOf(address(this));
 
             positionManager.multicall(data);
 
-            uint256 newBalance0 = IERC20(_vaultTokens[0]).balanceOf(address(this));
-            uint256 newBalance1 = IERC20(_vaultTokens[1]).balanceOf(address(this));
+            uint256 newBalance0 = IERC20(tokens[0]).balanceOf(address(this));
+            uint256 newBalance1 = IERC20(tokens[1]).balanceOf(address(this));
 
-            amount0Collected += newBalance0 - oldBalance0;
-            amount1Collected += newBalance1 - oldBalance1;
+            amount0Collected = newBalance0 - oldBalance0;
+            amount1Collected = newBalance1 - oldBalance1;
         }
 
-        IERC20(_vaultTokens[0]).safeTransfer(to, amount0Collected - withdrawn[0]);
-        IERC20(_vaultTokens[1]).safeTransfer(to, amount1Collected - withdrawn[1]);
+        IERC20(tokens[0]).safeTransfer(to, amount0Collected);
+        IERC20(tokens[1]).safeTransfer(to, amount1Collected);
+
+        amount0Collected += withdrawn[0];
+        amount1Collected += withdrawn[1];
+
         amount0Collected = amount0Collected > tokenAmounts[0] ? tokenAmounts[0] : amount0Collected;
         amount1Collected = amount1Collected > tokenAmounts[1] ? tokenAmounts[1] : amount1Collected;
         return (amount0Collected, amount1Collected);

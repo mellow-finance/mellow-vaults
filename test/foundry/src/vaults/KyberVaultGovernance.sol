@@ -12,9 +12,7 @@ import "./VaultGovernance.sol";
 contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
-    constructor(InternalParams memory internalParams_)
-        VaultGovernance(internalParams_)
-    {}
+    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -22,12 +20,7 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
             bytes[] memory paths = new bytes[](0);
-            return
-                StrategyParams({
-                    farm: IKyberSwapElasticLM(address(0)),
-                    paths: paths,
-                    pid: type(uint256).max
-                });
+            return StrategyParams({farm: IKyberSwapElasticLM(address(0)), paths: paths, pid: type(uint256).max});
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
