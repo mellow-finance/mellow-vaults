@@ -7,6 +7,7 @@ import "../external/kyber/periphery/IBasePositionManager.sol";
 import "../external/kyber/IPool.sol";
 
 import "../oracles/IOracle.sol";
+import "../utils/IKyberHelper.sol";
 import "../external/kyber/IKyberSwapElasticLM.sol";
 
 interface IKyberVault is IERC721Receiver, IIntegrationVault {
@@ -45,4 +46,6 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
     function pid() external view returns (uint256);
 
     function isLiquidityInFarm() external view returns (bool);
+
+    function kyberHelper() external view returns (IKyberHelper);
 }
