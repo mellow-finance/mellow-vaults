@@ -11,10 +11,16 @@ import "../MockOracle.sol";
 import "../vaults/GearboxVault.sol";
 import "../vaults/GearboxRootVault.sol";
 import "../vaults/ERC20Vault.sol";
+import "../vaults/KyberVault.sol";
 
+import "../utils/KyberHelper.sol";
+
+import "../vaults/KyberVaultGovernance.sol";
 import "../vaults/GearboxVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/ERC20RootVaultGovernance.sol";
+
+import "../interfaces/external/kyber/periphery/helpers/TicksFeeReader.sol";
 
 
 
@@ -23,13 +29,11 @@ contract MainnetDeployment is Script {
     ProtocolGovernance governance;
     VaultRegistry registry;
 
-    GearboxRootVault rootVault;
-    ERC20Vault erc20Vault;
-    GearboxVault gearboxVault;
+    KyberVault kyberVault;
 
     ERC20RootVaultGovernance governanceA; 
     ERC20VaultGovernance governanceB;
-    GearboxVaultGovernance governanceC;
+    KyberVaultGovernance governanceC;
 
     uint256 nftStart;
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
@@ -43,43 +47,32 @@ contract MainnetDeployment is Script {
     function run() external {
         vm.startBroadcast();
 
-        rootVault = new GearboxRootVault();
-        erc20Vault = new ERC20Vault();
-        gearboxVault = new GearboxVault();  
+        TicksFeesReader reader = new TicksFeesReader();
+        KyberHelper kyberHelper = new KyberHelper(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), reader);
 
-        governance = ProtocolGovernance(0xDc9C17662133fB865E7bA3198B67c53a617B2153);
-        registry = VaultRegistry(0xFD23F971696576331fCF96f80a20B4D3b31ca5b2);
+        console.log("reader:", address(reader));
+        console.log("helper:", address(kyberHelper));
+
+        kyberVault = new KyberVault(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83), kyberHelper, IOracle(0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836));
+
+        console.log("mock kyber vault:", address(kyberVault));
+
+        governance = ProtocolGovernance(0x8Ff3148CE574B8e135130065B188960bA93799c6);
+        registry = VaultRegistry(0xd3D0e85F225348a2006270Daf624D8c46cAe4E1F);
 
         IVaultGovernance.InternalParams memory internalParamsC = IVaultGovernance.InternalParams({
             protocolGovernance: governance,
             registry: registry,
-            singleton: gearboxVault
+            singleton: kyberVault
         });
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
-            withdrawDelay: 86400 * 7,
-            referralCode: 0,
-            univ3Adapter: 0x3883500A0721c09DC824421B00F79ae524569E09,
-            crv: 0xD533a949740bb3306d119CC777fa900bA034cd52,
-            cvx: cvx,
-            maxSlippageD9: 10000000,
-            maxSmallPoolsSlippageD9: 20000000,
-            maxCurveSlippageD9: 30000000,
-            uniswapRouter: 0xE592427A0AEce92De3Edee1F18E0157C05861564
-        });
-
-        governanceA = ERC20RootVaultGovernance(0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA);
-        governanceB = ERC20VaultGovernance(0x0bf7B603389795E109a13140eCb07036a1534573);
-        governanceC = new GearboxVaultGovernance(internalParamsC, delayedParams);
+        governanceC = new KyberVaultGovernance(internalParamsC);
         
-        console2.log("Gearbox Vault Governance", address(governanceC));
-        console2.log("Root Vault", address(rootVault));
-        console2.log("ERC20 Vault", address(erc20Vault));
-        console2.log("Gearbox Vault", address(gearboxVault));
+        console2.log("Kyber Vault Governance", address(governanceC));
 
         /////////////////////////////////////////////////////////////////// STOP HERE
         return;
-
+/*
         {
             uint8[] memory args = new uint8[](1);
             args[0] = PermissionIdsLibrary.REGISTER_VAULT;
@@ -144,6 +137,7 @@ contract MainnetDeployment is Script {
         registry.transferFrom(deployer, sAdmin, nftStart + 2);
 
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
+        */
         vm.stopBroadcast();
     }
 }
