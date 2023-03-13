@@ -17,6 +17,8 @@ import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
+import "forge-std/console2.sol";
+
 contract KyberPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
@@ -42,7 +44,6 @@ contract KyberPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     /// @param intervalWidth kyber position interval width
     /// @param tickNeighborhood if the spot tick is inside [lowerTick + tickNeighborhood, upperTick - tickNeighborhood], then the position will not be rebalanced
     /// @param maxDeviationForVaultPool maximum deviation of the spot tick from the average tick for the pool of token 0 and token 1
-    /// @param timespanForAverageTick time interval on which average ticks in pools are determined
     /// @param amount0Desired amount of token 0 to mint position on Kyber pool
     /// @param amount1Desired amount of token 1 to mint position on Kyber pool
     /// @param swapSlippageD coefficient to protect against price slippage when swapping tokens
@@ -53,7 +54,6 @@ contract KyberPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
         int24 intervalWidth;
         int24 tickNeighborhood;
         int24 maxDeviationForVaultPool;
-        uint32 timespanForAverageTick;
         uint256 amount0Desired;
         uint256 amount1Desired;
         uint256 swapSlippageD;
@@ -147,8 +147,6 @@ contract KyberPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
         );
 
         require(params.maxDeviationForVaultPool > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(params.timespanForAverageTick < 7 * 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
 
         require(params.amount0Desired > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.amount0Desired <= D9, ExceptionsLibrary.LIMIT_OVERFLOW);
@@ -206,9 +204,9 @@ contract KyberPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
         );
         require(pricesX96[0] != 0, ExceptionsLibrary.INVALID_TARGET);
 
-        int24 averageTick = TickMath.getTickAtSqrtRatio(uint160(CommonLibrary.sqrtX96(pricesX96[0])));
+        int24 oracleTick = TickMath.getTickAtSqrtRatio(uint160(CommonLibrary.sqrtX96(pricesX96[0])));
 
-        int24 tickDeviation = spotTick - averageTick;
+        int24 tickDeviation = spotTick - oracleTick;
         if (tickDeviation < 0) {
             tickDeviation = -tickDeviation;
         }
