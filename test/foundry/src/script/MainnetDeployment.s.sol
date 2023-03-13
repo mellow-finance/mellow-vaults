@@ -10,6 +10,7 @@ import "../MockOracle.sol";
 
 import "../utils/UniV3Helper.sol";
 import "../utils/LStrategyHelper.sol";
+import "../utils/GearboxOperator.sol";
 import "../vaults/GearboxVault.sol";
 import "../vaults/GearboxRootVault.sol";
 import "../vaults/ERC20Vault.sol";
@@ -282,6 +283,16 @@ contract MainnetDeployment is Script {
     function run() external {
         vm.startBroadcast(deployer);
 
+        address gearboxOperator = 0x629cd0120614ed5D2D56f36D6b3C36b43dccd7D0;
+
+        bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
+        bytes32 ADMIN_DELEGATE_ROLE =
+            bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
+        bytes32 OPERATOR_ROLE =
+            bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
+
+        /*
+
        // uint256 startNft = kek();
         uint256 startNft = 212;
         buildInitialPositions(width, startNft);
@@ -310,6 +321,20 @@ contract MainnetDeployment is Script {
         lstrategy.revokeRole(ADMIN_ROLE, deployer);
         console2.log("Root Vault: ", address(erc20RootVault));
         console2.log("Strategy: ", address(lstrategy));
+        */
+
+        GearboxOperator o = new GearboxOperator(deployer, 0xB17a8d440c4e0A206Fc1dE76F3D0531F70bF6d42);
+
+        console.log("operator:", address(o));
+
+        o.grantRole(ADMIN_ROLE, sAdmin);
+        o.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
+        o.grantRole(ADMIN_DELEGATE_ROLE, deployer);
+        o.grantRole(OPERATOR_ROLE, sAdmin);
+        o.grantRole(OPERATOR_ROLE, gearboxOperator);
+        o.revokeRole(OPERATOR_ROLE, deployer);
+        o.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
+        o.revokeRole(ADMIN_ROLE, deployer);
         return;
 
         /*
