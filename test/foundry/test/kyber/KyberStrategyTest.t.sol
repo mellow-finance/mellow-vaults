@@ -7,6 +7,7 @@ import "forge-std/console2.sol";
 
 import "../../src/utils/KyberHelper.sol";
 import "../../src/MockOracle.sol";
+import "../../src/MockRouter.sol";
 
 import "../../src/vaults/KyberVaultGovernance.sol";
 import "../../src/strategies/KyberPulseStrategy.sol";
@@ -275,8 +276,26 @@ contract KyberStrategyTest is Test {
 
         kyberStrategy = new KyberPulseStrategy(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8));
 
+        MockRouter mockRouter = new MockRouter(tokens, mockOracle);
+
+        address W = 0x6243288C527c15A7B7eD6B892Bc2670E05c951F0;
+
+        vm.stopPrank();
+        vm.startPrank(admin);
+
+        IProtocolGovernance(governance).stageValidator(address(mockRouter), W);
+        IProtocolGovernance(governance).stageValidator(stmatic, W);
+        IProtocolGovernance(governance).stageValidator(bob, W);
+        vm.warp(block.timestamp + 86400);
+        IProtocolGovernance(governance).commitValidator(address(mockRouter));
+        IProtocolGovernance(governance).commitValidator(stmatic);
+        IProtocolGovernance(governance).commitValidator(bob);
+
+        vm.stopPrank();
+        vm.startPrank(deployer);
+
         KyberPulseStrategy.ImmutableParams memory sParams = KyberPulseStrategy.ImmutableParams({
-            router: 0x1111111254EEB25477B68fb85Ed929f73A960582,
+            router: address(mockRouter),
             erc20Vault: erc20Vault,
             kyberVault: kyberVault,
             mellowOracle: mockOracle,
@@ -299,9 +318,6 @@ contract KyberStrategyTest is Test {
             minSwapAmounts: AA
         });
 
-        kyberStrategy.initialize(sParams, deployer);
-        kyberStrategy.updateMutableParams(smParams);
-
      //   kyberVault.updateFarmInfo();
 
      //   preparePush(address(kyberVault));
@@ -313,8 +329,14 @@ contract KyberStrategyTest is Test {
             combineVaults(tokens, nfts);
         }
 
+        kyberStrategy.initialize(sParams, deployer);
+        kyberStrategy.updateMutableParams(smParams);
+
         deal(stmatic, address(kyberStrategy), 10**9);
         deal(bob, address(kyberStrategy), 10**9);
+
+        deal(stmatic, address(mockRouter), 10**25);
+        deal(bob, address(mockRouter), 10**25);
     }
 
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
@@ -344,7 +366,12 @@ contract KyberStrategyTest is Test {
         firstDeposit();
         deposit(1000);
 
-        bytes memory swapdata = bytes("");
+        bytes4 selector = MockRouter.swap.selector;
+
+        uint256 tokenIn = 0;
+        uint256 amount = 50000740895733757102;
+
+        bytes memory swapdata = abi.encodePacked(selector, tokenIn, amount);
 
         kyberStrategy.rebalance(block.timestamp + 1, swapdata);
     }

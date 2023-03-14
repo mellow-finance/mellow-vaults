@@ -17,8 +17,6 @@ import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-import "forge-std/console2.sol";
-
 contract KyberPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
