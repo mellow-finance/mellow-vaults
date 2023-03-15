@@ -98,11 +98,7 @@ contract InchDepositWrapper is DefaultAccessControl {
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             if (vaultTokens[i] != token) {
-                uint256 amountI = FullMath.mulDiv(
-                    convertedAmounts[i],
-                    amount,
-                    totalToken0Tvl
-                );
+                uint256 amountI = FullMath.mulDiv(convertedAmounts[i], amount, totalToken0Tvl);
                 uint256 expectedAmountOut = _convert(vaultTokens[0], vaultTokens[i], amountI);
 
                 uint256 oldBalance = IERC20(vaultTokens[i]).balanceOf(address(this));
@@ -119,7 +115,6 @@ contract InchDepositWrapper is DefaultAccessControl {
         uint256 lpReceived;
 
         {
-
             uint256[] memory balances = new uint256[](vaultTokens.length);
             for (uint256 i = 0; i < vaultTokens.length; ++i) {
                 balances[i] = IERC20(vaultTokens[i]).balanceOf(address(this));
@@ -131,7 +126,6 @@ contract InchDepositWrapper is DefaultAccessControl {
             uint256 oldLpBalance = rootVault.balanceOf(address(this));
             actualTokenAmounts = rootVault.deposit(balances, minLpTokens, vaultOptions);
             lpReceived = rootVault.balanceOf(address(this)) - oldLpBalance;
-
         }
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
@@ -143,7 +137,7 @@ contract InchDepositWrapper is DefaultAccessControl {
             uint256 balance = IERC20(vaultTokens[i]).balanceOf(address(this));
             IERC20(vaultTokens[i]).safeTransfer(msg.sender, balance);
         }
-        
+
         uint256 tokenBalance = IERC20(token).balanceOf(address(this));
         if (tokenBalance > 0) {
             IERC20(token).safeTransfer(msg.sender, tokenBalance);
@@ -152,7 +146,11 @@ contract InchDepositWrapper is DefaultAccessControl {
         emit Deposit(msg.sender, address(rootVault), vaultTokens, actualTokenAmounts, lpReceived);
     }
 
-    function calcSwapAmounts(IERC20RootVault rootVault, uint256 amount) external view returns (uint256[] memory swapAmounts) {
+    function calcSwapAmounts(IERC20RootVault rootVault, uint256 amount)
+        external
+        view
+        returns (uint256[] memory swapAmounts)
+    {
         (, uint256[] memory maxTvl) = rootVault.tvl();
 
         address[] memory vaultTokens = rootVault.vaultTokens();
@@ -169,13 +167,9 @@ contract InchDepositWrapper is DefaultAccessControl {
         }
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
-            uint256 amountToken0 = FullMath.mulDiv(
-                convertedAmounts[i],
-                amount,
-                totalToken0Tvl
-            );
+            uint256 amountToken0 = FullMath.mulDiv(convertedAmounts[i], amount, totalToken0Tvl);
 
-            swapAmounts[i] = _convert(vaultTokens[0], vaultTokens[i], amountToken0); 
+            swapAmounts[i] = _convert(vaultTokens[0], vaultTokens[i], amountToken0);
         }
     }
 
