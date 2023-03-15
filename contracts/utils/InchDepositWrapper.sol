@@ -25,7 +25,7 @@ contract InchDepositWrapper is DefaultAccessControl {
     uint256 public constant D18 = 10**18;
     uint256 public constant D9 = 10**9;
 
-    mapping (address => mapping(address => uint256)) public pairToMask;
+    mapping(address => mapping(address => uint256)) public pairToMask;
 
     constructor(
         IChainlinkOracle mellowOracle_,
@@ -73,7 +73,11 @@ contract InchDepositWrapper is DefaultAccessControl {
         slippageD9 = newSlippageD9;
     }
 
-    function setMask(address token0, address token1, uint256 mask) external {
+    function setMask(
+        address token0,
+        address token1,
+        uint256 mask
+    ) external {
         _requireAdmin();
         pairToMask[token0][token1] = mask;
         pairToMask[token1][token0] = mask;
@@ -168,9 +172,7 @@ contract InchDepositWrapper is DefaultAccessControl {
         }
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
-            uint256 amountToken0 = FullMath.mulDiv(convertedAmounts[i], amount, totalToken0Tvl);
-
-            swapAmounts[i] = _convert(vaultTokens[0], vaultTokens[i], amountToken0);
+            swapAmounts[i] = FullMath.mulDiv(convertedAmounts[i], amount, totalToken0Tvl);
         }
     }
 
