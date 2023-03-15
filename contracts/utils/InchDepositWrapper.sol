@@ -25,6 +25,8 @@ contract InchDepositWrapper is DefaultAccessControl {
     uint256 public constant D18 = 10**18;
     uint256 public constant D9 = 10**9;
 
+    mapping (address => mapping(address => uint256)) public pairToMask;
+
     constructor(
         IChainlinkOracle mellowOracle_,
         IProtocolGovernance governance_,
@@ -43,9 +45,15 @@ contract InchDepositWrapper is DefaultAccessControl {
         address token1,
         uint256 amount
     ) internal view returns (uint256) {
-        (uint256[] memory pricesX96, ) = mellowOracle.priceX96(token0, token1, 0x20);
-        require(pricesX96[0] != 0, ExceptionsLibrary.INVALID_STATE);
-        return FullMath.mulDiv(amount, pricesX96[0], Q96);
+        (uint256[] memory pricesX96, ) = mellowOracle.priceX96(token0, token1, pairToMask[token0][token1]);
+
+        uint256 sum = 0;
+        for (uint256 i = 0; i < pricesX96.length; ++i) {
+            sum += pricesX96[i];
+        }
+
+        require(sum != 0, ExceptionsLibrary.INVALID_TARGET);
+        return FullMath.mulDiv(amount, sum / pricesX96.length, Q96);
     }
 
     function _swap(bytes memory swapOption) internal {
@@ -65,6 +73,12 @@ contract InchDepositWrapper is DefaultAccessControl {
         slippageD9 = newSlippageD9;
     }
 
+    function setMask(address token0, address token1, uint256 mask) external {
+        _requireAdmin();
+        pairToMask[token0][token1] = mask;
+        pairToMask[token1][token0] = mask;
+    }
+
     function deposit(
         IERC20RootVault rootVault,
         address token,
@@ -74,15 +88,10 @@ contract InchDepositWrapper is DefaultAccessControl {
         bytes[] memory swapOptions
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(governance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
-        require(mellowOracle.hasOracle(token), ExceptionsLibrary.FORBIDDEN);
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         address[] memory vaultTokens = rootVault.vaultTokens();
-
-        for (uint256 i = 0; i < vaultTokens.length; ++i) {
-            require(mellowOracle.hasOracle(vaultTokens[i]), ExceptionsLibrary.FORBIDDEN);
-        }
 
         (, uint256[] memory maxTvl) = rootVault.tvl();
 
