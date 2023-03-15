@@ -49,7 +49,7 @@ contract InchDepositWrapper is DefaultAccessControl {
     }
 
     function _swap(bytes memory swapOption) internal {
-        (bool res, bytes memory returndata) = router.call{value: 0}(swapOption);
+        (bool res, bytes memory returndata) = router.call(swapOption);
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)
@@ -72,9 +72,11 @@ contract InchDepositWrapper is DefaultAccessControl {
         uint256 minLpTokens,
         bytes calldata vaultOptions,
         bytes[] memory swapOptions
-    ) external {
+    ) external returns (uint256[] memory actualTokenAmounts) {
         require(governance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
         require(mellowOracle.hasOracle(token), ExceptionsLibrary.FORBIDDEN);
+
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         address[] memory vaultTokens = rootVault.vaultTokens();
 
@@ -82,38 +84,55 @@ contract InchDepositWrapper is DefaultAccessControl {
             require(mellowOracle.hasOracle(vaultTokens[i]), ExceptionsLibrary.FORBIDDEN);
         }
 
-        (uint256[] memory minTvl, ) = rootVault.tvl();
+        (, uint256[] memory maxTvl) = rootVault.tvl();
 
-        uint256 totalToken0Tvl = minTvl[0];
+        uint256 totalToken0Tvl = maxTvl[0];
+
+        uint256[] memory convertedAmounts = new uint256[](vaultTokens.length);
+        convertedAmounts[0] = maxTvl[0];
+
         for (uint256 i = 1; i < vaultTokens.length; ++i) {
-            totalToken0Tvl += _convert(vaultTokens[i], vaultTokens[0], minTvl[i]);
+            convertedAmounts[i] = _convert(vaultTokens[i], vaultTokens[0], maxTvl[i]);
+            totalToken0Tvl += convertedAmounts[i];
         }
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             if (vaultTokens[i] != token) {
                 uint256 amountI = FullMath.mulDiv(
-                    _convert(vaultTokens[i], vaultTokens[0], minTvl[i]),
+                    convertedAmounts[i],
                     amount,
                     totalToken0Tvl
                 );
                 uint256 expectedAmountOut = _convert(vaultTokens[0], vaultTokens[i], amountI);
+
+                uint256 oldBalance = IERC20(vaultTokens[i]).balanceOf(address(this));
+
                 _swap(swapOptions[i]);
                 require(
-                    IERC20(vaultTokens[i]).balanceOf(address(this)) >=
+                    IERC20(vaultTokens[i]).balanceOf(address(this)) - oldBalance >=
                         FullMath.mulDiv(expectedAmountOut, D9 - slippageD9, D9),
                     ExceptionsLibrary.INVARIANT
                 );
             }
         }
 
-        uint256[] memory balances = new uint256[](vaultTokens.length);
-        for (uint256 i = 0; i < vaultTokens.length; ++i) {
-            uint256 balance = IERC20(vaultTokens[i]).balanceOf(address(this));
-            balances[i] = balance;
-            IERC20(vaultTokens[i]).safeIncreaseAllowance(address(rootVault), balance);
-        }
+        uint256 lpReceived;
 
-        rootVault.deposit(balances, minLpTokens, vaultOptions);
+        {
+
+            uint256[] memory balances = new uint256[](vaultTokens.length);
+            for (uint256 i = 0; i < vaultTokens.length; ++i) {
+                balances[i] = IERC20(vaultTokens[i]).balanceOf(address(this));
+                if (balances[i] > 0) {
+                    IERC20(vaultTokens[i]).safeIncreaseAllowance(address(rootVault), balances[i]);
+                }
+            }
+
+            uint256 oldLpBalance = rootVault.balanceOf(address(this));
+            actualTokenAmounts = rootVault.deposit(balances, minLpTokens, vaultOptions);
+            lpReceived = rootVault.balanceOf(address(this)) - oldLpBalance;
+
+        }
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             IERC20(vaultTokens[i]).safeApprove(address(rootVault), 0);
@@ -121,28 +140,55 @@ contract InchDepositWrapper is DefaultAccessControl {
 
         rootVault.safeTransfer(msg.sender, rootVault.balanceOf(address(this)));
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
-            IERC20(vaultTokens[i]).safeTransfer(msg.sender, IERC20(vaultTokens[i]).balanceOf(address(this)));
+            uint256 balance = IERC20(vaultTokens[i]).balanceOf(address(this));
+            IERC20(vaultTokens[i]).safeTransfer(msg.sender, balance);
         }
+        
+        uint256 tokenBalance = IERC20(token).balanceOf(address(this));
+        if (tokenBalance > 0) {
+            IERC20(token).safeTransfer(msg.sender, tokenBalance);
+        }
+
+        emit Deposit(msg.sender, address(rootVault), vaultTokens, actualTokenAmounts, lpReceived);
     }
 
-    function calcSwapShares(IERC20RootVault rootVault) external returns (uint256[] memory swapSharesD18) {
-        (uint256[] memory minTvl, ) = rootVault.tvl();
+    function calcSwapAmounts(IERC20RootVault rootVault, uint256 amount) external view returns (uint256[] memory swapAmounts) {
+        (, uint256[] memory maxTvl) = rootVault.tvl();
 
         address[] memory vaultTokens = rootVault.vaultTokens();
 
-        swapSharesD18 = new uint256[](minTvl.length);
+        swapAmounts = new uint256[](maxTvl.length);
 
-        uint256 totalToken0Tvl = minTvl[0];
+        uint256[] memory convertedAmounts = new uint256[](vaultTokens.length);
+        convertedAmounts[0] = maxTvl[0];
+
+        uint256 totalToken0Tvl = maxTvl[0];
         for (uint256 i = 1; i < vaultTokens.length; ++i) {
-            totalToken0Tvl += _convert(vaultTokens[i], vaultTokens[0], minTvl[i]);
+            convertedAmounts[i] = _convert(vaultTokens[i], vaultTokens[0], maxTvl[i]);
+            totalToken0Tvl += convertedAmounts[i];
         }
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
-            swapSharesD18[i] = FullMath.mulDiv(
-                _convert(vaultTokens[i], vaultTokens[0], minTvl[i]),
-                D18,
+            uint256 amountToken0 = FullMath.mulDiv(
+                convertedAmounts[i],
+                amount,
                 totalToken0Tvl
             );
+
+            swapAmounts[i] = _convert(vaultTokens[0], vaultTokens[i], amountToken0); 
         }
     }
+
+    /// @notice Emitted when liquidity is deposited
+    /// @param from The source address for the liquidity
+    /// @param tokens ERC20 tokens deposited
+    /// @param actualTokenAmounts Token amounts deposited
+    /// @param lpTokenMinted LP tokens received by the liquidity provider
+    event Deposit(
+        address indexed from,
+        address indexed to,
+        address[] tokens,
+        uint256[] actualTokenAmounts,
+        uint256 lpTokenMinted
+    );
 }
