@@ -85,30 +85,20 @@ contract InchDepositWrapper is DefaultAccessControl {
         uint256 amount,
         uint256 minLpTokens,
         bytes calldata vaultOptions,
-        bytes[] memory swapOptions
+        bytes[] calldata swapOptions
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(governance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         address[] memory vaultTokens = rootVault.vaultTokens();
+        uint256[] memory swapAmounts = calcSwapAmounts(rootVault, amount);
 
-        (, uint256[] memory maxTvl) = rootVault.tvl();
-
-        uint256 totalToken0Tvl = maxTvl[0];
-
-        uint256[] memory convertedAmounts = new uint256[](vaultTokens.length);
-        convertedAmounts[0] = maxTvl[0];
-
-        for (uint256 i = 1; i < vaultTokens.length; ++i) {
-            convertedAmounts[i] = _convert(vaultTokens[i], vaultTokens[0], maxTvl[i]);
-            totalToken0Tvl += convertedAmounts[i];
-        }
+        IERC20(token).safeIncreaseAllowance(router, amount);
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             if (vaultTokens[i] != token) {
-                uint256 amountI = FullMath.mulDiv(convertedAmounts[i], amount, totalToken0Tvl);
-                uint256 expectedAmountOut = _convert(vaultTokens[0], vaultTokens[i], amountI);
+                uint256 expectedAmountOut = _convert(vaultTokens[0], vaultTokens[i], swapAmounts[i]);
 
                 uint256 oldBalance = IERC20(vaultTokens[i]).balanceOf(address(this));
 
@@ -116,12 +106,12 @@ contract InchDepositWrapper is DefaultAccessControl {
                 require(
                     IERC20(vaultTokens[i]).balanceOf(address(this)) - oldBalance >=
                         FullMath.mulDiv(expectedAmountOut, D9 - slippageD9, D9),
-                    ExceptionsLibrary.INVARIANT
+                    ExceptionsLibrary.LIMIT_UNDERFLOW
                 );
             }
         }
 
-        uint256 lpReceived;
+        IERC20(token).safeApprove(router, 0);
 
         {
             uint256[] memory balances = new uint256[](vaultTokens.length);
@@ -132,10 +122,10 @@ contract InchDepositWrapper is DefaultAccessControl {
                 }
             }
 
-            uint256 oldLpBalance = rootVault.balanceOf(address(this));
             actualTokenAmounts = rootVault.deposit(balances, minLpTokens, vaultOptions);
-            lpReceived = rootVault.balanceOf(address(this)) - oldLpBalance;
         }
+
+        uint256 lpReceived = rootVault.balanceOf(address(this));
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             IERC20(vaultTokens[i]).safeApprove(address(rootVault), 0);
@@ -144,7 +134,9 @@ contract InchDepositWrapper is DefaultAccessControl {
         rootVault.safeTransfer(msg.sender, rootVault.balanceOf(address(this)));
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             uint256 balance = IERC20(vaultTokens[i]).balanceOf(address(this));
-            IERC20(vaultTokens[i]).safeTransfer(msg.sender, balance);
+            if (balance > 0) {
+                IERC20(vaultTokens[i]).safeTransfer(msg.sender, balance);
+            }
         }
 
         uint256 tokenBalance = IERC20(token).balanceOf(address(this));
@@ -156,7 +148,7 @@ contract InchDepositWrapper is DefaultAccessControl {
     }
 
     function calcSwapAmounts(IERC20RootVault rootVault, uint256 amount)
-        external
+        public
         view
         returns (uint256[] memory swapAmounts)
     {
