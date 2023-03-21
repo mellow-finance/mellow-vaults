@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../interfaces/external/univ2/periphery/IWETH.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
@@ -17,6 +18,7 @@ contract InchDepositWrapper is DefaultAccessControl {
 
     IChainlinkOracle public immutable mellowOracle;
     IProtocolGovernance public immutable governance;
+    address public immutable weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public immutable router;
 
     uint256 public slippageD9;
@@ -90,7 +92,13 @@ contract InchDepositWrapper is DefaultAccessControl {
         uint256 minLpTokens,
         bytes calldata vaultOptions,
         bytes[] calldata swapOptions
-    ) external returns (uint256[] memory actualTokenAmounts) {
+    ) external payable returns (uint256[] memory actualTokenAmounts) {
+        if (msg.value > 0) {
+            require(token == weth, ExceptionsLibrary.INVALID_TOKEN);
+            require(msg.value == amount, ExceptionsLibrary.INVARIANT);
+            IWETH(weth).deposit{value: msg.value}();
+        }
+
         require(governance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
