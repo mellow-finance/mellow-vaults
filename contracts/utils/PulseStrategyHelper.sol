@@ -13,9 +13,8 @@ contract PulseStrategyHelper {
         returns (PulseStrategy.ImmutableParams memory immutableParams, PulseStrategy.MutableParams memory mutableParams)
     {
         {
-            (address router, IERC20Vault erc20Vault, IUniV3Vault uniV3Vault) = strategy.immutableParams();
+            (IERC20Vault erc20Vault, IUniV3Vault uniV3Vault) = strategy.immutableParams();
             immutableParams = PulseStrategy.ImmutableParams({
-                router: router,
                 erc20Vault: erc20Vault,
                 uniV3Vault: uniV3Vault,
                 tokens: erc20Vault.vaultTokens()
@@ -23,24 +22,28 @@ contract PulseStrategyHelper {
         }
         {
             (
+                bool forceRebalanceWidth,
                 int24 priceImpactD6,
                 int24 intervalWidth,
-                int24 tickNeighborhood,
+                int24 maxPositionLengthInTicks,
                 int24 maxDeviationForVaultPool,
                 uint32 timespanForAverageTick,
-                uint256 amount0Desired,
-                uint256 amount1Desired,
+                ISwapper swapHelper,
+                uint256 neighborhoodFactorD,
+                uint256 extensionFactorD,
                 uint256 swapSlippageD,
                 uint256 swappingAmountsCoefficientD
             ) = strategy.mutableParams();
             mutableParams = PulseStrategy.MutableParams({
+                forceRebalanceWidth: forceRebalanceWidth,
                 priceImpactD6: priceImpactD6,
                 intervalWidth: intervalWidth,
-                tickNeighborhood: tickNeighborhood,
+                maxPositionLengthInTicks: maxPositionLengthInTicks,
                 maxDeviationForVaultPool: maxDeviationForVaultPool,
                 timespanForAverageTick: timespanForAverageTick,
-                amount0Desired: amount0Desired,
-                amount1Desired: amount1Desired,
+                swapHelper: swapHelper,
+                neighborhoodFactorD: neighborhoodFactorD,
+                extensionFactorD: extensionFactorD,
                 swapSlippageD: swapSlippageD,
                 swappingAmountsCoefficientD: swappingAmountsCoefficientD,
                 minSwapAmounts: new uint256[](2)
