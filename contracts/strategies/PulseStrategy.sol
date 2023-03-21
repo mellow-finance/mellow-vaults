@@ -157,15 +157,9 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             ExceptionsLibrary.INVALID_VALUE
         );
 
-        require(
-            params.neighborhoodFactorD <= D9 / 2,
-            ExceptionsLibrary.LIMIT_OVERFLOW
-        );
+        require(params.neighborhoodFactorD <= D9 / 2, ExceptionsLibrary.LIMIT_OVERFLOW);
 
-        require(
-            params.extensionFactorD >= D9,
-            ExceptionsLibrary.LIMIT_UNDERFLOW
-        );
+        require(params.extensionFactorD >= D9, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(params.maxPositionLengthInTicks <= TickMath.MAX_TICK * 2, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(address(params.swapHelper) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -222,7 +216,11 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         require(tickDeviation < mutableParams_.maxDeviationForVaultPool, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
-    function formPositionWithSpotTickInCenter(MutableParams memory mutableParams_, int24 spotTick, int24 tickSpacing) public pure returns (Interval memory newInterval) {
+    function formPositionWithSpotTickInCenter(
+        MutableParams memory mutableParams_,
+        int24 spotTick,
+        int24 tickSpacing
+    ) public pure returns (Interval memory newInterval) {
         int24 centralTick = spotTick - (spotTick % tickSpacing);
         if ((spotTick % tickSpacing) * 2 > tickSpacing) {
             centralTick += tickSpacing;
@@ -244,7 +242,6 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         IUniswapV3Pool pool,
         uint256 uniV3Nft
     ) public view returns (Interval memory newInterval, bool neededNewInterval) {
-
         Interval memory currentInterval;
         int24 currentNeighborhood;
         int24 length;
@@ -256,7 +253,9 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
 
             length = currentInterval.upperTick - currentInterval.lowerTick;
 
-            currentNeighborhood = int24(uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.neighborhoodFactorD, D9)));
+            currentNeighborhood = int24(
+                uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.neighborhoodFactorD, D9))
+            );
             int24 minAcceptableTick = currentInterval.lowerTick + int24(uint24(currentNeighborhood));
             int24 maxAcceptableTick = currentInterval.upperTick - int24(uint24(currentNeighborhood));
 
@@ -276,8 +275,10 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             return (formPositionWithSpotTickInCenter(mutableParams_, spotTick, tickSpacing), true);
         }
 
-        int24 sideExtension = int24(uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.extensionFactorD - D9, D9) / 2));
-        
+        int24 sideExtension = int24(
+            uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.extensionFactorD - D9, D9) / 2)
+        );
+
         if (sideExtension < currentInterval.lowerTick + currentNeighborhood - spotTick) {
             sideExtension = currentInterval.lowerTick + currentNeighborhood - spotTick;
         }
@@ -472,10 +473,18 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         (uint256[] memory tvlBefore, ) = immutableParams_.erc20Vault.tvl();
 
         {
-
-            bytes memory callBytes = abi.encode(immutableParams.tokens[tokenInIndex], immutableParams.tokens[1 - tokenInIndex], amountIn, uint256(0), swapData);
-            immutableParams_.erc20Vault.externalCall(address(mutableParams_.swapHelper), ISwapper.swap.selector, callBytes);
-
+            bytes memory callBytes = abi.encode(
+                immutableParams.tokens[tokenInIndex],
+                immutableParams.tokens[1 - tokenInIndex],
+                amountIn,
+                uint256(0),
+                swapData
+            );
+            immutableParams_.erc20Vault.externalCall(
+                address(mutableParams_.swapHelper),
+                ISwapper.swap.selector,
+                callBytes
+            );
         }
 
         (uint256[] memory tvlAfter, ) = immutableParams_.erc20Vault.tvl();
