@@ -15,7 +15,6 @@ import "../libraries/external/TickMath.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
-import "forge-std/console2.sol";
 
 contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
@@ -149,6 +148,8 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         _swapToTarget(immutableParams_, mutableParams_, interval, sqrtPriceX96, swapData, minAmountOutInCaseOfSwap);
         _pushIntoUniswap(immutableParams_);
 
+        mutableParams.forceRebalanceWidth = false;
+
         emit Rebalance(tx.origin, msg.sender);
     }
 
@@ -162,9 +163,8 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             ExceptionsLibrary.INVALID_VALUE
         );
 
-        require(params.neighborhoodFactorD < D9 / 2, ExceptionsLibrary.LIMIT_OVERFLOW);
-
-        require(params.extensionFactorD >= D9, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(params.extensionFactorD < D9 / 2, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(params.extensionFactorD >= params.neighborhoodFactorD, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(params.maxPositionLengthInTicks <= TickMath.MAX_TICK * 2, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(address(params.swapHelper) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -264,12 +264,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             int24 minAcceptableTick = currentInterval.lowerTick + currentNeighborhood;
             int24 maxAcceptableTick = currentInterval.upperTick - currentNeighborhood;
 
-            if (
-                minAcceptableTick <= spotTick &&
-                spotTick <= maxAcceptableTick &&
-                mutableParams_.intervalWidth == length &&
-                !mutableParams_.forceRebalanceWidth
-            ) {
+            if (minAcceptableTick <= spotTick && spotTick <= maxAcceptableTick && !mutableParams_.forceRebalanceWidth) {
                 return (currentInterval, false);
             }
         }
@@ -280,29 +275,23 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             return (formPositionWithSpotTickInCenter(mutableParams_, spotTick, tickSpacing), true);
         }
 
-        int24 sideExtension = int24(
-            uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.extensionFactorD - D9, D9) / 2)
-        );
+        int24 sideExtension;
 
         int24 middleTick = (currentInterval.lowerTick + currentInterval.upperTick) / 2;
         uint256 zoneToZoneD = FullMath.mulDiv(
-            2 * mutableParams_.neighborhoodFactorD,
+            2 * mutableParams_.extensionFactorD,
             D9,
-            D9 - 2 * mutableParams_.neighborhoodFactorD
+            D9 - 2 * mutableParams_.extensionFactorD
         );
 
         if (spotTick <= middleTick) {
             int24 maxLowerTick = middleTick -
                 int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
-            if (sideExtension < currentInterval.lowerTick - maxLowerTick + tickSpacing) {
-                sideExtension = currentInterval.lowerTick - maxLowerTick + tickSpacing;
-            }
+            sideExtension = currentInterval.lowerTick - maxLowerTick;
         } else {
             int24 minUpperTick = middleTick +
                 int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
-            if (sideExtension < minUpperTick - currentInterval.upperTick + tickSpacing) {
-                sideExtension = minUpperTick - currentInterval.upperTick + tickSpacing;
-            }
+            sideExtension = minUpperTick - currentInterval.upperTick;
         }
 
         if (sideExtension % tickSpacing != 0 || sideExtension == 0) {

@@ -269,7 +269,7 @@ contract PulseStrategyTest is Test {
             timespanForAverageTick: 900,
             swapHelper: mockRouter,
             neighborhoodFactorD: 10 ** 8,
-            extensionFactorD: 1100 * 10**6,
+            extensionFactorD: 2 * 10 ** 8,
             swapSlippageD: 10 ** 7,
             swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
@@ -450,6 +450,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl = calcTvl();
+        require(newTvl * 1000 > oldTvl * 999);
 
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
 
@@ -493,7 +494,7 @@ contract PulseStrategyTest is Test {
         require(upperTick2 == upperTick);
     }
 
-    function testRebalanceAfterPriceMove() public {
+    function testNoRebalanceNeededAfterRebalance() public {
         firstDeposit();
         deposit(10000);
 
@@ -504,6 +505,48 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl = calcTvl();
+        require(newTvl * 1000 > oldTvl * 999);
+
+        (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
+
+        makeDesiredPoolPrice(lowerTick);
+
+        vm.warp(block.timestamp + 3600);
+
+        updateRouter();
+
+        uint256 oldTvl2 = calcTvl();
+        pulseStrategy.rebalance(block.timestamp + 1, data, 0);
+        uint256 newTvl2 = calcTvl();
+        require(newTvl2 * 1000 > oldTvl2 * 999);
+
+        deal(usdc, deployer, 10**8);
+        IERC20(usdc).transfer(address(erc20Vault), 10**8);
+        pulseStrategy.rebalance(block.timestamp + 1, data, 0);
+
+        (, , , , , int24 lowerTick2, int24 upperTick2, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
+
+        uint24 oldLength = uint24(upperTick - lowerTick);
+        uint24 newLength = uint24(upperTick2 - lowerTick2);
+
+        console2.log(oldLength);
+        console2.log(newLength);
+
+        require(newLength > oldLength);
+    }
+
+    function testRebalanceAfterPriceMove1() public {
+        firstDeposit();
+        deposit(10000);
+
+        updateRouter();
+
+        bytes memory data = bytes("");
+
+        uint256 oldTvl = calcTvl();
+        pulseStrategy.rebalance(block.timestamp + 1, data, 0);
+        uint256 newTvl = calcTvl();
+        require(newTvl * 1000 > oldTvl * 999);
 
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
 
@@ -518,6 +561,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl2 = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl2 = calcTvl();
+        require(newTvl2 * 1000 > oldTvl2 * 999);
 
         uint256 newNft = uniV3Vault.uniV3Nft();
 
@@ -532,7 +576,7 @@ contract PulseStrategyTest is Test {
         console2.log(newLength);
 
         require(oldLength == 3000);
-        require(newLength == 3300);
+        require(newLength == 4180);
 
         (uint256[] memory minTvl, ) = erc20Vault.tvl();
         require(minTvl[0] < 10**5);
@@ -540,8 +584,8 @@ contract PulseStrategyTest is Test {
         require(IERC20(weth).balanceOf(address(uniV3Vault)) == 0);
         require(IERC20(usdc).balanceOf(address(uniV3Vault)) == 0);
 
-        require(lowerTick2 == lowerTick - 150);
-        require(upperTick2 == upperTick + 150);
+        require(lowerTick2 == lowerTick - 590);
+        require(upperTick2 == upperTick + 590);
     }
 
     function testRebalanceAfterPriceMovesToTheBorder() public {
@@ -555,6 +599,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl = calcTvl();
+        require(newTvl * 1000 > oldTvl * 999);
 
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
 
@@ -569,6 +614,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl2 = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl2 = calcTvl();
+        require(newTvl2 * 1000 > oldTvl2 * 999);
 
         uint256 newNft = uniV3Vault.uniV3Nft();
 
@@ -583,7 +629,7 @@ contract PulseStrategyTest is Test {
         console2.log(newLength);
 
         require(oldLength == 3000);
-        require(newLength == 3780);
+        require(newLength == 5000);
 
         (uint256[] memory minTvl, ) = erc20Vault.tvl();
         require(minTvl[0] < 10**5);
@@ -591,8 +637,8 @@ contract PulseStrategyTest is Test {
         require(IERC20(weth).balanceOf(address(uniV3Vault)) == 0);
         require(IERC20(usdc).balanceOf(address(uniV3Vault)) == 0);
 
-        require(lowerTick2 == lowerTick - 390);
-        require(upperTick2 == upperTick + 390);
+        require(lowerTick2 == lowerTick - 1000);
+        require(upperTick2 == upperTick + 1000);
     }
 
     function testRebalanceAfterPriceMovesOutOfTheBorder() public {
@@ -606,10 +652,11 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl = calcTvl();
+        require(newTvl * 1000 > oldTvl * 999);
 
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
 
-        makeDesiredPoolPrice(upperTick + 1000);
+        makeDesiredPoolPrice(upperTick + 500);
 
         vm.warp(block.timestamp + 3600);
 
@@ -620,6 +667,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl2 = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl2 = calcTvl();
+        require(newTvl2 * 1000 > oldTvl2 * 999);
 
         uint256 newNft = uniV3Vault.uniV3Nft();
 
@@ -634,7 +682,7 @@ contract PulseStrategyTest is Test {
         console2.log(newLength);
 
         require(oldLength == 3000);
-        require(newLength == 6280);
+        require(newLength == 6680);
 
         (uint256[] memory minTvl, ) = erc20Vault.tvl();
         require(minTvl[0] < 10**5);
@@ -642,8 +690,106 @@ contract PulseStrategyTest is Test {
         require(IERC20(weth).balanceOf(address(uniV3Vault)) == 0);
         require(IERC20(usdc).balanceOf(address(uniV3Vault)) == 0);
 
-        require(lowerTick2 == lowerTick - 1640);
-        require(upperTick2 == upperTick + 1640);
+        require(lowerTick2 == lowerTick - 1840);
+        require(upperTick2 == upperTick + 1840);
+    }
+
+    function testRebalanceForced() public {
+        firstDeposit();
+        deposit(10000);
+
+        updateRouter();
+
+        bytes memory data = bytes("");
+        
+        {
+            uint256 oldTvl = calcTvl();
+            pulseStrategy.rebalance(block.timestamp + 1, data, 0);
+            uint256 newTvl = calcTvl();
+            require(newTvl * 1000 > oldTvl * 999);
+        }
+
+        (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
+
+        makeDesiredPoolPrice(lowerTick);
+
+        vm.warp(block.timestamp + 3600);
+
+        updateRouter();
+
+        {
+
+            uint256[] memory AA = new uint256[](2);
+            AA[0] = 10**6;
+            AA[1] = 10**15;
+
+            PulseStrategy.MutableParams memory smParams = PulseStrategy.MutableParams({
+                forceRebalanceWidth: true,
+                priceImpactD6: 0,
+                intervalWidth: 3000,
+                maxPositionLengthInTicks: 8000,
+                maxDeviationForVaultPool: 50,
+                timespanForAverageTick: 900,
+                swapHelper: mockRouter,
+                neighborhoodFactorD: 10 ** 8,
+                extensionFactorD: 2 * 10 ** 8,
+                swapSlippageD: 10 ** 7,
+                swappingAmountsCoefficientD: 10 ** 7,
+                minSwapAmounts: AA
+            });
+
+            pulseStrategy.updateMutableParams(smParams);
+
+        }
+
+        uint256 oldNft = uniV3Vault.uniV3Nft();
+
+        {
+            uint256 oldTvl2 = calcTvl();
+            pulseStrategy.rebalance(block.timestamp + 1, data, 0);
+            uint256 newTvl2 = calcTvl();
+            require(newTvl2 * 1000 > oldTvl2 * 999);
+        }
+
+        uint256 newNft = uniV3Vault.uniV3Nft();
+
+        require(oldNft != newNft);
+
+        (, , , , , int24 lowerTick2, int24 upperTick2, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
+
+        {
+
+            uint24 oldLength = uint24(upperTick - lowerTick);
+            uint24 newLength = uint24(upperTick2 - lowerTick2);
+
+            console2.log(oldLength);
+            console2.log(newLength);
+
+            require(oldLength == 3000);
+            require(newLength == 3000);
+
+        }
+
+        (uint256[] memory minTvl, ) = erc20Vault.tvl();
+        require(minTvl[0] < 10**5);
+        require(minTvl[1] < 10**14); // rebalance drained erc20vault to new uni position
+        console2.log(IERC20(weth).balanceOf(address(uniV3Vault)));
+        console2.log(IERC20(usdc).balanceOf(address(uniV3Vault)));
+        require(IERC20(weth).balanceOf(address(uniV3Vault)) == 0);
+        require(IERC20(usdc).balanceOf(address(uniV3Vault)) == 0);
+
+        makeDesiredPoolPrice(lowerTick2);
+
+        vm.warp(block.timestamp + 3600);
+
+        updateRouter();
+        pulseStrategy.rebalance(block.timestamp + 1, data, 0);
+
+        (, , , , , int24 lowerTick3, int24 upperTick3, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
+
+        uint24 newestLength = uint24(upperTick3 - lowerTick3);
+
+        require(newestLength > 3000);
     }
 
     function testRebalanceAfterPriceMovesVeryOutOfTheBorder() public {
@@ -657,6 +803,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl = calcTvl();
+        require(newTvl * 1000 > oldTvl * 999);
 
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = pulseStrategy.positionManager().positions(uniV3Vault.uniV3Nft());
 
@@ -671,6 +818,7 @@ contract PulseStrategyTest is Test {
         uint256 oldTvl2 = calcTvl();
         pulseStrategy.rebalance(block.timestamp + 1, data, 0);
         uint256 newTvl2 = calcTvl();
+        require(newTvl2 * 1000 > oldTvl2 * 999);
 
         uint256 newNft = uniV3Vault.uniV3Nft();
 
