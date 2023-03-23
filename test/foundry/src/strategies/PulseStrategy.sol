@@ -44,7 +44,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     struct MutableParams {
         bool forceRebalanceWidth;
         int24 priceImpactD6;
-        int24 intervalWidth;
+        int24 defaultIntervalWidth;
         int24 maxPositionLengthInTicks;
         int24 maxDeviationForVaultPool;
         uint32 timespanForAverageTick;
@@ -155,7 +155,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     function checkMutableParams(MutableParams memory params, ImmutableParams memory immutableParams_) public view {
         int24 tickSpacing = immutableParams_.uniV3Vault.pool().tickSpacing();
         require(
-            params.intervalWidth > 0 && params.intervalWidth % (2 * tickSpacing) == 0,
+            params.defaultIntervalWidth > 0 && params.defaultIntervalWidth % (2 * tickSpacing) == 0,
             ExceptionsLibrary.INVALID_VALUE
         );
 
@@ -227,8 +227,8 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             centralTick += tickSpacing;
         }
 
-        newInterval.lowerTick = centralTick - mutableParams_.intervalWidth / 2;
-        newInterval.upperTick = centralTick + mutableParams_.intervalWidth / 2;
+        newInterval.lowerTick = centralTick - mutableParams_.defaultIntervalWidth / 2;
+        newInterval.upperTick = centralTick + mutableParams_.defaultIntervalWidth / 2;
     }
 
     /// @param mutableParams_ structure with all mutable params of the strategy
@@ -271,7 +271,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
 
         int24 tickSpacing = pool.tickSpacing();
 
-        if (uniV3Nft == 0 || mutableParams_.forceRebalanceWidth || mutableParams_.intervalWidth != length) {
+        if (uniV3Nft == 0 || mutableParams_.forceRebalanceWidth) {
             return (formPositionWithSpotTickInCenter(mutableParams_, spotTick, tickSpacing), true);
         }
 

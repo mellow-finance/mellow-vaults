@@ -263,7 +263,7 @@ contract PulseStrategyTest is Test {
         PulseStrategy.MutableParams memory smParams = PulseStrategy.MutableParams({
             forceRebalanceWidth: false,
             priceImpactD6: 0,
-            intervalWidth: 3000,
+            defaultIntervalWidth: 3000,
             maxPositionLengthInTicks: 8000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 900,
@@ -726,7 +726,7 @@ contract PulseStrategyTest is Test {
             PulseStrategy.MutableParams memory smParams = PulseStrategy.MutableParams({
                 forceRebalanceWidth: true,
                 priceImpactD6: 0,
-                intervalWidth: 3000,
+                defaultIntervalWidth: 3000,
                 maxPositionLengthInTicks: 8000,
                 maxDeviationForVaultPool: 50,
                 timespanForAverageTick: 900,
