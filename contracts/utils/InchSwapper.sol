@@ -9,15 +9,18 @@ contract InchSwapper is ISwapper {
     using SafeERC20 for IERC20;
 
     address public immutable router;
-    
-    constructor(
-        address router_
-    ) {
+
+    constructor(address router_) {
         router = router_;
     }
 
-    function swap(address token0, address token1, uint256 amountIn, uint256 minAmountOut, bytes memory data) external returns (uint256) {
-
+    function swap(
+        address token0,
+        address token1,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        bytes memory data
+    ) external returns (uint256) {
         IERC20(token0).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(token0).safeIncreaseAllowance(router, amountIn);
 
@@ -40,8 +43,5 @@ contract InchSwapper is ISwapper {
         IERC20(token1).safeTransfer(msg.sender, balanceAfter);
 
         return balanceAfter;
-
     }
-
-    
 }
