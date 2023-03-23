@@ -132,11 +132,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
-    function rebalance(
-        uint256 deadline,
-        bytes calldata swapData,
-        uint256 minAmountOutInCaseOfSwap
-    ) external {
+    function rebalance(uint256 deadline, bytes calldata swapData, uint256 minAmountOutInCaseOfSwap) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
@@ -285,21 +281,17 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         );
 
         int24 middleTick = (currentInterval.lowerTick + currentInterval.upperTick) / 2;
-        uint256 zoneToZoneD = FullMath.mulDiv(
-            2 * mutableParams_.neighborhoodFactorD,
-            D9,
-            D9 - 2 * mutableParams_.neighborhoodFactorD
-        );
+        uint256 zoneToZoneD = FullMath.mulDiv(2 * mutableParams_.neighborhoodFactorD, D9, D9 - 2 * mutableParams_.neighborhoodFactorD);
 
         if (spotTick <= middleTick) {
-            int24 maxLowerTick = middleTick -
-                int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
+            int24 maxLowerTick = middleTick - int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
             if (sideExtension < currentInterval.lowerTick - maxLowerTick + tickSpacing) {
                 sideExtension = currentInterval.lowerTick - maxLowerTick + tickSpacing;
             }
-        } else {
-            int24 minUpperTick = middleTick +
-                int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
+        }
+
+        else {
+            int24 minUpperTick = middleTick + int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
             if (sideExtension < minUpperTick - currentInterval.upperTick + tickSpacing) {
                 sideExtension = minUpperTick - currentInterval.upperTick + tickSpacing;
             }
