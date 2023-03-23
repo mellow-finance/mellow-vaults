@@ -47,8 +47,4 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
 
     /// @notice Collect UniV3 fees to zero vault.
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> one-token-depositing

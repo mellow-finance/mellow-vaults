@@ -24,7 +24,7 @@ contract PulseStrategyHelper {
             (
                 bool forceRebalanceWidth,
                 int24 priceImpactD6,
-                int24 intervalWidth,
+                int24 defaultIntervalWidth,
                 int24 maxPositionLengthInTicks,
                 int24 maxDeviationForVaultPool,
                 uint32 timespanForAverageTick,
@@ -37,7 +37,7 @@ contract PulseStrategyHelper {
             mutableParams = PulseStrategy.MutableParams({
                 forceRebalanceWidth: forceRebalanceWidth,
                 priceImpactD6: priceImpactD6,
-                intervalWidth: intervalWidth,
+                defaultIntervalWidth: defaultIntervalWidth,
                 maxPositionLengthInTicks: maxPositionLengthInTicks,
                 maxDeviationForVaultPool: maxDeviationForVaultPool,
                 timespanForAverageTick: timespanForAverageTick,

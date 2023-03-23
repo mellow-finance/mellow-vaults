@@ -473,6 +473,15 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     }
 
     /// @inheritdoc ILpCallback
+    function depositCallback(bytes memory) external {
+        // pushes all tokens from erc20Vault to quickSwapVault to prevent possible attacks
+        _pushIntoQuickSwap(immutableParams);
+    }
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback(bytes memory) external {}
+
+    /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
 
     function _contractName() internal pure override returns (bytes32) {

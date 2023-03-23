@@ -6,6 +6,7 @@ import "../interfaces/external/univ2/periphery/IWETH.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
+import "../interfaces/utils/ISwapper.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
@@ -19,7 +20,8 @@ contract InchDepositWrapper is DefaultAccessControl {
     IChainlinkOracle public immutable mellowOracle;
     IProtocolGovernance public immutable governance;
     address public immutable weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public immutable router;
+    
+    ISwapper public immutable swapHelper;
 
     uint256 public slippageD9;
 
@@ -32,13 +34,13 @@ contract InchDepositWrapper is DefaultAccessControl {
     constructor(
         IChainlinkOracle mellowOracle_,
         IProtocolGovernance governance_,
-        address router_,
+        ISwapper swapHelper_,
         address admin,
         uint256 initialSlippageD9
     ) DefaultAccessControl(admin) {
         mellowOracle = mellowOracle_;
         governance = governance_;
-        router = router_;
+        swapHelper = swapHelper_;
         slippageD9 = initialSlippageD9;
     }
 
@@ -56,17 +58,6 @@ contract InchDepositWrapper is DefaultAccessControl {
 
         require(sum != 0, ExceptionsLibrary.INVALID_TARGET);
         return FullMath.mulDiv(amount, sum / pricesX96.length, Q96);
-    }
-
-    function _swap(bytes memory swapOption) internal {
-        (bool res, bytes memory returndata) = router.call(swapOption);
-        if (!res) {
-            assembly {
-                let returndata_size := mload(returndata)
-                // Bubble up revert reason
-                revert(add(32, returndata), returndata_size)
-            }
-        }
     }
 
     function setSlippage(uint256 newSlippageD9) external {
@@ -91,7 +82,8 @@ contract InchDepositWrapper is DefaultAccessControl {
         uint256 amount,
         uint256 minLpTokens,
         bytes calldata vaultOptions,
-        bytes[] calldata swapOptions
+        bytes[] calldata swapOptions,
+        uint256 minAmountOut
     ) external payable returns (uint256[] memory actualTokenAmounts) {
         if (msg.value > 0) {
             require(token == weth, ExceptionsLibrary.INVALID_TOKEN);
@@ -106,7 +98,7 @@ contract InchDepositWrapper is DefaultAccessControl {
         address[] memory vaultTokens = rootVault.vaultTokens();
         uint256[] memory swapAmounts = calcSwapAmounts(rootVault, amount);
 
-        IERC20(token).safeIncreaseAllowance(router, amount);
+        IERC20(token).safeIncreaseAllowance(address(swapHelper), amount);
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             if (vaultTokens[i] != token) {
@@ -114,7 +106,8 @@ contract InchDepositWrapper is DefaultAccessControl {
 
                 uint256 oldBalance = IERC20(vaultTokens[i]).balanceOf(address(this));
 
-                _swap(swapOptions[i]);
+                swapHelper.swap(token, vaultTokens[i], swapAmounts[i], minAmountOut, swapOptions[i]);
+
                 require(
                     IERC20(vaultTokens[i]).balanceOf(address(this)) - oldBalance >=
                         FullMath.mulDiv(expectedAmountOut, D9 - slippageD9, D9),
@@ -123,7 +116,7 @@ contract InchDepositWrapper is DefaultAccessControl {
             }
         }
 
-        IERC20(token).safeApprove(router, 0);
+        IERC20(token).safeApprove(address(swapHelper), 0);
 
         {
             uint256[] memory balances = new uint256[](vaultTokens.length);

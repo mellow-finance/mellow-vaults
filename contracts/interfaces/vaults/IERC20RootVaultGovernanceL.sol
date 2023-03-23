@@ -5,7 +5,7 @@ import "../oracles/IOracle.sol";
 import "./IERC20RootVault.sol";
 import "./IVaultGovernance.sol";
 
-interface IERC20RootVaultGovernance is IVaultGovernance {
+interface IERC20RootVaultGovernanceL is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param strategyTreasury Reference to address that will collect strategy management fees
     /// @param strategyPerformanceTreasury Reference to address that will collect strategy performance fees
@@ -38,6 +38,8 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     struct StrategyParams {
         uint256 tokenLimitPerAddress;
         uint256 tokenLimit;
+        uint256 maxTimeOneRebalance;
+        uint256 minTimeBetweenRebalances;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.

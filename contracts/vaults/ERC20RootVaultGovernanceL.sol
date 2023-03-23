@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IERC20RootVaultGovernanceL.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
@@ -10,12 +10,12 @@ import "./VaultGovernance.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
-contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
-    /// @inheritdoc IERC20RootVaultGovernance
+contract ERC20RootVaultGovernanceL is ContractMeta, IERC20RootVaultGovernanceL, VaultGovernance {
+    /// @inheritdoc IERC20RootVaultGovernanceL
     uint256 public constant MAX_PROTOCOL_FEE = 5 * 10**7; // 5%
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     uint256 public constant MAX_MANAGEMENT_FEE = 10 * 10**7; // 10%
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     uint256 public constant MAX_PERFORMANCE_FEE = 50 * 10**7; // 50%
 
     IERC20RootVaultHelper public immutable helper;
@@ -36,13 +36,13 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
             return DelayedProtocolParams({managementFeeChargeDelay: 0, oracle: IOracle(address(0))});
@@ -50,7 +50,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
         if (_delayedProtocolPerVaultParams[nft].length == 0) {
             return DelayedProtocolPerVaultParams({protocolFee: 0});
@@ -58,7 +58,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function stagedDelayedProtocolPerVaultParams(uint256 nft)
         external
         view
@@ -70,7 +70,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_stagedDelayedStrategyParams[nft].length == 0) {
             return
@@ -87,7 +87,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function operatorParams() external view returns (OperatorParams memory) {
         if (_operatorParams.length == 0) {
             return OperatorParams({disableDeposit: false});
@@ -95,7 +95,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_operatorParams, (OperatorParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
             return
@@ -112,22 +112,28 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0});
+            return
+                StrategyParams({
+                    tokenLimitPerAddress: 0,
+                    tokenLimit: 0,
+                    maxTimeOneRebalance: 0,
+                    minTimeBetweenRebalances: 3600
+                });
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
     // @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernance).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernanceL).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
         require(params.managementFee <= MAX_MANAGEMENT_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(params.performanceFee <= MAX_PERFORMANCE_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
@@ -135,7 +141,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function commitDelayedStrategyParams(uint256 nft) external {
         _commitDelayedStrategyParams(nft);
         emit CommitDelayedStrategyParams(
@@ -146,7 +152,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         );
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
         require(params.protocolFee <= MAX_PROTOCOL_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
@@ -159,7 +165,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         );
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function commitDelayedProtocolPerVaultParams(uint256 nft) external {
         _commitDelayedProtocolPerVaultParams(nft);
         emit CommitDelayedProtocolPerVaultParams(
@@ -170,26 +176,29 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         );
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
+        require(params.minTimeBetweenRebalances > 0);
+        require(params.minTimeBetweenRebalances <= 86400 * 7);
+        require(params.minTimeBetweenRebalances >= 2 * params.maxTimeOneRebalance);
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function setOperatorParams(OperatorParams calldata params) external {
         _setOperatorParams(abi.encode(params));
         emit SetOperatorParams(tx.origin, msg.sender, params);
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
         require(address(params.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function commitDelayedProtocolParams() external {
         _commitDelayedProtocolParams();
         emit CommitDelayedProtocolParams(
@@ -199,7 +208,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         );
     }
 
-    /// @inheritdoc IERC20RootVaultGovernance
+    /// @inheritdoc IERC20RootVaultGovernanceL
     function createVault(
         address[] memory vaultTokens_,
         address strategy_,
@@ -250,7 +259,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     // -------------------  INTERNAL, VIEW  -------------------
 
     function _contractName() internal pure override returns (bytes32) {
-        return bytes32("ERC20RootVaultGovernance");
+        return bytes32("ERC20RootVaultGovernanceL");
     }
 
     function _contractVersion() internal pure override returns (bytes32) {

@@ -10,5 +10,8 @@ interface ILpCallback {
     function depositCallback(bytes memory) external;
 
     /// @notice Function, that ERC20RootVault calling after withdraw
+    function withdrawCallback() external;
+
+    /// @notice Function, that ERC20RootVault calling after withdraw
     function withdrawCallback(bytes memory) external;
 }

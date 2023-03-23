@@ -13,7 +13,6 @@ import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
-import "forge-std/console2.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -30,8 +29,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     uint256 public lpPriceHighWaterMarkD18;
     EnumerableSet.AddressSet private _depositorsAllowlist;
     IERC20RootVaultHelper public helper;
-
-    uint256 public lastRebalanceFlagSet;
 
     // -------------------  EXTERNAL, VIEW  -------------------
     /// @inheritdoc IERC20RootVault
@@ -67,15 +64,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
-    function setRebalance() external {
-        _requireAtLeastStrategy();
-        IERC20RootVaultGovernance.StrategyParams memory strategyParams = IERC20RootVaultGovernance(
-            address(_vaultGovernance)
-        ).strategyParams(_nft);
-        require(block.timestamp > lastRebalanceFlagSet + strategyParams.minTimeBetweenRebalances);
-        lastRebalanceFlagSet = block.timestamp;
-    }
-
     /// @inheritdoc IERC20RootVault
     function initialize(
         uint256 nft_,
@@ -102,12 +90,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
-
-        IERC20RootVaultGovernance.StrategyParams memory strategyParams = IERC20RootVaultGovernance(
-            address(_vaultGovernance)
-        ).strategyParams(_nft);
-        require(block.timestamp > lastRebalanceFlagSet + strategyParams.maxTimeOneRebalance);
-
         address[] memory tokens = _vaultTokens;
         uint256 supply = totalSupply;
         if (supply == 0) {
@@ -119,13 +101,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 );
             }
         }
-        uint256[] memory maxTvl;
+        (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
-        {
-            uint256[] memory minTvl;
-            (minTvl, maxTvl) = tvl();
-            _chargeFees(thisNft, minTvl, supply, tokens);
-        }
+        _chargeFees(thisNft, minTvl, supply, tokens);
         supply = totalSupply;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
@@ -134,9 +112,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
+        uint256 preLpAmount;
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         {
-            uint256 preLpAmount;
             bool isSignificantTvl;
             (preLpAmount, isSignificantTvl) = _getLpAmount(maxTvl, tokenAmounts, supply);
             for (uint256 i = 0; i < tokens.length; ++i) {
@@ -173,10 +151,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
 
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            bytes memory depositInfo = abi.encode(actualTokenAmounts[0], actualTokenAmounts[1]);
-            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(
-                bytes.concat(vaultOptions, depositInfo)
-            );
+            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback() {} catch Error(
+                string memory reason
+            ) {
+                emit DepositCallbackLog(reason);
+            } catch {
+                emit DepositCallbackLog("callback failed without reason");
+            }
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -189,44 +170,20 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory minTokenAmounts,
         bytes[] memory vaultsOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        IERC20RootVaultGovernance.StrategyParams memory strategyParams = IERC20RootVaultGovernance(
-            address(_vaultGovernance)
-        ).strategyParams(_nft);
-        require(block.timestamp > lastRebalanceFlagSet + strategyParams.maxTimeOneRebalance);
-
         uint256 supply = totalSupply;
+        require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
         _chargeFees(_nft, minTvl, supply, tokens);
         supply = totalSupply;
-        console2.log(msg.sender);
         uint256 balance = balanceOf[msg.sender];
-        console2.log(balance);
         if (lpTokenAmount > balance) {
             lpTokenAmount = balance;
         }
         for (uint256 i = 0; i < tokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
         }
-
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
-            address(_vaultGovernance)
-        ).delayedStrategyParams(_nft);
-
-        if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
-            bytes memory withdrawInfo = abi.encode(tokenAmounts[0], tokenAmounts[1]);
-            try
-                ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback(
-                    bytes.concat(vaultsOptions[0], withdrawInfo)
-                )
-            {} catch Error(string memory reason) {
-                emit WithdrawCallbackLog(reason);
-            } catch {
-                emit WithdrawCallbackLog("callback failed without reason");
-            }
-        }
-
         actualTokenAmounts = _pull(address(this), tokenAmounts, vaultsOptions);
         // we are draining balance
         // if no sufficent amounts rest
@@ -240,26 +197,26 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 IERC20(tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
             }
         }
-
-        {
-            IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-            if (uint64(block.timestamp) != totalWithdrawnAmountsTimestamp) {
-                totalWithdrawnAmountsTimestamp = uint64(block.timestamp);
-                totalWithdrawnAmounts = new uint256[](actualTokenAmounts.length);
-            }
-            for (uint256 i = 0; i < actualTokenAmounts.length; i++) {
-                totalWithdrawnAmounts[i] += actualTokenAmounts[i];
-                require(
-                    totalWithdrawnAmounts[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
-                    ExceptionsLibrary.LIMIT_OVERFLOW
-                );
-            }
-        }
-
+        _updateWithdrawnAmounts(actualTokenAmounts);
         if (sufficientAmountRest) {
             _burn(msg.sender, lpTokenAmount);
         } else {
             _burn(msg.sender, balance);
+        }
+
+        uint256 thisNft = _nft;
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(thisNft);
+
+        if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
+            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
+                string memory reason
+            ) {
+                emit WithdrawCallbackLog(reason);
+            } catch {
+                emit WithdrawCallbackLog("callback failed without reason");
+            }
         }
 
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
@@ -459,6 +416,27 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
+    }
+
+    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
+        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
+        uint64 timestamp = uint64(block.timestamp);
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        if (timestamp != totalWithdrawnAmountsTimestamp) {
+            totalWithdrawnAmountsTimestamp = timestamp;
+        } else {
+            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+                withdrawn[i] = totalWithdrawnAmounts[i];
+            }
+        }
+        for (uint256 i = 0; i < tokenAmounts.length; i++) {
+            withdrawn[i] += tokenAmounts[i];
+            require(
+                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
+                ExceptionsLibrary.LIMIT_OVERFLOW
+            );
+            totalWithdrawnAmounts[i] = withdrawn[i];
+        }
     }
 
     // --------------------------  EVENTS  --------------------------

@@ -14,12 +14,12 @@ import "../../src/utils/FarmWrapper.sol";
 import "../../src/utils/LidoDepositWrapper.sol";
 import "../../src/utils/LStrategyHelper.sol";
 import "../../src/vaults/ERC20Vault.sol";
-import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20RootVaultL.sol";
 
 import "../../src/vaults/GearboxVaultGovernance.sol";
 import "../../src/vaults/ERC20VaultGovernance.sol";
 import "../../src/vaults/UniV3VaultGovernance.sol";
-import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernanceL.sol";
 import "../../src/strategies/LStrategy.sol";
 
 contract LStrategyDeployment is Script {
@@ -29,7 +29,7 @@ contract LStrategyDeployment is Script {
     IUniV3Vault uniV3LowerVault;
     IUniV3Vault uniV3UpperVault;
 
-    IERC20RootVaultGovernance rootVaultGovernance = ERC20RootVaultGovernance(0x1FaB5413B0DdC1e08025fc589415E699D9e892d1);
+    IERC20RootVaultGovernanceL rootVaultGovernance = ERC20RootVaultGovernanceL(0x1FaB5413B0DdC1e08025fc589415E699D9e892d1);
 
 
     uint256 nftStart;
@@ -58,7 +58,7 @@ contract LStrategyDeployment is Script {
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
 
-        ERC20RootVault singleton = new ERC20RootVault();
+        ERC20RootVaultL singleton = new ERC20RootVaultL();
 
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -71,7 +71,7 @@ contract LStrategyDeployment is Script {
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
-            IERC20RootVaultGovernance.StrategyParams({
+            IERC20RootVaultGovernanceL.StrategyParams({
                 tokenLimitPerAddress: type(uint256).max,
                 tokenLimit: type(uint256).max,
                 maxTimeOneRebalance: 0,
@@ -81,7 +81,7 @@ contract LStrategyDeployment is Script {
 
         rootVaultGovernance.stageDelayedStrategyParams(
             nft,
-            IERC20RootVaultGovernance.DelayedStrategyParams({
+            IERC20RootVaultGovernanceL.DelayedStrategyParams({
                 strategyTreasury: strategyTreasury,
                 strategyPerformanceTreasury: protocolTreasury,
                 managementFee: 0,

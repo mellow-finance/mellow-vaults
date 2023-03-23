@@ -13,12 +13,12 @@ import "../../src/MockOracle.sol";
 import "../../src/utils/UniV3Helper.sol";
 import "../../src/utils/LStrategyHelper.sol";
 import "../../src/vaults/ERC20Vault.sol";
-import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20RootVaultL.sol";
 
 import "../../src/vaults/GearboxVaultGovernance.sol";
 import "../../src/vaults/ERC20VaultGovernance.sol";
 import "../../src/vaults/UniV3VaultGovernance.sol";
-import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernanceL.sol";
 import "../../src/strategies/LStrategy.sol";
 
 contract LStrategyTest is Test {
@@ -93,12 +93,12 @@ contract LStrategyTest is Test {
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
 
-        ERC20RootVault singleton = new ERC20RootVault();
+        ERC20RootVaultL singleton = new ERC20RootVaultL();
 
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
-        IERC20RootVaultGovernance.DelayedProtocolParams memory paramsB = IERC20RootVaultGovernance.DelayedProtocolParams({
+        IERC20RootVaultGovernanceL.DelayedProtocolParams memory paramsB = IERC20RootVaultGovernanceL.DelayedProtocolParams({
             managementFeeChargeDelay: 0,
             oracle: IOracle(mellowOracle)
         });
@@ -111,7 +111,7 @@ contract LStrategyTest is Test {
 
         IERC20RootVaultHelper helper = new ERC20RootVaultHelper();
 
-        IERC20RootVaultGovernance rootVaultGovernance = new ERC20RootVaultGovernance(paramsA, paramsB, helper);
+        IERC20RootVaultGovernanceL rootVaultGovernance = new ERC20RootVaultGovernanceL(paramsA, paramsB, helper);
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
@@ -131,7 +131,7 @@ contract LStrategyTest is Test {
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
-            IERC20RootVaultGovernance.StrategyParams({
+            IERC20RootVaultGovernanceL.StrategyParams({
                 tokenLimitPerAddress: type(uint256).max,
                 tokenLimit: type(uint256).max,
                 maxTimeOneRebalance: 0,
@@ -141,7 +141,7 @@ contract LStrategyTest is Test {
 
         rootVaultGovernance.stageDelayedStrategyParams(
             nft,
-            IERC20RootVaultGovernance.DelayedStrategyParams({
+            IERC20RootVaultGovernanceL.DelayedStrategyParams({
                 strategyTreasury: strategyTreasury,
                 strategyPerformanceTreasury: protocolTreasury,
                 managementFee: 0,

@@ -449,6 +449,15 @@ contract PulseRouteStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     }
 
     /// @inheritdoc ILpCallback
+    function depositCallback(bytes memory) external {
+        // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
+        _pushIntoUniswap(immutableParams);
+    }
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback(bytes memory) external {}
+
+    /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
 
     function _contractName() internal pure override returns (bytes32) {

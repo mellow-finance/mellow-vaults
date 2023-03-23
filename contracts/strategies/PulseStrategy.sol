@@ -131,11 +131,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
-    function rebalance(
-        uint256 deadline,
-        bytes calldata swapData,
-        uint256 minAmountOutInCaseOfSwap
-    ) external {
+    function rebalance(uint256 deadline, bytes calldata swapData, uint256 minAmountOutInCaseOfSwap) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
@@ -264,7 +260,11 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             int24 minAcceptableTick = currentInterval.lowerTick + currentNeighborhood;
             int24 maxAcceptableTick = currentInterval.upperTick - currentNeighborhood;
 
-            if (minAcceptableTick <= spotTick && spotTick <= maxAcceptableTick && !mutableParams_.forceRebalanceWidth) {
+            if (
+                minAcceptableTick <= spotTick &&
+                spotTick <= maxAcceptableTick &&
+                !mutableParams_.forceRebalanceWidth
+            ) {
                 return (currentInterval, false);
             }
         }
@@ -276,21 +276,17 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         }
 
         int24 sideExtension;
-
+        
         int24 middleTick = (currentInterval.lowerTick + currentInterval.upperTick) / 2;
-        uint256 zoneToZoneD = FullMath.mulDiv(
-            2 * mutableParams_.extensionFactorD,
-            D9,
-            D9 - 2 * mutableParams_.extensionFactorD
-        );
+        uint256 zoneToZoneD = FullMath.mulDiv(2 * mutableParams_.extensionFactorD, D9, D9 - 2 * mutableParams_.extensionFactorD);
 
         if (spotTick <= middleTick) {
-            int24 maxLowerTick = middleTick -
-                int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
+            int24 maxLowerTick = middleTick - int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
             sideExtension = currentInterval.lowerTick - maxLowerTick;
-        } else {
-            int24 minUpperTick = middleTick +
-                int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
+        }
+
+        else {
+            int24 minUpperTick = middleTick + int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
             sideExtension = minUpperTick - currentInterval.upperTick;
         }
 
@@ -543,7 +539,16 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     }
 
     /// @inheritdoc ILpCallback
+    function depositCallback(bytes memory) external {
+        // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
+        _pushIntoUniswap(immutableParams);
+    }
+
+    /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback(bytes memory) external {}
 
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("PulseStrategy");

@@ -17,11 +17,26 @@ contract MockLpCallback is ILpCallback {
         _mode = mode_;
     }
 
-    function depositCallback() external {}
+    /// @notice Callback function
+    function depositCallback() external {
+        emit DepositCallbackCalled();
+    }
 
     /// @notice Callback function
     function depositCallback(bytes memory) external {
         emit DepositCallbackCalled();
+    }
+
+    /// @notice Callback function
+    function withdrawCallback() external {
+        if (_mode == WithdrawCallbackMode.NO_ERROR) {
+            emit WithdrawCallbackCalled();
+        } else if (_mode == WithdrawCallbackMode.EMPTY_ERROR) {
+            require(false);
+        } else {
+            require(_mode == WithdrawCallbackMode.NON_EMPTY_ERROR);
+            require(false, "Error description");
+        }
     }
 
     /// @notice Callback function

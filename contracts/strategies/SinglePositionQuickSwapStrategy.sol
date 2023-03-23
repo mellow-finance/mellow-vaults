@@ -555,10 +555,17 @@ contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAcce
         _pushIntoQuickSwap(immutableParams);
     }
 
-    function depositCallback() external {}
+    /// @inheritdoc ILpCallback
+    function depositCallback() external {
+        // pushes all tokens from erc20Vault to uniswap to prevent possible attacks
+        _pushIntoQuickSwap(immutableParams);
+    }
 
     /// @inheritdoc ILpCallback
     function withdrawCallback(bytes memory) external {}
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback() external {}
 
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("SinglePositionQuickSwapStrategy");
