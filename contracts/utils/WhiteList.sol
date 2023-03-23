@@ -24,8 +24,10 @@ contract WhiteList is DefaultAccessControl {
         bytes calldata vaultOptions,
         bytes32[] calldata proof
     ) external returns (uint256[] memory actualTokenAmounts) {
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        require(MerkleProof.verify(proof, root, leaf), ExceptionsLibrary.FORBIDDEN);
+        {
+            bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
+            require(MerkleProof.verify(proof, root, leaf), ExceptionsLibrary.FORBIDDEN);
+        }
 
         address[] memory tokens = vault.vaultTokens();
         require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INVALID_LENGTH);

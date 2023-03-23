@@ -136,7 +136,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const priceX96 = await lStrategy.getTargetPriceX96(
             tokens[0],
             tokens[1],
-            tradingParams
+            tradingParams.oracle,
+            tradingParams.oracleSafetyMask
         );
 
         const sqrtPriceX48 = BigNumber.from(
@@ -176,6 +177,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
     });
 
+
     const lStrategy = await ethers.getContract("LStrategy");
 
     const semiPositionRange = Math.floor(intervalWidthInTicks / 2);
@@ -201,7 +203,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         tickRightUpper,
         uniV3UpperVaultNft
     );
-
+    
     await combineVaults(
         hre,
         erc20VaultNft + 1,

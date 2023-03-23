@@ -1,3 +1,4 @@
+
 import { buildMStrategies } from "./0130_MStrategy";
 
 const func = buildMStrategies("Yearn");

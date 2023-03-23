@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -38,6 +38,7 @@ contract ERC20Token is IERC20 {
     }
 
     function transfer(address to, uint256 amount) public virtual returns (bool) {
+        _beforeTokenTransfer(msg.sender, to, amount);
         balanceOf[msg.sender] -= amount;
 
         unchecked {
@@ -53,6 +54,7 @@ contract ERC20Token is IERC20 {
         address to,
         uint256 amount
     ) public virtual returns (bool) {
+        _beforeTokenTransfer(from, to, amount);
         uint256 allowed = allowance[from][msg.sender];
 
         if (allowed != type(uint256).max) {
@@ -139,4 +141,10 @@ contract ERC20Token is IERC20 {
 
         emit Transfer(from, address(0), amount);
     }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
 }

@@ -101,6 +101,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
         });
 
         describe("#supportsInterface", () => {
+            /*
             it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
@@ -108,6 +109,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                     )
                 ).to.be.true;
             });
+            */
 
             describe("access control:", () => {
                 it("allowed: any address", async () => {

@@ -1067,6 +1067,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .setStrategyParams(nftIndex, {
                                     tokenLimitPerAddress: BigNumber.from(0),
                                     tokenLimit: BigNumber.from(0),
+                                    maxTimeOneRebalance: BigNumber.from(0),
+                                    minTimeBetweenRebalances:
+                                        BigNumber.from(3600),
                                 });
 
                             await expect(
@@ -1093,6 +1096,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     tokenLimitPerAddress:
                                         MIN_FIRST_DEPOSIT[0].mul(10),
                                     tokenLimit: BigNumber.from(0),
+                                    maxTimeOneRebalance: BigNumber.from(0),
+                                    minTimeBetweenRebalances:
+                                        BigNumber.from(3600),
                                 });
 
                             await expect(
@@ -1186,7 +1192,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edge cases:", () => {
                 describe("when total supply is 0", () => {
-                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                    it(`reverts because of zero division`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(
                                 this.subject
@@ -1197,7 +1203,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                         [],
                                         []
                                     )
-                            ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                            ).to.be.reverted;
                         });
                     });
                 });

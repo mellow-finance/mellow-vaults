@@ -634,7 +634,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     const targetPriceX96 = await this.subject.getTargetPriceX96(
                         tokens[0],
                         tokens[1],
-                        await this.subject.tradingParams()
+                        (
+                            await this.subject.tradingParams()
+                        ).oracle,
+                        (
+                            await this.subject.tradingParams()
+                        ).oracleSafetyMask
                     );
                     const sqrtTargetPriceX96 = BigNumber.from(
                         sqrt(JSBI.BigInt(targetPriceX96)).toString()
@@ -736,7 +741,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     const targetPriceX96 = await this.subject.getTargetPriceX96(
                         this.wsteth.address,
                         this.weth.address,
-                        await this.subject.tradingParams()
+                        (
+                            await this.subject.tradingParams()
+                        ).oracle,
+                        (
+                            await this.subject.tradingParams()
+                        ).oracleSafetyMask
                     );
                     let [minTvl, maxTvl] = await vault.tvl();
                     return minTvl[0]
@@ -2011,7 +2021,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         await this.subject.getTargetPriceX96(
                             this.wsteth.address,
                             this.weth.address,
-                            params
+                            params.oracle,
+                            params.oracleSafetyMask
                         )
                     ).shr(96)
                 ).to.be.gt(0);
@@ -2032,7 +2043,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             this.subject.getTargetPriceX96(
                                 this.wsteth.address,
                                 this.weth.address,
-                                params
+                                params.oracle,
+                                params.oracleSafetyMask
                             )
                         ).to.be.reverted;
                     });
