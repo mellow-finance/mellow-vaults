@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../interfaces/utils/ILpCallback.sol";
-import "../interfaces/utils/ISwapper.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 
@@ -48,7 +47,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         int24 maxPositionLengthInTicks;
         int24 maxDeviationForVaultPool;
         uint32 timespanForAverageTick;
-        ISwapper swapHelper;
+        address router;
         uint256 neighborhoodFactorD;
         uint256 extensionFactorD;
         uint256 swapSlippageD;
@@ -114,7 +113,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
                 immutableParams.erc20Vault.externalCall(
                     immutableParams.tokens[i],
                     IERC20.approve.selector,
-                    abi.encode(mutableParams_.swapHelper, type(uint256).max)
+                    abi.encode(mutableParams_.router, type(uint256).max)
                 )
             returns (bytes memory) {} catch {}
         }
@@ -167,7 +166,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         require(params.extensionFactorD >= params.neighborhoodFactorD, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(params.maxPositionLengthInTicks <= TickMath.MAX_TICK * 2, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(address(params.swapHelper) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.router != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         require(params.maxDeviationForVaultPool > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
@@ -459,7 +458,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         MutableParams memory mutableParams_,
         Interval memory interval,
         uint160 sqrtSpotPriceX96,
-        bytes memory swapData,
+        bytes calldata swapData,
         uint256 minAmountOutInCaseOfSwap
     ) private {
         uint256 priceX96 = FullMath.mulDiv(sqrtSpotPriceX96, sqrtSpotPriceX96, Q96);
@@ -481,28 +480,25 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         (uint256[] memory tvlBefore, ) = immutableParams_.erc20Vault.tvl();
 
         {
-            bytes memory callBytes = abi.encode(
-                immutableParams.tokens[tokenInIndex],
-                immutableParams.tokens[1 - tokenInIndex],
-                amountIn,
-                minAmountOutInCaseOfSwap,
-                swapData
-            );
-            immutableParams_.erc20Vault.externalCall(
-                address(mutableParams_.swapHelper),
-                ISwapper.swap.selector,
-                callBytes
-            );
+            immutableParams_.erc20Vault.externalCall(mutableParams_.router, bytes4(swapData[:4]), swapData[4:]);
         }
 
-        (uint256[] memory tvlAfter, ) = immutableParams_.erc20Vault.tvl();
+        uint256 actualAmountIn;
+        uint256 actualAmountOut;
 
-        require(tvlAfter[tokenInIndex] <= tvlBefore[tokenInIndex], ExceptionsLibrary.INVARIANT);
-        require(tvlAfter[tokenInIndex ^ 1] >= tvlBefore[tokenInIndex ^ 1], ExceptionsLibrary.INVARIANT);
+        {
+            (uint256[] memory tvlAfter, ) = immutableParams_.erc20Vault.tvl();
 
-        uint256 actualAmountIn = tvlBefore[tokenInIndex] - tvlAfter[tokenInIndex];
-        uint256 actualAmountOut = tvlAfter[tokenInIndex ^ 1] - tvlBefore[tokenInIndex ^ 1];
+            require(tvlAfter[tokenInIndex] <= tvlBefore[tokenInIndex], ExceptionsLibrary.INVARIANT);
+            require(tvlAfter[tokenInIndex ^ 1] >= tvlBefore[tokenInIndex ^ 1], ExceptionsLibrary.INVARIANT);
+
+            actualAmountIn = tvlBefore[tokenInIndex] - tvlAfter[tokenInIndex];
+            actualAmountOut = tvlAfter[tokenInIndex ^ 1] - tvlBefore[tokenInIndex ^ 1];
+        }
+
         uint256 actualSwapPriceX96 = FullMath.mulDiv(actualAmountOut, Q96, actualAmountIn);
+
+        require(actualAmountOut >= minAmountOutInCaseOfSwap, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(
             FullMath.mulDiv(priceX96, D9 - mutableParams_.swapSlippageD, D9) <= actualSwapPriceX96,

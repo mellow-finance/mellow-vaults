@@ -48,7 +48,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         int24 maxPositionLengthInTicks;
         int24 maxDeviationForVaultPool;
         uint32 timespanForAverageTick;
-        ISwapper swapHelper;
+        address router;
         uint256 neighborhoodFactorD;
         uint256 extensionFactorD;
         uint256 swapSlippageD;
@@ -114,7 +114,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
                 immutableParams.erc20Vault.externalCall(
                     immutableParams.tokens[i],
                     IERC20.approve.selector,
-                    abi.encode(mutableParams_.swapHelper, type(uint256).max)
+                    abi.encode(mutableParams_.router, type(uint256).max)
                 )
             returns (bytes memory) {} catch {}
         }
@@ -131,7 +131,11 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
-    function rebalance(uint256 deadline, bytes calldata swapData, uint256 minAmountOutInCaseOfSwap) external {
+    function rebalance(
+        uint256 deadline,
+        bytes calldata swapData,
+        uint256 minAmountOutInCaseOfSwap
+    ) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
@@ -163,7 +167,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         require(params.extensionFactorD >= params.neighborhoodFactorD, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(params.maxPositionLengthInTicks <= TickMath.MAX_TICK * 2, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(address(params.swapHelper) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.router != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         require(params.maxDeviationForVaultPool > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
@@ -260,11 +264,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             int24 minAcceptableTick = currentInterval.lowerTick + currentNeighborhood;
             int24 maxAcceptableTick = currentInterval.upperTick - currentNeighborhood;
 
-            if (
-                minAcceptableTick <= spotTick &&
-                spotTick <= maxAcceptableTick &&
-                !mutableParams_.forceRebalanceWidth
-            ) {
+            if (minAcceptableTick <= spotTick && spotTick <= maxAcceptableTick && !mutableParams_.forceRebalanceWidth) {
                 return (currentInterval, false);
             }
         }
@@ -276,17 +276,21 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         }
 
         int24 sideExtension;
-        
+
         int24 middleTick = (currentInterval.lowerTick + currentInterval.upperTick) / 2;
-        uint256 zoneToZoneD = FullMath.mulDiv(2 * mutableParams_.extensionFactorD, D9, D9 - 2 * mutableParams_.extensionFactorD);
+        uint256 zoneToZoneD = FullMath.mulDiv(
+            2 * mutableParams_.extensionFactorD,
+            D9,
+            D9 - 2 * mutableParams_.extensionFactorD
+        );
 
         if (spotTick <= middleTick) {
-            int24 maxLowerTick = middleTick - int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
+            int24 maxLowerTick = middleTick -
+                int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
             sideExtension = currentInterval.lowerTick - maxLowerTick;
-        }
-
-        else {
-            int24 minUpperTick = middleTick + int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
+        } else {
+            int24 minUpperTick = middleTick +
+                int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
             sideExtension = minUpperTick - currentInterval.upperTick;
         }
 
@@ -455,7 +459,7 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         MutableParams memory mutableParams_,
         Interval memory interval,
         uint160 sqrtSpotPriceX96,
-        bytes memory swapData,
+        bytes calldata swapData,
         uint256 minAmountOutInCaseOfSwap
     ) private {
         uint256 priceX96 = FullMath.mulDiv(sqrtSpotPriceX96, sqrtSpotPriceX96, Q96);
@@ -477,28 +481,31 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         (uint256[] memory tvlBefore, ) = immutableParams_.erc20Vault.tvl();
 
         {
-            bytes memory callBytes = abi.encode(
-                immutableParams.tokens[tokenInIndex],
-                immutableParams.tokens[1 - tokenInIndex],
-                amountIn,
-                minAmountOutInCaseOfSwap,
-                swapData
-            );
             immutableParams_.erc20Vault.externalCall(
-                address(mutableParams_.swapHelper),
-                ISwapper.swap.selector,
-                callBytes
+                mutableParams_.router,
+                bytes4(swapData[:4]), // ISwapper.swap.selector,
+                swapData[4:] // abi.encode(immutableParams_.tokens[tokenInIndex], immutableParams_.tokens[1 - tokenInIndex], amountIn, minAmountOutInCaseOfSwap, swapData)
             );
         }
 
-        (uint256[] memory tvlAfter, ) = immutableParams_.erc20Vault.tvl();
+        uint256 actualAmountIn;
+        uint256 actualAmountOut;
 
-        require(tvlAfter[tokenInIndex] <= tvlBefore[tokenInIndex], ExceptionsLibrary.INVARIANT);
-        require(tvlAfter[tokenInIndex ^ 1] >= tvlBefore[tokenInIndex ^ 1], ExceptionsLibrary.INVARIANT);
+        {
 
-        uint256 actualAmountIn = tvlBefore[tokenInIndex] - tvlAfter[tokenInIndex];
-        uint256 actualAmountOut = tvlAfter[tokenInIndex ^ 1] - tvlBefore[tokenInIndex ^ 1];
+            (uint256[] memory tvlAfter, ) = immutableParams_.erc20Vault.tvl();
+
+            require(tvlAfter[tokenInIndex] <= tvlBefore[tokenInIndex], ExceptionsLibrary.INVARIANT);
+            require(tvlAfter[tokenInIndex ^ 1] >= tvlBefore[tokenInIndex ^ 1], ExceptionsLibrary.INVARIANT);
+
+            actualAmountIn = tvlBefore[tokenInIndex] - tvlAfter[tokenInIndex];
+            actualAmountOut = tvlAfter[tokenInIndex ^ 1] - tvlBefore[tokenInIndex ^ 1];
+
+        }
+
         uint256 actualSwapPriceX96 = FullMath.mulDiv(actualAmountOut, Q96, actualAmountIn);
+
+        require(actualAmountOut >= minAmountOutInCaseOfSwap, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(
             FullMath.mulDiv(priceX96, D9 - mutableParams_.swapSlippageD, D9) <= actualSwapPriceX96,

@@ -5,8 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/external/univ2/periphery/IWETH.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
-import "../interfaces/oracles/IChainlinkOracle.sol";
-import "../interfaces/utils/ISwapper.sol";
+import "../interfaces/oracles/IOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
@@ -17,11 +16,11 @@ contract InchDepositWrapper is DefaultAccessControl {
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20RootVault;
 
-    IChainlinkOracle public immutable mellowOracle;
+    IOracle public immutable mellowOracle;
     IProtocolGovernance public immutable governance;
-    address public immutable weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
-    ISwapper public immutable swapHelper;
+    address public immutable router;
 
     uint256 public slippageD9;
 
@@ -32,15 +31,15 @@ contract InchDepositWrapper is DefaultAccessControl {
     mapping(address => mapping(address => uint256)) public pairToMask;
 
     constructor(
-        IChainlinkOracle mellowOracle_,
+        IOracle mellowOracle_,
         IProtocolGovernance governance_,
-        ISwapper swapHelper_,
+        address router_,
         address admin,
         uint256 initialSlippageD9
     ) DefaultAccessControl(admin) {
         mellowOracle = mellowOracle_;
         governance = governance_;
-        swapHelper = swapHelper_;
+        router = router_;
         slippageD9 = initialSlippageD9;
     }
 
@@ -98,7 +97,7 @@ contract InchDepositWrapper is DefaultAccessControl {
         address[] memory vaultTokens = rootVault.vaultTokens();
         uint256[] memory swapAmounts = calcSwapAmounts(rootVault, amount);
 
-        IERC20(token).safeIncreaseAllowance(address(swapHelper), amount);
+        IERC20(token).safeIncreaseAllowance(router, amount);
 
         for (uint256 i = 0; i < vaultTokens.length; ++i) {
             if (vaultTokens[i] != token) {
@@ -106,17 +105,25 @@ contract InchDepositWrapper is DefaultAccessControl {
 
                 uint256 oldBalance = IERC20(vaultTokens[i]).balanceOf(address(this));
 
-                swapHelper.swap(token, vaultTokens[i], swapAmounts[i], minAmountOut, swapOptions[i]);
+                (bool res, bytes memory returndata) = router.call(swapOptions[i]);
+                if (!res) {
+                    assembly {
+                        let returndata_size := mload(returndata)
+                        // Bubble up revert reason
+                        revert(add(32, returndata), returndata_size)
+                    }
+                }
+
+                uint256 received = IERC20(vaultTokens[i]).balanceOf(address(this)) - oldBalance;
 
                 require(
-                    IERC20(vaultTokens[i]).balanceOf(address(this)) - oldBalance >=
-                        FullMath.mulDiv(expectedAmountOut, D9 - slippageD9, D9),
+                    received >= FullMath.mulDiv(expectedAmountOut, D9 - slippageD9, D9) && received >= minAmountOut,
                     ExceptionsLibrary.LIMIT_UNDERFLOW
                 );
             }
         }
 
-        IERC20(token).safeApprove(address(swapHelper), 0);
+        IERC20(token).safeApprove(router, 0);
 
         {
             uint256[] memory balances = new uint256[](vaultTokens.length);
