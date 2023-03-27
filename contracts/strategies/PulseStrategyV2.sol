@@ -30,6 +30,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
     struct ImmutableParams {
         IERC20Vault erc20Vault;
         IUniV3Vault uniV3Vault;
+        address router;
         address[] tokens;
     }
 
@@ -41,13 +42,11 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
     /// @param swappingAmountsCoefficientD coefficient of deviation of expected tokens for the swap and the actual number of exchanged tokens
     /// @param minSwapAmounts thresholds that cut off swap of an insignificant amount of tokens
     struct MutableParams {
-        bool forceRebalanceWidth;
         int24 priceImpactD6;
         int24 defaultIntervalWidth;
         int24 maxPositionLengthInTicks;
         int24 maxDeviationForVaultPool;
         uint32 timespanForAverageTick;
-        address router;
         uint256 neighborhoodFactorD;
         uint256 extensionFactorD;
         uint256 swapSlippageD;
@@ -74,6 +73,8 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
 
     DesiredAmounts public desiredAmounts;
 
+    bool public forceRebalanceWidthFlag;
+
     /// @param positionManager_ Uniswap v3 NonfungiblePositionManager
     constructor(INonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -87,12 +88,24 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         immutableParams = immutableParams_;
         for (uint256 i = 0; i < 2; i++) {
             IERC20(immutableParams_.tokens[i]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
+            try
+                immutableParams.erc20Vault.externalCall(
+                    immutableParams.tokens[i],
+                    IERC20.approve.selector,
+                    abi.encode(immutableParams.router, type(uint256).max)
+                )
+            returns (bytes memory) {} catch {}
         }
         DefaultAccessControlLateInit.init(admin);
     }
 
+    function setForceRebalanceFlag(bool newValue) external {
+        _requireAdmin();
+        forceRebalanceWidthFlag = newValue;
+    }
+
     function updateDesiredAmounts(DesiredAmounts memory params) external {
-        _requireAtLeastOperator();
+        _requireAdmin();
 
         require(params.amount0Desired > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.amount0Desired <= D9, ExceptionsLibrary.LIMIT_OVERFLOW);
@@ -107,17 +120,6 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
     function updateMutableParams(MutableParams memory mutableParams_) external {
         _requireAdmin();
         checkMutableParams(mutableParams_, immutableParams);
-
-        for (uint256 i = 0; i < 2; i++) {
-            try
-                immutableParams.erc20Vault.externalCall(
-                    immutableParams.tokens[i],
-                    IERC20.approve.selector,
-                    abi.encode(mutableParams_.router, type(uint256).max)
-                )
-            returns (bytes memory) {} catch {}
-        }
-
         mutableParams = mutableParams_;
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
@@ -144,11 +146,10 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
 
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
         Interval memory interval = _positionsRebalance(immutableParams_, mutableParams_, spotTick, pool);
+        forceRebalanceWidthFlag = false;
+
         _swapToTarget(immutableParams_, mutableParams_, interval, sqrtPriceX96, swapData, minAmountOutInCaseOfSwap);
         _pushIntoUniswap(immutableParams_);
-
-        mutableParams.forceRebalanceWidth = false;
-
         emit Rebalance(tx.origin, msg.sender);
     }
 
@@ -166,7 +167,6 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         require(params.extensionFactorD >= params.neighborhoodFactorD, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(params.maxPositionLengthInTicks <= TickMath.MAX_TICK * 2, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(params.router != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         require(params.maxDeviationForVaultPool > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
@@ -180,6 +180,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
     /// @dev checks immutable params according to strategy restrictions
     /// @param params immutable parameters to be checked
     function checkImmutableParams(ImmutableParams memory params) public view {
+        require(params.router != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(params.tokens[0] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.tokens[1] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -246,53 +247,34 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         IUniswapV3Pool pool,
         uint256 uniV3Nft
     ) public view returns (Interval memory newInterval, bool neededNewInterval) {
-        Interval memory currentInterval;
-        int24 currentNeighborhood;
-        int24 length;
-
-        if (uniV3Nft != 0) {
-            (, , , , , currentInterval.lowerTick, currentInterval.upperTick, , , , , ) = positionManager.positions(
-                uniV3Nft
-            );
-
-            length = currentInterval.upperTick - currentInterval.lowerTick;
-
-            currentNeighborhood = int24(
-                uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.neighborhoodFactorD, D9))
-            );
-            int24 minAcceptableTick = currentInterval.lowerTick + currentNeighborhood;
-            int24 maxAcceptableTick = currentInterval.upperTick - currentNeighborhood;
-
-            if (minAcceptableTick <= spotTick && spotTick <= maxAcceptableTick && !mutableParams_.forceRebalanceWidth) {
-                return (currentInterval, false);
-            }
-        }
-
         int24 tickSpacing = pool.tickSpacing();
-
-        if (uniV3Nft == 0 || mutableParams_.forceRebalanceWidth) {
+        if (uniV3Nft == 0 || forceRebalanceWidthFlag) {
             return (formPositionWithSpotTickInCenter(mutableParams_, spotTick, tickSpacing), true);
         }
 
-        int24 sideExtension;
-
-        int24 middleTick = (currentInterval.lowerTick + currentInterval.upperTick) / 2;
-        uint256 zoneToZoneD = FullMath.mulDiv(
-            2 * mutableParams_.extensionFactorD,
-            D9,
-            D9 - 2 * mutableParams_.extensionFactorD
+        Interval memory currentInterval;
+        (, , , , , currentInterval.lowerTick, currentInterval.upperTick, , , , , ) = positionManager.positions(
+            uniV3Nft
         );
 
-        if (spotTick <= middleTick) {
-            int24 maxLowerTick = middleTick -
-                int24(uint24(FullMath.mulDiv(uint256(uint24(middleTick - spotTick)), zoneToZoneD + D9, D9)));
-            sideExtension = currentInterval.lowerTick - maxLowerTick;
-        } else {
-            int24 minUpperTick = middleTick +
-                int24(uint24(FullMath.mulDiv(uint256(uint24(spotTick - middleTick)), zoneToZoneD + D9, D9)));
-            sideExtension = minUpperTick - currentInterval.upperTick;
+        int24 length = currentInterval.upperTick - currentInterval.lowerTick;
+
+        int24 currentNeighborhood = int24(
+            uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.neighborhoodFactorD, D9))
+        );
+
+        int24 minAcceptableTick = currentInterval.lowerTick + currentNeighborhood;
+        int24 maxAcceptableTick = currentInterval.upperTick - currentNeighborhood;
+        if (minAcceptableTick <= spotTick && spotTick <= maxAcceptableTick) {
+            return (currentInterval, false);
         }
 
+        int24 closeness = minAcceptableTick - spotTick;
+        if (spotTick - maxAcceptableTick > closeness) {
+            closeness = spotTick - maxAcceptableTick;
+        }
+
+        int24 sideExtension = int24(int256(FullMath.mulDiv(mutableParams_.extensionFactorD, uint24(closeness), D9)));
         if (sideExtension % tickSpacing != 0 || sideExtension == 0) {
             sideExtension += tickSpacing;
             sideExtension -= sideExtension % tickSpacing;
@@ -480,7 +462,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         (uint256[] memory tvlBefore, ) = immutableParams_.erc20Vault.tvl();
 
         {
-            immutableParams_.erc20Vault.externalCall(mutableParams_.router, bytes4(swapData[:4]), swapData[4:]);
+            immutableParams_.erc20Vault.externalCall(immutableParams_.router, bytes4(swapData[:4]), swapData[4:]);
         }
 
         uint256 actualAmountIn;
