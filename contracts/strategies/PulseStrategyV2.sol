@@ -274,7 +274,8 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
             closeness = spotTick - maxAcceptableTick;
         }
 
-        int24 sideExtension = int24(int256(FullMath.mulDiv(mutableParams_.extensionFactorD, uint24(closeness), D9)));
+        int24 sideExtension = closeness +
+            int24(int256(FullMath.mulDiv(mutableParams_.extensionFactorD, uint24(currentNeighborhood), D9)));
         if (sideExtension % tickSpacing != 0 || sideExtension == 0) {
             sideExtension += tickSpacing;
             sideExtension -= sideExtension % tickSpacing;
