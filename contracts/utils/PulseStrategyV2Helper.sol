@@ -16,35 +16,32 @@ contract PulseStrategyV2Helper {
         )
     {
         {
-            (IERC20Vault erc20Vault, IUniV3Vault uniV3Vault) = strategy.immutableParams();
+            (IERC20Vault erc20Vault, IUniV3Vault uniV3Vault, address router) = strategy.immutableParams();
             immutableParams = PulseStrategyV2.ImmutableParams({
                 erc20Vault: erc20Vault,
                 uniV3Vault: uniV3Vault,
+                router: router,
                 tokens: erc20Vault.vaultTokens()
             });
         }
         {
             (
-                bool forceRebalanceWidth,
                 int24 priceImpactD6,
                 int24 defaultIntervalWidth,
                 int24 maxPositionLengthInTicks,
                 int24 maxDeviationForVaultPool,
                 uint32 timespanForAverageTick,
-                address router,
                 uint256 neighborhoodFactorD,
                 uint256 extensionFactorD,
                 uint256 swapSlippageD,
                 uint256 swappingAmountsCoefficientD
             ) = strategy.mutableParams();
             mutableParams = PulseStrategyV2.MutableParams({
-                forceRebalanceWidth: forceRebalanceWidth,
                 priceImpactD6: priceImpactD6,
                 defaultIntervalWidth: defaultIntervalWidth,
                 maxPositionLengthInTicks: maxPositionLengthInTicks,
                 maxDeviationForVaultPool: maxDeviationForVaultPool,
                 timespanForAverageTick: timespanForAverageTick,
-                router: router,
                 neighborhoodFactorD: neighborhoodFactorD,
                 extensionFactorD: extensionFactorD,
                 swapSlippageD: swapSlippageD,
