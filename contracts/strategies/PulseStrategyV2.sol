@@ -163,11 +163,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
             ExceptionsLibrary.INVALID_VALUE
         );
 
-        require(params.extensionFactorD < D9 / 2, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        require(params.extensionFactorD >= params.neighborhoodFactorD, ExceptionsLibrary.LIMIT_UNDERFLOW);
-
         require(params.maxPositionLengthInTicks <= TickMath.MAX_TICK * 2, ExceptionsLibrary.LIMIT_OVERFLOW);
-
         require(params.maxDeviationForVaultPool > 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(params.timespanForAverageTick > 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.timespanForAverageTick < 7 * 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
@@ -260,7 +256,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         int24 length = currentInterval.upperTick - currentInterval.lowerTick;
 
         int24 currentNeighborhood = int24(
-            uint24(FullMath.mulDiv(uint256(uint24(length)), mutableParams_.neighborhoodFactorD, D9))
+            uint24(FullMath.mulDiv(uint24(length), mutableParams_.neighborhoodFactorD, D9))
         );
 
         int24 minAcceptableTick = currentInterval.lowerTick + currentNeighborhood;
@@ -275,7 +271,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         }
 
         int24 sideExtension = closeness +
-            int24(int256(FullMath.mulDiv(mutableParams_.extensionFactorD, uint24(currentNeighborhood), D9)));
+            int24(int256(FullMath.mulDiv(uint24(currentNeighborhood), mutableParams_.extensionFactorD, D9)));
         if (sideExtension % tickSpacing != 0 || sideExtension == 0) {
             sideExtension += tickSpacing;
             sideExtension -= sideExtension % tickSpacing;
