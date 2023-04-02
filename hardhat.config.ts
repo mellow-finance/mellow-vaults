@@ -270,6 +270,9 @@ const config: HardhatUserConfig = {
             polygon: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B",
             optimism: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B",
         },
+        stMatic: {
+            polygon: "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
+        },
         wsteth: {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
             rinkeby: "0x2ca788280fb10384946d3ecc838d94deca505cf4",
@@ -297,6 +300,9 @@ const config: HardhatUserConfig = {
         },
         algebraPositionManager: {
             polygon: "0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6",
+        },
+        kyberPositionManager: {
+            polygon: "0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8",
         },
         uniswapV3Factory: {
             default: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
