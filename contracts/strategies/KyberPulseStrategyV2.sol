@@ -138,7 +138,12 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
-    function rebalance(uint256 deadline, bytes calldata swapData) external {
+    function rebalance(
+        uint256 deadline,
+        bytes calldata swapData,
+        Interval memory newInterval,
+        int24[2] memory previousTicks
+    ) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
@@ -147,7 +152,14 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         checkTickDeviation(immutableParams_, mutableParams_, pool);
 
         (uint160 sqrtPriceX96, int24 spotTick, , ) = pool.getPoolState();
-        Interval memory interval = _positionsRebalance(immutableParams_, mutableParams_, spotTick, pool);
+        Interval memory interval = _positionsRebalance(
+            immutableParams_,
+            mutableParams_,
+            spotTick,
+            pool,
+            newInterval,
+            previousTicks
+        );
         _swapToTarget(immutableParams_, mutableParams_, interval, sqrtPriceX96, swapData);
         _pushIntoKyberSwap(immutableParams_);
 
@@ -170,32 +182,41 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         require(params.timespanForAverageTick < 7 * 24 * 60 * 60, ExceptionsLibrary.VALUE_ZERO);
 
         require(params.minSwapAmounts.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(params.swapSlippageD <= D9, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(params.swappingAmountsCoefficientD <= D9, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(
+            params.swapSlippageD <= D9 && params.swappingAmountsCoefficientD <= D9,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
     }
 
     /// @dev checks immutable params according to strategy restrictions
     /// @param params immutable parameters to be checked
     function checkImmutableParams(ImmutableParams memory params) public view {
-        require(params.router != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(
+            params.router != address(0) && params.tokens[0] != address(0) && params.tokens[1] != address(0),
+            ExceptionsLibrary.ADDRESS_ZERO
+        );
         require(params.tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(params.tokens[0] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.tokens[1] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         {
-            require(address(params.erc20Vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+            require(
+                address(params.erc20Vault) != address(0) && address(params.kyberVault) != address(0),
+                ExceptionsLibrary.ADDRESS_ZERO
+            );
             address[] memory erc20VaultTokens = params.erc20Vault.vaultTokens();
             require(erc20VaultTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-            require(erc20VaultTokens[0] == params.tokens[0], ExceptionsLibrary.INVARIANT);
-            require(erc20VaultTokens[1] == params.tokens[1], ExceptionsLibrary.INVARIANT);
+            require(
+                erc20VaultTokens[0] == params.tokens[0] && erc20VaultTokens[1] == params.tokens[1],
+                ExceptionsLibrary.INVARIANT
+            );
         }
 
         {
-            require(address(params.kyberVault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
             address[] memory kyberVaultTokens = params.kyberVault.vaultTokens();
             require(kyberVaultTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-            require(kyberVaultTokens[0] == params.tokens[0], ExceptionsLibrary.INVARIANT);
-            require(kyberVaultTokens[1] == params.tokens[1], ExceptionsLibrary.INVARIANT);
+            require(
+                kyberVaultTokens[0] == params.tokens[0] && kyberVaultTokens[1] == params.tokens[1],
+                ExceptionsLibrary.INVARIANT
+            );
         }
     }
 
@@ -296,6 +317,18 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         neededNewInterval = true;
     }
 
+    /// @dev need to check that previousTick is the closest initialized tick <= tick
+    function _checkCorrectPreviousTick(
+        IPool pool,
+        int24 tick,
+        int24 previousTick
+    ) internal view {
+        require(previousTick <= tick, ExceptionsLibrary.INVARIANT); // condition 1: previousTick <= tick
+        (int24 previousTickForP, int24 nextTickForP) = pool.initializedTicks(previousTick);
+        require(previousTickForP != 0 || nextTickForP != 0, ExceptionsLibrary.INVALID_TARGET); // condition 2: initialized
+        require(nextTickForP == previousTick || nextTickForP > tick, ExceptionsLibrary.INVARIANT); // condition 3: closest
+    }
+
     /// @dev The function rebalances the position on the algebra pool. If there was a position in the kyberVault,
     /// and the current tick is inside this position, taking into account the tickNeighborhood, then the position will not be rebalanced.
     /// Otherwise, if there is a position in the kyberVault, then all tokens will be sent to erc20Vault, the new position will be mined,
@@ -309,7 +342,9 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
         int24 spotTick,
-        IPool pool
+        IPool pool,
+        Interval memory newInterval,
+        int24[2] memory previousTicks
     ) private returns (Interval memory) {
         IKyberVault vault = immutableParams_.kyberVault;
         uint256 positionNft = vault.kyberNft();
@@ -332,14 +367,12 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
             vault.pull(address(immutableParams_.erc20Vault), immutableParams_.tokens, tokenAmounts, "");
         }
 
-        int24[2] memory Qticks;
-
-        {
-            (int24 tickLowerQ, ) = pool.initializedTicks(interval.lowerTick);
-            (int24 tickUpperQ, ) = pool.initializedTicks(interval.upperTick);
-            Qticks[0] = tickLowerQ;
-            Qticks[1] = tickUpperQ;
-        }
+        require(
+            interval.lowerTick == newInterval.lowerTick && interval.upperTick == newInterval.upperTick,
+            ExceptionsLibrary.INVALID_TARGET
+        );
+        _checkCorrectPreviousTick(pool, interval.lowerTick, previousTicks[0]);
+        _checkCorrectPreviousTick(pool, interval.upperTick, previousTicks[1]);
 
         (uint256 newNft, , , ) = positionManager.mint(
             IBasePositionManager.MintParams({
@@ -348,7 +381,7 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
                 fee: pool.swapFeeUnits(),
                 tickLower: interval.lowerTick,
                 tickUpper: interval.upperTick,
-                ticksPrevious: Qticks,
+                ticksPrevious: previousTicks,
                 amount0Desired: desiredAmounts.amount0Desired,
                 amount1Desired: desiredAmounts.amount1Desired,
                 amount0Min: 0,
@@ -532,7 +565,7 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.0.0");
+        return bytes32("1.1.0");
     }
 
     /// @notice Emitted after a successful token swap
