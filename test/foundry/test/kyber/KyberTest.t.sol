@@ -271,7 +271,7 @@ contract KyberTest is Test {
 
      //   kyberVault.updateFarmInfo();
 
-        preparePush(address(kyberVault));
+      //  preparePush(address(kyberVault));
 
         {
             uint256[] memory nfts = new uint256[](2);
