@@ -6,7 +6,7 @@ import "../strategies/LStrategy.sol";
 import "./DefaultAccessControl.sol";
 
 contract RebalanceWrapper is DefaultAccessControl {
-    LStrategy public strategy;
+    LStrategy public immutable strategy;
     int24 public maxTicksDelta;
 
     constructor(
@@ -23,7 +23,7 @@ contract RebalanceWrapper is DefaultAccessControl {
         maxTicksDelta = newMaxTicksDelta;
     }
 
-    function rebalanceUniV3Vaults(int24 offchainTick)
+    function rebalanceUniV3Vaults(int24 offchainTick, uint256 deadline)
         external
         returns (
             uint256[] memory pulledAmounts,
@@ -38,10 +38,10 @@ contract RebalanceWrapper is DefaultAccessControl {
         uint256[] memory minValues = new uint256[](2);
 
         (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity, lowerToUpper) = strategy
-            .rebalanceUniV3Vaults(minValues, minValues, block.timestamp + 1);
+            .rebalanceUniV3Vaults(minValues, minValues, deadline);
     }
 
-    function rebalanceERC20UniV3Vaults(int24 offchainTick)
+    function rebalanceERC20UniV3Vaults(int24 offchainTick, uint256 deadline)
         external
         returns (
             uint256[] memory totalPulledAmounts,
@@ -56,7 +56,7 @@ contract RebalanceWrapper is DefaultAccessControl {
         (totalPulledAmounts, isNegativeCapitalDelta, percentageIncreaseD) = strategy.rebalanceERC20UniV3Vaults(
             minValues,
             minValues,
-            block.timestamp + 1
+            deadline
         );
     }
 
