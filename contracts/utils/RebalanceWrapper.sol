@@ -6,11 +6,14 @@ import "../strategies/LStrategy.sol";
 import "./DefaultAccessControl.sol";
 
 contract RebalanceWrapper is DefaultAccessControl {
-
     LStrategy public strategy;
     int24 public maxTicksDelta;
 
-    constructor(address admin, address strategy_, int24 initialDelta) DefaultAccessControl(admin) {
+    constructor(
+        address admin,
+        address strategy_,
+        int24 initialDelta
+    ) DefaultAccessControl(admin) {
         strategy = LStrategy(strategy_);
         maxTicksDelta = initialDelta;
     }
@@ -26,7 +29,10 @@ contract RebalanceWrapper is DefaultAccessControl {
         _requireAtLeastOperator();
         IUniswapV3Pool pool = strategy.lowerVault().pool();
         (, int24 spotTick, , , , , ) = pool.slot0();
-        require(offchainTick + maxTicksDelta >= spotTick && offchainTick - maxTicksDelta <= spotTick, ExceptionsLibrary.INVALID_STATE);
+        require(
+            offchainTick + maxTicksDelta >= spotTick && offchainTick - maxTicksDelta <= spotTick,
+            ExceptionsLibrary.INVALID_STATE
+        );
         uint256[] memory minValues = new uint256[](2);
 
         strategy.rebalanceUniV3Vaults(minValues, minValues, block.timestamp + 1);
@@ -36,7 +42,10 @@ contract RebalanceWrapper is DefaultAccessControl {
         _requireAtLeastOperator();
         IUniswapV3Pool pool = strategy.lowerVault().pool();
         (, int24 spotTick, , , , , ) = pool.slot0();
-        require(offchainTick + maxTicksDelta >= spotTick && offchainTick - maxTicksDelta <= spotTick, ExceptionsLibrary.INVALID_STATE);
+        require(
+            offchainTick + maxTicksDelta >= spotTick && offchainTick - maxTicksDelta <= spotTick,
+            ExceptionsLibrary.INVALID_STATE
+        );
         uint256[] memory minValues = new uint256[](2);
 
         strategy.rebalanceERC20UniV3Vaults(minValues, minValues, block.timestamp + 1);
