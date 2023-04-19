@@ -3,11 +3,13 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
+import {PositionValue, LiquidityAmounts} from "../interfaces/external/quickswap/PositionValue.sol";
 import "../interfaces/utils/IQuickSwapHelper.sol";
 import "../interfaces/external/quickswap/IDragonLair.sol";
 
 import "../libraries/external/DataStorageLibrary.sol";
+import "../libraries/external/TickMath.sol";
+import "../libraries/external/FullMath.sol";
 
 contract QuickSwapHelper is IQuickSwapHelper {
     IAlgebraNonfungiblePositionManager public immutable positionManager;
