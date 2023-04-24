@@ -29,8 +29,9 @@ contract MainnetDeployment is Script {
     IUniV3Vault uniV3Vault;
 
     PulseStrategyV2 strategy;
-
     uint256 nftStart;
+
+    /* mainnet
     address sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
     address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
     address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
@@ -45,6 +46,22 @@ contract MainnetDeployment is Script {
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
     address public uniV3Governance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+    */
+
+    address sAdmin = 0x36B16e173C5CDE5ef9f43944450a7227D71B4E31;
+    address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
+    address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
+    address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
+    address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
+
+    address public matic = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+    address public stmatic = 0x3A58a54C066FdC0f2D55FC9C89F0415C92eBf3C4;
+    address public governance = 0x8Ff3148CE574B8e135130065B188960bA93799c6;
+    address public registry = 0xd3D0e85F225348a2006270Daf624D8c46cAe4E1F;
+    address public rootGovernance = 0xC12885af1d4eAfB8176905F16d23CD7A33D21f37;
+    address public erc20Governance = 0x05164eC2c3074A4E8eA20513Fbe98790FfE930A4;
+    address public uniV3Governance = 0x1832A9c3a578a0E6D02Cc4C19ecBD33FA88Cb183;
+    address public mellowOracle = 0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836;
 
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
@@ -88,21 +105,27 @@ contract MainnetDeployment is Script {
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = wsteth;
-        tokens[1] = weth;
+        tokens[0] = matic;
+        tokens[1] = stmatic;
 
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
             erc20VaultGovernance.createVault(tokens, deployer);
         }
 
-        IOracle oracle = IOracle(0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836);
-
         UniV3Helper helper = new UniV3Helper(INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88));
 
         {
             IUniV3VaultGovernance uniGovernance = IUniV3VaultGovernance(uniV3Governance);
-            uniGovernance.createVault(tokens, deployer, 500, address(helper));
+            uniGovernance.createVault(tokens, deployer, 100, address(helper));
+
+            IUniV3VaultGovernance.DelayedStrategyParams memory dsp = IUniV3VaultGovernance.DelayedStrategyParams({
+                safetyIndicesSet: 2
+            });
+
+            uniGovernance.stageDelayedStrategyParams(erc20VaultNft + 1, dsp);
+            uniGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
+
         }
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
@@ -118,17 +141,17 @@ contract MainnetDeployment is Script {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**15;
-        AA[1] = 10**15;
+        AA[0] = 10**12;
+        AA[1] = 10**12;
 
         PulseStrategyV2.MutableParams memory smParams = PulseStrategyV2.MutableParams({
             priceImpactD6: 0,
             defaultIntervalWidth: 280,
             maxPositionLengthInTicks: 700,
             maxDeviationForVaultPool: 50,
-            timespanForAverageTick: 60,
+            timespanForAverageTick: 300,
             neighborhoodFactorD: 10 ** 7 * 15,
-            extensionFactorD: 10 ** 9 * 2,
+            extensionFactorD: 10 ** 7 * 175,
             swapSlippageD: 10 ** 7,
             swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
@@ -169,19 +192,27 @@ contract MainnetDeployment is Script {
     function run() external {
         vm.startBroadcast();
 
-        IERC20(weth).transfer(0xFDF8B88D77a9B65646e0D9Cd5880E3677B94Af01, 10**12);
-        IERC20(wsteth).transfer(0xFDF8B88D77a9B65646e0D9Cd5880E3677B94Af01, 10**12);
+        kek();
 
-        rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
+        IERC20(matic).transfer(address(strategy), 10**12);
+        IERC20(stmatic).transfer(address(strategy), 10**12);
 
-      //  IERC20(weth).approve(address(rootVault), 10**20);
-      //  IERC20(wsteth).approve(address(rootVault), 10**20);
+      //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
+
+        IERC20(matic).approve(address(rootVault), 10**20);
+        IERC20(stmatic).approve(address(rootVault), 10**20);
 
         uint256[] memory A = new uint256[](2);
-        A[0] = 4 * 10**16;
-        A[1] = 4 * 10**16;
+        A[0] = 10**10;
+        A[1] = 10**10;
 
-        //rootVault.deposit(A, 0, "");
+        rootVault.deposit(A, 0, "");
+
+        A = new uint256[](2);
+        A[0] = 4 * 10**15;
+        A[1] = 4 * 10**15;
+
+        rootVault.deposit(A, 0, "");
 
 
      //   kek();
