@@ -7,7 +7,7 @@ import "./IAlgebraNonfungiblePositionManager.sol";
 
 import "./FixedPoint128.sol";
 import "./LiquidityAmounts.sol";
-import "./TickMath.sol";
+import "../../../libraries/external/TickMath.sol";
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {

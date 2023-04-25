@@ -1,5 +1,3 @@
-/*
-
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
@@ -12,61 +10,60 @@ import "../../src/MockOracle.sol";
 import "../../src/MockRouter.sol";
 
 import "../../src/vaults/CamelotVaultGovernance.sol";
-import "../../src/strategies/KyberPulseStrategy.sol";
-
-import "../../src/interfaces/external/kyber/periphery/helpers/TicksFeeReader.sol";
+import "../../src/strategies/CamelotPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
-import "../../src/interfaces/vaults/IKyberVaultGovernance.sol";
+import "../../src/interfaces/vaults/ICamelotVaultGovernance.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVault.sol";
 import "../../src/interfaces/vaults/IERC20Vault.sol";
-import "../../src/interfaces/vaults/IKyberVault.sol";
+import "../../src/interfaces/vaults/ICamelotVault.sol";
 
-import "../../src/vaults/KyberVault.sol";
+import "../../src/vaults/CamelotVault.sol";
 
-contract KyberStrategyTest is Test {
+contract CamelotStrategyTest is Test {
 
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
-    IKyberVault kyberVault;
+    ICamelotVault camelotVault;
 
-    KyberPulseStrategy kyberStrategy;
+    CamelotPulseStrategyV2 camelotStrategy;
 
     uint256 nftStart;
-    address sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
-    address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
-    address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
+    address sAdmin = 0x49e99fd160a04304b6CFd251Fce0ACB0A79c626d;
+    address protocolTreasury = 0xDF6780faC92ec8D5f366584c29599eA1c97C77F5;
+    address strategyTreasury = 0xb0426fDFEfF47B23E5c2794D406A3cC8E77Ec001;
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
-    address admin = 0xdbA69aa8be7eC788EF5F07Ce860C631F5395E3B1;
+    address admin = 0x160cda72DEc5E7ECc82E0a98CF13c29B0a2396E4;
 
-    address public bob = 0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B;
-    address public stmatic = 0x3A58a54C066FdC0f2D55FC9C89F0415C92eBf3C4;
-    address public governance = 0x8Ff3148CE574B8e135130065B188960bA93799c6;
-    address public registry = 0xd3D0e85F225348a2006270Daf624D8c46cAe4E1F;
-    address public rootGovernance = 0xC12885af1d4eAfB8176905F16d23CD7A33D21f37;
-    address public erc20Governance = 0x05164eC2c3074A4E8eA20513Fbe98790FfE930A4;
-    address public mellowOracle = 0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836;
+    address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public usdc = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
 
-    address public knc = 0x1C954E8fe737F99f68Fa1CCda3e51ebDB291948C;
-    address public usdc = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
+    address public governance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
+    address public registry = 0x7D7fEF7bF8bE4DB0FFf06346C59efc24EE8e4c22;
+
+    address public rootGovernance = 0xC75825C5539968648632ec6207f8EDeC407dF891;
+    address public erc20Governance = 0x7D62E2c0516B8e747d95323Ca350c847C4Dea533;
+    address public mellowOracle = 0x3EFf1DA9e5f72d51F268937d3A5426c2bf5eFf4A;
+
+    address public manager = 0xAcDcC3C6A2339D08E0AC9f694E4DE7c52F890Db3;
 
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
         
-        deal(stmatic, deployer, 10**10);
-        deal(bob, deployer, 10**10);
+        deal(weth, deployer, 10**10);
+        deal(usdc, deployer, 10**4);
 
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 10**10;
-        amounts[1] = 10**10;
+        amounts[1] = 10**4;
 
-        IERC20(stmatic).approve(address(rootVault), type(uint256).max);
-        IERC20(bob).approve(address(rootVault), type(uint256).max);
+        IERC20(weth).approve(address(rootVault), type(uint256).max);
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
 
         bytes memory depositInfo;
 
@@ -79,15 +76,15 @@ contract KyberStrategyTest is Test {
             firstDeposit();
         }
 
-        deal(stmatic, deployer, amount * 10**18);
-        deal(bob, deployer, amount * 10**18);
+        deal(weth, deployer, amount * 10**15);
+        deal(usdc, deployer, amount * 10**6);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = amount * 10**18;
-        amounts[1] = amount * 10**18;
+        amounts[0] = amount * 10**15;
+        amounts[1] = amount * 10**6;
 
-        IERC20(stmatic).approve(address(rootVault), type(uint256).max);
-        IERC20(bob).approve(address(rootVault), type(uint256).max);
+        IERC20(weth).approve(address(rootVault), type(uint256).max);
+        IERC20(usdc).approve(address(rootVault), type(uint256).max);
 
         bytes memory depositInfo;
 
@@ -102,7 +99,7 @@ contract KyberStrategyTest is Test {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
 
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(kyberStrategy), nfts, deployer);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(camelotStrategy), nfts, deployer);
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -134,31 +131,10 @@ contract KyberStrategyTest is Test {
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = stmatic;
-        tokens[1] = bob;
+        tokens[0] = weth;
+        tokens[1] = usdc;
 
-        TicksFeesReader reader = new TicksFeesReader();
-
-        KyberHelper kyberHelper = new KyberHelper(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), reader);
-
-        {
-            uint8[] memory grant = new uint8[](2);
-            grant[0] = 2;
-            grant[1] = 3;
-
-            IProtocolGovernance gv = IProtocolGovernance(governance);
-
-            vm.stopPrank();
-            vm.startPrank(admin);
-
-            gv.stagePermissionGrants(stmatic, grant);
-            vm.warp(block.timestamp + 86400);
-            gv.commitPermissionGrants(stmatic);
-
-            vm.stopPrank();
-            vm.startPrank(deployer);
-
-        }
+        CamelotHelper helper = new CamelotHelper(IAlgebraNonfungiblePositionManager(manager), weth, usdc);
 
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
@@ -166,19 +142,21 @@ contract KyberStrategyTest is Test {
         }
 
         MockOracle mockOracle = new MockOracle();
-        mockOracle.updatePrice(10187222 * 10**22);
+        mockOracle.updatePrice(14832901 * 10**13);
+
+        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         {
 
-            KyberVault k = new KyberVault(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83), kyberHelper, IOracle(address(mockOracle)));
+            CamelotVault k = new CamelotVault(IAlgebraNonfungiblePositionManager(manager), helper);
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
-                protocolGovernance: IProtocolGovernance(0x8Ff3148CE574B8e135130065B188960bA93799c6),
+                protocolGovernance: IProtocolGovernance(governance),
                 registry: vaultRegistry,
                 singleton: k
             });
 
-            IKyberVaultGovernance kyberVaultGovernance = new KyberVaultGovernance(paramsA);
+            ICamelotVaultGovernance camelotVaultGovernance = new CamelotVaultGovernance(paramsA);
 
             {
 
@@ -189,80 +167,80 @@ contract KyberStrategyTest is Test {
                 vm.stopPrank();
                 vm.startPrank(admin);
 
-                gv.stagePermissionGrants(address(kyberVaultGovernance), grant2);
+                gv.stagePermissionGrants(address(camelotVaultGovernance), grant2);
                 vm.warp(block.timestamp + 86400);
-                gv.commitPermissionGrants(address(kyberVaultGovernance));
+                gv.commitPermissionGrants(address(camelotVaultGovernance));
 
                 vm.stopPrank();
                 vm.startPrank(deployer);
 
             }
 
+            camelotVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
+        }
+
+        camelotVault = ICamelotVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
+
+        camelotStrategy = new CamelotPulseStrategyV2(IAlgebraNonfungiblePositionManager(manager));
+        MockRouter mockRouter = new MockRouter(tokens, mockOracle);
+
+        {
+            uint8[] memory grant = new uint8[](1);
+            grant[0] = 4;
+
+            IProtocolGovernance gv = IProtocolGovernance(governance);
+
             vm.stopPrank();
             vm.startPrank(admin);
 
-            bytes[] memory P = new bytes[](1);
-            P[0] = abi.encodePacked(knc, uint24(1000), usdc, uint24(8), bob);
-
-            IKyberVaultGovernance.StrategyParams memory paramsC = IKyberVaultGovernance.StrategyParams({
-                farm: IKyberSwapElasticLM(0xBdEc4a045446F583dc564C0A227FFd475b329bf0),
-                paths: P,
-                pid: 117
-            });
+            gv.stagePermissionGrants(address(mockRouter), grant);
+            vm.warp(block.timestamp + 86400);
+            gv.commitPermissionGrants(address(mockRouter));
 
             vm.stopPrank();
             vm.startPrank(deployer);
 
-            kyberVaultGovernance.createVault(tokens, deployer, 1000);
-
-            kyberVaultGovernance.setStrategyParams(erc20VaultNft + 1, paramsC);
         }
 
-        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
-        kyberVault = IKyberVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
-
-        kyberStrategy = new KyberPulseStrategy(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8));
-
-        MockRouter mockRouter = new MockRouter(tokens, mockOracle);
-
-        address W = 0x6243288C527c15A7B7eD6B892Bc2670E05c951F0;
+        address W = 0x52314d240BCA143aCF755870659B9035eE357bb6;
 
         vm.stopPrank();
         vm.startPrank(admin);
 
         IProtocolGovernance(governance).stageValidator(address(mockRouter), W);
-        IProtocolGovernance(governance).stageValidator(stmatic, W);
-        IProtocolGovernance(governance).stageValidator(bob, W);
         vm.warp(block.timestamp + 86400);
         IProtocolGovernance(governance).commitValidator(address(mockRouter));
-        IProtocolGovernance(governance).commitValidator(stmatic);
-        IProtocolGovernance(governance).commitValidator(bob);
 
         vm.stopPrank();
         vm.startPrank(deployer);
 
-        KyberPulseStrategy.ImmutableParams memory sParams = KyberPulseStrategy.ImmutableParams({
-            router: address(mockRouter),
+        CamelotPulseStrategyV2.ImmutableParams memory sParams = CamelotPulseStrategyV2.ImmutableParams({
             erc20Vault: erc20Vault,
-            kyberVault: kyberVault,
-            mellowOracle: mockOracle,
+            camelotVault: camelotVault,
+            router: address(mockRouter),
             tokens: tokens
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**15;
-        AA[1] = 10**15;
+        AA[0] = 10**12;
+        AA[1] = 10**3;
 
-        KyberPulseStrategy.MutableParams memory smParams = KyberPulseStrategy.MutableParams({
+        CamelotPulseStrategyV2.MutableParams memory smParams = CamelotPulseStrategyV2.MutableParams({
             priceImpactD6: 0,
-            intervalWidth: 2400,
-            tickNeighborhood: 200,
+            defaultIntervalWidth: 4200,
+            maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
-            amount0Desired: 10 ** 9,
-            amount1Desired: 10 ** 9,
+            timespanForAverageTick: 300,
+            neighborhoodFactorD: 15 * 10**7,
+            extensionFactorD: 175 * 10**7,
             swapSlippageD: 10 ** 7,
             swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
+        });
+
+        CamelotPulseStrategyV2.DesiredAmounts memory smmParams = CamelotPulseStrategyV2.DesiredAmounts({
+            amount0Desired: 10 ** 9,
+            amount1Desired: 10 ** 9
         });
 
      //   kyberVault.updateFarmInfo();
@@ -276,14 +254,15 @@ contract KyberStrategyTest is Test {
             combineVaults(tokens, nfts);
         }
 
-        kyberStrategy.initialize(sParams, deployer);
-        kyberStrategy.updateMutableParams(smParams);
+        camelotStrategy.initialize(sParams, deployer);
+        camelotStrategy.updateMutableParams(smParams);
+        camelotStrategy.updateDesiredAmounts(smmParams);
 
-        deal(stmatic, address(kyberStrategy), 10**9);
-        deal(bob, address(kyberStrategy), 10**9);
+        deal(weth, address(camelotStrategy), 10**9);
+        deal(usdc, address(camelotStrategy), 10**9);
 
-        deal(stmatic, address(mockRouter), 10**25);
-        deal(bob, address(mockRouter), 10**25);
+        deal(weth, address(mockRouter), 10**25);
+        deal(usdc, address(mockRouter), 10**25);
     }
 
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
@@ -315,13 +294,27 @@ contract KyberStrategyTest is Test {
 
         bytes4 selector = MockRouter.swap.selector;
 
-        uint256 tokenIn = 0;
-        uint256 amount = 50000740895733757102;
+        uint256 tokenIn = 1;
+        uint256 amount = 511344429;
 
         bytes memory swapdata = abi.encodePacked(selector, tokenIn, amount);
 
-        kyberStrategy.rebalance(block.timestamp + 1, swapdata);
+        camelotStrategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
-}
 
-*/
+    function testFailRebalanceWrongAmount() public {
+        firstDeposit();
+        deposit(1000);
+
+        bytes4 selector = MockRouter.swap.selector;
+
+        uint256 tokenIn = 1;
+        uint256 amount = 51134442;
+
+        bytes memory swapdata = abi.encodePacked(selector, tokenIn, amount);
+
+        camelotStrategy.rebalance(block.timestamp + 1, swapdata, 0);
+    }
+
+
+}
