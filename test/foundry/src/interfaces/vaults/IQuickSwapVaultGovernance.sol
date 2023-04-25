@@ -25,10 +25,10 @@ interface IQuickSwapVaultGovernance is IVaultGovernance {
     /// @notice Deploys a new vault.
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param owner_ Owner of the vault NFT
-    /// @param quickSwapHelper_ address of helper
+    /// @param erc20Vault_ address of erc20Vault
     function createVault(
         address[] memory vaultTokens_,
         address owner_,
-        address quickSwapHelper_
+        address erc20Vault_
     ) external returns (IQuickSwapVault vault, uint256 nft);
 }

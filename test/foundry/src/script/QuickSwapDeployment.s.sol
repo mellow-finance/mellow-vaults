@@ -104,7 +104,9 @@ contract QuickSwapDeployment is Script {
 
         IOracle oracle = IOracle(0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836);
 
-        QuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6), 0xB5C064F955D8e7F38fE0460C556a72987494eE17, 0x958d208Cdf087843e9AD98d23823d32E17d723A1);
+        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
+
+   //     QuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6), 0xB5C064F955D8e7F38fE0460C556a72987494eE17, 0x958d208Cdf087843e9AD98d23823d32E17d723A1);
 
         {
 /*
@@ -117,7 +119,7 @@ contract QuickSwapDeployment is Script {
             });
 */
             IQuickSwapVaultGovernance quickGovernanceC = QuickSwapVaultGovernance(0xaC2A04502929436062e2D0e8b9fD16b2C85fBD88);
-            quickGovernanceC.createVault(tokens, deployer, address(helper));
+            quickGovernanceC.createVault(tokens, deployer, address(erc20Vault));
 
             IQuickSwapVaultGovernance.StrategyParams memory sp = IQuickSwapVaultGovernance.StrategyParams({
                 key: IIncentiveKey.IncentiveKey({
@@ -136,7 +138,6 @@ contract QuickSwapDeployment is Script {
             quickGovernanceC.setStrategyParams(erc20VaultNft + 1, sp);
         }
 
-        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         quickVault = IQuickSwapVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
         QuickPulseStrategyV2 protoS = new QuickPulseStrategyV2(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6));
