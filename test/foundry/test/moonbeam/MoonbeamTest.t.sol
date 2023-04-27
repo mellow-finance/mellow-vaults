@@ -52,6 +52,8 @@ contract StellaStrategyTest is Test {
     address public factory = 0xabE1655110112D0E45EF91e94f8d757e4ddBA59C;
     address public farm = 0x0D4F8A55a5B2583189468ca3b0A32d972f90e6e5;
 
+    address public pool = 0xaB8C35164a8e3EF302d18DA953923eA31f0Fe393;
+
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
@@ -128,12 +130,15 @@ contract StellaStrategyTest is Test {
         rootVaultGovernance.commitDelayedStrategyParams(nft);
     }
 
+    address[] tokens;
+
     function kek() public payable returns (uint256 startNft) {
+
+        tokens = new address[](2);
 
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
-        address[] memory tokens = new address[](2);
         tokens[0] = usdc;
         tokens[1] = wglmr;
 
@@ -180,6 +185,27 @@ contract StellaStrategyTest is Test {
             }
 
             quickSwapVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
+
+            IIncentiveKey.IncentiveKey memory key = IIncentiveKey.IncentiveKey({
+                rewardToken: IERC20Minimal(0x0E358838ce72d5e61E0018a2ffaC4bEC5F4c88d2),
+                bonusRewardToken: IERC20Minimal(0xAcc15dC74880C9944775448304B263D191c6077F),
+                pool: IAlgebraPool(0xaB8C35164a8e3EF302d18DA953923eA31f0Fe393),
+                startTime: 1679238000,
+                endTime: 2024838000
+            });
+
+            IQuickSwapVaultGovernance.StrategyParams memory qsp = IQuickSwapVaultGovernance.StrategyParams({
+                key: key,
+                bonusTokenToUnderlying: wglmr,
+                rewardTokenToUnderlying: wglmr,
+                swapSlippageD: 10**7,
+                rewardPoolTimespan: 300
+            });
+
+            quickSwapVaultGovernance.setStrategyParams(erc20VaultNft + 1, qsp);
+
+
+
         }
 
         quickswapVault = IQuickSwapVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
@@ -196,8 +222,10 @@ contract StellaStrategyTest is Test {
             vm.startPrank(admin);
 
             gv.stagePermissionGrants(address(router), grant);
+            gv.stagePermissionGrants(address(pool), grant);
             vm.warp(block.timestamp + 86400);
             gv.commitPermissionGrants(address(router));
+            gv.commitPermissionGrants(address(pool));
 
             vm.stopPrank();
             vm.startPrank(deployer);
@@ -224,18 +252,19 @@ contract StellaStrategyTest is Test {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**3;
+        
+        AA[0] = 10**3;
+        AA[1] = 10**12;
 
         QuickPulseStrategyV2.MutableParams memory smParams = QuickPulseStrategyV2.MutableParams({
-            priceImpactD6: 0,
+            priceImpactD6: 5000,
             defaultIntervalWidth: 4200,
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
             neighborhoodFactorD: 15 * 10**7,
             extensionFactorD: 175 * 10**7,
-            swapSlippageD: 10 ** 7,
+            swapSlippageD: 2 * 10 ** 7,
             swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
@@ -287,41 +316,104 @@ contract StellaStrategyTest is Test {
         uint256 startNft = kek();
     }
 
-    /*
-
-    function testRebalance() public {
+    function testSmallDepositRebalance() public {
         firstDeposit();
-        deposit(1000);
+        deposit(10);
 
-        bytes4 selector = MockRouter.swap.selector;
+        bytes4 selector = IAlgebraSwapRouter.exactInputSingle.selector;
 
-        uint256 tokenIn = 1;
-        uint256 amount = 511344429;
+        uint256 tokenIn = 0;
+        uint256 amount = 4985950;
 
-        bytes memory swapdata = abi.encodePacked(selector, tokenIn, amount);
+        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
 
-        camelotStrategy.rebalance(block.timestamp + 1, swapdata, 0);
+        strategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
 
-    function testFailRebalanceWrongAmount() public {
+
+    function testFailSmallDepositRebalanceWrongAmount() public {
         firstDeposit();
-        deposit(1000);
+        deposit(10);
 
-        bytes4 selector = MockRouter.swap.selector;
+        bytes4 selector = IAlgebraSwapRouter.exactInputSingle.selector;
 
-        uint256 tokenIn = 1;
-        uint256 amount = 51134442;
+        uint256 tokenIn = 0;
+        uint256 amount = 3985950;
 
-        bytes memory swapdata = abi.encodePacked(selector, tokenIn, amount);
+        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
 
-        camelotStrategy.rebalance(block.timestamp + 1, swapdata, 0);
+        strategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
 
-    */
+    function testLargeDepositRebalance() public {
+        firstDeposit();
+        deposit(100000);
 
-    function test() public {
+        bytes4 selector = IAlgebraSwapRouter.exactInputSingle.selector;
 
+        uint256 tokenIn = 0;
+        uint256 amount = 49809693113;
+
+        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+
+        strategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
 
+    function testFarmingWorksCorrectly() public {
 
+        {
+
+            firstDeposit();
+            deposit(10);
+
+            bytes4 selector = IAlgebraSwapRouter.exactInputSingle.selector;
+
+            uint256 tokenIn = 0;
+            uint256 amount = 4985950;
+
+            bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+
+            strategy.rebalance(block.timestamp + 1, swapdata, 0);
+
+        }
+
+        deal(usdc, deployer, 10**10);
+
+        IERC20(usdc).approve(router, type(uint256).max);
+        IERC20(wglmr).approve(router, type(uint256).max);
+
+        (uint256[] memory tvlBefore, ) = rootVault.tvl();
+
+        IAlgebraSwapRouter.ExactInputSingleParams memory sp = IAlgebraSwapRouter.ExactInputSingleParams({
+            tokenIn: tokens[0],
+            tokenOut: tokens[1],
+            recipient: deployer,
+            deadline: type(uint256).max,
+            amountIn: 10**10,
+            amountOutMinimum: 0,
+            limitSqrtPrice: 0
+        });
+
+        uint256 A = IAlgebraSwapRouter(router).exactInputSingle(sp);
+
+        sp = IAlgebraSwapRouter.ExactInputSingleParams({
+            tokenIn: tokens[1],
+            tokenOut: tokens[0],
+            recipient: deployer,
+            deadline: type(uint256).max,
+            amountIn: A,
+            amountOutMinimum: 0,
+            limitSqrtPrice: 0
+        });
+
+        IAlgebraSwapRouter(router).exactInputSingle(sp);
+
+        vm.warp(86400 * 30);
+
+        (uint256[] memory tvlAfter, ) = rootVault.tvl();
+        require(tvlAfter[0] >= tvlBefore[0] && tvlAfter[1] >= tvlBefore[1]);
+        require(tvlAfter[0] > tvlBefore[0] || tvlAfter[1] > tvlBefore[1]);
+
+        quickswapVault.collectRewards();
+    }
 }
