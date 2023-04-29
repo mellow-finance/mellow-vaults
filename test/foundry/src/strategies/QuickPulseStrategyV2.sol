@@ -468,6 +468,9 @@ contract QuickPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
             calculateTargetRatioOfToken1(interval, sqrtSpotPriceX96, priceX96)
         );
 
+        console2.log(tokenInIndex);
+        console2.log(amountIn);
+
         if (amountIn < mutableParams_.minSwapAmounts[tokenInIndex]) {
             return;
         }
@@ -496,7 +499,7 @@ contract QuickPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         }
 
         uint256 actualSwapPriceX96 = FullMath.mulDiv(actualAmountOut, Q96, actualAmountIn);
-
+        
         require(actualAmountOut >= minAmountOutInCaseOfSwap, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(
