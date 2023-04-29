@@ -18,8 +18,6 @@ import "../libraries/external/DataStorageLibraryV2.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-import "forge-std/console2.sol";
-
 contract CamelotPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
     using SafeERC20 for IERC20;
 

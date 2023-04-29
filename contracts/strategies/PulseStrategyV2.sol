@@ -132,11 +132,15 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
+<<<<<<< Updated upstream:contracts/strategies/PulseStrategyV2.sol
     function rebalance(
         uint256 deadline,
         bytes calldata swapData,
         uint256 minAmountOutInCaseOfSwap
     ) external {
+=======
+    function rebalance(uint256 deadline, bytes calldata swapData, Interval memory newInterval, int[2] memory previousTicks) external {
+>>>>>>> Stashed changes:contracts/strategies/KyberPulseStrategyV2.sol
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
@@ -144,9 +148,16 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         IUniswapV3Pool pool = immutableParams_.uniV3Vault.pool();
         checkTickDeviation(mutableParams_, pool);
 
+<<<<<<< Updated upstream:contracts/strategies/PulseStrategyV2.sol
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
         Interval memory interval = _positionsRebalance(immutableParams_, mutableParams_, spotTick, pool);
         forceRebalanceWidthFlag = false;
+=======
+        (uint160 sqrtPriceX96, int24 spotTick, , ) = pool.getPoolState();
+        Interval memory interval = _positionsRebalance(immutableParams_, mutableParams_, spotTick, pool, newInterval, previousTicks);
+        _swapToTarget(immutableParams_, mutableParams_, interval, sqrtPriceX96, swapData);
+        _pushIntoKyberSwap(immutableParams_);
+>>>>>>> Stashed changes:contracts/strategies/KyberPulseStrategyV2.sol
 
         _swapToTarget(immutableParams_, mutableParams_, interval, sqrtPriceX96, swapData, minAmountOutInCaseOfSwap);
         _pushIntoUniswap(immutableParams_);
@@ -287,7 +298,18 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         neededNewInterval = true;
     }
 
+<<<<<<< Updated upstream:contracts/strategies/PulseStrategyV2.sol
     /// @dev The function rebalances the position on the uniswap pool. If there was a position in the uniV3Vault,
+=======
+    function _checkCorrectPreviousTick(IPool pool, int24 tick, int24 previousTick) internal {
+        require(previousTick < tick, ExceptionsLibrary.INVARIANT);
+        (int24 previousTickForP, int24 nextTickForP) = pool.initializedTicks(previousTick);
+        require(previousTickForP != 0 || nextTickForP != 0, ExceptionsLibrary.INVALID_TARGET);
+        require(nextTickForP >= tick, ExceptionsLibrary.INVARIANT);
+    }
+
+    /// @dev The function rebalances the position on the algebra pool. If there was a position in the kyberVault,
+>>>>>>> Stashed changes:contracts/strategies/KyberPulseStrategyV2.sol
     /// and the current tick is inside this position, taking into account the tickNeighborhood, then the position will not be rebalanced.
     /// Otherwise, if there is a position in the uniV3Vault, then all tokens will be sent to erc20Vault, the new position will be mined,
     /// and the old one will be burned.
@@ -300,7 +322,13 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
         int24 spotTick,
+<<<<<<< Updated upstream:contracts/strategies/PulseStrategyV2.sol
         IUniswapV3Pool pool
+=======
+        IPool pool,
+        Interval memory newInterval, 
+        int[2] memory previousTicks
+>>>>>>> Stashed changes:contracts/strategies/KyberPulseStrategyV2.sol
     ) private returns (Interval memory) {
         IUniV3Vault vault = immutableParams_.uniV3Vault;
         uint256 uniV3Nft = vault.uniV3Nft();
@@ -321,6 +349,24 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
                 vault.liquidityToTokenAmounts(type(uint128).max),
                 ""
             );
+<<<<<<< Updated upstream:contracts/strategies/PulseStrategyV2.sol
+=======
+
+            vault.pull(address(immutableParams_.erc20Vault), immutableParams_.tokens, tokenAmounts, "");
+        }
+
+        int24[2] memory Qticks;
+
+        require(interval.lowerTick == newInterval.lowerTick && interval.upperTick == newInterval.upperTick, ExceptionsLibrary.INVALID_TARGET);
+        _checkCorrectPreviousTick(pool, interval.lowerTick, Qticks[0]);
+        _checkCorrectPreviousTick(pool, interval.upperTick, Qticks[1]);
+
+        {
+            (int24 tickLowerQ, ) = pool.initializedTicks(interval.lowerTick);
+            (int24 tickUpperQ, ) = pool.initializedTicks(interval.upperTick);
+            Qticks[0] = tickLowerQ;
+            Qticks[1] = tickUpperQ;
+>>>>>>> Stashed changes:contracts/strategies/KyberPulseStrategyV2.sol
         }
 
         (uint256 newNft, , , ) = positionManager.mint(
