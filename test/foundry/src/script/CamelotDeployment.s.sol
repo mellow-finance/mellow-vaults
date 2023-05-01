@@ -199,11 +199,15 @@ contract CamelotDeployment is Script {
         camelotStrategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
         camelotStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
         camelotStrategy.grantRole(OPERATOR_ROLE, sAdmin);
-        camelotStrategy.revokeRole(OPERATOR_ROLE, deployer);
         camelotStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
         camelotStrategy.revokeRole(ADMIN_ROLE, deployer);
 
         vaultRegistry.safeTransferFrom(deployer, sAdmin, erc20VaultNft + 2);
+
+        console2.log("strategy:", address(camelotStrategy));
+        console2.log("erc20 vault:", address(erc20Vault));
+        console2.log("root vault:", address(rootVault));
+        console2.log("camelot vault:", address(camelotVault));
 
     }
 
