@@ -19,6 +19,7 @@
       "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --skip-simulation --with-gas-price=300000000 --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:arbitrum": "forge script src/script/CamelotDeployment.s.sol:CamelotDeployment --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+      "deploy:collector": "forge script src/script/CollectorDeployment.s.sol:CollectorDeployment --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "compile": "forge build",
       "size": "forge build --sizes --force --via-ir"
     }

@@ -214,6 +214,7 @@ contract CamelotDeployment is Script {
     function run() external {
 
         vm.startBroadcast();
+        
         kek();
         deposit(1);
     }
