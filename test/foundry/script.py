@@ -11,7 +11,7 @@ from cache import Cache
 from datetime import datetime
 import asyncio
 
-w3_1 = Web3(Web3.HTTPProvider('https://polygon-mainnet.g.alchemy.com/v2/???'))
+w3_1 = Web3(Web3.HTTPProvider('https://polygon-mainnet.g.alchemy.com/v2/2hGHxl93BXAhw36CS-PytquxtQQNEPcS'))
 AVG_BLOCK_TIME = 13
 
 def get_contract(address: str, name: str, w3) -> Optional[Contract]:
@@ -49,9 +49,14 @@ def call_contracts(block):
 def main():
     index = 0
     with open('kek.logs', 'w') as f:
-        for block in range(39097000, 40120000, 1000):
-            A, B = call_contracts(block)
-            f.write(str(A) + ' ' + str(B) + '\n')
-            f.flush()
+        for block in range(39097000, 42229000, 1000):
+            while (True):
+                try:
+                    A, B = call_contracts(block)
+                    f.write(str(A) + ' ' + str(B) + '\n')
+                    f.flush()
+                    break
+                except:
+                    continue
 
 main()
