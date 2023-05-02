@@ -15,20 +15,16 @@
       "prettier:check": "prettier --check **.sol",
       "test:goerli": "forge test -vvvv --rpc-url $(grep GOERLI_RPC_URL .env | cut -d '=' -f2) --fork-block-number 7630000 --match-path 'test/goerli/*.sol'",
       "test:mainnet": "forge test -vv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15867000 --match-path 'test/mainnet/*.sol'",
-<<<<<<< HEAD
       "test:algebra": "forge test -vvvv --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --fork-block-number 84290000 --match-path 'test/algebra-v2/*.sol'",
+      "test:moonbeam": "forge test -vvvv --rpc-url $(grep MOONBEAM_RPC .env | cut -d '=' -f2) --fork-block-number 3436910 --match-path 'test/moonbeam/*.sol'",
       "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --skip-simulation --with-gas-price=300000000 --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:arbitrum": "forge script src/script/CamelotDeployment.s.sol:CamelotDeployment --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:collector": "forge script src/script/CollectorDeployment.s.sol:CollectorDeployment --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
-=======
-      "test:moonbeam": "forge test -vvvv --rpc-url $(grep MOONBEAM_RPC .env | cut -d '=' -f2) --fork-block-number 3436910 --match-path 'test/moonbeam/*.sol'",
-      "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
-      "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:quick": "forge script src/script/QuickSwapDeployment.s.sol:QuickSwapDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_POLYGON .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGONSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:moonbeamstart": "forge script src/script/MoonBeamInitialDeployment.s.sol:MoonBeamDeploymentA --rpc-url $(grep MOONBEAM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_POLYGON .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep MOONSCAN_API_KEY .env | cut -d '=' -f2) --with-gas-price 500000000000 -vvvv",
       "deploy:moonbeam": "forge script src/script/MoonBeamDeployment.s.sol:MoonBeamDeploymentB --rpc-url $(grep MOONBEAM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_POLYGON .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep MOONSCAN_API_KEY .env | cut -d '=' -f2) --with-gas-price 500000000000 -vvvv",
->>>>>>> quick-v2
+      "deploy:moonbeamcollector": "forge script src/script/CollectorDeploymentMoonBeam.s.sol:MoonBeamDeploymentC --rpc-url $(grep MOONBEAM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_POLYGON .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep MOONSCAN_API_KEY .env | cut -d '=' -f2) --with-gas-price 500000000000 -vvvv",
       "compile": "forge build",
       "size": "forge build --sizes --force --via-ir"
     }
