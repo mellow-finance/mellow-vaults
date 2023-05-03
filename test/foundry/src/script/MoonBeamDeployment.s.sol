@@ -5,6 +5,7 @@ import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
 
 import "../../src/utils/QuickSwapHelper.sol";
+import "../../src/utils/DepositWrapper.sol";
 import "../../src/MockOracle.sol";
 
 import "../../src/vaults/QuickSwapVaultGovernance.sol";
@@ -293,6 +294,11 @@ contract MoonBeamDeploymentB is Script {
     function run() external {
 
         vm.startBroadcast();
+
+        DepositWrapper d = new DepositWrapper(deployer);
+        console.log("moonbeam wrapper:", address(d));
+
+        return;
 
         kek();
         smallDepositRebalance();
