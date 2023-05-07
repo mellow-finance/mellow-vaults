@@ -23,7 +23,7 @@ import "../vaults/ERC20RootVaultGovernance.sol";
 import "../strategies/PulseStrategyV2.sol";
 
 
-contract OptimismDeployment is Script {
+contract ArbitrumDeployment is Script {
 
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
@@ -43,9 +43,10 @@ contract OptimismDeployment is Script {
 
     address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
     address public registry = 0x7D7fEF7bF8bE4DB0FFf06346C59efc24EE8e4c22;
-    address public rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
-    address public erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
-    address public uniV3Governance = 0x558055ae71ee1BC926905469301a232066eD4673;
+
+    address public rootGovernance = 0xC75825C5539968648632ec6207f8EDeC407dF891;
+    address public erc20Governance = 0x7D62E2c0516B8e747d95323Ca350c847C4Dea533;
+    address public uniV3Governance = 0x11Ae9a21d34BfFdf0865436c802cba39f50F94E0;
 
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
