@@ -90,7 +90,7 @@ contract ArbitrumDeployment is Script {
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = op;
+        tokens[0] = weth;
         tokens[1] = bob;
 
         {
@@ -123,7 +123,7 @@ contract ArbitrumDeployment is Script {
         PulseStrategyV2.ImmutableParams memory sParams = PulseStrategyV2.ImmutableParams({
             erc20Vault: erc20Vault,
             uniV3Vault: uniV3Vault,
-            router: 0x1111111254EEB25477B68fb85Ed929f73A960582,
+            router: 0xE592427A0AEce92De3Edee1F18E0157C05861564,
             tokens: tokens
         });
 
@@ -187,12 +187,12 @@ contract ArbitrumDeployment is Script {
 
         kek();
 
-        IERC20(op).transfer(address(strategy), 10**12);
+        IERC20(weth).transfer(address(strategy), 10**12);
         IERC20(bob).transfer(address(strategy), 10**12);
 
       //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        IERC20(op).approve(address(rootVault), 10**20);
+        IERC20(weth).approve(address(rootVault), 10**20);
         IERC20(bob).approve(address(rootVault), 10**20);
 
         uint256[] memory A = new uint256[](2);
@@ -202,8 +202,8 @@ contract ArbitrumDeployment is Script {
         rootVault.deposit(A, 0, "");
 
         A = new uint256[](2);
-        A[0] = 5 * 10**17;
-        A[1] = 5 * 10**17;
+        A[0] = 10**15;
+        A[1] = 10**15;
 
         rootVault.deposit(A, 0, "");
 

@@ -20,6 +20,7 @@
       "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:polygon": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGONSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:optimism": "forge script src/script/OptimismDeployment.s.sol:OptimismDeployment --rpc-url $(grep OPTIMISM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --with-gas-price=10000000 --etherscan-api-key $(grep OPTISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+      "deploy:arbitrum": "forge script src/script/ArbitrumDeployment.s.sol:ArbitrumDeployment --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "compile": "forge build",
       "size": "forge build --sizes --force --via-ir"
     }
