@@ -143,6 +143,11 @@ contract OptimismDeployment is Script {
             minSwapAmounts: AA
         });
 
+        PulseStrategyV2.DesiredAmounts memory kekK = PulseStrategyV2.DesiredAmounts({
+            amount0Desired: 10**9,
+            amount1Desired: 10**9
+        });
+
         {
             uint256[] memory nfts = new uint256[](2);
             nfts[0] = erc20VaultNft;
@@ -152,6 +157,7 @@ contract OptimismDeployment is Script {
 
         strategy.initialize(sParams, deployer);
         strategy.updateMutableParams(smParams);
+        strategy.updateDesiredAmounts(kekK);
 
         IVaultRegistry(registry).transferFrom(deployer, sAdmin, erc20VaultNft + 2);
 
@@ -195,8 +201,8 @@ contract OptimismDeployment is Script {
         rootVault.deposit(A, 0, "");
 
         A = new uint256[](2);
-        A[0] = 10**18;
-        A[1] = 10**18;
+        A[0] = 5 * 10**17;
+        A[1] = 5 * 10**17;
 
         rootVault.deposit(A, 0, "");
 
