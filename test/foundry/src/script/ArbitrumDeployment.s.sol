@@ -39,6 +39,7 @@ contract ArbitrumDeployment is Script {
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
     address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public usdc = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
     address public bob = 0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B;
 
     address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
@@ -206,6 +207,18 @@ contract ArbitrumDeployment is Script {
         A[1] = 10**15;
 
         rootVault.deposit(A, 0, "");
+
+        bytes memory path = abi.encodePacked(weth, uint24(500), usdc, uint24(500), bob);
+        console2.log(path.length);
+        bytes memory calld = abi.encodePacked(ISwapRouter.exactInput.selector, abi.encode(path, address(erc20Vault), type(uint256).max, 10**17, 0));
+
+        bytes memory S = abi.encode(path, address(erc20Vault), type(uint256).max, uint256(10**17), uint256(0));
+
+        console2.log(123);
+        ISwapRouter.ExactInputParams memory params = abi.decode(S, (ISwapRouter.ExactInputParams));
+        console2.log(params.recipient);
+
+        strategy.rebalance(type(uint256).max, calld, 0);
 
 
      //   kek();
