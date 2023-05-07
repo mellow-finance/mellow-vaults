@@ -40,7 +40,6 @@ contract OptimismDeployment is Script {
 
     address public op = 0x4200000000000000000000000000000000000042;
     address public bob = 0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B;
-    address public usdc = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
 
     address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
     address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
@@ -206,10 +205,6 @@ contract OptimismDeployment is Script {
         A[1] = 5 * 10**17;
 
         rootVault.deposit(A, 0, "");
-
-        ISwapRouter.ExactInputParams memory eip = ISwapRouter.ExactInputParams({
-
-        })
 
 
      //   kek();
