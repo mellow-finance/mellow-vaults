@@ -208,16 +208,17 @@ contract ArbitrumDeployment is Script {
 
         rootVault.deposit(A, 0, "");
 
-        bytes memory path = abi.encodePacked(weth, uint24(500), usdc, uint24(500), bob);
-        console2.log(path.length);
-        bytes memory calld = abi.encodePacked(ISwapRouter.exactInput.selector, abi.encode(path, address(erc20Vault), type(uint256).max, 10**17, 0));
+        bytes memory path = abi.encodePacked(weth, uint24(500), usdc, uint24(100), bob);
 
-        bytes memory S = abi.encode(path, address(erc20Vault), type(uint256).max, uint256(10**17), uint256(0));
+        ISwapRouter.ExactInputParams memory ss = ISwapRouter.ExactInputParams({
+            path: path,
+            recipient: address(erc20Vault),
+            deadline: type(uint256).max,
+            amountIn: 10**17,
+            amountOutMinimum: 0
+        });
 
-        console2.log(123);
-        ISwapRouter.ExactInputParams memory params = abi.decode(S, (ISwapRouter.ExactInputParams));
-        console2.log(params.recipient);
-
+        bytes memory calld = abi.encodePacked(ISwapRouter.exactInput.selector, abi.encode(ss));
         strategy.rebalance(type(uint256).max, calld, 0);
 
 
