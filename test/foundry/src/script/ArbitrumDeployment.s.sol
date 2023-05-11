@@ -36,7 +36,7 @@ contract ArbitrumDeployment is Script {
     address protocolTreasury = 0xDF6780faC92ec8D5f366584c29599eA1c97C77F5;
     address strategyTreasury = 0xb0426fDFEfF47B23E5c2794D406A3cC8E77Ec001;
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
-    address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
+    address operator = 0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E;
 
     address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
     address public usdc = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
@@ -174,6 +174,7 @@ contract ArbitrumDeployment is Script {
         strategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
         strategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
         strategy.grantRole(OPERATOR_ROLE, sAdmin);
+        strategy.grantRole(OPERATOR_ROLE, operator);
         strategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
         strategy.revokeRole(ADMIN_ROLE, deployer);
 
@@ -214,7 +215,7 @@ contract ArbitrumDeployment is Script {
             path: path,
             recipient: address(erc20Vault),
             deadline: type(uint256).max,
-            amountIn: 10**17,
+            amountIn: 499527312236353,
             amountOutMinimum: 0
         });
 
