@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-<<<<<<< HEAD
-=======
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
->>>>>>> main
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
@@ -21,11 +17,7 @@ import "../libraries/external/DataStorageLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-<<<<<<< HEAD
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
-=======
-contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
->>>>>>> main
     using SafeERC20 for IERC20;
 
     uint256 public constant D6 = 10**6;
@@ -483,19 +475,6 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
 
-<<<<<<< HEAD
-=======
-    /// @inheritdoc IERC721Receiver
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes memory
-    ) external returns (bytes4) {
-        return this.onERC721Received.selector;
-    }
-
->>>>>>> main
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("QuickPulseStrategy");
     }
