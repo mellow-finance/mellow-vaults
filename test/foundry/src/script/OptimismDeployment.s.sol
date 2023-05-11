@@ -36,7 +36,7 @@ contract OptimismDeployment is Script {
     address protocolTreasury = 0x8E4aF8cE6aD41D6E3cdbf0AAaAE3f7471775744c;
     address strategyTreasury = 0xe551d73d50b940e40471C704eA598Cd2f73e7fb1;
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
-    address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
+    address operator = 0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E;
 
     address public op = 0x4200000000000000000000000000000000000042;
     address public bob = 0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B;
@@ -172,6 +172,7 @@ contract OptimismDeployment is Script {
         strategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
         strategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
         strategy.grantRole(OPERATOR_ROLE, sAdmin);
+        strategy.grantRole(OPERATOR_ROLE, operator);
         strategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
         strategy.revokeRole(ADMIN_ROLE, deployer);
 
