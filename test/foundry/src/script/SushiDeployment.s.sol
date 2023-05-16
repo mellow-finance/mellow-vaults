@@ -15,6 +15,7 @@ import "../vaults/ERC20Vault.sol";
 import "../vaults/UniV3Vault.sol";
 
 import "../utils/UniV3Helper.sol";
+import "../utils/DepositWrapper.sol";
 
 import "../vaults/UniV3VaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
@@ -48,6 +49,7 @@ contract SushiDeployment is Script {
     address public uniV3Governance = 0x558055ae71ee1BC926905469301a232066eD4673;
 
     address public manager = 0x1af415a1EbA07a4986a52B6f2e7dE7003D82231e;
+    address public wrapper = 0xcA4f07803954291279deFA1f6a39f0674CE184AB;
 
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
@@ -61,6 +63,12 @@ contract SushiDeployment is Script {
 
         (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(strategy), nfts, deployer);
         rootVault = w;
+
+        address[] memory k = new address[](1);
+        k[0] = wrapper;
+
+        rootVault.addDepositorsToAllowlist(k);
+
         rootVaultGovernance.setStrategyParams(
             nft,
             IERC20RootVaultGovernance.StrategyParams({
@@ -76,7 +84,7 @@ contract SushiDeployment is Script {
                 strategyPerformanceTreasury: protocolTreasury,
                 managementFee: 0,
                 performanceFee: 0,
-                privateVault: false,
+                privateVault: true,
                 depositCallbackAddress: address(0),
                 withdrawCallbackAddress: address(0)
             })
@@ -120,9 +128,10 @@ contract SushiDeployment is Script {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        PulseStrategyV2 protoS = new PulseStrategyV2(INonfungiblePositionManager(manager));
-        TransparentUpgradeableProxy kek = new TransparentUpgradeableProxy(address(protoS), sAdmin, "");
-        strategy = PulseStrategyV2(address(kek));
+       // PulseStrategyV2 protoS = new PulseStrategyV2(INonfungiblePositionManager(manager));
+       // TransparentUpgradeableProxy kek = new TransparentUpgradeableProxy(address(protoS), sAdmin, "");
+       
+        strategy = new PulseStrategyV2(INonfungiblePositionManager(manager));
 
         PulseStrategyV2.ImmutableParams memory sParams = PulseStrategyV2.ImmutableParams({
             erc20Vault: erc20Vault,
@@ -197,20 +206,24 @@ contract SushiDeployment is Script {
 
       //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        IERC20(wsteth).approve(address(rootVault), 10**20);
-        IERC20(weth).approve(address(rootVault), 10**20);
+        IERC20(wsteth).approve(wrapper, 10**20);
+        IERC20(weth).approve(wrapper, 10**20);
+
+        DepositWrapper w = DepositWrapper(wrapper);
+
+        w.addNewStrategy(address(rootVault), address(strategy), true);
 
         uint256[] memory A = new uint256[](2);
         A[0] = 10**10;
         A[1] = 10**10;
 
-        rootVault.deposit(A, 0, "");
+        w.deposit(rootVault, A, 0, "");
 
         A = new uint256[](2);
         A[0] = 10**14;
         A[1] = 10**14;
 
-        rootVault.deposit(A, 0, "");
+        w.deposit(rootVault, A, 0, "");
 
 
 
