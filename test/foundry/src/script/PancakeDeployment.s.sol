@@ -24,7 +24,7 @@ import "../vaults/ERC20RootVaultGovernance.sol";
 import "../strategies/PulseStrategyV2.sol";
 
 
-contract SushiDeployment is Script {
+contract PancakeDeployment is Script {
 
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
@@ -33,23 +33,24 @@ contract SushiDeployment is Script {
     PulseStrategyV2 strategy;
     uint256 nftStart;
 
-    address sAdmin = 0xE8Ce688923944eBE6636d7272E7eCA1AECb68E37;
-    address protocolTreasury = 0x8E4aF8cE6aD41D6E3cdbf0AAaAE3f7471775744c;
-    address strategyTreasury = 0xe551d73d50b940e40471C704eA598Cd2f73e7fb1;
+    address sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
+    address protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
+    address strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
-    address operator = 0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E;
+    address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
     address public wsteth = 0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb;
     address public weth = 0x4200000000000000000000000000000000000006;
 
-    address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
-    address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
-    address public rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
-    address public erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
-    address public uniV3Governance = 0x558055ae71ee1BC926905469301a232066eD4673;
-    address public mellowOracle = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
+    address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
+    address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
+    address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
+    address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
+    address public uniV3Governance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
+    address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
-    address public manager = 0x1af415a1EbA07a4986a52B6f2e7dE7003D82231e;
+    address public manager = 0x46A15B0b27311cedF172AB29E4f4766fbE7F4364;
+
     address public wrapper = 0xcA4f07803954291279deFA1f6a39f0674CE184AB;
 
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
