@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "./IIntegrationVault.sol";
 import "../external/gearbox/ICreditFacade.sol";

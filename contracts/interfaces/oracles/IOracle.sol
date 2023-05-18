@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 interface IOracle {
     /// @notice Oracle price for tokens as a Q64.96 value.
