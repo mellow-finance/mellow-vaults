@@ -20,7 +20,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    uint256 public constant Q96 = 1 << 96;
+    uint256 public constant Q96 = 2 ** 96;
     uint256 public constant NO_WETH = 2;
 
     EnumerableSet.UintSet positions;
@@ -60,20 +60,21 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         maxTokenAmounts = minTokenAmounts;
     }
 
-    function _highestBitSet(uint256 self) internal pure returns (uint8 highest) {
+    function _bitwiseLength(uint256 self) internal pure returns (uint16 highest) {
         require(self != 0);
         uint256 val = self;
+        highest = 1;
         for (uint8 i = 128; i >= 1; i >>= 1) {
             if (val & (1 << i) - 1 << i != 0) {
-                highest += i;
+                highest += uint16(i);
                 val >>= i;
             }
         }
     }
     
-    function _g(uint256 x) internal pure returns (uint256 res) {
+    function _g(uint256 x) internal view returns (uint256 res) {
         res = CommonLibrary.sqrt(x);
-        uint8 b = _highestBitSet(res);
+        uint16 b = _bitwiseLength(res);
 
         if (b >= 48) {
             res >>= (b - 48);
@@ -82,7 +83,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
     }
 
     function _e(uint256 x) internal pure returns (uint64) {
-        uint8 b = _highestBitSet(x);
+        uint16 b = _bitwiseLength(x);
         if (b >= 48) {
             b -= 48;
         }
@@ -90,11 +91,16 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
             b = 0;
         }
 
-        return uint64((x >> b) | (b << 48));
+        return uint64((x >> b) | (uint256(b) << 48));
 
     }
 
-    function addPosition(uint256 lowerPriceLOX96, uint256 startPriceLOX96, uint256 upperPriceLOX96, uint256 lowerPriceROX96, uint256 startPriceROX96, uint256 upperPriceROX96, uint256 amount0, uint256 amount1) external {
+    function getPosition(uint256 index) external returns (uint256 nft) {
+        require(index < positions.length(), ExceptionsLibrary.INVALID_TARGET);
+        return positions.at(index);
+    }
+
+    function addPosition(uint256 lowerPriceLOX96, uint256 startPriceLOX96, uint256 upperPriceLOX96, uint256 lowerPriceROX96, uint256 startPriceROX96, uint256 upperPriceROX96, uint256 amount0, uint256 amount1) external returns (uint256 nft) {
         require(_isApprovedOrOwner(msg.sender));
 
         require(lowerPriceLOX96 <= startPriceLOX96 && startPriceLOX96 <= upperPriceLOX96, ExceptionsLibrary.INVARIANT);
@@ -128,11 +134,11 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
         }
 
-        if (startPriceROX96 == lowerPriceROX96) {
+        if (startPriceROX96 == upperPriceROX96) {
             require(amount0 == 0, ExceptionsLibrary.INVARIANT);
         }
 
-        if (startPriceLOX96 == upperPriceLOX96) {
+        if (startPriceLOX96 == lowerPriceLOX96) {
             require(amount1 == 0, ExceptionsLibrary.INVARIANT);
         }
 
@@ -142,9 +148,9 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         Order[2] memory orders;
 
         {
-            uint256 lowerPriceROT = _g(lowerPriceROX96);
-            uint256 upperPriceROT = _g(upperPriceROX96);
-            uint256 startPriceROT = _g(startPriceROX96);
+            uint256 lowerPriceROT = _g(FullMath.mulDiv(Q96, Q96, upperPriceROX96));
+            uint256 upperPriceROT = _g(FullMath.mulDiv(Q96, Q96, lowerPriceROX96));
+            uint256 startPriceROT = _g(FullMath.mulDiv(Q96, Q96, startPriceROX96));
 
             uint128 maximalAmountOfOrder0 = uint128(amount0);
             if (lowerPriceROT != startPriceROT) {
@@ -155,13 +161,13 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         }
 
         {
-            uint256 lowerPriceLOT = _g(FullMath.mulDiv(Q96, Q96, upperPriceLOX96));
-            uint256 upperPriceLOT = _g(FullMath.mulDiv(Q96, Q96, lowerPriceLOX96));
-            uint256 startPriceLOT = _g(FullMath.mulDiv(Q96, Q96, startPriceLOX96));
+            uint256 lowerPriceLOT = _g(lowerPriceLOX96);
+            uint256 upperPriceLOT = _g(upperPriceLOX96);
+            uint256 startPriceLOT = _g(startPriceLOX96);
 
             uint128 maximalAmountOfOrder1 = uint128(amount1);
             if (lowerPriceLOT != startPriceLOT) {
-                maximalAmountOfOrder1 = uint128(FullMath.mulDiv(amount0, upperPriceLOT - lowerPriceLOT, startPriceLOT - lowerPriceLOT));
+                maximalAmountOfOrder1 = uint128(FullMath.mulDiv(amount1, upperPriceLOT - lowerPriceLOT, startPriceLOT - lowerPriceLOT));
             }
 
             orders[1] = Order(uint128(amount1), maximalAmountOfOrder1, _e(upperPriceLOT - lowerPriceLOT), _e(lowerPriceLOT)); 
@@ -175,25 +181,40 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
         if (wethIndex != NO_WETH) {
             if (eth < _vaultTokens[1 - wethIndex]) {
-                uint256 nft = controller.createStrategy{value: val}(Token.wrap(eth), Token.wrap(_vaultTokens[1 - wethIndex]), orders);
-                positions.add(nft);
+                nft = controller.createStrategy{value: val}(Token.wrap(eth), Token.wrap(_vaultTokens[1 - wethIndex]), orders);
             }
             else {
-                uint256 nft = controller.createStrategy{value: val}(Token.wrap(_vaultTokens[1 - wethIndex]), Token.wrap(eth), orders);
-                positions.add(nft);
+                nft = controller.createStrategy{value: val}(Token.wrap(_vaultTokens[1 - wethIndex]), Token.wrap(eth), orders);
             }
         }
         else {
-            uint256 nft = controller.createStrategy{value: val}(Token.wrap(_vaultTokens[0]), Token.wrap(_vaultTokens[1]), orders);
-            positions.add(nft);
+            nft = controller.createStrategy{value: val}(Token.wrap(_vaultTokens[0]), Token.wrap(_vaultTokens[1]), orders);
         }
+
+        positions.add(nft);
+
+        IERC20(_vaultTokens[0]).safeApprove(address(controller), 0);
+        IERC20(_vaultTokens[1]).safeApprove(address(controller), 0);
+
+    }
+
+    /// @inheritdoc IERC721Receiver
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) external pure returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 
     function _checkBalanceSpecial(uint256 index, address[] memory vaultTokens, uint256 amount) internal {
         if (tokensReversed) {
             index = 1 - index;
-        }
+        }        
+
         require(IERC20(vaultTokens[index]).balanceOf(address(this)) >= amount, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        IERC20(vaultTokens[index]).safeIncreaseAllowance(address(controller), amount);
 
         if (wethIndex == index) {
             IWETH(weth).withdraw(amount);
@@ -208,6 +229,8 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         uint256 ethBalance = address(this).balance;
 
         IWETH(weth).deposit{value: ethBalance}();
+
+        positions.remove(nft);
     }
 
     function updatePosition(uint256 nft, uint256 amount0, uint256 amount1) external {
@@ -215,45 +238,72 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         require(positions.contains(nft), ExceptionsLibrary.INVALID_TARGET);
 
         uint256 val;
-        if (wethIndex != NO_WETH) {
-            if (wethIndex == 0) val = amount0;
-            else val = amount1;
-        }
 
         if (tokensReversed) {
             (amount0, amount1) = (amount1, amount0);
         }
 
         Strategy memory strategy = controller.strategy(nft);
-        Order[2] memory currentOrders = strategy.orders;
 
-        Order[2] memory newOrders = currentOrders;
+        Order[2] memory currentOrders = strategy.orders;
+        Order[2] memory newOrders;
+
         address[] memory vaultTokens = _vaultTokens;
 
         if (currentOrders[0].y == 0) {
             require(amount0 == 0, ExceptionsLibrary.INVARIANT);
+            newOrders[0] = Order({
+                y: currentOrders[0].y,
+                z: currentOrders[0].z,
+                A: currentOrders[0].A,
+                B: currentOrders[0].B
+            });
         }
 
         else {
             if (amount0 > uint256(currentOrders[0].y)) {
                 uint256 delta = amount0 - uint256(currentOrders[0].y);
+                if ((wethIndex == 0 && !tokensReversed) || (wethIndex == 1 && tokensReversed)) {
+                    val = delta;
+                }
                 _checkBalanceSpecial(0, vaultTokens, delta);
             }
-            newOrders[0].z = uint128(FullMath.mulDiv(uint256(currentOrders[0].z), amount0, uint256(currentOrders[0].y)));
-            newOrders[0].y = uint128(amount0);
+
+            newOrders[0] = Order({
+                y: uint128(amount0),
+                z: uint128(FullMath.mulDiv(uint256(currentOrders[0].z), amount0, uint256(currentOrders[0].y))),
+                A: currentOrders[0].A,
+                B: currentOrders[0].B
+            });
+
         }
 
         if (currentOrders[1].y == 0) {
             require(amount1 == 0, ExceptionsLibrary.INVARIANT);
+            newOrders[1] = Order({
+                y: currentOrders[1].y,
+                z: currentOrders[1].z,
+                A: currentOrders[1].A,
+                B: currentOrders[1].B
+            });
         }
 
         else {
             if (amount1 > uint256(currentOrders[1].y)) {
                 uint256 delta = amount1 - uint256(currentOrders[1].y);
+                if ((wethIndex == 1 && !tokensReversed) || (wethIndex == 0 && tokensReversed)) {
+                    val = delta;
+                }
                 _checkBalanceSpecial(1, vaultTokens, delta);
             }
-            newOrders[1].z = uint128(FullMath.mulDiv(uint256(currentOrders[1].z), amount1, uint256(currentOrders[1].y)));
-            newOrders[1].y = uint128(amount1);
+            
+            newOrders[1] = Order({
+                y: uint128(amount1),
+                z: uint128(FullMath.mulDiv(uint256(currentOrders[1].z), amount1, uint256(currentOrders[1].y))),
+                A: currentOrders[1].A,
+                B: currentOrders[1].B
+            });
+
         }
 
         controller.updateStrategy{value: val}(nft, currentOrders, newOrders);
@@ -261,7 +311,11 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
         IWETH(weth).deposit{value: ethBalance}();
 
+        IERC20(_vaultTokens[0]).safeApprove(address(controller), 0);
+        IERC20(_vaultTokens[1]).safeApprove(address(controller), 0);
     }
+
+    receive() external payable {}
 
     /// @inheritdoc ICarbonVault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
@@ -291,7 +345,16 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
     }
 
-    function _isReclaimForbidden(address token) internal view override returns (bool) {}
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+
+        address[] memory vaultTokens = _vaultTokens;
+
+        if (token == vaultTokens[0] || token == vaultTokens[1]) {
+            return true;
+        }
+
+        return false;
+    }
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
