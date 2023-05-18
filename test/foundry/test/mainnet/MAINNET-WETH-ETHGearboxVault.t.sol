@@ -315,7 +315,7 @@ contract GearboxWETHTest is Test {
 
         rootVault.deposit(amounts, 0, "");
         if (gearboxVault.getCreditAccount() == address(0)) {
-            vm.stopPrank();
+            vm.prank(address(this));
             gearboxVault.openCreditAccount();
         }
     }

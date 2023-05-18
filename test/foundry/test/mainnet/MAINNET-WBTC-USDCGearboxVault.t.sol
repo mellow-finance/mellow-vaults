@@ -325,7 +325,7 @@ contract GearboxWBTCTest is Test {
 
         rootVault.deposit(amounts, 0, "");
         if (gearboxVault.getCreditAccount() == address(0)) {
-            vm.stopPrank();
+            vm.prank(address(this));
             gearboxVault.openCreditAccount();
         }
     }
@@ -909,7 +909,7 @@ contract GearboxWBTCTest is Test {
         address secondUser = getNextUserAddress();
         vm.startPrank(secondUser);
         deposit(FIRST_DEPOSIT, secondUser);
-        vm.stopPrank();
+        // vm.stopPrank();
 
         gearboxVault.adjustPosition(); // 671% on staking => 16% earned
         
