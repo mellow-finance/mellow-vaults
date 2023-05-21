@@ -379,6 +379,26 @@ contract CarbonTest is Test {
         require(g <= 1000 && g >= 995);
     }
 
+    function testSuccessfullTradeOneSide() public {
+        uint256 A = 500;
+        uint256 B = 1000;
+        uint256 C = 3000;
+        uint256 D = 4000;
+
+        deposit(1000);
+        uint256 nft = carbonVault.addPosition(convert(D), convert(C), convert(C), convert(B), convert(B), convert(A), 1000 * 10**6, 1000 * 10**12);
+
+        TradeAction[] memory ta = new TradeAction[](1);
+        ta[0] = TradeAction({
+            strategyId: nft,
+            amount: 500 * 10**15
+        });
+
+        uint128 g = carbonVault.controller().tradeBySourceAmount{value: 500 * 10**15}(Token.wrap(eth), Token.wrap(usdc), ta, type(uint256).max, 100);
+
+        require(g <= 45 * 10**7 && g >= 35 * 10**7);
+    }
+
     function testSuccessfullMicroTradeOtherSide() public {
         uint256 A = 500;
         uint256 B = 1000;
@@ -400,6 +420,29 @@ contract CarbonTest is Test {
         uint128 g = carbonVault.controller().tradeBySourceAmount(Token.wrap(usdc), Token.wrap(eth), ta, type(uint256).max, 10**9);
 
         require(g <= 334 * 10**9 && g >= 329 * 10**9);
+    }
+
+    function testSuccessfullTradeOtherSide() public {
+        uint256 A = 500;
+        uint256 B = 1000;
+        uint256 C = 3000;
+        uint256 D = 4000;
+
+        deposit(1000);
+        uint256 nft = carbonVault.addPosition(convert(D), convert(C), convert(C), convert(B), convert(B), convert(A), 1000 * 10**6, 1000 * 10**12);
+
+        TradeAction[] memory ta = new TradeAction[](1);
+        ta[0] = TradeAction({
+            strategyId: nft,
+            amount: 3 * 10**6
+        });
+
+        deal(usdc, deployer, 3 * 10**6);
+        IERC20(usdc).approve(address(carbonVault.controller()), type(uint256).max);
+
+        uint128 g = carbonVault.controller().tradeBySourceAmount(Token.wrap(usdc), Token.wrap(eth), ta, type(uint256).max, 10**9);
+
+        require(g <= 900 * 10**12 && g >= 600 * 10**12);
     }
 
 }

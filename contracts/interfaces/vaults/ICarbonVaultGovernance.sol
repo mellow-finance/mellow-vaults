@@ -10,6 +10,7 @@ interface ICarbonVaultGovernance is IVaultGovernance {
 
     struct DelayedProtocolParams {
         ICarbonController controller;
+        address weth;
     }
 
     struct DelayedStrategyParams {
