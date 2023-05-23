@@ -113,9 +113,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _updateTvls();
     }
 
-    function getDebt(uint256 index) public view returns (uint256 debt) {
-        require(index < _vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
-        address token = _vaultTokens[index];
+    function getDebt(address token) public view returns (uint256 debt) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
         IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
             address(_vaultGovernance)

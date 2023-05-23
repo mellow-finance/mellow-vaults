@@ -41,7 +41,6 @@ contract DeltaNeutralStrategyHelper {
         address[] memory aaveTokens = aaveVault.vaultTokens();
         address[] memory uniV3Tokens = uniV3Vault.vaultTokens();
         require(aaveTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        require(erc20Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         require(uniV3Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
 
         require(uniV3Tokens[0] == aaveTokens[0], ExceptionsLibrary.INVARIANT);
@@ -64,7 +63,7 @@ contract DeltaNeutralStrategyHelper {
         )
     {
         require(withdrawOptions.length == 32, ExceptionsLibrary.INVALID_VALUE);
-        require(msg.sender == owner, ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(owner), ExceptionsLibrary.FORBIDDEN);
         uint256 shareOfCapitalQ96 = abi.decode(withdrawOptions, (uint256));
 
         (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(uniV3Vault.uniV3Nft());

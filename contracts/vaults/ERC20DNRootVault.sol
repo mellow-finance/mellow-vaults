@@ -8,9 +8,10 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
-import "../interfaces/vaults/IERC20RootVault.sol";
+import "../interfaces/vaults/IERC20DNRootVault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/utils/ILpCallback.sol";
+import "../interfaces/oracles/IOracle.sol";
 import "../utils/ERC20Token.sol";
 import "../interfaces/utils/IERC20RootVaultHelper.sol";
 
@@ -18,23 +19,30 @@ import "./AaveVault.sol";
 import "./AggregateVault.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
+contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes4 public constant SUPPORTS_INTERFACE_SELECTOR = AaveVault.supportsInterface.selector;
     uint256 public constant Q96 = (1 << 96);
 
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     uint64 public lastFeeCharge;
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     uint64 public totalWithdrawnAmountsTimestamp;
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     uint256[] public totalWithdrawnAmounts;
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     uint256 public lpPriceHighWaterMarkD18;
+
     EnumerableSet.AddressSet private _depositorsAllowlist;
     IERC20RootVaultHelper public helper;
+
+    bool[][] public isSubvaultAndTokenPositive;
+
+    IOracle public oracle;
+    uint256[] public safetyIndicesSets;
+    uint256 public specialToken;
 
     function tvl()
         public
@@ -42,55 +50,84 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         override(IVault, AggregateVault)
         returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts)
     {
-        minTokenAmounts = new uint256[](2);
-        maxTokenAmounts = new uint256[](2);
+        address[] memory vaultTokens = _vaultTokens;
 
-        int256 totalToken1TvlMin = 0;
-        int256 totalToken1TvlMax = 0;
+        bool[][] memory isSubvaultAndTokenPositive_ = isSubvaultAndTokenPositive;
 
-        for (uint256 i = 0; i < 3; ++i) {
-            (uint256[] memory minSubvaultTvl, uint256[] memory maxSubvaultTvl) = IIntegrationVault(
-                IAggregateVault(address(this)).subvaultAt(i)
-            ).tvl();
-            minTokenAmounts[0] += minSubvaultTvl[0];
-            maxTokenAmounts[0] += maxSubvaultTvl[0];
-            if (i == 2) {
-                totalToken1TvlMax -= int256(minSubvaultTvl[1]);
-                totalToken1TvlMin -= int256(maxSubvaultTvl[1]);
-            } else {
-                totalToken1TvlMin += int256(minSubvaultTvl[1]);
-                totalToken1TvlMax += int256(maxSubvaultTvl[1]);
+        uint256 subvaultsCount = isSubvaultAndTokenPositive_.length;
+        uint256 tokensCount = isSubvaultAndTokenPositive_[0].length;
+
+        int256[] memory signedMinTokenAmounts = new int256[](vaultTokens.length);
+        int256[] memory signedMaxTokenAmounts = new int256[](vaultTokens.length);
+
+        for (uint256 i = 0; i < subvaultsCount; ++i) {
+            IIntegrationVault subvault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(i));
+            (uint256[] memory minSubvaultTvl, uint256[] memory maxSubvaultTvl) = subvault.tvl();
+
+            address[] memory subvaultTokens = subvault.vaultTokens();
+            uint256 subvaultTokenId = 0;
+            for (
+                uint256 tokenId = 0;
+                tokenId < vaultTokens.length && subvaultTokenId < subvaultTokens.length;
+                ++tokenId
+            ) {
+                if (subvaultTokens[subvaultTokenId] == vaultTokens[tokenId]) {
+                    if (isSubvaultAndTokenPositive[i][tokenId]) {
+                        signedMinTokenAmounts[tokenId] += int256(minSubvaultTvl[subvaultTokenId]);
+                        signedMaxTokenAmounts[tokenId] += int256(maxSubvaultTvl[subvaultTokenId]);
+                    } else {
+                        signedMinTokenAmounts[tokenId] -= int256(maxSubvaultTvl[subvaultTokenId]);
+                        signedMaxTokenAmounts[tokenId] -= int256(minSubvaultTvl[subvaultTokenId]);
+                    }
+                    subvaultTokenId += 1;
+                }
             }
         }
 
-        if (totalToken1TvlMin < 0) {
-            minTokenAmounts[0] -= _getZeroTokenAmount(uint256(-totalToken1TvlMin));
-        } else {
-            minTokenAmounts[0] += _getZeroTokenAmount(uint256(totalToken1TvlMin));
+        int256 minTvl = signedMinTokenAmounts[specialToken];
+        int256 maxTvl = signedMaxTokenAmounts[specialToken];
+
+        for (uint256 i = 0; i < tokensCount; ++i) {
+            if (i == specialToken) continue;
+            minTvl += _getZeroTokenAmount(vaultTokens, i, signedMinTokenAmounts[i]);
+            maxTvl += _getZeroTokenAmount(vaultTokens, i, signedMaxTokenAmounts[i]);
         }
 
-        if (totalToken1TvlMax < 0) {
-            maxTokenAmounts[0] -= _getZeroTokenAmount(uint256(-totalToken1TvlMax));
-        } else {
-            maxTokenAmounts[0] += _getZeroTokenAmount(uint256(totalToken1TvlMax));
-        }
+        require(minTvl >= 0, ExceptionsLibrary.INVALID_STATE);
+
+        minTokenAmounts[0] = uint256(minTvl);
+        maxTokenAmounts[0] = uint256(maxTvl);
     }
 
-    function _getZeroTokenAmount(uint256 amount) internal view returns (uint256 expectedAmount) {
-        IUniswapV3Pool pool = IUniswapV3Pool(IUniV3Vault(IAggregateVault(address(this)).subvaultAt(1)).pool());
+    function _getZeroTokenAmount(
+        address[] memory vaultTokens,
+        uint256 index,
+        int256 amount
+    ) internal view returns (int256 expectedAmount) {
+        (uint256[] memory pricesX96, ) = oracle.priceX96(
+            vaultTokens[index],
+            vaultTokens[specialToken],
+            safetyIndicesSets[index]
+        );
 
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        require(pricesX96.length > 0, ExceptionsLibrary.INVALID_LENGTH);
 
-        if (_vaultTokens[0] == pool.token1()) {
-            expectedAmount = FullMath.mulDiv(amount, priceX96, Q96);
+        uint256 sum = 0;
+        for (uint256 i = 0; i < pricesX96.length; ++i) {
+            sum += pricesX96[i];
+        }
+
+        uint256 priceX96 = sum / pricesX96.length;
+
+        if (amount > 0) {
+            return int256(FullMath.mulDiv(uint256(amount), priceX96, Q96));
         } else {
-            expectedAmount = FullMath.mulDiv(amount, Q96, priceX96);
+            return -int256(FullMath.mulDiv(uint256(-amount), priceX96, Q96));
         }
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     function depositorsAllowlist() external view returns (address[] memory) {
         return _depositorsAllowlist.values();
     }
@@ -103,11 +140,11 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         override(IERC165, AggregateVault)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId) || type(IERC20RootVault).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IERC20DNRootVault).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -115,7 +152,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         }
     }
 
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     function removeDepositorsFromAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -123,39 +160,56 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         }
     }
 
-    /// @inheritdoc IERC20RootVault
+    function setSafetyIndicesSet(uint256 index, uint256 val) public {
+        require(val > 1, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        _requireAdmin();
+        safetyIndicesSets[index] = val;
+    }
+
+    /// @inheritdoc IERC20DNRootVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
         address strategy_,
         uint256[] memory subvaultNfts_,
-        IERC20RootVaultHelper helper_
+        IERC20RootVaultHelper helper_,
+        bool[][] memory isSubvaultAndTokenPositive_,
+        uint256 specialToken_
     ) external {
         _initialize(vaultTokens_, nft_, strategy_, subvaultNfts_);
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
-        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        {
-            address aaveVault = _vaultGovernance.internalParams().registry.vaultForNft(subvaultNfts_[2]);
-            (, bytes memory returndata) = aaveVault.call{value: 0}(
-                abi.encodePacked(SUPPORTS_INTERFACE_SELECTOR, abi.encode(type(IAaveVault).interfaceId))
-            );
-            bool ifSupports = abi.decode(returndata, (bool));
-            require(ifSupports, ExceptionsLibrary.INVARIANT);
+
+        require(subvaultNfts_.length == isSubvaultAndTokenPositive_.length, ExceptionsLibrary.INVALID_LENGTH);
+        for (uint256 i = 0; i < isSubvaultAndTokenPositive_.length; ++i) {
+            require(vaultTokens_.length == isSubvaultAndTokenPositive_[i].length, ExceptionsLibrary.INVALID_LENGTH);
         }
+
+        isSubvaultAndTokenPositive = isSubvaultAndTokenPositive_;
+
         uint256 len = vaultTokens_.length;
+
+        safetyIndicesSets = new uint256[](len);
+        for (uint256 i = 0; i < len; ++i) {
+            safetyIndicesSets[i] = 0x20;
+        }
+
+        specialToken = specialToken_;
+
         totalWithdrawnAmounts = new uint256[](len);
         lastFeeCharge = uint64(block.timestamp);
         helper = helper_;
     }
 
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
         bytes memory vaultOptions
     ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts) {
         address vaultGovernance = address(_vaultGovernance);
-        tokenAmounts[1] = 0;
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            if (i != specialToken) tokenAmounts[i] = 0;
+        }
         require(
             !IERC20RootVaultGovernance(vaultGovernance).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
@@ -198,8 +252,10 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(vaultGovernance)
             .strategyParams(thisNft);
-        require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(
+            lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress && lpAmount + supply <= params.tokenLimit,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
 
         IERC20(_vaultTokens[0]).safeTransferFrom(msg.sender, address(this), tokenAmounts[0]);
 
@@ -224,7 +280,7 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
-    /// @inheritdoc IERC20RootVault
+    /// @inheritdoc IERC20DNRootVault
     function withdraw(
         address to,
         uint256 lpTokenAmount,
@@ -233,7 +289,10 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 supply = totalSupply;
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
-        require(minTokenAmounts[1] == 0, ExceptionsLibrary.INVALID_VALUE);
+
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            if (i != specialToken) require(minTokenAmounts[i] == 0, ExceptionsLibrary.INVALID_VALUE);
+        }
 
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
@@ -283,6 +342,16 @@ contract ERC20DNRootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggre
         require(
             (internalParams.protocolGovernance.isAdmin(msg.sender) ||
                 internalParams.registry.getApproved(nft_) == msg.sender ||
+                (internalParams.registry.ownerOf(nft_) == msg.sender)),
+            ExceptionsLibrary.FORBIDDEN
+        );
+    }
+
+    function _requireAdmin() internal view {
+        uint256 nft_ = _nft;
+        IVaultGovernance.InternalParams memory internalParams = _vaultGovernance.internalParams();
+        require(
+            (internalParams.protocolGovernance.isAdmin(msg.sender) ||
                 (internalParams.registry.ownerOf(nft_) == msg.sender)),
             ExceptionsLibrary.FORBIDDEN
         );
