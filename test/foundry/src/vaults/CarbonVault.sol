@@ -14,13 +14,11 @@ import "./IntegrationVault.sol";
 
 import "../interfaces/vaults/ICarbonVaultGovernance.sol";
 
-import "forge-std/console2.sol";
-
 contract CarbonVault is ICarbonVault, IntegrationVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant Q96 = 2**96;
     uint256 public constant NO_WETH = 2;
 
     EnumerableSet.UintSet positions;
@@ -46,8 +44,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
                 Order memory order = strategy.orders[j];
                 if (!tokensReversed) {
                     minTokenAmounts[j] += order.y;
-                }
-                else {
+                } else {
                     minTokenAmounts[1 - j] += order.y;
                 }
             }
@@ -61,18 +58,18 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
     }
 
     function _bitwiseLength(uint256 self) internal pure returns (uint16 highest) {
-        require(self != 0);
+        require(self != 0, ExceptionsLibrary.VALUE_ZERO);
         uint256 val = self;
         highest = 1;
         for (uint8 i = 128; i >= 1; i >>= 1) {
-            if (val & (1 << i) - 1 << i != 0) {
+            if (val & (((1 << i) - 1) << i) != 0) {
                 highest += uint16(i);
                 val >>= i;
             }
         }
     }
-    
-    function _g(uint256 x) internal view returns (uint256 res) {
+
+    function _g(uint256 x) internal pure returns (uint256 res) {
         res = CommonLibrary.sqrt(x);
         uint16 b = _bitwiseLength(res);
 
@@ -86,22 +83,29 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         uint16 b = _bitwiseLength(x);
         if (b >= 48) {
             b -= 48;
-        }
-        else {
+        } else {
             b = 0;
         }
 
         return uint64((x >> b) | (uint256(b) << 48));
-
     }
 
-    function getPosition(uint256 index) external returns (uint256 nft) {
+    function getPosition(uint256 index) external view returns (uint256 nft) {
         require(index < positions.length(), ExceptionsLibrary.INVALID_TARGET);
         return positions.at(index);
     }
 
-    function addPosition(uint256 lowerPriceLOX96, uint256 startPriceLOX96, uint256 upperPriceLOX96, uint256 lowerPriceROX96, uint256 startPriceROX96, uint256 upperPriceROX96, uint256 amount0, uint256 amount1) external returns (uint256 nft) {
-        require(_isApprovedOrOwner(msg.sender));
+    function addPosition(
+        uint256 lowerPriceLOX96,
+        uint256 startPriceLOX96,
+        uint256 upperPriceLOX96,
+        uint256 lowerPriceROX96,
+        uint256 startPriceROX96,
+        uint256 upperPriceROX96,
+        uint256 amount0,
+        uint256 amount1
+    ) external returns (uint256 nft) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
         require(lowerPriceLOX96 <= startPriceLOX96 && startPriceLOX96 <= upperPriceLOX96, ExceptionsLibrary.INVARIANT);
         require(upperPriceLOX96 <= lowerPriceROX96, ExceptionsLibrary.INVARIANT);
@@ -122,16 +126,15 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
             (startPriceLOX96, startPriceROX96) = (startPriceROX96, startPriceLOX96);
         }
 
-        ICarbonVaultGovernance.DelayedStrategyParams memory strategyParams = ICarbonVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
+        ICarbonVaultGovernance.DelayedStrategyParams memory strategyParams = ICarbonVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
 
         {
-
             uint256 newPositionsCount = positions.length() + 1;
             uint256 maxPositionsCount = strategyParams.maximalPositionsCount;
 
             require(newPositionsCount <= maxPositionsCount, ExceptionsLibrary.LIMIT_OVERFLOW);
-
         }
 
         if (startPriceROX96 == upperPriceROX96) {
@@ -154,10 +157,17 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
             uint128 maximalAmountOfOrder0 = uint128(amount0);
             if (lowerPriceROT != startPriceROT) {
-                maximalAmountOfOrder0 = uint128(FullMath.mulDiv(amount0, upperPriceROT - lowerPriceROT, startPriceROT - lowerPriceROT));
+                maximalAmountOfOrder0 = uint128(
+                    FullMath.mulDiv(amount0, upperPriceROT - lowerPriceROT, startPriceROT - lowerPriceROT)
+                );
             }
 
-            orders[0] = Order(uint128(amount0), maximalAmountOfOrder0, _e(upperPriceROT - lowerPriceROT), _e(lowerPriceROT)); 
+            orders[0] = Order(
+                uint128(amount0),
+                maximalAmountOfOrder0,
+                _e(upperPriceROT - lowerPriceROT),
+                _e(lowerPriceROT)
+            );
         }
 
         {
@@ -167,10 +177,17 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
             uint128 maximalAmountOfOrder1 = uint128(amount1);
             if (lowerPriceLOT != startPriceLOT) {
-                maximalAmountOfOrder1 = uint128(FullMath.mulDiv(amount1, upperPriceLOT - lowerPriceLOT, startPriceLOT - lowerPriceLOT));
+                maximalAmountOfOrder1 = uint128(
+                    FullMath.mulDiv(amount1, upperPriceLOT - lowerPriceLOT, startPriceLOT - lowerPriceLOT)
+                );
             }
 
-            orders[1] = Order(uint128(amount1), maximalAmountOfOrder1, _e(upperPriceLOT - lowerPriceLOT), _e(lowerPriceLOT)); 
+            orders[1] = Order(
+                uint128(amount1),
+                maximalAmountOfOrder1,
+                _e(upperPriceLOT - lowerPriceLOT),
+                _e(lowerPriceLOT)
+            );
         }
 
         uint256 val;
@@ -181,21 +198,30 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
         if (wethIndex != NO_WETH) {
             if (eth < _vaultTokens[1 - wethIndex]) {
-                nft = controller.createStrategy{value: val}(Token.wrap(eth), Token.wrap(_vaultTokens[1 - wethIndex]), orders);
+                nft = controller.createStrategy{value: val}(
+                    Token.wrap(eth),
+                    Token.wrap(_vaultTokens[1 - wethIndex]),
+                    orders
+                );
+            } else {
+                nft = controller.createStrategy{value: val}(
+                    Token.wrap(_vaultTokens[1 - wethIndex]),
+                    Token.wrap(eth),
+                    orders
+                );
             }
-            else {
-                nft = controller.createStrategy{value: val}(Token.wrap(_vaultTokens[1 - wethIndex]), Token.wrap(eth), orders);
-            }
-        }
-        else {
-            nft = controller.createStrategy{value: val}(Token.wrap(_vaultTokens[0]), Token.wrap(_vaultTokens[1]), orders);
+        } else {
+            nft = controller.createStrategy{value: val}(
+                Token.wrap(_vaultTokens[0]),
+                Token.wrap(_vaultTokens[1]),
+                orders
+            );
         }
 
         positions.add(nft);
 
         IERC20(_vaultTokens[0]).safeApprove(address(controller), 0);
         IERC20(_vaultTokens[1]).safeApprove(address(controller), 0);
-
     }
 
     /// @inheritdoc IERC721Receiver
@@ -208,10 +234,14 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
-    function _checkBalanceSpecial(uint256 index, address[] memory vaultTokens, uint256 amount) internal {
+    function _checkBalanceSpecial(
+        uint256 index,
+        address[] memory vaultTokens,
+        uint256 amount
+    ) internal {
         if (tokensReversed) {
             index = 1 - index;
-        }        
+        }
 
         require(IERC20(vaultTokens[index]).balanceOf(address(this)) >= amount, ExceptionsLibrary.LIMIT_UNDERFLOW);
         IERC20(vaultTokens[index]).safeIncreaseAllowance(address(controller), amount);
@@ -222,7 +252,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
     }
 
     function closePosition(uint256 nft) external {
-        require(_isApprovedOrOwner(msg.sender));
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(positions.contains(nft), ExceptionsLibrary.INVALID_TARGET);
 
         controller.deleteStrategy(nft);
@@ -233,8 +263,12 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         positions.remove(nft);
     }
 
-    function updatePosition(uint256 nft, uint256 amount0, uint256 amount1) external {
-        require(_isApprovedOrOwner(msg.sender));
+    function updatePosition(
+        uint256 nft,
+        uint256 amount0,
+        uint256 amount1
+    ) external {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(positions.contains(nft), ExceptionsLibrary.INVALID_TARGET);
 
         uint256 val;
@@ -258,9 +292,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
                 A: currentOrders[0].A,
                 B: currentOrders[0].B
             });
-        }
-
-        else {
+        } else {
             if (amount0 > uint256(currentOrders[0].y)) {
                 uint256 delta = amount0 - uint256(currentOrders[0].y);
                 if ((wethIndex == 0 && !tokensReversed) || (wethIndex == 1 && tokensReversed)) {
@@ -275,7 +307,6 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
                 A: currentOrders[0].A,
                 B: currentOrders[0].B
             });
-
         }
 
         if (currentOrders[1].y == 0) {
@@ -286,9 +317,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
                 A: currentOrders[1].A,
                 B: currentOrders[1].B
             });
-        }
-
-        else {
+        } else {
             if (amount1 > uint256(currentOrders[1].y)) {
                 uint256 delta = amount1 - uint256(currentOrders[1].y);
                 if ((wethIndex == 1 && !tokensReversed) || (wethIndex == 0 && tokensReversed)) {
@@ -296,14 +325,13 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
                 }
                 _checkBalanceSpecial(1, vaultTokens, delta);
             }
-            
+
             newOrders[1] = Order({
                 y: uint128(amount1),
                 z: uint128(FullMath.mulDiv(uint256(currentOrders[1].z), amount1, uint256(currentOrders[1].y))),
                 A: currentOrders[1].A,
                 B: currentOrders[1].B
             });
-
         }
 
         controller.updateStrategy{value: val}(nft, currentOrders, newOrders);
@@ -338,15 +366,12 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
 
         if (wethIndex != NO_WETH) {
             controller.pair(Token.wrap(eth), Token.wrap(vaultTokens_[1 - wethIndex]));
-        }
-        else {
+        } else {
             controller.pair(Token.wrap(vaultTokens_[0]), Token.wrap(vaultTokens_[1]));
         }
-
     }
 
     function _isReclaimForbidden(address token) internal view override returns (bool) {
-
         address[] memory vaultTokens = _vaultTokens;
 
         if (token == vaultTokens[0] || token == vaultTokens[1]) {

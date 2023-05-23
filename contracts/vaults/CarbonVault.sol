@@ -58,7 +58,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
     }
 
     function _bitwiseLength(uint256 self) internal pure returns (uint16 highest) {
-        require(self != 0);
+        require(self != 0, ExceptionsLibrary.VALUE_ZERO);
         uint256 val = self;
         highest = 1;
         for (uint8 i = 128; i >= 1; i >>= 1) {
@@ -105,7 +105,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         uint256 amount0,
         uint256 amount1
     ) external returns (uint256 nft) {
-        require(_isApprovedOrOwner(msg.sender));
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
         require(lowerPriceLOX96 <= startPriceLOX96 && startPriceLOX96 <= upperPriceLOX96, ExceptionsLibrary.INVARIANT);
         require(upperPriceLOX96 <= lowerPriceROX96, ExceptionsLibrary.INVARIANT);
@@ -252,7 +252,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
     }
 
     function closePosition(uint256 nft) external {
-        require(_isApprovedOrOwner(msg.sender));
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(positions.contains(nft), ExceptionsLibrary.INVALID_TARGET);
 
         controller.deleteStrategy(nft);
@@ -268,7 +268,7 @@ contract CarbonVault is ICarbonVault, IntegrationVault {
         uint256 amount0,
         uint256 amount1
     ) external {
-        require(_isApprovedOrOwner(msg.sender));
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(positions.contains(nft), ExceptionsLibrary.INVALID_TARGET);
 
         uint256 val;
