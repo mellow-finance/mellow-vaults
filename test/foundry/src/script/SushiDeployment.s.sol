@@ -46,7 +46,7 @@ contract SushiDeployment is Script {
     address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
     address public rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
     address public erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
-    address public uniV3Governance = 0x558055ae71ee1BC926905469301a232066eD4673;
+    address public uniV3Governance = 0xC8843a242b3939A2e8b654fdAE2e5BB668b40D4a;
     address public mellowOracle = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
 
     address public manager = 0x1af415a1EbA07a4986a52B6f2e7dE7003D82231e;
@@ -95,17 +95,17 @@ contract SushiDeployment is Script {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
+/*
         console2.log(IProtocolGovernance(governance).hasPermission(0x1111111254EEB25477B68fb85Ed929f73A960582, 4));
         console2.log(IProtocolGovernance(governance).hasPermission(0x1111111254EEB25477B68fb85Ed929f73A960582, 5));
-
+*/
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
         tokens[0] = wsteth;
         tokens[1] = weth;
-
+/*
         {
             UniV3Vault singleton = new UniV3Vault();
             IVaultGovernance.InternalParams memory ip = IVaultGovernance.InternalParams({
@@ -125,7 +125,7 @@ contract SushiDeployment is Script {
             return 0;
 
         }
-
+*/
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
             erc20VaultGovernance.createVault(tokens, deployer);
@@ -221,8 +221,6 @@ contract SushiDeployment is Script {
         vm.startBroadcast();
 
         kek();
-
-        return;
 
         IERC20(wsteth).transfer(address(strategy), 10**12);
         IERC20(weth).transfer(address(strategy), 10**12);

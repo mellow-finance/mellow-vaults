@@ -115,7 +115,7 @@ library PositionValue {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
-                    positionManager.factory(),
+                    positionManager.deployer(),
                     PoolAddress.PoolKey({token0: feeParams.token0, token1: feeParams.token1, fee: feeParams.fee})
                 )
             ),

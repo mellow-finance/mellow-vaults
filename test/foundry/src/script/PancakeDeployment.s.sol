@@ -39,19 +39,17 @@ contract PancakeDeployment is Script {
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
-    address public wsteth = 0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb;
-    address public weth = 0x4200000000000000000000000000000000000006;
+    address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
     address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
     address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
-    address public uniV3Governance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
+    address public uniV3Governance = 0xbFEcB005Dcdfda48c63BE54f43a0d4Cf00198cc6;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
     address public manager = 0x46A15B0b27311cedF172AB29E4f4766fbE7F4364;
-
-    address public wrapper = 0xcA4f07803954291279deFA1f6a39f0674CE184AB;
 
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
@@ -65,11 +63,6 @@ contract PancakeDeployment is Script {
 
         (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(strategy), nfts, deployer);
         rootVault = w;
-
-        address[] memory k = new address[](1);
-        k[0] = wrapper;
-
-        rootVault.addDepositorsToAllowlist(k);
 
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -86,7 +79,7 @@ contract PancakeDeployment is Script {
                 strategyPerformanceTreasury: protocolTreasury,
                 managementFee: 0,
                 performanceFee: 0,
-                privateVault: true,
+                privateVault: false,
                 depositCallbackAddress: address(0),
                 withdrawCallbackAddress: address(0)
             })
@@ -97,14 +90,11 @@ contract PancakeDeployment is Script {
 
     function kek() public payable returns (uint256 startNft) {
 
-        console2.log(IProtocolGovernance(governance).hasPermission(0x1111111254EEB25477B68fb85Ed929f73A960582, 4));
-        console2.log(IProtocolGovernance(governance).hasPermission(0x1111111254EEB25477B68fb85Ed929f73A960582, 5));
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = wsteth;
+        tokens[0] = usdc;
         tokens[1] = weth;
 
         {
@@ -136,7 +126,7 @@ contract PancakeDeployment is Script {
 
         {
             IUniV3VaultGovernance uniGovernance = IUniV3VaultGovernance(uniV3Governance);
-            uniGovernance.createVault(tokens, deployer, 100, address(helper));
+            uniGovernance.createVault(tokens, deployer, 500, address(helper));
 
             IUniV3VaultGovernance.DelayedStrategyParams memory dsp = IUniV3VaultGovernance.DelayedStrategyParams({
                 safetyIndicesSet: 2
@@ -225,29 +215,28 @@ contract PancakeDeployment is Script {
 
         return;
 
-        IERC20(wsteth).transfer(address(strategy), 10**12);
+        IERC20(usdc).transfer(address(strategy), 10**3);
         IERC20(weth).transfer(address(strategy), 10**12);
 
       //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        IERC20(wsteth).approve(wrapper, 10**20);
-        IERC20(weth).approve(wrapper, 10**20);
-
-        DepositWrapper w = DepositWrapper(wrapper);
-
-        w.addNewStrategy(address(rootVault), address(strategy), true);
+        IERC20(usdc).approve(address(rootVault), 10**20);
+        IERC20(weth).approve(address(rootVault), 10**20);
 
         uint256[] memory A = new uint256[](2);
-        A[0] = 10**10;
+        A[0] = 10**4;
         A[1] = 10**10;
 
-        w.deposit(rootVault, A, 0, "");
+        rootVault.deposit(A, 0, "");
 
         A = new uint256[](2);
-        A[0] = 10**14;
-        A[1] = 10**14;
+        A[0] = 10**5;
+        A[1] = 10**11;
 
-        w.deposit(rootVault, A, 0, "");
+        rootVault.deposit(A, 0, "");
+
+        bytes memory z = "0x0502b1c5000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000c35000000000000000000000000000000000000000000000000000001415a950b9dc0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d0340397ff1542f962076d0bfe58ea045ffa2d347aca0cfee7c08";
+        strategy.rebalance(100000000000000000000, z, 0);
 
 
 
