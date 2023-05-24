@@ -54,7 +54,7 @@ interface IAaveVaultGovernance is IVaultGovernance {
     /// @notice Deploys a new vault.
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param owner_ Owner of the vault NFT
-    function createVault(address[] memory vaultTokens_, address owner_)
+    function createVault(address[] memory vaultTokens_, address owner_, bool[] memory tokenStatus_)
         external
         returns (IAaveVault vault, uint256 nft);
 }
