@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+<<<<<<< HEAD
 pragma solidity ^0.8.0;
+=======
+pragma solidity 0.8.9;
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
@@ -383,6 +387,10 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     /// @param mutableParams_ structure with all mutable params of the strategy
     /// @param interval current interval on uniV3Vault
     /// @param sqrtSpotPriceX96 sqrt price X96 of spot tick
+<<<<<<< HEAD
+=======
+    /// @param swapData expected amount In of tokens and
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
     function _swapToTarget(
         ImmutableParams memory immutableParams_,
         MutableParams memory mutableParams_,
@@ -407,18 +415,38 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         }
 
         (uint256[] memory tvlBefore, ) = immutableParams_.erc20Vault.tvl();
+<<<<<<< HEAD
         immutableParams_.erc20Vault.externalCall(immutableParams_.router, bytes4(swapData[:4]), swapData[4:]);
+=======
+        bytes memory routerResult = immutableParams_.erc20Vault.externalCall(
+            immutableParams_.router,
+            bytes4(swapData[:4]),
+            swapData[4:]
+        );
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
         (uint256[] memory tvlAfter, ) = immutableParams_.erc20Vault.tvl();
 
         require(tvlAfter[tokenInIndex] <= tvlBefore[tokenInIndex], ExceptionsLibrary.INVARIANT);
         require(tvlAfter[tokenInIndex ^ 1] >= tvlBefore[tokenInIndex ^ 1], ExceptionsLibrary.INVARIANT);
 
+<<<<<<< HEAD
         uint256 actualAmountIn = tvlBefore[tokenInIndex] - tvlAfter[tokenInIndex];
         uint256 actualAmountOut = tvlAfter[tokenInIndex ^ 1] - tvlBefore[tokenInIndex ^ 1];
         uint256 actualSwapPriceX96 = FullMath.mulDiv(actualAmountOut, Q96, actualAmountIn);
 
         require(
             FullMath.mulDiv(priceX96, D9 - mutableParams_.swapSlippageD, D9) <= actualSwapPriceX96,
+=======
+        uint256 actualSwapPriceX96;
+        uint256 actualAmountIn = tvlBefore[tokenInIndex] - tvlAfter[tokenInIndex];
+        {
+            uint256 actualAmountOut = tvlAfter[tokenInIndex ^ 1] - tvlBefore[tokenInIndex ^ 1];
+            actualSwapPriceX96 = FullMath.mulDiv(actualAmountOut, Q96, actualAmountIn);
+        }
+
+        require(
+            FullMath.mulDiv(actualSwapPriceX96, D9 - mutableParams_.swapSlippageD, D9) >= priceX96,
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
             ExceptionsLibrary.LIMIT_UNDERFLOW
         );
 
@@ -432,7 +460,11 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
             ExceptionsLibrary.LIMIT_UNDERFLOW
         );
 
+<<<<<<< HEAD
         emit TokensSwapped(actualAmountIn, actualAmountOut, tokenInIndex);
+=======
+        emit TokensSwapped(swapData, routerResult);
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
     }
 
     /// @dev pushed maximal possible amounts of tokens from erc20Vault to uniV3Vault
@@ -467,10 +499,16 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
     }
 
     /// @notice Emitted after a successful token swap
+<<<<<<< HEAD
     /// @param amountIn amount of token, that pushed into SwapRouter
     /// @param amountOut amount of token, that recieved from SwapRouter
     /// @param tokenInIndex index of token, that pushed into SwapRouter
     event TokensSwapped(uint256 amountIn, uint256 amountOut, uint256 tokenInIndex);
+=======
+    /// @param swapData structure with different parameters for handling swap via 1inch swap router
+    /// @param routerResponse the actual amount received from the swapRouter during swaps
+    event TokensSwapped(bytes swapData, bytes routerResponse);
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
 
     /// @notice Emited when mutable parameters are successfully updated
     /// @param origin Origin of the transaction (tx.origin)

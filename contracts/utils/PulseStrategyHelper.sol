@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
+<<<<<<< HEAD
 pragma solidity ^0.8.0;
 
 import "../strategies/PulseStrategy.sol";
 import "../libraries/external/PositionValue.sol";
+=======
+pragma solidity 0.8.9;
+
+import "../strategies/PulseStrategy.sol";
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
 
 contract PulseStrategyHelper {
     uint256 public constant Q96 = 2**96;
@@ -48,6 +54,7 @@ contract PulseStrategyHelper {
         }
     }
 
+<<<<<<< HEAD
     function _calculateAmountsForSwap(
         uint256 targetRatioOfToken1X96,
         IERC20Vault erc20Vault,
@@ -92,11 +99,17 @@ contract PulseStrategyHelper {
         }
     }
 
+=======
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
     function calculateAmountForSwap(PulseStrategy strategy)
         public
         view
         returns (
+<<<<<<< HEAD
             uint256 amountIn,
+=======
+            uint256 amount,
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
             address from,
             address to,
             IERC20Vault erc20Vault
@@ -109,17 +122,25 @@ contract PulseStrategyHelper {
 
         IUniswapV3Pool pool = IUniswapV3Pool(immutableParams.uniV3Vault.pool());
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
+<<<<<<< HEAD
         erc20Vault = immutableParams.erc20Vault;
         uint256 targetRatioOfToken1X96;
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256[] memory delta = new uint256[](2);
         {
             (PulseStrategy.Interval memory interval, bool neededNewInterval) = strategy.calculateNewPosition(
+=======
+        uint256 targetRatioOfToken1;
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        {
+            (PulseStrategy.Interval memory interval, ) = strategy.calculateNewPosition(
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
                 mutableParams,
                 spotTick,
                 pool,
                 immutableParams.uniV3Vault.uniV3Nft()
             );
+<<<<<<< HEAD
 
             if (neededNewInterval) {
                 (delta, ) = immutableParams.uniV3Vault.tvl();
@@ -139,6 +160,17 @@ contract PulseStrategyHelper {
             priceX96,
             mutableParams,
             delta
+=======
+            targetRatioOfToken1 = strategy.calculateTargetRatioOfToken1(interval, sqrtPriceX96, priceX96);
+        }
+
+        uint256 tokenInIndex;
+        (amount, tokenInIndex) = strategy.calculateAmountsForSwap(
+            immutableParams,
+            mutableParams,
+            priceX96,
+            targetRatioOfToken1
+>>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
         );
 
         from = immutableParams.tokens[tokenInIndex];
