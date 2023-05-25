@@ -77,7 +77,6 @@ const buildSinglePositionStrategy = async (
         uniV3VaultNft500
     );
 
-    const deploymentName = "PulseStrategy";
     const immutableParams = {
         router: aggregationRouterV5,
         erc20Vault: erc20Vault,
