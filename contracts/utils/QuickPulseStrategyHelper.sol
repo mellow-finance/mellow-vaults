@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
+<<<<<<< HEAD
 pragma solidity ^0.8.0;
 
 import "../strategies/QuickPulseStrategy.sol";
 
 contract QuickPulseStrategyHelper {
+=======
+pragma solidity 0.8.9;
+
+import "../strategies/QuickPulseStrategy.sol";
+
+contract PulseStrategyHelper {
+>>>>>>> 361385bd (new helper)
     uint256 public constant Q96 = 2**96;
 
     function getStrategyParams(QuickPulseStrategy strategy)
@@ -123,17 +131,25 @@ contract QuickPulseStrategyHelper {
                 pool,
                 vault.positionNft()
             );
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 361385bd (new helper)
             (delta, ) = vault.tvl();
             if (!neededNewInterval) {
                 (delta, ) = vault.tvl();
                 IQuickSwapHelper helper = vault.helper();
                 (, , , , , , uint128 liquidity, , , , ) = vault.positionManager().positions(vault.positionNft());
+<<<<<<< HEAD
                 (uint256 amount0, uint256 amount1) = helper.liquidityToTokenAmounts(
                     vault.positionNft(),
                     sqrtPriceX96,
                     liquidity
                 );
+=======
+                (uint256 amount0, uint256 amount1) = helper.liquidityToTokenAmounts(vault.positionNft(), sqrtPriceX96, liquidity);
+>>>>>>> 361385bd (new helper)
                 delta[0] -= amount0;
                 delta[1] -= amount1;
             }
