@@ -143,7 +143,7 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         address,
         address,
         uint256 tokenId
-    ) internal override view {
+    ) internal view {
         require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
 
