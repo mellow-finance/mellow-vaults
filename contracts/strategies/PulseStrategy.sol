@@ -445,8 +445,12 @@ contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit,
         }
 
         require(
+<<<<<<< HEAD
             FullMath.mulDiv(actualSwapPriceX96, D9 - mutableParams_.swapSlippageD, D9) >= priceX96,
 >>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
+=======
+            FullMath.mulDiv(priceX96, D9 - mutableParams_.swapSlippageD, D9) <= actualSwapPriceX96,
+>>>>>>> db89dc40 (fixes for strategy && deploy scripts)
             ExceptionsLibrary.LIMIT_UNDERFLOW
         );
 
