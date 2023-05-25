@@ -8,7 +8,11 @@ import "../libraries/external/PositionValue.sol";
 pragma solidity 0.8.9;
 
 import "../strategies/PulseStrategy.sol";
+<<<<<<< HEAD
 >>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
+=======
+import "../libraries/external/PositionValue.sol";
+>>>>>>> 7ca448e2 (fixes)
 
 contract PulseStrategyHelper {
     uint256 public constant Q96 = 2**96;
@@ -55,6 +59,9 @@ contract PulseStrategyHelper {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7ca448e2 (fixes)
     function _calculateAmountsForSwap(
         uint256 targetRatioOfToken1X96,
         IERC20Vault erc20Vault,
@@ -99,17 +106,24 @@ contract PulseStrategyHelper {
         }
     }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
+=======
+>>>>>>> 7ca448e2 (fixes)
     function calculateAmountForSwap(PulseStrategy strategy)
         public
         view
         returns (
 <<<<<<< HEAD
+<<<<<<< HEAD
             uint256 amountIn,
 =======
             uint256 amount,
 >>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
+=======
+            uint256 amountIn,
+>>>>>>> 7ca448e2 (fixes)
             address from,
             address to,
             IERC20Vault erc20Vault
@@ -123,6 +137,7 @@ contract PulseStrategyHelper {
         IUniswapV3Pool pool = IUniswapV3Pool(immutableParams.uniV3Vault.pool());
         (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
 <<<<<<< HEAD
+<<<<<<< HEAD
         erc20Vault = immutableParams.erc20Vault;
         uint256 targetRatioOfToken1X96;
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
@@ -131,16 +146,28 @@ contract PulseStrategyHelper {
             (PulseStrategy.Interval memory interval, bool neededNewInterval) = strategy.calculateNewPosition(
 =======
         uint256 targetRatioOfToken1;
+=======
+        erc20Vault = immutableParams.erc20Vault;
+        uint256 targetRatioOfToken1X96;
+>>>>>>> 7ca448e2 (fixes)
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        uint256[] memory delta = new uint256[](2);
         {
+<<<<<<< HEAD
             (PulseStrategy.Interval memory interval, ) = strategy.calculateNewPosition(
 >>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
+=======
+            (PulseStrategy.Interval memory interval, bool neededNewInterval) = strategy.calculateNewPosition(
+>>>>>>> 7ca448e2 (fixes)
                 mutableParams,
                 spotTick,
                 pool,
                 immutableParams.uniV3Vault.uniV3Nft()
             );
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7ca448e2 (fixes)
 
             if (neededNewInterval) {
                 (delta, ) = immutableParams.uniV3Vault.tvl();
@@ -151,6 +178,7 @@ contract PulseStrategyHelper {
                 );
             }
             targetRatioOfToken1X96 = strategy.calculateTargetRatioOfToken1(interval, sqrtPriceX96, priceX96);
+<<<<<<< HEAD
         }
 
         uint256 tokenInIndex;
@@ -162,15 +190,22 @@ contract PulseStrategyHelper {
             delta
 =======
             targetRatioOfToken1 = strategy.calculateTargetRatioOfToken1(interval, sqrtPriceX96, priceX96);
+=======
+>>>>>>> 7ca448e2 (fixes)
         }
 
         uint256 tokenInIndex;
-        (tokenInIndex, amount) = strategy.calculateAmountsForSwap(
-            immutableParams,
-            mutableParams,
+        (amountIn, tokenInIndex) = _calculateAmountsForSwap(
+            targetRatioOfToken1X96,
+            erc20Vault,
             priceX96,
+<<<<<<< HEAD
             targetRatioOfToken1
 >>>>>>> 82ca668c (PulseStrategy with 1inch router for swaps)
+=======
+            mutableParams,
+            delta
+>>>>>>> 7ca448e2 (fixes)
         );
 
         from = immutableParams.tokens[tokenInIndex];

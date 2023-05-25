@@ -76,9 +76,8 @@ const buildSinglePositionStrategy = async (
     } as ImmutableParamsStruct;
 
 
-    console.log("ImmutableParams:");
-    console.log(immutableParams.router, immutableParams.erc20Vault, immutableParams.uniV3Vault, immutableParams.tokens);
-    console.log("MutableParams:", mutableParams.toString(), mutableParams);
+    console.log("ImmutableParams:", immutableParams);
+    console.log("MutableParams:", mutableParams);
 
     await deploy(deploymentName, {
         from: deployer,
@@ -90,7 +89,7 @@ const buildSinglePositionStrategy = async (
     });
 
     const strategy = await hre.ethers.getContract(deploymentName);
-    const { address: proxyAddress } = await deploy("PulseStrategyProxyShort", {
+    const { address: proxyAddress } = await deploy("PulseStrategyProxyWide", {
         from: deployer,
         contract: "TransparentUpgradeableProxy",
         args: [
@@ -228,8 +227,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await deployStrategy(hre);
     await buildSinglePositionStrategy(hre, [weth, bob], {
         priceImpactD6: 0,
-        intervalWidth: 2400,
-        tickNeighborhood: 200,
+        intervalWidth: 4200,
+        tickNeighborhood: 500,
         maxDeviationForVaultPool: 50,
         timespanForAverageTick: 60,
         amount0Desired: 10 ** 9, // weth
