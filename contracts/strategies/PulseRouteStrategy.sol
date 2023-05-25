@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+<<<<<<< HEAD
 pragma solidity ^0.8.0;
+=======
+pragma solidity 0.8.9;
+>>>>>>> 62a3a156 (added PulseRouteStrategy for optimism (#301))
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
