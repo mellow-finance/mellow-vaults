@@ -6,7 +6,10 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 =======
 pragma solidity 0.8.9;
 
+<<<<<<< HEAD
 >>>>>>> c7888324 (Added QuickPulseStrategy)
+=======
+>>>>>>> 8ec71908 (sushiswap deployment script ready)
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
@@ -25,6 +28,7 @@ import "../libraries/external/DataStorageLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
+<<<<<<< HEAD
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
 =======
 =======
@@ -36,6 +40,9 @@ import "../utils/DefaultAccessControlLateInit.sol";
 
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
 >>>>>>> c7888324 (Added QuickPulseStrategy)
+=======
+contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
+>>>>>>> 8ec71908 (sushiswap deployment script ready)
     using SafeERC20 for IERC20;
 
     uint256 public constant D6 = 10**6;
@@ -502,6 +509,7 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     function withdrawCallback() external {}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     /// @inheritdoc IERC721Receiver
     function onERC721Received(
         address,
@@ -514,6 +522,8 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
 
 =======
 >>>>>>> c7888324 (Added QuickPulseStrategy)
+=======
+>>>>>>> 8ec71908 (sushiswap deployment script ready)
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("QuickPulseStrategy");
     }
