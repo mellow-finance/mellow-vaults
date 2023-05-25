@@ -47,4 +47,6 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
 
     /// @notice Collect Kyber fees to zero vault.
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
+
+    function updateFarmInfo() external;
 }

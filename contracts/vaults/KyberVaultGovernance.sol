@@ -16,6 +16,8 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
         VaultGovernance(internalParams_)
     {
         require(address(delayedProtocolParams_.positionManager) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(delayedProtocolParams_.farm) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(delayedProtocolParams_.mellowOracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -30,9 +32,27 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     /// @inheritdoc IKyberVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({positionManager: IBasePositionManager(address(0))});
+            return DelayedProtocolParams({positionManager: IBasePositionManager(address(0)), farm: IKyberSwapElasticLM(address(0)), mellowOracle: IOracle(address(0))});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
+    }
+
+    /// @inheritdoc IKyberVaultGovernance
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            bytes[] memory paths = new bytes[](0);
+            return DelayedStrategyParams({paths: paths, pid: type(uint256).max});
+        }
+        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc IKyberVaultGovernance
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_delayedStrategyParams[nft].length == 0) {
+            bytes[] memory paths = new bytes[](0);
+            return DelayedStrategyParams({paths: paths, pid: type(uint256).max});
+        }
+        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
     /// @inheritdoc IERC165
@@ -56,6 +76,23 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
             tx.origin,
             msg.sender,
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
+        );
+    }
+
+    /// @inheritdoc IKyberVaultGovernance
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
+    }
+
+    /// @inheritdoc IKyberVaultGovernance
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+        emit CommitDelayedStrategyParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
         );
     }
 
@@ -101,4 +138,30 @@ contract KyberVaultGovernance is ContractMeta, IKyberVaultGovernance, VaultGover
     /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
+
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params
+    );
 }
