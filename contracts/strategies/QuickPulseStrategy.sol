@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-<<<<<<< HEAD
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-=======
-pragma solidity 0.8.9;
-
-<<<<<<< HEAD
->>>>>>> c7888324 (Added QuickPulseStrategy)
-=======
->>>>>>> 8ec71908 (sushiswap deployment script ready)
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
@@ -21,28 +13,12 @@ import "../interfaces/vaults/IQuickSwapVault.sol";
 
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import "../libraries/external/DataStorageLibrary.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-<<<<<<< HEAD
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
-=======
-=======
-import "../libraries/external/DataStorageLibrary.sol";
->>>>>>> 43a88453 (prettified && fixes)
-
-import "../utils/ContractMeta.sol";
-import "../utils/DefaultAccessControlLateInit.sol";
-
-contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
->>>>>>> c7888324 (Added QuickPulseStrategy)
-=======
-contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
->>>>>>> 8ec71908 (sushiswap deployment script ready)
     using SafeERC20 for IERC20;
 
     uint256 public constant D6 = 10**6;
@@ -219,15 +195,7 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     /// @param vaultPool pool of quickSwapVault
     function checkTickDeviation(MutableParams memory mutableParams_, IAlgebraPool vaultPool) public view {
         (, int24 spotTick, , , , , ) = vaultPool.globalState();
-<<<<<<< HEAD
-<<<<<<< HEAD
         (int24 averageTick, bool withFail) = DataStorageLibrary.consult(
-=======
-        (int24 averageTick, , bool withFail) = OracleLibrary.consult(
->>>>>>> c7888324 (Added QuickPulseStrategy)
-=======
-        (int24 averageTick, bool withFail) = DataStorageLibrary.consult(
->>>>>>> 43a88453 (prettified && fixes)
             address(vaultPool),
             mutableParams_.timespanForAverageTick
         );
@@ -508,8 +476,6 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     /// @inheritdoc IERC721Receiver
     function onERC721Received(
         address,
@@ -520,10 +486,6 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
         return this.onERC721Received.selector;
     }
 
-=======
->>>>>>> c7888324 (Added QuickPulseStrategy)
-=======
->>>>>>> 8ec71908 (sushiswap deployment script ready)
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("QuickPulseStrategy");
     }
