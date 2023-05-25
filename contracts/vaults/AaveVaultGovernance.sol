@@ -109,10 +109,11 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     }
 
     /// @inheritdoc IAaveVaultGovernance
-    function createVault(address[] memory vaultTokens_, address owner_, bool[] memory tokenStatus_)
-        external
-        returns (IAaveVault vault, uint256 nft)
-    {
+    function createVault(
+        address[] memory vaultTokens_,
+        address owner_,
+        bool[] memory tokenStatus_
+    ) external returns (IAaveVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = IAaveVault(vaddr);

@@ -73,7 +73,11 @@ contract AaveVault is IAaveVault, IntegrationVault {
     }
 
     /// @inheritdoc IAaveVault
-    function initialize(uint256 nft_, address[] memory vaultTokens_, bool[] memory tokenStatus_) external {
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        bool[] memory tokenStatus_
+    ) external {
         _initialize(vaultTokens_, nft_);
         _lendingPool = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
         aTokens = new address[](vaultTokens_.length);
@@ -185,8 +189,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         for (uint256 i = 0; i < tvlsLength; ++i) {
             if (tokenStatus[i] == ONLY_DEPOSIT) {
                 _tvls[i] = IERC20(aTokens[i]).balanceOf(address(this));
-            }
-            else {
+            } else {
                 _tvls[i] = getDebt(_vaultTokens[i]);
             }
         }
