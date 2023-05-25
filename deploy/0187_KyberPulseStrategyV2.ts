@@ -206,7 +206,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { getNamedAccounts } = hre;
     const { stMatic, bob } = await getNamedAccounts();
 
-    if (!bob) return;
+    if (!bob || true) return;
     await deployStrategy(hre);
 
     await buildSinglePositionStrategy(hre, [stMatic, bob], {
