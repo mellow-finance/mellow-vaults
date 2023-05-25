@@ -19,6 +19,7 @@ import "../interfaces/vaults/IQuickSwapVault.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import "../libraries/external/DataStorageLibrary.sol";
 
 import "../utils/ContractMeta.sol";
@@ -26,10 +27,12 @@ import "../utils/DefaultAccessControlLateInit.sol";
 
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
 =======
+=======
+import "../libraries/external/DataStorageLibrary.sol";
+>>>>>>> 43a88453 (prettified && fixes)
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
-import "../utils/SinglePositionStrategyHelper.sol";
 
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
 >>>>>>> c7888324 (Added QuickPulseStrategy)
@@ -210,10 +213,14 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     function checkTickDeviation(MutableParams memory mutableParams_, IAlgebraPool vaultPool) public view {
         (, int24 spotTick, , , , , ) = vaultPool.globalState();
 <<<<<<< HEAD
+<<<<<<< HEAD
         (int24 averageTick, bool withFail) = DataStorageLibrary.consult(
 =======
         (int24 averageTick, , bool withFail) = OracleLibrary.consult(
 >>>>>>> c7888324 (Added QuickPulseStrategy)
+=======
+        (int24 averageTick, bool withFail) = DataStorageLibrary.consult(
+>>>>>>> 43a88453 (prettified && fixes)
             address(vaultPool),
             mutableParams_.timespanForAverageTick
         );
