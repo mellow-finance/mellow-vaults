@@ -27,10 +27,15 @@ import "./IntegrationVault.sol";
 contract AaveVault is IAaveVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    bool public constant ONLY_DEPOSIT = false;
+    bool public constant ONLY_BORROW = true;
+
     address[] public aTokens;
     uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
     ILendingPool private _lendingPool;
+
+    bool[] public tokenStatus;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -68,49 +73,84 @@ contract AaveVault is IAaveVault, IntegrationVault {
     }
 
     /// @inheritdoc IAaveVault
-    function initialize(uint256 nft_, address[] memory vaultTokens_) external {
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        bool[] memory tokenStatus_
+    ) external {
         _initialize(vaultTokens_, nft_);
         _lendingPool = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
         aTokens = new address[](vaultTokens_.length);
+
+        require(tokenStatus_.length == vaultTokens_.length, ExceptionsLibrary.INVALID_LENGTH);
+
+        tokenStatus = tokenStatus_;
+
         for (uint256 i = 0; i < vaultTokens_.length; ++i) {
             address aToken = _getAToken(vaultTokens_[i]);
             require(aToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
             aTokens[i] = aToken;
             _tvls.push(0);
         }
+
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    function borrow(address token, address to, uint256 amount) external {
+    function _findIndex(address token) internal view returns (uint256) {
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            if (_vaultTokens[i] == token) {
+                return i;
+            }
+        }
+        require(false, ExceptionsLibrary.INVARIANT);
+    }
+
+    function borrow(
+        address token,
+        address to,
+        uint256 amount
+    ) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
+
+        uint256 tokenIndex = _findIndex(token);
+        require(tokenStatus[tokenIndex] == ONLY_BORROW, ExceptionsLibrary.FORBIDDEN);
+
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
         _lendingPool.borrow(token, amount, strategyParams.rateMode, 0, address(this));
         IERC20(token).safeTransfer(to, amount);
         _updateTvls();
     }
 
-    function repay(address token, address from, uint256 amount) external {
+    function repay(
+        address token,
+        address from,
+        uint256 amount
+    ) external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+
+        uint256 tokenIndex = _findIndex(token);
+        require(tokenStatus[tokenIndex] == ONLY_BORROW, ExceptionsLibrary.FORBIDDEN);
+
         IERC20(token).safeTransferFrom(from, address(this), amount);
         IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
-        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
         _lendingPool.repay(token, amount, strategyParams.rateMode, address(this));
         IERC20(token).safeApprove(address(_lendingPool), 0);
         _updateTvls();
     }
 
-    function getDebt(uint256 index) public view returns (uint256 debt) {
-        require(index < _vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
-        address token = _vaultTokens[index];
+    function getDebt(address token) public view returns (uint256 debt) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
-        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_nft);
-        if (strategyParams.rateMode == 1) { 
+        IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(_nft);
+        if (strategyParams.rateMode == 1) {
             return IERC20(data.stableDebtTokenAddress).balanceOf(address(this));
-        }
-        else {
+        } else {
             return IERC20(data.variableDebtTokenAddress).balanceOf(address(this));
         }
     }
@@ -118,7 +158,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function getLTV(address token) external view returns (uint256 ltv) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
         uint256 config = data.configuration.data;
-        return config % (1<<16);
+        return config % (1 << 16);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -147,9 +187,10 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function _updateTvls() private {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            _tvls[i] = IERC20(aTokens[i]).balanceOf(address(this));
-            if (_tvls[i] == 0) {
-                _tvls[i] = getDebt(i);
+            if (tokenStatus[i] == ONLY_DEPOSIT) {
+                _tvls[i] = IERC20(aTokens[i]).balanceOf(address(this));
+            } else {
+                _tvls[i] = getDebt(_vaultTokens[i]);
             }
         }
         _lastTvlUpdateTimestamp = block.timestamp;
@@ -170,6 +211,9 @@ contract AaveVault is IAaveVault, IntegrationVault {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
+
+            require(tokenStatus[i] == ONLY_DEPOSIT, ExceptionsLibrary.FORBIDDEN);
+
             address token = tokens[i];
             IERC20(token).safeIncreaseAllowance(address(_lendingPool), tokenAmounts[i]);
             _lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));

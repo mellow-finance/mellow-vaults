@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import "forge-std/Script.sol";
 
-import "../strategies/DeltaNeutralStrategy.sol";
 import "../vaults/ERC20RootVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/UniV3VaultGovernance.sol";
@@ -12,7 +11,6 @@ import "../vaults/AaveVault.sol";
 import "../vaults/ERC20DNRootVault.sol";
 import "../utils/UniV3Helper.sol";
 import "../utils/ERC20RootVaultHelper.sol";
-import "../utils/DeltaNeutralStrategyHelper.sol";
 
 import "../interfaces/external/aave/AaveOracle.sol";
 import "../MockAggregator.sol";
@@ -21,7 +19,7 @@ uint256 constant width = 8000;
 uint256 constant stop = 2700;
 
 contract PolygonDeployment is Script {
-
+/*
     DeltaNeutralStrategy dstrategy = DeltaNeutralStrategy(0x355FD7BcF399963e7fbaA30F81f4CfDb8f8ae472);
 
     ERC20DNRootVault rootVault;
@@ -205,7 +203,7 @@ contract PolygonDeployment is Script {
            // return 0;
        //     console2.log("aaveGovernance", address(aaveVaultGovernance));
          //   console2.log("rootGovernance", address(rootVaultGovernance));
-         /*
+         
             {
 
                 uint8[] memory grants = new uint8[](1);
@@ -218,7 +216,7 @@ contract PolygonDeployment is Script {
                 protocolGovernance.commitPermissionGrants(address(aaveVaultGovernance));
                 protocolGovernance.commitPermissionGrants(address(rootVaultGovernance));
             }
-            */
+            
 
             uniV3VaultGovernance.createVault(tokens, deployer, 500, address(helper));
             aaveVaultGovernance.createVault(tokens, deployer);
@@ -264,7 +262,7 @@ contract PolygonDeployment is Script {
 
         vm.startBroadcast();
 
-/*
+
         IProtocolGovernance protocolGovernance = IProtocolGovernance(governance);
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
@@ -298,14 +296,14 @@ contract PolygonDeployment is Script {
         dstrategy.rebalance();
         IERC20RootVault(0xBb5317A8Df6Cbc4BE7B5385ddA95075b9D49ff9d).deposit(A, 0, B);
         return;
-*/
+
         uint256 startNft = kek();
         console2.log(startNft);
 
         return;
 
         buildInitialPositions(startNft);
-/*
+
         uint8[] memory grants = new uint8[](2);
         grants[0] = 4;
         grants[1] = 5;
@@ -314,7 +312,6 @@ contract PolygonDeployment is Script {
 
         protocolGovernance.stagePermissionGrants(address(aaveVault), grants);
         protocolGovernance.commitPermissionGrants(address(aaveVault));
-*/
         bytes32 ADMIN_ROLE =
         bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
         bytes32 ADMIN_DELEGATE_ROLE =
@@ -331,6 +328,8 @@ contract PolygonDeployment is Script {
         dstrategy.revokeRole(ADMIN_ROLE, deployer);
         return;
     }
+
+    */
 
     
 }
