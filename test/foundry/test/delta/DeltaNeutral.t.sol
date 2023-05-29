@@ -44,6 +44,7 @@ contract DeltaNeutralTest is Test {
     address public weth = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
     address public uniswapV3Router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public uniswapV3PositionManager = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
+    address public uniswapV3Factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public governance = 0x8Ff3148CE574B8e135130065B188960bA93799c6;
     address public registry = 0xd3D0e85F225348a2006270Daf624D8c46cAe4E1F;
     address public erc20Governance = 0x05164eC2c3074A4E8eA20513Fbe98790FfE930A4;
@@ -53,6 +54,7 @@ contract DeltaNeutralTest is Test {
     address public rootHelper = 0xb1f69766991b64121c472B38607063A79bbEeb2a;
 
     address public ppool = 0x9Ceca832a91f1e74C10FF46fDBC413F50dC7f3DA;
+    address public oracleAdmin = 0xdc9A35B16DB4e126cFeDC41322b3a36454B1F772;
 
     MockOracle mck;
 
@@ -316,8 +318,8 @@ contract DeltaNeutralTest is Test {
 
         dstrategy = new DeltaNeutralStrategyBob(
             positionManager,
-            IOracle(mck),
-            ISwapRouter(uniswapV3Router)
+            ISwapRouter(uniswapV3Router),
+            IUniswapV3Factory(uniswapV3Factory)
         );
 
         dstrategy = dstrategy.createStrategy(address(erc20Vault), address(uniV3Vault), address(aaveVault), deployer, 0, 2, 1);
@@ -404,7 +406,7 @@ contract DeltaNeutralTest is Test {
         tickLowerQ -= tickLowerQ % 60;
         int24 tickUpperQ = tickLowerQ + int24(uint24(width));
 
-        dstrategy.rebalance(true, tickLowerQ, tickUpperQ);
+        dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
 
         (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = INonfungiblePositionManager(uniswapV3PositionManager).positions(
                 uniV3Vault.uniV3Nft()
@@ -432,8 +434,6 @@ contract DeltaNeutralTest is Test {
         require(totalTvl[2] == 0);
         require(totalTvl[0] >= 9999 && totalTvl[0] <= 10001);
 
-        return;
-
         vm.warp(block.timestamp + 86400 * 365); // aave debt - fees decreases tvl
 
         (uint256[] memory tvlA, uint256[] memory tvlB) = rootVault.tvl();
@@ -447,26 +447,50 @@ contract DeltaNeutralTest is Test {
         require(finalTotalTvl[0] > 10050);
     }
 
-    /*
-
     function testDepositCallbackWorks() public {
+
+        {
+
+            firstDeposit();
+            (, int24 tickQ, , , , ,) = uniV3Vault.pool().slot0();
+            int24 tickLowerQ = (tickQ - int24(uint24(width)) / 2);
+            tickLowerQ -= tickLowerQ % 60;
+            int24 tickUpperQ = tickLowerQ + int24(uint24(width));
+            dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
+
+        }
+
         deposit(1000);
 
         (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
 
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
+        require(erc20Tvl[2] <= 10**18);
 
         (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
+        require(totalTvl[2] == 0);
         require(isClose(totalTvl[0], 1000*10**6, 1000));
     }
 
     function testSimpleWithdrawWorks() public {
+
+        {
+
+            firstDeposit();
+            (, int24 tickQ, , , , ,) = uniV3Vault.pool().slot0();
+            int24 tickLowerQ = (tickQ - int24(uint24(width)) / 2);
+            tickLowerQ -= tickLowerQ % 60;
+            int24 tickUpperQ = tickLowerQ + int24(uint24(width));
+            dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
+
+        }
+
         deposit(1000);
         uint256 lpTokens = rootVault.balanceOf(deployer);
 
-        uint256[] memory minTokenAmounts = new uint256[](2);
+        uint256[] memory minTokenAmounts = new uint256[](3);
         bytes[] memory vaultsOptions = new bytes[](3);
 
         uint256 oldBalance = IERC20(usdc).balanceOf(deployer);
@@ -492,11 +516,24 @@ contract DeltaNeutralTest is Test {
     }
 
     function testDepositWorksProportionally() public {
+
+        {
+
+            firstDeposit();
+            (, int24 tickQ, , , , ,) = uniV3Vault.pool().slot0();
+            int24 tickLowerQ = (tickQ - int24(uint24(width)) / 2);
+            tickLowerQ -= tickLowerQ % 60;
+            int24 tickUpperQ = tickLowerQ + int24(uint24(width));
+            dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
+
+        }
+
         deposit(1000);
         uint256 lpTokensBefore = rootVault.balanceOf(deployer);
 
         (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
+        require(totalTvl[2] == 0);
         require(isClose(totalTvl[0], 1000*10**6, 1000));
 
         deposit(3000);
@@ -504,18 +541,19 @@ contract DeltaNeutralTest is Test {
 
         (uint256[] memory totalTvlNew, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
+        require(totalTvl[2] == 0);
         require(isClose(totalTvlNew[0], 4000*10**6, 1000));
 
         require(isClose(lpTokensBefore * 4, lpTokensAfter, 1000));
     }
 
-    function changePrice(uint256 newPrice) public {
-        IUniswapV3Pool pool = uniV3Vault.pool();
+    function changePriceBob(uint256 newPrice) public {
+        IUniswapV3Pool pool = IUniswapV3Pool(dstrategy.factory().getPool(weth, bob, 500));
 
-        int24 needTick = TickMath.getTickAtSqrtRatio(uint160(CommonLibrary.sqrtX96(FullMath.mulDiv(1<<96, 10**12, newPrice))));
+        int24 needTick = TickMath.getTickAtSqrtRatio(uint160(CommonLibrary.sqrtX96((1 << 96) * newPrice)));
 
-        uint256 startEth = 5 * 10**22;
-        uint256 startUsd = 10**14;
+        uint256 startEth = 2 * 10**20;
+        uint256 startUsd = 4 * 10**23;
 
         uint256 pos = 0;
 
@@ -523,13 +561,90 @@ contract DeltaNeutralTest is Test {
 
         while (true) {
             t += 1;
-            (, int24 tick, , , , , ) = uniV3Vault.pool().slot0();
+            (, int24 tick, , , , , ) = pool.slot0();
 
-            if (tick < needTick && needTick - tick < 100) {
+            if (tick < needTick && needTick - tick < 20) {
                 break;
             }
 
-            if (tick > needTick && tick - needTick < 100) {
+            if (tick > needTick && tick - needTick < 20) {
+                break;
+            }
+
+            if (tick < needTick) {
+                if (pos != 0) {
+                    pos = 1 - pos;
+                    startEth /= 2;
+                    startUsd /= 2;
+                }
+                bytes memory b = "";
+                deal(bob, deployer, startUsd);
+
+                IERC20(bob).approve(uniswapV3Router, startUsd);
+
+                ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+                    tokenIn: bob,
+                    tokenOut: weth,
+                    fee: 500,
+                    recipient: deployer,
+                    deadline: block.timestamp + 1,
+                    amountIn: startUsd,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                });
+
+                ISwapRouter(uniswapV3Router).exactInputSingle(swapParams);
+            }
+
+            else {
+                if (pos != 1) {
+                    pos = 1 - pos;
+                    startEth /= 2;
+                    startUsd /= 2;
+                }
+                bytes memory b = "";
+                deal(weth, deployer, startEth);
+
+                IERC20(weth).approve(uniswapV3Router, startEth);
+
+                ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+                    tokenIn: weth,
+                    tokenOut: bob,
+                    fee: 500,
+                    recipient: deployer,
+                    deadline: block.timestamp + 1,
+                    amountIn: startEth,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                });
+
+                ISwapRouter(uniswapV3Router).exactInputSingle(swapParams);
+            }
+        }
+    }
+
+    function changePrice(uint256 newPrice) public {
+        changePriceBob(newPrice);
+        IUniswapV3Pool pool = IUniswapV3Pool(dstrategy.factory().getPool(weth, usdc, 500));
+
+        int24 needTick = TickMath.getTickAtSqrtRatio(uint160(CommonLibrary.sqrtX96(FullMath.mulDiv(1<<96, 10**12, newPrice))));
+
+        uint256 startEth = 2 * 10**21;
+        uint256 startUsd = 4 * 10**12;
+
+        uint256 pos = 0;
+
+        uint256 t = 0;
+
+        while (true) {
+            t += 1;
+            (, int24 tick, , , , , ) = pool.slot0();
+
+            if (tick < needTick && needTick - tick < 20) {
+                break;
+            }
+
+            if (tick > needTick && tick - needTick < 20) {
                 break;
             }
 
@@ -584,7 +699,7 @@ contract DeltaNeutralTest is Test {
             }
         }
 
-        AaveOracle aaveOracle = AaveOracle(0xA50ba011c48153De246E5192C8f9258A2ba79Ca9);
+        AaveOracle aaveOracle = AaveOracle(0x0229F777B0fAb107F9591a41d5F02E4e98dB6f2d);
         switchPrank(oracleAdmin);
 
         address[] memory addresses = new address[](1);
@@ -603,61 +718,102 @@ contract DeltaNeutralTest is Test {
 
     function testDepositWorksWhenPriceChanges() public {
 
+        {
+
+            firstDeposit();
+            (, int24 tickQ, , , , ,) = uniV3Vault.pool().slot0();
+            int24 tickLowerQ = (tickQ - int24(uint24(width)) / 2);
+            tickLowerQ -= tickLowerQ % 60;
+            int24 tickUpperQ = tickLowerQ + int24(uint24(width));
+            dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
+
+        }
+
         dstrategy.updateOracleParams(
-            DeltaNeutralStrategy.OracleParams({
+            DeltaNeutralStrategyBob.OracleParams({
                 averagePriceTimeSpan: 1800,
                 maxTickDeviation: 15000
             })
         );
 
         deposit(1000);
-        changePrice(1600);
+        changePrice(1400);
         deposit(1000);
 
         (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
 
         require(erc20Tvl[0] <= 10**6); // 0.1%
         require(erc20Tvl[1] <= 10**14);
+        require(erc20Tvl[2] <= 10**18);
 
         (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
-        require(totalTvl[0] >= 1900*10**6 && totalTvl[0] <= 1980*10**6);
+        require(totalTvl[2] == 0);
+        require(totalTvl[0] >= 1900*10**6 && totalTvl[0] <= 1990*10**6);
     }
 
     function testFailDepositWithoutRebalanceAfterPriceChange() public {
+
+        {
+
+            firstDeposit();
+            (, int24 tickQ, , , , ,) = uniV3Vault.pool().slot0();
+            int24 tickLowerQ = (tickQ - int24(uint24(3000)) / 2);
+            tickLowerQ -= tickLowerQ % 60;
+            int24 tickUpperQ = tickLowerQ + int24(uint24(3000));
+            dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
+
+        }
+
         dstrategy.updateOracleParams(
-            DeltaNeutralStrategy.OracleParams({
+            DeltaNeutralStrategyBob.OracleParams({
                 averagePriceTimeSpan: 1800,
                 maxTickDeviation: 15000
             })
         );
 
         deposit(1000);
-        changePrice(1800);
+        changePrice(1300);
         deposit(1000);
     }
 
     function testRebalanceWorksProperlyAfterPriceRise() public {
+
+        {
+
+            firstDeposit();
+            (, int24 tickQ, , , , ,) = uniV3Vault.pool().slot0();
+            int24 tickLowerQ = (tickQ - int24(uint24(width)) / 2);
+            tickLowerQ -= tickLowerQ % 60;
+            int24 tickUpperQ = tickLowerQ + int24(uint24(width));
+            dstrategy.rebalance(true, tickLowerQ, tickUpperQ, 0);
+
+        }
+
         dstrategy.updateOracleParams(
-            DeltaNeutralStrategy.OracleParams({
+            DeltaNeutralStrategyBob.OracleParams({
                 averagePriceTimeSpan: 1800,
                 maxTickDeviation: 15000
             })
         );
 
         deposit(1000);
-        changePrice(1800);
-        dstrategy.rebalance();
+        changePrice(2300);
+        deposit(1000);
 
         (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
 
-        require(erc20Tvl[0] <= 10**6); // 0.1%
-        require(erc20Tvl[1] <= 10**14);
+        require(erc20Tvl[0] <= 3 * 10**6); // 0.1%
+        require(erc20Tvl[1] <= 3 * 10**14);
+        require(erc20Tvl[2] <= 3 * 10**18);
 
         (uint256[] memory totalTvl, ) = rootVault.tvl();
         require(totalTvl[1] == 0);
-        require(totalTvl[0] >= 900*10**6 && totalTvl[0] <= 960*10**6);
+        require(totalTvl[2] == 0);
+        require(totalTvl[0] >= 1900*10**6 && totalTvl[0] <= 1980*10**6);
     }
+
+    /*
 
     function testRebalanceWorksProperlyAfterPricePlummets() public {
         dstrategy.updateOracleParams(

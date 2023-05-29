@@ -277,12 +277,8 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         actualTokenAmounts = _push(tokenAmounts, vaultOptions);
 
         if (supply > 0) {
-            uint256 shareX96 = FullMath.mulDiv(lpAmount, Q96, supply);
-
-            bytes memory q = abi.encode(shareX96);
-
             if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(q);
+                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback("");
             }
         }
 

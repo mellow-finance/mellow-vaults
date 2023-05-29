@@ -11,11 +11,11 @@ import "../interfaces/utils/ILpCallback.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
-import "../interfaces/oracles/IOracle.sol";
 import "../interfaces/vaults/IAaveVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
+import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/FullMath.sol";
@@ -24,7 +24,7 @@ import "../libraries/external/LiquidityAmounts.sol";
 
 import "forge-std/console2.sol";
 
-contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessControlLateInit {
+contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
     uint256 public constant D4 = 10**4;
@@ -38,9 +38,12 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
     IAaveVault public aaveVault;
 
     IUniswapV3Pool public pool;
+
+    IUniswapV3Factory public immutable factory;
     INonfungiblePositionManager public immutable positionManager;
-    IOracle public immutable oracle;
     ISwapRouter public immutable router;
+    
+    bool private _fromCallback;
 
     address[] public tokens;
     uint256[] public uniTokensIndices;
@@ -78,18 +81,18 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
 
     constructor(
         INonfungiblePositionManager positionManager_,
-        IOracle mellowOracle,
-        ISwapRouter router_
+        ISwapRouter router_,
+        IUniswapV3Factory factory_
     ) {
         require(
             address(positionManager_) != address(0) &&
-                address(mellowOracle) != address(0) &&
-                address(router_) != address(0),
+                address(router_) != address(0) &&
+                address(factory_) != address(0),
             ExceptionsLibrary.ADDRESS_ZERO
         );
-        oracle = mellowOracle;
         positionManager = positionManager_;
         router = router_;
+        factory = factory_;
         DefaultAccessControlLateInit.init(address(this));
     }
 
@@ -191,7 +194,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         uniV3Vault.pull(address(erc20Vault), uniV3Vault.vaultTokens(), uniTvl, "");
     }
 
-    function isDeltaOkay(
+    function areDeltasOkay(
         bool createNewPosition,
         int24 tickLower,
         int24 tickUpper,
@@ -206,26 +209,45 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             int24
         )
     {
-        (, int24 spotTick, , , , , ) = pool.slot0();
 
-        if (nft != 0 && !createNewPosition) {
-            (, , , , , tickLower, tickUpper, , , , , ) = positionManager.positions(nft);
+        int24 spotTickR;
+
+        for (uint256 i = 0; i < 3; ++i) {
+            for (uint256 j = i + 1; j < 3; ++j) {
+                IUniswapV3Pool poolIJ = IUniswapV3Pool(factory.getPool(tokens[i], tokens[j], swapParams[i][j].swapFee));
+                (, int24 spotTick, , , , , ) = poolIJ.slot0();
+
+                if (address(poolIJ) == address(pool) && nft != 0 && !createNewPosition) {
+                    (, , , , , tickLower, tickUpper, , , , , ) = positionManager.positions(nft);
+                    require(tickLower < spotTick && spotTick < tickUpper, ExceptionsLibrary.INVARIANT);
+                }
+
+                int24 avgTick;
+
+                {
+                    bool withFail;
+                    (avgTick, , withFail) = OracleLibrary.consult(address(poolIJ), oracleParams.averagePriceTimeSpan);
+                    require(!withFail);
+                }
+
+                int24 maxDelta = int24(oracleParams.maxTickDeviation);
+                if (spotTick < avgTick && avgTick - spotTick > maxDelta) {
+                    return (false, spotTick, tickLower, tickUpper);
+                }
+
+                if (avgTick < spotTick && spotTick - avgTick > maxDelta) {
+                    return (false, spotTick, tickLower, tickUpper);
+                }
+
+                if (address(poolIJ) == address(pool)) {
+                    spotTickR = spotTick;
+                }
+
+            }
         }
-        require(tickLower < spotTick && spotTick < tickUpper, ExceptionsLibrary.INVARIANT);
 
-        (int24 avgTick, , bool withFail) = OracleLibrary.consult(address(pool), oracleParams.averagePriceTimeSpan);
-        require(!withFail);
+        return (true, spotTickR, tickLower, tickUpper);
 
-        int24 maxDelta = int24(oracleParams.maxTickDeviation);
-        if (spotTick < avgTick && avgTick - spotTick > maxDelta) {
-            return (false, spotTick, tickLower, tickUpper);
-        }
-
-        if (avgTick < spotTick && spotTick - avgTick > maxDelta) {
-            return (false, spotTick, tickLower, tickUpper);
-        }
-
-        return (true, spotTick, tickLower, tickUpper);
     }
 
     function _repayDebt(uint256 currentCollateral, uint256 debtAmount) internal returns (uint256) {
@@ -261,16 +283,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
     }
 
     function _addCollateral(uint256 amount) internal {
-        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-        if (erc20Tvl[usdIndex] < amount) {
-            _swapExactOutput(usdLikeIndex, usdIndex, amount - erc20Tvl[usdIndex]);
-            (erc20Tvl, ) = erc20Vault.tvl();
-        }
-        if (erc20Tvl[usdIndex] < amount) {
-            _swapExactOutput(secondTokenIndex, usdIndex, amount - erc20Tvl[usdIndex]);
-            (erc20Tvl, ) = erc20Vault.tvl();
-        }
-
+        _swapToUsdUntilNeeded(amount);
         _addExistingCollateral(amount);
     }
 
@@ -414,9 +427,12 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         }
     }
 
-    function _makeBalances(uint256 usdLikeAmount, uint256 aaveAmount) internal {
+    function _makeBalances(uint256 usdLikeAmount, uint256 aaveAmount, uint256 untouchable) internal {
         uint256 usdBalance = IERC20(tokens[usdIndex]).balanceOf(address(erc20Vault));
-        _swapExactInput(usdIndex, usdLikeIndex, usdBalance);
+
+        if (usdBalance > untouchable) {
+            _swapExactInput(usdIndex, usdLikeIndex, usdBalance - untouchable);
+        }
 
         uint256 usdLikeBalance = IERC20(tokens[usdLikeIndex]).balanceOf(address(erc20Vault));
         uint256 aaveBalance = IERC20(tokens[secondTokenIndex]).balanceOf(address(erc20Vault));
@@ -428,12 +444,29 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         }
     }
 
+    function _swapToUsdUntilNeeded(uint256 amount) internal {
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        if (erc20Tvl[usdIndex] < amount) {
+            _swapExactOutput(usdLikeIndex, usdIndex, amount - erc20Tvl[usdIndex]);
+            (erc20Tvl, ) = erc20Vault.tvl();
+        }
+        if (erc20Tvl[usdIndex] < amount) {
+            _swapExactOutput(secondTokenIndex, usdIndex, amount - erc20Tvl[usdIndex]);
+            (erc20Tvl, ) = erc20Vault.tvl();
+        }
+    } 
+
     function rebalance(
         bool createNewPosition,
         int24 tickLower,
-        int24 tickUpper
-    ) external {
-        _requireAtLeastOperator();
+        int24 tickUpper,
+        uint256 shareForOutputQ96
+    ) public {
+        if (!_fromCallback) {
+            _requireAtLeastOperator();
+            require(shareForOutputQ96 == 0, ExceptionsLibrary.FORBIDDEN);
+        }
+        
         int24 spotTick;
         bool poolConditionsHealthy;
 
@@ -442,7 +475,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             uniV3Vault.collectEarnings();
         }
 
-        (poolConditionsHealthy, spotTick, tickLower, tickUpper) = isDeltaOkay(
+        (poolConditionsHealthy, spotTick, tickLower, tickUpper) = areDeltasOkay(
             createNewPosition,
             tickLower,
             tickUpper,
@@ -455,6 +488,10 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         }
 
         (uint256 usdAmount, uint256 currentCollateral, uint256 currentBorrowAave) = _totalUsdBalance();
+
+        uint256 toWithdraw = FullMath.mulDiv(usdAmount, shareForOutputQ96, Q96);
+        usdAmount = FullMath.mulDiv(usdAmount, Q96 - shareForOutputQ96, Q96);
+
         if (createNewPosition) {
             _mintNewPosition(nft, tickLower, tickUpper);
         }
@@ -498,15 +535,33 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             aaveVault.borrow(tokens[secondTokenIndex], address(erc20Vault), borrowAave - currentBorrowAave);
         }
 
-        _makeBalances(_convert(usdIndex, usdLikeIndex, usdAmount - collateral), borrowAave);
+        uint256 usdLikeAmountToUni = _convert(usdIndex, usdLikeIndex, usdAmount - collateral);
+        uint256 secondTAmountToUni = borrowAave;
 
         address[] memory uniTokens = uniV3Vault.vaultTokens();
         uint256[] memory tokenAmounts = new uint256[](2);
 
-        tokenAmounts[0] = IERC20(tokens[uniTokensIndices[0]]).balanceOf(address(erc20Vault));
-        tokenAmounts[1] = IERC20(tokens[uniTokensIndices[1]]).balanceOf(address(erc20Vault));
+        if (usdLikeIndex < secondTokenIndex) {
+            tokenAmounts[0] = usdLikeAmountToUni;
+            tokenAmounts[1] = secondTAmountToUni;
+        }
 
-        erc20Vault.pull(address(uniV3Vault), uniTokens, tokenAmounts, "");
+        else {
+            tokenAmounts[1] = usdLikeAmountToUni;
+            tokenAmounts[0] = secondTAmountToUni;
+        }
+
+        if (toWithdraw < usdAmount) {
+            _swapToUsdUntilNeeded(toWithdraw);
+            _makeBalances(usdLikeAmountToUni, secondTAmountToUni, toWithdraw);
+            erc20Vault.pull(address(uniV3Vault), uniTokens, tokenAmounts, "");
+        }
+
+        else {
+            _makeBalances(usdLikeAmountToUni, secondTAmountToUni, 0);
+            erc20Vault.pull(address(uniV3Vault), uniTokens, tokenAmounts, "");
+            _swapToUsdUntilNeeded(toWithdraw);
+        }
     }
 
     function _convert(
@@ -514,17 +569,18 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         uint256 indexTo,
         uint256 amount
     ) internal view returns (uint256) {
-        (uint256[] memory pricesX96, ) = oracle.priceX96(
-            tokens[indexFrom],
-            tokens[indexTo],
-            safetyIndicesSet[indexFrom][indexTo]
-        );
-        uint256 sum = 0;
-        for (uint256 i = 0; i < pricesX96.length; ++i) {
-            sum += pricesX96[i];
-        }
 
-        uint256 priceX96 = sum / pricesX96.length;
+        address tokenFrom = tokens[indexFrom];
+        address tokenTo = tokens[indexTo];
+
+        IUniswapV3Pool poolHere = IUniswapV3Pool(factory.getPool(tokenFrom, tokenTo, swapParams[indexFrom][indexTo].swapFee));
+        (uint256 sqrtPriceX96, , , , , ,) = poolHere.slot0();
+
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+        if (tokenFrom != poolHere.token0()) {
+            priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
+        }
 
         return FullMath.mulDiv(amount, priceX96, Q96);
     }
@@ -589,6 +645,25 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
     ) external returns (DeltaNeutralStrategyBob strategy) {
         strategy = DeltaNeutralStrategyBob(Clones.clone(address(this)));
         strategy.initialize(erc20Vault_, uniV3Vault_, aaveVault_, admin, usdIndex_, usdLikeIndex_, secondTokenIndex_);
+    }
+
+    /// @inheritdoc ILpCallback
+    function depositCallback(bytes memory depositOptions) external {
+        _fromCallback = true;
+
+        rebalance(false, 0, 0, 0);
+
+        _fromCallback = false;
+    }
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback(bytes memory withdrawOptions) external {
+        _fromCallback = true;
+
+        (uint256 shareD) = abi.decode(withdrawOptions, (uint256));
+        rebalance(false, 0, 0, shareD);
+
+        _fromCallback = false;
     }
 
     function _contractName() internal pure override returns (bytes32) {
