@@ -46,7 +46,7 @@ contract PancakeDeployment is Script {
     address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
     address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
-    address public uniV3Governance = 0xbFEcB005Dcdfda48c63BE54f43a0d4Cf00198cc6;
+    address public uniV3Governance = 0xC2A195439ea4E88A7032c03B89f81e97FA200108;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
     address public manager = 0x46A15B0b27311cedF172AB29E4f4766fbE7F4364;
@@ -97,6 +97,8 @@ contract PancakeDeployment is Script {
         tokens[0] = usdc;
         tokens[1] = weth;
 
+        /*
+
         {
             UniV3Vault singleton = new UniV3Vault();
             IVaultGovernance.InternalParams memory ip = IVaultGovernance.InternalParams({
@@ -116,6 +118,8 @@ contract PancakeDeployment is Script {
             return 0;
 
         }
+
+        */
 
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
@@ -211,9 +215,12 @@ contract PancakeDeployment is Script {
     function run() external {
         vm.startBroadcast();
 
-        kek();
+      //  kek();
 
-        return;
+     //   return;
+
+        strategy = PulseStrategyV2(0x53c238C350D1d71d2028d6676C4f2E1b681250E1);
+        rootVault = IERC20RootVault(0x943dD7a5f0971bDFA0e69DC39E5401E78127161C);
 
         IERC20(usdc).transfer(address(strategy), 10**3);
         IERC20(weth).transfer(address(strategy), 10**12);
@@ -235,8 +242,8 @@ contract PancakeDeployment is Script {
 
         rootVault.deposit(A, 0, "");
 
-        bytes memory z = "0x0502b1c5000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000c35000000000000000000000000000000000000000000000000000001415a950b9dc0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d0340397ff1542f962076d0bfe58ea045ffa2d347aca0cfee7c08";
-        strategy.rebalance(100000000000000000000, z, 0);
+    //    bytes memory z = "0x0502b1c5000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000c35000000000000000000000000000000000000000000000000000001415a950b9dc0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d0340397ff1542f962076d0bfe58ea045ffa2d347aca0cfee7c08";
+    //    strategy.rebalance(100000000000000000000, z, 0);
 
 
 
