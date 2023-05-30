@@ -396,7 +396,7 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         emit PositionMinted(newNft);
         if (positionNft != 0) {
             positionManager.burn(positionNft);
-            emit PositionBurned(positionNft);
+            // emit PositionBurned(positionNft);
         }
         return interval;
     }
@@ -589,7 +589,7 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
     /// @param tokenId nft of new kyber position
     event PositionMinted(uint256 tokenId);
 
-    /// @notice Emited when a kyber position is burned
-    /// @param tokenId nft of kyber position
-    event PositionBurned(uint256 tokenId);
+    // /// @notice Emited when a kyber position is burned
+    // /// @param tokenId nft of kyber position
+    // event PositionBurned(uint256 tokenId);
 }
