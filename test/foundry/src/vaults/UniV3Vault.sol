@@ -10,6 +10,8 @@ import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 import "../utils/UniV3Helper.sol";
 
+import "forge-std/console2.sol";
+
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
     using SafeERC20 for IERC20;

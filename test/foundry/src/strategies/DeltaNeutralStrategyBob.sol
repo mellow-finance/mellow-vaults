@@ -190,8 +190,6 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         } else {
             result += _convert(secondTokenIndex, usdIndex, uint256(totalTvl[secondTokenIndex]));
         }
-
-        uniV3Vault.pull(address(erc20Vault), uniV3Vault.vaultTokens(), uniTvl, "");
     }
 
     function areDeltasOkay(
@@ -318,6 +316,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         uint256 indexTo,
         uint256 amount
     ) internal {
+        require(amount <= IERC20(tokens[indexFrom]).balanceOf(address(erc20Vault)), ExceptionsLibrary.FORBIDDEN);
         if (amount > 0) {
             ISwapRouter.ExactInputSingleParams memory currentSwapParams = ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokens[indexFrom],
@@ -489,6 +488,17 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
 
         (uint256 usdAmount, uint256 currentCollateral, uint256 currentBorrowAave) = _totalUsdBalance();
 
+        if (nft != 0) {
+            uint256[] memory withdrawTokenAmounts = uniV3Vault.liquidityToTokenAmounts(type(uint128).max);
+
+            uniV3Vault.pull(
+                address(erc20Vault),
+                uniV3Vault.vaultTokens(),
+                withdrawTokenAmounts,
+                ""
+            );
+        }
+
         uint256 toWithdraw = FullMath.mulDiv(usdAmount, shareForOutputQ96, Q96);
         usdAmount = FullMath.mulDiv(usdAmount, Q96 - shareForOutputQ96, Q96);
 
@@ -551,17 +561,12 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             tokenAmounts[0] = secondTAmountToUni;
         }
 
-        if (toWithdraw < usdAmount) {
+        {
             _swapToUsdUntilNeeded(toWithdraw);
             _makeBalances(usdLikeAmountToUni, secondTAmountToUni, toWithdraw);
             erc20Vault.pull(address(uniV3Vault), uniTokens, tokenAmounts, "");
         }
-
-        else {
-            _makeBalances(usdLikeAmountToUni, secondTAmountToUni, 0);
-            erc20Vault.pull(address(uniV3Vault), uniTokens, tokenAmounts, "");
-            _swapToUsdUntilNeeded(toWithdraw);
-        }
+        
     }
 
     function _convert(

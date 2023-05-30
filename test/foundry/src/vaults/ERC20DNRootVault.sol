@@ -243,6 +243,12 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             ExceptionsLibrary.FORBIDDEN
         );
 
+        if (totalSupply > 0) {
+            if (delayedStrategyParams.depositCallbackAddress != address(0)) {
+                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback("");
+            }
+        }
+
         (, uint256[] memory maxTvl) = tvl();
         _chargeFees(thisNft, maxTvl[0], totalSupply);
 

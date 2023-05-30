@@ -12,7 +12,7 @@ interface IERC20DNRootVault is IAggregateVault, IERC20 {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param strategy_ The address that will have approvals for subvaultNfts
-    /// @param subvaultNfts_ The NFTs of the subvaults that will be aggregated by this ERC20RootVault
+    /// @param subvaultNfts_ The NFTs of the subvaults that will be aggregated by this ERC20DNRootVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,

@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IERC20DNRootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20DNRootVault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/utils/ILpCallback.sol";
@@ -59,6 +59,8 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
         int256[] memory signedMinTokenAmounts = new int256[](vaultTokens.length);
         int256[] memory signedMaxTokenAmounts = new int256[](vaultTokens.length);
+        minTokenAmounts = new uint256[](vaultTokens.length);
+        maxTokenAmounts = new uint256[](vaultTokens.length);
 
         for (uint256 i = 0; i < subvaultsCount; ++i) {
             IIntegrationVault subvault = IIntegrationVault(IAggregateVault(address(this)).subvaultAt(i));
@@ -198,6 +200,10 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         totalWithdrawnAmounts = new uint256[](len);
         lastFeeCharge = uint64(block.timestamp);
         helper = helper_;
+
+        IERC20DNRootVaultGovernance vg = IERC20DNRootVaultGovernance(address(_vaultGovernance));
+        IERC20DNRootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
+        oracle = delayedProtocolParams.oracle;
     }
 
     /// @inheritdoc IERC20DNRootVault
@@ -211,7 +217,7 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             if (i != specialToken) tokenAmounts[i] = 0;
         }
         require(
-            !IERC20RootVaultGovernance(vaultGovernance).operatorParams().disableDeposit,
+            !IERC20DNRootVaultGovernance(vaultGovernance).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
 
@@ -226,13 +232,19 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             );
         }
 
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
+        IERC20DNRootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20DNRootVaultGovernance(
             vaultGovernance
         ).delayedStrategyParams(thisNft);
         require(
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
+
+        if (totalSupply > 0) {
+            if (delayedStrategyParams.depositCallbackAddress != address(0)) {
+                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback("");
+            }
+        }
 
         (, uint256[] memory maxTvl) = tvl();
         _chargeFees(thisNft, maxTvl[0], totalSupply);
@@ -250,7 +262,7 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
-        IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(vaultGovernance)
+        IERC20DNRootVaultGovernance.StrategyParams memory params = IERC20DNRootVaultGovernance(vaultGovernance)
             .strategyParams(thisNft);
         require(
             lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress && lpAmount + supply <= params.tokenLimit,
@@ -268,12 +280,8 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         actualTokenAmounts = _push(tokenAmounts, vaultOptions);
 
         if (supply > 0) {
-            uint256 shareX96 = FullMath.mulDiv(lpAmount, Q96, supply);
-
-            bytes memory q = abi.encode(shareX96);
-
             if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback(q);
+                ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback("");
             }
         }
 
@@ -305,9 +313,9 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
         {
             uint256 thisNft = _nft;
-            IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
-                address(_vaultGovernance)
-            ).delayedStrategyParams(thisNft);
+            IERC20DNRootVaultGovernance.DelayedStrategyParams
+                memory delayedStrategyParams = IERC20DNRootVaultGovernance(address(_vaultGovernance))
+                    .delayedStrategyParams(thisNft);
 
             uint256 shareX96 = FullMath.mulDiv(lpTokenAmount, Q96, supply);
 
@@ -371,15 +379,15 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 tvlValue,
         uint256 supply
     ) internal {
-        IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
+        IERC20DNRootVaultGovernance vg = IERC20DNRootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
-        IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
+        IERC20DNRootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay || supply == 0) {
             return;
         }
 
         lastFeeCharge = uint64(block.timestamp);
-        IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
+        IERC20DNRootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
 
