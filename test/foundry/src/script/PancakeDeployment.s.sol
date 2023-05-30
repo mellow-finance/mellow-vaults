@@ -39,7 +39,7 @@ contract PancakeDeployment is Script {
     address deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address operator = 0x136348814f89fcbF1a0876Ca853D48299AFB8b3c;
 
-    address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
@@ -94,8 +94,8 @@ contract PancakeDeployment is Script {
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = usdc;
-        tokens[1] = weth;
+        tokens[0] = weth;
+        tokens[1] = usdt;
 
         /*
 
@@ -215,19 +215,19 @@ contract PancakeDeployment is Script {
     function run() external {
         vm.startBroadcast();
 
-      //  kek();
+        kek();
 
-     //   return;
+        //return;
 
-        strategy = PulseStrategyV2(0x53c238C350D1d71d2028d6676C4f2E1b681250E1);
-        rootVault = IERC20RootVault(0x943dD7a5f0971bDFA0e69DC39E5401E78127161C);
+       // strategy = PulseStrategyV2(0x53c238C350D1d71d2028d6676C4f2E1b681250E1);
+       // rootVault = IERC20RootVault(0x943dD7a5f0971bDFA0e69DC39E5401E78127161C);
 
-        IERC20(usdc).transfer(address(strategy), 10**3);
+        IERC20(usdt).transfer(address(strategy), 10**3);
         IERC20(weth).transfer(address(strategy), 10**12);
 
       //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        IERC20(usdc).approve(address(rootVault), 10**20);
+        IERC20(usdt).approve(address(rootVault), 10**20);
         IERC20(weth).approve(address(rootVault), 10**20);
 
         uint256[] memory A = new uint256[](2);
