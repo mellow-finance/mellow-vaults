@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.0;
 
 import {IKyberSwapElasticLMEvents} from './IKyberSwapElasticLMEvents.sol';
 import {IERC721} from '@openzeppelin/contracts/token/ERC721/IERC721.sol';

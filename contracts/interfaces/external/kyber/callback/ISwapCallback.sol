@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.0;
 
 /// @title Callback for IPool#swap
 /// @notice Any contract that calls IPool#swap must implement this interface
