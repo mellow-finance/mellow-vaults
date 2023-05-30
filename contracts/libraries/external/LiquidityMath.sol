@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import {MathConstants as C} from "./MathConstants.sol";
 import {FullMath} from "./FullMath.sol";
