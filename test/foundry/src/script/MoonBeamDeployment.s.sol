@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
+import "forge-std/Script.sol";
 
 import "../../src/utils/QuickSwapHelper.sol";
 import "../../src/utils/DepositWrapper.sol";
