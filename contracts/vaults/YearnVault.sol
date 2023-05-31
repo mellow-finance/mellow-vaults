@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "../interfaces/external/yearn/IYearnProtocolVault.sol";
 import "../interfaces/vaults/IYearnVaultGovernance.sol";

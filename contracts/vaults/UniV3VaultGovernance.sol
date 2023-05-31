@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "../interfaces/vaults/IUniV3VaultGovernance.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Holdings, 2021
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import { IAdapter } from "./helpers/IAdapter.sol";
 import { ISwapRouter } from "./helpers/uniswap/IUniswapV3.sol";

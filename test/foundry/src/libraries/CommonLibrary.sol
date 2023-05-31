@@ -133,6 +133,18 @@ library CommonLibrary {
         return (r < r1 ? r : r1);
     }
 
+    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
+        require(_start + 20 >= _start, "toAddress_overflow");
+        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
+        address tempAddress;
+
+        assembly {
+            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
+        }
+
+        return tempAddress;
+    }
+
     /// @notice Recovers signer address from signed message hash
     /// @param _ethSignedMessageHash signed message
     /// @param _signature contatenated ECDSA r, s, v (65 bytes)

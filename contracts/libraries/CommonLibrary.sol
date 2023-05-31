@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
+import "./external/FullMath.sol";
 import "./ExceptionsLibrary.sol";
 
 /// @notice CommonLibrary shared utilities
@@ -119,7 +120,7 @@ library CommonLibrary {
             xx >>= 4;
             r <<= 2;
         }
-        if (xx >= 0x4) {
+        if (xx >= 0x8) {
             r <<= 1;
         }
         r = (r + x / r) >> 1;
@@ -131,6 +132,18 @@ library CommonLibrary {
         r = (r + x / r) >> 1;
         uint256 r1 = x / r;
         return (r < r1 ? r : r1);
+    }
+
+    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
+        require(_start + 20 >= _start, "toAddress_overflow");
+        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
+        address tempAddress;
+
+        assembly {
+            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
+        }
+
+        return tempAddress;
     }
 
     /// @notice Recovers signer address from signed message hash
