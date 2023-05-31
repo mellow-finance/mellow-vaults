@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./external/FullMath.sol";
 import "./ExceptionsLibrary.sol";
 
 /// @notice CommonLibrary shared utilities
@@ -120,7 +119,7 @@ library CommonLibrary {
             xx >>= 4;
             r <<= 2;
         }
-        if (xx >= 0x8) {
+        if (xx >= 0x4) {
             r <<= 1;
         }
         r = (r + x / r) >> 1;
