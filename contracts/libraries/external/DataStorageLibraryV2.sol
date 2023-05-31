@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import '../../interfaces/external/algebrav2/FullMath.sol';
 import '../../interfaces/external/algebrav2/TickMath.sol';

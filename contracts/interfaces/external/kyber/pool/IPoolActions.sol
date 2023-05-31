@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.0;
 
 interface IPoolActions {
     /// @notice Sets the initial price for the pool and seeds reinvestment liquidity

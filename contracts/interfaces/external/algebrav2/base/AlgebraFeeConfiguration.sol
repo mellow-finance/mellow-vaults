@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.0;
 
 // coefficients for sigmoids: α / (1 + e^( (β-x) / γ))
 // alpha1 + alpha2 + baseFee must be <= type(uint16).max
