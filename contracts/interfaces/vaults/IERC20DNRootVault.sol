@@ -3,8 +3,9 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
-import "../oracles/IOracle.sol";
 import "../utils/IERC20RootVaultHelper.sol";
+import "../external/univ3/IUniswapV3Factory.sol";
+import "../external/univ3/IUniswapV3Pool.sol";
 
 interface IERC20DNRootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
@@ -19,19 +20,18 @@ interface IERC20DNRootVault is IAggregateVault, IERC20 {
         address strategy_,
         uint256[] memory subvaultNfts_,
         IERC20RootVaultHelper helper_,
+        IUniswapV3Factory factory,
         bool[][] memory isSubvaultAndTokenPositive_,
         uint256 specialToken_
     ) external;
 
     function isSubvaultAndTokenPositive(uint256 i, uint256 j) external view returns (bool);
 
-    function oracle() external view returns (IOracle);
-
-    function safetyIndicesSets(uint256 index) external returns (uint256);
+    function poolFees(uint256 indexA, uint256 indexB) external returns (uint24);
     
     function specialToken() external returns (uint256);
 
-    function setSafetyIndicesSet(uint256 index, uint256 val) external;
+    function setFee(uint256 indexA, uint256 indexB, uint24 fee) external;
 
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);

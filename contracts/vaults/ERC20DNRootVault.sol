@@ -40,8 +40,9 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
     bool[][] public isSubvaultAndTokenPositive;
 
-    IOracle public oracle;
-    uint256[] public safetyIndicesSets;
+    IUniswapV3Factory public factory;
+    uint24[][] public poolFees;
+
     uint256 public specialToken;
 
     function tvl()
@@ -106,20 +107,18 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 index,
         int256 amount
     ) internal view returns (int256 expectedAmount) {
-        (uint256[] memory pricesX96, ) = oracle.priceX96(
-            vaultTokens[index],
-            vaultTokens[specialToken],
-            safetyIndicesSets[index]
-        );
+        address tokenFrom = vaultTokens[index];
+        address tokenTo = vaultTokens[specialToken];
 
-        require(pricesX96.length > 0, ExceptionsLibrary.INVALID_LENGTH);
+        IUniswapV3Pool poolHere = IUniswapV3Pool(factory.getPool(tokenFrom, tokenTo, poolFees[index][specialToken]));
 
-        uint256 sum = 0;
-        for (uint256 i = 0; i < pricesX96.length; ++i) {
-            sum += pricesX96[i];
+        (uint256 sqrtPriceX96, , , , , , ) = poolHere.slot0();
+
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+        if (tokenFrom != poolHere.token0()) {
+            priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
         }
-
-        uint256 priceX96 = sum / pricesX96.length;
 
         if (amount > 0) {
             return int256(FullMath.mulDiv(uint256(amount), priceX96, Q96));
@@ -162,10 +161,14 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         }
     }
 
-    function setSafetyIndicesSet(uint256 index, uint256 val) public {
-        require(val > 1, ExceptionsLibrary.LIMIT_UNDERFLOW);
+    function setFee(
+        uint256 indexA,
+        uint256 indexB,
+        uint24 fee
+    ) public {
+        require((fee == 100 || fee == 500 || fee == 3000 || fee == 10000), ExceptionsLibrary.INVARIANT);
         _requireAdmin();
-        safetyIndicesSets[index] = val;
+        poolFees[indexA][indexB] = fee;
     }
 
     /// @inheritdoc IERC20DNRootVault
@@ -175,6 +178,7 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         address strategy_,
         uint256[] memory subvaultNfts_,
         IERC20RootVaultHelper helper_,
+        IUniswapV3Factory factory_,
         bool[][] memory isSubvaultAndTokenPositive_,
         uint256 specialToken_
     ) external {
@@ -190,20 +194,13 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
         uint256 len = vaultTokens_.length;
 
-        safetyIndicesSets = new uint256[](len);
-        for (uint256 i = 0; i < len; ++i) {
-            safetyIndicesSets[i] = 0x20;
-        }
-
         specialToken = specialToken_;
 
         totalWithdrawnAmounts = new uint256[](len);
         lastFeeCharge = uint64(block.timestamp);
         helper = helper_;
 
-        IERC20DNRootVaultGovernance vg = IERC20DNRootVaultGovernance(address(_vaultGovernance));
-        IERC20DNRootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
-        oracle = delayedProtocolParams.oracle;
+        factory = factory_;
     }
 
     /// @inheritdoc IERC20DNRootVault

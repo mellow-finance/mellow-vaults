@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../oracles/IOracle.sol";
 import "./IERC20DNRootVault.sol";
 import "./IVaultGovernance.sol";
 import "../utils/IERC20RootVaultHelper.sol";
@@ -27,10 +26,8 @@ interface IERC20DNRootVaultGovernance is IVaultGovernance {
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param managementFeeChargeDelay The minimal interval between management fee charges
-    /// @param oracle Oracle for getting token prices
     struct DelayedProtocolParams {
         uint256 managementFeeChargeDelay;
-        IOracle oracle;
     }
 
     /// @notice Params that could be changed by Strategy or Protocol Governance.
@@ -142,6 +139,7 @@ interface IERC20DNRootVaultGovernance is IVaultGovernance {
         uint256[] memory subvaultNfts_,
         address owner_,
         bool[][] memory isSubvaultAndTokenPositive_,
-        uint256 specialToken_
+        uint256 specialToken_,
+        IUniswapV3Factory factory
     ) external returns (IERC20DNRootVault vault, uint256 nft);
 }

@@ -28,7 +28,6 @@ contract ERC20DNRootVaultGovernance is ContractMeta, IERC20DNRootVaultGovernance
         DelayedProtocolParams memory delayedProtocolParams_,
         IERC20RootVaultHelper helper_
     ) VaultGovernance(internalParams_) {
-        require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(helper_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         helper = helper_;
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
@@ -45,7 +44,7 @@ contract ERC20DNRootVaultGovernance is ContractMeta, IERC20DNRootVaultGovernance
     /// @inheritdoc IERC20DNRootVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({managementFeeChargeDelay: 0, oracle: IOracle(address(0))});
+            return DelayedProtocolParams({managementFeeChargeDelay: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -184,7 +183,6 @@ contract ERC20DNRootVaultGovernance is ContractMeta, IERC20DNRootVaultGovernance
 
     /// @inheritdoc IERC20DNRootVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
-        require(address(params.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
@@ -206,7 +204,8 @@ contract ERC20DNRootVaultGovernance is ContractMeta, IERC20DNRootVaultGovernance
         uint256[] memory subvaultNfts_,
         address owner_,
         bool[][] memory isSubvaultAndTokenPositive_,
-        uint256 specialToken_
+        uint256 specialToken_,
+        IUniswapV3Factory factory
     ) external returns (IERC20DNRootVault vault, uint256 nft) {
         address vaddr;
         IVaultRegistry registry = _internalParams.registry;
@@ -235,17 +234,19 @@ contract ERC20DNRootVaultGovernance is ContractMeta, IERC20DNRootVaultGovernance
                     ExceptionsLibrary.INVALID_INTERFACE
                 );
             }
-            uint256 subvaultTokenId = 0;
-            for (
-                uint256 tokenId = 0;
-                tokenId < vaultTokens_.length && subvaultTokenId < subvaultTokens.length;
-                ++tokenId
-            ) {
-                if (subvaultTokens[subvaultTokenId] == vaultTokens_[tokenId]) {
-                    subvaultTokenId++;
+            {
+                uint256 subvaultTokenId = 0;
+                for (
+                    uint256 tokenId = 0;
+                    tokenId < vaultTokens_.length && subvaultTokenId < subvaultTokens.length;
+                    ++tokenId
+                ) {
+                    if (subvaultTokens[subvaultTokenId] == vaultTokens_[tokenId]) {
+                        subvaultTokenId++;
+                    }
                 }
+                require(subvaultTokenId == subvaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
             }
-            require(subvaultTokenId == subvaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
@@ -255,6 +256,7 @@ contract ERC20DNRootVaultGovernance is ContractMeta, IERC20DNRootVaultGovernance
             strategy_,
             subvaultNfts_,
             helper,
+            factory,
             isSubvaultAndTokenPositive_,
             specialToken_
         );

@@ -55,7 +55,6 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     /// @inheritdoc IAaveVaultGovernance
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
-            uint256 len = IVault(_internalParams.registry.vaultForNft(nft)).vaultTokens().length;
             return DelayedStrategyParams({rateMode: 0});
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));

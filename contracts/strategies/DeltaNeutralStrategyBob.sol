@@ -11,6 +11,7 @@ import "../interfaces/utils/ILpCallback.sol";
 
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
+import "../utils/DeltaNeutralHelper.sol";
 import "../interfaces/vaults/IAaveVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
@@ -70,17 +71,20 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         uint256 maxSlippageD;
     }
 
-    TradingParams[3][3] swapParams;
+    TradingParams[3][3] public swapParams;
     uint256[3][3] safetyIndicesSet;
 
     StrategyParams public strategyParams;
     MintingParams public mintingParams;
     OracleParams public oracleParams;
 
+    DeltaNeutralHelper helper;
+
     constructor(
         INonfungiblePositionManager positionManager_,
         ISwapRouter router_,
-        IUniswapV3Factory factory_
+        IUniswapV3Factory factory_,
+        DeltaNeutralHelper helper_
     ) {
         require(
             address(positionManager_) != address(0) &&
@@ -91,6 +95,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         positionManager = positionManager_;
         router = router_;
         factory = factory_;
+        helper = helper_;
         DefaultAccessControlLateInit.init(address(this));
     }
 
@@ -188,59 +193,6 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         } else {
             result += _convert(secondTokenIndex, usdIndex, uint256(totalTvl[secondTokenIndex]));
         }
-    }
-
-    function areDeltasOkay(
-        bool createNewPosition,
-        int24 tickLower,
-        int24 tickUpper,
-        uint256 nft
-    )
-        public
-        view
-        returns (
-            bool,
-            int24,
-            int24,
-            int24
-        )
-    {
-        int24 spotTickR;
-
-        for (uint256 i = 0; i < 3; ++i) {
-            for (uint256 j = i + 1; j < 3; ++j) {
-                IUniswapV3Pool poolIJ = IUniswapV3Pool(factory.getPool(tokens[i], tokens[j], swapParams[i][j].swapFee));
-                (, int24 spotTick, , , , , ) = poolIJ.slot0();
-
-                if (address(poolIJ) == address(pool) && nft != 0 && !createNewPosition) {
-                    (, , , , , tickLower, tickUpper, , , , , ) = positionManager.positions(nft);
-                    require(tickLower < spotTick && spotTick < tickUpper, ExceptionsLibrary.INVARIANT);
-                }
-
-                int24 avgTick;
-
-                {
-                    bool withFail;
-                    (avgTick, , withFail) = OracleLibrary.consult(address(poolIJ), oracleParams.averagePriceTimeSpan);
-                    require(!withFail);
-                }
-
-                int24 maxDelta = int24(oracleParams.maxTickDeviation);
-                if (spotTick < avgTick && avgTick - spotTick > maxDelta) {
-                    return (false, spotTick, tickLower, tickUpper);
-                }
-
-                if (avgTick < spotTick && spotTick - avgTick > maxDelta) {
-                    return (false, spotTick, tickLower, tickUpper);
-                }
-
-                if (address(poolIJ) == address(pool)) {
-                    spotTickR = spotTick;
-                }
-            }
-        }
-
-        return (true, spotTickR, tickLower, tickUpper);
     }
 
     function _repayDebt(uint256 currentCollateral, uint256 debtAmount) internal returns (uint256) {
@@ -471,7 +423,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             uniV3Vault.collectEarnings();
         }
 
-        (poolConditionsHealthy, spotTick, tickLower, tickUpper) = areDeltasOkay(
+        (poolConditionsHealthy, spotTick, tickLower, tickUpper) = helper.areDeltasOkay(
             createNewPosition,
             tickLower,
             tickUpper,
