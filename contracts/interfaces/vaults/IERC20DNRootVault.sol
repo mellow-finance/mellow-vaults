@@ -60,26 +60,26 @@ interface IERC20DNRootVault is IAggregateVault, IERC20 {
     function removeDepositorsFromAllowlist(address[] calldata depositors) external;
 
     /// @notice The function of depositing the amount of tokens in exchange
-    /// @param tokenAmounts Array of amounts of tokens for deposit
+    /// @param amount amount of tokens for deposit
     /// @param minLpTokens Minimal value of LP tokens
     /// @param vaultOptions Options of vaults
-    /// @return actualTokenAmounts Arrays of actual token amounts after deposit
+    /// @return actualAmount actual token amount after deposit
     function deposit(
-        uint256[] memory tokenAmounts,
+        uint256 amount,
         uint256 minLpTokens,
         bytes memory vaultOptions
-    ) external returns (uint256[] memory actualTokenAmounts);
+    ) external returns (uint256 actualAmount);
 
     /// @notice The function of withdrawing the amount of tokens in exchange
     /// @param to Address to which the withdrawal will be sent
     /// @param lpTokenAmount LP token amount, that requested for withdraw
-    /// @param minTokenAmounts Array of minmal remining wtoken amounts after withdrawal
+    /// @param minAmount minimal remaining wtoken amount after withdrawal
     /// @param vaultsOptions Options of vaults
-    /// @return actualTokenAmounts Arrays of actual token amounts after withdrawal
+    /// @return actualAmount actual token amount after withdrawal
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        uint256[] memory minTokenAmounts,
+        uint256 minAmount,
         bytes[] memory vaultsOptions
-    ) external returns (uint256[] memory actualTokenAmounts);
+    ) external returns (uint256 actualAmount);
 }

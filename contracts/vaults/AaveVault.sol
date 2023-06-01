@@ -27,15 +27,12 @@ import "./IntegrationVault.sol";
 contract AaveVault is IAaveVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    bool public constant ONLY_DEPOSIT = false;
-    bool public constant ONLY_BORROW = true;
-
     address[] public aTokens;
     uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
     ILendingPool private _lendingPool;
 
-    bool[] public tokenStatus;
+    Status[] public tokenStatus;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -76,7 +73,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
-        bool[] memory tokenStatus_
+        Status[] memory tokenStatus_
     ) external {
         _initialize(vaultTokens_, nft_);
         _lendingPool = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
@@ -102,7 +99,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
                 return i;
             }
         }
-        require(false, ExceptionsLibrary.INVARIANT);
+        require(false, ExceptionsLibrary.INVALID_TOKEN);
     }
 
     function borrow(
@@ -113,7 +110,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
         uint256 tokenIndex = _findIndex(token);
-        require(tokenStatus[tokenIndex] == ONLY_BORROW, ExceptionsLibrary.FORBIDDEN);
+        require(tokenStatus[tokenIndex] == Status.ONLY_BORROW, ExceptionsLibrary.FORBIDDEN);
 
         IAaveVaultGovernance.DelayedStrategyParams memory strategyParams = IAaveVaultGovernance(
             address(_vaultGovernance)
@@ -131,7 +128,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
 
         uint256 tokenIndex = _findIndex(token);
-        require(tokenStatus[tokenIndex] == ONLY_BORROW, ExceptionsLibrary.FORBIDDEN);
+        require(tokenStatus[tokenIndex] == Status.ONLY_BORROW, ExceptionsLibrary.FORBIDDEN);
 
         IERC20(token).safeTransferFrom(from, address(this), amount);
         IERC20(token).safeIncreaseAllowance(address(_lendingPool), amount);
@@ -158,7 +155,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function getLTV(address token) external view returns (uint256 ltv) {
         DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
         uint256 config = data.configuration.data;
-        return config % (1 << 16);
+        return config & 0xffff;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -187,7 +184,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     function _updateTvls() private {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            if (tokenStatus[i] == ONLY_DEPOSIT) {
+            if (tokenStatus[i] == Status.ONLY_DEPOSIT) {
                 _tvls[i] = IERC20(aTokens[i]).balanceOf(address(this));
             } else {
                 _tvls[i] = getDebt(_vaultTokens[i]);
@@ -212,7 +209,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
                 continue;
             }
 
-            require(tokenStatus[i] == ONLY_DEPOSIT, ExceptionsLibrary.FORBIDDEN);
+            require(tokenStatus[i] == Status.ONLY_DEPOSIT, ExceptionsLibrary.FORBIDDEN);
 
             address token = tokens[i];
             IERC20(token).safeIncreaseAllowance(address(_lendingPool), tokenAmounts[i]);

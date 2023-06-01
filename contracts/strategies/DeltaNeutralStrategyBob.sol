@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -72,13 +72,13 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
     }
 
     TradingParams[3][3] public swapParams;
-    uint256[3][3] safetyIndicesSet;
+    uint256[3][3] public safetyIndicesSet;
 
     StrategyParams public strategyParams;
     MintingParams public mintingParams;
     OracleParams public oracleParams;
 
-    DeltaNeutralHelper helper;
+    DeltaNeutralHelper public helper;
 
     constructor(
         INonfungiblePositionManager positionManager_,
@@ -148,7 +148,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         TradingParams calldata newTradingParams
     ) external {
         _requireAdmin();
-        require(indexA <= tokens.length && indexB <= tokens.length, ExceptionsLibrary.INVARIANT);
+        require(indexA <= tokens.length && indexB <= tokens.length && indexA != indexB, ExceptionsLibrary.INVARIANT);
         uint256 fee = newTradingParams.swapFee;
         require((fee == 100 || fee == 500 || fee == 3000 || fee == 10000) && newTradingParams.maxSlippageD <= D9);
 
@@ -178,7 +178,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
 
         for (uint256 i = 0; i < 2; ++i) {
             totalTvl[uniTokensIndices[i]] += int256(uniTvl[i]);
-            if (!aaveVault.tokenStatus(i)) {
+            if (aaveVault.tokenStatus(i) == IAaveVault.Status.ONLY_DEPOSIT) {
                 totalTvl[aaveTokensIndices[i]] += int256(aaveTvl[i]);
                 currentCollateral = aaveTvl[i];
             } else {
@@ -190,7 +190,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         result = uint256(totalTvl[usdIndex]) + _convert(usdLikeIndex, usdIndex, uint256(totalTvl[usdLikeIndex]));
         if (totalTvl[secondTokenIndex] < 0) {
             result -= _convert(secondTokenIndex, usdIndex, uint256(-totalTvl[secondTokenIndex]));
-        } else {
+        } else if (totalTvl[secondTokenIndex] > 0) {
             result += _convert(secondTokenIndex, usdIndex, uint256(totalTvl[secondTokenIndex]));
         }
     }
@@ -208,7 +208,14 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             }
             if (erc20Tvl[secondTokenIndex] < debtAmount) {
                 uint256 shareD = FullMath.mulDiv(erc20Tvl[secondTokenIndex], D9, debtAmount);
+
+                erc20Vault.externalCall(
+                    tokens[secondTokenIndex],
+                    APPROVE_SELECTOR,
+                    abi.encode(address(aaveVault), erc20Tvl[secondTokenIndex])
+                ); // approve
                 aaveVault.repay(tokens[secondTokenIndex], address(erc20Vault), erc20Tvl[secondTokenIndex]);
+                erc20Vault.externalCall(tokens[secondTokenIndex], APPROVE_SELECTOR, abi.encode(address(aaveVault), 0));
 
                 uint256 toWithdrawFromAave = FullMath.mulDiv(currentCollateral, shareD, D9);
                 _withdrawCollateral(toWithdrawFromAave);
@@ -323,8 +330,14 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         int24 tickLower,
         int24 tickUpper
     ) internal {
-        IERC20(tokens[usdLikeIndex]).safeApprove(address(positionManager), mintingParams.minTokenUsdForOpening);
-        IERC20(tokens[secondTokenIndex]).safeApprove(address(positionManager), mintingParams.minTokenStForOpening);
+        IERC20(tokens[usdLikeIndex]).safeIncreaseAllowance(
+            address(positionManager),
+            mintingParams.minTokenUsdForOpening
+        );
+        IERC20(tokens[secondTokenIndex]).safeIncreaseAllowance(
+            address(positionManager),
+            mintingParams.minTokenStForOpening
+        );
 
         uint256 newNft;
 
@@ -369,6 +382,8 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         if (oldNft != 0) {
             positionManager.burn(oldNft);
         }
+
+        emit PositionMinted(newNft);
     }
 
     function _makeBalances(
@@ -400,7 +415,6 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         }
         if (erc20Tvl[usdIndex] < amount) {
             _swapExactOutput(secondTokenIndex, usdIndex, amount - erc20Tvl[usdIndex]);
-            (erc20Tvl, ) = erc20Vault.tvl();
         }
     }
 
@@ -412,7 +426,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
     ) public {
         if (!_fromCallback) {
             _requireAtLeastOperator();
-            require(shareForOutputQ96 == 0, ExceptionsLibrary.FORBIDDEN);
+            require(shareForOutputQ96 == 0, ExceptionsLibrary.INVALID_VALUE);
         }
 
         int24 spotTick;
@@ -430,7 +444,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
             nft
         );
 
-        require(poolConditionsHealthy, ExceptionsLibrary.FORBIDDEN);
+        require(poolConditionsHealthy, ExceptionsLibrary.INVALID_STATE);
         if (nft == 0) {
             require(createNewPosition, ExceptionsLibrary.INVARIANT);
         }
@@ -444,7 +458,7 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         }
 
         uint256 toWithdraw = FullMath.mulDiv(usdAmount, shareForOutputQ96, Q96);
-        usdAmount = FullMath.mulDiv(usdAmount, Q96 - shareForOutputQ96, Q96);
+        usdAmount = usdAmount - toWithdraw;
 
         if (createNewPosition) {
             _mintNewPosition(nft, tickLower, tickUpper);
@@ -545,21 +559,22 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         uniV3Vault = IUniV3Vault(uniV3Vault_);
         aaveVault = IAaveVault(aaveVault_);
 
-        tokens = erc20Vault.vaultTokens();
-
-        pool = uniV3Vault.pool();
-
-        require(tokens.length == 3, ExceptionsLibrary.INVALID_LENGTH);
-
         require(
             erc20Vault_ != address(0) && uniV3Vault_ != address(0) && aaveVault_ != address(0),
             ExceptionsLibrary.ADDRESS_ZERO
         );
+
         require(usdIndex_ <= 2 && usdLikeIndex_ <= 2 && secondTokenIndex_ <= 2, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(
             usdIndex_ != usdLikeIndex_ && usdIndex_ != secondTokenIndex_ && usdLikeIndex_ != secondTokenIndex_,
             ExceptionsLibrary.INVARIANT
         );
+
+        tokens = erc20Vault.vaultTokens();
+
+        require(tokens.length == 3, ExceptionsLibrary.INVALID_LENGTH);
+
+        pool = uniV3Vault.pool();
 
         aaveTokensIndices = new uint256[](2);
         uniTokensIndices = new uint256[](2);
@@ -634,4 +649,8 @@ contract DeltaNeutralStrategyBob is ContractMeta, Multicall, DefaultAccessContro
         uint256 indexB,
         TradingParams tradingParams
     );
+
+    /// @notice Emited when a new uniswap position is created
+    /// @param tokenId nft of new uniswap position
+    event PositionMinted(uint256 tokenId);
 }

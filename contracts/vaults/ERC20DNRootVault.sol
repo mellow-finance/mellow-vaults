@@ -58,8 +58,9 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 subvaultsCount = isSubvaultAndTokenPositive_.length;
         uint256 tokensCount = isSubvaultAndTokenPositive_[0].length;
 
-        int256[] memory signedMinTokenAmounts = new int256[](vaultTokens.length);
-        int256[] memory signedMaxTokenAmounts = new int256[](vaultTokens.length);
+        int256[] memory signedMinTokenAmounts = new int256[](1);
+        int256[] memory signedMaxTokenAmounts = new int256[](1);
+
         minTokenAmounts = new uint256[](vaultTokens.length);
         maxTokenAmounts = new uint256[](vaultTokens.length);
 
@@ -92,8 +93,8 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
         for (uint256 i = 0; i < tokensCount; ++i) {
             if (i == specialToken) continue;
-            minTvl += _getZeroTokenAmount(vaultTokens, i, signedMinTokenAmounts[i]);
-            maxTvl += _getZeroTokenAmount(vaultTokens, i, signedMaxTokenAmounts[i]);
+            minTvl += _getSpecialTokenAmount(vaultTokens, i, signedMinTokenAmounts[i]);
+            maxTvl += _getSpecialTokenAmount(vaultTokens, i, signedMaxTokenAmounts[i]);
         }
 
         require(minTvl >= 0, ExceptionsLibrary.INVALID_STATE);
@@ -102,7 +103,7 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         maxTokenAmounts[0] = uint256(maxTvl);
     }
 
-    function _getZeroTokenAmount(
+    function _getSpecialTokenAmount(
         address[] memory vaultTokens,
         uint256 index,
         int256 amount
@@ -205,14 +206,12 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @inheritdoc IERC20DNRootVault
     function deposit(
-        uint256[] memory tokenAmounts,
+        uint256 amount,
         uint256 minLpTokens,
         bytes memory vaultOptions
-    ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts) {
+    ) external virtual nonReentrant returns (uint256 actualAmount) {
         address vaultGovernance = address(_vaultGovernance);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            if (i != specialToken) tokenAmounts[i] = 0;
-        }
+
         require(
             !IERC20DNRootVaultGovernance(vaultGovernance).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
@@ -221,12 +220,9 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 thisNft = _nft;
 
         if (totalSupply == 0) {
-            uint256 pullExistentialsForToken = _pullExistentials[0];
-            require(tokenAmounts[0] >= 10 * pullExistentialsForToken, ExceptionsLibrary.LIMIT_UNDERFLOW);
-            require(
-                tokenAmounts[0] <= pullExistentialsForToken * pullExistentialsForToken,
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
+            uint256 pullExistentialsForToken = _pullExistentials[specialToken];
+            require(amount >= 10 * pullExistentialsForToken, ExceptionsLibrary.LIMIT_UNDERFLOW);
+            require(amount <= pullExistentialsForToken * pullExistentialsForToken, ExceptionsLibrary.LIMIT_OVERFLOW);
         }
 
         IERC20DNRootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20DNRootVaultGovernance(
@@ -250,11 +246,11 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         uint256 lpAmount;
 
         if (supply == 0) {
-            lpAmount = tokenAmounts[0];
+            lpAmount = amount;
         } else {
             uint256 tvlValue = maxTvl[0];
-            lpAmount = FullMath.mulDiv(supply, tokenAmounts[0], tvlValue);
-            tokenAmounts[0] = FullMath.mulDiv(tvlValue, lpAmount, supply);
+            lpAmount = FullMath.mulDiv(supply, amount, tvlValue);
+            amount = FullMath.mulDiv(tvlValue, lpAmount, supply);
         }
 
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -266,7 +262,7 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             ExceptionsLibrary.LIMIT_OVERFLOW
         );
 
-        IERC20(_vaultTokens[0]).safeTransferFrom(msg.sender, address(this), tokenAmounts[0]);
+        IERC20(_vaultTokens[specialToken]).safeTransferFrom(msg.sender, address(this), amount);
 
         if (supply == 0) {
             _mint(address(0), lpAmount);
@@ -274,7 +270,11 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             _mint(msg.sender, lpAmount);
         }
 
-        actualTokenAmounts = _push(tokenAmounts, vaultOptions);
+        uint256[] memory tokenAmounts = new uint256[](3);
+        tokenAmounts[specialToken] = amount;
+
+        uint256[] memory actualTokenAmounts = _push(tokenAmounts, vaultOptions);
+        actualAmount = actualTokenAmounts[specialToken];
 
         if (supply > 0) {
             if (delayedStrategyParams.depositCallbackAddress != address(0)) {
@@ -282,22 +282,18 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             }
         }
 
-        emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
+        emit Deposit(msg.sender, _vaultTokens, actualAmount, lpAmount);
     }
 
     /// @inheritdoc IERC20DNRootVault
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        uint256[] memory minTokenAmounts,
+        uint256 minTokenAmount,
         bytes[] memory vaultsOptions
-    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
+    ) external nonReentrant returns (uint256 actualAmount) {
         uint256 supply = totalSupply;
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
-
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            if (i != specialToken) require(minTokenAmounts[i] == 0, ExceptionsLibrary.INVALID_VALUE);
-        }
 
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
@@ -323,20 +319,24 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
             }
         }
 
-        tokenAmounts[0] = FullMath.mulDiv(lpTokenAmount, minTvl[0], supply);
-        address erc20Vault = IAggregateVault(address(this)).subvaultAt(0);
-        uint256 erc20VaultBalance = IERC20(_vaultTokens[0]).balanceOf(erc20Vault);
+        tokenAmounts[specialToken] = FullMath.mulDiv(lpTokenAmount, minTvl[0], supply);
 
-        if (erc20VaultBalance < tokenAmounts[0]) {
-            tokenAmounts[0] = erc20VaultBalance;
+        address erc20Vault = IAggregateVault(address(this)).subvaultAt(0);
+        uint256 erc20VaultBalance = IERC20(_vaultTokens[specialToken]).balanceOf(erc20Vault);
+
+        if (erc20VaultBalance < tokenAmounts[specialToken]) {
+            tokenAmounts[specialToken] = erc20VaultBalance;
         }
+
+        require(tokenAmounts[specialToken] >= minTokenAmount, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        actualAmount = tokenAmounts[specialToken];
 
         _pull(to, tokenAmounts, vaultsOptions);
 
-        _updateWithdrawnAmounts(actualTokenAmounts);
+        _updateWithdrawnAmounts(actualAmount);
         _burn(msg.sender, lpTokenAmount);
 
-        emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
+        emit Withdraw(msg.sender, _vaultTokens, actualAmount, lpTokenAmount);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -460,23 +460,25 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
 
-    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
-        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
+    function _updateWithdrawnAmounts(uint256 amount) internal {
+        uint256[] memory withdrawn = new uint256[](_vaultTokens.length);
         uint64 timestamp = uint64(block.timestamp);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
         if (timestamp != totalWithdrawnAmountsTimestamp) {
             totalWithdrawnAmountsTimestamp = timestamp;
         } else {
-            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+            for (uint256 i = 0; i < withdrawn.length; i++) {
                 withdrawn[i] = totalWithdrawnAmounts[i];
             }
         }
-        for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            withdrawn[i] += tokenAmounts[i];
-            require(
-                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
+
+        withdrawn[specialToken] += amount;
+        require(
+            withdrawn[specialToken] <= protocolGovernance.withdrawLimit(_vaultTokens[specialToken]),
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
+
+        for (uint256 i = 0; i < withdrawn.length; ++i) {
             totalWithdrawnAmounts[i] = withdrawn[i];
         }
     }
@@ -504,16 +506,16 @@ contract ERC20DNRootVault is IERC20DNRootVault, ERC20Token, ReentrancyGuard, Agg
     /// @notice Emitted when liquidity is deposited
     /// @param from The source address for the liquidity
     /// @param tokens ERC20 tokens deposited
-    /// @param actualTokenAmounts Token amounts deposited
+    /// @param actualAmount Token amount deposited
     /// @param lpTokenMinted LP tokens received by the liquidity provider
-    event Deposit(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);
+    event Deposit(address indexed from, address[] tokens, uint256 actualAmount, uint256 lpTokenMinted);
 
     /// @notice Emitted when liquidity is withdrawn
     /// @param from The source address for the liquidity
     /// @param tokens ERC20 tokens withdrawn
-    /// @param actualTokenAmounts Token amounts withdrawn
+    /// @param actualAmount Token amount withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
-    event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+    event Withdraw(address indexed from, address[] tokens, uint256 actualAmount, uint256 lpTokenBurned);
 
     /// @notice Emitted when callback in deposit failed
     /// @param reason Error reason

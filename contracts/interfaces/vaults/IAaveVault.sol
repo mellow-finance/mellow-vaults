@@ -5,6 +5,12 @@ import "../external/aave/ILendingPool.sol";
 import "./IIntegrationVault.sol";
 
 interface IAaveVault is IIntegrationVault {
+
+    enum Status {
+        ONLY_DEPOSIT,
+        ONLY_BORROW
+    }
+
     /// @notice Reference to Aave protocol lending pool.
     function lendingPool() external view returns (ILendingPool);
 
@@ -15,7 +21,7 @@ interface IAaveVault is IIntegrationVault {
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    function initialize(uint256 nft_, address[] memory vaultTokens_, bool[] memory tokenStatus_) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, Status[] memory tokenStatus_) external;
 
     function borrow(address token, address to, uint256 amount) external;
 
@@ -23,7 +29,7 @@ interface IAaveVault is IIntegrationVault {
 
     function getDebt(address token) external view returns (uint256 debt);
 
-    function tokenStatus(uint256) external view returns (bool);
+    function tokenStatus(uint256) external view returns (Status);
 
     function aTokens(uint256) external view returns (address);
 

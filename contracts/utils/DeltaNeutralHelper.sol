@@ -9,9 +9,9 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../strategies/DeltaNeutralStrategyBob.sol";
 
 contract DeltaNeutralHelper {
-    DeltaNeutralStrategyBob strategy;
-    INonfungiblePositionManager manager;
-    IUniswapV3Factory factory;
+    DeltaNeutralStrategyBob public strategy;
+    INonfungiblePositionManager public manager;
+    IUniswapV3Factory public factory;
 
     uint32 averagePriceTimeSpan;
     uint24 maxTickDeviation;
@@ -66,7 +66,7 @@ contract DeltaNeutralHelper {
                 {
                     bool withFail;
                     (avgTick, , withFail) = OracleLibrary.consult(address(poolIJ), averagePriceTimeSpan);
-                    require(!withFail);
+                    require(!withFail, ExceptionsLibrary.INVALID_STATE);
                 }
 
                 if (spotTick < avgTick && avgTick - spotTick > int24(maxTickDeviation)) {
