@@ -38,6 +38,10 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
     /// @return liquidity Liquidity for the specified token amounts
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) external view returns (uint128 liquidity);
 
+    function burnFarmingPosition() external;
+
+    function openFarmingPosition() external;
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
