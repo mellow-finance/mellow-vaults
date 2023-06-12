@@ -517,7 +517,6 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
 
     /// @inheritdoc ILpCallback
     function depositCallback() external {
-        // pushes all tokens from erc20Vault to PancakeSwap to prevent possible attacks
         ImmutableParams memory immutableParams_ = immutableParams;
         immutableParams_.pancakeSwapVault.collectEarnings();
         _pushIntoPancakeSwap(immutableParams_);

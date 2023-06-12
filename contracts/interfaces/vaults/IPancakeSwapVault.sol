@@ -19,9 +19,6 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
     /// @notice Pancake farming pool manager
     function masterChef() external view returns (address);
 
-    /// @notice Pancake swap router
-    function smartRouter() external view returns (address);
-
     /// @notice Reference to UniswapV3 pool.
     function pool() external view returns (IUniswapV3Pool);
 
@@ -52,7 +49,8 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
         uint256 nft_,
         address[] memory vaultTokens_,
         uint24 fee_,
-        address uniV3Helper_
+        address uniV3Helper_,
+        address masterChef_
     ) external;
 
     /// @notice Collect UniV3 fees to zero vault.

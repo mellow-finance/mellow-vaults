@@ -34,9 +34,6 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     /// @inheritdoc IPancakeSwapVault
     address public masterChef;
 
-    /// @inheritdoc IPancakeSwapVault
-    address public smartRouter;
-
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVault
@@ -77,7 +74,8 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         uint256 nft_,
         address[] memory vaultTokens_,
         uint24 fee_,
-        address helper_
+        address helper_,
+        address masterChef_
     ) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
@@ -87,6 +85,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
+        masterChef = masterChef_;
         _helper = PancakeSwapHelper(helper_);
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
@@ -266,7 +265,8 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     }
 
     function compound() public {
-        uint256 amountIn = IMasterChef(masterChef).pendingCake(uniV3Nft);
+        address masterChef_ = masterChef;
+        uint256 amountIn = IMasterChef(masterChef_).pendingCake(uniV3Nft);
         if (amountIn == 0) return;
 
         IPancakeSwapVaultGovernance.StrategyParams memory params = IPancakeSwapVaultGovernance(
@@ -279,9 +279,9 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         uint256 expectedAmountOut = FullMath.mulDiv(amountIn, priceX96, CommonLibrary.Q96);
         if (expectedAmountOut == 0) return;
 
-        IMasterChef(masterChef).harvest(uniV3Nft, address(this));
-        IERC20(params.cake).safeIncreaseAllowance(smartRouter, amountIn);
-        ISmartRouter(smartRouter).exactInputSingle(
+        IMasterChef(masterChef_).harvest(uniV3Nft, address(this));
+        IERC20(params.cake).safeIncreaseAllowance(params.smartRouter, amountIn);
+        ISmartRouter(params.smartRouter).exactInputSingle(
             ISmartRouter.ExactInputSingleParams({
                 tokenIn: params.cake,
                 tokenOut: params.underlyingToken,

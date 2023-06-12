@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../external/univ3/INonfungiblePositionManager.sol";
 import "../oracles/IOracle.sol";
 import "./IVaultGovernance.sol";
-import "./IUniV3Vault.sol";
+import "./IPancakeSwapVault.sol";
 
 interface IPancakeSwapVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
@@ -24,6 +24,7 @@ interface IPancakeSwapVaultGovernance is IVaultGovernance {
         address poolForSwap;
         address cake;
         address underlyingToken;
+        address smartRouter;
         uint32 averageTickTimespan;
     }
 
@@ -75,6 +76,7 @@ interface IPancakeSwapVaultGovernance is IVaultGovernance {
         address[] memory vaultTokens_,
         address owner_,
         uint24 fee_,
-        address uniV3Helper_
-    ) external returns (IUniV3Vault vault, uint256 nft);
+        address uniV3Helper_,
+        address masterChef_
+    ) external returns (IPancakeSwapVault vault, uint256 nft);
 }

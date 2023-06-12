@@ -49,6 +49,7 @@ contract PancakeSwapVaultGovernance is ContractMeta, IPancakeSwapVaultGovernance
                     poolForSwap: address(0),
                     cake: address(0),
                     underlyingToken: address(0),
+                    smartRouter: address(0),
                     averageTickTimespan: 0
                 });
         }
@@ -126,12 +127,13 @@ contract PancakeSwapVaultGovernance is ContractMeta, IPancakeSwapVaultGovernance
         address[] memory vaultTokens_,
         address owner_,
         uint24 fee_,
-        address uniV3Helper_
-    ) external returns (IUniV3Vault vault, uint256 nft) {
+        address helper_,
+        address masterChef_
+    ) external returns (IPancakeSwapVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
-        vault = IUniV3Vault(vaddr);
-        vault.initialize(nft, vaultTokens_, fee_, uniV3Helper_);
+        vault = IPancakeSwapVault(vaddr);
+        vault.initialize(nft, vaultTokens_, fee_, helper_, masterChef_);
         emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(fee_), owner_, vaddr, nft);
     }
 
@@ -142,7 +144,7 @@ contract PancakeSwapVaultGovernance is ContractMeta, IPancakeSwapVaultGovernance
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.1.0");
+        return bytes32("1.0.0");
     }
 
     // --------------------------  EVENTS  --------------------------
