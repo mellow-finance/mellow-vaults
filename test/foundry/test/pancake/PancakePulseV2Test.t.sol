@@ -304,6 +304,17 @@ contract PancakePulseV2Test is Test {
         vm.stopPrank();
     }
 
+    function logState() public view {
+        uint256 nft = pancakeSwapVault.uniV3Nft();
+        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(nft);
+
+        (uint256[] memory tvl, ) = rootVault.tvl();
+
+        console2.log("Position:", uint24(tickLower), uint24(tickUpper));
+        console2.log("Tvl usdc / weth :", tvl[0] / 1e6, tvl[1] / 1e18);
+        console2.log();
+    }
+
     function test() external {
         deployGovernances();
         deployVaults();
@@ -320,16 +331,20 @@ contract PancakePulseV2Test is Test {
         deposit();
         withdraw();
 
-        movePrice(usdc, weth, 5e12);
-        rebalance();
+        logState();
 
-        movePrice(usdc, weth, 3e12);
-        rebalance();
+        for (uint256 i = 0; i < 5; i++) {
+            movePrice(usdc, weth, 5e10);
+            rebalance();
+            logState();
+        }
 
-        movePrice(weth, usdc, 300e18);
+        movePrice(usdc, weth, 5e11);
         rebalance();
+        logState();
 
-        movePrice(weth, usdc, 300e18);
+        movePrice(weth, usdc, 30e18);
         rebalance();
+        logState();
     }
 }
