@@ -347,6 +347,15 @@ contract PancakePulseV2Test is Test {
         logState();
     }
 
+    function testDeposit() external {
+        deployGovernances();
+        deployVaults();
+        firstDeposit();
+        initializeStrategy();
+        rebalance();
+        deposit();
+    }
+
     function testStrategy() external {
         deployGovernances();
         deployVaults();
