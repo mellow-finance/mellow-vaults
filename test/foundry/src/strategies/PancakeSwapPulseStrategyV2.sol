@@ -320,9 +320,8 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
                 vault.liquidityToTokenAmounts(type(uint128).max),
                 ""
             );
+            vault.burnFarmingPosition();
         }
-
-        vault.burnFarmingPosition();
 
         (uint256 newNft, , , ) = positionManager.mint(
             INonfungiblePositionManager.MintParams({
@@ -346,8 +345,6 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
             positionManager.burn(uniV3Nft);
             emit PositionBurned(uniV3Nft);
         }
-
-        vault.openFarmingPosition();
 
         return interval;
     }
@@ -462,9 +459,7 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
 
         (uint256[] memory tvlBefore, ) = immutableParams_.erc20Vault.tvl();
 
-        {
-            immutableParams_.erc20Vault.externalCall(immutableParams_.router, bytes4(swapData[:4]), swapData[4:]);
-        }
+        immutableParams_.erc20Vault.externalCall(immutableParams_.router, bytes4(swapData[:4]), swapData[4:]);
 
         uint256 actualAmountIn;
         uint256 actualAmountOut;

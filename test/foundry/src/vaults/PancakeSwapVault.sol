@@ -34,6 +34,8 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     /// @inheritdoc IPancakeSwapVault
     address public masterChef;
 
+    bool private _isPositionInFarm;
+
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVault
@@ -305,12 +307,19 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     }
 
     function _openFarmingPosition() private {
-        _positionManager.safeTransferFrom(address(this), masterChef, uniV3Nft);
+        (, , , , , , , uint128 liquidity, , , , ) = _positionManager.positions(uniV3Nft);
+        if (_isPositionInFarm || liquidity == 0) return;
+        try _positionManager.safeTransferFrom(address(this), masterChef, uniV3Nft) {
+            _isPositionInFarm = true;
+        } catch {}
     }
 
     function _burnFarmingPosition() private {
-        compound();
-        IMasterChef(masterChef).withdraw(uniV3Nft, address(this));
+        if (_isPositionInFarm) {
+            compound();
+            IMasterChef(masterChef).withdraw(uniV3Nft, address(this));
+            _isPositionInFarm = false;
+        }
     }
 
     // --------------------------  EVENTS  --------------------------
