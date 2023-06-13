@@ -8,6 +8,7 @@ import "../interfaces/vaults/IPancakeSwapVaultGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "../interfaces/external/pancakeswap/libraries/OracleLibrary.sol";
 import "../interfaces/external/pancakeswap/libraries/PositionValue.sol";
+import "../interfaces/external/pancakeswap/ILMPool.sol";
 
 contract PancakeSwapHelper {
     INonfungiblePositionManager public immutable positionManager;
@@ -177,14 +178,78 @@ contract PancakeSwapHelper {
         }
     }
 
+    function calculateActualPendingCake(address masterChef, uint256 nft) public view returns (uint256 reward) {
+        IMasterChef.UserPositionInfo memory positionInfo = IMasterChef(masterChef).userPositionInfos(nft);
+        IMasterChef.PoolInfo memory pool = IMasterChef(masterChef).poolInfo(positionInfo.pid);
+        ILMPool LMPool = ILMPool(pool.v3Pool.lmPool());
+
+        uint32 currTimestamp = uint32(block.timestamp);
+        uint256 rewardGrowthGlobalX128 = LMPool.rewardGrowthGlobalX128();
+        uint32 lastRewardTimestamp = LMPool.lastRewardTimestamp();
+        uint128 lmLiquidity = LMPool.lmLiquidity();
+        if (currTimestamp > lastRewardTimestamp) {
+            if (lmLiquidity != 0) {
+                (uint256 rewardPerSecond, uint256 endTime) = IMasterChef(masterChef).getLatestPeriodInfo(
+                    address(LMPool.pool())
+                );
+
+                uint32 endTimestamp = uint32(endTime);
+                uint32 duration;
+                if (endTimestamp > currTimestamp) {
+                    duration = currTimestamp - lastRewardTimestamp;
+                } else if (endTimestamp > lastRewardTimestamp) {
+                    duration = endTimestamp - lastRewardTimestamp;
+                }
+
+                if (duration != 0) {
+                    rewardGrowthGlobalX128 += FullMath.mulDiv(
+                        duration,
+                        FullMath.mulDiv(rewardPerSecond, FixedPoint128.Q128, 1e12),
+                        lmLiquidity
+                    );
+                }
+            }
+        }
+
+        (, int24 tickCurrent, , , , , ) = LMPool.pool().slot0();
+
+        ILMPool.Info memory lower = LMPool.lmTicks(positionInfo.tickLower);
+        ILMPool.Info memory upper = LMPool.lmTicks(positionInfo.tickUpper);
+
+        uint256 rewardGrowthBelowX128;
+        if (tickCurrent >= positionInfo.tickLower) {
+            rewardGrowthBelowX128 = lower.rewardGrowthOutsideX128;
+        } else {
+            rewardGrowthBelowX128 = rewardGrowthGlobalX128 - lower.rewardGrowthOutsideX128;
+        }
+
+        uint256 rewardGrowthAboveX128;
+        if (tickCurrent < positionInfo.tickUpper) {
+            rewardGrowthAboveX128 = upper.rewardGrowthOutsideX128;
+        } else {
+            rewardGrowthAboveX128 = rewardGrowthGlobalX128 - upper.rewardGrowthOutsideX128;
+        }
+
+        uint256 rewardGrowthInside = rewardGrowthGlobalX128 - rewardGrowthBelowX128 - rewardGrowthAboveX128;
+        if (
+            rewardGrowthInside > positionInfo.rewardGrowthInside &&
+            type(uint256).max / (rewardGrowthInside - positionInfo.rewardGrowthInside) > positionInfo.boostLiquidity
+        )
+            reward =
+                ((rewardGrowthInside - positionInfo.rewardGrowthInside) * positionInfo.boostLiquidity) /
+                0x100000000000000000000000000000000;
+
+        reward += positionInfo.reward;
+    }
+
     function calculateAmountOfCakeInUnderlying(
         IPancakeSwapVaultGovernance.StrategyParams memory params,
         address masterChef,
         uint256 uniV3Nft
-    ) public view returns (uint256 amount) {
-        uint256 amountIn = IMasterChef(masterChef).pendingCake(uniV3Nft);
-        if (amountIn == 0) return 0;
-        return FullMath.mulDiv(amountIn, calculateCakePriceX96InUnderlying(params), CommonLibrary.Q96);
+    ) public view returns (uint256) {
+        uint256 cakeAmount = calculateActualPendingCake(masterChef, uniV3Nft);
+        if (cakeAmount == 0) return 0;
+        return FullMath.mulDiv(cakeAmount, calculateCakePriceX96InUnderlying(params), CommonLibrary.Q96);
     }
 
     function getMinMaxPrice(
@@ -226,7 +291,9 @@ contract PancakeSwapHelper {
         if (delayedStrategyParams.safetyIndicesSet == 2) {
             (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
             minTokenAmounts = calculateTvlBySqrtPriceX96(uniV3Nft_, sqrtPriceX96);
-            maxTokenAmounts = minTokenAmounts;
+            maxTokenAmounts = new uint256[](2);
+            maxTokenAmounts[0] = minTokenAmounts[0];
+            maxTokenAmounts[1] = minTokenAmounts[1];
         } else {
             (uint256 minPriceX96, uint256 maxPriceX96) = getMinMaxPrice(
                 vaultTokens,
@@ -243,14 +310,16 @@ contract PancakeSwapHelper {
             ).strategyParams(vaultNft);
             uint256 amountOfCakeInUnderlying = calculateAmountOfCakeInUnderlying(strategyParams, masterChef, uniV3Nft_);
 
-            if (vaultTokens[0] == strategyParams.underlyingToken) {
-                minTokenAmounts[0] += amountOfCakeInUnderlying;
-                maxTokenAmounts[0] += amountOfCakeInUnderlying;
-            } else if (vaultTokens[1] == strategyParams.underlyingToken) {
-                minTokenAmounts[1] += amountOfCakeInUnderlying;
-                maxTokenAmounts[1] += amountOfCakeInUnderlying;
-            } else {
-                revert(ExceptionsLibrary.INVALID_STATE);
+            if (amountOfCakeInUnderlying > 0) {
+                if (vaultTokens[0] == strategyParams.underlyingToken) {
+                    minTokenAmounts[0] += amountOfCakeInUnderlying;
+                    maxTokenAmounts[0] += amountOfCakeInUnderlying;
+                } else if (vaultTokens[1] == strategyParams.underlyingToken) {
+                    minTokenAmounts[1] += amountOfCakeInUnderlying;
+                    maxTokenAmounts[1] += amountOfCakeInUnderlying;
+                } else {
+                    revert(ExceptionsLibrary.INVALID_STATE);
+                }
             }
         }
     }

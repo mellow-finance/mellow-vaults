@@ -29,18 +29,22 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     /// @inheritdoc IPancakeSwapVault
     uint256 public uniV3Nft;
     INonfungiblePositionManager private _positionManager;
-    PancakeSwapHelper private _helper;
+
+    PancakeSwapHelper public helper;
 
     /// @inheritdoc IPancakeSwapVault
     address public masterChef;
 
     bool private _isPositionInFarm;
 
+    /// @inheritdoc IPancakeSwapVault
+    address public erc20Vault;
+
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        (minTokenAmounts, maxTokenAmounts) = _helper.tvl(
+        (minTokenAmounts, maxTokenAmounts) = helper.tvl(
             uniV3Nft,
             address(_vaultGovernance),
             _nft,
@@ -62,12 +66,12 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
 
     /// @inheritdoc IPancakeSwapVault
     function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = _helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft);
+        tokenAmounts = helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft);
     }
 
     /// @inheritdoc IPancakeSwapVault
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) public view returns (uint128 liquidity) {
-        liquidity = _helper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft);
+        liquidity = helper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -77,7 +81,8 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         address[] memory vaultTokens_,
         uint24 fee_,
         address helper_,
-        address masterChef_
+        address masterChef_,
+        address erc20Vault_
     ) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
@@ -88,7 +93,8 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
             IPancakeV3Factory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
         masterChef = masterChef_;
-        _helper = PancakeSwapHelper(helper_);
+        erc20Vault = erc20Vault_;
+        helper = PancakeSwapHelper(helper_);
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
 
@@ -170,37 +176,35 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         if (uniV3Nft == 0) return actualTokenAmounts;
 
         uint128 liquidity = tokenAmountsToLiquidity(tokenAmounts);
-
         if (liquidity == 0) return actualTokenAmounts;
-        else {
-            _burnFarmingPosition();
-            address[] memory tokens = _vaultTokens;
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
-            }
 
-            Options memory opts = _parseOptions(options);
-            Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
-            Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-            (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
-                INonfungiblePositionManager.IncreaseLiquidityParams({
-                    tokenId: uniV3Nft,
-                    amount0Desired: amounts.a0,
-                    amount1Desired: amounts.a1,
-                    amount0Min: minAmounts.a0,
-                    amount1Min: minAmounts.a1,
-                    deadline: opts.deadline
-                })
-            );
-
-            actualTokenAmounts[0] = amount0;
-            actualTokenAmounts[1] = amount1;
-
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
-            }
-            _openFarmingPosition();
+        _unstakeUniV3Nft();
+        address[] memory tokens = _vaultTokens;
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
         }
+
+        Options memory opts = _parseOptions(options);
+        Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
+        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
+        (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
+            INonfungiblePositionManager.IncreaseLiquidityParams({
+                tokenId: uniV3Nft,
+                amount0Desired: amounts.a0,
+                amount1Desired: amounts.a1,
+                amount0Min: minAmounts.a0,
+                amount1Min: minAmounts.a1,
+                deadline: opts.deadline
+            })
+        );
+
+        actualTokenAmounts[0] = amount0;
+        actualTokenAmounts[1] = amount1;
+
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
+        }
+        _stakeUniV3Nft();
     }
 
     function _pull(
@@ -211,14 +215,14 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
 
-        _burnFarmingPosition();
+        _unstakeUniV3Nft();
 
         Options memory opts = _parseOptions(options);
         Pair memory amounts = _pullUniV3Nft(tokenAmounts, to, opts);
         actualTokenAmounts[0] = amounts.a0;
         actualTokenAmounts[1] = amounts.a1;
 
-        _openFarmingPosition();
+        _stakeUniV3Nft();
     }
 
     function _pullUniV3Nft(
@@ -232,7 +236,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
                 uniV3Nft
             );
             (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-            liquidityToPull = _helper.tokenAmountsToMaximalLiquidity(
+            liquidityToPull = helper.tokenAmountsToMaximalLiquidity(
                 sqrtPriceX96,
                 tickLower,
                 tickUpper,
@@ -266,29 +270,34 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         return Pair({a0: amount0Collected, a1: amount1Collected});
     }
 
-    function compound() public {
+    function compound() public returns (uint256 rewards) {
         address masterChef_ = masterChef;
-        uint256 amountIn = IMasterChef(masterChef_).pendingCake(uniV3Nft);
-        if (amountIn == 0) return;
-
+        try IMasterChef(masterChef_).harvest(uniV3Nft, address(this)) returns (uint256 rewards_) {
+            rewards = rewards_;
+        } catch {
+            return 0;
+        }
         IPancakeSwapVaultGovernance.StrategyParams memory params = IPancakeSwapVaultGovernance(
             address(_vaultGovernance)
         ).strategyParams(_nft);
 
-        uint256 priceX96 = _helper.calculateCakePriceX96InUnderlying(params);
+        uint256 amountIn = IERC20(params.cake).balanceOf(address(this));
+
+        if (amountIn == 0) return 0;
+
+        uint256 priceX96 = helper.calculateCakePriceX96InUnderlying(params);
         priceX96 = FullMath.mulDiv(priceX96, D9 - params.swapSlippageD, D9);
 
         uint256 expectedAmountOut = FullMath.mulDiv(amountIn, priceX96, CommonLibrary.Q96);
-        if (expectedAmountOut == 0) return;
+        if (expectedAmountOut == 0) return 0;
 
-        IMasterChef(masterChef_).harvest(uniV3Nft, address(this));
         IERC20(params.cake).safeIncreaseAllowance(params.smartRouter, amountIn);
         ISmartRouter(params.smartRouter).exactInputSingle(
             ISmartRouter.ExactInputSingleParams({
                 tokenIn: params.cake,
                 tokenOut: params.underlyingToken,
                 fee: IPancakeV3Pool(params.poolForSwap).fee(),
-                recipient: address(this),
+                recipient: erc20Vault,
                 amountIn: amountIn,
                 amountOutMinimum: expectedAmountOut,
                 sqrtPriceLimitX96: 0
@@ -296,17 +305,17 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         );
     }
 
-    function openFarmingPosition() external {
+    function stakeUniV3Nft() external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _openFarmingPosition();
+        _stakeUniV3Nft();
     }
 
-    function burnFarmingPosition() external {
+    function unstakeUniV3Nft() external {
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _burnFarmingPosition();
+        _unstakeUniV3Nft();
     }
 
-    function _openFarmingPosition() private {
+    function _stakeUniV3Nft() private {
         (, , , , , , , uint128 liquidity, , , , ) = _positionManager.positions(uniV3Nft);
         if (_isPositionInFarm || liquidity == 0) return;
         try _positionManager.safeTransferFrom(address(this), masterChef, uniV3Nft) {
@@ -314,7 +323,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         } catch {}
     }
 
-    function _burnFarmingPosition() private {
+    function _unstakeUniV3Nft() private {
         if (_isPositionInFarm) {
             compound();
             IMasterChef(masterChef).withdraw(uniV3Nft, address(this));

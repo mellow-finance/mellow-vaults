@@ -20,5 +20,5 @@ interface IPancakeV3Pool is
     IPancakeV3PoolOwnerActions,
     IPancakeV3PoolEvents
 {
-
+    function lmPool() external view returns (address);
 }

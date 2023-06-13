@@ -77,6 +77,7 @@ interface IPancakeSwapVaultGovernance is IVaultGovernance {
         address owner_,
         uint24 fee_,
         address helper_,
-        address masterChef_
+        address masterChef_,
+        address erc20Vault_
     ) external returns (IPancakeSwapVault vault, uint256 nft);
 }

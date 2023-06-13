@@ -7,7 +7,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
+/// @notice Governance that manages all PancakeSwap Vaults params and can deploy a new PancakeSwap Vault.
 contract PancakeSwapVaultGovernance is ContractMeta, IPancakeSwapVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
@@ -137,12 +137,13 @@ contract PancakeSwapVaultGovernance is ContractMeta, IPancakeSwapVaultGovernance
         address owner_,
         uint24 fee_,
         address helper_,
-        address masterChef_
+        address masterChef_,
+        address erc20Vault_
     ) external returns (IPancakeSwapVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = IPancakeSwapVault(vaddr);
-        vault.initialize(nft, vaultTokens_, fee_, helper_, masterChef_);
+        vault.initialize(nft, vaultTokens_, fee_, helper_, masterChef_, erc20Vault_);
         emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(fee_), owner_, vaddr, nft);
     }
 

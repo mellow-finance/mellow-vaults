@@ -19,6 +19,9 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
     /// @notice Pancake farming pool manager
     function masterChef() external view returns (address);
 
+    /// @notice erc20 vault of the rootvault system
+    function erc20Vault() external view returns (address);
+
     /// @notice Reference to PancakeV3Pool pool.
     function pool() external view returns (IPancakeV3Pool);
 
@@ -35,9 +38,9 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
     /// @return liquidity Liquidity for the specified token amounts
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) external view returns (uint128 liquidity);
 
-    function burnFarmingPosition() external;
+    function stakeUniV3Nft() external;
 
-    function openFarmingPosition() external;
+    function unstakeUniV3Nft() external;
 
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
@@ -50,9 +53,12 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
         address[] memory vaultTokens_,
         uint24 fee_,
         address uniV3Helper_,
-        address masterChef_
+        address masterChef_,
+        address erc20Vault_
     ) external;
 
     /// @notice Collect UniV3 fees to zero vault.
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
+
+    function compound() external returns (uint256);
 }

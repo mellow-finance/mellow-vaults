@@ -320,7 +320,7 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
                 vault.liquidityToTokenAmounts(type(uint128).max),
                 ""
             );
-            vault.burnFarmingPosition();
+            vault.unstakeUniV3Nft();
         }
 
         (uint256 newNft, , , ) = positionManager.mint(

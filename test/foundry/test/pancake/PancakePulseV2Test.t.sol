@@ -61,6 +61,7 @@ contract PancakePulseV2Test is Test {
     MockRouter public router = new MockRouter();
 
     PancakeSwapPulseV2Helper public strategyHelper = new PancakeSwapPulseV2Helper();
+    PancakeSwapHelper public vaultHelper = new PancakeSwapHelper(positionManager);
 
     uint256 public constant Q96 = 2**96;
 
@@ -149,15 +150,17 @@ contract PancakePulseV2Test is Test {
         tokens[1] = weth;
         vm.startPrank(deployer);
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
+        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
+
         IPancakeSwapVaultGovernance(pancakeSwapVaultGovernance).createVault(
             tokens,
             deployer,
             500,
-            address(new PancakeSwapHelper(positionManager)),
-            address(masterChef)
+            address(vaultHelper),
+            address(masterChef),
+            address(erc20Vault)
         );
 
-        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         pancakeSwapVault = IPancakeSwapVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
         pancakeSwapVaultGovernance.setStrategyParams(
@@ -309,13 +312,42 @@ contract PancakePulseV2Test is Test {
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(nft);
 
         (uint256[] memory tvl, ) = rootVault.tvl();
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        (uint256[] memory pancakeTvl, ) = pancakeSwapVault.tvl();
 
         console2.log("Position:", uint24(tickLower), uint24(tickUpper));
-        console2.log("Tvl usdc / weth :", tvl[0] / 1e6, tvl[1] / 1e18);
+        console2.log("RootVault tvl usdc / weth :", tvl[0], tvl[1]);
+        console2.log("ERC20Vault tvl usdc / weth :", erc20Tvl[0], erc20Tvl[1]);
+        console2.log("PancakeSwapVault tvl usdc / weth :", pancakeTvl[0], pancakeTvl[1]);
         console2.log();
     }
 
-    function test() external {
+    function testCompound() external {
+        deployGovernances();
+        deployVaults();
+        firstDeposit();
+        initializeStrategy();
+        rebalance();
+        deposit();
+
+        logState();
+
+        skip(24 * 3600);
+
+        console2.log(
+            "Pending rewards:",
+            vaultHelper.calculateActualPendingCake(address(masterChef), pancakeSwapVault.uniV3Nft())
+        );
+
+        logState();
+
+        uint256 actualRewards = pancakeSwapVault.compound();
+        console2.log("Actual collected rewards:", actualRewards);
+
+        logState();
+    }
+
+    function testStrategy() external {
         deployGovernances();
         deployVaults();
         firstDeposit();
