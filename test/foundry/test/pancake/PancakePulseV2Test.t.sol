@@ -5,7 +5,15 @@ import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
 
+import "../../src/interfaces/external/pancakeswap/ISmartRouter.sol";
+
+import "../../src/strategies/PancakeSwapPulseStrategyV2.sol";
+
+import "../../src/test/MockRouter.sol";
+
+import "../../src/utils/DepositWrapper.sol";
 import "../../src/utils/PancakeSwapHelper.sol";
+import "../../src/utils/PancakeSwapPulseV2Helper.sol";
 
 import "../../src/vaults/ERC20Vault.sol";
 import "../../src/vaults/ERC20VaultGovernance.sol";
@@ -15,13 +23,6 @@ import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
 import "../../src/vaults/PancakeSwapVault.sol";
 import "../../src/vaults/PancakeSwapVaultGovernance.sol";
-
-import "../../src/strategies/PancakeSwapPulseStrategyV2.sol";
-
-import "../../src/utils/DepositWrapper.sol";
-import "../../src/utils/PancakeSwapPulseV2Helper.sol";
-
-import "../../src/test/MockRouter.sol";
 
 contract PancakePulseV2Test is Test {
     IERC20RootVault public rootVault;
@@ -166,7 +167,7 @@ contract PancakePulseV2Test is Test {
                 poolForSwap: 0x517F451b0A9E1b87Dc0Ae98A05Ee033C3310F046,
                 cake: 0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898,
                 underlyingToken: weth,
-                smartRouter: 0x13f4EA83D0bd40E75C8222255bc855a974568Dd4,
+                smartRouter: swapRouter,
                 averageTickTimespan: 30
             })
         );
@@ -279,6 +280,30 @@ contract PancakePulseV2Test is Test {
         vm.stopPrank();
     }
 
+    function movePrice(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn
+    ) public {
+        vm.startPrank(deployer);
+        deal(tokenIn, deployer, amountIn);
+        IERC20(tokenIn).approve(swapRouter, amountIn);
+        ISmartRouter(swapRouter).exactInputSingle(
+            ISmartRouter.ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: 500,
+                recipient: deployer,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+
+        skip(24 * 3600);
+        vm.stopPrank();
+    }
+
     function test() external {
         deployGovernances();
         deployVaults();
@@ -294,5 +319,17 @@ contract PancakePulseV2Test is Test {
         rebalance();
         deposit();
         withdraw();
+
+        movePrice(usdc, weth, 5e12);
+        rebalance();
+
+        movePrice(usdc, weth, 3e12);
+        rebalance();
+
+        movePrice(weth, usdc, 300e18);
+        rebalance();
+
+        movePrice(weth, usdc, 300e18);
+        rebalance();
     }
 }
