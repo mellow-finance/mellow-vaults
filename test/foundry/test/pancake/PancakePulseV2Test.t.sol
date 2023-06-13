@@ -83,12 +83,12 @@ contract PancakePulseV2Test is Test {
     }
 
     function deposit() public {
-        deal(usdc, deployer, 10**12);
-        deal(weth, deployer, 10**21);
+        deal(usdc, deployer, 10**10);
+        deal(weth, deployer, 10**19);
 
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = 10**12;
-        tokenAmounts[1] = 10**21;
+        tokenAmounts[0] = 10**10;
+        tokenAmounts[1] = 10**19;
 
         vm.startPrank(deployer);
         (, bool needToCallCallback) = depositWrapper.depositInfo(address(rootVault));
@@ -97,6 +97,13 @@ contract PancakePulseV2Test is Test {
         }
 
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        vm.stopPrank();
+    }
+
+    function withdraw() public {
+        vm.startPrank(deployer);
+        uint256 lpAmount = rootVault.balanceOf(deployer) / 2;
+        rootVault.withdraw(deployer, lpAmount, new uint256[](2), new bytes[](2));
         vm.stopPrank();
     }
 
@@ -163,17 +170,13 @@ contract PancakePulseV2Test is Test {
                 averageTickTimespan: 30
             })
         );
-        
+
         pancakeSwapVaultGovernance.stageDelayedStrategyParams(
             erc20VaultNft + 1,
-            IPancakeSwapVaultGovernance.DelayedStrategyParams({
-                safetyIndicesSet: 2
-            })
+            IPancakeSwapVaultGovernance.DelayedStrategyParams({safetyIndicesSet: 2})
         );
 
-        pancakeSwapVaultGovernance.commitDelayedStrategyParams(
-            erc20VaultNft + 1
-        );
+        pancakeSwapVaultGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -203,7 +206,7 @@ contract PancakePulseV2Test is Test {
         permission[0] = 4;
         IProtocolGovernance(governance).stagePermissionGrants(address(router), permission);
         IProtocolGovernance(governance).stageValidator(address(router), 0xa8a78538Fc6D44951d6e957192a9772AfB02dd2f);
-        
+
         skip(24 * 3600);
 
         IProtocolGovernance(governance).commitPermissionGrants(address(pancakeSwapVaultGovernance));
@@ -245,10 +248,7 @@ contract PancakePulseV2Test is Test {
         );
 
         strategy.updateDesiredAmounts(
-            PancakeSwapPulseStrategyV2.DesiredAmounts({
-                amount0Desired: 1e6,
-                amount1Desired: 1e9
-            })
+            PancakeSwapPulseStrategyV2.DesiredAmounts({amount0Desired: 1e6, amount1Desired: 1e9})
         );
 
         deal(usdc, address(strategy), 10**8);
@@ -290,7 +290,9 @@ contract PancakePulseV2Test is Test {
         deposit();
         rebalance();
         deposit();
+        withdraw();
         rebalance();
         deposit();
+        withdraw();
     }
 }
