@@ -19,6 +19,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
+        gasLimit: BigNumber.from(6 * 10 ** 6)
+    });
+
+    await deploy("PancakeSwapHelper", {
+        from: deployer,
+        args: [pancakePositionManager],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+        gasLimit: BigNumber.from(6 * 10 ** 6)
     });
     
     await deploy("PancakeSwapVaultGovernance", {
@@ -36,7 +46,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
         autoMine: true,
-        ...TRANSACTION_GAS_LIMITS
+        ...TRANSACTION_GAS_LIMITS,
+        gasLimit: BigNumber.from(6 * 10 ** 6)
     });
 };
 export default func;
