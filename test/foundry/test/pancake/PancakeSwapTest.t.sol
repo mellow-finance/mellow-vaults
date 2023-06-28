@@ -313,9 +313,9 @@ contract PancakePulseV2Test is Test {
         firstDeposit();
         initializeStrategy();
         rebalance();
-        
+
         deposit();
-                
+
         movePrice(usdc, weth, 1e6 * 100000);
         skip(60 * 60);
         movePrice(usdc, weth, 1e6 * 100000);
