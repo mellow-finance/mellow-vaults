@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
-import "../external/pancakeswap/INonfungiblePositionManager.sol";
+import "../external/pancakeswap/IPancakeNonfungiblePositionManager.sol";
 import "../external/pancakeswap/IPancakeV3Pool.sol";
 
 interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
@@ -13,8 +13,8 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
         uint256 deadline;
     }
 
-    /// @notice Reference to INonfungiblePositionManager of UniswapV3 protocol.
-    function positionManager() external view returns (INonfungiblePositionManager);
+    /// @notice Reference to IPancakeNonfungiblePositionManager of UniswapV3 protocol.
+    function positionManager() external view returns (IPancakeNonfungiblePositionManager);
 
     /// @notice Pancake farming pool manager
     function masterChef() external view returns (address);

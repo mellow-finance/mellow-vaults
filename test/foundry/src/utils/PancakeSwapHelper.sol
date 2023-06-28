@@ -12,9 +12,9 @@ import "../interfaces/external/pancakeswap/ILMPool.sol";
 import "../interfaces/external/pancakeswap/IPancakeV3LMPool.sol";
 
 contract PancakeSwapHelper {
-    INonfungiblePositionManager public immutable positionManager;
+    IPancakeNonfungiblePositionManager public immutable positionManager;
 
-    constructor(INonfungiblePositionManager positionManager_) {
+    constructor(IPancakeNonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
     }

@@ -47,8 +47,8 @@ contract PancakePulseV2Test is Test {
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
-    INonfungiblePositionManager public positionManager =
-        INonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364);
+    IPancakeNonfungiblePositionManager public positionManager =
+        IPancakeNonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364);
     IMasterChef public masterChef = IMasterChef(0x556B9306565093C855AEA9AE92A594704c2Cd59e);
 
     address public swapRouter = 0x13f4EA83D0bd40E75C8222255bc855a974568Dd4;

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "../external/pancakeswap/INonfungiblePositionManager.sol";
+import "../external/pancakeswap/IPancakeNonfungiblePositionManager.sol";
 import "../oracles/IOracle.sol";
 import "./IVaultGovernance.sol";
 import "./IPancakeSwapVault.sol";
 
 interface IPancakeSwapVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
-    /// @param positionManager Reference to PancakeSwap INonfungiblePositionManager
+    /// @param positionManager Reference to PancakeSwap IPancakeNonfungiblePositionManager
     struct DelayedProtocolParams {
-        INonfungiblePositionManager positionManager;
+        IPancakeNonfungiblePositionManager positionManager;
         IOracle oracle;
     }
 

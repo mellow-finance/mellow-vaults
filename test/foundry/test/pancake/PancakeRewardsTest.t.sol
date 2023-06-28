@@ -26,7 +26,7 @@ import "../../src/vaults/PancakeSwapVaultGovernance.sol";
 
 contract PancakePulseV2Test is Test {
     PancakeSwapHelper vaultHelper =
-        new PancakeSwapHelper(INonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364));
+        new PancakeSwapHelper(IPancakeNonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364));
 
     function testUSDT() external {
         {

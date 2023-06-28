@@ -21,7 +21,7 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
     uint256 public constant D9 = 10**9;
     uint256 public constant Q96 = 2**96;
 
-    INonfungiblePositionManager public immutable positionManager;
+    IPancakeNonfungiblePositionManager public immutable positionManager;
 
     /// @param erc20Vault buffer vault of rootVault system
     /// @param pancakeSwapVault vault containing a PancakeSwap position, allowing to add and withdraw liquidity from it
@@ -75,7 +75,7 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
     bool public forceRebalanceWidthFlag;
 
     /// @param positionManager_ PancakeSwap v3 NonfungiblePositionManager
-    constructor(INonfungiblePositionManager positionManager_) {
+    constructor(IPancakeNonfungiblePositionManager positionManager_) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
     }
@@ -344,7 +344,7 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
         }
 
         (uint256 newNft, , , ) = positionManager.mint(
-            INonfungiblePositionManager.MintParams({
+            IPancakeNonfungiblePositionManager.MintParams({
                 token0: immutableParams_.tokens[0],
                 token1: immutableParams_.tokens[1],
                 fee: pool.fee(),

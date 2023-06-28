@@ -8,7 +8,7 @@ import "../../../../libraries/external/LiquidityAmounts.sol";
 
 import "../IPancakeV3Pool.sol";
 import "../IPancakeV3Factory.sol";
-import "../INonfungiblePositionManager.sol";
+import "../IPancakeNonfungiblePositionManager.sol";
 
 /// @title Returns information about the token value held in a Pancake V3 NFT
 library PositionValue {
@@ -20,7 +20,7 @@ library PositionValue {
     /// @return amount0 The total amount of token0 including principal and fees
     /// @return amount1 The total amount of token1 including principal and fees
     function total(
-        INonfungiblePositionManager positionManager,
+        IPancakeNonfungiblePositionManager positionManager,
         uint256 tokenId,
         uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
@@ -37,7 +37,7 @@ library PositionValue {
     /// @return amount0 The principal amount of token0
     /// @return amount1 The principal amount of token1
     function principal(
-        INonfungiblePositionManager positionManager,
+        IPancakeNonfungiblePositionManager positionManager,
         uint256 tokenId,
         uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
@@ -70,7 +70,7 @@ library PositionValue {
     /// @param tokenId The tokenId of the token for which to get the total fees owed
     /// @return amount0 The amount of fees owed in token0
     /// @return amount1 The amount of fees owed in token1
-    function fees(INonfungiblePositionManager positionManager, uint256 tokenId)
+    function fees(IPancakeNonfungiblePositionManager positionManager, uint256 tokenId)
         internal
         view
         returns (uint256 amount0, uint256 amount1)
@@ -108,7 +108,7 @@ library PositionValue {
             );
     }
 
-    function _fees(INonfungiblePositionManager positionManager, FeeParams memory feeParams)
+    function _fees(IPancakeNonfungiblePositionManager positionManager, FeeParams memory feeParams)
         private
         view
         returns (uint256 amount0, uint256 amount1)

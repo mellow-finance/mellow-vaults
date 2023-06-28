@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "../interfaces/external/pancakeswap/INonfungiblePositionManager.sol";
+import "../interfaces/external/pancakeswap/IPancakeNonfungiblePositionManager.sol";
 import "../interfaces/external/pancakeswap/IPancakeV3Pool.sol";
 import "../interfaces/external/pancakeswap/IPancakeV3Factory.sol";
 import "../interfaces/vaults/IPancakeSwapVaultGovernance.sol";
@@ -12,8 +12,6 @@ import "../utils/PancakeSwapHelper.sol";
 
 import "../interfaces/external/pancakeswap/IMasterChef.sol";
 import "../interfaces/external/pancakeswap/ISmartRouter.sol";
-
-import "forge-std/console2.sol";
 
 /// @notice Vault that interfaces PancakeV3 protocol in the integration layer.
 contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
@@ -30,7 +28,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     IPancakeV3Pool public pool;
     /// @inheritdoc IPancakeSwapVault
     uint256 public uniV3Nft;
-    INonfungiblePositionManager private _positionManager;
+    IPancakeNonfungiblePositionManager private _positionManager;
 
     PancakeSwapHelper public helper;
 
@@ -62,7 +60,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     }
 
     /// @inheritdoc IPancakeSwapVault
-    function positionManager() external view returns (INonfungiblePositionManager) {
+    function positionManager() external view returns (IPancakeNonfungiblePositionManager) {
         return _positionManager;
     }
 
@@ -208,7 +206,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
         Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
         (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
-            INonfungiblePositionManager.IncreaseLiquidityParams({
+            IPancakeNonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: uniV3Nft,
                 amount0Desired: amounts.a0,
                 amount1Desired: amounts.a1,
@@ -268,7 +266,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         if (liquidityToPull != 0) {
             Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
             _positionManager.decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
+                IPancakeNonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: uniV3Nft,
                     liquidity: liquidityToPull,
                     amount0Min: minAmounts.a0,
@@ -278,7 +276,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
             );
         }
         (uint256 amount0Collected, uint256 amount1Collected) = _positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
+            IPancakeNonfungiblePositionManager.CollectParams({
                 tokenId: uniV3Nft,
                 recipient: to,
                 amount0Max: type(uint128).max,

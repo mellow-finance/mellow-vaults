@@ -10,7 +10,12 @@ import "./IPeripheryImmutableState.sol";
 /// @title Non-fungible token for positions
 /// @notice Wraps PancakeSwap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface INonfungiblePositionManager is IPoolInitializer, IPeripheryPayments, IPeripheryImmutableState, IERC721 {
+interface IPancakeNonfungiblePositionManager is
+    IPoolInitializer,
+    IPeripheryPayments,
+    IPeripheryImmutableState,
+    IERC721
+{
     /// @notice Emitted when liquidity is increased for a position NFT
     /// @dev Also emitted when a token is minted
     /// @param tokenId The ID of the token for which liquidity was increased

@@ -33,7 +33,7 @@ contract PancakeSwapVaultGovernance is ContractMeta, IPancakeSwapVaultGovernance
         if (_stagedDelayedProtocolParams.length == 0) {
             return
                 DelayedProtocolParams({
-                    positionManager: INonfungiblePositionManager(address(0)),
+                    positionManager: IPancakeNonfungiblePositionManager(address(0)),
                     oracle: IOracle(address(0))
                 });
         }
