@@ -382,8 +382,8 @@ contract PancakePulseV2Test is Test {
             movePrice(usdc, weth, 5e10);
             rebalance();
             // logState();
-        }   
-    
+        }
+
         movePrice(usdc, weth, 5e11);
         rebalance();
         // logState();
@@ -392,11 +392,11 @@ contract PancakePulseV2Test is Test {
         rebalance();
         // logState();
 
-        uint256 calculatedRewards = vaultHelper.calculateActualPendingCake(pancakeSwapVault.masterChef(), pancakeSwapVault.uniV3Nft());
-        uint256 actualRewards = actualRewardsAmount();
-        console2.log(
-            calculatedRewards,
-            actualRewards
+        uint256 calculatedRewards = vaultHelper.calculateActualPendingCake(
+            pancakeSwapVault.masterChef(),
+            pancakeSwapVault.uniV3Nft()
         );
+        uint256 actualRewards = actualRewardsAmount();
+        console2.log(calculatedRewards, actualRewards);
     }
 }
