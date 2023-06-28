@@ -42,6 +42,8 @@ interface IPancakeSwapVault is IERC721Receiver, IIntegrationVault {
 
     function unstakeUniV3Nft() external;
 
+    function updateHelper(address newHelper) external;
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry

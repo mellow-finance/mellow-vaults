@@ -148,6 +148,24 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         emit CollectedEarnings(tx.origin, msg.sender, to, collectedEarnings0, collectedEarnings1);
     }
 
+    /// @inheritdoc IPancakeSwapVault
+    function updateHelper(address newHelper) external {
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        helper = PancakeSwapHelper(newHelper);
+    }
+
+    /// @inheritdoc IPancakeSwapVault
+    function stakeUniV3Nft() external {
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _stakeUniV3Nft();
+    }
+
+    /// @inheritdoc IPancakeSwapVault
+    function unstakeUniV3Nft() external {
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _unstakeUniV3Nft();
+    }
+
     // -------------------  INTERNAL, VIEW  -------------------
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
@@ -303,16 +321,6 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
                 sqrtPriceLimitX96: 0
             })
         );
-    }
-
-    function stakeUniV3Nft() external {
-        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _stakeUniV3Nft();
-    }
-
-    function unstakeUniV3Nft() external {
-        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _unstakeUniV3Nft();
     }
 
     function _stakeUniV3Nft() private {

@@ -123,6 +123,26 @@ contract PancakeSwapPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessCon
         emit UpdateMutableParams(tx.origin, msg.sender, mutableParams_);
     }
 
+    function updatePancakeVaultHelper(address newHelper) external {
+        _requireAdmin();
+        immutableParams.pancakeSwapVault.updateHelper(newHelper);
+    }
+
+    /// @notice manual pulling tokens from vault. Can be called only by admin
+    /// @param fromVault the address of the vault to pull tokens from
+    /// @param toVault the address of the vault to pull tokens to
+    /// @param tokenAmounts the amount of tokens to be pulled
+    /// @param vaultOptions additional options for `pull` method
+    function manualPull(
+        IIntegrationVault fromVault,
+        IIntegrationVault toVault,
+        uint256[] memory tokenAmounts,
+        bytes memory vaultOptions
+    ) external {
+        _requireAdmin();
+        fromVault.pull(address(toVault), immutableParams.tokens, tokenAmounts, vaultOptions);
+    }
+
     /// @dev Rebalancing goes like this:
     /// 1. Function checks the current states of the pools, and if the volatility is significant, the transaction reverts.
     /// 2. If necessary, a new position is minted on pancakeSwapVault, and the previous one is burned.

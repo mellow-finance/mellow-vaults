@@ -9,6 +9,7 @@ import "../libraries/CommonLibrary.sol";
 import "../interfaces/external/pancakeswap/libraries/OracleLibrary.sol";
 import "../interfaces/external/pancakeswap/libraries/PositionValue.sol";
 import "../interfaces/external/pancakeswap/ILMPool.sol";
+import "../interfaces/external/pancakeswap/IPancakeV3LMPool.sol";
 
 contract PancakeSwapHelper {
     INonfungiblePositionManager public immutable positionManager;
@@ -178,19 +179,21 @@ contract PancakeSwapHelper {
         }
     }
 
-    function calculateActualPendingCake(address masterChef, uint256 nft) public view returns (uint256 reward) {
-        IMasterChef.UserPositionInfo memory positionInfo = IMasterChef(masterChef).userPositionInfos(nft);
-        IMasterChef.PoolInfo memory pool = IMasterChef(masterChef).poolInfo(positionInfo.pid);
-        ILMPool LMPool = ILMPool(pool.v3Pool.lmPool());
+    function _accumulateReward(uint32 currTimestamp, IPancakeV3LMPool lmPool)
+        private
+        view
+        returns (uint256 rewardGrowthGlobalX128)
+    {
+        unchecked {
+            uint32 lastRewardTimestamp = lmPool.lastRewardTimestamp();
+            rewardGrowthGlobalX128 = lmPool.rewardGrowthGlobalX128();
+            if (currTimestamp <= lastRewardTimestamp) {
+                return rewardGrowthGlobalX128;
+            }
 
-        uint32 currTimestamp = uint32(block.timestamp);
-        uint256 rewardGrowthGlobalX128 = LMPool.rewardGrowthGlobalX128();
-        uint32 lastRewardTimestamp = LMPool.lastRewardTimestamp();
-        uint128 lmLiquidity = LMPool.lmLiquidity();
-        if (currTimestamp > lastRewardTimestamp) {
-            if (lmLiquidity != 0) {
-                (uint256 rewardPerSecond, uint256 endTime) = IMasterChef(masterChef).getLatestPeriodInfo(
-                    address(LMPool.pool())
+            if (lmPool.lmLiquidity() != 0) {
+                (uint256 rewardPerSecond, uint256 endTime) = lmPool.masterChef().getLatestPeriodInfo(
+                    address(lmPool.pool())
                 );
 
                 uint32 endTimestamp = uint32(endTime);
@@ -204,42 +207,150 @@ contract PancakeSwapHelper {
                 if (duration != 0) {
                     rewardGrowthGlobalX128 += FullMath.mulDiv(
                         duration,
-                        FullMath.mulDiv(rewardPerSecond, FixedPoint128.Q128, 1e12),
-                        lmLiquidity
+                        FullMath.mulDiv(rewardPerSecond, FixedPoint128.Q128, lmPool.REWARD_PRECISION()),
+                        lmPool.lmLiquidity()
                     );
                 }
             }
         }
+    }
 
-        (, int24 tickCurrent, , , , , ) = LMPool.pool().slot0();
-
-        ILMPool.Info memory lower = LMPool.lmTicks(positionInfo.tickLower);
-        ILMPool.Info memory upper = LMPool.lmTicks(positionInfo.tickUpper);
-
-        uint256 rewardGrowthBelowX128;
-        if (tickCurrent >= positionInfo.tickLower) {
-            rewardGrowthBelowX128 = lower.rewardGrowthOutsideX128;
-        } else {
-            rewardGrowthBelowX128 = rewardGrowthGlobalX128 - lower.rewardGrowthOutsideX128;
+    function _getLMTicks(int24 tick, IPancakeV3LMPool lmPool) internal view returns (ILMPool.Info memory info) {
+        unchecked {
+            // When tick had updated in thirdLMPool , read tick info from third LMPool, or read from second LMPool , if not , read from firstLMPool.
+            if (lmPool.thirdLMPool().lmTicksFlag(tick)) {
+                (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool.thirdLMPool().lmTicks(
+                    tick
+                );
+            } else if (lmPool.secondLMPool().lmTicksFlag(tick)) {
+                (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool.secondLMPool().lmTicks(
+                    tick
+                );
+            } else {
+                (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool.firstLMPool().lmTicks(
+                    tick
+                );
+            }
         }
+    }
 
-        uint256 rewardGrowthAboveX128;
-        if (tickCurrent < positionInfo.tickUpper) {
-            rewardGrowthAboveX128 = upper.rewardGrowthOutsideX128;
-        } else {
-            rewardGrowthAboveX128 = rewardGrowthGlobalX128 - upper.rewardGrowthOutsideX128;
+    function _getRewardGrowthInsideInternal(
+        int24 tickLower,
+        int24 tickUpper,
+        IPancakeV3LMPool lmPool,
+        uint256 rewardGrowthGlobalX128
+    ) internal view returns (uint256 rewardGrowthInsideX128, bool isNegative) {
+        unchecked {
+            (, int24 tick, , , , , ) = lmPool.pool().slot0();
+            ILMPool.Info memory lower;
+            if (lmPool.lmTicksFlag(tickLower)) {
+                lower = lmPool.lmTicks(tickLower);
+            } else {
+                lower = _getLMTicks(tickLower, lmPool);
+            }
+            ILMPool.Info memory upper;
+            if (lmPool.lmTicksFlag(tickUpper)) {
+                upper = lmPool.lmTicks(tickUpper);
+            } else {
+                upper = _getLMTicks(tickUpper, lmPool);
+            }
+
+            // calculate reward growth below
+            uint256 rewardGrowthBelowX128;
+            if (tick >= tickLower) {
+                rewardGrowthBelowX128 = lower.rewardGrowthOutsideX128;
+            } else {
+                rewardGrowthBelowX128 = rewardGrowthGlobalX128 - lower.rewardGrowthOutsideX128;
+            }
+
+            // calculate reward growth above
+            uint256 rewardGrowthAboveX128;
+            if (tick < tickUpper) {
+                rewardGrowthAboveX128 = upper.rewardGrowthOutsideX128;
+            } else {
+                rewardGrowthAboveX128 = rewardGrowthGlobalX128 - upper.rewardGrowthOutsideX128;
+            }
+
+            rewardGrowthInsideX128 = rewardGrowthGlobalX128 - rewardGrowthBelowX128 - rewardGrowthAboveX128;
+            isNegative = (rewardGrowthBelowX128 + rewardGrowthAboveX128) > rewardGrowthGlobalX128;
         }
+    }
 
-        uint256 rewardGrowthInside = rewardGrowthGlobalX128 - rewardGrowthBelowX128 - rewardGrowthAboveX128;
-        if (
-            rewardGrowthInside > positionInfo.rewardGrowthInside &&
-            type(uint256).max / (rewardGrowthInside - positionInfo.rewardGrowthInside) > positionInfo.boostLiquidity
-        )
-            reward =
-                ((rewardGrowthInside - positionInfo.rewardGrowthInside) * positionInfo.boostLiquidity) /
-                0x100000000000000000000000000000000;
+    function _getNegativeRewardGrowthInsideInitValue(
+        int24 tickLower,
+        int24 tickUpper,
+        IPancakeV3LMPool lmPool
+    ) internal view returns (uint256 initValue) {
+        unchecked {
+            // If already chekced third LMPool , use current negativeRewardGrowthInsideInitValue.
+            if (lmPool.checkThirdLMPool(tickLower, tickUpper)) {
+                initValue = lmPool.negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+            } else {
+                bool checkSecondLMPoolFlagInThirdLMPool = lmPool.thirdLMPool().checkSecondLMPool(tickLower, tickUpper);
+                // If already checked second LMPool , use third LMPool negativeRewardGrowthInsideInitValue.
+                if (checkSecondLMPoolFlagInThirdLMPool) {
+                    initValue = lmPool.thirdLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                } else {
+                    // If not checked second LMPool , use second LMPool negativeRewardGrowthInsideInitValue.
+                    initValue = lmPool.secondLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                }
+            }
+        }
+    }
 
-        reward += positionInfo.reward;
+    function _getRewardGrowthInside(
+        int24 tickLower,
+        int24 tickUpper,
+        IPancakeV3LMPool lmPool,
+        uint256 rewardGrowthGlobalX128
+    ) private view returns (uint256 rewardGrowthInsideX128) {
+        unchecked {
+            (rewardGrowthInsideX128, ) = _getRewardGrowthInsideInternal(
+                tickLower,
+                tickUpper,
+                lmPool,
+                rewardGrowthGlobalX128
+            );
+            uint256 initValue = _getNegativeRewardGrowthInsideInitValue(tickLower, tickUpper, lmPool);
+            rewardGrowthInsideX128 = rewardGrowthInsideX128 - initValue;
+        }
+    }
+
+    function calculateActualPendingCake(address masterChef, uint256 nft) public view returns (uint256 reward) {
+        unchecked {
+            IMasterChef.UserPositionInfo memory positionInfo = IMasterChef(masterChef).userPositionInfos(nft);
+            if (positionInfo.liquidity == 0 && positionInfo.reward == 0) return 0;
+
+            IMasterChef.PoolInfo memory pool = IMasterChef(masterChef).poolInfo(positionInfo.pid);
+            ILMPool LMPool = ILMPool(pool.v3Pool.lmPool());
+            if (address(LMPool) != address(0)) {
+                // Update rewardGrowthInside
+                uint256 rewardGrowthGlobalX128 = _accumulateReward(
+                    uint32(block.timestamp),
+                    IPancakeV3LMPool(address(LMPool))
+                );
+
+                uint256 rewardGrowthInside = _getRewardGrowthInside(
+                    positionInfo.tickLower,
+                    positionInfo.tickUpper,
+                    IPancakeV3LMPool(address(LMPool)),
+                    rewardGrowthGlobalX128
+                );
+
+                // Check overflow
+                if (
+                    rewardGrowthInside > positionInfo.rewardGrowthInside &&
+                    type(uint256).max / (rewardGrowthInside - positionInfo.rewardGrowthInside) >
+                    positionInfo.boostLiquidity
+                )
+                    reward =
+                        ((rewardGrowthInside - positionInfo.rewardGrowthInside) * positionInfo.boostLiquidity) /
+                        CommonLibrary.Q128;
+                positionInfo.rewardGrowthInside = rewardGrowthInside;
+            }
+
+            reward += positionInfo.reward;
+        }
     }
 
     function calculateAmountOfCakeInUnderlying(

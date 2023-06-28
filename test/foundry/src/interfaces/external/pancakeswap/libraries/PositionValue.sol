@@ -115,7 +115,7 @@ library PositionValue {
     {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
             IPancakeV3Pool(
-                IPancakeV3Factory(positionManager.factory()).getPool(feeParams.token0,  feeParams.token1, feeParams.fee)
+                IPancakeV3Factory(positionManager.factory()).getPool(feeParams.token0, feeParams.token1, feeParams.fee)
             ),
             feeParams.tickLower,
             feeParams.tickUpper
