@@ -19,7 +19,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
-        gasLimit: BigNumber.from(10 ** 6 * 6)
     });
     
     await deploy("PancakeSwapVaultGovernance", {
@@ -28,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
-                singleton,
+                singleton: singleton,
             },
             {
                 positionManager: pancakePositionManager,
@@ -37,8 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
         autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-        gasLimit: BigNumber.from(10 ** 6 * 3)
+        ...TRANSACTION_GAS_LIMITS
     });
 };
 export default func;
@@ -46,8 +44,5 @@ func.tags = [
     "PancakeSwapVaultGovernance",
     "core",
     ...MAIN_NETWORKS,
-    "arbitrum",
-    "optimism",
-    "polygon",
 ];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

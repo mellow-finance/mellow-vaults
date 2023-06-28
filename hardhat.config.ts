@@ -242,6 +242,9 @@ const config: HardhatUserConfig = {
             optimism: "0x68f180fcce6836688e9084f035309e29bf0a2095",
             rinkeby: "0x577d296678535e4903d59a4c929b718e1d575e0a",
         },
+        usdt: {
+            default: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
             kovan: "0xe22da380ee6b445bb8273c81944adeb6e8450422",

@@ -141,13 +141,12 @@ const buildSinglePositionStrategy = async (
         mStrategyTreasury
     );
 
-    return;
     const proxyStrategy = await hre.ethers.getContractAt(deploymentName, proxyAddress);  
     
     await proxyStrategy.initialize(
         {
-            erc20Vault: erc20Vault.address,
-            pancakeSwapVault: pancakeSwapVault.address,
+            erc20Vault: erc20Vault,
+            pancakeSwapVault: pancakeSwapVault,
             router: aggregationRouterV5,
             tokens: tokens,
         },
@@ -182,7 +181,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { getNamedAccounts } = hre;
     const { weth, usdt } = await getNamedAccounts();
 
-    // await deployStrategy(hre);
+    await deployStrategy(hre);
+    return;
     await buildSinglePositionStrategy(hre, [weth, usdt]);
 }
 
