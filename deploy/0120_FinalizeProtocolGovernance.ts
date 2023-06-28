@@ -105,6 +105,7 @@ async function registerGovernances(
     for (const name of [
         "AaveVaultGovernance",
         "UniV3VaultGovernance",
+        "PancakeSwapVaultGovernance",
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
         "ERC20RootVaultGovernance",
@@ -131,8 +132,8 @@ async function registerTokens(
         "ProtocolGovernance"
     );
     const erc20Validator = await deployments.get("ERC20Validator");
-    const { weth, wbtc, usdc, dai, wsteth } = await hre.getNamedAccounts();
-    const tokens = [weth, wbtc, usdc, dai, wsteth]
+    const { weth, wbtc, usdc, usdt, dai, wsteth } = await hre.getNamedAccounts();
+    const tokens = [weth, wbtc, usdc, usdt, dai, wsteth]
         .map((t) => t.toLowerCase())
         .sort();
     for (const token of tokens) {
@@ -216,7 +217,7 @@ async function setUnitPrices(
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
-    const { admin, weth, wbtc, usdc, wsteth } = await hre.getNamedAccounts();
+    const { admin, weth, wbtc, usdc, usdt, wsteth } = await hre.getNamedAccounts();
     const txWETH = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(weth, WETH_PRICE);
@@ -231,9 +232,13 @@ async function setUnitPrices(
         .connect(admin)
         .populateTransaction.stageUnitPrice(wbtc, WBTC_PRICE);
     txDatas.push(txWBTC.data);
-    const txUSDC = await protocolGovernance
+    let txUSDC = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(usdc, USDC_PRICE);
+    txDatas.push(txUSDC.data);
+    txUSDC = await protocolGovernance
+        .connect(admin)
+        .populateTransaction.stageUnitPrice(usdt, USDC_PRICE);
     txDatas.push(txUSDC.data);
     const txWETHc = await protocolGovernance
         .connect(admin)
@@ -249,9 +254,13 @@ async function setUnitPrices(
         .connect(admin)
         .populateTransaction.commitUnitPrice(wbtc);
     txDatas.push(txWBTCc.data);
-    const txUSDCc = await protocolGovernance
+    let txUSDCc = await protocolGovernance
         .connect(admin)
         .populateTransaction.commitUnitPrice(usdc);
+    txDatas.push(txUSDCc.data);
+    txUSDCc = await protocolGovernance
+        .connect(admin)
+        .populateTransaction.commitUnitPrice(usdt);
     txDatas.push(txUSDCc.data);
 }
 

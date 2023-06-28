@@ -202,7 +202,8 @@ const config: HardhatUserConfig = {
             rinkeby: process.env["RINKEBY_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             arbitrum:
                 process.env["ARBITRUM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
-                optimism: process.env["OPTIMISM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
+            optimism:
+                process.env["OPTIMISM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
         },
         protocolTreasury: {
             hardhat: "0x00192Fb10dF37c9FB26829eb2CC623cd1BF599E8",
@@ -214,7 +215,8 @@ const config: HardhatUserConfig = {
             rinkeby: process.env["RINKEBY_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             arbitrum:
                 process.env["ARBITRUM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
-            optimism: process.env["OPTIMISM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
+            optimism:
+                process.env["OPTIMISM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
         },
         test: {
             default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
@@ -239,6 +241,9 @@ const config: HardhatUserConfig = {
             arbitrum: "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
             optimism: "0x68f180fcce6836688e9084f035309e29bf0a2095",
             rinkeby: "0x577d296678535e4903d59a4c929b718e1d575e0a",
+        },
+        usdt: {
+            default: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -309,6 +314,12 @@ const config: HardhatUserConfig = {
         },
         uniswapV3PositionManager: {
             default: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+        },
+        pancakeSwapRouter: {
+            default: "0x13f4EA83D0bd40E75C8222255bc855a974568Dd4",
+        },
+        pancakePositionManager: {
+            default: "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
         },
         uniswapV3Router: {
             default: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
