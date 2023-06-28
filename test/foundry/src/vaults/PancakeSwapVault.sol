@@ -13,6 +13,8 @@ import "../utils/PancakeSwapHelper.sol";
 import "../interfaces/external/pancakeswap/IMasterChef.sol";
 import "../interfaces/external/pancakeswap/ISmartRouter.sol";
 
+import "forge-std/console2.sol";
+
 /// @notice Vault that interfaces PancakeV3 protocol in the integration layer.
 contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     using SafeERC20 for IERC20;

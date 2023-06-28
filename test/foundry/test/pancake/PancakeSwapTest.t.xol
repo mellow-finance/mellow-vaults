@@ -307,96 +307,28 @@ contract PancakePulseV2Test is Test {
         vm.stopPrank();
     }
 
-    function actualRewardsAmount() public returns (uint256) {
-        return pancakeSwapVault.compound();
-    }
-
-    function logState() public view {
-        uint256 nft = pancakeSwapVault.uniV3Nft();
-        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(nft);
-
-        (uint256[] memory tvl, ) = rootVault.tvl();
-        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-        (uint256[] memory pancakeTvl, ) = pancakeSwapVault.tvl();
-
-        console2.log("Position:", uint24(tickLower), uint24(tickUpper));
-        console2.log("RootVault tvl usdc / weth :", tvl[0], tvl[1]);
-        console2.log("ERC20Vault tvl usdc / weth :", erc20Tvl[0], erc20Tvl[1]);
-        console2.log("PancakeSwapVault tvl usdc / weth :", pancakeTvl[0], pancakeTvl[1]);
-        console2.log();
-    }
-
     function testCompound() external {
         deployGovernances();
         deployVaults();
         firstDeposit();
         initializeStrategy();
         rebalance();
+        
         deposit();
+                
+        movePrice(usdc, weth, 1e6 * 100000);
+        skip(60 * 60);
+        movePrice(usdc, weth, 1e6 * 100000);
+        skip(60 * 60);
+        movePrice(weth, usdc, 1e18 * 100);
 
-        logState();
-
-        skip(24 * 3600);
-
-        console2.log(
-            "Pending rewards:",
-            vaultHelper.calculateActualPendingCake(address(masterChef), pancakeSwapVault.uniV3Nft())
-        );
-
-        logState();
-
-        uint256 actualRewards = pancakeSwapVault.compound();
-        console2.log("Actual collected rewards:", actualRewards);
-
-        logState();
-    }
-
-    function testDeposit() external {
-        deployGovernances();
-        deployVaults();
-        firstDeposit();
-        initializeStrategy();
-        rebalance();
         deposit();
-    }
-
-    function testStrategy() external {
-        deployGovernances();
-        deployVaults();
-        firstDeposit();
-        initializeStrategy();
-        rebalance();
-        deposit();
-        rebalance();
-        // deposit();
-        // rebalance();
-        // deposit();
-        // withdraw();
-        // rebalance();
-        // deposit();
-        // withdraw();
-
-        // logState();
-
-        for (uint256 i = 0; i < 0; i++) {
-            movePrice(usdc, weth, 5e10);
-            rebalance();
-            // logState();
-        }
-
-        movePrice(usdc, weth, 5e11);
-        rebalance();
-        // logState();
-
-        movePrice(weth, usdc, 30e18);
-        rebalance();
-        // logState();
 
         uint256 calculatedRewards = vaultHelper.calculateActualPendingCake(
             pancakeSwapVault.masterChef(),
             pancakeSwapVault.uniV3Nft()
         );
-        uint256 actualRewards = actualRewardsAmount();
+        uint256 actualRewards = pancakeSwapVault.compound();
         console2.log(calculatedRewards, actualRewards);
     }
 }
