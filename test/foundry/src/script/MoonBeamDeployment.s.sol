@@ -10,7 +10,7 @@ import "../../src/utils/DepositWrapper.sol";
 import "../../src/MockOracle.sol";
 
 import "../../src/vaults/QuickSwapVaultGovernance.sol";
-import "../../src/strategies/QuickPulseStrategyV2.sol";
+import {QuickPulseStrategyV2} from "../../src/strategies/QuickPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
@@ -20,7 +20,7 @@ import "../../src/interfaces/vaults/IERC20RootVault.sol";
 import "../../src/interfaces/vaults/IERC20Vault.sol";
 import "../../src/interfaces/vaults/IQuickSwapVault.sol";
 
-import "../../src/vaults/QuickSwapVault.sol";
+import {QuickSwapVault} from "../../src/vaults/QuickSwapVault.sol";
 
 contract MoonBeamDeploymentB is Script {
     IERC20RootVault public rootVault;

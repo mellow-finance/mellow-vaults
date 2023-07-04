@@ -10,7 +10,7 @@ import "../../src/MockOracle.sol";
 import "../../src/MockRouter.sol";
 
 import "../../src/vaults/CamelotVaultGovernance.sol";
-import "../../src/strategies/CamelotPulseStrategyV2.sol";
+import {CamelotPulseStrategyV2} from "../../src/strategies/CamelotPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
@@ -23,7 +23,6 @@ import "../../src/interfaces/vaults/ICamelotVault.sol";
 import "../../src/vaults/CamelotVault.sol";
 
 contract CamelotStrategyTest is Test {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     ICamelotVault camelotVault;
@@ -54,7 +53,6 @@ contract CamelotStrategyTest is Test {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-        
         deal(weth, deployer, 10**10);
         deal(usdc, deployer, 10**4);
 
@@ -71,7 +69,6 @@ contract CamelotStrategyTest is Test {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
@@ -92,14 +89,18 @@ contract CamelotStrategyTest is Test {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
 
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(camelotStrategy), nfts, deployer);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(
+            tokens,
+            address(camelotStrategy),
+            nfts,
+            deployer
+        );
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -126,7 +127,6 @@ contract CamelotStrategyTest is Test {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -147,7 +147,6 @@ contract CamelotStrategyTest is Test {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         {
-
             CamelotVault k = new CamelotVault(IAlgebraNonfungiblePositionManager(manager), helper);
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
@@ -159,7 +158,6 @@ contract CamelotStrategyTest is Test {
             ICamelotVaultGovernance camelotVaultGovernance = new CamelotVaultGovernance(paramsA);
 
             {
-
                 uint8[] memory grant2 = new uint8[](1);
 
                 IProtocolGovernance gv = IProtocolGovernance(governance);
@@ -173,7 +171,6 @@ contract CamelotStrategyTest is Test {
 
                 vm.stopPrank();
                 vm.startPrank(deployer);
-
             }
 
             camelotVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
@@ -199,7 +196,6 @@ contract CamelotStrategyTest is Test {
 
             vm.stopPrank();
             vm.startPrank(deployer);
-
         }
 
         address W = 0x52314d240BCA143aCF755870659B9035eE357bb6;
@@ -233,19 +229,19 @@ contract CamelotStrategyTest is Test {
             timespanForAverageTick: 300,
             neighborhoodFactorD: 15 * 10**7,
             extensionFactorD: 175 * 10**7,
-            swapSlippageD: 10 ** 7,
-            swappingAmountsCoefficientD: 10 ** 7,
+            swapSlippageD: 10**7,
+            swappingAmountsCoefficientD: 10**7,
             minSwapAmounts: AA
         });
 
         CamelotPulseStrategyV2.DesiredAmounts memory smmParams = CamelotPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10 ** 9,
-            amount1Desired: 10 ** 9
+            amount0Desired: 10**9,
+            amount1Desired: 10**9
         });
 
-     //   kyberVault.updateFarmInfo();
+        //   kyberVault.updateFarmInfo();
 
-     //   preparePush(address(kyberVault));
+        //   preparePush(address(kyberVault));
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -265,12 +261,15 @@ contract CamelotStrategyTest is Test {
         deal(usdc, address(mockRouter), 10**25);
     }
 
-    function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
+    function isClose(
+        uint256 x,
+        uint256 y,
+        uint256 measure
+    ) public returns (bool) {
         uint256 delta;
         if (x < y) {
             delta = y - x;
-        }
-        else {
+        } else {
             delta = x - y;
         }
 
@@ -282,7 +281,6 @@ contract CamelotStrategyTest is Test {
     }
 
     function setUp() external {
-
         vm.startPrank(deployer);
 
         uint256 startNft = kek();
@@ -315,6 +313,4 @@ contract CamelotStrategyTest is Test {
 
         camelotStrategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
-
-
 }

@@ -11,8 +11,8 @@ import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/ICamelotVault.sol";
 
-import "../libraries/external/FullMath.sol";
-import "../libraries/external/TickMath.sol";
+import "../interfaces/external/algebrav2/FullMath.sol";
+import "../interfaces/external/algebrav2/TickMath.sol";
 import "../libraries/external/DataStorageLibraryV2.sol";
 
 import "../utils/ContractMeta.sol";

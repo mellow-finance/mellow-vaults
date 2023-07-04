@@ -18,8 +18,6 @@ import "../libraries/external/DataStorageLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-import "forge-std/console2.sol";
-
 contract QuickPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
     using SafeERC20 for IERC20;
 
@@ -467,9 +465,6 @@ contract QuickPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
             priceX96,
             calculateTargetRatioOfToken1(interval, sqrtSpotPriceX96, priceX96)
         );
-
-        console2.log(tokenInIndex);
-        console2.log(amountIn);
 
         if (amountIn < mutableParams_.minSwapAmounts[tokenInIndex]) {
             return;

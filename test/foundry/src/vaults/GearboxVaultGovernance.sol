@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "../interfaces/vaults/IGearboxVaultGovernance.sol";
@@ -129,7 +129,7 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
         require(params.curveAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.convexAdapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.facade != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.initialMarginalValueD9 >= D9, ExceptionsLibrary.INVALID_VALUE);
+        require(params.initialMarginalValueD9 > D9, ExceptionsLibrary.INVALID_VALUE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
             tx.origin,

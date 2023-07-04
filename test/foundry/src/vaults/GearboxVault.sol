@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
-import "../interfaces/IDegenDistributor.sol";
+import "../interfaces/external/gearbox/helpers/IDegenDistributor.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;

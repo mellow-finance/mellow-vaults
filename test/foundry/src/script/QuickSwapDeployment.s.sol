@@ -14,13 +14,13 @@ import "../vaults/GearboxRootVault.sol";
 import "../vaults/ERC20Vault.sol";
 import "../vaults/QuickSwapVault.sol";
 
-import "../utils/QuickSwapHelper.sol";
+import {QuickSwapHelper} from "../utils/QuickSwapHelper.sol";
 
 import "../vaults/QuickSwapVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/ERC20RootVaultGovernance.sol";
 
-import "../strategies/QuickPulseStrategyV2.sol";
+import {QuickPulseStrategyV2} from "../strategies/QuickPulseStrategyV2.sol";
 
 contract QuickSwapDeployment is Script {
     IERC20RootVault public rootVault;

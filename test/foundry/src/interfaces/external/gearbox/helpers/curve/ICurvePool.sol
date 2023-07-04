@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 interface ICurvePool {
@@ -9,6 +9,8 @@ interface ICurvePool {
     function balances(uint256 i) external view returns (uint256);
 
     function coins(int128) external view returns (address);
+
+    function nCoins() external view returns (uint256);
 
     function underlying_coins(int128) external view returns (address);
 

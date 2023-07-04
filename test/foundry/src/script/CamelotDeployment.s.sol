@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
 
+import "../../src/strategies/CamelotPulseStrategyV2.sol";
+
 import "../../src/utils/CamelotHelper.sol";
 import "../../src/MockOracle.sol";
-import "../../src/MockRouter.sol";
 
 import "../../src/vaults/CamelotVaultGovernance.sol";
-import "../../src/strategies/CamelotPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
@@ -18,7 +18,7 @@ import "../../src/interfaces/vaults/IERC20RootVault.sol";
 import "../../src/interfaces/vaults/IERC20Vault.sol";
 import "../../src/interfaces/vaults/ICamelotVault.sol";
 
-import "../../src/vaults/CamelotVault.sol";
+import {CamelotVault} from "../../src/vaults/CamelotVault.sol";
 
 contract CamelotDeployment is Script {
     IERC20RootVault public rootVault;
