@@ -56,12 +56,12 @@ contract LidoPulseV2 is Script {
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
     DepositWrapper public depositWrapper = new DepositWrapper(deployer);
 
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
 
     function firstDeposit(address strategy) public {
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[1] = 10**4;
-        tokenAmounts[0] = 10**13;
+        tokenAmounts[1] = 10 ** 4;
+        tokenAmounts[0] = 10 ** 13;
 
         if (IERC20(usdc).allowance(msg.sender, address(depositWrapper)) == 0) {
             IERC20(usdc).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
@@ -75,11 +75,7 @@ contract LidoPulseV2 is Script {
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
-    function combineVaults(
-        address strategy_,
-        address[] memory tokens,
-        uint256[] memory nfts
-    ) public {
+    function combineVaults(address strategy_, address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
@@ -122,6 +118,9 @@ contract LidoPulseV2 is Script {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         IUniV3VaultGovernance(uniV3Governance).createVault(tokens, deployer, 500, address(uniV3Helper));
+
+        uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
+
         IUniV3VaultGovernance(uniV3Governance).stageDelayedStrategyParams(
             erc20VaultNft + 1,
             IUniV3VaultGovernance.DelayedStrategyParams({safetyIndicesSet: 2})
@@ -174,15 +173,16 @@ contract LidoPulseV2 is Script {
     PulseStrategyV2Helper public strategyHelper;
 
     function deployContracts() public {
-        baseStrategy = new PulseStrategyV2(
-            positionManager
-        );
+        baseStrategy = new PulseStrategyV2(positionManager);
         strategyHelper = new PulseStrategyV2Helper();
     }
 
     // deploy
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+
+        deployContracts();
+
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),
             deployer,
