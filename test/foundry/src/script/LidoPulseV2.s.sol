@@ -54,7 +54,7 @@ contract LidoPulseV2 is Script {
     address public oneInchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
 
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
-    DepositWrapper public depositWrapper = new DepositWrapper(deployer);
+    DepositWrapper public depositWrapper;
 
     uint256 public constant Q96 = 2 ** 96;
 
@@ -72,6 +72,15 @@ contract LidoPulseV2 is Script {
         }
 
         depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
+        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+    }
+
+    function secondDeposit(address strategy) public {
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[1] = 10 ** 4 * 100;
+        tokenAmounts[0] = 10 ** 13 * 100;
+
+        depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
@@ -172,34 +181,49 @@ contract LidoPulseV2 is Script {
     PulseStrategyV2 public baseStrategy;
     PulseStrategyV2Helper public strategyHelper;
 
+    // verifying DepositWrapper (0xe591BF60946E65f659c03B9Ee33530eDC1bBf3e6) ...
+    // verifying PulseStrategyV2 (0xd4Ffdf794Ede88e52B224F06306F7fCE46fEb612) ...
+    // verifying PulseStrategyV2Helper (0x1d7908B99a496AC8B6D006C294F1b8e2bCd1359a) ...
+    // already verified: Pulse_WSTETH_USDC_Proxy (0xe42984aA2375f275f52215f531072c949CE8d41f), skipping.
+
     function deployContracts() public {
-        baseStrategy = new PulseStrategyV2(positionManager);
-        strategyHelper = new PulseStrategyV2Helper();
+        depositWrapper = DepositWrapper(0xe591BF60946E65f659c03B9Ee33530eDC1bBf3e6);
+        baseStrategy = PulseStrategyV2(0xd4Ffdf794Ede88e52B224F06306F7fCE46fEb612);
+        strategyHelper = PulseStrategyV2Helper(0x1d7908B99a496AC8B6D006C294F1b8e2bCd1359a);
     }
 
     // deploy
     function run() external {
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-
-        deployContracts();
-
-        TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
-            address(baseStrategy),
-            deployer,
-            new bytes(0)
+        TransparentUpgradeableProxy newStrategy = TransparentUpgradeableProxy(
+            payable(0xe42984aA2375f275f52215f531072c949CE8d41f)
         );
+        {
+            vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
 
-        deployVaults(address(newStrategy));
-        firstDeposit(address(newStrategy));
+            deployContracts();
 
-        IERC20(usdc).safeTransfer(address(newStrategy), 1e6);
-        IERC20(wsteth).safeTransfer(address(newStrategy), 1e11);
+            deployVaults(address(newStrategy));
+            firstDeposit(address(newStrategy));
 
-        vm.stopBroadcast();
-        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+            IERC20(usdc).safeTransfer(address(newStrategy), 1e6);
+            IERC20(wsteth).safeTransfer(address(newStrategy), 1e11);
 
-        initializeStrategy(PulseStrategyV2(address(newStrategy)));
+            vm.stopBroadcast();
+        }
 
-        vm.stopBroadcast();
+        {
+            vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+
+            initializeStrategy(PulseStrategyV2(address(newStrategy)));
+
+            PulseStrategyV2(address(newStrategy)).rebalance(type(uint256).max, new bytes(0), 0);
+            vm.stopBroadcast();
+        }
+
+        {
+            vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+            secondDeposit(address(newStrategy));
+            vm.stopBroadcast();
+        }
     }
 }
