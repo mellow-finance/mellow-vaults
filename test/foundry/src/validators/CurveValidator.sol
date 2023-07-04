@@ -17,13 +17,7 @@ contract CurveValidator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inhericdoc IValidator
-    function validate(
-        address,
-        address addr,
-        uint256,
-        bytes4 selector,
-        bytes calldata data
-    ) external view {
+    function validate(address, address addr, uint256, bytes4 selector, bytes calldata data) external view {
         IVault vault = IVault(msg.sender);
         if (selector == EXCHANGE_SELECTOR) {
             (int128 i, int128 j, , ) = abi.decode(data, (int128, int128, uint256, uint256));

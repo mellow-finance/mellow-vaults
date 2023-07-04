@@ -11,15 +11,10 @@ library OracleLibrary {
     /// @param secondsAgo Number of seconds in the past from which to calculate the time-weighted means
     /// @return arithmeticMeanTick The arithmetic mean tick from (block.timestamp - secondsAgo) to block.timestamp
     /// @return harmonicMeanLiquidity The harmonic mean liquidity from (block.timestamp - secondsAgo) to block.timestamp
-    function consult(address pool, uint32 secondsAgo)
-        internal
-        view
-        returns (
-            int24 arithmeticMeanTick,
-            uint128 harmonicMeanLiquidity,
-            bool withFail
-        )
-    {
+    function consult(
+        address pool,
+        uint32 secondsAgo
+    ) internal view returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity, bool withFail) {
         require(secondsAgo != 0, "BP");
 
         uint32[] memory secondsAgos = new uint32[](2);

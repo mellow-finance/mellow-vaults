@@ -43,12 +43,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(uint256[] memory tokenAmounts, bytes memory)
-        internal
-        pure
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory
+    ) internal pure override returns (uint256[] memory actualTokenAmounts) {
         // no-op, tokens are already on balance
         return tokenAmounts;
     }

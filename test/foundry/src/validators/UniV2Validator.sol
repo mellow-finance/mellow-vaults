@@ -46,13 +46,7 @@ contract UniV2Validator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inhericdoc IValidator
-    function validate(
-        address,
-        address addr,
-        uint256 value,
-        bytes4 selector,
-        bytes calldata data
-    ) external view {
+    function validate(address, address addr, uint256 value, bytes4 selector, bytes calldata data) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         IVault vault = IVault(msg.sender);
 

@@ -23,7 +23,7 @@ contract DataCollector is DefaultAccessControl {
     address public immutable usdc;
     UniV3Helper public immutable uniV3Helper;
     MellowOracle public immutable mellowOracle;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
 
     struct VaultRequest {
         uint256[] erc20VaultNfts;

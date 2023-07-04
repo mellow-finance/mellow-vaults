@@ -3,18 +3,14 @@
 // (c) Gearbox Holdings, 2021
 pragma solidity ^0.8.0;
 
-import { IAdapter } from "./helpers/IAdapter.sol";
-import { ISwapRouter } from "./helpers/uniswap/IUniswapV3.sol";
+import {IAdapter} from "./helpers/IAdapter.sol";
+import {ISwapRouter} from "./helpers/uniswap/IUniswapV3.sol";
 
 interface IUniswapV3AdapterExceptions {
     error IncorrectPathLengthException();
 }
 
-interface IUniswapV3Adapter is
-    IAdapter,
-    ISwapRouter,
-    IUniswapV3AdapterExceptions
-{
+interface IUniswapV3Adapter is IAdapter, ISwapRouter, IUniswapV3AdapterExceptions {
     /// @dev A struct encoding parameters for exactAllInputSingle,
     ///      which is unique to the Gearbox adapter
     /// @param tokenIn Token that is spent by the swap
@@ -38,9 +34,7 @@ interface IUniswapV3Adapter is
     /// - Fills the `ExactInputSingleParams` struct
     /// - Makes a max allowance fast check call, passing the new struct as params
     /// @param params The parameters necessary for the swap, encoded as `ExactAllInputSingleParams` in calldata
-    function exactAllInputSingle(ExactAllInputSingleParams calldata params)
-        external
-        returns (uint256 amountOut);
+    function exactAllInputSingle(ExactAllInputSingleParams calldata params) external returns (uint256 amountOut);
 
     /// @dev A struct encoding parameters for exactAllInput,
     ///      which is unique to the Gearbox adapter
@@ -60,7 +54,5 @@ interface IUniswapV3Adapter is
     /// - Fills the `ExactAllInputParams` struct
     /// - Makes a max allowance fast check call, passing the new struct as `params`
     /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactAllInputParams` in calldata
-    function exactAllInput(ExactAllInputParams calldata params)
-        external
-        returns (uint256 amountOut);
+    function exactAllInput(ExactAllInputParams calldata params) external returns (uint256 amountOut);
 }

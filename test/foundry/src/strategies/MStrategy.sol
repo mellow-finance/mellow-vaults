@@ -21,7 +21,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
-    uint256 public constant DENOMINATOR = 10**9;
+    uint256 public constant DENOMINATOR = 10 ** 9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
 
@@ -140,14 +140,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @return poolAmounts The amount of each token that was pulled from erc20Vault to the money vault if positive, otherwise vice versa
     /// @return tokenAmounts The amount of each token passed to and from SwapRouter dependings on zeroToOne
     /// @return zeroToOne Flag, that true if we swapped amount of zero token to first token, otherwise false
-    function rebalance(uint256[] memory minTokensAmount, bytes memory vaultOptions)
-        external
-        returns (
-            int256[] memory poolAmounts,
-            uint256[] memory tokenAmounts,
-            bool zeroToOne
-        )
-    {
+    function rebalance(
+        uint256[] memory minTokensAmount,
+        bytes memory vaultOptions
+    ) external returns (int256[] memory poolAmounts, uint256[] memory tokenAmounts, bool zeroToOne) {
         _requireAtLeastOperator();
         SwapToTargetParams memory params;
         params.tokens = tokens;
@@ -243,11 +239,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
     }
 
-    function _targetTokenRatioD(
-        int24 tick,
-        int24 tickMin,
-        int24 tickMax
-    ) internal pure returns (uint256) {
+    function _targetTokenRatioD(int24 tick, int24 tickMin, int24 tickMax) internal pure returns (uint256) {
         if (tick <= tickMin) {
             return DENOMINATOR;
         }
@@ -423,10 +415,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault;
     }
 
-    function _swapToTarget(SwapToTargetParams memory params, bytes memory vaultOptions)
-        internal
-        returns (uint256 amountOut)
-    {
+    function _swapToTarget(
+        SwapToTargetParams memory params,
+        bytes memory vaultOptions
+    ) internal returns (uint256 amountOut) {
         ISwapRouter.ExactInputSingleParams memory swapParams;
         uint8 tokenInIndex = params.tokenInIndex;
         uint256 amountIn = params.amountIn;

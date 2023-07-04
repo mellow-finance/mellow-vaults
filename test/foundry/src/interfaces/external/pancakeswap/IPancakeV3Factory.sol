@@ -63,11 +63,7 @@ interface IPancakeV3Factory {
     /// @param tokenB The contract address of the other token
     /// @param fee The fee collected upon every swap in the pool, denominated in hundredths of a bip
     /// @return pool The pool address
-    function getPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) external view returns (address pool);
+    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address pool);
 
     /// @notice Creates a pool for the given two tokens and fee
     /// @param tokenA One of the two tokens in the desired pool
@@ -77,11 +73,7 @@ interface IPancakeV3Factory {
     /// from the fee. The call will revert if the pool already exists, the fee is invalid, or the token arguments
     /// are invalid.
     /// @return pool The address of the newly created pool
-    function createPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) external returns (address pool);
+    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool);
 
     /// @notice Updates the owner of the factory
     /// @dev Must be called by the current owner
@@ -103,19 +95,11 @@ interface IPancakeV3Factory {
     /// @dev Fee amounts can be updated by owner with extra info
     /// @param whitelistRequested The flag whether should be created by owner only
     /// @param enabled The flag is the fee is enabled or not
-    function setFeeAmountExtraInfo(
-        uint24 fee,
-        bool whitelistRequested,
-        bool enabled
-    ) external;
+    function setFeeAmountExtraInfo(uint24 fee, bool whitelistRequested, bool enabled) external;
 
     function setLmPoolDeployer(address _lmPoolDeployer) external;
 
-    function setFeeProtocol(
-        address pool,
-        uint32 feeProtocol0,
-        uint32 feeProtocol1
-    ) external;
+    function setFeeProtocol(address pool, uint32 feeProtocol0, uint32 feeProtocol1) external;
 
     function collectProtocol(
         address pool,

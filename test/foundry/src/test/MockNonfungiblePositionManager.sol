@@ -11,7 +11,9 @@ contract MockNonfungiblePositionManager is INonfungiblePositionManager {
         uniV3Factory = factory_;
     }
 
-    function positions(uint256 tokenId)
+    function positions(
+        uint256 tokenId
+    )
         external
         view
         returns (
@@ -30,32 +32,17 @@ contract MockNonfungiblePositionManager is INonfungiblePositionManager {
         )
     {}
 
-    function mint(MintParams calldata params)
-        external
-        payable
-        returns (
-            uint256 tokenId,
-            uint128 liquidity,
-            uint256 amount0,
-            uint256 amount1
-        )
-    {}
+    function mint(
+        MintParams calldata params
+    ) external payable returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) {}
 
-    function increaseLiquidity(IncreaseLiquidityParams calldata params)
-        external
-        payable
-        returns (
-            uint128 liquidity,
-            uint256 amount0,
-            uint256 amount1
-        )
-    {}
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    ) external payable returns (uint128 liquidity, uint256 amount0, uint256 amount1) {}
 
-    function decreaseLiquidity(DecreaseLiquidityParams calldata params)
-        external
-        payable
-        returns (uint256 amount0, uint256 amount1)
-    {}
+    function decreaseLiquidity(
+        DecreaseLiquidityParams calldata params
+    ) external payable returns (uint256 amount0, uint256 amount1) {}
 
     function collect(CollectParams calldata params) external payable returns (uint256 amount0, uint256 amount1) {}
 
@@ -65,17 +52,9 @@ contract MockNonfungiblePositionManager is INonfungiblePositionManager {
 
     function ownerOf(uint256 tokenId) external view returns (address owner) {}
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external {}
+    function safeTransferFrom(address from, address to, uint256 tokenId) external {}
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external {}
+    function transferFrom(address from, address to, uint256 tokenId) external {}
 
     function approve(address to, uint256 tokenId) external {}
 
@@ -85,12 +64,7 @@ contract MockNonfungiblePositionManager is INonfungiblePositionManager {
 
     function isApprovedForAll(address owner, address operator) external view returns (bool) {}
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external {}
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external {}
 
     function factory() external view returns (address) {
         return address(uniV3Factory);

@@ -128,30 +128,27 @@ contract ExporterDataCollector {
         RootVaultData rootVaultData;
     }
 
-    function collectUniPulseData(PulseStrategyV2 strategy, IERC20RootVault rootVault)
-        public
-        view
-        returns (PulseStrategyData memory data)
-    {
+    function collectUniPulseData(
+        PulseStrategyV2 strategy,
+        IERC20RootVault rootVault
+    ) public view returns (PulseStrategyData memory data) {
         (, IUniV3Vault uniV3Vault, ) = strategy.immutableParams();
         data.fees = calculateUniFees(uniV3Vault);
         data.rootVaultData = collectRootVaultData(rootVault);
     }
 
-    function collectQuickPulseData(QuickPulseStrategyV2 strategy, IERC20RootVault rootVault)
-        public
-        view
-        returns (PulseStrategyData memory data)
-    {
+    function collectQuickPulseData(
+        QuickPulseStrategyV2 strategy,
+        IERC20RootVault rootVault
+    ) public view returns (PulseStrategyData memory data) {
         data.fees = calculateQuickSwapFees(strategy);
         data.rootVaultData = collectRootVaultData(rootVault);
     }
 
-    function collectCamelotPulseData(CamelotPulseStrategyV2 strategy, IERC20RootVault rootVault)
-        public
-        view
-        returns (PulseStrategyData memory data)
-    {
+    function collectCamelotPulseData(
+        CamelotPulseStrategyV2 strategy,
+        IERC20RootVault rootVault
+    ) public view returns (PulseStrategyData memory data) {
         data.fees = calculateCamelotFees(strategy);
         data.rootVaultData = collectRootVaultData(rootVault);
     }
@@ -167,7 +164,9 @@ contract ExporterDataCollector {
         address[] users;
     }
 
-    function collect(Request memory request)
+    function collect(
+        Request memory request
+    )
         public
         view
         returns (

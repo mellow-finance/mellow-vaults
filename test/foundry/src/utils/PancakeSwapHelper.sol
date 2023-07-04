@@ -91,11 +91,10 @@ contract PancakeSwapHelper {
     }
 
     /// @dev returns with "Invalid Token ID" for non-existent nfts
-    function calculateTvlBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
-        public
-        view
-        returns (uint256[] memory tokenAmounts)
-    {
+    function calculateTvlBySqrtPriceX96(
+        uint256 uniV3Nft,
+        uint160 sqrtPriceX96
+    ) public view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96);
     }
@@ -164,11 +163,9 @@ contract PancakeSwapHelper {
         token0Amount = capital - FullMath.mulDiv(token1Amount, CommonLibrary.Q96, spotPriceX96);
     }
 
-    function calculateCakePriceX96InUnderlying(IPancakeSwapVaultGovernance.StrategyParams memory params)
-        public
-        view
-        returns (uint256 priceX96)
-    {
+    function calculateCakePriceX96InUnderlying(
+        IPancakeSwapVaultGovernance.StrategyParams memory params
+    ) public view returns (uint256 priceX96) {
         IPancakeV3Pool poolForSwap = IPancakeV3Pool(params.poolForSwap);
         (int24 averageTick, , bool withFail) = OracleLibrary.consult(params.poolForSwap, params.averageTickTimespan);
         require(!withFail, ExceptionsLibrary.INVALID_STATE);
@@ -179,11 +176,10 @@ contract PancakeSwapHelper {
         }
     }
 
-    function _accumulateReward(uint32 currTimestamp, IPancakeV3LMPool lmPool)
-        private
-        view
-        returns (uint256 rewardGrowthGlobalX128)
-    {
+    function _accumulateReward(
+        uint32 currTimestamp,
+        IPancakeV3LMPool lmPool
+    ) private view returns (uint256 rewardGrowthGlobalX128) {
         unchecked {
             uint32 lastRewardTimestamp = lmPool.lastRewardTimestamp();
             rewardGrowthGlobalX128 = lmPool.rewardGrowthGlobalX128();

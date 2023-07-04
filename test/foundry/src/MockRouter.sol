@@ -15,7 +15,7 @@ contract MockRouter is Test {
     address[] tokens;
     IOracle oracle;
 
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
 
     constructor(address[] memory inputTokens, IOracle oracle_) {
         tokens = inputTokens;

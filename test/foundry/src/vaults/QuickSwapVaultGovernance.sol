@@ -47,7 +47,7 @@ contract QuickSwapVaultGovernance is ContractMeta, IQuickSwapVaultGovernance, Va
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         require(params.bonusTokenToUnderlying != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.rewardTokenToUnderlying != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.swapSlippageD < 10**9, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(params.swapSlippageD < 10 ** 9, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(address(params.key.rewardToken) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.key.bonusRewardToken) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.key.pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);

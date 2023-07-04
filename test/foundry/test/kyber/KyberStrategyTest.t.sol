@@ -25,7 +25,6 @@ import "../../src/interfaces/vaults/IKyberVault.sol";
 import "../../src/vaults/KyberVault.sol";
 
 contract KyberStrategyTest is Test {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IKyberVault kyberVault;
@@ -55,13 +54,12 @@ contract KyberStrategyTest is Test {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-        
-        deal(stmatic, deployer, 10**10);
-        deal(bob, deployer, 10**10);
+        deal(stmatic, deployer, 10 ** 10);
+        deal(bob, deployer, 10 ** 10);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 10**10;
-        amounts[1] = 10**10;
+        amounts[0] = 10 ** 10;
+        amounts[1] = 10 ** 10;
 
         IERC20(stmatic).approve(address(rootVault), type(uint256).max);
         IERC20(bob).approve(address(rootVault), type(uint256).max);
@@ -72,17 +70,16 @@ contract KyberStrategyTest is Test {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
 
-        deal(stmatic, deployer, amount * 10**18);
-        deal(bob, deployer, amount * 10**18);
+        deal(stmatic, deployer, amount * 10 ** 18);
+        deal(bob, deployer, amount * 10 ** 18);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = amount * 10**18;
-        amounts[1] = amount * 10**18;
+        amounts[0] = amount * 10 ** 18;
+        amounts[1] = amount * 10 ** 18;
 
         IERC20(stmatic).approve(address(rootVault), type(uint256).max);
         IERC20(bob).approve(address(rootVault), type(uint256).max);
@@ -93,14 +90,18 @@ contract KyberStrategyTest is Test {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
 
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(kyberStrategy), nfts, deployer);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(
+            tokens,
+            address(kyberStrategy),
+            nfts,
+            deployer
+        );
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -126,7 +127,7 @@ contract KyberStrategyTest is Test {
         rootVaultGovernance.commitDelayedStrategyParams(nft);
     }
 
-/*
+    /*
     uint256 A0;
     uint256 A1;
 
@@ -182,7 +183,6 @@ contract KyberStrategyTest is Test {
 */
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -192,7 +192,10 @@ contract KyberStrategyTest is Test {
 
         TicksFeesReader reader = new TicksFeesReader();
 
-        KyberHelper kyberHelper = new KyberHelper(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), reader);
+        KyberHelper kyberHelper = new KyberHelper(
+            IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8),
+            reader
+        );
 
         {
             uint8[] memory grant = new uint8[](2);
@@ -210,7 +213,6 @@ contract KyberStrategyTest is Test {
 
             vm.stopPrank();
             vm.startPrank(deployer);
-
         }
 
         {
@@ -219,11 +221,15 @@ contract KyberStrategyTest is Test {
         }
 
         MockOracle mockOracle = new MockOracle();
-        mockOracle.updatePrice(10187222 * 10**22);
+        mockOracle.updatePrice(10187222 * 10 ** 22);
 
         {
-
-            KyberVault k = new KyberVault(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83), kyberHelper, IOracle(address(mockOracle)));
+            KyberVault k = new KyberVault(
+                IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8),
+                IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83),
+                kyberHelper,
+                IOracle(address(mockOracle))
+            );
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
                 protocolGovernance: IProtocolGovernance(0x8Ff3148CE574B8e135130065B188960bA93799c6),
@@ -234,7 +240,6 @@ contract KyberStrategyTest is Test {
             IKyberVaultGovernance kyberVaultGovernance = new KyberVaultGovernance(paramsA);
 
             {
-
                 uint8[] memory grant2 = new uint8[](1);
 
                 IProtocolGovernance gv = IProtocolGovernance(governance);
@@ -248,7 +253,6 @@ contract KyberStrategyTest is Test {
 
                 vm.stopPrank();
                 vm.startPrank(deployer);
-
             }
 
             vm.stopPrank();
@@ -303,8 +307,8 @@ contract KyberStrategyTest is Test {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**15;
-        AA[1] = 10**15;
+        AA[0] = 10 ** 15;
+        AA[1] = 10 ** 15;
 
         KyberPulseStrategy.MutableParams memory smParams = KyberPulseStrategy.MutableParams({
             priceImpactD6: 0,
@@ -318,9 +322,9 @@ contract KyberStrategyTest is Test {
             minSwapAmounts: AA
         });
 
-     //   kyberVault.updateFarmInfo();
+        //   kyberVault.updateFarmInfo();
 
-     //   preparePush(address(kyberVault));
+        //   preparePush(address(kyberVault));
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -332,19 +336,18 @@ contract KyberStrategyTest is Test {
         kyberStrategy.initialize(sParams, deployer);
         kyberStrategy.updateMutableParams(smParams);
 
-        deal(stmatic, address(kyberStrategy), 10**9);
-        deal(bob, address(kyberStrategy), 10**9);
+        deal(stmatic, address(kyberStrategy), 10 ** 9);
+        deal(bob, address(kyberStrategy), 10 ** 9);
 
-        deal(stmatic, address(mockRouter), 10**25);
-        deal(bob, address(mockRouter), 10**25);
+        deal(stmatic, address(mockRouter), 10 ** 25);
+        deal(bob, address(mockRouter), 10 ** 25);
     }
 
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
         uint256 delta;
         if (x < y) {
             delta = y - x;
-        }
-        else {
+        } else {
             delta = x - y;
         }
 
@@ -356,7 +359,6 @@ contract KyberStrategyTest is Test {
     }
 
     function setUp() external {
-
         vm.startPrank(deployer);
 
         uint256 startNft = kek();

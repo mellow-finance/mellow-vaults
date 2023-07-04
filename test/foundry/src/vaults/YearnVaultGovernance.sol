@@ -14,9 +14,10 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
-    constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
-        VaultGovernance(internalParams_)
-    {
+    constructor(
+        InternalParams memory internalParams_,
+        DelayedProtocolParams memory delayedProtocolParams_
+    ) VaultGovernance(internalParams_) {
         require(address(delayedProtocolParams_.yearnVaultRegistry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
@@ -82,10 +83,10 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
     }
 
     /// @inheritdoc IYearnVaultGovernance
-    function createVault(address[] memory vaultTokens_, address owner_)
-        external
-        returns (IYearnVault vault, uint256 nft)
-    {
+    function createVault(
+        address[] memory vaultTokens_,
+        address owner_
+    ) external returns (IYearnVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = IYearnVault(vaddr);

@@ -53,12 +53,12 @@ contract CamelotStrategyTest is Test {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-        deal(weth, deployer, 10**10);
-        deal(usdc, deployer, 10**4);
+        deal(weth, deployer, 10 ** 10);
+        deal(usdc, deployer, 10 ** 4);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 10**10;
-        amounts[1] = 10**4;
+        amounts[0] = 10 ** 10;
+        amounts[1] = 10 ** 4;
 
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -73,12 +73,12 @@ contract CamelotStrategyTest is Test {
             firstDeposit();
         }
 
-        deal(weth, deployer, amount * 10**15);
-        deal(usdc, deployer, amount * 10**6);
+        deal(weth, deployer, amount * 10 ** 15);
+        deal(usdc, deployer, amount * 10 ** 6);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = amount * 10**15;
-        amounts[1] = amount * 10**6;
+        amounts[0] = amount * 10 ** 15;
+        amounts[1] = amount * 10 ** 6;
 
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -142,7 +142,7 @@ contract CamelotStrategyTest is Test {
         }
 
         MockOracle mockOracle = new MockOracle();
-        mockOracle.updatePrice(14832901 * 10**13);
+        mockOracle.updatePrice(14832901 * 10 ** 13);
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
@@ -218,8 +218,8 @@ contract CamelotStrategyTest is Test {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**3;
+        AA[0] = 10 ** 12;
+        AA[1] = 10 ** 3;
 
         CamelotPulseStrategyV2.MutableParams memory smParams = CamelotPulseStrategyV2.MutableParams({
             priceImpactD6: 0,
@@ -227,16 +227,16 @@ contract CamelotStrategyTest is Test {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 15 * 10**7,
-            extensionFactorD: 175 * 10**7,
-            swapSlippageD: 10**7,
-            swappingAmountsCoefficientD: 10**7,
+            neighborhoodFactorD: 15 * 10 ** 7,
+            extensionFactorD: 175 * 10 ** 7,
+            swapSlippageD: 10 ** 7,
+            swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
 
         CamelotPulseStrategyV2.DesiredAmounts memory smmParams = CamelotPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10**9,
-            amount1Desired: 10**9
+            amount0Desired: 10 ** 9,
+            amount1Desired: 10 ** 9
         });
 
         //   kyberVault.updateFarmInfo();
@@ -254,18 +254,14 @@ contract CamelotStrategyTest is Test {
         camelotStrategy.updateMutableParams(smParams);
         camelotStrategy.updateDesiredAmounts(smmParams);
 
-        deal(weth, address(camelotStrategy), 10**9);
-        deal(usdc, address(camelotStrategy), 10**9);
+        deal(weth, address(camelotStrategy), 10 ** 9);
+        deal(usdc, address(camelotStrategy), 10 ** 9);
 
-        deal(weth, address(mockRouter), 10**25);
-        deal(usdc, address(mockRouter), 10**25);
+        deal(weth, address(mockRouter), 10 ** 25);
+        deal(usdc, address(mockRouter), 10 ** 25);
     }
 
-    function isClose(
-        uint256 x,
-        uint256 y,
-        uint256 measure
-    ) public returns (bool) {
+    function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
         uint256 delta;
         if (x < y) {
             delta = y - x;

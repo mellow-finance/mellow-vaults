@@ -69,11 +69,10 @@ library PositionValue {
     /// @param tokenId The tokenId of the token for which to get the total fees owed
     /// @return amount0 The amount of fees owed in token0
     /// @return amount1 The amount of fees owed in token1
-    function fees(INonfungiblePositionManager positionManager, uint256 tokenId)
-        internal
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function fees(
+        INonfungiblePositionManager positionManager,
+        uint256 tokenId
+    ) internal view returns (uint256 amount0, uint256 amount1) {
         (
             ,
             ,
@@ -107,11 +106,10 @@ library PositionValue {
             );
     }
 
-    function _fees(INonfungiblePositionManager positionManager, FeeParams memory feeParams)
-        private
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function _fees(
+        INonfungiblePositionManager positionManager,
+        FeeParams memory feeParams
+    ) private view returns (uint256 amount0, uint256 amount1) {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
             IUniswapV3Pool(
                 PoolAddress.computeAddress(

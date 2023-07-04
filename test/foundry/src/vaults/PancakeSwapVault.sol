@@ -22,7 +22,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
         uint256 a1;
     }
 
-    uint256 public constant D9 = 10**9;
+    uint256 public constant D9 = 10 ** 9;
 
     /// @inheritdoc IPancakeSwapVault
     IPancakeV3Pool public pool;
@@ -99,12 +99,7 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
     }
 
     /// @inheritdoc IERC721Receiver
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
         if (from == masterChef) {
             require(tokenId == uniV3Nft, ExceptionsLibrary.INVALID_TOKEN);
@@ -185,11 +180,10 @@ contract PancakeSwapVault is IPancakeSwapVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
 

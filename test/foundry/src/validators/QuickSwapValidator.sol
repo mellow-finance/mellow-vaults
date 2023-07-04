@@ -30,13 +30,7 @@ contract QuickSwapValidator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inhericdoc IValidator
-    function validate(
-        address,
-        address addr,
-        uint256 value,
-        bytes4 selector,
-        bytes calldata data
-    ) external view {
+    function validate(address, address addr, uint256 value, bytes4 selector, bytes calldata data) external view {
         require(swapRouter == addr, ExceptionsLibrary.INVALID_TARGET);
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
         IVault vault = IVault(msg.sender);
@@ -76,11 +70,7 @@ contract QuickSwapValidator is ContractMeta, Validator {
         return bytes32("1.0.0");
     }
 
-    function _verifyMultiCall(
-        IVault vault,
-        address recipient,
-        bytes memory path
-    ) private view {
+    function _verifyMultiCall(IVault vault, address recipient, bytes memory path) private view {
         uint256 i;
         address token0;
         address token1;
@@ -103,12 +93,7 @@ contract QuickSwapValidator is ContractMeta, Validator {
         require(vault.isVaultToken(token1), ExceptionsLibrary.INVALID_TOKEN);
     }
 
-    function _verifySingleCall(
-        IVault vault,
-        address recipient,
-        address tokenIn,
-        address tokenOut
-    ) private view {
+    function _verifySingleCall(IVault vault, address recipient, address tokenIn, address tokenOut) private view {
         require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
         require(vault.isVaultToken(tokenOut), ExceptionsLibrary.INVALID_TOKEN);
         _verifyPathItem(tokenIn, tokenOut);

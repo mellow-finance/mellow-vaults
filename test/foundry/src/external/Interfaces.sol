@@ -34,27 +34,11 @@ interface IWalletChecker {
 }
 
 interface IVoting {
-    function vote(
-        uint256,
-        bool,
-        bool
-    ) external; //voteId, support, executeIfDecided
+    function vote(uint256, bool, bool) external; //voteId, support, executeIfDecided
 
-    function getVote(uint256)
-        external
-        view
-        returns (
-            bool,
-            bool,
-            uint64,
-            uint64,
-            uint64,
-            uint64,
-            uint256,
-            uint256,
-            uint256,
-            bytes memory
-        );
+    function getVote(
+        uint256
+    ) external view returns (bool, bool, uint64, uint64, uint64, uint64, uint256, uint256, uint256, bytes memory);
 
     function vote_for_gauge_weights(address, uint256) external;
 }
@@ -80,11 +64,7 @@ interface IStaker {
 
     function withdraw(address) external;
 
-    function withdraw(
-        address,
-        address,
-        uint256
-    ) external;
+    function withdraw(address, address, uint256) external;
 
     function withdrawAll(address, address) external;
 
@@ -104,11 +84,7 @@ interface IStaker {
 
     function setStashAccess(address, bool) external;
 
-    function vote(
-        uint256,
-        address,
-        bool
-    ) external;
+    function vote(uint256, address, bool) external;
 
     function voteGaugeWeight(address, uint256) external;
 
@@ -116,11 +92,7 @@ interface IStaker {
 
     function operator() external view returns (address);
 
-    function execute(
-        address _to,
-        uint256 _value,
-        bytes calldata _data
-    ) external returns (bool, bytes memory);
+    function execute(address _to, uint256 _value, bytes calldata _data) external returns (bool, bytes memory);
 }
 
 interface IRewards {
@@ -182,29 +154,11 @@ interface IDeposit {
 
     function totalSupply() external view returns (uint256);
 
-    function poolInfo(uint256)
-        external
-        view
-        returns (
-            address,
-            address,
-            address,
-            address,
-            address,
-            bool
-        );
+    function poolInfo(uint256) external view returns (address, address, address, address, address, bool);
 
-    function rewardClaimed(
-        uint256,
-        address,
-        uint256
-    ) external;
+    function rewardClaimed(uint256, address, uint256) external;
 
-    function withdrawTo(
-        uint256,
-        uint256,
-        address
-    ) external;
+    function withdrawTo(uint256, uint256, address) external;
 
     function claimRewards(uint256, address) external returns (bool);
 
@@ -226,11 +180,7 @@ interface IRewardFactory {
 
     function CreateCrvRewards(uint256, address) external returns (address);
 
-    function CreateTokenRewards(
-        address,
-        address,
-        address
-    ) external returns (address);
+    function CreateTokenRewards(address, address, address) external returns (address);
 
     function activeRewardCount(address) external view returns (uint256);
 
@@ -240,12 +190,7 @@ interface IRewardFactory {
 }
 
 interface IStashFactory {
-    function CreateStash(
-        uint256,
-        address,
-        address,
-        uint256
-    ) external returns (address);
+    function CreateStash(uint256, address, address, uint256) external returns (address);
 }
 
 interface ITokenFactory {
@@ -253,31 +198,13 @@ interface ITokenFactory {
 }
 
 interface IPools {
-    function addPool(
-        address _lptoken,
-        address _gauge,
-        uint256 _stashVersion
-    ) external returns (bool);
+    function addPool(address _lptoken, address _gauge, uint256 _stashVersion) external returns (bool);
 
-    function forceAddPool(
-        address _lptoken,
-        address _gauge,
-        uint256 _stashVersion
-    ) external returns (bool);
+    function forceAddPool(address _lptoken, address _gauge, uint256 _stashVersion) external returns (bool);
 
     function shutdownPool(uint256 _pid) external returns (bool);
 
-    function poolInfo(uint256)
-        external
-        view
-        returns (
-            address,
-            address,
-            address,
-            address,
-            address,
-            bool
-        );
+    function poolInfo(uint256) external view returns (address, address, address, address, address, bool);
 
     function poolLength() external view returns (uint256);
 

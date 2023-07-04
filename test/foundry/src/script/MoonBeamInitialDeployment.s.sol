@@ -24,7 +24,6 @@ import "../validators/ERC20Validator.sol";
 
 import {QuickPulseStrategyV2} from "../strategies/QuickPulseStrategyV2.sol";
 
-
 contract MoonBeamDeploymentA is Script {
     address public wglmr = 0xAcc15dC74880C9944775448304B263D191c6077F;
     address public usdc = 0x931715FEE2d06333043d11F658C8CE934aC61D0c;
@@ -43,9 +42,9 @@ contract MoonBeamDeploymentA is Script {
         console2.log("governance: ", address(governance));
         console2.log("registry: ", address(registry));
 
-        governance.stageUnitPrice(wglmr, 4 * 10**17);
-        governance.stageUnitPrice(usdc, 10**6);
-        governance.stageUnitPrice(dot, 10**10 / 5);
+        governance.stageUnitPrice(wglmr, 4 * 10 ** 17);
+        governance.stageUnitPrice(usdc, 10 ** 6);
+        governance.stageUnitPrice(dot, 10 ** 10 / 5);
 
         governance.commitUnitPrice(wglmr);
         governance.commitUnitPrice(usdc);

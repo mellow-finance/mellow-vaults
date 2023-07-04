@@ -38,12 +38,7 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param fee_ Fee of the UniV3 pool
     /// @param uniV3Helper_ address of helper for UniV3 arithmetic with ticks
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        uint24 fee_,
-        address uniV3Helper_
-    ) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, uint24 fee_, address uniV3Helper_) external;
 
     /// @notice Collect UniV3 fees to zero vault.
     function collectEarnings() external returns (uint256[] memory collectedEarnings);

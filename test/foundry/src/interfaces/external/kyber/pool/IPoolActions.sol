@@ -34,13 +34,7 @@ interface IPoolActions {
         int24[2] calldata ticksPrevious,
         uint128 qty,
         bytes calldata data
-    )
-        external
-        returns (
-            uint256 qty0,
-            uint256 qty1,
-            uint256 feeGrowthInside
-        );
+    ) external returns (uint256 qty0, uint256 qty1, uint256 feeGrowthInside);
 
     /// @notice Remove liquidity from the caller
     /// Also sends reinvestment tokens (fees) to the caller for any fees collected
@@ -56,13 +50,7 @@ interface IPoolActions {
         int24 tickLower,
         int24 tickUpper,
         uint128 qty
-    )
-        external
-        returns (
-            uint256 qty0,
-            uint256 qty1,
-            uint256 feeGrowthInside
-        );
+    ) external returns (uint256 qty0, uint256 qty1, uint256 feeGrowthInside);
 
     /// @notice Burns reinvestment tokens in exchange to receive the fees collected in token0 and token1
     /// @param qty Reinvestment token quantity to burn
@@ -98,10 +86,5 @@ interface IPoolActions {
     /// @param qty0 token0 quantity to be loaned to the recipient
     /// @param qty1 token1 quantity to be loaned to the recipient
     /// @param data Any data to be passed through to the callback
-    function flash(
-        address recipient,
-        uint256 qty0,
-        uint256 qty1,
-        bytes calldata data
-    ) external;
+    function flash(address recipient, uint256 qty0, uint256 qty1, bytes calldata data) external;
 }

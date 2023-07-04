@@ -33,15 +33,7 @@ contract CommonTest {
         return CommonLibrary.recoverSigner(_ethSignedMessageHash, _signature);
     }
 
-    function splitSignature(bytes memory sig)
-        external
-        pure
-        returns (
-            bytes32 r,
-            bytes32 s,
-            uint8 v
-        ) 
-    {  
+    function splitSignature(bytes memory sig) external pure returns (bytes32 r, bytes32 s, uint8 v) {
         return CommonLibrary.splitSignature(sig);
     }
 }

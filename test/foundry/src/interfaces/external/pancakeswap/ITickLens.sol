@@ -18,8 +18,8 @@ interface ITickLens {
     /// @param tickBitmapIndex The index of the word in the tick bitmap for which to parse the bitmap and
     /// fetch all the populated ticks
     /// @return populatedTicks An array of tick data for the given word in the tick bitmap
-    function getPopulatedTicksInWord(address pool, int16 tickBitmapIndex)
-        external
-        view
-        returns (PopulatedTick[] memory populatedTicks);
+    function getPopulatedTicksInWord(
+        address pool,
+        int16 tickBitmapIndex
+    ) external view returns (PopulatedTick[] memory populatedTicks);
 }

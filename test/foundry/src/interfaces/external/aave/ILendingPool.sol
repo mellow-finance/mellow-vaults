@@ -173,12 +173,7 @@ interface ILendingPool {
      * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
      *   0 if the action is executed directly by the user, without any middle-man
      **/
-    function deposit(
-        address asset,
-        uint256 amount,
-        address onBehalfOf,
-        uint16 referralCode
-    ) external;
+    function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
     /**
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
@@ -191,11 +186,7 @@ interface ILendingPool {
      *   different wallet
      * @return The final amount withdrawn
      **/
-    function withdraw(
-        address asset,
-        uint256 amount,
-        address to
-    ) external returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
     /**
      * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
@@ -232,12 +223,7 @@ interface ILendingPool {
      * other borrower whose debt should be removed
      * @return The final amount repaid
      **/
-    function repay(
-        address asset,
-        uint256 amount,
-        uint256 rateMode,
-        address onBehalfOf
-    ) external returns (uint256);
+    function repay(address asset, uint256 amount, uint256 rateMode, address onBehalfOf) external returns (uint256);
 
     /**
      * @dev Allows a borrower to swap his debt between stable and variable mode, or viceversa
@@ -320,7 +306,9 @@ interface ILendingPool {
      * @return ltv the loan to value of the user
      * @return healthFactor the current health factor of the user
      **/
-    function getUserAccountData(address user)
+    function getUserAccountData(
+        address user
+    )
         external
         view
         returns (

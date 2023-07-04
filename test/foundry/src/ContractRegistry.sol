@@ -103,10 +103,7 @@ contract ContractRegistry is ContractMeta, IContractRegistry, Multicall {
     }
 
     function _requireAtLeastOperator() private view {
-        require(
-            governance.isOperator(msg.sender) || governance.isAdmin(msg.sender), 
-            ExceptionsLibrary.FORBIDDEN
-        );
+        require(governance.isOperator(msg.sender) || governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 
     function _latestVersion(bytes32 name) private view returns (uint256) {

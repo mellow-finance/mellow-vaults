@@ -137,12 +137,9 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         return _params.withdrawLimit * unitPrices[token];
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(UnitPricesGovernance, IERC165, ERC165)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(UnitPricesGovernance, IERC165, ERC165) returns (bool) {
         return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
 
@@ -151,11 +148,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     /// @inheritdoc IProtocolGovernance
     function stageValidator(address target, address validator) external {
         _requireAdmin();
-        require(
-            target != address(0) &&
-            validator != address(0), 
-            ExceptionsLibrary.ADDRESS_ZERO
-        );
+        require(target != address(0) && validator != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stagedValidatorsAddresses.add(target);
         stagedValidators[target] = validator;
         uint256 at = block.timestamp + _params.governanceDelay;
@@ -196,7 +189,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         uint256 length = _stagedValidatorsAddresses.length();
         addressesCommitted = new address[](length);
         uint256 addressesCommittedLength;
-        for (uint256 i; i != length;) {
+        for (uint256 i; i != length; ) {
             address stagedAddress = _stagedValidatorsAddresses.at(i);
             if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
                 validators[stagedAddress] = stagedValidators[stagedAddress];
@@ -259,7 +252,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         uint256 length = _stagedPermissionGrantsAddresses.length();
         uint256 addressesLeft = length;
         addresses = new address[](length);
-        for (uint256 i; i != addressesLeft;) {
+        for (uint256 i; i != addressesLeft; ) {
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
                 permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
@@ -298,10 +291,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     function commitParams() external {
         _requireAdmin();
         require(stagedParamsTimestamp != 0, ExceptionsLibrary.NULL);
-        require(
-            block.timestamp >= stagedParamsTimestamp,
-            ExceptionsLibrary.TIMESTAMP
-        );
+        require(block.timestamp >= stagedParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _params = _stagedParams;
         delete _stagedParams;
         delete stagedParamsTimestamp;

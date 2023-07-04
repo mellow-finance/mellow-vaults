@@ -16,7 +16,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     uint256 public constant DENOMINATOR = 1000_000_000;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
 
@@ -164,10 +164,10 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     /// @param data structure with all immutable, mutable and internal params of the strategy
     /// @param restrictions rebalance restrictions
-    function processRebalance(StrategyData memory data, Restrictions memory restrictions)
-        external
-        returns (Restrictions memory actualAmounts)
-    {
+    function processRebalance(
+        StrategyData memory data,
+        Restrictions memory restrictions
+    ) external returns (Restrictions memory actualAmounts) {
         _requireAdmin();
 
         // Getting sqrtPriceX96 and spotTick from the swapPool. These parameters will be used for future ratio calculations.
@@ -264,11 +264,7 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
     )
         public
         view
-        returns (
-            uint256[] memory moneyExpected,
-            uint256[][] memory uniV3Expected,
-            uint256 expectedAmountOfToken0
-        )
+        returns (uint256[] memory moneyExpected, uint256[][] memory uniV3Expected, uint256 expectedAmountOfToken0)
     {
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256 totalCapitalInToken0 = totalToken0 + FullMath.mulDiv(totalToken1, Q96, priceX96);
@@ -321,11 +317,10 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     /// @param data structure with all immutable, mutable and internal params of the strategy
     /// @param tick current spot tick of swapPool
-    function calculateNewPosition(StrategyData memory data, int24 tick)
-        public
-        pure
-        returns (int24 newShortLowerTick, int24 newShortUpperTick)
-    {
+    function calculateNewPosition(
+        StrategyData memory data,
+        int24 tick
+    ) public pure returns (int24 newShortLowerTick, int24 newShortUpperTick) {
         int24 lowerCentralTick = tick - (tick % data.halfOfShortInterval);
         int24 upperCentralTick = lowerCentralTick + data.halfOfShortInterval;
 
@@ -387,10 +382,10 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     /// @param data structure with all immutable, mutable and internal params of the strategy
     /// @param restrictions rebalance restrictions
-    function _updatePositions(StrategyData memory data, Restrictions memory restrictions)
-        private
-        returns (uint256[][] memory drainedAmounts)
-    {
+    function _updatePositions(
+        StrategyData memory data,
+        Restrictions memory restrictions
+    ) private returns (uint256[][] memory drainedAmounts) {
         IERC20(data.tokens[0]).safeIncreaseAllowance(
             address(positionManager),
             data.amount0ForMint * data.uniV3Vaults.length
@@ -561,11 +556,10 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     /// @param totalExpectedLiquidity expected total liquidity over all uniV3Vaults after rebalance
     /// @param data structure with all immutable, mutable and internal params of the strategy
-    function _calculateUniV3VaultsExpectedAmounts(uint128 totalExpectedLiquidity, StrategyData memory data)
-        private
-        view
-        returns (uint256[][] memory expectedTokenAmounts, uint256[] memory totalAmount)
-    {
+    function _calculateUniV3VaultsExpectedAmounts(
+        uint128 totalExpectedLiquidity,
+        StrategyData memory data
+    ) private view returns (uint256[][] memory expectedTokenAmounts, uint256[] memory totalAmount) {
         uint256 totalWeight = 0;
         for (uint256 i = 0; i < data.uniV3Weights.length; ++i) {
             totalWeight += data.uniV3Weights[i];
@@ -601,11 +595,10 @@ contract MultiPoolHStrategyRebalancer is DefaultAccessControlLateInit {
 
     /// @param sqrtRatios sqrt prices X96 lower and upper ticks of domain and short intervals
     /// @param sqrtPriceX96 sqrt price X96 at current spot tick in swapPool
-    function _calculateUniV3RatioD(SqrtRatios memory sqrtRatios, uint160 sqrtPriceX96)
-        private
-        pure
-        returns (uint256 uniV3RatioD)
-    {
+    function _calculateUniV3RatioD(
+        SqrtRatios memory sqrtRatios,
+        uint160 sqrtPriceX96
+    ) private pure returns (uint256 uniV3RatioD) {
         uniV3RatioD = FullMath.mulDiv(
             DENOMINATOR,
             2 *

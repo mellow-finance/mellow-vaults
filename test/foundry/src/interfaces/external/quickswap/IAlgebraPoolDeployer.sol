@@ -24,15 +24,7 @@ interface IAlgebraPoolDeployer {
      * Returns token0 The first token of the pool by address sort order
      * Returns token1 The second token of the pool by address sort order
      */
-    function parameters()
-        external
-        view
-        returns (
-            address dataStorage,
-            address factory,
-            address token0,
-            address token1
-        );
+    function parameters() external view returns (address dataStorage, address factory, address token0, address token1);
 
     /**
      * @dev Deploys a pool with the given parameters by transiently setting the parameters storage slot and then

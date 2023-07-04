@@ -136,8 +136,8 @@ contract MainnetDeployment is Script {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**12;
+        AA[0] = 10 ** 12;
+        AA[1] = 10 ** 12;
 
         PulseStrategyV2.MutableParams memory smParams = PulseStrategyV2.MutableParams({
             priceImpactD6: 0,
@@ -145,10 +145,10 @@ contract MainnetDeployment is Script {
             maxPositionLengthInTicks: 700,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 10**7 * 15,
-            extensionFactorD: 10**7 * 175,
-            swapSlippageD: 10**7,
-            swappingAmountsCoefficientD: 10**7,
+            neighborhoodFactorD: 10 ** 7 * 15,
+            extensionFactorD: 10 ** 7 * 175,
+            swapSlippageD: 10 ** 7,
+            swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
 
@@ -186,23 +186,23 @@ contract MainnetDeployment is Script {
 
         kek();
 
-        IERC20(matic).transfer(address(strategy), 10**12);
-        IERC20(stmatic).transfer(address(strategy), 10**12);
+        IERC20(matic).transfer(address(strategy), 10 ** 12);
+        IERC20(stmatic).transfer(address(strategy), 10 ** 12);
 
         //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        IERC20(matic).approve(address(rootVault), 10**20);
-        IERC20(stmatic).approve(address(rootVault), 10**20);
+        IERC20(matic).approve(address(rootVault), 10 ** 20);
+        IERC20(stmatic).approve(address(rootVault), 10 ** 20);
 
         uint256[] memory A = new uint256[](2);
-        A[0] = 10**10;
-        A[1] = 10**10;
+        A[0] = 10 ** 10;
+        A[1] = 10 ** 10;
 
         rootVault.deposit(A, 0, "");
 
         A = new uint256[](2);
-        A[0] = 4 * 10**15;
-        A[1] = 4 * 10**15;
+        A[0] = 4 * 10 ** 15;
+        A[1] = 4 * 10 ** 15;
 
         rootVault.deposit(A, 0, "");
 

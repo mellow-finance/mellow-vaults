@@ -47,11 +47,7 @@ interface IQuickSwapVault is IERC721Receiver, IIntegrationVault {
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    function initialize(
-        uint256 nft_,
-        address erc20Vault,
-        address[] memory vaultTokens_
-    ) external;
+    function initialize(uint256 nft_, address erc20Vault, address[] memory vaultTokens_) external;
 
     /// @param nft nft position of quickswap protocol
     /// @param farmingCenter_ Algebra main farming contract. Manages farmings and performs entry, exit and other actions.

@@ -7,9 +7,7 @@ import "../external/algebrav2/IAlgebraNonfungiblePositionManager.sol";
 import "../vaults/ICamelotVaultGovernance.sol";
 
 interface ICamelotHelper {
-    function calculateTvl(
-        uint256 nft
-    ) external view returns (uint256[] memory tokenAmounts);
+    function calculateTvl(uint256 nft) external view returns (uint256[] memory tokenAmounts);
 
     function liquidityToTokenAmounts(
         uint256 nft,

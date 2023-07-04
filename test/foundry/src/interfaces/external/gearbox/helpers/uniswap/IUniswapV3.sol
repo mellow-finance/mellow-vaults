@@ -14,10 +14,7 @@ interface ISwapRouter {
         uint160 sqrtPriceLimitX96;
     }
 
-    function exactInputSingle(ExactInputSingleParams calldata params)
-        external
-        payable
-        returns (uint256 amountOut);
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
 
     struct ExactInputParams {
         bytes path;
@@ -27,10 +24,7 @@ interface ISwapRouter {
         uint256 amountOutMinimum;
     }
 
-    function exactInput(ExactInputParams calldata params)
-        external
-        payable
-        returns (uint256 amountOut);
+    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
 
     struct ExactOutputSingleParams {
         address tokenIn;
@@ -43,10 +37,7 @@ interface ISwapRouter {
         uint160 sqrtPriceLimitX96;
     }
 
-    function exactOutputSingle(ExactOutputSingleParams calldata params)
-        external
-        payable
-        returns (uint256 amountIn);
+    function exactOutputSingle(ExactOutputSingleParams calldata params) external payable returns (uint256 amountIn);
 
     struct ExactOutputParams {
         bytes path;
@@ -56,8 +47,5 @@ interface ISwapRouter {
         uint256 amountInMaximum;
     }
 
-    function exactOutput(ExactOutputParams calldata params)
-        external
-        payable
-        returns (uint256 amountIn);
+    function exactOutput(ExactOutputParams calldata params) external payable returns (uint256 amountIn);
 }

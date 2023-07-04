@@ -16,14 +16,7 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
 
     function eternalFarming() external view returns (IAlgebraEternalFarming);
 
-    function l2Nfts(uint256)
-        external
-        view
-        returns (
-            uint96 nonce,
-            address operator,
-            uint256 tokenId
-        );
+    function l2Nfts(uint256) external view returns (uint96 nonce, address operator, uint256 tokenId);
 
     /// @notice Returns information about a deposited NFT
     /// @param tokenId The ID of the deposit (and token) that is being transferred
@@ -31,15 +24,9 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
     /// numberOfFarms The number of farms,
     /// inLimitFarming The parameter showing if the token is in the limit farm,
     /// owner The owner of deposit
-    function deposits(uint256 tokenId)
-        external
-        view
-        returns (
-            uint256 L2TokenId,
-            uint32 numberOfFarms,
-            bool inLimitFarming,
-            address owner
-        );
+    function deposits(
+        uint256 tokenId
+    ) external view returns (uint256 L2TokenId, uint32 numberOfFarms, bool inLimitFarming, address owner);
 
     /// @notice Enters in incentive (time-limited or eternal farming) with NFT-position token
     /// @dev token must be deposited in FarmingCenter
@@ -58,11 +45,7 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
     /// @param key The incentive event key
     /// @param tokenId The id of position NFT
     /// @param isLimit Is incentive time-limited or eternal
-    function exitFarming(
-        IIncentiveKey.IncentiveKey memory key,
-        uint256 tokenId,
-        bool isLimit
-    ) external;
+    function exitFarming(IIncentiveKey.IncentiveKey memory key, uint256 tokenId, bool isLimit) external;
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
     /// @dev "proxies" to NonfungiblePositionManager
@@ -72,18 +55,19 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
     /// amount1Max The maximum amount of token1 to collect
     /// @return amount0 The amount of fees collected in token0
     /// @return amount1 The amount of fees collected in token1
-    function collect(IAlgebraNonfungiblePositionManager.CollectParams calldata params)
-        external
-        returns (uint256 amount0, uint256 amount1);
+    function collect(
+        IAlgebraNonfungiblePositionManager.CollectParams calldata params
+    ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Used to collect reward from eternal farming. Then reward can be claimed.
     /// @param key The incentive event key
     /// @param tokenId The id of position NFT
     /// @return reward The amount of collected reward
     /// @return bonusReward The amount of collected  bonus reward
-    function collectRewards(IIncentiveKey.IncentiveKey memory key, uint256 tokenId)
-        external
-        returns (uint256 reward, uint256 bonusReward);
+    function collectRewards(
+        IIncentiveKey.IncentiveKey memory key,
+        uint256 tokenId
+    ) external returns (uint256 reward, uint256 bonusReward);
 
     /// @notice Used to claim and send rewards from farming(s)
     /// @dev can be used via static call to get current rewards for user
@@ -104,9 +88,5 @@ interface IFarmingCenter is IERC721Receiver, IERC721Permit, IPeripheryPayments {
     /// @param tokenId The id of position NFT
     /// @param to New owner of position NFT
     /// @param data The additional data for NonfungiblePositionManager
-    function withdrawToken(
-        uint256 tokenId,
-        address to,
-        bytes memory data
-    ) external;
+    function withdrawToken(uint256 tokenId, address to, bytes memory data) external;
 }

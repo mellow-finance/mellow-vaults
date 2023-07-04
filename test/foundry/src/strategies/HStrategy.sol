@@ -21,7 +21,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
-    uint32 public constant DENOMINATOR = 10**9;
+    uint32 public constant DENOMINATOR = 10 ** 9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     ISwapRouter public immutable router;
@@ -356,10 +356,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param moneyVaultOptions additional parameters for pulling for `pull` method for money vault
     /// @return actualPulledAmounts actual transferred amounts
     /// @return burnedAmounts actual burned amounts from uniV3 position
-    function rebalance(RebalanceTokenAmounts memory restrictions, bytes memory moneyVaultOptions)
-        external
-        returns (RebalanceTokenAmounts memory actualPulledAmounts, uint256[] memory burnedAmounts)
-    {
+    function rebalance(
+        RebalanceTokenAmounts memory restrictions,
+        bytes memory moneyVaultOptions
+    ) external returns (RebalanceTokenAmounts memory actualPulledAmounts, uint256[] memory burnedAmounts) {
         _requireAtLeastOperator();
         IUniswapV3Pool pool_ = pool;
         (, int24 tick, , , , , ) = pool_.slot0();
@@ -372,10 +372,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param tick current price tick
     /// @return burnedAmounts actual transferred amounts of tokens from position while burn
-    function _partialRebalanceOfUniV3Position(RebalanceTokenAmounts memory restrictions, int24 tick)
-        internal
-        returns (uint256[] memory burnedAmounts)
-    {
+    function _partialRebalanceOfUniV3Position(
+        RebalanceTokenAmounts memory restrictions,
+        int24 tick
+    ) internal returns (uint256[] memory burnedAmounts) {
         IIntegrationVault erc20Vault_ = erc20Vault;
         IUniV3Vault uniV3Vault_ = uniV3Vault;
         uint256 uniV3Nft = uniV3Vault_.uniV3Nft();

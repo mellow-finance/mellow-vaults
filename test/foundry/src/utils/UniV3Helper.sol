@@ -87,11 +87,10 @@ contract UniV3Helper {
     }
 
     /// @dev returns with "Invalid Token ID" for non-existent nfts
-    function calculateTvlBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
-        public
-        view
-        returns (uint256[] memory tokenAmounts)
-    {
+    function calculateTvlBySqrtPriceX96(
+        uint256 uniV3Nft,
+        uint160 sqrtPriceX96
+    ) public view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96);
     }

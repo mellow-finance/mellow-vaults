@@ -29,11 +29,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     mapping(address => mapping(address => IUniswapV3Pool)) public poolsIndex;
     EnumerableSet.AddressSet private _pools;
 
-    constructor(
-        IUniswapV3Factory factory_,
-        IUniswapV3Pool[] memory pools,
-        address admin
-    ) DefaultAccessControl(admin) {
+    constructor(IUniswapV3Factory factory_, IUniswapV3Pool[] memory pools, address admin) DefaultAccessControl(admin) {
         factory = factory_;
         _addUniV3Pools(pools);
     }

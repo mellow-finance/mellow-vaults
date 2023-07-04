@@ -34,12 +34,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     bool public isLiquidityInFarm;
 
-    constructor(
-        IBasePositionManager positionManager_,
-        IRouter router_,
-        IKyberHelper helper_,
-        IOracle oracle_
-    ) {
+    constructor(IBasePositionManager positionManager_, IRouter router_, IKyberHelper helper_, IOracle oracle_) {
         positionManager = positionManager_;
         router = router_;
         kyberHelper = helper_;
@@ -60,11 +55,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
     /// @inheritdoc IKyberVault
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        uint24 fee_
-    ) external {
+    function initialize(uint256 nft_, address[] memory vaultTokens_, uint24 fee_) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
         pool = IPool(IFactory(positionManager.factory()).getPool(vaultTokens_[0], vaultTokens_[1], fee_));
@@ -172,12 +163,7 @@ contract KyberVault is IKyberVault, IntegrationVault {
     }
 
     /// @inheritdoc IERC721Receiver
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         require(msg.sender == address(positionManager) && _isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, IBasePositionManager.PoolInfo memory poolInfo) = positionManager.positions(tokenId);
 
@@ -227,11 +213,10 @@ contract KyberVault is IKyberVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         if (kyberNft == 0) return actualTokenAmounts;
 

@@ -16,11 +16,7 @@ contract MellowOracle is ContractMeta, IMellowOracle, ERC165 {
     /// @inheritdoc IMellowOracle
     IChainlinkOracle public immutable chainlinkOracle;
 
-    constructor(
-        IUniV2Oracle univ2Oracle_,
-        IUniV3Oracle univ3Oracle_,
-        IChainlinkOracle chainlinkOracle_
-    ) {
+    constructor(IUniV2Oracle univ2Oracle_, IUniV3Oracle univ3Oracle_, IChainlinkOracle chainlinkOracle_) {
         univ2Oracle = univ2Oracle_;
         univ3Oracle = univ3Oracle_;
         chainlinkOracle = chainlinkOracle_;

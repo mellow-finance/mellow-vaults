@@ -12,8 +12,8 @@ import "./IntegrationVault.sol";
 /// @notice Vault that interfaces QuickSwap protocol in the integration layer.
 contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     using SafeERC20 for IERC20;
-    uint256 public constant Q96 = 2**96;
-    uint256 public constant D9 = 10**9;
+    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant D9 = 10 ** 9;
 
     /// @inheritdoc IQuickSwapVault
     uint256 public positionNft;
@@ -56,11 +56,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     }
 
     /// @inheritdoc IQuickSwapVault
-    function initialize(
-        uint256 nft_,
-        address erc20Vault_,
-        address[] memory vaultTokens_
-    ) external {
+    function initialize(uint256 nft_, address erc20Vault_, address[] memory vaultTokens_) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         erc20Vault = erc20Vault_;
         _initialize(vaultTokens_, nft_);
@@ -70,12 +66,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
     }
 
     /// @inheritdoc IERC721Receiver
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         IFarmingCenter farmingCenter_ = farmingCenter;
         require(msg.sender == address(positionManager), ExceptionsLibrary.FORBIDDEN);
 
@@ -239,11 +230,10 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
         IERC20(from).safeApprove(address(swapRouter), 0);
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         uint256 positionNft_ = positionNft;
         if (positionNft_ == 0) return actualTokenAmounts;
@@ -333,15 +323,7 @@ contract QuickSwapVault is IQuickSwapVault, IntegrationVault {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _parseOptions(bytes memory options)
-        internal
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    function _parseOptions(bytes memory options) internal view returns (uint256, uint256, uint256) {
         if (options.length == 0) return (0, 0, block.timestamp + 1);
         require(options.length == 32 * 3, ExceptionsLibrary.INVALID_VALUE);
         return abi.decode(options, (uint256, uint256, uint256));

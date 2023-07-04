@@ -6,11 +6,7 @@ import "../libraries/external/OracleLibrary.sol";
 import "../libraries/external/DataStorageLibrary.sol";
 
 contract SinglePositionStrategyHelper {
-    function checkUniV3PoolState(
-        address pool,
-        int24 maxDeviation,
-        uint32 timespan
-    ) public view {
+    function checkUniV3PoolState(address pool, int24 maxDeviation, uint32 timespan) public view {
         (, int24 spotTick, , , , , ) = IUniswapV3Pool(pool).slot0();
         (int24 averageTick, , bool withFail) = OracleLibrary.consult(pool, timespan);
         require(!withFail, ExceptionsLibrary.INVALID_STATE);
@@ -21,11 +17,7 @@ contract SinglePositionStrategyHelper {
         require(tickDeviation < maxDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
-    function checkAlgebraPoolState(
-        address pool,
-        int24 maxDeviation,
-        uint32 timespan
-    ) public view {
+    function checkAlgebraPoolState(address pool, int24 maxDeviation, uint32 timespan) public view {
         (, int24 spotTick, , , , , ) = IAlgebraPool(pool).globalState();
         (int24 averageTick, bool withFail) = DataStorageLibrary.consult(pool, timespan);
         require(!withFail, ExceptionsLibrary.INVALID_STATE);

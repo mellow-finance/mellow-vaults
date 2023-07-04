@@ -5,9 +5,11 @@ import "../strategies/KyberPulseStrategyV2.sol";
 import "../libraries/external/PositionValue.sol";
 
 contract KyberPulseStrategyV2Helper {
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
 
-    function getStrategyParams(KyberPulseStrategyV2 strategy)
+    function getStrategyParams(
+        KyberPulseStrategyV2 strategy
+    )
         public
         view
         returns (
@@ -71,7 +73,7 @@ contract KyberPulseStrategyV2Helper {
             currentAmounts[1] + FullMath.mulDiv(currentAmounts[0], priceX96, Q96)
         );
 
-        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(mutableParams.priceImpactD6)), 10**6);
+        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(mutableParams.priceImpactD6)), 10 ** 6);
         if (currentRatioOfToken1X96 > targetRatioOfToken1X96) {
             tokenInIndex = 1;
             // (dx * y0 - dy * x0 * p) / (1 - dy * fee)
@@ -97,16 +99,9 @@ contract KyberPulseStrategyV2Helper {
         }
     }
 
-    function calculateAmountForSwap(KyberPulseStrategyV2 strategy)
-        public
-        view
-        returns (
-            uint256 amountIn,
-            address from,
-            address to,
-            IERC20Vault erc20Vault
-        )
-    {
+    function calculateAmountForSwap(
+        KyberPulseStrategyV2 strategy
+    ) public view returns (uint256 amountIn, address from, address to, IERC20Vault erc20Vault) {
         (
             KyberPulseStrategyV2.ImmutableParams memory immutableParams,
             KyberPulseStrategyV2.MutableParams memory mutableParams

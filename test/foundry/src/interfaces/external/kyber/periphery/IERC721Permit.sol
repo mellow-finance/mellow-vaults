@@ -22,14 +22,7 @@ interface IERC721Permit is IERC721, IERC721Enumerable {
     /// @param v Must produce valid secp256k1 signature from the holder along with `r` and `s`
     /// @param r Must produce valid secp256k1 signature from the holder along with `v` and `s`
     /// @param s Must produce valid secp256k1 signature from the holder along with `r` and `v`
-    function permit(
-        address spender,
-        uint256 tokenId,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
+    function permit(address spender, uint256 tokenId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
 
     /**
      * @dev Returns true if this contract implements the interface defined by

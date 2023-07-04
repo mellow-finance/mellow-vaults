@@ -15,13 +15,7 @@ contract CowswapValidator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inheritdoc IValidator
-    function validate(
-        address,
-        address,
-        uint256,
-        bytes4 selector,
-        bytes calldata
-    ) external pure {
+    function validate(address, address, uint256, bytes4 selector, bytes calldata) external pure {
         // we don't validate TRUSTED_STRATEGY here because it's validated at allowance level
         if (selector == PRE_SIGNATURE_SELECTOR) {
             return;

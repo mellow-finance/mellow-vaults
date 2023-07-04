@@ -12,9 +12,10 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
-    constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
-        VaultGovernance(internalParams_)
-    {
+    constructor(
+        InternalParams memory internalParams_,
+        DelayedProtocolParams memory delayedProtocolParams_
+    ) VaultGovernance(internalParams_) {
         require(address(delayedProtocolParams_.positionManager) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);

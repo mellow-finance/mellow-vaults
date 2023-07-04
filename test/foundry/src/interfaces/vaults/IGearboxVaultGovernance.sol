@@ -5,7 +5,6 @@ import "./IGearboxVault.sol";
 import "./IVaultGovernance.sol";
 
 interface IGearboxVaultGovernance is IVaultGovernance {
-
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param withdrawDelay The minimal time to pass between two consecutive withdrawal orders execution
     /// @param referralCode The referral code to be used when depositing to Gearbox
@@ -58,10 +57,9 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     /// @notice Delayed Protocol Per Vault Params staged for commit after delay.
     /// @param nft VaultRegistry NFT of the vault
-    function stagedDelayedProtocolPerVaultParams(uint256 nft)
-        external
-        view
-        returns (DelayedProtocolPerVaultParams memory);
+    function stagedDelayedProtocolPerVaultParams(
+        uint256 nft
+    ) external view returns (DelayedProtocolPerVaultParams memory);
 
     /// @notice Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param nft VaultRegistry NFT of the vault
@@ -98,7 +96,9 @@ interface IGearboxVaultGovernance is IVaultGovernance {
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param owner_ Owner of the vault NFT
     /// @param helper_ Gearbox helper contract address
-    function createVault(address[] memory vaultTokens_, address owner_, address helper_)
-        external
-        returns (IGearboxVault vault, uint256 nft);
+    function createVault(
+        address[] memory vaultTokens_,
+        address owner_,
+        address helper_
+    ) external returns (IGearboxVault vault, uint256 nft);
 }

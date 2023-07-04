@@ -11,7 +11,7 @@ import "./TickMath.sol";
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
-    uint256 public constant Q128 = 2**128;
+    uint256 public constant Q128 = 2 ** 128;
 
     /// @notice Returns the total amounts of token0 and token1, i.e. the sum of fees and principal
     /// that a given nonfungible position manager token is worth
@@ -70,11 +70,10 @@ library PositionValue {
     /// @param tokenId The tokenId of the token for which to get the total fees owed
     /// @return amount0 The amount of fees owed in token0
     /// @return amount1 The amount of fees owed in token1
-    function fees(IAlgebraNonfungiblePositionManager positionManager, uint256 tokenId)
-        internal
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function fees(
+        IAlgebraNonfungiblePositionManager positionManager,
+        uint256 tokenId
+    ) internal view returns (uint256 amount0, uint256 amount1) {
         (
             ,
             ,
@@ -106,11 +105,10 @@ library PositionValue {
             );
     }
 
-    function _fees(IAlgebraNonfungiblePositionManager positionManager, FeeParams memory feeParams)
-        private
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function _fees(
+        IAlgebraNonfungiblePositionManager positionManager,
+        FeeParams memory feeParams
+    ) private view returns (uint256 amount0, uint256 amount1) {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
             IAlgebraPool(IAlgebraFactory(positionManager.factory()).poolByPair(feeParams.token0, feeParams.token1)),
             feeParams.tickLower,

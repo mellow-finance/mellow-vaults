@@ -47,13 +47,7 @@ contract BaseRewardPool {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
-    constructor(
-        uint256 pid_,
-        address stakingToken_,
-        address rewardToken_,
-        address operator_,
-        address manager_
-    ) public {
+    constructor(uint256 pid_, address stakingToken_, address rewardToken_, address operator_, address manager_) public {
         pid = pid_;
         stakingToken = IERC20(stakingToken_);
         rewardToken = IERC20(rewardToken_);

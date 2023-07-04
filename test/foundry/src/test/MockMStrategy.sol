@@ -4,15 +4,12 @@ pragma solidity ^0.8.0;
 import "../strategies/MStrategy.sol";
 
 contract MockMStrategy is MStrategy {
-    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_)
-        MStrategy(positionManager_, router_)
-    {}
+    constructor(
+        INonfungiblePositionManager positionManager_,
+        ISwapRouter router_
+    ) MStrategy(positionManager_, router_) {}
 
-    function targetTokenRatioD(
-        int24 tick,
-        int24 tickMin,
-        int24 tickMax
-    ) external pure returns (uint256) {
+    function targetTokenRatioD(int24 tick, int24 tickMin, int24 tickMax) external pure returns (uint256) {
         return _targetTokenRatioD(tick, tickMin, tickMax);
     }
 

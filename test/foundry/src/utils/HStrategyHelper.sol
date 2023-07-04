@@ -11,16 +11,14 @@ import "../strategies/HStrategy.sol";
 import "./UniV3Helper.sol";
 
 contract HStrategyHelper {
-    uint32 constant DENOMINATOR = 10**9;
+    uint32 constant DENOMINATOR = 10 ** 9;
 
     /// @notice calculates the ratios of the capital on all vaults using price from the oracle
     /// @param domainPositionParams the current state of the position, pool and oracle prediction
     /// @return ratios ratios of the capital
-    function calculateExpectedRatios(HStrategy.DomainPositionParams memory domainPositionParams)
-        external
-        pure
-        returns (HStrategy.ExpectedRatios memory ratios)
-    {
+    function calculateExpectedRatios(
+        HStrategy.DomainPositionParams memory domainPositionParams
+    ) external pure returns (HStrategy.ExpectedRatios memory ratios) {
         uint256 denominatorX96 = CommonLibrary.Q96 *
             2 -
             FullMath.mulDiv(
@@ -435,11 +433,10 @@ contract HStrategyHelper {
     /// @param strategyParams_ parameters of strategy
     /// @return lowerTick lower tick of new position
     /// @return upperTick upper tick of new position
-    function calculateNewPositionTicks(int24 spotTick, HStrategy.StrategyParams memory strategyParams_)
-        external
-        pure
-        returns (int24 lowerTick, int24 upperTick)
-    {
+    function calculateNewPositionTicks(
+        int24 spotTick,
+        HStrategy.StrategyParams memory strategyParams_
+    ) external pure returns (int24 lowerTick, int24 upperTick) {
         if (spotTick < strategyParams_.domainLowerTick) {
             spotTick = strategyParams_.domainLowerTick;
         } else if (spotTick > strategyParams_.domainUpperTick) {

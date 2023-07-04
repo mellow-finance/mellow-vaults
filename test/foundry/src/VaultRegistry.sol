@@ -139,11 +139,7 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         return _protocolGovernance.isAdmin(sender);
     }
 
-    function _beforeTokenTransfer(
-        address,
-        address,
-        uint256 tokenId
-    ) internal view override {
+    function _beforeTokenTransfer(address, address, uint256 tokenId) internal view override {
         require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
 

@@ -41,7 +41,9 @@ interface IPoolStorage {
     /// liquidityNet how much liquidity changes when the pool tick crosses above the tick
     /// feeGrowthOutside the fee growth on the other side of the tick relative to the current tick
     /// secondsPerLiquidityOutside the seconds spent on the other side of the tick relative to the current tick
-    function ticks(int24 tick)
+    function ticks(
+        int24 tick
+    )
         external
         view
         returns (
@@ -73,25 +75,13 @@ interface IPoolStorage {
     function getPoolState()
         external
         view
-        returns (
-            uint160 sqrtP,
-            int24 currentTick,
-            int24 nearestCurrentTick,
-            bool locked
-        );
+        returns (uint160 sqrtP, int24 currentTick, int24 nearestCurrentTick, bool locked);
 
     /// @notice Fetches the pool's liquidity values
     /// @return baseL pool's base liquidity without reinvest liqudity
     /// @return reinvestL the liquidity is reinvested into the pool
     /// @return reinvestLLast last cached value of reinvestL, used for calculating reinvestment token qty
-    function getLiquidityState()
-        external
-        view
-        returns (
-            uint128 baseL,
-            uint128 reinvestL,
-            uint128 reinvestLLast
-        );
+    function getLiquidityState() external view returns (uint128 baseL, uint128 reinvestL, uint128 reinvestLLast);
 
     /// @return feeGrowthGlobal All-time fee growth per unit of liquidity of the pool
     function getFeeGrowthGlobal() external view returns (uint256);
@@ -108,8 +98,8 @@ interface IPoolStorage {
     /// @param tickUpper The upper tick (of a position)
     /// @return secondsPerLiquidityInside active time (multiplied by 2^96)
     /// between the 2 ticks, per unit of liquidity.
-    function getSecondsPerLiquidityInside(int24 tickLower, int24 tickUpper)
-        external
-        view
-        returns (uint128 secondsPerLiquidityInside);
+    function getSecondsPerLiquidityInside(
+        int24 tickLower,
+        int24 tickUpper
+    ) external view returns (uint128 secondsPerLiquidityInside);
 }

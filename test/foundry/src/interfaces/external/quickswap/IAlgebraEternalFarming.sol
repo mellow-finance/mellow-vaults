@@ -55,7 +55,10 @@ interface IAlgebraEternalFarming is IAlgebraFarming {
     /// tickUpper The upper tick of position,
     /// innerRewardGrowth0 The last saved reward0 growth inside position,
     /// innerRewardGrowth1 The last saved reward1 growth inside position
-    function farms(uint256 tokenId, bytes32 incentiveId)
+    function farms(
+        uint256 tokenId,
+        bytes32 incentiveId
+    )
         external
         view
         returns (
@@ -77,17 +80,9 @@ interface IAlgebraEternalFarming is IAlgebraFarming {
         Tiers calldata tiers
     ) external returns (address virtualPool);
 
-    function addRewards(
-        IncentiveKey memory key,
-        uint256 rewardAmount,
-        uint256 bonusRewardAmount
-    ) external;
+    function addRewards(IncentiveKey memory key, uint256 rewardAmount, uint256 bonusRewardAmount) external;
 
-    function setRates(
-        IncentiveKey memory key,
-        uint128 rewardRate,
-        uint128 bonusRewardRate
-    ) external;
+    function setRates(IncentiveKey memory key, uint128 rewardRate, uint128 bonusRewardRate) external;
 
     function collectRewards(
         IncentiveKey memory key,

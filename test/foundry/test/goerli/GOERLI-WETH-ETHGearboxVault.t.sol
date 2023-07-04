@@ -24,17 +24,16 @@ import "../../src/utils/GearboxHelper.sol";
 import "../../src/external/ConvexBaseRewardPool.sol";
 
 contract GearboxWETHTest is Test {
-
-    uint256 weiofUsdc = 10**15;
+    uint256 weiofUsdc = 10 ** 15;
 
     ProtocolGovernance governance;
     VaultRegistry registry;
 
     GearboxRootVault rootVault = new GearboxRootVault();
     ERC20Vault erc20Vault = new ERC20Vault();
-    GearboxVault gearboxVault = new GearboxVault();   
+    GearboxVault gearboxVault = new GearboxVault();
 
-    address weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6; 
+    address weth = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
 
     address creditAccount;
     uint256 nftStart;
@@ -46,12 +45,7 @@ contract GearboxWETHTest is Test {
 
     uint256 YEAR = 365 * 24 * 60 * 60;
 
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
@@ -65,7 +59,6 @@ contract GearboxWETHTest is Test {
     }
 
     function checkNotNonExpectedBalance() public returns (bool) {
-
         address creditAccount = gearboxVault.getCreditAccount();
 
         uint256 wethBalance = IERC20(weth).balanceOf(creditAccount);
@@ -80,7 +73,6 @@ contract GearboxWETHTest is Test {
     }
 
     function setUp() public {
-
         governance = new ProtocolGovernance(address(this));
         registry = new VaultRegistry("Mellow LP", "MLP", governance);
 
@@ -131,30 +123,29 @@ contract GearboxWETHTest is Test {
 
         MockSwapRouter router = new MockSwapRouter();
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance.DelayedProtocolParams({
-            withdrawDelay: 86400 * 7,
-            referralCode: 0,
-            univ3Adapter: 0x8d4dDb8c50A3281FB4B87139e11D67E416509528,
-            crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
-            cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
-            maxSlippageD9: 1000000,
-            maxSmallPoolsSlippageD9: 20000000,
-            maxCurveSlippageD9: 50000000,
-            uniswapRouter: address(router)
-        });
+        IGearboxVaultGovernance.DelayedProtocolParams memory delayedParams = IGearboxVaultGovernance
+            .DelayedProtocolParams({
+                withdrawDelay: 86400 * 7,
+                referralCode: 0,
+                univ3Adapter: 0x8d4dDb8c50A3281FB4B87139e11D67E416509528,
+                crv: 0x976d27eC7ebb1136cd7770F5e06aC917Aa9C672b,
+                cvx: 0x6D75eb70402CF06a0cB5B8fdc1836dAe29702B17,
+                maxSlippageD9: 1000000,
+                maxSmallPoolsSlippageD9: 20000000,
+                maxCurveSlippageD9: 50000000,
+                uniswapRouter: address(router)
+            });
 
         MockOracle oracle = new MockOracle();
         ERC20RootVaultHelper helper = new ERC20RootVaultHelper();
 
-        IERC20RootVaultGovernance.DelayedProtocolParams memory delayedParamsA = IERC20RootVaultGovernance.DelayedProtocolParams({
-            managementFeeChargeDelay: 0,
-            oracle: IOracle(oracle)
-        });
-        
+        IERC20RootVaultGovernance.DelayedProtocolParams memory delayedParamsA = IERC20RootVaultGovernance
+            .DelayedProtocolParams({managementFeeChargeDelay: 0, oracle: IOracle(oracle)});
+
         governanceA = new ERC20RootVaultGovernance(internalParamsA, delayedParamsA, IERC20RootVaultHelper(helper));
         ERC20VaultGovernance governanceB = new ERC20VaultGovernance(internalParamsB);
         governanceC = new GearboxVaultGovernance(internalParamsC, delayedParams);
-        
+
         {
             uint8[] memory args = new uint8[](1);
             args[0] = PermissionIdsLibrary.REGISTER_VAULT;
@@ -173,25 +164,27 @@ contract GearboxWETHTest is Test {
             tokenLimit: type(uint256).max
         });
 
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance.DelayedStrategyParams({
-            strategyTreasury: address(this),
-            strategyPerformanceTreasury: address(this),
-            privateVault: false,
-            managementFee: 10**8,
-            performanceFee: 10**8,
-            depositCallbackAddress: address(0),
-            withdrawCallbackAddress: address(0)
-        });
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance
+            .DelayedStrategyParams({
+                strategyTreasury: address(this),
+                strategyPerformanceTreasury: address(this),
+                privateVault: false,
+                managementFee: 10 ** 8,
+                performanceFee: 10 ** 8,
+                depositCallbackAddress: address(0),
+                withdrawCallbackAddress: address(0)
+            });
 
         nftStart = registry.vaultsCount() + 1;
 
-        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance.DelayedProtocolPerVaultParams({
-            primaryToken: weth,
-            curveAdapter: 0xfB50859b3bb66F65623103A7C7852b96DaCCF0fd,
-            convexAdapter: 0x15D07f782492b4998C39943AbD8ADeA4B8D3C566,
-            facade: 0x2ADDB8489Eba8873277b39f15CF770f5e1eE21Fe,
-            initialMarginalValueD9: 3000000000
-        });
+        IGearboxVaultGovernance.DelayedProtocolPerVaultParams memory delayedVaultParams = IGearboxVaultGovernance
+            .DelayedProtocolPerVaultParams({
+                primaryToken: weth,
+                curveAdapter: 0xfB50859b3bb66F65623103A7C7852b96DaCCF0fd,
+                convexAdapter: 0x15D07f782492b4998C39943AbD8ADeA4B8D3C566,
+                facade: 0x2ADDB8489Eba8873277b39f15CF770f5e1eE21Fe,
+                initialMarginalValueD9: 3000000000
+            });
 
         IGearboxVaultGovernance.StrategyParams memory strategyParamsB = IGearboxVaultGovernance.StrategyParams({
             largePoolFeeUsed: 500
@@ -205,7 +198,7 @@ contract GearboxWETHTest is Test {
         governanceA.commitDelayedStrategyParams(nftStart + 2);
 
         address[] memory tokens = new address[](1);
-        tokens[0] = weth; 
+        tokens[0] = weth;
 
         GearboxHelper helper2 = new GearboxHelper();
 
@@ -229,13 +222,14 @@ contract GearboxWETHTest is Test {
 
         curveAdapter = ICurveV1Adapter(0xfB50859b3bb66F65623103A7C7852b96DaCCF0fd);
         convexAdapter = IConvexV1BaseRewardPoolAdapter(0x15D07f782492b4998C39943AbD8ADeA4B8D3C566);
-        
+
         governanceA.setStrategyParams(nftStart + 2, strategyParams);
         IERC20(weth).approve(address(rootVault), type(uint256).max);
     }
 
     function setZeroManagementFees() public {
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = governanceA.delayedStrategyParams(nftStart + 2);
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = governanceA
+            .delayedStrategyParams(nftStart + 2);
         delayedStrategyParams.managementFee = 0;
         delayedStrategyParams.performanceFee = 0;
         governanceA.stageDelayedStrategyParams(nftStart + 2, delayedStrategyParams);
@@ -247,8 +241,7 @@ contract GearboxWETHTest is Test {
         uint256 delta;
         if (x < y) {
             delta = y - x;
-        }
-        else {
+        } else {
             delta = x - y;
         }
 
@@ -260,26 +253,24 @@ contract GearboxWETHTest is Test {
     }
 
     function firstDeposit() public {
-
-        deal(weth, address(this), 10**10);
+        deal(weth, address(this), 10 ** 10);
 
         uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 10**10;
+        amounts[0] = 10 ** 10;
         IERC20(weth).approve(address(rootVault), type(uint256).max);
 
         rootVault.deposit(amounts, 0, "");
     }
 
     function deposit(uint256 amount, address user) public {
-
         uint256 subtract = 0;
 
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
-            subtract = 10**10;
+            subtract = 10 ** 10;
         }
 
-        deal(weth, user, amount * weiofUsdc - subtract); 
+        deal(weth, user, amount * weiofUsdc - subtract);
 
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount * weiofUsdc - subtract;
@@ -302,13 +293,12 @@ contract GearboxWETHTest is Test {
     }
 
     function invokeExecution() public {
-
-        changeSlippage(10**7);
+        changeSlippage(10 ** 7);
 
         vm.roll(block.number + 1);
         rootVault.invokeExecution();
 
-        changeSlippage(10**6);
+        changeSlippage(10 ** 6);
     }
 
     function claimMoney(address recipient) public {
@@ -322,13 +312,13 @@ contract GearboxWETHTest is Test {
         address cont = manager.adapterToContract(address(convexAdapter));
 
         BaseRewardPool rewardsPool = BaseRewardPool(cont);
-        
+
         vm.startPrank(rewardsPool.rewardManager());
         rewardsPool.sync(
             rewardsPool.periodFinish(),
             rewardsPool.rewardRate(),
             rewardsPool.lastUpdateTime(),
-            nominator * rewardsPool.rewardPerTokenStored() / denominator,
+            (nominator * rewardsPool.rewardPerTokenStored()) / denominator,
             rewardsPool.queuedRewards(),
             rewardsPool.currentRewards(),
             rewardsPool.historicalRewards()
@@ -360,7 +350,6 @@ contract GearboxWETHTest is Test {
     }
 
     function testSimpleDeposit() public {
-
         deposit(500, address(this));
 
         creditAccount = gearboxVault.getCreditAccount();
@@ -378,7 +367,6 @@ contract GearboxWETHTest is Test {
     }
 
     function testTwoDepositsWETH() public {
-        
         deposit(500, address(this));
         uint256 lpAmountBefore = rootVault.balanceOf(address(this));
 
@@ -426,7 +414,7 @@ contract GearboxWETHTest is Test {
     function testTvlAfterTimePasses() public {
         deposit(500, address(this));
         vm.warp(block.timestamp + YEAR);
-        assertTrue(tvl() < 49999 * weiofUsdc / 100); // some fees accrued
+        assertTrue(tvl() < (49999 * weiofUsdc) / 100); // some fees accrued
     }
 
     function testTvlAfterMultipleDeposits() public {
@@ -581,7 +569,7 @@ contract GearboxWETHTest is Test {
 
         uint256 convexFantomBalanceAfter = IERC20(convexAdapter.stakedPhantomToken()).balanceOf(creditAccount);
 
-        assertTrue(isClose(convexFantomBalanceAfter*2100, convexFantomBalanceBefore*2328, 50));
+        assertTrue(isClose(convexFantomBalanceAfter * 2100, convexFantomBalanceBefore * 2328, 50));
     }
 
     function testVaultCloseWithoutOrdersAndConvexWETH() public {
@@ -685,7 +673,7 @@ contract GearboxWETHTest is Test {
         claimMoney(recipient);
         assertTrue(isClose(IERC20(weth).balanceOf(recipient), 250 * weiofUsdc, 50));
         uint256 newSupply = rootVault.totalSupply();
-        
+
         assertTrue(oldSupply - lpTokens / 2 == newSupply);
     }
 
@@ -695,7 +683,7 @@ contract GearboxWETHTest is Test {
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
 
-        rootVault.registerWithdrawal(lpTokens * 3 / 4); // 375 mETH
+        rootVault.registerWithdrawal((lpTokens * 3) / 4); // 375 mETH
         invokeExecution();
 
         deposit(400, address(this));
@@ -710,8 +698,8 @@ contract GearboxWETHTest is Test {
         claimMoney(recipient);
         assertTrue(isClose(IERC20(weth).balanceOf(recipient), 375 * weiofUsdc, 50));
         uint256 newSupply = rootVault.totalSupply();
-        
-        assertTrue(oldSupply - lpTokens * 3 / 4 == newSupply);
+
+        assertTrue(oldSupply - (lpTokens * 3) / 4 == newSupply);
     }
 
     function testCloseVaultWithOneFullWETH() public {
@@ -730,7 +718,6 @@ contract GearboxWETHTest is Test {
         claimMoney(recipient);
         assertTrue(isClose(IERC20(weth).balanceOf(recipient), 800 * weiofUsdc, 50));
     }
-
 
     function testCloseVaultWithSeveralDepositsAndPartialWithdrawalsWETH() public {
         deposit(500, address(this));
@@ -753,7 +740,6 @@ contract GearboxWETHTest is Test {
         uint256 wentForWithdrawal = IERC20(weth).balanceOf(address(erc20Vault));
         assertTrue(isClose(leftOnGearbox, 325 * weiofUsdc, 50));
         assertTrue(isClose(wentForWithdrawal, 275 * weiofUsdc, 50));
-
 
         address recipient = getNextUserAddress();
         claimMoney(recipient);
@@ -780,7 +766,7 @@ contract GearboxWETHTest is Test {
 
         deposit(500, address(this));
 
-        rootVault.registerWithdrawal(lpTokens * 2 / 3); // ~333 mETH
+        rootVault.registerWithdrawal((lpTokens * 2) / 3); // ~333 mETH
         invokeExecution();
 
         uint256 leftOnGearbox = IERC20(weth).balanceOf(address(gearboxVault));
@@ -806,13 +792,13 @@ contract GearboxWETHTest is Test {
 
         uint256 leftOnGearbox = IERC20(weth).balanceOf(address(gearboxVault));
         uint256 wentForWithdrawal = IERC20(weth).balanceOf(address(erc20Vault));
-        assertTrue(isClose(tvl(), 584*weiofUsdc, 50));
+        assertTrue(isClose(tvl(), 584 * weiofUsdc, 50));
         assertTrue(isClose(leftOnGearbox, 584 * weiofUsdc, 20));
         assertTrue(isClose(wentForWithdrawal, 416 * weiofUsdc, 20));
     }
 
     function testCancelWithdrawalIsOkayWETH() public {
-        deposit(500, address(this)); 
+        deposit(500, address(this));
         gearboxVault.adjustPosition();
 
         uint256 lpTokens = rootVault.balanceOf(address(this));
@@ -841,7 +827,7 @@ contract GearboxWETHTest is Test {
         vm.stopPrank();
 
         gearboxVault.adjustPosition();
-        
+
         setNewRewardInRewardPool(5000, 1); // + 110 mETH => 2580 mETH in pool
         address recipient = getNextUserAddress();
         claimMoney(recipient); // 250 mETH claimed
@@ -876,7 +862,7 @@ contract GearboxWETHTest is Test {
         invokeExecution();
 
         address recipient = getNextUserAddress();
-        claimMoney(recipient); 
+        claimMoney(recipient);
 
         assertTrue(isClose(IERC20(weth).balanceOf(recipient), 250 * weiofUsdc, 20));
     }
@@ -890,5 +876,4 @@ contract GearboxWETHTest is Test {
         vm.warp(block.timestamp + 86400 * 3); // only 3 days
         invokeExecution();
     }
-    
 }

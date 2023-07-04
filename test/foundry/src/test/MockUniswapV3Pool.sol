@@ -59,12 +59,7 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
         bytes calldata data
     ) external returns (int256 amount0, int256 amount1) {}
 
-    function flash(
-        address recipient,
-        uint256 amount0,
-        uint256 amount1,
-        bytes calldata data
-    ) external {}
+    function flash(address recipient, uint256 amount0, uint256 amount1, bytes calldata data) external {}
 
     function increaseObservationCardinalityNext(uint16 observationCardinalityNext) external {}
 
@@ -128,7 +123,9 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
 
     function liquidity() external view returns (uint128) {}
 
-    function ticks(int24 tick)
+    function ticks(
+        int24 tick
+    )
         external
         view
         returns (
@@ -145,7 +142,9 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
 
     function tickBitmap(int16 wordPosition) external view returns (uint256) {}
 
-    function positions(bytes32 key)
+    function positions(
+        bytes32 key
+    )
         external
         view
         returns (
@@ -174,7 +173,9 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
         observationsParams.observationsCalled = 0;
     }
 
-    function observations(uint256 index)
+    function observations(
+        uint256 index
+    )
         external
         view
         returns (
@@ -201,11 +202,9 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
         observeCumulativeTick_ = tick;
     }
 
-    function observe(uint32[] calldata)
-        external
-        view
-        returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s)
-    {
+    function observe(
+        uint32[] calldata
+    ) external view returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) {
         tickCumulatives = new int56[](2);
         tickCumulatives[0] = observeCumulativeTick_;
         tickCumulatives[1] = observeCumulativeTick_ * 2;

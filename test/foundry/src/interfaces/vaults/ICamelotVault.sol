@@ -35,11 +35,7 @@ interface ICamelotVault is IERC721Receiver, IIntegrationVault {
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    function initialize(
-        uint256 nft_,
-        address erc20Vault,
-        address[] memory vaultTokens_
-    ) external;
+    function initialize(uint256 nft_, address erc20Vault, address[] memory vaultTokens_) external;
 
     /// @return collectedFees array of length 2 with amounts of collected and transferred fees from Camelot position to ERC20Vault
     function collectEarnings() external returns (uint256[] memory collectedFees);

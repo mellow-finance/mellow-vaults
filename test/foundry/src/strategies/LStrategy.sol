@@ -18,7 +18,7 @@ contract LStrategy is DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
-    uint256 public constant DENOMINATOR = 10**9;
+    uint256 public constant DENOMINATOR = 10 ** 9;
     bytes4 public constant SET_PRESIGNATURE_SELECTOR = 0xec6cb13f;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     address[] public tokens;
@@ -145,11 +145,9 @@ contract LStrategy is DefaultAccessControl {
     }
 
     /// @notice Target liquidity ratio for UniV3 vaults
-    function targetUniV3LiquidityRatio(int24 targetTick_)
-        public
-        view
-        returns (uint128 liquidityRatioD, bool isNegative)
-    {
+    function targetUniV3LiquidityRatio(
+        int24 targetTick_
+    ) public view returns (uint128 liquidityRatioD, bool isNegative) {
         (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
         int24 midTick = (tickUpper + tickLower) / 2;
         isNegative = midTick > targetTick_;
@@ -174,14 +172,7 @@ contract LStrategy is DefaultAccessControl {
         uint256[] memory minLowerVaultTokens,
         uint256[] memory minUpperVaultTokens,
         uint256 deadline
-    )
-        public
-        returns (
-            uint256[] memory totalPulledAmounts,
-            bool isNegativeCapitalDelta,
-            uint256 percentageIncreaseD
-        )
-    {
+    ) public returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta, uint256 percentageIncreaseD) {
         _requireAtLeastOperator();
         require(
             block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
@@ -426,11 +417,7 @@ contract LStrategy is DefaultAccessControl {
     /// @param order Cowswap order data
     /// @param uuid Cowswap order id
     /// @param signed To sign order set to `true`
-    function signOrder(
-        GPv2Order.Data memory order,
-        bytes calldata uuid,
-        bool signed
-    ) external {
+    function signOrder(GPv2Order.Data memory order, bytes calldata uuid, bool signed) external {
         _requireAtLeastOperator();
         if (signed) {
             address sellToken = address(order.sellToken);
@@ -572,15 +559,9 @@ contract LStrategy is DefaultAccessControl {
     /// @return tickLower Lower tick for the uniV3 poistion inside the vault
     /// @return tickUpper Upper tick for the uniV3 poistion inside the vault
     /// @return liquidity Vault liquidity
-    function _getVaultStats(IUniV3Vault vault)
-        internal
-        view
-        returns (
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity
-        )
-    {
+    function _getVaultStats(
+        IUniV3Vault vault
+    ) internal view returns (int24 tickLower, int24 tickUpper, uint128 liquidity) {
         (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(vault.uniV3Nft());
     }
 
@@ -622,11 +603,10 @@ contract LStrategy is DefaultAccessControl {
 
     /// @notice Covert token amounts and deadline to byte options
     /// @dev Empty tokenAmounts are equivalent to zero tokenAmounts
-    function _makeUniswapVaultOptions(uint256[] memory tokenAmounts, uint256 deadline)
-        internal
-        pure
-        returns (bytes memory options)
-    {
+    function _makeUniswapVaultOptions(
+        uint256[] memory tokenAmounts,
+        uint256 deadline
+    ) internal pure returns (bytes memory options) {
         options = new bytes(0x60);
         assembly {
             mstore(add(options, 0x60), deadline)
@@ -781,11 +761,7 @@ contract LStrategy is DefaultAccessControl {
     /// @param lowerTick Lower tick of the Uni interval
     /// @param upperTick Upper tick of the Uni interval
     /// @param deadline Timestamp after which the transaction will be reverted
-    function _mintNewNft(
-        int24 lowerTick,
-        int24 upperTick,
-        uint256 deadline
-    ) internal returns (uint256 newNft) {
+    function _mintNewNft(int24 lowerTick, int24 upperTick, uint256 deadline) internal returns (uint256 newNft) {
         uint256 minToken0ForOpening = otherParams.minToken0ForOpening;
         uint256 minToken1ForOpening = otherParams.minToken1ForOpening;
         IERC20(tokens[0]).safeApprove(address(positionManager), minToken0ForOpening);

@@ -19,13 +19,9 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IERC165
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(IERC165, AccessControlEnumerable)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165, AccessControlEnumerable) returns (bool) {
         return (interfaceId == type(IUnitPricesGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
 

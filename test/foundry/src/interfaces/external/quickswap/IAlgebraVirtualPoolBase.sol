@@ -10,7 +10,9 @@ interface IAlgebraVirtualPoolBase is IAlgebraVirtualPool {
     function timeOutside() external view returns (uint32);
 
     // returns data associated with a tick
-    function ticks(int24 tickId)
+    function ticks(
+        int24 tickId
+    )
         external
         view
         returns (
@@ -40,10 +42,10 @@ interface IAlgebraVirtualPoolBase is IAlgebraVirtualPool {
     /// @param bottomTick The bottom tick of a position
     /// @param topTick The top tick of a position
     /// @return innerSecondsSpentPerLiquidity The seconds per liquidity inside the position
-    function getInnerSecondsPerLiquidity(int24 bottomTick, int24 topTick)
-        external
-        view
-        returns (uint160 innerSecondsSpentPerLiquidity);
+    function getInnerSecondsPerLiquidity(
+        int24 bottomTick,
+        int24 topTick
+    ) external view returns (uint160 innerSecondsSpentPerLiquidity);
 
     /**
      * @dev This function is called when anyone farms their liquidity. The position in a virtual pool

@@ -16,14 +16,10 @@ contract QuickSwapHelper is IQuickSwapHelper {
     address public immutable quickToken;
     address public immutable dQuickToken;
 
-    uint256 public constant Q128 = 2**128;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q128 = 2 ** 128;
+    uint256 public constant Q96 = 2 ** 96;
 
-    constructor(
-        IAlgebraNonfungiblePositionManager positionManager_,
-        address quickToken_,
-        address dQuickToken_
-    ) {
+    constructor(IAlgebraNonfungiblePositionManager positionManager_, address quickToken_, address dQuickToken_) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());
@@ -145,11 +141,10 @@ contract QuickSwapHelper is IQuickSwapHelper {
         liquidity = liquidity < positionLiquidity ? liquidity : positionLiquidity;
     }
 
-    function increaseCumulative(uint32 currentTimestamp, IAlgebraEternalVirtualPool virtualPool)
-        public
-        view
-        returns (uint256 deltaTotalRewardGrowth0, uint256 deltaTotalRewardGrowth1)
-    {
+    function increaseCumulative(
+        uint32 currentTimestamp,
+        IAlgebraEternalVirtualPool virtualPool
+    ) public view returns (uint256 deltaTotalRewardGrowth0, uint256 deltaTotalRewardGrowth1) {
         unchecked {
             uint256 timeDelta = currentTimestamp - virtualPool.prevTimestamp(); // safe until timedelta > 136 years
             if (timeDelta == 0) return (0, 0);

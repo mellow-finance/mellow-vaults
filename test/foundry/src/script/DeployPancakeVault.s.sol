@@ -60,12 +60,12 @@ contract DeployPancakeVault is Script {
     DepositWrapper public depositWrapper = DepositWrapper(0x231002439E1BD5b610C3d98321EA760002b9Ff64);
     PancakeSwapHelper public vaultHelper = PancakeSwapHelper(0x6DFd0eb105511615629D2C0B72E1AE4d068346Bc);
 
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
 
     function firstDeposit(address strategy) public {
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[1] = 10**4;
-        tokenAmounts[0] = 10**13;
+        tokenAmounts[1] = 10 ** 4;
+        tokenAmounts[0] = 10 ** 13;
 
         // if (IERC20(usdt).allowance(msg.sender, address(depositWrapper)) == 0) {
         //     IERC20(usdt).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
@@ -79,11 +79,7 @@ contract DeployPancakeVault is Script {
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
-    function combineVaults(
-        address strategy_,
-        address[] memory tokens,
-        uint256[] memory nfts
-    ) public {
+    function combineVaults(address strategy_, address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
@@ -240,7 +236,6 @@ contract DeployPancakeVault is Script {
     // rebalance
     function run() external {
         vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-
 
         bytes
             memory swapData = "0x0502b1c5000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200000000000000000000000000000000000000000000000000000238b7284ab8000000000000000000000000000000000000000000000000000000000000126d0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d03403a8414b08ffb128cf1a9da1097b0454e0d4bfa8fcfee7c08";

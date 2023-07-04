@@ -45,15 +45,9 @@ contract MockCowswap {
 
     uint256 internal constant UID_LENGTH = 56;
 
-    function extractOrderUidParams(bytes calldata orderUid)
-        internal
-        pure
-        returns (
-            bytes32 orderDigest,
-            address owner,
-            uint32 validTo
-        )
-    {
+    function extractOrderUidParams(
+        bytes calldata orderUid
+    ) internal pure returns (bytes32 orderDigest, address owner, uint32 validTo) {
         require(orderUid.length == UID_LENGTH, "GPv2: invalid uid");
 
         // Use assembly to efficiently decode packed calldata.

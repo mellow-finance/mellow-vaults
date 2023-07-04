@@ -10,7 +10,6 @@ import "../../src/MockOracle.sol";
 
 import "../../src/vaults/KyberVaultGovernance.sol";
 
-
 import "../../src/interfaces/external/kyber/periphery/helpers/TicksFeeReader.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
@@ -24,7 +23,6 @@ import "../../src/interfaces/vaults/IKyberVault.sol";
 import "../../src/vaults/KyberVault.sol";
 
 contract KyberTestWithoutFarm is Test {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IKyberVault kyberVault;
@@ -52,13 +50,12 @@ contract KyberTestWithoutFarm is Test {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-        
-        deal(stmatic, deployer, 10**10);
-        deal(bob, deployer, 10**10);
+        deal(stmatic, deployer, 10 ** 10);
+        deal(bob, deployer, 10 ** 10);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 10**10;
-        amounts[1] = 10**10;
+        amounts[0] = 10 ** 10;
+        amounts[1] = 10 ** 10;
 
         IERC20(stmatic).approve(address(rootVault), type(uint256).max);
         IERC20(bob).approve(address(rootVault), type(uint256).max);
@@ -69,17 +66,16 @@ contract KyberTestWithoutFarm is Test {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
 
-        deal(stmatic, deployer, amount * 10**18);
-        deal(bob, deployer, amount * 10**18);
+        deal(stmatic, deployer, amount * 10 ** 18);
+        deal(bob, deployer, amount * 10 ** 18);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = amount * 10**18;
-        amounts[1] = amount * 10**18;
+        amounts[0] = amount * 10 ** 18;
+        amounts[1] = amount * 10 ** 18;
 
         IERC20(stmatic).approve(address(rootVault), type(uint256).max);
         IERC20(bob).approve(address(rootVault), type(uint256).max);
@@ -90,7 +86,6 @@ contract KyberTestWithoutFarm is Test {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
@@ -127,40 +122,40 @@ contract KyberTestWithoutFarm is Test {
     uint256 A1;
 
     function preparePush(address vault) public {
-
         int24 tickLower = 0;
         int24 tickUpper = 4000;
 
         IPool pool = kyberVault.pool();
 
-        (int24 tickLowerQ, ) = pool.initializedTicks(tickLower); 
+        (int24 tickLowerQ, ) = pool.initializedTicks(tickLower);
         (int24 tickUpperQ, ) = pool.initializedTicks(tickUpper);
 
         int24[2] memory Qticks;
         Qticks[0] = tickLowerQ;
-        Qticks[1] = tickUpperQ; 
-        
+        Qticks[1] = tickUpperQ;
+
         IERC20(bob).approve(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8, type(uint256).max);
         IERC20(stmatic).approve(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8, type(uint256).max);
-        deal(bob, deployer, 10**9);
-        deal(stmatic, deployer, 10**9);
+        deal(bob, deployer, 10 ** 9);
+        deal(stmatic, deployer, 10 ** 9);
 
-        (uint256 nft, , uint256 A0_, uint256 A1_) = IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8).mint(
-            IBasePositionManager.MintParams({
-                token0: stmatic,
-                token1: bob,
-                fee: 1000,
-                tickLower: 0,
-                tickUpper: 4000,
-                ticksPrevious: Qticks,
-                amount0Desired: 10**9,
-                amount1Desired: 10**9,
-                amount0Min: 0,
-                amount1Min: 0,
-                recipient: operator,
-                deadline: type(uint256).max
-            })
-        );
+        (uint256 nft, , uint256 A0_, uint256 A1_) = IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8)
+            .mint(
+                IBasePositionManager.MintParams({
+                    token0: stmatic,
+                    token1: bob,
+                    fee: 1000,
+                    tickLower: 0,
+                    tickUpper: 4000,
+                    ticksPrevious: Qticks,
+                    amount0Desired: 10 ** 9,
+                    amount1Desired: 10 ** 9,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    recipient: operator,
+                    deadline: type(uint256).max
+                })
+            );
 
         A0 = A0_;
         A1 = A1_;
@@ -177,7 +172,6 @@ contract KyberTestWithoutFarm is Test {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -187,7 +181,10 @@ contract KyberTestWithoutFarm is Test {
 
         TicksFeesReader reader = new TicksFeesReader();
 
-        KyberHelper kyberHelper = new KyberHelper(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), reader);
+        KyberHelper kyberHelper = new KyberHelper(
+            IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8),
+            reader
+        );
 
         {
             uint8[] memory grant = new uint8[](2);
@@ -205,7 +202,6 @@ contract KyberTestWithoutFarm is Test {
 
             vm.stopPrank();
             vm.startPrank(deployer);
-
         }
 
         {
@@ -214,11 +210,15 @@ contract KyberTestWithoutFarm is Test {
         }
 
         {
-
             MockOracle mockOracle = new MockOracle();
-            mockOracle.updatePrice(6507009 * 10**22);
+            mockOracle.updatePrice(6507009 * 10 ** 22);
 
-            KyberVault k = new KyberVault(IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8), IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83), kyberHelper, IOracle(address(mockOracle)));
+            KyberVault k = new KyberVault(
+                IBasePositionManager(0x2B1c7b41f6A8F2b2bc45C3233a5d5FB3cD6dC9A8),
+                IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83),
+                kyberHelper,
+                IOracle(address(mockOracle))
+            );
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
                 protocolGovernance: IProtocolGovernance(0x8Ff3148CE574B8e135130065B188960bA93799c6),
@@ -229,7 +229,6 @@ contract KyberTestWithoutFarm is Test {
             IKyberVaultGovernance kyberVaultGovernance = new KyberVaultGovernance(paramsA);
 
             {
-
                 uint8[] memory grant2 = new uint8[](1);
 
                 IProtocolGovernance gv = IProtocolGovernance(governance);
@@ -243,7 +242,6 @@ contract KyberTestWithoutFarm is Test {
 
                 vm.stopPrank();
                 vm.startPrank(deployer);
-
             }
 
             vm.stopPrank();
@@ -263,13 +261,13 @@ contract KyberTestWithoutFarm is Test {
 
             kyberVaultGovernance.createVault(tokens, deployer, 1000);
 
-           // kyberVaultGovernance.setStrategyParams(erc20VaultNft + 1, paramsC);
+            // kyberVaultGovernance.setStrategyParams(erc20VaultNft + 1, paramsC);
         }
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         kyberVault = IKyberVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-     //   kyberVault.updateFarmInfo();
+        //   kyberVault.updateFarmInfo();
 
         preparePush(address(kyberVault));
 
@@ -285,8 +283,7 @@ contract KyberTestWithoutFarm is Test {
         uint256 delta;
         if (x < y) {
             delta = y - x;
-        }
-        else {
+        } else {
             delta = x - y;
         }
 
@@ -298,7 +295,6 @@ contract KyberTestWithoutFarm is Test {
     }
 
     function setUp() external {
-
         vm.startPrank(deployer);
 
         uint256 startNft = kek();
@@ -311,7 +307,6 @@ contract KyberTestWithoutFarm is Test {
     }
 
     function testPush() public {
-
         (uint256[] memory oldTvl, ) = kyberVault.tvl();
 
         firstDeposit();
@@ -433,27 +428,29 @@ contract KyberTestWithoutFarm is Test {
         (uint256[] memory tvl, ) = kyberVault.tvl();
 
         {
+            deal(stmatic, deployer, 10 ** 24);
 
-            deal(stmatic, deployer, 10**24);
+            IERC20(stmatic).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10 ** 24);
+            IERC20(bob).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10 ** 25);
+            uint256 A = IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(
+                IRouter.ExactInputParams({
+                    path: abi.encodePacked(stmatic, uint24(1000), bob),
+                    recipient: deployer,
+                    deadline: block.timestamp + 1,
+                    amountIn: 10 ** 24,
+                    minAmountOut: 0
+                })
+            );
 
-            IERC20(stmatic).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10**24);
-            IERC20(bob).approve(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83, 10**25);
-            uint256 A = IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(IRouter.ExactInputParams({
-                path: abi.encodePacked(stmatic, uint24(1000), bob),
-                recipient: deployer,
-                deadline: block.timestamp + 1,
-                amountIn: 10**24,
-                minAmountOut: 0
-            }));
-
-            IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(IRouter.ExactInputParams({
-                path: abi.encodePacked(bob, uint24(1000), stmatic),
-                recipient: deployer,
-                deadline: block.timestamp + 1,
-                amountIn: A,
-                minAmountOut: 0
-            }));
-
+            IRouter(0xC1e7dFE73E1598E3910EF4C7845B68A9Ab6F4c83).swapExactInput(
+                IRouter.ExactInputParams({
+                    path: abi.encodePacked(bob, uint24(1000), stmatic),
+                    recipient: deployer,
+                    deadline: block.timestamp + 1,
+                    amountIn: A,
+                    minAmountOut: 0
+                })
+            );
         }
 
         (uint256[] memory tvl3, ) = kyberVault.tvl();

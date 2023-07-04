@@ -15,14 +15,7 @@ interface ILMPool {
         uint256 rewardGrowthOutsideX128;
     }
 
-    function lmTicks(int24)
-        external
-        view
-        returns (
-            uint128,
-            int128,
-            uint256
-        );
+    function lmTicks(int24) external view returns (uint128, int128, uint256);
 
     function rewardGrowthGlobalX128() external view returns (uint256);
 

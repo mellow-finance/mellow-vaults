@@ -13,9 +13,5 @@ interface ISwapCallback {
     /// @param deltaQty1 The token1 quantity that was sent (negative) or must be received (positive) by the pool by
     /// the end of the swap. If positive, the callback must send deltaQty1 of token1 to the pool.
     /// @param data Data passed through by the caller via the IPool#swap call
-    function swapCallback(
-        int256 deltaQty0,
-        int256 deltaQty1,
-        bytes calldata data
-    ) external;
+    function swapCallback(int256 deltaQty0, int256 deltaQty1, bytes calldata data) external;
 }

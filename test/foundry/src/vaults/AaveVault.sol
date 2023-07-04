@@ -107,11 +107,10 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         uint256 referralCode = 0;
         if (options.length > 0) {

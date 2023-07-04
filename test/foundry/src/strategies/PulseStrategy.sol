@@ -18,9 +18,9 @@ import "../utils/DefaultAccessControlLateInit.sol";
 contract PulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D6 = 10**6;
-    uint256 public constant D9 = 10**9;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant D6 = 10 ** 6;
+    uint256 public constant D9 = 10 ** 9;
+    uint256 public constant Q96 = 2 ** 96;
 
     INonfungiblePositionManager public immutable positionManager;
 

@@ -60,8 +60,8 @@ contract MoonBeamDeploymentB is Script {
     function firstDeposit() public {
         uint256[] memory amounts = new uint256[](2);
 
-        amounts[0] = 10**4;
-        amounts[1] = 10**10;
+        amounts[0] = 10 ** 4;
+        amounts[1] = 10 ** 10;
 
         IERC20(wglmr).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -78,8 +78,8 @@ contract MoonBeamDeploymentB is Script {
 
         uint256[] memory amounts = new uint256[](2);
 
-        amounts[0] = amount * 10**6;
-        amounts[1] = amount * 10**18;
+        amounts[0] = amount * 10 ** 6;
+        amounts[1] = amount * 10 ** 18;
 
         IERC20(wglmr).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -205,7 +205,7 @@ contract MoonBeamDeploymentB is Script {
                 key: key,
                 bonusTokenToUnderlying: wglmr,
                 rewardTokenToUnderlying: wglmr,
-                swapSlippageD: 10**7,
+                swapSlippageD: 10 ** 7,
                 rewardPoolTimespan: 300
             });
 
@@ -225,8 +225,8 @@ contract MoonBeamDeploymentB is Script {
 
         uint256[] memory AA = new uint256[](2);
 
-        AA[0] = 10**3;
-        AA[1] = 10**12;
+        AA[0] = 10 ** 3;
+        AA[1] = 10 ** 12;
 
         QuickPulseStrategyV2.MutableParams memory smParams = QuickPulseStrategyV2.MutableParams({
             priceImpactD6: 5000,
@@ -234,16 +234,16 @@ contract MoonBeamDeploymentB is Script {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 15 * 10**7,
-            extensionFactorD: 175 * 10**7,
-            swapSlippageD: 2 * 10**7,
-            swappingAmountsCoefficientD: 10**7,
+            neighborhoodFactorD: 15 * 10 ** 7,
+            extensionFactorD: 175 * 10 ** 7,
+            swapSlippageD: 2 * 10 ** 7,
+            swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
 
         QuickPulseStrategyV2.DesiredAmounts memory smmParams = QuickPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10**9,
-            amount1Desired: 10**9
+            amount0Desired: 10 ** 9,
+            amount1Desired: 10 ** 9
         });
 
         {
@@ -262,8 +262,8 @@ contract MoonBeamDeploymentB is Script {
         console2.log("root vault:", address(rootVault));
         console2.log("quick vault:", address(quickswapVault));
 
-        IERC20(wglmr).transfer(address(strategy), 10**9);
-        IERC20(usdc).transfer(address(strategy), 10**3);
+        IERC20(wglmr).transfer(address(strategy), 10 ** 9);
+        IERC20(usdc).transfer(address(strategy), 10 ** 3);
     }
 
     function smallDepositRebalance() public {

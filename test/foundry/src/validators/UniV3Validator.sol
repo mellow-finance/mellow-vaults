@@ -30,13 +30,7 @@ contract UniV3Validator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inhericdoc IValidator
-    function validate(
-        address,
-        address addr,
-        uint256 value,
-        bytes4 selector,
-        bytes calldata data
-    ) external view {
+    function validate(address, address addr, uint256 value, bytes4 selector, bytes calldata data) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
         IVault vault = IVault(msg.sender);
@@ -67,11 +61,7 @@ contract UniV3Validator is ContractMeta, Validator {
         return bytes32("1.0.0");
     }
 
-    function _verifyMultiCall(
-        IVault vault,
-        address recipient,
-        bytes memory path
-    ) private view {
+    function _verifyMultiCall(IVault vault, address recipient, bytes memory path) private view {
         uint256 i;
         address token0;
         address token1;
@@ -110,11 +100,7 @@ contract UniV3Validator is ContractMeta, Validator {
         _verifyPathItem(tokenIn, tokenOut, fee);
     }
 
-    function _verifyPathItem(
-        address tokenIn,
-        address tokenOut,
-        uint24 fee
-    ) private view {
+    function _verifyPathItem(address tokenIn, address tokenOut, uint24 fee) private view {
         require(tokenIn != tokenOut, ExceptionsLibrary.INVALID_TOKEN);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         address pool = factory.getPool(tokenIn, tokenOut, fee);

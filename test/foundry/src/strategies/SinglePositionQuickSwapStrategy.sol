@@ -22,9 +22,9 @@ import "../utils/SinglePositionStrategyHelper.sol";
 contract SinglePositionQuickSwapStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
-    uint256 public constant DENOMINATOR = 10**9;
-    uint256 public constant MAX_MINTING_PARAMS = 10**9;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant DENOMINATOR = 10 ** 9;
+    uint256 public constant MAX_MINTING_PARAMS = 10 ** 9;
+    uint256 public constant Q96 = 2 ** 96;
     uint256 public constant D6 = 1000000;
 
     IAlgebraPool public algebraPool;

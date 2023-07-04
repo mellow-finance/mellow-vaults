@@ -18,9 +18,9 @@ import "../utils/DefaultAccessControlLateInit.sol";
 contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D6 = 10**6;
-    uint256 public constant D9 = 10**9;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant D6 = 10 ** 6;
+    uint256 public constant D9 = 10 ** 9;
+    uint256 public constant Q96 = 2 ** 96;
 
     INonfungiblePositionManager public immutable positionManager;
 
@@ -132,11 +132,7 @@ contract PulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateIni
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
-    function rebalance(
-        uint256 deadline,
-        bytes calldata swapData,
-        uint256 minAmountOutInCaseOfSwap
-    ) external {
+    function rebalance(uint256 deadline, bytes calldata swapData, uint256 minAmountOutInCaseOfSwap) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;

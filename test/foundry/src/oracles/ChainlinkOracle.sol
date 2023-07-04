@@ -23,11 +23,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
     mapping(address => int256) public decimalsIndex;
     EnumerableSet.AddressSet private _tokens;
 
-    constructor(
-        address[] memory tokens,
-        address[] memory oracles,
-        address admin
-    ) DefaultAccessControl(admin) {
+    constructor(address[] memory tokens, address[] memory oracles, address admin) DefaultAccessControl(admin) {
         _addChainlinkOracles(tokens, oracles);
     }
 
@@ -72,9 +68,9 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         int256 decimals0 = decimalsIndex[token0];
         int256 decimals1 = decimalsIndex[token1];
         if (decimals1 > decimals0) {
-            price1 *= 10**(uint256(decimals1 - decimals0));
+            price1 *= 10 ** (uint256(decimals1 - decimals0));
         } else if (decimals0 > decimals1) {
-            price0 *= 10**(uint256(decimals0 - decimals1));
+            price0 *= 10 ** (uint256(decimals0 - decimals1));
         }
         pricesX96 = new uint256[](1);
         safetyIndices = new uint256[](1);

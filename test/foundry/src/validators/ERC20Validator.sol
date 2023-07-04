@@ -16,13 +16,7 @@ contract ERC20Validator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inhericdoc IValidator
-    function validate(
-        address sender,
-        address addr,
-        uint256 value,
-        bytes4 selector,
-        bytes calldata data
-    ) external view {
+    function validate(address sender, address addr, uint256 value, bytes4 selector, bytes calldata data) external view {
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
         if (selector == APPROVE_SELECTOR) {
             address spender;
@@ -45,11 +39,7 @@ contract ERC20Validator is ContractMeta, Validator {
         return bytes32("1.0.0");
     }
 
-    function _verifyApprove(
-        address sender,
-        address token,
-        address spender
-    ) private view {
+    function _verifyApprove(address sender, address token, address spender) private view {
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         if (!protocolGovernance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER)) {
             revert(ExceptionsLibrary.FORBIDDEN);

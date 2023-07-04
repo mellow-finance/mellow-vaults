@@ -16,14 +16,10 @@ contract CamelotHelper is ICamelotHelper {
 
     IAlgebraPool public immutable pool;
 
-    uint256 public constant Q128 = 2**128;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q128 = 2 ** 128;
+    uint256 public constant Q96 = 2 ** 96;
 
-    constructor(
-        IAlgebraNonfungiblePositionManager positionManager_,
-        address token0_,
-        address token1_
-    ) {
+    constructor(IAlgebraNonfungiblePositionManager positionManager_, address token0_, address token1_) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());

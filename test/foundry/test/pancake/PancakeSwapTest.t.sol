@@ -63,15 +63,15 @@ contract PancakePulseV2Test is Test {
     PancakeSwapPulseV2Helper public strategyHelper = new PancakeSwapPulseV2Helper();
     PancakeSwapHelper public vaultHelper = new PancakeSwapHelper(positionManager);
 
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q96 = 2 ** 96;
 
     function firstDeposit() public {
-        deal(usdc, deployer, 10**4);
-        deal(weth, deployer, 10**13);
+        deal(usdc, deployer, 10 ** 4);
+        deal(weth, deployer, 10 ** 13);
 
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = 10**4;
-        tokenAmounts[1] = 10**13;
+        tokenAmounts[0] = 10 ** 4;
+        tokenAmounts[1] = 10 ** 13;
 
         vm.startPrank(deployer);
         IERC20(usdc).approve(address(depositWrapper), type(uint256).max);
@@ -85,12 +85,12 @@ contract PancakePulseV2Test is Test {
     }
 
     function deposit() public {
-        deal(usdc, deployer, 10**10);
-        deal(weth, deployer, 10**19);
+        deal(usdc, deployer, 10 ** 10);
+        deal(weth, deployer, 10 ** 19);
 
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = 10**10;
-        tokenAmounts[1] = 10**19;
+        tokenAmounts[0] = 10 ** 10;
+        tokenAmounts[1] = 10 ** 19;
 
         vm.startPrank(deployer);
         (, bool needToCallCallback) = depositWrapper.depositInfo(address(rootVault));
@@ -255,8 +255,8 @@ contract PancakePulseV2Test is Test {
             PancakeSwapPulseStrategyV2.DesiredAmounts({amount0Desired: 1e6, amount1Desired: 1e9})
         );
 
-        deal(usdc, address(strategy), 10**8);
-        deal(weth, address(strategy), 10**11);
+        deal(usdc, address(strategy), 10 ** 8);
+        deal(weth, address(strategy), 10 ** 11);
 
         vm.stopPrank();
     }
@@ -283,11 +283,7 @@ contract PancakePulseV2Test is Test {
         vm.stopPrank();
     }
 
-    function movePrice(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) public {
+    function movePrice(address tokenIn, address tokenOut, uint256 amountIn) public {
         vm.startPrank(deployer);
         deal(tokenIn, deployer, amountIn);
         IERC20(tokenIn).approve(swapRouter, amountIn);

@@ -3,7 +3,7 @@
 // (c) Gearbox Holdings, 2021
 pragma solidity ^0.8.0;
 
-import { IVersion } from "./IVersion.sol";
+import {IVersion} from "./IVersion.sol";
 
 interface IPriceOracleV2Events {
     /// @dev Emits when a new price feed is added
@@ -22,37 +22,23 @@ interface IPriceOracleV2Exceptions {
 }
 
 /// @title Price oracle interface
-interface IPriceOracleV2 is
-    IPriceOracleV2Events,
-    IPriceOracleV2Exceptions,
-    IVersion
-{
+interface IPriceOracleV2 is IPriceOracleV2Events, IPriceOracleV2Exceptions, IVersion {
     /// @dev Converts a quantity of an asset to USD (decimals = 8).
     /// @param amount Amount to convert
     /// @param token Address of the token to be converted
-    function convertToUSD(uint256 amount, address token)
-        external
-        view
-        returns (uint256);
+    function convertToUSD(uint256 amount, address token) external view returns (uint256);
 
     /// @dev Converts a quantity of USD (decimals = 8) to an equivalent amount of an asset
     /// @param amount Amount to convert
     /// @param token Address of the token converted to
-    function convertFromUSD(uint256 amount, address token)
-        external
-        view
-        returns (uint256);
+    function convertFromUSD(uint256 amount, address token) external view returns (uint256);
 
     /// @dev Converts one asset into another
     ///
     /// @param amount Amount to convert
     /// @param tokenFrom Address of the token to convert from
     /// @param tokenTo Address of the token to convert to
-    function convert(
-        uint256 amount,
-        address tokenFrom,
-        address tokenTo
-    ) external view returns (uint256);
+    function convert(uint256 amount, address tokenFrom, address tokenTo) external view returns (uint256);
 
     /// @dev Returns collateral values for two tokens, required for a fast check
     /// @param amountFrom Amount of the outbound token
@@ -74,22 +60,14 @@ interface IPriceOracleV2 is
 
     /// @dev Returns the price feed address for the passed token
     /// @param token Token to get the price feed for
-    function priceFeeds(address token)
-        external
-        view
-        returns (address priceFeed);
+    function priceFeeds(address token) external view returns (address priceFeed);
 
     /// @dev Returns the price feed for the passed token,
     ///      with additional parameters
     /// @param token Token to get the price feed for
-    function priceFeedsWithFlags(address token)
-        external
-        view
-        returns (
-            address priceFeed,
-            bool skipCheck,
-            uint256 decimals
-        );
+    function priceFeedsWithFlags(
+        address token
+    ) external view returns (address priceFeed, bool skipCheck, uint256 decimals);
 }
 
 interface IPriceOracleV2Ext is IPriceOracleV2 {

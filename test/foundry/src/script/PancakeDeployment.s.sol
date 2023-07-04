@@ -156,8 +156,8 @@ contract PancakeDeployment is Script {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**12;
+        AA[0] = 10 ** 12;
+        AA[1] = 10 ** 12;
 
         PulseStrategyV2.MutableParams memory smParams = PulseStrategyV2.MutableParams({
             priceImpactD6: 0,
@@ -165,16 +165,16 @@ contract PancakeDeployment is Script {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 10**7 * 15,
-            extensionFactorD: 10**7 * 175,
-            swapSlippageD: 10**7,
-            swappingAmountsCoefficientD: 10**7,
+            neighborhoodFactorD: 10 ** 7 * 15,
+            extensionFactorD: 10 ** 7 * 175,
+            swapSlippageD: 10 ** 7,
+            swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
 
         PulseStrategyV2.DesiredAmounts memory kekK = PulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10**9,
-            amount1Desired: 10**9
+            amount0Desired: 10 ** 9,
+            amount1Desired: 10 ** 9
         });
 
         {
@@ -215,27 +215,27 @@ contract PancakeDeployment is Script {
 
         return;
 
-        IERC20(wsteth).transfer(address(strategy), 10**12);
-        IERC20(weth).transfer(address(strategy), 10**12);
+        IERC20(wsteth).transfer(address(strategy), 10 ** 12);
+        IERC20(weth).transfer(address(strategy), 10 ** 12);
 
         //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        IERC20(wsteth).approve(wrapper, 10**20);
-        IERC20(weth).approve(wrapper, 10**20);
+        IERC20(wsteth).approve(wrapper, 10 ** 20);
+        IERC20(weth).approve(wrapper, 10 ** 20);
 
         DepositWrapper w = DepositWrapper(wrapper);
 
         w.addNewStrategy(address(rootVault), address(strategy), true);
 
         uint256[] memory A = new uint256[](2);
-        A[0] = 10**10;
-        A[1] = 10**10;
+        A[0] = 10 ** 10;
+        A[1] = 10 ** 10;
 
         w.deposit(rootVault, A, 0, "");
 
         A = new uint256[](2);
-        A[0] = 10**14;
-        A[1] = 10**14;
+        A[0] = 10 ** 14;
+        A[1] = 10 ** 14;
 
         w.deposit(rootVault, A, 0, "");
 

@@ -89,11 +89,7 @@ interface IFactory {
     /// @param tokenB Contract address of the other token
     /// @param swapFeeUnits Fee to be collected upon every swap in the pool, in fee units
     /// @return pool The pool address. Returns null address if it does not exist
-    function getPool(
-        address tokenA,
-        address tokenB,
-        uint24 swapFeeUnits
-    ) external view returns (address pool);
+    function getPool(address tokenA, address tokenB, uint24 swapFeeUnits) external view returns (address pool);
 
     /// @notice Fetch parameters to be used for pool creation
     /// @dev Called by the pool constructor to fetch the parameters of the pool
@@ -105,13 +101,7 @@ interface IFactory {
     function parameters()
         external
         view
-        returns (
-            address factory,
-            address token0,
-            address token1,
-            uint24 swapFeeUnits,
-            int24 tickDistance
-        );
+        returns (address factory, address token0, address token1, uint24 swapFeeUnits, int24 tickDistance);
 
     /// @notice Creates a pool for the given two tokens and fee
     /// @param tokenA One of the two tokens in the desired pool
@@ -123,11 +113,7 @@ interface IFactory {
     ///     2) invalid swap fee
     ///     3) invalid token arguments
     /// @return pool The address of the newly created pool
-    function createPool(
-        address tokenA,
-        address tokenB,
-        uint24 swapFeeUnits
-    ) external returns (address pool);
+    function createPool(address tokenA, address tokenB, uint24 swapFeeUnits) external returns (address pool);
 
     /// @notice Enables a fee amount with the given tickDistance
     /// @dev Fee amounts may never be removed once enabled

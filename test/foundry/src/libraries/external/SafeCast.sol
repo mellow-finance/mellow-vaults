@@ -15,7 +15,7 @@ library SafeCast {
     /// @param y The uint256 to be casted
     /// @return z The casted integer, now type int256
     function toInt128(uint128 y) internal pure returns (int128 z) {
-        require(y < 2**127);
+        require(y < 2 ** 127);
         z = int128(y);
     }
 
@@ -46,7 +46,7 @@ library SafeCast {
     /// @param y The uint256 to be casted
     /// @return z The casted integer, now type int256
     function toInt256(uint256 y) internal pure returns (int256 z) {
-        require(y < 2**255);
+        require(y < 2 ** 255);
         z = int256(y);
     }
 
@@ -54,7 +54,7 @@ library SafeCast {
     /// @param y The uint256 to be casted
     /// @return z = -y, now type int256
     function revToInt256(uint256 y) internal pure returns (int256 z) {
-        require(y < 2**255);
+        require(y < 2 ** 255);
         z = -int256(y);
     }
 

@@ -11,13 +11,7 @@ contract AllowAllValidator is ContractMeta, Validator {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inheritdoc IValidator
-    function validate(
-        address,
-        address,
-        uint256,
-        bytes4,
-        bytes calldata
-    ) external view {}
+    function validate(address, address, uint256, bytes4, bytes calldata) external view {}
 
     // -------------------  INTERNAL, VIEW  -------------------
 

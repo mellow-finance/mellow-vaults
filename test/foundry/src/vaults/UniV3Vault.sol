@@ -80,12 +80,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
     /// @inheritdoc IUniV3Vault
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        uint24 fee_,
-        address uniV3Hepler_
-    ) external {
+    function initialize(uint256 nft_, address[] memory vaultTokens_, uint24 fee_, address uniV3Hepler_) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
         _positionManager = IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
@@ -97,12 +92,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     /// @inheritdoc IERC721Receiver
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, uint24 fee, , , , , , , ) = _positionManager.positions(tokenId);
@@ -160,11 +150,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return false;
     }
 
-    function _getMinMaxPrice(IOracle oracle, uint32 safetyIndicesSet)
-        internal
-        view
-        returns (uint256 minPriceX96, uint256 maxPriceX96)
-    {
+    function _getMinMaxPrice(
+        IOracle oracle,
+        uint32 safetyIndicesSet
+    ) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
         (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], safetyIndicesSet);
         require(prices.length >= 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
@@ -180,11 +169,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
 

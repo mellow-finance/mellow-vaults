@@ -137,8 +137,8 @@ contract GoerliDeployment is Script {
                 strategyTreasury: admin,
                 strategyPerformanceTreasury: admin,
                 privateVault: false,
-                managementFee: 10**8,
-                performanceFee: 10**8,
+                managementFee: 10 ** 8,
+                performanceFee: 10 ** 8,
                 depositCallbackAddress: address(0),
                 withdrawCallbackAddress: address(0)
             });

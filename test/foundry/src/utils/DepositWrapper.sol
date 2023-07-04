@@ -56,11 +56,7 @@ contract DepositWrapper is DefaultAccessControl {
         emit Deposit(msg.sender, address(vault), tokens, actualTokenAmounts, lpTokenMinted);
     }
 
-    function addNewStrategy(
-        address vault,
-        address strategy,
-        bool needToCallCallback
-    ) external {
+    function addNewStrategy(address vault, address strategy, bool needToCallCallback) external {
         _requireAdmin();
         depositInfo[vault] = StrategyInfo({strategy: strategy, needToCallCallback: needToCallCallback});
     }

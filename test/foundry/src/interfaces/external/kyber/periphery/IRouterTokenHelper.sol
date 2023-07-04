@@ -18,9 +18,5 @@ interface IRouterTokenHelper {
     /// @param token The contract address of the token which will be transferred to `recipient`
     /// @param minAmount The minimum amount of token required for a transfer
     /// @param recipient The destination address of the token
-    function transferAllTokens(
-        address token,
-        uint256 minAmount,
-        address recipient
-    ) external payable;
+    function transferAllTokens(address token, uint256 minAmount, address recipient) external payable;
 }

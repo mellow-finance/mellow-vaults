@@ -172,7 +172,7 @@ contract KyberHelper is IKyberHelper {
                     }
 
                     if (pricesX96[0] != 0) {
-                        uint256 amount = FullMath.mulDiv(rewardsPending[i], pricesX96[0], 2**96);
+                        uint256 amount = FullMath.mulDiv(rewardsPending[i], pricesX96[0], 2 ** 96);
                         for (uint256 j = 0; j < _vaultTokens.length; ++j) {
                             if (lastToken == _vaultTokens[j]) {
                                 minTokenAmounts[j] += amount;
@@ -188,11 +188,10 @@ contract KyberHelper is IKyberHelper {
         maxTokenAmounts = minTokenAmounts;
     }
 
-    function getBytesToMulticall(uint256[] memory tokenAmounts, IKyberVault.Options memory opts)
-        external
-        view
-        returns (bytes[] memory data)
-    {
+    function getBytesToMulticall(
+        uint256[] memory tokenAmounts,
+        IKyberVault.Options memory opts
+    ) external view returns (bytes[] memory data) {
         IKyberVault vault = IKyberVault(msg.sender);
 
         uint256 kyberNft = vault.kyberNft();
