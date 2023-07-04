@@ -40,8 +40,8 @@ contract DeployPancakeVault is Script {
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address public operator = 0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E;
 
-    address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
     address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
     address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
@@ -64,11 +64,16 @@ contract DeployPancakeVault is Script {
 
     function firstDeposit(address strategy) public {
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = 10**4;
-        tokenAmounts[1] = 10**13;
+        tokenAmounts[1] = 10**4;
+        tokenAmounts[0] = 10**13;
 
-        IERC20(usdc).safeApprove(address(depositWrapper), type(uint256).max);
+        // if (IERC20(usdt).allowance(msg.sender, address(depositWrapper)) == 0) {
+        //     IERC20(usdt).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
+        // }
+
+        // if (IERC20(weth).allowance(msg.sender, address(depositWrapper)) == 0) {
         IERC20(weth).safeApprove(address(depositWrapper), type(uint256).max);
+        // }
 
         depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
@@ -115,8 +120,8 @@ contract DeployPancakeVault is Script {
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = usdc;
-        tokens[1] = weth;
+        tokens[1] = usdt;
+        tokens[0] = weth;
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
@@ -174,8 +179,8 @@ contract DeployPancakeVault is Script {
         );
 
         uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e7;
-        minSwapAmounts[1] = 5e15;
+        minSwapAmounts[1] = 1e7;
+        minSwapAmounts[0] = 5e15;
 
         strategy.updateMutableParams(
             PancakeSwapPulseStrategyV2.MutableParams({
@@ -197,17 +202,14 @@ contract DeployPancakeVault is Script {
         );
     }
 
-    PancakeSwapPulseStrategyV2 baseStrategy;
-    PancakeSwapPulseV2Helper public strategyHelper;
+    PancakeSwapPulseStrategyV2 public baseStrategy =
+        PancakeSwapPulseStrategyV2(0xC68a8c6A29412827018A23058E0CEd132889Ea48);
+    PancakeSwapPulseV2Helper public strategyHelper =
+        PancakeSwapPulseV2Helper(0x8bc60087Ca542511De2F6865E4257775cf2B5ca8);
 
-    function baseDeploy() public {
-        baseStrategy = new PancakeSwapPulseStrategyV2(positionManager);
-        strategyHelper = new PancakeSwapPulseV2Helper();
-    }
-
-    function run() external {
+    // deploy
+    function _run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        baseDeploy();
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),
             deployer,
@@ -217,7 +219,7 @@ contract DeployPancakeVault is Script {
         deployVaults(address(newStrategy));
         firstDeposit(address(newStrategy));
 
-        IERC20(usdc).safeTransfer(address(newStrategy), 1e6);
+        IERC20(usdt).safeTransfer(address(newStrategy), 1e6);
         IERC20(weth).safeTransfer(address(newStrategy), 1e11);
 
         vm.stopBroadcast();
@@ -232,6 +234,29 @@ contract DeployPancakeVault is Script {
         uint256 actualRewards = pancakeSwapVault.compound();
         console2.log(calculatedRewards, actualRewards);
 
+        vm.stopBroadcast();
+    }
+
+    // rebalance
+    function run() external {
+        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+
+        bytes
+            memory swapData = "0x0502b1c5000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200000000000000000000000000000000000000000000000000000238b7284ab8000000000000000000000000000000000000000000000000000000000000126d0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d03403a8414b08ffb128cf1a9da1097b0454e0d4bfa8fcfee7c08";
+        PancakeSwapPulseStrategyV2(0xD20f9DBDBc609c591f90c0C8dB3546f150694F84).rebalance(
+            type(uint256).max,
+            swapData,
+            0
+        );
+
+        vm.stopBroadcast();
+
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        depositWrapper.addNewStrategy(
+            address(0x74620326155f8Ef1FE4044b18Daf93654521CF9A),
+            address(0x1D140852c7a98839E077D640FE0bb7fB1601a229),
+            true
+        );
         vm.stopBroadcast();
     }
 }
