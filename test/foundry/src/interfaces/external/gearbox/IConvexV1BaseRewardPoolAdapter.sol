@@ -3,8 +3,8 @@
 // (c) Gearbox Holdings, 2021
 pragma solidity ^0.8.0;
 
-import {IAdapter} from "./helpers/IAdapter.sol";
-import {IBaseRewardPool} from "./helpers/convex/IBaseRewardPool.sol";
+import { IAdapter } from "./helpers/IAdapter.sol";
+import { IBaseRewardPool } from "./helpers/convex/IBaseRewardPool.sol";
 
 interface IConvexV1BaseRewardPoolAdapterErrors {
     /// @dev Thrown when the adapter attempts to use a token not
@@ -12,7 +12,11 @@ interface IConvexV1BaseRewardPoolAdapterErrors {
     error TokenIsNotAddedToCreditManagerException(address token);
 }
 
-interface IConvexV1BaseRewardPoolAdapter is IAdapter, IBaseRewardPool, IConvexV1BaseRewardPoolAdapterErrors {
+interface IConvexV1BaseRewardPoolAdapter is
+    IAdapter,
+    IBaseRewardPool,
+    IConvexV1BaseRewardPoolAdapterErrors
+{
     /// @dev Returns the address of a Curve pool LP token
     ///      staked in the adapter's targer Convex pool
     function curveLPtoken() external view returns (address);

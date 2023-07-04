@@ -3,10 +3,10 @@
 // (c) Gearbox Holdings, 2021
 pragma solidity ^0.8.0;
 
-import {IVersion} from "./helpers/IVersion.sol";
-import {ICreditManagerV2, ICreditManagerV2Exceptions} from "./helpers/ICreditManagerV2.sol";
-import {Balance} from "./helpers/libraries/Balances.sol";
-import {MultiCall} from "./helpers/libraries/MultiCall.sol";
+import { IVersion } from "./helpers/IVersion.sol";
+import { ICreditManagerV2, ICreditManagerV2Exceptions } from "./helpers/ICreditManagerV2.sol";
+import { Balance } from "./helpers/libraries/Balances.sol";
+import { MultiCall } from "./helpers/libraries/MultiCall.sol";
 
 interface ICreditFacadeExtended {
     /// @dev Stores expected balances (computed as current balance + passed delta)
@@ -60,7 +60,11 @@ interface ICreditFacadeEvents {
     event DecreaseBorrowedAmount(address indexed borrower, uint256 amount);
 
     /// @dev Emits when the account owner add new collateral to a CA
-    event AddCollateral(address indexed onBehalfOf, address indexed token, uint256 value);
+    event AddCollateral(
+        address indexed onBehalfOf,
+        address indexed token,
+        uint256 value
+    );
 
     /// @dev Emits when a multicall is started
     event MultiCallStarted(address indexed borrower);
@@ -72,7 +76,11 @@ interface ICreditFacadeEvents {
     event TransferAccount(address indexed oldOwner, address indexed newOwner);
 
     /// @dev Emits when the user changes approval for account transfers to itself from another address
-    event TransferAccountAllowed(address indexed from, address indexed to, bool state);
+    event TransferAccountAllowed(
+        address indexed from,
+        address indexed to,
+        bool state
+    );
 
     /// @dev Emits when the account owner enables a token on their CA
     event TokenEnabled(address creditAccount, address token);
@@ -140,7 +148,11 @@ interface ICreditFacadeExceptions is ICreditManagerV2Exceptions {
     error ActionProhibitedWithForbiddenTokensException();
 }
 
-interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersion {
+interface ICreditFacade is
+    ICreditFacadeEvents,
+    ICreditFacadeExceptions,
+    IVersion
+{
     //
     // CREDIT ACCOUNT MANAGEMENT
     //
@@ -286,7 +298,10 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
 
     /// @dev Returns true if the borrower has an open Credit Account
     /// @param borrower Borrower address
-    function hasOpenedCreditAccount(address borrower) external view returns (bool);
+    function hasOpenedCreditAccount(address borrower)
+        external
+        view
+        returns (bool);
 
     /// @dev Sets token allowance from msg.sender's Credit Account to a connected target contract
     /// @param targetContract Contract to set allowance to. Cannot be in the list of upgradeable contracts
@@ -323,7 +338,10 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
     /// @param creditAccount Credit Account address
     /// @return total Total value in underlying
     /// @return twv Total weighted (discounted by liquidation thresholds) value in underlying
-    function calcTotalValue(address creditAccount) external view returns (uint256 total, uint256 twv);
+    function calcTotalValue(address creditAccount)
+        external
+        view
+        returns (uint256 total, uint256 twv);
 
     /**
      * @dev Calculates health factor for the credit account
@@ -338,7 +356,10 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
      * @param creditAccount Credit account address
      * @return hf = Health factor in bp (see PERCENTAGE FACTOR in PercentageMath.sol)
      */
-    function calcCreditAccountHealthFactor(address creditAccount) external view returns (uint256 hf);
+    function calcCreditAccountHealthFactor(address creditAccount)
+        external
+        view
+        returns (uint256 hf);
 
     /// @dev Returns true if token is a collateral token and is not forbidden,
     /// otherwise returns false
@@ -351,7 +372,10 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
     /// @dev Returns true if 'from' is allowed to transfer Credit Accounts to 'to'
     /// @param from Sender address to check allowance for
     /// @param to Receiver address to check allowance for
-    function transfersAllowed(address from, address to) external view returns (bool);
+    function transfersAllowed(address from, address to)
+        external
+        view
+        returns (bool);
 
     /// @return maxBorrowedAmountPerBlock Maximal amount of new debt that can be taken per block
     /// @return isIncreaseDebtForbidden True if increasing debt is forbidden
@@ -367,7 +391,10 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
 
     /// @return minBorrowedAmount Minimal borrowed amount per credit account
     /// @return maxBorrowedAmount Maximal borrowed amount per credit account
-    function limits() external view returns (uint128 minBorrowedAmount, uint128 maxBorrowedAmount);
+    function limits()
+        external
+        view
+        returns (uint128 minBorrowedAmount, uint128 maxBorrowedAmount);
 
     /// @dev Address of the DegenNFT that gatekeeps account openings in whitelisted mode
     function degenNFT() external view returns (address);

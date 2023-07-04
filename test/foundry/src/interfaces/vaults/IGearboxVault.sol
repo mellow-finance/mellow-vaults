@@ -6,6 +6,7 @@ import "../external/gearbox/ICreditFacade.sol";
 import "../external/gearbox/IUniswapV3Adapter.sol";
 
 interface IGearboxVault is IIntegrationVault {
+
     /// @notice Reference to the Gearbox creditFacade contract for the primary token of this vault.
     function creditFacade() external view returns (ICreditFacade);
 
@@ -19,7 +20,7 @@ interface IGearboxVault is IIntegrationVault {
     function depositToken() external view returns (address);
 
     /// @notice The leverage factor of the vault, multiplied by 10^9
-    /// For a vault with X usd of collateral and marginal factor T >= 1, total assets (collateral + debt) should be equal to X * T
+    /// For a vault with X usd of collateral and marginal factor T >= 1, total assets (collateral + debt) should be equal to X * T 
     function marginalFactorD9() external view returns (uint256);
 
     /// @notice Index used for claiming in Gearbox V2 Degen contract
@@ -39,17 +40,13 @@ interface IGearboxVault is IIntegrationVault {
 
     /// @notice The address of the convex token we receive after staking Convex LPs
     function convexOutputToken() external view returns (address);
-
+    
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param helper_ address of helper
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        address helper_
-    ) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
 
     /// @notice Updates marginalFactorD9 (can be successfully called only by an admin or a strategist)
     /// @param marginalFactorD_ New marginalFactorD9
@@ -59,11 +56,7 @@ interface IGearboxVault is IIntegrationVault {
     /// @param merkleIndex_ Required index
     /// @param merkleTotalAmount_ Total amount of NFTs we have in Gearbox Degen Contract
     /// @param merkleProof_ Proof in Merkle tree
-    function setMerkleParameters(
-        uint256 merkleIndex_,
-        uint256 merkleTotalAmount_,
-        bytes32[] memory merkleProof_
-    ) external;
+    function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) external;
 
     /// @notice Adjust a position (takes more debt or repays some, depending on the past performance) to achieve the required marginalFactorD9
     function adjustPosition() external;
@@ -90,10 +83,5 @@ interface IGearboxVault is IIntegrationVault {
 
     /// @notice A helper function to be able to call Gearbox multicalls from the helper, but on behalf of the vault
     /// Can be successfully called only by the helper
-    function swap(
-        ISwapRouter router,
-        ISwapRouter.ExactOutputParams memory uniParams,
-        address token,
-        uint256 amount
-    ) external;
+    function swap(ISwapRouter router, ISwapRouter.ExactOutputParams memory uniParams, address token, uint256 amount) external;
 }

@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IDegenNFT} from "./IDegenNFT.sol";
+import { IDegenNFT } from "./IDegenNFT.sol";
 
 interface IDegenDistributorEvents {
     /// @dev Emits when a user claims tokens
-    event Claimed(address indexed account, uint256 amount);
+    event Claimed(
+        address indexed account,
+        uint256 amount
+    );
 
     /// @dev Emits when the owner replaces the merkle root
     event RootUpdated(bytes32 oldRoot, bytes32 indexed newRoot);
@@ -31,3 +34,4 @@ interface IDegenDistributor is IDegenDistributorEvents {
         bytes32[] calldata merkleProof
     ) external;
 }
+

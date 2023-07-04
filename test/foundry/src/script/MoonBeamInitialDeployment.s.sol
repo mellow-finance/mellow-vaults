@@ -24,6 +24,7 @@ import "../validators/ERC20Validator.sol";
 
 import {QuickPulseStrategyV2} from "../strategies/QuickPulseStrategyV2.sol";
 
+
 contract MoonBeamDeploymentA is Script {
     address public wglmr = 0xAcc15dC74880C9944775448304B263D191c6077F;
     address public usdc = 0x931715FEE2d06333043d11F658C8CE934aC61D0c;

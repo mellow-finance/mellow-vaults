@@ -33,7 +33,7 @@ library PoolAddress {
                 uint256(
                     keccak256(
                         abi.encodePacked(
-                            hex"ff",
+                            hex'ff',
                             poolDeployer,
                             keccak256(abi.encode(key.token0, key.token1)),
                             POOL_INIT_CODE_HASH

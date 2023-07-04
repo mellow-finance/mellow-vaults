@@ -9,6 +9,7 @@ import "./IVaultGovernance.sol";
 import "./IKyberVault.sol";
 
 interface IKyberVaultGovernance is IVaultGovernance {
+
     struct StrategyParams {
         IKyberSwapElasticLM farm;
         bytes[] paths;

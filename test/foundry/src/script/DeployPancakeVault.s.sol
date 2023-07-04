@@ -240,42 +240,24 @@ contract DeployPancakeVault is Script {
     // rebalance
     function run() external {
         vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-        uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[1] = 1e7;
-        minSwapAmounts[0] = 5e15;
 
-        PancakeSwapPulseStrategyV2(0xD20f9DBDBc609c591f90c0C8dB3546f150694F84).updateMutableParams(
-            PancakeSwapPulseStrategyV2.MutableParams({
-                priceImpactD6: 0,
-                defaultIntervalWidth: 4200,
-                maxPositionLengthInTicks: 15000,
-                maxDeviationForVaultPool: 50,
-                timespanForAverageTick: 60,
-                neighborhoodFactorD: 150000000,
-                extensionFactorD: 2000000000,
-                swapSlippageD: 10000000,
-                swappingAmountsCoefficientD: 10000000,
-                minSwapAmounts: minSwapAmounts
-            })
+
+        bytes
+            memory swapData = "0x0502b1c5000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200000000000000000000000000000000000000000000000000000238b7284ab8000000000000000000000000000000000000000000000000000000000000126d0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d03403a8414b08ffb128cf1a9da1097b0454e0d4bfa8fcfee7c08";
+        PancakeSwapPulseStrategyV2(0xD20f9DBDBc609c591f90c0C8dB3546f150694F84).rebalance(
+            type(uint256).max,
+            swapData,
+            0
         );
 
-        (minSwapAmounts[0], minSwapAmounts[1]) = (minSwapAmounts[1], minSwapAmounts[0]);
+        vm.stopBroadcast();
 
-        PancakeSwapPulseStrategyV2(0x1D140852c7a98839E077D640FE0bb7fB1601a229).updateMutableParams(
-            PancakeSwapPulseStrategyV2.MutableParams({
-                priceImpactD6: 0,
-                defaultIntervalWidth: 4200,
-                maxPositionLengthInTicks: 15000,
-                maxDeviationForVaultPool: 50,
-                timespanForAverageTick: 60,
-                neighborhoodFactorD: 150000000,
-                extensionFactorD: 2000000000,
-                swapSlippageD: 10000000,
-                swappingAmountsCoefficientD: 10000000,
-                minSwapAmounts: minSwapAmounts
-            })
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        depositWrapper.addNewStrategy(
+            address(0x74620326155f8Ef1FE4044b18Daf93654521CF9A),
+            address(0x1D140852c7a98839E077D640FE0bb7fB1601a229),
+            true
         );
-
         vm.stopBroadcast();
     }
 }
