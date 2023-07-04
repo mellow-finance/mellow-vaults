@@ -25,11 +25,11 @@ import "../../src/vaults/UniV3VaultGovernance.sol";
 contract LidoPulseV2 is Script {
     using SafeERC20 for IERC20;
 
+    // arbitrum deploy
+
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
     IUniV3Vault public uniV3Vault;
-
-    uint256 public nftStart;
 
     address public protocolTreasury = 0x6e30DBAf2f6798e7f3330472658b0d1ba94C005B;
     address public strategyTreasury = 0x6e30DBAf2f6798e7f3330472658b0d1ba94C005B;
@@ -56,12 +56,12 @@ contract LidoPulseV2 is Script {
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
     DepositWrapper public depositWrapper = new DepositWrapper(deployer);
 
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant Q96 = 2**96;
 
     function firstDeposit(address strategy) public {
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[1] = 10 ** 4;
-        tokenAmounts[0] = 10 ** 13;
+        tokenAmounts[1] = 10**4;
+        tokenAmounts[0] = 10**13;
 
         if (IERC20(usdc).allowance(msg.sender, address(depositWrapper)) == 0) {
             IERC20(usdc).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
@@ -75,7 +75,11 @@ contract LidoPulseV2 is Script {
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
-    function combineVaults(address strategy_, address[] memory tokens, uint256[] memory nfts) public {
+    function combineVaults(
+        address strategy_,
+        address[] memory tokens,
+        uint256[] memory nfts
+    ) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
@@ -118,6 +122,12 @@ contract LidoPulseV2 is Script {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         IUniV3VaultGovernance(uniV3Governance).createVault(tokens, deployer, 500, address(uniV3Helper));
+        IUniV3VaultGovernance(uniV3Governance).stageDelayedStrategyParams(
+            erc20VaultNft + 1,
+            IUniV3VaultGovernance.DelayedStrategyParams({safetyIndicesSet: 2})
+        );
+
+        IUniV3VaultGovernance(uniV3Governance).commitDelayedStrategyParams(erc20VaultNft + 1);
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -160,11 +170,18 @@ contract LidoPulseV2 is Script {
         strategy.updateDesiredAmounts(PulseStrategyV2.DesiredAmounts({amount0Desired: 1e6, amount1Desired: 1e9}));
     }
 
-    PulseStrategyV2 public baseStrategy = PulseStrategyV2(0xC68a8c6A29412827018A23058E0CEd132889Ea48);
-    PulseStrategyV2Helper public strategyHelper = PulseStrategyV2Helper(0x8bc60087Ca542511De2F6865E4257775cf2B5ca8);
+    PulseStrategyV2 public baseStrategy;
+    PulseStrategyV2Helper public strategyHelper;
+
+    function deployContracts() public {
+        baseStrategy = new PulseStrategyV2(
+            positionManager
+        );
+        strategyHelper = new PulseStrategyV2Helper();
+    }
 
     // deploy
-    function _run() external {
+    function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),

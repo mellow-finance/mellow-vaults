@@ -12,6 +12,7 @@
     },
     "scripts": {
       "prettier": "prettier --write ./src/** && prettier --write ./test/** && prettier --write ./script/**",
+      "prettier:changed": "prettier -w  $(git status | grep '.sol' | grep -v 'deleted:' | cut -d ' ' -f 4)",
       "prettier:check": "prettier --check **.sol",
       "test:goerli": "forge test -vvvv --rpc-url $(grep GOERLI_RPC_URL .env | cut -d '=' -f2) --fork-block-number 7630000 --match-path 'test/goerli/*.sol'",
       "test:mainnet": "forge test -vv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --fork-block-number 15867000 --match-path 'test/mainnet/*.sol'",
