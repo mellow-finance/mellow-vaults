@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
@@ -25,7 +25,7 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
 
     /// @notice NFT of KyberSwap position manager
     function kyberNft() external view returns (uint256);
-    
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry

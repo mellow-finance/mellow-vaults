@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "forge-std/Script.sol";
@@ -22,10 +22,7 @@ import "../vaults/ERC20RootVaultGovernance.sol";
 
 import "../strategies/QuickPulseStrategyV2.sol";
 
-
-
 contract QuickSwapDeployment is Script {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IQuickSwapVault quickVault;
@@ -55,7 +52,6 @@ contract QuickSwapDeployment is Script {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
@@ -89,7 +85,6 @@ contract QuickSwapDeployment is Script {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -106,10 +101,10 @@ contract QuickSwapDeployment is Script {
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
-   //     QuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6), 0xB5C064F955D8e7F38fE0460C556a72987494eE17, 0x958d208Cdf087843e9AD98d23823d32E17d723A1);
+        //     QuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6), 0xB5C064F955D8e7F38fE0460C556a72987494eE17, 0x958d208Cdf087843e9AD98d23823d32E17d723A1);
 
         {
-/*
+            /*
             IVault w = new QuickSwapVault(IAlgebraNonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88), IQuickSwapHelper(helper), IAlgebraSwapRouter(0xf5b509bB0909a69B1c207E495f687a596C168E12), IFarmingCenter(0x7F281A8cdF66eF5e9db8434Ec6D97acc1bc01E78), 0x958d208Cdf087843e9AD98d23823d32E17d723A1, 0xB5C064F955D8e7F38fE0460C556a72987494eE17);
 
             IVaultGovernance.InternalParams memory p = IVaultGovernance.InternalParams({
@@ -118,7 +113,9 @@ contract QuickSwapDeployment is Script {
                 singleton: w
             });
 */
-            IQuickSwapVaultGovernance quickGovernanceC = QuickSwapVaultGovernance(0xaC2A04502929436062e2D0e8b9fD16b2C85fBD88);
+            IQuickSwapVaultGovernance quickGovernanceC = QuickSwapVaultGovernance(
+                0xaC2A04502929436062e2D0e8b9fD16b2C85fBD88
+            );
             quickGovernanceC.createVault(tokens, deployer, address(erc20Vault));
 
             IQuickSwapVaultGovernance.StrategyParams memory sp = IQuickSwapVaultGovernance.StrategyParams({
@@ -140,7 +137,9 @@ contract QuickSwapDeployment is Script {
 
         quickVault = IQuickSwapVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        QuickPulseStrategyV2 protoS = new QuickPulseStrategyV2(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6));
+        QuickPulseStrategyV2 protoS = new QuickPulseStrategyV2(
+            IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6)
+        );
         TransparentUpgradeableProxy kek = new TransparentUpgradeableProxy(address(protoS), sAdmin, "");
         strategy = QuickPulseStrategyV2(address(kek));
 
@@ -161,10 +160,10 @@ contract QuickSwapDeployment is Script {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 10 ** 7 * 15,
-            extensionFactorD: 10 ** 7 * 175,
-            swapSlippageD: 10 ** 7,
-            swappingAmountsCoefficientD: 10 ** 7,
+            neighborhoodFactorD: 10**7 * 15,
+            extensionFactorD: 10**7 * 175,
+            swapSlippageD: 10**7,
+            swappingAmountsCoefficientD: 10**7,
             minSwapAmounts: AA
         });
 
@@ -190,12 +189,9 @@ contract QuickSwapDeployment is Script {
 
         rootVault.addDepositorsToAllowlist(AD);
 
-        bytes32 ADMIN_ROLE =
-        bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
-        bytes32 ADMIN_DELEGATE_ROLE =
-            bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
-        bytes32 OPERATOR_ROLE =
-            bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
+        bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
+        bytes32 ADMIN_DELEGATE_ROLE = bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
+        bytes32 OPERATOR_ROLE = bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
 
         strategy.grantRole(ADMIN_ROLE, sAdmin);
         strategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
@@ -216,14 +212,13 @@ contract QuickSwapDeployment is Script {
         vm.startBroadcast();
 
         uint256 erc20VaultNft = kek();
-        
 
-      //  rootVault = IERC20RootVault(0xAd9DF50455e690Fd2044Fd079348a1df672617B7);
+        //  rootVault = IERC20RootVault(0xAd9DF50455e690Fd2044Fd079348a1df672617B7);
 
         IERC20(weth).transfer(address(strategy), 10**12);
         IERC20(bob).transfer(address(strategy), 10**12);
 
-    //    rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
+        //    rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
         IERC20(weth).approve(address(rootVault), 10**20);
         IERC20(bob).approve(address(rootVault), 10**20);
@@ -246,7 +241,6 @@ contract QuickSwapDeployment is Script {
         rootVault.removeDepositorsFromAllowlist(AD);
 
         IVaultRegistry(registry).transferFrom(deployer, sAdmin, erc20VaultNft + 2);
-
 
         //kek();
     }

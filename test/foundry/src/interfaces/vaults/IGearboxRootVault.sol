@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
@@ -68,10 +68,10 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @notice Total value of lp tokens withdrawal requests during the current epoch
     function totalCurrentEpochLpWitdrawalRequests() external view returns (uint256);
 
-    /// @notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed 
+    /// @notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed
     function totalLpTokensWaitingWithdrawal() external view returns (uint256);
 
-    /// @notice Timestamp of the latest epoch change 
+    /// @notice Timestamp of the latest epoch change
     function lastEpochChangeTimestamp() external view returns (uint256);
 
     /// @notice Total value of vault tokens awaiting on the ERC20 vault to be claimed for a specific address
@@ -98,18 +98,15 @@ interface IGearboxRootVault is IAggregateVault, IERC20 {
     /// @param to Address to which the withdrawal will be sent
     /// @param vaultsOptions Options of vaults
     /// @return actualTokenAmounts Arrays of actual token amounts after withdrawal
-    function withdraw(
-        address to,
-        bytes[] memory vaultsOptions
-    ) external returns (uint256[] memory actualTokenAmounts);
+    function withdraw(address to, bytes[] memory vaultsOptions) external returns (uint256[] memory actualTokenAmounts);
 
     /// @notice The function of registering withdrawal of lp tokens amount
-    /// @param lpTokenAmount Amount the sender wants to withdraw 
+    /// @param lpTokenAmount Amount the sender wants to withdraw
     /// @return amountRegistered Amount which was actually registered
     function registerWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRegistered);
 
     /// @notice The function of cancelling withdrawal of lp tokens amount
-    /// @param lpTokenAmount Amount the sender wants to cancel 
+    /// @param lpTokenAmount Amount the sender wants to cancel
     /// @return amountRemained Amount for which the withdrawal request remains
     function cancelWithdrawal(uint256 lpTokenAmount) external returns (uint256 amountRemained);
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.0;
 
 interface IRouterTokenHelper {
     /// @notice Unwraps the contract's WETH balance and sends it to recipient as ETH.

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0 <0.9.0;
+pragma solidity ^0.8.0;
 
-import './FullMath.sol';
-import './TickMath.sol';
-import '../../interfaces/external/algebrav2/IAlgebraPool.sol';
-import '../../interfaces/external/algebrav2/IDataStorageOperator.sol';
-import '../../interfaces/external/algebrav2/libraries/LowGasSafeMath.sol';
+import "./FullMath.sol";
+import "./TickMath.sol";
+import "../../interfaces/external/algebrav2/IAlgebraPool.sol";
+import "../../interfaces/external/algebrav2/IDataStorageOperator.sol";
+import "../../interfaces/external/algebrav2/libraries/LowGasSafeMath.sol";
 
-import '../../interfaces/external/algebrav2/libraries/PoolAddress.sol';
+import "../../interfaces/external/algebrav2/libraries/PoolAddress.sol";
 
 /// @title DataStorage library
 /// @notice Provides functions to integrate with pool dataStorage
@@ -17,7 +17,7 @@ library DataStorageLibrary {
     /// @param period Number of seconds in the past to start calculating time-weighted average
     /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - period) to block.timestamp
     function consult(address pool, uint32 period) internal view returns (int24 timeWeightedAverageTick) {
-        require(period != 0, 'BP');
+        require(period != 0, "BP");
 
         uint32[] memory secondAgos = new uint32[](2);
         secondAgos[0] = period;

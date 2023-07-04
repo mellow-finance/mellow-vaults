@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 interface ICurvePool {
     function coins(uint256 i) external view returns (address);
@@ -54,10 +54,7 @@ interface ICurvePool {
 
     function A_precise() external view returns (uint256);
 
-    function calc_withdraw_one_coin(uint256 _burn_amount, int128 i)
-        external
-        view
-        returns (uint256);
+    function calc_withdraw_one_coin(uint256 _burn_amount, int128 i) external view returns (uint256);
 
     function admin_balances(uint256 i) external view returns (uint256);
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
 
@@ -21,7 +21,6 @@ import "../../src/interfaces/vaults/ICamelotVault.sol";
 import "../../src/vaults/CamelotVault.sol";
 
 contract CamelotDeployment is Script {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     ICamelotVault camelotVault;
@@ -52,7 +51,6 @@ contract CamelotDeployment is Script {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 10**10;
         amounts[1] = 10**4;
@@ -66,7 +64,6 @@ contract CamelotDeployment is Script {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
@@ -84,14 +81,18 @@ contract CamelotDeployment is Script {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
 
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(camelotStrategy), nfts, deployer);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(
+            tokens,
+            address(camelotStrategy),
+            nfts,
+            deployer
+        );
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -118,7 +119,6 @@ contract CamelotDeployment is Script {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -136,8 +136,9 @@ contract CamelotDeployment is Script {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         {
-
-            ICamelotVaultGovernance camelotVaultGovernance = ICamelotVaultGovernance(0x08F07A1F678b55ECa970ca0ec7139B8bf002Dc93);
+            ICamelotVaultGovernance camelotVaultGovernance = ICamelotVaultGovernance(
+                0x08F07A1F678b55ECa970ca0ec7139B8bf002Dc93
+            );
             camelotVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
         }
 
@@ -164,14 +165,14 @@ contract CamelotDeployment is Script {
             timespanForAverageTick: 300,
             neighborhoodFactorD: 15 * 10**7,
             extensionFactorD: 175 * 10**7,
-            swapSlippageD: 10 ** 7,
-            swappingAmountsCoefficientD: 10 ** 7,
+            swapSlippageD: 10**7,
+            swappingAmountsCoefficientD: 10**7,
             minSwapAmounts: AA
         });
 
         CamelotPulseStrategyV2.DesiredAmounts memory smmParams = CamelotPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10 ** 9,
-            amount1Desired: 10 ** 9
+            amount0Desired: 10**9,
+            amount1Desired: 10**9
         });
 
         {
@@ -188,12 +189,9 @@ contract CamelotDeployment is Script {
         IERC20(weth).transfer(address(camelotStrategy), 10**9);
         IERC20(usdc).transfer(address(camelotStrategy), 10**3);
 
-        bytes32 ADMIN_ROLE =
-        bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
-        bytes32 ADMIN_DELEGATE_ROLE =
-            bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
-        bytes32 OPERATOR_ROLE =
-            bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
+        bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
+        bytes32 ADMIN_DELEGATE_ROLE = bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
+        bytes32 OPERATOR_ROLE = bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
 
         camelotStrategy.grantRole(ADMIN_ROLE, sAdmin);
         camelotStrategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
@@ -208,13 +206,11 @@ contract CamelotDeployment is Script {
         console2.log("erc20 vault:", address(erc20Vault));
         console2.log("root vault:", address(rootVault));
         console2.log("camelot vault:", address(camelotVault));
-
     }
 
     function run() external {
-
         vm.startBroadcast();
-        
+
         kek();
         deposit(1);
     }

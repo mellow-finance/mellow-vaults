@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.0;
 
 /// @title Provides functions for deriving a pool address from the poolDeployer and tokens
 /// @dev Credit to Uniswap Labs under GPL-2.0-or-later license:
@@ -33,7 +33,7 @@ library PoolAddress {
                 uint256(
                     keccak256(
                         abi.encodePacked(
-                            hex'ff',
+                            hex"ff",
                             poolDeployer,
                             keccak256(abi.encode(key.token0, key.token1)),
                             POOL_INIT_CODE_HASH
