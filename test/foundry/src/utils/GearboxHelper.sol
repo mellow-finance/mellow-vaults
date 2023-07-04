@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/external/convex/ICvx.sol";
@@ -219,7 +219,6 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) public {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         address depositToken_ = depositToken;
@@ -276,7 +275,6 @@ contract GearboxHelper {
         address creditAccount,
         address convexOutputToken
     ) public {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
@@ -381,7 +379,6 @@ contract GearboxHelper {
         uint256 poolId,
         int128 primaryIndex
     ) public {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         MultiCall[] memory calls = new MultiCall[](3);
@@ -420,7 +417,6 @@ contract GearboxHelper {
         address convexOutputToken,
         address creditAccount_
     ) external {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         claimRewards(vaultGovernance, creditAccount_, convexOutputToken);
@@ -490,7 +486,6 @@ contract GearboxHelper {
         address vaultGovernance,
         address creditAccount
     ) external {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -529,7 +524,6 @@ contract GearboxHelper {
         external
         returns (uint256[] memory actualAmounts)
     {
-
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -581,8 +575,11 @@ contract GearboxHelper {
         actualAmounts[0] = amount;
     }
 
-    function openCreditAccount(address creditAccount, address vaultGovernance, uint256 marginalFactorD9) external {
-
+    function openCreditAccount(
+        address creditAccount,
+        address vaultGovernance,
+        uint256 marginalFactorD9
+    ) external {
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
         require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 
@@ -595,8 +592,10 @@ contract GearboxHelper {
 
         uint256 currentPrimaryTokenAmount = IERC20(primaryToken_).balanceOf(address(admin));
 
-        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance).delayedProtocolParams();
-        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance).strategyParams(vaultNft);
+        IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
+            .delayedProtocolParams();
+        IGearboxVaultGovernance.StrategyParams memory strategyParams = IGearboxVaultGovernance(vaultGovernance)
+            .strategyParams(vaultNft);
 
         if (depositToken_ != primaryToken_ && currentPrimaryTokenAmount < minimalNecessaryAmount) {
             ISwapRouter router = ISwapRouter(protocolParams.uniswapRouter);

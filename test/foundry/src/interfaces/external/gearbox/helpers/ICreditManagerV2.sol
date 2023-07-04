@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Holdings, 2021
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import { IPriceOracleV2 } from "./IPriceOracle.sol";
-import { IVersion } from "./IVersion.sol";
+import {IPriceOracleV2} from "./IPriceOracle.sol";
+import {IVersion} from "./IVersion.sol";
 
 enum ClosureAction {
     CLOSE_ACCOUNT,
@@ -72,11 +72,7 @@ interface ICreditManagerV2Exceptions {
 /// @notice All Credit Manager functions are access-restricted and can only be called
 ///         by the Credit Facade or allowed adapters. Users are not allowed to
 ///         interact with the Credit Manager directly
-interface ICreditManagerV2 is
-    ICreditManagerV2Events,
-    ICreditManagerV2Exceptions,
-    IVersion
-{
+interface ICreditManagerV2 is ICreditManagerV2Events, ICreditManagerV2Exceptions, IVersion {
     //
     // CREDIT ACCOUNT MANAGEMENT
     //
@@ -87,9 +83,7 @@ interface ICreditManagerV2 is
     ///
     /// @param borrowedAmount Amount to be borrowed by the Credit Account
     /// @param onBehalfOf The owner of the newly opened Credit Account
-    function openCreditAccount(uint256 borrowedAmount, address onBehalfOf)
-        external
-        returns (address);
+    function openCreditAccount(uint256 borrowedAmount, address onBehalfOf) external returns (address);
 
     ///  @dev Closes a Credit Account - covers both normal closure and liquidation
     /// - Checks whether the contract is paused, and, if so, if the payer is an emergency liquidator.
@@ -244,10 +238,7 @@ interface ICreditManagerV2 is
 
     /// @dev Returns the address of a borrower's Credit Account, or reverts if there is none.
     /// @param borrower Borrower's address
-    function getCreditAccountOrRevert(address borrower)
-        external
-        view
-        returns (address);
+    function getCreditAccountOrRevert(address borrower) external view returns (address);
 
     /// @dev Computes amounts that must be sent to various addresses before closing an account
     /// @param totalValue Credit Accounts total value in underlying
@@ -295,24 +286,15 @@ interface ICreditManagerV2 is
     /// Only enabled tokens are counted as collateral for the Credit Account
     /// @notice An enabled token mask encodes an enabled token by setting
     ///         the bit at the position equal to token's index to 1
-    function enabledTokensMap(address creditAccount)
-        external
-        view
-        returns (uint256);
+    function enabledTokensMap(address creditAccount) external view returns (uint256);
 
     /// @dev Maps the Credit Account to its current percentage drop across all swaps since
     ///      the last full check, in RAY format
-    function cumulativeDropAtFastCheckRAY(address creditAccount)
-        external
-        view
-        returns (uint256);
+    function cumulativeDropAtFastCheckRAY(address creditAccount) external view returns (uint256);
 
     /// @dev Returns the collateral token at requested index and its liquidation threshold
     /// @param id The index of token to return
-    function collateralTokens(uint256 id)
-        external
-        view
-        returns (address token, uint16 liquidationThreshold);
+    function collateralTokens(uint256 id) external view returns (address token, uint16 liquidationThreshold);
 
     /// @dev Returns the collateral token with requested mask and its liquidationThreshold
     /// @param tokenMask Token mask corresponding to the token
@@ -335,10 +317,7 @@ interface ICreditManagerV2 is
     function adapterToContract(address adapter) external view returns (address);
 
     /// @dev Maps 3rd party contracts to their respective adapters
-    function contractToAdapter(address targetContract)
-        external
-        view
-        returns (address);
+    function contractToAdapter(address targetContract) external view returns (address);
 
     /// @dev Address of the underlying asset
     function underlying() external view returns (address);
@@ -361,10 +340,7 @@ interface ICreditManagerV2 is
 
     /// @dev Returns the liquidation threshold for the provided token
     /// @param token Token to retrieve the LT for
-    function liquidationThresholds(address token)
-        external
-        view
-        returns (uint16);
+    function liquidationThresholds(address token) external view returns (uint16);
 
     /// @dev The maximal number of enabled tokens on a single Credit Account
     function maxAllowedEnabledTokenLength() external view returns (uint8);

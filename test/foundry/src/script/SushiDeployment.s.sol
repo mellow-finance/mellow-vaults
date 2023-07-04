@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "forge-std/Script.sol";
@@ -23,9 +23,7 @@ import "../vaults/ERC20RootVaultGovernance.sol";
 
 import "../strategies/PulseStrategyV2.sol";
 
-
 contract SushiDeployment is Script {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IUniV3Vault uniV3Vault;
@@ -55,7 +53,6 @@ contract SushiDeployment is Script {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
@@ -95,7 +92,6 @@ contract SushiDeployment is Script {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         console2.log(IProtocolGovernance(governance).hasPermission(0x1111111254EEB25477B68fb85Ed929f73A960582, 4));
         console2.log(IProtocolGovernance(governance).hasPermission(0x1111111254EEB25477B68fb85Ed929f73A960582, 5));
 
@@ -113,8 +109,7 @@ contract SushiDeployment is Script {
                 registry: IVaultRegistry(registry),
                 singleton: singleton
             });
-            
-            
+
             IUniV3VaultGovernance.DelayedProtocolParams memory dpp = IUniV3VaultGovernance.DelayedProtocolParams({
                 positionManager: INonfungiblePositionManager(manager),
                 oracle: IOracle(mellowOracle)
@@ -123,7 +118,6 @@ contract SushiDeployment is Script {
             IUniV3VaultGovernance gg = new UniV3VaultGovernance(ip, dpp);
             console2.log("uni governance for sushi:", address(gg));
             return 0;
-
         }
 
         {
@@ -143,15 +137,14 @@ contract SushiDeployment is Script {
 
             uniGovernance.stageDelayedStrategyParams(erc20VaultNft + 1, dsp);
             uniGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
-
         }
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-       // PulseStrategyV2 protoS = new PulseStrategyV2(INonfungiblePositionManager(manager));
-       // TransparentUpgradeableProxy kek = new TransparentUpgradeableProxy(address(protoS), sAdmin, "");
-       
+        // PulseStrategyV2 protoS = new PulseStrategyV2(INonfungiblePositionManager(manager));
+        // TransparentUpgradeableProxy kek = new TransparentUpgradeableProxy(address(protoS), sAdmin, "");
+
         strategy = new PulseStrategyV2(INonfungiblePositionManager(manager));
 
         PulseStrategyV2.ImmutableParams memory sParams = PulseStrategyV2.ImmutableParams({
@@ -171,10 +164,10 @@ contract SushiDeployment is Script {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 10 ** 7 * 15,
-            extensionFactorD: 10 ** 7 * 175,
-            swapSlippageD: 10 ** 7,
-            swappingAmountsCoefficientD: 10 ** 7,
+            neighborhoodFactorD: 10**7 * 15,
+            extensionFactorD: 10**7 * 175,
+            swapSlippageD: 10**7,
+            swappingAmountsCoefficientD: 10**7,
             minSwapAmounts: AA
         });
 
@@ -196,12 +189,9 @@ contract SushiDeployment is Script {
 
         IVaultRegistry(registry).transferFrom(deployer, sAdmin, erc20VaultNft + 2);
 
-        bytes32 ADMIN_ROLE =
-        bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
-        bytes32 ADMIN_DELEGATE_ROLE =
-            bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
-        bytes32 OPERATOR_ROLE =
-            bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
+        bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
+        bytes32 ADMIN_DELEGATE_ROLE = bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
+        bytes32 OPERATOR_ROLE = bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
 
         strategy.grantRole(ADMIN_ROLE, sAdmin);
         strategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
@@ -227,7 +217,7 @@ contract SushiDeployment is Script {
         IERC20(wsteth).transfer(address(strategy), 10**12);
         IERC20(weth).transfer(address(strategy), 10**12);
 
-      //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
+        //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
         IERC20(wsteth).approve(wrapper, 10**20);
         IERC20(weth).approve(wrapper, 10**20);
@@ -248,9 +238,6 @@ contract SushiDeployment is Script {
 
         w.deposit(rootVault, A, 0, "");
 
-
-
-
-     //   kek();
+        //   kek();
     }
 }

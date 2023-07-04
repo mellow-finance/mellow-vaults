@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "../external/kyber/periphery/IBasePositionManager.sol";
 import "../external/kyber/IKyberSwapElasticLM.sol";
@@ -9,7 +9,6 @@ import "./IVaultGovernance.sol";
 import "./IKyberVault.sol";
 
 interface IKyberVaultGovernance is IVaultGovernance {
-
     struct StrategyParams {
         IKyberSwapElasticLM farm;
         bytes[] paths;

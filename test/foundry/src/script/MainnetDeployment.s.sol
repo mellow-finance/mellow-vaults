@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
 
@@ -21,9 +21,7 @@ import "../vaults/ERC20RootVaultGovernance.sol";
 
 import "../strategies/PulseStrategyV2.sol";
 
-
 contract MainnetDeployment is Script {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IUniV3Vault uniV3Vault;
@@ -66,7 +64,6 @@ contract MainnetDeployment is Script {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
@@ -100,7 +97,6 @@ contract MainnetDeployment is Script {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -125,7 +121,6 @@ contract MainnetDeployment is Script {
 
             uniGovernance.stageDelayedStrategyParams(erc20VaultNft + 1, dsp);
             uniGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
-
         }
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
@@ -150,10 +145,10 @@ contract MainnetDeployment is Script {
             maxPositionLengthInTicks: 700,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 10 ** 7 * 15,
-            extensionFactorD: 10 ** 7 * 175,
-            swapSlippageD: 10 ** 7,
-            swappingAmountsCoefficientD: 10 ** 7,
+            neighborhoodFactorD: 10**7 * 15,
+            extensionFactorD: 10**7 * 175,
+            swapSlippageD: 10**7,
+            swappingAmountsCoefficientD: 10**7,
             minSwapAmounts: AA
         });
 
@@ -169,12 +164,9 @@ contract MainnetDeployment is Script {
 
         IVaultRegistry(registry).transferFrom(deployer, sAdmin, erc20VaultNft + 2);
 
-        bytes32 ADMIN_ROLE =
-        bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
-        bytes32 ADMIN_DELEGATE_ROLE =
-            bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
-        bytes32 OPERATOR_ROLE =
-            bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
+        bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
+        bytes32 ADMIN_DELEGATE_ROLE = bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")
+        bytes32 OPERATOR_ROLE = bytes32(0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622); // keccak256("operator")
 
         strategy.grantRole(ADMIN_ROLE, sAdmin);
         strategy.grantRole(ADMIN_DELEGATE_ROLE, sAdmin);
@@ -197,7 +189,7 @@ contract MainnetDeployment is Script {
         IERC20(matic).transfer(address(strategy), 10**12);
         IERC20(stmatic).transfer(address(strategy), 10**12);
 
-      //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
+        //  rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
         IERC20(matic).approve(address(rootVault), 10**20);
         IERC20(stmatic).approve(address(rootVault), 10**20);
@@ -214,7 +206,6 @@ contract MainnetDeployment is Script {
 
         rootVault.deposit(A, 0, "");
 
-
-     //   kek();
+        //   kek();
     }
 }

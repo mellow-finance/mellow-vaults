@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
@@ -499,7 +499,7 @@ contract QuickPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
         }
 
         uint256 actualSwapPriceX96 = FullMath.mulDiv(actualAmountOut, Q96, actualAmountIn);
-        
+
         require(actualAmountOut >= minAmountOutInCaseOfSwap, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         require(

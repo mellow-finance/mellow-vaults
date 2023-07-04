@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Holdings, 2022
-pragma solidity ^0.8.9;
-import { IVersion } from "./external/gearbox/helpers/IVersion.sol";
-import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+pragma solidity ^0.8.0;
+import {IVersion} from "./external/gearbox/helpers/IVersion.sol";
+import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 interface IDegenNFTExceptions {
     /// @dev Thrown if an access-restricted function was called by non-CreditFacade
@@ -30,12 +30,7 @@ interface IDegenNFTEvents {
     event NewCreditFacadeRemoved(address indexed);
 }
 
-interface IDegenNFT is
-    IDegenNFTExceptions,
-    IDegenNFTEvents,
-    IVersion,
-    IERC721Metadata
-{
+interface IDegenNFT is IDegenNFTExceptions, IDegenNFTEvents, IVersion, IERC721Metadata {
     /// @dev address of the current minter
     function minter() external view returns (address);
 
@@ -55,6 +50,5 @@ interface IDegenNFT is
     /// @param amount The number of tokens to burn
     function burn(address from, uint256 amount) external;
 
-    function setMinter(address minter_)
-        external;
+    function setMinter(address minter_) external;
 }

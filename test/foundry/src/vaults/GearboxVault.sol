@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSL-1.1
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
@@ -40,8 +40,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     uint256 public merkleIndex;
 
     /// @inheritdoc IGearboxVault
-    uint256 public merkleTotalAmount; 
-    
+    uint256 public merkleTotalAmount;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -205,7 +204,11 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     }
 
     /// @inheritdoc IGearboxVault
-    function setMerkleParameters(uint256 merkleIndex_, uint256 merkleTotalAmount_, bytes32[] memory merkleProof_) public {
+    function setMerkleParameters(
+        uint256 merkleIndex_,
+        uint256 merkleTotalAmount_,
+        bytes32[] memory merkleProof_
+    ) public {
         require(_isApprovedOrOwner(msg.sender));
         merkleIndex = merkleIndex_;
         merkleTotalAmount = merkleTotalAmount_;

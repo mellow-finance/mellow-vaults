@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "forge-std/Script.sol";
@@ -15,7 +15,6 @@ import "../vaults/QuickSwapVault.sol";
 
 import "../utils/QuickSwapHelper.sol";
 
-
 import "../vaults/QuickSwapVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/ERC20RootVaultGovernance.sol";
@@ -25,10 +24,7 @@ import "../validators/ERC20Validator.sol";
 
 import "../strategies/QuickPulseStrategyV2.sol";
 
-
-
 contract MoonBeamDeploymentA is Script {
-
     address public wglmr = 0xAcc15dC74880C9944775448304B263D191c6077F;
     address public usdc = 0x931715FEE2d06333043d11F658C8CE934aC61D0c;
     address public dot = 0xFfFFfFff1FcaCBd218EDc0EbA20Fc2308C778080;
@@ -38,7 +34,6 @@ contract MoonBeamDeploymentA is Script {
     address public factory = 0xabE1655110112D0E45EF91e94f8d757e4ddBA59C;
 
     function run() external {
-
         vm.startBroadcast();
 
         ProtocolGovernance governance = new ProtocolGovernance(deployer);
@@ -58,10 +53,11 @@ contract MoonBeamDeploymentA is Script {
         IERC20RootVaultHelper rHelper = new ERC20RootVaultHelper();
         console2.log("root helper:", address(rHelper));
 
-        IERC20RootVaultGovernance.DelayedProtocolParams memory rParams = IERC20RootVaultGovernance.DelayedProtocolParams({
-            managementFeeChargeDelay: 86400,
-            oracle: IOracle(usdc) // temporary fake oracle as we don't need any now
-        });
+        IERC20RootVaultGovernance.DelayedProtocolParams memory rParams = IERC20RootVaultGovernance
+            .DelayedProtocolParams({
+                managementFeeChargeDelay: 86400,
+                oracle: IOracle(usdc) // temporary fake oracle as we don't need any now
+            });
 
         ERC20RootVault rv = new ERC20RootVault();
 
@@ -103,7 +99,6 @@ contract MoonBeamDeploymentA is Script {
         governance.stagePermissionGrants(dot, g);
         governance.stagePermissionGrants(wglmr, g);
 
-
         governance.commitValidator(usdc);
         governance.commitValidator(dot);
         governance.commitValidator(wglmr);
@@ -122,7 +117,5 @@ contract MoonBeamDeploymentA is Script {
 
         governance.stageParams(params);
         governance.commitParams();
-
-
     }
 }

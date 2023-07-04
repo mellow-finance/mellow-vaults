@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
@@ -23,7 +23,6 @@ import "../../src/interfaces/vaults/IQuickSwapVault.sol";
 import "../../src/vaults/QuickSwapVault.sol";
 
 contract MoonBeamDeploymentB is Script {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IQuickSwapVault quickswapVault;
@@ -59,7 +58,6 @@ contract MoonBeamDeploymentB is Script {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-
         uint256[] memory amounts = new uint256[](2);
 
         amounts[0] = 10**4;
@@ -74,7 +72,6 @@ contract MoonBeamDeploymentB is Script {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
@@ -93,7 +90,6 @@ contract MoonBeamDeploymentB is Script {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
@@ -129,8 +125,7 @@ contract MoonBeamDeploymentB is Script {
     address[] tokens;
 
     function kek() public payable returns (uint256 startNft) {
-
-/*
+        /*
         {
             uint8[] memory grant = new uint8[](1);
             grant[0] = 4;
@@ -150,23 +145,21 @@ contract MoonBeamDeploymentB is Script {
         //address W = 0x04a02e3e65Fed5d93e3B7Bf7eB3E5beEa5dd212a;
 
         //IProtocolGovernance(governance).stageValidator(address(router), W);
-   //     IProtocolGovernance(governance).commitValidator(address(router));
-    //    return 0;
-
-        
+        //     IProtocolGovernance(governance).commitValidator(address(router));
+        //    return 0;
 
         tokens = new address[](2);
 
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
-       // uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
+        // uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         uint256 erc20VaultNft = vaultRegistry.vaultsCount();
 
         tokens[0] = usdc;
         tokens[1] = wglmr;
 
-       // IQuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(manager), address(0), address(0));
-/*
+        // IQuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(manager), address(0), address(0));
+        /*
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
             erc20VaultGovernance.createVault(tokens, deployer);
@@ -175,9 +168,8 @@ contract MoonBeamDeploymentB is Script {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         {
-
-         //   QuickSwapVault k = new QuickSwapVault(IAlgebraNonfungiblePositionManager(manager), helper, IAlgebraSwapRouter(router), IFarmingCenter(farm), address(0), address(0));
-/*
+            //   QuickSwapVault k = new QuickSwapVault(IAlgebraNonfungiblePositionManager(manager), helper, IAlgebraSwapRouter(router), IFarmingCenter(farm), address(0), address(0));
+            /*
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
                 protocolGovernance: IProtocolGovernance(governance),
                 registry: vaultRegistry,
@@ -185,21 +177,18 @@ contract MoonBeamDeploymentB is Script {
             });
     */
 
-            IQuickSwapVaultGovernance quickSwapVaultGovernance = IQuickSwapVaultGovernance(0x85344A85CC52512c20318Ab349F3E5c25E3CA592);
+            IQuickSwapVaultGovernance quickSwapVaultGovernance = IQuickSwapVaultGovernance(
+                0x85344A85CC52512c20318Ab349F3E5c25E3CA592
+            );
 
-          //  console2.log("quick governance:", address(quickSwapVaultGovernance));
+            //  console2.log("quick governance:", address(quickSwapVaultGovernance));
 
             {
-
                 // uint8[] memory grant2 = new uint8[](1);
-
-               // IProtocolGovernance gv = IProtocolGovernance(governance);
-
-              //  gv.stagePermissionGrants(address(quickSwapVaultGovernance), grant2);
-             //   gv.commitPermissionGrants(address(quickSwapVaultGovernance));
-
-              //  return 0;
-
+                // IProtocolGovernance gv = IProtocolGovernance(governance);
+                //  gv.stagePermissionGrants(address(quickSwapVaultGovernance), grant2);
+                //   gv.commitPermissionGrants(address(quickSwapVaultGovernance));
+                //  return 0;
             }
 
             quickSwapVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
@@ -227,7 +216,6 @@ contract MoonBeamDeploymentB is Script {
 
         strategy = new QuickPulseStrategyV2(IAlgebraNonfungiblePositionManager(manager));
 
-
         QuickPulseStrategyV2.ImmutableParams memory sParams = QuickPulseStrategyV2.ImmutableParams({
             erc20Vault: erc20Vault,
             quickSwapVault: quickswapVault,
@@ -236,7 +224,7 @@ contract MoonBeamDeploymentB is Script {
         });
 
         uint256[] memory AA = new uint256[](2);
-        
+
         AA[0] = 10**3;
         AA[1] = 10**12;
 
@@ -248,14 +236,14 @@ contract MoonBeamDeploymentB is Script {
             timespanForAverageTick: 300,
             neighborhoodFactorD: 15 * 10**7,
             extensionFactorD: 175 * 10**7,
-            swapSlippageD: 2 * 10 ** 7,
-            swappingAmountsCoefficientD: 10 ** 7,
+            swapSlippageD: 2 * 10**7,
+            swappingAmountsCoefficientD: 10**7,
             minSwapAmounts: AA
         });
 
         QuickPulseStrategyV2.DesiredAmounts memory smmParams = QuickPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10 ** 9,
-            amount1Desired: 10 ** 9
+            amount0Desired: 10**9,
+            amount1Desired: 10**9
         });
 
         {
@@ -287,13 +275,23 @@ contract MoonBeamDeploymentB is Script {
         uint256 tokenIn = 0;
         uint256 amount = 511193;
 
-        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+        bytes memory swapdata = abi.encodePacked(
+            selector,
+            abi.encode(
+                tokens[tokenIn],
+                tokens[1 - tokenIn],
+                address(erc20Vault),
+                type(uint256).max,
+                amount,
+                uint256(0),
+                uint160(0)
+            )
+        );
 
         strategy.rebalance(block.timestamp + 10000, swapdata, 0);
     }
 
     function run() external {
-
         vm.startBroadcast();
 
         DepositWrapper d = new DepositWrapper(deployer);

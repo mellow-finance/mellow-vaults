@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Holdings, 2021
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import { IAdapter } from "./helpers/IAdapter.sol";
-import { ICurvePool } from "./helpers/curve/ICurvePool.sol";
+import {IAdapter} from "./helpers/IAdapter.sol";
+import {ICurvePool} from "./helpers/curve/ICurvePool.sol";
 
 interface ICurveV1AdapterExceptions {
     error IncorrectIndexException();
@@ -49,8 +49,7 @@ interface ICurveV1Adapter is IAdapter, ICurvePool, ICurveV1AdapterExceptions {
     /// @dev Sends an order to remove all liquidity from the pool in a single asset
     /// @param i Index of the asset to withdraw
     /// @param minRateRAY Minimal exchange rate between the LP token and the received token
-    function remove_all_liquidity_one_coin(int128 i, uint256 minRateRAY)
-        external;
+    function remove_all_liquidity_one_coin(int128 i, uint256 minRateRAY) external;
 
     //
     // GETTERS
@@ -92,8 +91,5 @@ interface ICurveV1Adapter is IAdapter, ICurvePool, ICurveV1AdapterExceptions {
     /// @dev Returns the amount of lp token received when adding a single coin to the pool
     /// @param amount Amount of coin to be deposited
     /// @param i Index of a coin to be deposited
-    function calc_add_one_coin(uint256 amount, int128 i)
-        external
-        view
-        returns (uint256);
+    function calc_add_one_coin(uint256 amount, int128 i) external view returns (uint256);
 }
