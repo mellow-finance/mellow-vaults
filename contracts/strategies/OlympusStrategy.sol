@@ -4,20 +4,16 @@ pragma solidity ^0.8.0;
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 
-import {BasePulseStrategy, IERC20, IUniV3Vault, TickMath} from "./BasePulseStrategy.sol";
+import {BasePulseStrategy, IUniV3Vault, TickMath} from "./BasePulseStrategy.sol";
 
 import "../interfaces/external/olympus/IOlympusRange.sol";
-import "../interfaces/external/olympus/IOlympusPrice.sol";
 
 contract OlympusStrategy is DefaultAccessControl {
     uint256 public constant Q96 = 2**96;
 
     BasePulseStrategy public immutable baseStrategy;
     IOlympusRange public immutable range;
-    IOlympusPrice public immutable price;
     int24 public immutable tickSpacing;
-    address[] private tokens_;
-
     uint8 public immutable ohmDecimals;
     uint8 public immutable reserveDecimals;
     uint8 public immutable priceDecimals;
@@ -27,25 +23,19 @@ contract OlympusStrategy is DefaultAccessControl {
         address admin_,
         BasePulseStrategy baseStrategy_,
         IOlympusRange range_,
-        IOlympusPrice price_
+        int24 tickSpacing_,
+        uint8 ohmDecimals_,
+        uint8 reserveDecimals_,
+        uint8 priceDecimals_,
+        bool isFirstOhm_
     ) DefaultAccessControl(admin_) {
         baseStrategy = baseStrategy_;
         range = range_;
-
-        (, IUniV3Vault uniV3Vault, ) = baseStrategy.immutableParams();
-        tickSpacing = uniV3Vault.pool().tickSpacing();
-        tokens_ = uniV3Vault.vaultTokens();
-
-        if (tokens_[0] == address(range_.ohm())) {
-            isFirstOhm = true;
-            ohmDecimals = IERC20(tokens_[0]).decimals();
-            reserveDecimals = IERC20(tokens_[1]).decimals();
-        } else {
-            ohmDecimals = IERC20(tokens_[1]).decimals();
-            reserveDecimals = IERC20(tokens_[0]).decimals();
-        }
-
-        priceDecimals = price_.decimals();
+        tickSpacing = tickSpacing_;
+        ohmDecimals = ohmDecimals_;
+        reserveDecimals = reserveDecimals_;
+        priceDecimals = priceDecimals_;
+        isFirstOhm = isFirstOhm_;
     }
 
     function calculateInterval() public view returns (BasePulseStrategy.Interval memory) {
@@ -79,8 +69,8 @@ contract OlympusStrategy is DefaultAccessControl {
             );
         }
 
-        uint160 lowerSqrtPriceX96 = CommonLibrary.sqrtX96(lowerPriceX96);
-        uint160 upperSqrtPriceX96 = CommonLibrary.sqrtX96(upperPriceX96);
+        uint160 lowerSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(lowerPriceX96));
+        uint160 upperSqrtPriceX96 = uint160(CommonLibrary.sqrtX96(upperPriceX96));
 
         int24 lowerTick = TickMath.getTickAtSqrtRatio(lowerSqrtPriceX96);
         int24 upperTick = TickMath.getTickAtSqrtRatio(upperSqrtPriceX96);
