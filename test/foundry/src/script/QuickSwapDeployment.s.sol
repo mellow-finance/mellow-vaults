@@ -14,13 +14,14 @@ import "../vaults/GearboxRootVault.sol";
 import "../vaults/ERC20Vault.sol";
 import "../vaults/QuickSwapVault.sol";
 
-import "../utils/QuickSwapHelper.sol";
+import {QuickSwapHelper} from "../utils/QuickSwapHelper.sol";
 
 import "../vaults/QuickSwapVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
 import "../vaults/ERC20RootVaultGovernance.sol";
 
-import "../strategies/QuickPulseStrategyV2.sol";
+import {QuickPulseStrategyV2Helper} from "../utils/QuickPulseStrategyV2Helper.sol";
+import {QuickPulseStrategyV2} from "../strategies/QuickPulseStrategyV2.sol";
 
 contract QuickSwapDeployment is Script {
     IERC20RootVault public rootVault;
@@ -101,18 +102,7 @@ contract QuickSwapDeployment is Script {
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
-        //     QuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(0x8eF88E4c7CfbbaC1C163f7eddd4B578792201de6), 0xB5C064F955D8e7F38fE0460C556a72987494eE17, 0x958d208Cdf087843e9AD98d23823d32E17d723A1);
-
         {
-            /*
-            IVault w = new QuickSwapVault(IAlgebraNonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88), IQuickSwapHelper(helper), IAlgebraSwapRouter(0xf5b509bB0909a69B1c207E495f687a596C168E12), IFarmingCenter(0x7F281A8cdF66eF5e9db8434Ec6D97acc1bc01E78), 0x958d208Cdf087843e9AD98d23823d32E17d723A1, 0xB5C064F955D8e7F38fE0460C556a72987494eE17);
-
-            IVaultGovernance.InternalParams memory p = IVaultGovernance.InternalParams({
-                protocolGovernance: IProtocolGovernance(governance),
-                registry: IVaultRegistry(registry),
-                singleton: w
-            });
-*/
             IQuickSwapVaultGovernance quickGovernanceC = QuickSwapVaultGovernance(
                 0xaC2A04502929436062e2D0e8b9fD16b2C85fBD88
             );
@@ -128,7 +118,7 @@ contract QuickSwapDeployment is Script {
                 }),
                 bonusTokenToUnderlying: 0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B,
                 rewardTokenToUnderlying: 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619,
-                swapSlippageD: 10**7,
+                swapSlippageD: 10 ** 7,
                 rewardPoolTimespan: 60
             });
 
@@ -151,8 +141,8 @@ contract QuickSwapDeployment is Script {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**12;
+        AA[0] = 10 ** 12;
+        AA[1] = 10 ** 12;
 
         QuickPulseStrategyV2.MutableParams memory smParams = QuickPulseStrategyV2.MutableParams({
             priceImpactD6: 0,
@@ -160,16 +150,16 @@ contract QuickSwapDeployment is Script {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 10**7 * 15,
-            extensionFactorD: 10**7 * 175,
-            swapSlippageD: 10**7,
-            swappingAmountsCoefficientD: 10**7,
+            neighborhoodFactorD: 10 ** 7 * 15,
+            extensionFactorD: 10 ** 7 * 175,
+            swapSlippageD: 10 ** 7,
+            swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
 
         QuickPulseStrategyV2.DesiredAmounts memory smsParams = QuickPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10**9,
-            amount1Desired: 10**9
+            amount0Desired: 10 ** 9,
+            amount1Desired: 10 ** 9
         });
 
         {
@@ -209,38 +199,43 @@ contract QuickSwapDeployment is Script {
     }
 
     function run() external {
-        vm.startBroadcast();
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
 
-        uint256 erc20VaultNft = kek();
+        QuickPulseStrategyV2Helper helper = new QuickPulseStrategyV2Helper();
+        console2.log(address(helper));
 
-        //  rootVault = IERC20RootVault(0xAd9DF50455e690Fd2044Fd079348a1df672617B7);
+        vm.stopBroadcast();
 
-        IERC20(weth).transfer(address(strategy), 10**12);
-        IERC20(bob).transfer(address(strategy), 10**12);
+        // uint256 erc20VaultNft = kek();
 
-        //    rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
+        // //  rootVault = IERC20RootVault(0xAd9DF50455e690Fd2044Fd079348a1df672617B7);
 
-        IERC20(weth).approve(address(rootVault), 10**20);
-        IERC20(bob).approve(address(rootVault), 10**20);
+        // IERC20(weth).transfer(address(strategy), 10**12);
+        // IERC20(bob).transfer(address(strategy), 10**12);
 
-        uint256[] memory A = new uint256[](2);
-        A[0] = 10**10;
-        A[1] = 10**10;
+        // //    rootVault = IERC20RootVault(0x5Fd7eA4e9F96BBBab73D934618a75746Fd88e460);
 
-        rootVault.deposit(A, 0, "");
+        // IERC20(weth).approve(address(rootVault), 10**20);
+        // IERC20(bob).approve(address(rootVault), 10**20);
 
-        A = new uint256[](2);
-        A[0] = 10**15;
-        A[1] = 10**15;
+        // uint256[] memory A = new uint256[](2);
+        // A[0] = 10**10;
+        // A[1] = 10**10;
 
-        rootVault.deposit(A, 0, "");
+        // rootVault.deposit(A, 0, "");
 
-        address[] memory AD = new address[](1);
-        AD[0] = deployer;
+        // A = new uint256[](2);
+        // A[0] = 10**15;
+        // A[1] = 10**15;
 
-        rootVault.removeDepositorsFromAllowlist(AD);
+        // rootVault.deposit(A, 0, "");
 
-        IVaultRegistry(registry).transferFrom(deployer, sAdmin, erc20VaultNft + 2);
+        // address[] memory AD = new address[](1);
+        // AD[0] = deployer;
+
+        // rootVault.removeDepositorsFromAllowlist(AD);
+
+        // IVaultRegistry(registry).transferFrom(deployer, sAdmin, erc20VaultNft + 2);
 
         //kek();
     }

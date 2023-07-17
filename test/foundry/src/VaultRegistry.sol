@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -139,11 +139,7 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         return _protocolGovernance.isAdmin(sender);
     }
 
-    function _beforeTokenTransfer(
-        address,
-        address,
-        uint256 tokenId
-    ) internal view {
+    function _beforeTokenTransfer(address, address, uint256 tokenId) internal view {
         require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
 

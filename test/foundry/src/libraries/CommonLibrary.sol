@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./external/FullMath.sol";
 import "./ExceptionsLibrary.sol";
 
 /// @notice CommonLibrary shared utilities
 library CommonLibrary {
-    uint256 constant DENOMINATOR = 10**9;
-    uint256 constant D18 = 10**18;
+    uint256 constant DENOMINATOR = 10 ** 9;
+    uint256 constant D18 = 10 ** 18;
     uint256 constant YEAR = 365 * 24 * 3600;
-    uint256 constant Q128 = 2**128;
-    uint256 constant Q96 = 2**96;
-    uint256 constant Q48 = 2**48;
-    uint256 constant Q160 = 2**160;
-    uint256 constant UNI_FEE_DENOMINATOR = 10**6;
+    uint256 constant Q128 = 2 ** 128;
+    uint256 constant Q96 = 2 ** 96;
+    uint256 constant Q48 = 2 ** 48;
+    uint256 constant Q160 = 2 ** 160;
+    uint256 constant UNI_FEE_DENOMINATOR = 10 ** 6;
 
     /// @notice Sort uint256 using bubble sort. The sorting is done in-place.
     /// @param arr Array of uint256
@@ -119,7 +120,7 @@ library CommonLibrary {
             xx >>= 4;
             r <<= 2;
         }
-        if (xx >= 0x4) {
+        if (xx >= 0x8) {
             r <<= 1;
         }
         r = (r + x / r) >> 1;
@@ -160,15 +161,7 @@ library CommonLibrary {
     /// @return r ECDSA r
     /// @return s ECDSA s
     /// @return v ECDSA v
-    function splitSignature(bytes memory sig)
-        internal
-        pure
-        returns (
-            bytes32 r,
-            bytes32 s,
-            uint8 v
-        )
-    {
+    function splitSignature(bytes memory sig) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
         require(sig.length == 65, ExceptionsLibrary.INVALID_LENGTH);
 
         assembly {

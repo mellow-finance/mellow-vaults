@@ -111,11 +111,7 @@ interface IKyberSwapElasticLM is IKyberSwapElasticLMEvents {
      * @param liqs list liquidity value to join each nft
      *
      */
-    function join(
-        uint256 pId,
-        uint256[] calldata nftIds,
-        uint256[] calldata liqs
-    ) external;
+    function join(uint256 pId, uint256[] calldata nftIds, uint256[] calldata liqs) external;
 
     /**
      * @dev Exit from pools
@@ -124,11 +120,7 @@ interface IKyberSwapElasticLM is IKyberSwapElasticLMEvents {
      * @param liqs list liquidity value to exit from each nft
      *
      */
-    function exit(
-        uint256 pId,
-        uint256[] calldata nftIds,
-        uint256[] calldata liqs
-    ) external;
+    function exit(uint256 pId, uint256[] calldata nftIds, uint256[] calldata liqs) external;
 
     /**
      * @dev Operator only. Call to withdraw all reward from list pools.
@@ -149,16 +141,14 @@ interface IKyberSwapElasticLM is IKyberSwapElasticLMEvents {
 
     function poolLength() external view returns (uint256);
 
-    function getUserInfo(uint256 nftId, uint256 pId)
-        external
-        view
-        returns (
-            uint256 liquidity,
-            uint256[] memory rewardPending,
-            uint256[] memory rewardLast
-        );
+    function getUserInfo(
+        uint256 nftId,
+        uint256 pId
+    ) external view returns (uint256 liquidity, uint256[] memory rewardPending, uint256[] memory rewardLast);
 
-    function getPoolInfo(uint256 pId)
+    function getPoolInfo(
+        uint256 pId
+    )
         external
         view
         returns (
@@ -176,8 +166,8 @@ interface IKyberSwapElasticLM is IKyberSwapElasticLMEvents {
 
     function getDepositedNFTs(address user) external view returns (uint256[] memory listNFTs);
 
-    function getRewardCalculationData(uint256 nftId, uint256 pId)
-        external
-        view
-        returns (RewardCalculationData memory data);
+    function getRewardCalculationData(
+        uint256 nftId,
+        uint256 pId
+    ) external view returns (RewardCalculationData memory data);
 }

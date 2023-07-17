@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./FullMath.sol";
-import "./TickMath.sol";
+import "../../interfaces/external/algebrav2/FullMath.sol";
+import "../../interfaces/external/algebrav2/TickMath.sol";
 import "../../interfaces/external/algebrav2/IAlgebraPool.sol";
 import "../../interfaces/external/algebrav2/IDataStorageOperator.sol";
 import "../../interfaces/external/algebrav2/libraries/LowGasSafeMath.sol";
