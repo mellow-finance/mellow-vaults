@@ -39,5 +39,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["MellowVaultGovernance", "core", ...ALL_NETWORKS];
+func.tags = ["MellowVaultGovernance", "core", ...MAIN_NETWORKS];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

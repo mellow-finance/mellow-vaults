@@ -2,17 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "./IOracle.sol";
-import "./IUniV2Oracle.sol";
-import "./IUniV3Oracle.sol";
-import "./IChainlinkOracle.sol";
 
 interface IMellowOracle is IOracle {
     /// @notice Reference to UniV2 oracle
-    function univ2Oracle() external view returns (IUniV2Oracle);
+    function univ2Oracle() external view returns (IOracle);
 
     /// @notice Reference to UniV3 oracle
-    function univ3Oracle() external view returns (IUniV3Oracle);
+    function univ3Oracle() external view returns (IOracle);
 
     /// @notice Reference to Chainlink oracle
-    function chainlinkOracle() external view returns (IChainlinkOracle);
+    function chainlinkOracle() external view returns (IOracle);
 }

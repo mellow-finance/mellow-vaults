@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
-import { ALL_NETWORKS, TRANSACTION_GAS_LIMITS } from "./0000_utils";
+import { MAIN_NETWORKS, TRANSACTION_GAS_LIMITS } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -18,5 +18,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["UniV2Validator", "core", ...ALL_NETWORKS];
+func.tags = ["UniV2Validator", "core", ...MAIN_NETWORKS];
 func.dependencies = ["ProtocolGovernance"];

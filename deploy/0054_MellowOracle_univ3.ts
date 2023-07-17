@@ -11,11 +11,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, execute } = deployments;
     const { deployer } = await getNamedAccounts();
-    const { address: chainlinkOracle } = await get("ChainlinkOracle");
-    const { address: univ3Oracle } = await get("UniV3Oracle");
+    // const { address: chainlinkOracle } = await get("ChainlinkOracle");
+    const { address: univ3Oracle } = await get("PancakeV3Oracle");
     await deploy("MellowOracle", {
         from: deployer,
-        args: [hre.ethers.constants.AddressZero, univ3Oracle, chainlinkOracle],
+        args: [hre.ethers.constants.AddressZero, univ3Oracle, hre.ethers.constants.AddressZero],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
@@ -25,8 +25,5 @@ export default func;
 func.tags = [
     "MellowOracle",
     "core",
-    ...MAIN_NETWORKS,
-    "polygon",
-    "arbitrum",
-    "optimism",
+    ...ALL_NETWORKS
 ];

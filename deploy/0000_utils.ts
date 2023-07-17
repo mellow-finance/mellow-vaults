@@ -15,8 +15,9 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 // 2e10 for mainnet
 // 1e11 for polygon
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
-    maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+    // maxFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+    // maxPriorityFeePerGas: ethers.BigNumber.from(20).mul(10 ** 9),
+    gasPrice: ethers.BigNumber.from(10 ** 9)
 };
 
 export const ALLOWED_APPROVE_LIST = {
@@ -72,6 +73,20 @@ export const ALLOWED_APPROVE_LIST = {
             "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063", // DAI
         ],
     },
+    polygonzkevm: {
+        uniV3: [],
+        uniV2: [],
+        curve: [],
+        erc20: [
+            "0x4f9a0e7fd2bf6067db6994cf12e4495df938e6e9", // WETH
+            "0xa8ce8aee21bc2a48a5ef670afcc9274c7bbbc035", // USDC
+            "0xea034fb02eb1808c2cc3adbc15f447b93cbe08e1", // WBTC
+            "0x1e4a5963abfd975d8c9021ce480b42188849d41d", // USDT
+        ],
+        all: [
+            "0x678aa4bf4e210cf2166753e054d5b7c31cc7fa86",
+        ]
+    },
 };
 
 export const PRIVATE_VAULT = true;
@@ -106,6 +121,7 @@ export const ALL_NETWORKS = [
     "fantom",
     "xdai",
     "rinkeby",
+    "polygonzkevm",
 ];
 export const MAIN_NETWORKS = [
     "hardhat",

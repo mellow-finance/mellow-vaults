@@ -41,7 +41,7 @@ const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 
-const buildSinglePositionStrategy = async (
+const buildStrategy = async (
     hre: HardhatRuntimeEnvironment,
     tokens: string[]
 ) => {
@@ -91,7 +91,7 @@ const buildSinglePositionStrategy = async (
             poolForSwap: '0x517F451b0A9E1b87Dc0Ae98A05Ee033C3310F046',
             cake: '0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898',
             underlyingToken: weth,
-            smartRouter: '0x13f4EA83D0bd40E75C8222255bc855a974568Dd4',
+            smartRouter: "0x678aa4bf4e210cf2166753e054d5b7c31cc7fa86",
             averageTickTimespan: 30
         }
     );
@@ -103,7 +103,7 @@ const buildSinglePositionStrategy = async (
     );
 
     const strategy = await hre.ethers.getContract(deploymentName);  
-    const { address: proxyAddress } = await deploy("PancakeSwapPulseStrategyV2_WETH_USDT", {
+    const { address: proxyAddress } = await deploy("PancakeSwapPulseStrategyV2_WETH_USDC", {
         from: deployer,
         contract: "TransparentUpgradeableProxy",
         args: [
@@ -183,7 +183,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await deployStrategy(hre);
     return;
-    await buildSinglePositionStrategy(hre, [weth, usdt]);
+    await buildStrategy(hre, [weth, usdt]);
 }
 
 export default func;

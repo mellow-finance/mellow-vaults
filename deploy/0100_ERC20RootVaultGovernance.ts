@@ -11,13 +11,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
     const { address: oracle } = await get("MellowOracle");
-    const { deployer, aaveLendingPool } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
     const { address: singleton } = await deploy("ERC20RootVault", {
         from: deployer,
         args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
+        gasLimit: BigNumber.from(10).pow(6).mul(6)
     });
     const { address: helperAddress } = await deploy("ERC20RootVaultHelper", {
         from: deployer,
@@ -25,6 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
+        gasLimit: BigNumber.from(10).pow(6).mul(6)
     });
     const { address: ERC20RootVaultGovernanceAddress } = await deploy(
         "ERC20RootVaultGovernance",
@@ -42,6 +44,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             log: true,
             autoMine: true,
             ...TRANSACTION_GAS_LIMITS,
+            gasLimit: BigNumber.from(10).pow(6).mul(6)
         }
     );
     const approvedIssuer = await read(

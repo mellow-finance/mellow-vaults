@@ -9,15 +9,29 @@ import {
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, get, read, execute } = deployments;
-    const { deployer, uniswapV2Factory } = await getNamedAccounts();
-    await deploy("UniV2Oracle", {
+    const { deploy } = deployments;
+    const { deployer, admin } =
+        await getNamedAccounts();
+
+    const pools = [
+        "0x4641377ba87c2640B4f8D2EEcCE1F5c20048f7ed"
+    ];
+
+    await deploy("PancakeV3Oracle", {
         from: deployer,
-        args: [uniswapV2Factory],
+        args: [
+            "0x0bfbcf9fa4f9c56b0f40a671ad40e0805a091865",
+            pools,
+            admin
+        ],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
 };
 export default func;
-func.tags = ["UniV2Oracle", "core", ...MAIN_NETWORKS];
+func.tags = [
+    "PancakeV3Oracle",
+    "core",
+    ...ALL_NETWORKS,
+];

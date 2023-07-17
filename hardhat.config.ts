@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
-import "@nomiclabs/hardhat-etherscan";
+import "@nomicfoundation/hardhat-verify";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
@@ -103,7 +103,18 @@ const config: HardhatUserConfig = {
                     : undefined,
             chainId: 137,
         },
-
+        polygonzkevm: {
+            url: process.env["POLYGON_ZKEVM_RPC"] || "https://zkevm-rpc.com",
+            accounts:
+                process.env["POLYGON_ZKEVM_DEPLOYER_PK"] &&
+                process.env["POLYGON_ZKEVM_APPROVER_PK"]
+                    ? [
+                          process.env["POLYGON_ZKEVM_DEPLOYER_PK"],
+                          process.env["POLYGON_ZKEVM_APPROVER_PK"],
+                      ]
+                    : undefined,
+            chainId: 1101,
+        },
         bsc: {
             url: process.env["BSC_RPC"] || "https://bsc-dataseed.binance.org",
             accounts:
@@ -178,6 +189,7 @@ const config: HardhatUserConfig = {
             kovan: process.env["KOVAN_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             avalanche: process.env["AVALANCHE_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
+            polygonzkevm: process.env["POLYGON_ZKEVM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             optimism: process.env["OPTIMISM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
@@ -188,6 +200,7 @@ const config: HardhatUserConfig = {
             kovan: process.env["KOVAN_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             avalanche: process.env["AVALANCHE_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_STRATEGY_ADMIN_ADDRESS"] || "0x0",
+            polygonzkevm: process.env["POLYGON_ZKEVM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             arbitrum: process.env["ARBITRUM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             optimism: process.env["OPTIMISM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
@@ -199,6 +212,7 @@ const config: HardhatUserConfig = {
             avalanche:
                 process.env["AVALANCHE_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_STRATEGY_TREASURY_ADDRESS"] || "0x0",
+            polygonzkevm: process.env["POLYGON_ZKEVM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             arbitrum:
                 process.env["ARBITRUM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
@@ -212,6 +226,7 @@ const config: HardhatUserConfig = {
             avalanche:
                 process.env["AVALANCHE_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
+            polygonzkevm: process.env["POLYGON_ZKEVM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             arbitrum:
                 process.env["ARBITRUM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
@@ -235,6 +250,7 @@ const config: HardhatUserConfig = {
             kovan: "0xd1b98b6607330172f1d991521145a22bce793277",
             avalanche: "0x50b7545627a5162f82a992c33b87adc75187b218",
             polygon: "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
+            polygonzkevm: "0xea034fb02eb1808c2cc3adbc15f447b93cbe08e1",
             fantom: "0x321162Cd933E2Be498Cd2267a90534A804051b11",
             bsc: "0xd47Ba9A00EB87B9E753c6651e402DAD7D9f1C4Ca",
             xdai: "0x8e5bBbb09Ed1ebdE8674Cda39A0c169401db4252",
@@ -244,12 +260,14 @@ const config: HardhatUserConfig = {
         },
         usdt: {
             default: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            polygonzkevm: "0x1e4a5963abfd975d8c9021ce480b42188849d41d",
         },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
             kovan: "0xe22da380ee6b445bb8273c81944adeb6e8450422",
             avalanche: "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664",
             polygon: "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+            polygonzkevm: "0xa8ce8aee21bc2a48a5ef670afcc9274c7bbbc035",
             fantom: "0x04068da6c83afcfa0e13ba15a6696662335d5b75",
             bsc: "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
             xdai: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83",
@@ -262,6 +280,7 @@ const config: HardhatUserConfig = {
             kovan: "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
             avalanche: "0x49d5c2bdffac6ce2bfdb6640f4f80f226bc10bab",
             polygon: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+            polygonzkevm: "0x4f9a0e7fd2bf6067db6994cf12e4495df938e6e9",
             fantom: "0x74b23882a30290451A17c44f4F05243b6b58C76d",
             xdai: "0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1",
             arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
@@ -290,6 +309,7 @@ const config: HardhatUserConfig = {
             kovan: "0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa",
             avalanche: "0xd586e7f844cea2f87f50152665bcbc2c279d8d70",
             polygon: "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+            polygonzkevm: "0xc5015b9d9161dca7e18e32f6f25c4ad850731fd4",
             fantom: "0x8d11ec38a3eb5e956b052f67da8bdc9bef8abf3e",
             bsc: "0x334b3ecb4dca3593bccc3c7ebd1a1c1d1780fbf1",
             xdai: "0xFc8B2690F66B46fEC8B3ceeb95fF4Ac35a0054BC",
@@ -317,6 +337,7 @@ const config: HardhatUserConfig = {
         },
         pancakeSwapRouter: {
             default: "0x13f4EA83D0bd40E75C8222255bc855a974568Dd4",
+            polygonzkevm: "0x678aa4bf4e210cf2166753e054d5b7c31cc7fa86",
         },
         pancakePositionManager: {
             default: "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
@@ -417,6 +438,16 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: process.env["ETHERSCAN_API_KEY"],
+        customChains: [
+            {
+              network: "polygonzkevm",
+              chainId: 1101,
+              urls: {
+                apiURL: "https://api-zkevm.polygonscan.com/api",
+                browserURL: "https://zkevm.polygonscan.com"
+              }
+            }
+          ]
     },
 };
 

@@ -17,13 +17,14 @@ import {
 import { ethers } from "ethers";
 import { deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
+import { exit } from "process";
 
 // TODO: refactor this
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute, read, getOrNull } = deployments;
-    const { deployer, admin, protocolTreasury, weth, wbtc, usdc } =
+    const { log, execute, read } = deployments;
+    const { deployer, admin, protocolTreasury } =
         await getNamedAccounts();
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
@@ -88,6 +89,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             autoMine: true,
             log: true,
             ...TRANSACTION_GAS_LIMITS,
+            gasLimit: BigNumber.from(10 ** 6).mul(6)
         },
         "multicall",
         txDatas
@@ -132,8 +134,8 @@ async function registerTokens(
         "ProtocolGovernance"
     );
     const erc20Validator = await deployments.get("ERC20Validator");
-    const { weth, wbtc, usdc, usdt, dai, wsteth } = await hre.getNamedAccounts();
-    const tokens = [weth, wbtc, usdc, usdt, dai, wsteth]
+    const { weth, wbtc, usdc, usdt} = await hre.getNamedAccounts();
+    const tokens = [weth, wbtc, usdc, usdt]
         .map((t) => t.toLowerCase())
         .sort();
     for (const token of tokens) {
@@ -192,6 +194,7 @@ async function registerExternalProtocols(
         uniV2: "UniV2Validator",
         curve: "CurveValidator",
         erc20: "ERC20Validator",
+        all: "AllowAllValidator",
     };
     for (const key in validators) {
         // @ts-ignore
@@ -217,17 +220,11 @@ async function setUnitPrices(
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
-    const { admin, weth, wbtc, usdc, usdt, wsteth } = await hre.getNamedAccounts();
+    const { admin, weth, wbtc, usdc, usdt } = await hre.getNamedAccounts();
     const txWETH = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(weth, WETH_PRICE);
     txDatas.push(txWETH.data);
-    if (wsteth) {
-        const txWSTETH = await protocolGovernance
-            .connect(admin)
-            .populateTransaction.stageUnitPrice(wsteth, WETH_PRICE);
-        txDatas.push(txWSTETH.data);
-    }
     const txWBTC = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(wbtc, WBTC_PRICE);
@@ -244,12 +241,7 @@ async function setUnitPrices(
         .connect(admin)
         .populateTransaction.commitUnitPrice(weth);
     txDatas.push(txWETHc.data);
-    if (wsteth) {
-        const txWSTETHc = await protocolGovernance
-            .connect(admin)
-            .populateTransaction.commitUnitPrice(wsteth);
-        txDatas.push(txWSTETHc.data);
-    }
+
     const txWBTCc = await protocolGovernance
         .connect(admin)
         .populateTransaction.commitUnitPrice(wbtc);
