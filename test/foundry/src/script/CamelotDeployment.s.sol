@@ -8,7 +8,7 @@ import "../../src/MockOracle.sol";
 import "../../src/MockRouter.sol";
 
 import "../../src/vaults/CamelotVaultGovernance.sol";
-import "../../src/strategies/CamelotPulseStrategyV2.sol";
+import {CamelotPulseStrategyV2} from "../../src/strategies/CamelotPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
@@ -52,8 +52,8 @@ contract CamelotDeployment is Script {
 
     function firstDeposit() public {
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 10**10;
-        amounts[1] = 10**4;
+        amounts[0] = 10 ** 10;
+        amounts[1] = 10 ** 4;
 
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -69,8 +69,8 @@ contract CamelotDeployment is Script {
         }
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = amount * 10**15;
-        amounts[1] = amount * 10**6;
+        amounts[0] = amount * 10 ** 15;
+        amounts[1] = amount * 10 ** 6;
 
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -154,8 +154,8 @@ contract CamelotDeployment is Script {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**3;
+        AA[0] = 10 ** 12;
+        AA[1] = 10 ** 3;
 
         CamelotPulseStrategyV2.MutableParams memory smParams = CamelotPulseStrategyV2.MutableParams({
             priceImpactD6: 0,
@@ -163,16 +163,16 @@ contract CamelotDeployment is Script {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 15 * 10**7,
-            extensionFactorD: 175 * 10**7,
-            swapSlippageD: 10**7,
-            swappingAmountsCoefficientD: 10**7,
+            neighborhoodFactorD: 15 * 10 ** 7,
+            extensionFactorD: 175 * 10 ** 7,
+            swapSlippageD: 10 ** 7,
+            swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
         });
 
         CamelotPulseStrategyV2.DesiredAmounts memory smmParams = CamelotPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 10**9,
-            amount1Desired: 10**9
+            amount0Desired: 10 ** 9,
+            amount1Desired: 10 ** 9
         });
 
         {
@@ -186,8 +186,8 @@ contract CamelotDeployment is Script {
         camelotStrategy.updateMutableParams(smParams);
         camelotStrategy.updateDesiredAmounts(smmParams);
 
-        IERC20(weth).transfer(address(camelotStrategy), 10**9);
-        IERC20(usdc).transfer(address(camelotStrategy), 10**3);
+        IERC20(weth).transfer(address(camelotStrategy), 10 ** 9);
+        IERC20(usdc).transfer(address(camelotStrategy), 10 ** 3);
 
         bytes32 ADMIN_ROLE = bytes32(0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8); // keccak256("admin)
         bytes32 ADMIN_DELEGATE_ROLE = bytes32(0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7); // keccak256("admin_delegate")

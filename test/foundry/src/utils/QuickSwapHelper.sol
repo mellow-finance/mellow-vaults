@@ -3,13 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {PositionValue, LiquidityAmounts} from "../interfaces/external/quickswap/PositionValue.sol";
+import {PositionValue, LiquidityAmounts, TickMath, FullMath} from "../interfaces/external/quickswap/PositionValue.sol";
 import "../interfaces/utils/IQuickSwapHelper.sol";
 import "../interfaces/external/quickswap/IDragonLair.sol";
 
 import "../libraries/external/DataStorageLibrary.sol";
-import "../libraries/external/TickMath.sol";
-import "../libraries/external/FullMath.sol";
 
 contract QuickSwapHelper is IQuickSwapHelper {
     IAlgebraNonfungiblePositionManager public immutable positionManager;
@@ -18,14 +16,10 @@ contract QuickSwapHelper is IQuickSwapHelper {
     address public immutable quickToken;
     address public immutable dQuickToken;
 
-    uint256 public constant Q128 = 2**128;
-    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q128 = 2 ** 128;
+    uint256 public constant Q96 = 2 ** 96;
 
-    constructor(
-        IAlgebraNonfungiblePositionManager positionManager_,
-        address quickToken_,
-        address dQuickToken_
-    ) {
+    constructor(IAlgebraNonfungiblePositionManager positionManager_, address quickToken_, address dQuickToken_) {
         require(address(positionManager_) != address(0));
         positionManager = positionManager_;
         factory = IAlgebraFactory(positionManager.factory());
@@ -147,11 +141,10 @@ contract QuickSwapHelper is IQuickSwapHelper {
         liquidity = liquidity < positionLiquidity ? liquidity : positionLiquidity;
     }
 
-    function increaseCumulative(uint32 currentTimestamp, IAlgebraEternalVirtualPool virtualPool)
-        public
-        view
-        returns (uint256 deltaTotalRewardGrowth0, uint256 deltaTotalRewardGrowth1)
-    {
+    function increaseCumulative(
+        uint32 currentTimestamp,
+        IAlgebraEternalVirtualPool virtualPool
+    ) public view returns (uint256 deltaTotalRewardGrowth0, uint256 deltaTotalRewardGrowth1) {
         unchecked {
             uint256 timeDelta = currentTimestamp - virtualPool.prevTimestamp(); // safe until timedelta > 136 years
             if (timeDelta == 0) return (0, 0);

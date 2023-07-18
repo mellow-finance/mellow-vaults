@@ -1,15 +1,15 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "./IntegrationVault.sol";
 import "../utils/GearboxHelper.sol";
-import "../interfaces/IDegenDistributor.sol";
+import "../interfaces/external/gearbox/helpers/IDegenDistributor.sol";
 
 contract GearboxVault is IGearboxVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D9 = 10**9;
-    uint256 public constant D7 = 10**7;
+    uint256 public constant D9 = 10 ** 9;
+    uint256 public constant D7 = 10 ** 7;
 
     GearboxHelper internal _helper;
 
@@ -119,11 +119,7 @@ contract GearboxVault is IGearboxVault, IntegrationVault {
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IGearboxVault
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        address helper_
-    ) external {
+    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external {
         require(vaultTokens_.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
         _initialize(vaultTokens_, nft_);

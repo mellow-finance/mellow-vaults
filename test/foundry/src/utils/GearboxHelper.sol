@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -15,8 +15,8 @@ import "../interfaces/external/gearbox/helpers/convex/IBooster.sol";
 contract GearboxHelper {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D9 = 10**9;
-    uint256 public constant D27 = 10**27;
+    uint256 public constant D9 = 10 ** 9;
+    uint256 public constant D27 = 10 ** 27;
     bytes4 public constant GET_REWARD_SELECTOR = 0x7050ccd9;
 
     ICreditFacade public creditFacade;
@@ -54,15 +54,7 @@ contract GearboxHelper {
         admin = IGearboxVault(msg.sender);
     }
 
-    function verifyInstances()
-        external
-        view
-        returns (
-            int128 primaryIndex,
-            address convexOutputToken,
-            uint256 poolId
-        )
-    {
+    function verifyInstances() external view returns (int128 primaryIndex, address convexOutputToken, uint256 poolId) {
         ICurveV1Adapter curveAdapter_ = ICurveV1Adapter(curveAdapter);
         IConvexV1BaseRewardPoolAdapter convexAdapter_ = IConvexV1BaseRewardPoolAdapter(convexAdapter);
 
@@ -87,11 +79,10 @@ contract GearboxHelper {
         require(lpToken == convexAdapter_.curveLPtoken(), ExceptionsLibrary.INVALID_TARGET);
     }
 
-    function calculateEarnedCvxAmountByEarnedCrvAmount(uint256 crvAmount, address cvxTokenAddress)
-        public
-        view
-        returns (uint256)
-    {
+    function calculateEarnedCvxAmountByEarnedCrvAmount(
+        uint256 crvAmount,
+        address cvxTokenAddress
+    ) public view returns (uint256) {
         IConvexToken cvxToken = IConvexToken(cvxTokenAddress);
 
         unchecked {
@@ -270,11 +261,7 @@ contract GearboxHelper {
         }
     }
 
-    function claimRewards(
-        address vaultGovernance,
-        address creditAccount,
-        address convexOutputToken
-    ) public {
+    function claimRewards(address vaultGovernance, address creditAccount, address convexOutputToken) public {
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         uint256 balance = IERC20(convexOutputToken).balanceOf(creditAccount);
@@ -335,11 +322,7 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function withdrawFromConvex(
-        uint256 amount,
-        address vaultGovernance,
-        int128 primaryIndex
-    ) public {
+    function withdrawFromConvex(uint256 amount, address vaultGovernance, int128 primaryIndex) public {
         if (amount == 0) {
             return;
         }
@@ -520,10 +503,10 @@ contract GearboxHelper {
         admin.multicall(calls);
     }
 
-    function pullFromAddress(uint256 amount, address vaultGovernance)
-        external
-        returns (uint256[] memory actualAmounts)
-    {
+    function pullFromAddress(
+        uint256 amount,
+        address vaultGovernance
+    ) external returns (uint256[] memory actualAmounts) {
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
 
         IGearboxVaultGovernance.DelayedProtocolParams memory protocolParams = IGearboxVaultGovernance(vaultGovernance)
@@ -575,11 +558,7 @@ contract GearboxHelper {
         actualAmounts[0] = amount;
     }
 
-    function openCreditAccount(
-        address creditAccount,
-        address vaultGovernance,
-        uint256 marginalFactorD9
-    ) external {
+    function openCreditAccount(address creditAccount, address vaultGovernance, uint256 marginalFactorD9) external {
         require(msg.sender == address(admin), ExceptionsLibrary.FORBIDDEN);
         require(creditAccount == address(0), ExceptionsLibrary.DUPLICATE);
 

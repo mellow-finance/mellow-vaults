@@ -8,7 +8,7 @@ import "../../src/utils/QuickSwapHelper.sol";
 import "../../src/MockOracle.sol";
 
 import "../../src/vaults/QuickSwapVaultGovernance.sol";
-import "../../src/strategies/QuickPulseStrategyV2.sol";
+import {QuickPulseStrategyV2} from "../../src/strategies/QuickPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
@@ -18,10 +18,9 @@ import "../../src/interfaces/vaults/IERC20RootVault.sol";
 import "../../src/interfaces/vaults/IERC20Vault.sol";
 import "../../src/interfaces/vaults/IQuickSwapVault.sol";
 
-import "../../src/vaults/QuickSwapVault.sol";
+import {QuickSwapVault} from "../../src/vaults/QuickSwapVault.sol";
 
 contract StellaStrategyTest is Test {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     IQuickSwapVault quickswapVault;
@@ -57,14 +56,13 @@ contract StellaStrategyTest is Test {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-        
-        deal(wglmr, deployer, 10**10);
-        deal(usdc, deployer, 10**4);
+        deal(wglmr, deployer, 10 ** 10);
+        deal(usdc, deployer, 10 ** 4);
 
         uint256[] memory amounts = new uint256[](2);
 
-        amounts[0] = 10**4;
-        amounts[1] = 10**10;
+        amounts[0] = 10 ** 4;
+        amounts[1] = 10 ** 10;
 
         IERC20(wglmr).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -75,18 +73,17 @@ contract StellaStrategyTest is Test {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
 
-        deal(wglmr, deployer, amount * 10**18);
-        deal(usdc, deployer, amount * 10**6);
+        deal(wglmr, deployer, amount * 10 ** 18);
+        deal(usdc, deployer, amount * 10 ** 6);
 
         uint256[] memory amounts = new uint256[](2);
 
-        amounts[0] = amount * 10**6;
-        amounts[1] = amount * 10**18;
+        amounts[0] = amount * 10 ** 6;
+        amounts[1] = amount * 10 ** 18;
 
         IERC20(wglmr).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -97,7 +94,6 @@ contract StellaStrategyTest is Test {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
@@ -133,7 +129,6 @@ contract StellaStrategyTest is Test {
     address[] tokens;
 
     function kek() public payable returns (uint256 startNft) {
-
         tokens = new address[](2);
 
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -142,7 +137,11 @@ contract StellaStrategyTest is Test {
         tokens[0] = usdc;
         tokens[1] = wglmr;
 
-        IQuickSwapHelper helper = new QuickSwapHelper(IAlgebraNonfungiblePositionManager(manager), address(0), address(0));
+        IQuickSwapHelper helper = new QuickSwapHelper(
+            IAlgebraNonfungiblePositionManager(manager),
+            address(0),
+            address(0)
+        );
 
         {
             IERC20VaultGovernance erc20VaultGovernance = IERC20VaultGovernance(erc20Governance);
@@ -155,8 +154,14 @@ contract StellaStrategyTest is Test {
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         {
-
-            QuickSwapVault k = new QuickSwapVault(IAlgebraNonfungiblePositionManager(manager), helper, IAlgebraSwapRouter(router), IFarmingCenter(farm), address(0), address(0));
+            QuickSwapVault k = new QuickSwapVault(
+                IAlgebraNonfungiblePositionManager(manager),
+                helper,
+                IAlgebraSwapRouter(router),
+                IFarmingCenter(farm),
+                address(0),
+                address(0)
+            );
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
                 protocolGovernance: IProtocolGovernance(governance),
@@ -167,7 +172,6 @@ contract StellaStrategyTest is Test {
             IQuickSwapVaultGovernance quickSwapVaultGovernance = new QuickSwapVaultGovernance(paramsA);
 
             {
-
                 uint8[] memory grant2 = new uint8[](1);
 
                 IProtocolGovernance gv = IProtocolGovernance(governance);
@@ -181,7 +185,6 @@ contract StellaStrategyTest is Test {
 
                 vm.stopPrank();
                 vm.startPrank(deployer);
-
             }
 
             quickSwapVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
@@ -198,14 +201,11 @@ contract StellaStrategyTest is Test {
                 key: key,
                 bonusTokenToUnderlying: wglmr,
                 rewardTokenToUnderlying: wglmr,
-                swapSlippageD: 10**7,
+                swapSlippageD: 10 ** 7,
                 rewardPoolTimespan: 300
             });
 
             quickSwapVaultGovernance.setStrategyParams(erc20VaultNft + 1, qsp);
-
-
-
         }
 
         quickswapVault = IQuickSwapVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
@@ -229,7 +229,6 @@ contract StellaStrategyTest is Test {
 
             vm.stopPrank();
             vm.startPrank(deployer);
-
         }
 
         address W = 0x04a02e3e65Fed5d93e3B7Bf7eB3E5beEa5dd212a;
@@ -252,9 +251,9 @@ contract StellaStrategyTest is Test {
         });
 
         uint256[] memory AA = new uint256[](2);
-        
-        AA[0] = 10**3;
-        AA[1] = 10**12;
+
+        AA[0] = 10 ** 3;
+        AA[1] = 10 ** 12;
 
         QuickPulseStrategyV2.MutableParams memory smParams = QuickPulseStrategyV2.MutableParams({
             priceImpactD6: 5000,
@@ -262,8 +261,8 @@ contract StellaStrategyTest is Test {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 15 * 10**7,
-            extensionFactorD: 175 * 10**7,
+            neighborhoodFactorD: 15 * 10 ** 7,
+            extensionFactorD: 175 * 10 ** 7,
             swapSlippageD: 2 * 10 ** 7,
             swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
@@ -274,9 +273,9 @@ contract StellaStrategyTest is Test {
             amount1Desired: 10 ** 9
         });
 
-     //   kyberVault.updateFarmInfo();
+        //   kyberVault.updateFarmInfo();
 
-     //   preparePush(address(kyberVault));
+        //   preparePush(address(kyberVault));
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -289,16 +288,15 @@ contract StellaStrategyTest is Test {
         strategy.updateMutableParams(smParams);
         strategy.updateDesiredAmounts(smmParams);
 
-        deal(wglmr, address(strategy), 10**9);
-        deal(usdc, address(strategy), 10**9);
+        deal(wglmr, address(strategy), 10 ** 9);
+        deal(usdc, address(strategy), 10 ** 9);
     }
 
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
         uint256 delta;
         if (x < y) {
             delta = y - x;
-        }
-        else {
+        } else {
             delta = x - y;
         }
 
@@ -310,7 +308,6 @@ contract StellaStrategyTest is Test {
     }
 
     function setUp() external {
-
         vm.startPrank(deployer);
 
         uint256 startNft = kek();
@@ -325,11 +322,21 @@ contract StellaStrategyTest is Test {
         uint256 tokenIn = 0;
         uint256 amount = 4985950;
 
-        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+        bytes memory swapdata = abi.encodePacked(
+            selector,
+            abi.encode(
+                tokens[tokenIn],
+                tokens[1 - tokenIn],
+                address(erc20Vault),
+                type(uint256).max,
+                amount,
+                uint256(0),
+                uint160(0)
+            )
+        );
 
         strategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
-
 
     function testFailSmallDepositRebalanceWrongAmount() public {
         firstDeposit();
@@ -340,7 +347,18 @@ contract StellaStrategyTest is Test {
         uint256 tokenIn = 0;
         uint256 amount = 3985950;
 
-        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+        bytes memory swapdata = abi.encodePacked(
+            selector,
+            abi.encode(
+                tokens[tokenIn],
+                tokens[1 - tokenIn],
+                address(erc20Vault),
+                type(uint256).max,
+                amount,
+                uint256(0),
+                uint160(0)
+            )
+        );
 
         strategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
@@ -354,15 +372,24 @@ contract StellaStrategyTest is Test {
         uint256 tokenIn = 0;
         uint256 amount = 49809693113;
 
-        bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+        bytes memory swapdata = abi.encodePacked(
+            selector,
+            abi.encode(
+                tokens[tokenIn],
+                tokens[1 - tokenIn],
+                address(erc20Vault),
+                type(uint256).max,
+                amount,
+                uint256(0),
+                uint160(0)
+            )
+        );
 
         strategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
 
     function testFarmingWorksCorrectly() public {
-
         {
-
             firstDeposit();
             deposit(10);
 
@@ -371,13 +398,23 @@ contract StellaStrategyTest is Test {
             uint256 tokenIn = 0;
             uint256 amount = 4985950;
 
-            bytes memory swapdata = abi.encodePacked(selector, abi.encode(tokens[tokenIn], tokens[1 - tokenIn], address(erc20Vault), type(uint256).max, amount, uint256(0), uint160(0)));
+            bytes memory swapdata = abi.encodePacked(
+                selector,
+                abi.encode(
+                    tokens[tokenIn],
+                    tokens[1 - tokenIn],
+                    address(erc20Vault),
+                    type(uint256).max,
+                    amount,
+                    uint256(0),
+                    uint160(0)
+                )
+            );
 
             strategy.rebalance(block.timestamp + 1, swapdata, 0);
-
         }
 
-        deal(usdc, deployer, 10**10);
+        deal(usdc, deployer, 10 ** 10);
 
         IERC20(usdc).approve(router, type(uint256).max);
         IERC20(wglmr).approve(router, type(uint256).max);
@@ -389,7 +426,7 @@ contract StellaStrategyTest is Test {
             tokenOut: tokens[1],
             recipient: deployer,
             deadline: type(uint256).max,
-            amountIn: 10**10,
+            amountIn: 10 ** 10,
             amountOutMinimum: 0,
             limitSqrtPrice: 0
         });

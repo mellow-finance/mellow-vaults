@@ -15,8 +15,8 @@ interface IAlgebraPoolDerivedState {
     /// @param topTick The upper tick of the range
     /// @return innerSecondsSpentPerLiquidity The snapshot of seconds per liquidity for the range
     /// @return innerSecondsSpent The snapshot of the number of seconds during which the price was in this range
-    function getInnerCumulatives(int24 bottomTick, int24 topTick)
-        external
-        view
-        returns (uint160 innerSecondsSpentPerLiquidity, uint32 innerSecondsSpent);
+    function getInnerCumulatives(
+        int24 bottomTick,
+        int24 topTick
+    ) external view returns (uint160 innerSecondsSpentPerLiquidity, uint32 innerSecondsSpent);
 }

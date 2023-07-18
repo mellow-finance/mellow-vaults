@@ -13,7 +13,7 @@ import "../vaults/ERC20Vault.sol";
 import "../vaults/ERC20RootVault.sol";
 import "../vaults/QuickSwapVault.sol";
 
-import "../utils/QuickSwapHelper.sol";
+import {QuickSwapHelper} from "../utils/QuickSwapHelper.sol";
 
 import "../vaults/QuickSwapVaultGovernance.sol";
 import "../vaults/ERC20VaultGovernance.sol";
@@ -22,7 +22,7 @@ import "../vaults/ERC20RootVaultGovernance.sol";
 import "../validators/QuickSwapValidator.sol";
 import "../validators/ERC20Validator.sol";
 
-import "../strategies/QuickPulseStrategyV2.sol";
+import {QuickPulseStrategyV2} from "../strategies/QuickPulseStrategyV2.sol";
 
 contract MoonBeamDeploymentA is Script {
     address public wglmr = 0xAcc15dC74880C9944775448304B263D191c6077F;
@@ -42,9 +42,9 @@ contract MoonBeamDeploymentA is Script {
         console2.log("governance: ", address(governance));
         console2.log("registry: ", address(registry));
 
-        governance.stageUnitPrice(wglmr, 4 * 10**17);
-        governance.stageUnitPrice(usdc, 10**6);
-        governance.stageUnitPrice(dot, 10**10 / 5);
+        governance.stageUnitPrice(wglmr, 4 * 10 ** 17);
+        governance.stageUnitPrice(usdc, 10 ** 6);
+        governance.stageUnitPrice(dot, 10 ** 10 / 5);
 
         governance.commitUnitPrice(wglmr);
         governance.commitUnitPrice(usdc);

@@ -10,7 +10,7 @@ import "../../src/MockOracle.sol";
 import "../../src/MockRouter.sol";
 
 import "../../src/vaults/CamelotVaultGovernance.sol";
-import "../../src/strategies/CamelotPulseStrategyV2.sol";
+import {CamelotPulseStrategyV2} from "../../src/strategies/CamelotPulseStrategyV2.sol";
 
 import "../../src/interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../../src/interfaces/vaults/IERC20VaultGovernance.sol";
@@ -23,7 +23,6 @@ import "../../src/interfaces/vaults/ICamelotVault.sol";
 import "../../src/vaults/CamelotVault.sol";
 
 contract CamelotStrategyTest is Test {
-
     IERC20RootVault public rootVault;
     IERC20Vault erc20Vault;
     ICamelotVault camelotVault;
@@ -54,13 +53,12 @@ contract CamelotStrategyTest is Test {
     IERC20RootVaultGovernance rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
     function firstDeposit() public {
-        
-        deal(weth, deployer, 10**10);
-        deal(usdc, deployer, 10**4);
+        deal(weth, deployer, 10 ** 10);
+        deal(usdc, deployer, 10 ** 4);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 10**10;
-        amounts[1] = 10**4;
+        amounts[0] = 10 ** 10;
+        amounts[1] = 10 ** 4;
 
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -71,17 +69,16 @@ contract CamelotStrategyTest is Test {
     }
 
     function deposit(uint256 amount) public {
-
         if (rootVault.totalSupply() == 0) {
             firstDeposit();
         }
 
-        deal(weth, deployer, amount * 10**15);
-        deal(usdc, deployer, amount * 10**6);
+        deal(weth, deployer, amount * 10 ** 15);
+        deal(usdc, deployer, amount * 10 ** 6);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = amount * 10**15;
-        amounts[1] = amount * 10**6;
+        amounts[0] = amount * 10 ** 15;
+        amounts[1] = amount * 10 ** 6;
 
         IERC20(weth).approve(address(rootVault), type(uint256).max);
         IERC20(usdc).approve(address(rootVault), type(uint256).max);
@@ -92,14 +89,18 @@ contract CamelotStrategyTest is Test {
     }
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
 
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
 
-        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(tokens, address(camelotStrategy), nfts, deployer);
+        (IERC20RootVault w, uint256 nft) = rootVaultGovernance.createVault(
+            tokens,
+            address(camelotStrategy),
+            nfts,
+            deployer
+        );
         rootVault = w;
         rootVaultGovernance.setStrategyParams(
             nft,
@@ -126,7 +127,6 @@ contract CamelotStrategyTest is Test {
     }
 
     function kek() public payable returns (uint256 startNft) {
-
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
@@ -142,12 +142,11 @@ contract CamelotStrategyTest is Test {
         }
 
         MockOracle mockOracle = new MockOracle();
-        mockOracle.updatePrice(14832901 * 10**13);
+        mockOracle.updatePrice(14832901 * 10 ** 13);
 
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         {
-
             CamelotVault k = new CamelotVault(IAlgebraNonfungiblePositionManager(manager), helper);
 
             IVaultGovernance.InternalParams memory paramsA = IVaultGovernance.InternalParams({
@@ -159,7 +158,6 @@ contract CamelotStrategyTest is Test {
             ICamelotVaultGovernance camelotVaultGovernance = new CamelotVaultGovernance(paramsA);
 
             {
-
                 uint8[] memory grant2 = new uint8[](1);
 
                 IProtocolGovernance gv = IProtocolGovernance(governance);
@@ -173,7 +171,6 @@ contract CamelotStrategyTest is Test {
 
                 vm.stopPrank();
                 vm.startPrank(deployer);
-
             }
 
             camelotVaultGovernance.createVault(tokens, deployer, address(erc20Vault));
@@ -199,7 +196,6 @@ contract CamelotStrategyTest is Test {
 
             vm.stopPrank();
             vm.startPrank(deployer);
-
         }
 
         address W = 0x52314d240BCA143aCF755870659B9035eE357bb6;
@@ -222,8 +218,8 @@ contract CamelotStrategyTest is Test {
         });
 
         uint256[] memory AA = new uint256[](2);
-        AA[0] = 10**12;
-        AA[1] = 10**3;
+        AA[0] = 10 ** 12;
+        AA[1] = 10 ** 3;
 
         CamelotPulseStrategyV2.MutableParams memory smParams = CamelotPulseStrategyV2.MutableParams({
             priceImpactD6: 0,
@@ -231,8 +227,8 @@ contract CamelotStrategyTest is Test {
             maxPositionLengthInTicks: 15000,
             maxDeviationForVaultPool: 50,
             timespanForAverageTick: 300,
-            neighborhoodFactorD: 15 * 10**7,
-            extensionFactorD: 175 * 10**7,
+            neighborhoodFactorD: 15 * 10 ** 7,
+            extensionFactorD: 175 * 10 ** 7,
             swapSlippageD: 10 ** 7,
             swappingAmountsCoefficientD: 10 ** 7,
             minSwapAmounts: AA
@@ -243,9 +239,9 @@ contract CamelotStrategyTest is Test {
             amount1Desired: 10 ** 9
         });
 
-     //   kyberVault.updateFarmInfo();
+        //   kyberVault.updateFarmInfo();
 
-     //   preparePush(address(kyberVault));
+        //   preparePush(address(kyberVault));
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -258,19 +254,18 @@ contract CamelotStrategyTest is Test {
         camelotStrategy.updateMutableParams(smParams);
         camelotStrategy.updateDesiredAmounts(smmParams);
 
-        deal(weth, address(camelotStrategy), 10**9);
-        deal(usdc, address(camelotStrategy), 10**9);
+        deal(weth, address(camelotStrategy), 10 ** 9);
+        deal(usdc, address(camelotStrategy), 10 ** 9);
 
-        deal(weth, address(mockRouter), 10**25);
-        deal(usdc, address(mockRouter), 10**25);
+        deal(weth, address(mockRouter), 10 ** 25);
+        deal(usdc, address(mockRouter), 10 ** 25);
     }
 
     function isClose(uint256 x, uint256 y, uint256 measure) public returns (bool) {
         uint256 delta;
         if (x < y) {
             delta = y - x;
-        }
-        else {
+        } else {
             delta = x - y;
         }
 
@@ -282,7 +277,6 @@ contract CamelotStrategyTest is Test {
     }
 
     function setUp() external {
-
         vm.startPrank(deployer);
 
         uint256 startNft = kek();
@@ -315,6 +309,4 @@ contract CamelotStrategyTest is Test {
 
         camelotStrategy.rebalance(block.timestamp + 1, swapdata, 0);
     }
-
-
 }
