@@ -14,6 +14,8 @@ import "../libraries/external/TickMath.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
+import "forge-std/Test.sol";
+
 contract BasePulseStrategy is ContractMeta, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
@@ -205,6 +207,7 @@ contract BasePulseStrategy is ContractMeta, DefaultAccessControlLateInit, ILpCal
     }
 
     function compareIntervals(Interval memory newInterval, uint256 nft) public view returns (bool) {
+        if (nft == 0) return false;
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(nft);
         return newInterval.lowerTick == tickLower && newInterval.upperTick == tickUpper;
     }
@@ -308,6 +311,7 @@ contract BasePulseStrategy is ContractMeta, DefaultAccessControlLateInit, ILpCal
     ) public view returns (uint256 tokenInIndex, uint256 amountIn) {
         uint256 targetRatioOfToken0X96 = Q96 - targetRatioOfToken1X96;
         (uint256[] memory currentAmounts, ) = immutableParams_.erc20Vault.tvl();
+        if (currentAmounts[0] + currentAmounts[1] == 0) return (0, 0);
         uint256 currentRatioOfToken1X96 = FullMath.mulDiv(
             currentAmounts[1],
             Q96,

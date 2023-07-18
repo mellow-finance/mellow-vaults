@@ -5,12 +5,15 @@ import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 import "../../src/strategies/BasePulseStrategy.sol";
 import "../../src/strategies/OlympusStrategy.sol";
 
 import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/DepositWrapper.sol";
+import "../../src/utils/BasePulseStrategyHelper.sol";
 import "../../src/utils/UniV3Helper.sol";
 
 import "../../src/vaults/ERC20Vault.sol";
@@ -25,7 +28,7 @@ import "../../src/vaults/UniV3VaultGovernance.sol";
 contract OlympusTest is Test {
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
-    IPancakeSwapVault public pancakeSwapVault;
+    IUniV3Vault public uniV3Vault;
 
     uint256 public nftStart;
     address public sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
@@ -44,9 +47,11 @@ contract OlympusTest is Test {
     address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
     address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
+    address public uniV3VaultGovernance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
-    INonfungiblePositionManager public positionManager = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+    INonfungiblePositionManager public positionManager =
+        INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
     address public swapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
@@ -54,7 +59,10 @@ contract OlympusTest is Test {
     DepositWrapper public depositWrapper = new DepositWrapper(deployer);
     MockRouter public router = new MockRouter();
 
-    uint256 public constant Q96 = 2**96;
+    BasePulseStrategy public strategy = new BasePulseStrategy(positionManager);
+    OlympusStrategy public olympusStrategy;
+
+    uint256 public constant Q96 = 2 ** 96;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -95,43 +103,30 @@ contract OlympusTest is Test {
     }
 
     function deployVaults() public {
+        vm.startPrank(deployer);
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = usdc;
-        tokens[1] = weth;
-        vm.startPrank(deployer);
+        tokens[0] = ohm;
+        tokens[1] = usdc;
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
-        IUniV3VaultGovernance(pancakeSwapVaultGovernance).createVault(
+        IUniV3VaultGovernance(uniV3VaultGovernance).createVault(
             tokens,
             deployer,
-            500,
-            0xe04DC6F116A85508cD6299229218Ed4719E43F2a
+            3000,
+            0xA995B345d22Db15c9a36Cb6928967AFCFAb84fDb
         );
 
-        pancakeSwapVault = IPancakeSwapVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
+        uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        pancakeSwapVaultGovernance.setStrategyParams(
-            pancakeSwapVault.nft(),
-            IPancakeSwapVaultGovernance.StrategyParams({
-                swapSlippageD: 1e7,
-                poolForSwap: 0x517F451b0A9E1b87Dc0Ae98A05Ee033C3310F046,
-                cake: 0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898,
-                underlyingToken: weth,
-                smartRouter: swapRouter,
-                averageTickTimespan: 30
-            })
-        );
-
-        pancakeSwapVaultGovernance.stageDelayedStrategyParams(
+        IUniV3VaultGovernance(uniV3VaultGovernance).stageDelayedStrategyParams(
             erc20VaultNft + 1,
-            IPancakeSwapVaultGovernance.DelayedStrategyParams({safetyIndicesSet: 2})
+            IUniV3VaultGovernance.DelayedStrategyParams({safetyIndicesSet: 2})
         );
-
-        pancakeSwapVaultGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
+        IUniV3VaultGovernance(uniV3VaultGovernance).commitDelayedStrategyParams(erc20VaultNft + 1);
 
         {
             uint256[] memory nfts = new uint256[](2);
@@ -142,129 +137,184 @@ contract OlympusTest is Test {
         vm.stopPrank();
     }
 
-    function deployGovernances() public {
+    BasePulseStrategyHelper public strategyHelper = new BasePulseStrategyHelper();
+
+    function deployGlobalParams() public {
         vm.startPrank(admin);
         uint8[] memory permission = new uint8[](2);
         permission[0] = 2;
         permission[0] = 3;
         IProtocolGovernance(governance).stagePermissionGrants(address(ohm), permission);
         IProtocolGovernance(governance).stageValidator(address(ohm), 0xf7A19974dC36E1Ad9A74e967B0Bc9B24e0f4C4b3);
+        IProtocolGovernance(governance).stageValidator(address(router), 0xa8a78538Fc6D44951d6e957192a9772AfB02dd2f);
+        permission = new uint8[](1);
+        permission[0] = 4;
+        IProtocolGovernance(governance).stagePermissionGrants(address(router), permission);
         skip(24 * 3600);
         IProtocolGovernance(governance).commitPermissionGrants(address(ohm));
+        IProtocolGovernance(governance).commitPermissionGrants(address(router));
         IProtocolGovernance(governance).commitValidator(address(ohm));
+        IProtocolGovernance(governance).commitValidator(address(router));
         vm.stopPrank();
+    }
+
+    function actualizeRouter(address tokenIn) public {
+        deal(usdc, address(router), type(uint128).max);
+        deal(ohm, address(router), type(uint128).max);
+
+        (uint160 sqrtPriceX96, , , , , , ) = uniV3Vault.pool().slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        if (ohm != tokenIn) priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
+
+        router.setPrice(priceX96);
     }
 
     function initializeStrategy() public {
         vm.startPrank(sAdmin);
 
+        uint256[] memory minSwapAmounts = new uint256[](2);
+        minSwapAmounts[0] = 1e8;
+        minSwapAmounts[1] = 1e6;
+
         strategy.initialize(
-            PancakeSwapPulseStrategyV2.ImmutableParams({
+            BasePulseStrategy.ImmutableParams({
                 erc20Vault: erc20Vault,
-                pancakeSwapVault: pancakeSwapVault,
+                uniV3Vault: uniV3Vault,
                 router: address(router),
                 tokens: erc20Vault.vaultTokens()
             }),
             sAdmin
         );
 
-        uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e7;
-        minSwapAmounts[1] = 5e15;
-
         strategy.updateMutableParams(
-            PancakeSwapPulseStrategyV2.MutableParams({
+            BasePulseStrategy.MutableParams({
                 priceImpactD6: 0,
-                defaultIntervalWidth: 4200,
-                maxPositionLengthInTicks: 10000,
-                maxDeviationForVaultPool: 100,
-                timespanForAverageTick: 30,
-                neighborhoodFactorD: 1e9,
-                extensionFactorD: 1e8,
+                maxDeviationForVaultPool: 50,
+                timespanForAverageTick: 60,
                 swapSlippageD: 1e7,
                 swappingAmountsCoefficientD: 1e7,
                 minSwapAmounts: minSwapAmounts
             })
         );
 
-        strategy.updateDesiredAmounts(
-            PancakeSwapPulseStrategyV2.DesiredAmounts({amount0Desired: 1e6, amount1Desired: 1e9})
-        );
-
-        deal(usdc, address(strategy), 10**8);
-        deal(weth, address(strategy), 10**11);
+        strategy.updateDesiredAmounts(BasePulseStrategy.DesiredAmounts({amount0Desired: 1e4, amount1Desired: 1e4}));
 
         vm.stopPrank();
     }
 
-    function rebalance() public {
-        (uint256 amountIn, address tokenIn, address tokenOut, IERC20Vault reciever) = strategyHelper
-            .calculateAmountForSwap(strategy);
-
-        {
-            deal(usdc, address(router), type(uint128).max);
-            deal(weth, address(router), type(uint128).max);
-
-            (uint160 sqrtPriceX96, , , , , , ) = pancakeSwapVault.pool().slot0();
-            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-            if (tokenIn != usdc) priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
-
-            router.setPrice(priceX96);
+    function deposit(uint256 coef) public {
+        uint256 totalSupply = rootVault.totalSupply();
+        uint256[] memory tokenAmounts = rootVault.pullExistentials();
+        address[] memory tokens = rootVault.vaultTokens();
+        for (uint256 i = 0; i < tokens.length; i++) {
+            tokenAmounts[i] *= 10 * coef;
+            deal(tokens[i], deployer, tokenAmounts[i]);
         }
+        vm.startPrank(deployer);
+        if (totalSupply == 0) {
+            for (uint256 i = 0; i < tokens.length; i++) {
+                IERC20(tokens[i]).approve(address(depositWrapper), type(uint256).max);
+            }
+            depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
+        } else {
+            depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
+        }
+        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
 
-        bytes memory swapData = abi.encodeWithSelector(router.swap.selector, amountIn, tokenIn, tokenOut, reciever);
+        vm.stopPrank();
+    }
+
+    function simpleRebalance() public {
+        (, int24 lowerTick, , , , , ) = uniV3Vault.pool().slot0();
+        int24 tickSpacing = uniV3Vault.pool().tickSpacing();
+        lowerTick -= lowerTick % tickSpacing;
+        int24 upperTick = lowerTick + 1000 * tickSpacing;
+        lowerTick -= 1000 * tickSpacing;
+
+        BasePulseStrategy.Interval memory interval = BasePulseStrategy.Interval({
+            lowerTick: lowerTick,
+            upperTick: upperTick
+        });
+        (uint256 amountIn, address from, address to, ) = strategyHelper.calculateAmountForSwap(strategy, interval);
+
+        bytes memory swapData = abi.encodeWithSelector(router.swap.selector, amountIn, from, to, address(erc20Vault));
+
+        actualizeRouter(from);
+        deal(usdc, address(strategy), 10 ** 6);
+        deal(ohm, address(strategy), 10 ** 6);
 
         vm.startPrank(sAdmin);
-        strategy.rebalance(type(uint256).max, swapData, 0);
+        strategy.rebalance(type(uint256).max, interval, swapData, 0);
         vm.stopPrank();
     }
 
-    function movePrice(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) public {
-        vm.startPrank(deployer);
-        deal(tokenIn, deployer, amountIn);
-        IERC20(tokenIn).approve(swapRouter, amountIn);
-        ISmartRouter(swapRouter).exactInputSingle(
-            ISmartRouter.ExactInputSingleParams({
-                tokenIn: tokenIn,
-                tokenOut: tokenOut,
-                fee: 500,
-                recipient: deployer,
-                amountIn: amountIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            })
+    function smartRebalance() public {
+        // address admin_,
+        // BasePulseStrategy baseStrategy_,
+        // IOlympusRange range_,
+        // int24 tickSpacing_,
+        // uint8 ohmDecimals_,
+        // uint8 reserveDecimals_,
+        // uint8 priceDecimals_,
+        // bool isFirstOhm_
+
+        olympusStrategy = new OlympusStrategy(
+            sAdmin,
+            strategy,
+            IOlympusRange(0xb212D9584cfc56EFf1117F412Fe0bBdc53673954),
+            60,
+            9,
+            6,
+            18,
+            true
         );
 
-        skip(24 * 3600);
+        BasePulseStrategy.Interval memory interval = olympusStrategy.calculateInterval();
+
+        console2.log(
+            "New interval: -",
+            uint256(int256(-interval.lowerTick)),
+            "-",
+            uint256(-int256(interval.upperTick))
+        );
+
+        (uint256 amountIn, address from, address to, ) = strategyHelper.calculateAmountForSwap(strategy, interval);
+        bytes memory swapData = abi.encodeWithSelector(router.swap.selector, amountIn, from, to, address(erc20Vault));
+
+        actualizeRouter(from);
+
+        vm.startPrank(sAdmin);
+        strategy.grantRole(strategy.ADMIN_DELEGATE_ROLE(), address(sAdmin));
+        strategy.grantRole(strategy.OPERATOR(), address(olympusStrategy));
+        olympusStrategy.rebalance(type(uint256).max, swapData, 0);
         vm.stopPrank();
     }
 
-    function testCompound() external {
-        deployGovernances();
+    function manualRebalance(int24 lowerTick, int24 upperTick) public {
+        BasePulseStrategy.Interval memory interval = BasePulseStrategy.Interval({
+            lowerTick: lowerTick,
+            upperTick: upperTick
+        });
+        (uint256 amountIn, address from, address to, ) = strategyHelper.calculateAmountForSwap(strategy, interval);
+
+        bytes memory swapData = abi.encodeWithSelector(router.swap.selector, amountIn, from, to, address(erc20Vault));
+        actualizeRouter(from);
+
+        vm.startPrank(sAdmin);
+        strategy.rebalance(type(uint256).max, interval, swapData, 0);
+        vm.stopPrank();
+    }
+
+    function test() external {
+        deployGlobalParams();
         deployVaults();
-        firstDeposit();
         initializeStrategy();
-        rebalance();
-
-        deposit();
-
-        movePrice(usdc, weth, 1e6 * 100000);
-        skip(60 * 60);
-        movePrice(usdc, weth, 1e6 * 100000);
-        skip(60 * 60);
-        movePrice(weth, usdc, 1e18 * 100);
-
-        deposit();
-
-        uint256 calculatedRewards = vaultHelper.calculateActualPendingCake(
-            pancakeSwapVault.masterChef(),
-            pancakeSwapVault.uniV3Nft()
-        );
-        uint256 actualRewards = pancakeSwapVault.compound();
-        console2.log(calculatedRewards, actualRewards);
+        deposit(1);
+        simpleRebalance();
+        deposit(100);
+        smartRebalance();
+        smartRebalance();
+        manualRebalance(-45900, -45000);
+        smartRebalance();
     }
 }
