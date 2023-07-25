@@ -26,6 +26,8 @@ import "../../src/vaults/ERC20RootVaultGovernance.sol";
 import "../../src/vaults/UniV3Vault.sol";
 import "../../src/vaults/UniV3VaultGovernance.sol";
 
+import "../../src/oracles/OHMOracle.sol";
+
 contract OlympusDeployment is Script {
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
@@ -217,11 +219,17 @@ contract OlympusDeployment is Script {
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
 
-        deployVaults();
-        initializeStrategy();
-        deposit(1);
-        smartRebalance();
-        deposit(10);
+        OHMOracle oracle = new OHMOracle();
+
+        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle
+            .latestRoundData();
+        console2.log(uint256(answer));
+
+        // deployVaults();
+        // initializeStrategy();
+        // deposit(1);
+        // smartRebalance();
+        // deposit(10);
 
         vm.stopBroadcast();
     }
