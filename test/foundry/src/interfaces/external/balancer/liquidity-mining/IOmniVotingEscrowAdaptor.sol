@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 /**
  * @dev Interface for `OmniVotingEscrowAdaptor`.
@@ -34,9 +34,5 @@ interface IOmniVotingEscrowAdaptor {
      * @param _dstChainId - Destination chain ID.
      * @param _refundAddress - Address where to return excess ETH.
      */
-    function sendUserBalance(
-        address _user,
-        uint16 _dstChainId,
-        address payable _refundAddress
-    ) external payable;
+    function sendUserBalance(address _user, uint16 _dstChainId, address payable _refundAddress) external payable;
 }

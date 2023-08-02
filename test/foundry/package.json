@@ -19,7 +19,7 @@
       "test:kyber": "forge test -vvvv --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --fork-block-number 39892000 --match-path 'test/kyber/*.sol'",
       "test:pancake": "forge test -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/pancake/*.sol'",
       "test:olympus": "forge test -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/olympus/*.sol'",
-      "test:balancer": "forge test -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/balancer/*.sol'",
+      "test:balancer": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/balancer/*.sol'",
       "deploy:goerli": "forge script src/script/GoerliDeployment.s.sol:GoerliDeployment --rpc-url $(grep GOERLI_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:mainnet": "forge script src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --private-key $(grep PRIVATE_KEY_MAINNET .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
       "deploy:pancake": "forge script src/script/DeployPancakeVault.s.sol:DeployPancakeVault --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",

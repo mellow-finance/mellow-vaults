@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General external License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity ^0.7.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./IOmniVotingEscrowAdaptor.sol";
@@ -97,11 +97,7 @@ interface IVotingEscrowRemapper {
      * @param remoteUser - The address to receive `localUser`'s balance of veBAL on the remote chain.
      * @param chainId - The chain id of the remote chain on which `remoteUser` resides.
      */
-    function setNetworkRemapping(
-        address localUser,
-        address remoteUser,
-        uint16 chainId
-    ) external payable;
+    function setNetworkRemapping(address localUser, address remoteUser, uint16 chainId) external payable;
 
     /**
      * @notice Sets an address to manage the mapping for a given local user on their behalf.

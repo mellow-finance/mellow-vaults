@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "../vault/IVault.sol";
 import "./IProtocolFeesWithdrawer.sol";
@@ -70,14 +70,9 @@ interface IProtocolFeeSplitter {
      * @return revenueSharePercentageOverride - the percentage of the split sent to the pool beneficiary.
      * @return beneficiary - the address of the pool beneficiary.
      */
-    function getRevenueShareSettings(bytes32 poolId)
-        external
-        view
-        returns (
-            uint256 revenueSharePercentageOverride,
-            address beneficiary,
-            bool overrideSet
-        );
+    function getRevenueShareSettings(
+        bytes32 poolId
+    ) external view returns (uint256 revenueSharePercentageOverride, address beneficiary, bool overrideSet);
 
     /**
      * @dev Returns the default revenue share percentage a pool will receive, unless overridden by a call

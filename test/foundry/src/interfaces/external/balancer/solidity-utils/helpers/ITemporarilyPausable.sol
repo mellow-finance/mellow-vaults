@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 /**
  * @dev Interface for the TemporarilyPausable helper.
@@ -29,9 +29,5 @@ interface ITemporarilyPausable {
     function getPausedState()
         external
         view
-        returns (
-            bool paused,
-            uint256 pauseWindowEndTime,
-            uint256 bufferPeriodEndTime
-        );
+        returns (bool paused, uint256 pauseWindowEndTime, uint256 bufferPeriodEndTime);
 }

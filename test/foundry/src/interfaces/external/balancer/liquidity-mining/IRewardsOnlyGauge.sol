@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "./IChildChainStreamer.sol";
 import "./IRewardTokenDistributor.sol";
@@ -22,22 +22,14 @@ import "./IRewardTokenDistributor.sol";
 // solhint-disable func-name-mixedcase
 
 interface IRewardsOnlyGauge is IRewardTokenDistributor {
-    function initialize(
-        address pool,
-        address streamer,
-        bytes32 claimSignature
-    ) external;
+    function initialize(address pool, address streamer, bytes32 claimSignature) external;
 
     // solhint-disable-next-line func-name-mixedcase
     function lp_token() external view returns (IERC20);
 
     function reward_contract() external view returns (IChildChainStreamer);
 
-    function set_rewards(
-        address childChainStreamer,
-        bytes32 claimSig,
-        address[8] calldata rewardTokens
-    ) external;
+    function set_rewards(address childChainStreamer, bytes32 claimSig, address[8] calldata rewardTokens) external;
 
     function last_claim() external view returns (uint256);
 }

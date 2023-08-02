@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 /**
  * @dev Interface for the OptionalOnlyCaller helper, used to opt in to a caller
@@ -30,11 +30,7 @@ interface IOptionalOnlyCaller {
      */
     function setOnlyCallerCheck(bool enabled) external;
 
-    function setOnlyCallerCheckWithSignature(
-        address user,
-        bool enabled,
-        bytes memory signature
-    ) external;
+    function setOnlyCallerCheckWithSignature(address user, bool enabled, bytes memory signature) external;
 
     /**
      * @dev Returns true if caller verification is enabled for the given user, false otherwise.

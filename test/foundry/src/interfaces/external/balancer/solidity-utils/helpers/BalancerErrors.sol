@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.1 <0.9.0;
+pragma solidity ^0.8.0;
 
 // solhint-disable
 
@@ -29,11 +29,7 @@ function _require(bool condition, uint256 errorCode) pure {
  * @dev Reverts if `condition` is false, with a revert reason containing `errorCode`. Only codes up to 999 are
  * supported.
  */
-function _require(
-    bool condition,
-    uint256 errorCode,
-    bytes3 prefix
-) pure {
+function _require(bool condition, uint256 errorCode, bytes3 prefix) pure {
     if (!condition) _revert(errorCode, prefix);
 }
 

@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "../vault/IVault.sol";
@@ -35,9 +35,10 @@ import "../vault/IVault.sol";
  * structs for simplicity.
  */
 interface IBalancerQueries {
-    function querySwap(IVault.SingleSwap memory singleSwap, IVault.FundManagement memory funds)
-        external
-        returns (uint256);
+    function querySwap(
+        IVault.SingleSwap memory singleSwap,
+        IVault.FundManagement memory funds
+    ) external returns (uint256);
 
     function queryBatchSwap(
         IVault.SwapKind kind,

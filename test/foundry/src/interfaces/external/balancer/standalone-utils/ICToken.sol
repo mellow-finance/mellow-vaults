@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity ^0.7.0;
+pragma solidity ^0.8.0;
 
 // Interface for MidasCapital. An open interest protocol based on
 // modified Fuse contracts. Anyone can create an deploy isolated

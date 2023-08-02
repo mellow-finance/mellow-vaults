@@ -12,15 +12,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 interface IAuthorizer {
     /**
      * @dev Returns true if `account` can perform the action described by `actionId` in the contract `where`.
      */
-    function canPerform(
-        bytes32 actionId,
-        address account,
-        address where
-    ) external view returns (bool);
+    function canPerform(bytes32 actionId, address account, address where) external view returns (bool);
 }

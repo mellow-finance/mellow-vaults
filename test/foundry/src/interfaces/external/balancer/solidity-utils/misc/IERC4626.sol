@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "../openzeppelin/IERC20.sol";
 
@@ -42,11 +42,7 @@ interface IERC4626 is IERC20 {
     /**
      * @dev Burns exactly `shares` from `owner` and sends `assets` of underlying tokens to `receiver`.
      */
-    function redeem(
-        uint256 shares,
-        address receiver,
-        address owner
-    ) external returns (uint256 assets);
+    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
 
     /**
      * @dev The address of the underlying token that the Vault uses for accounting, depositing, and withdrawing.

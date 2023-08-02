@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "../solidity-utils/openzeppelin/IERC20.sol";
 
@@ -49,11 +49,7 @@ interface IGearboxVault {
      * @dev Adds liquidity to pool and sends diesel (LP) tokens back to the liquidity provider
      * The Referral code can be 0
      */
-    function addLiquidity(
-        uint256 underlyingAmount,
-        address onBehalfOf,
-        uint256 referralCode
-    ) external;
+    function addLiquidity(uint256 underlyingAmount, address onBehalfOf, uint256 referralCode) external;
 
     /**
      * @dev Removes liquidity from the pool and sends the underlying tokens to the `to` address

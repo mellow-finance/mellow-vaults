@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./IAuthorizerAdaptorEntrypoint.sol";
@@ -23,7 +23,16 @@ import "./IStakingLiquidityGauge.sol";
 
 interface IGaugeAdder is IAuthentication {
     // Deprecated. TODO: remove from interfaces, and remove references.
-    enum GaugeType { LiquidityMiningCommittee, veBAL, Ethereum, Polygon, Arbitrum, Optimism, Gnosis, ZKSync }
+    enum GaugeType {
+        LiquidityMiningCommittee,
+        veBAL,
+        Ethereum,
+        Polygon,
+        Arbitrum,
+        Optimism,
+        Gnosis,
+        ZKSync
+    }
 
     // String values are hashed when indexed, so we also emit the raw string as a data field for ease of use.
     event GaugeTypeAdded(string indexed indexedGaugeType, string gaugeType);
