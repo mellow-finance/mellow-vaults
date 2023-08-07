@@ -5,62 +5,34 @@ import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console2.sol";
 
-// import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../src/interfaces/external/balancer/vault/IVault.sol";
+import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../src/interfaces/external/balancer/vault/IVault.sol";
 import {IBasePool} from "../../src/interfaces/external/balancer/vault/IBasePool.sol";
 
-// import {IStakingLiquidityGauge} from "../../src/interfaces/external/balancer/liquidity-mining/IStakingLiquidityGauge.sol";
-// import {IBalancerMinter} from "../../src/interfaces/external/balancer/liquidity-mining/IBalancerMinter.sol";
-
-// import {WeightedPoolUserData} from "../../src/interfaces/external/balancer/pool-weighted/WeightedPoolUserData.sol";
-// import {StablePoolUserData} from "../../src/interfaces/external/balancer/pool-stable/StablePoolUserData.sol";
+import "../../src/vaults/BalancerV2VaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
 
 import "../../src/vaults/BalancerV2Vault.sol";
+import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20Vault.sol";
+
+import "../../src/utils/DepositWrapper.sol";
 
 contract BalancerTest is Test {
     IBalancerVault public vault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
-    // address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
-    address public deployer = address(1234123);
     address public constant GHO = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
     address public constant WSTETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
     address public constant LUSD = 0x5f98805A4E8be255a32880FDeC7F6728C6568bA0;
+    address public constant BAL = 0xba100000625a3754423978a60c9317c58a424e3D;
 
     address public constant GHO_WSTETH_POOL = 0x7D98f308Db99FDD04BbF4217a4be8809F38fAa64;
     address public constant GHO_LUSD_POOL = 0x3FA8C89704e5d07565444009e5d9e624B40Be813;
     address public constant GHO_BOOSTED_STABLE_POOL = 0xc2B021133D1b0cF07dba696fd5DD89338428225B;
 
-    function testVault() external {
-        BalancerV2Vault vault_ = new BalancerV2Vault();
+    address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
 
-        uint256 balToUSDC = vault_.getPriceToUSDX96(
-            IAggregatorV3(0xdF2917806E30300537aEB49A7663062F4d1F2b5F),
-            IAsset(0xba100000625a3754423978a60c9317c58a424e3D)
-        );
-
-        uint256 ghoToUSDC = vault_.getPriceToUSDX96(
-            IAggregatorV3(0x3f12643D3f6f874d39C2a4c9f2Cd6f2DbAC877FC),
-            IAsset(0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f)
-        );
-
-        console2.log((1e18 * balToUSDC) / 2 ** 96, (1e18 * ghoToUSDC) / 2 ** 96);
-
-        //     BalancerV2WeightedVault.RewardSwapParameters({
-        //         swaps: new IBalancerVault.BatchSwapStep[](0),
-        //         assets: new IAsset[](0),
-        //         funds: IBalancerVault.FundManagement({
-        //             sender: deployer,
-        //             fromInternalBalance: false,
-        //             recipient: payable(deployer),
-        //             toInternalBalance: false
-        //         }),
-        //         rewardOracle: IAggregatorV3(0xdF2917806E30300537aEB49A7663062F4d1F2b5F),
-        //         underlyingOracle: IAggregatorV3(0x3f12643D3f6f874d39C2a4c9f2Cd6f2DbAC877FC),
-        //         slippageD: 1e7
-        //     })
-        // );
-    }
-
-    function _testWeightedPool() external {
+    function testWeightedPool() external {
         vm.startPrank(deployer);
 
         // IBalancerMinter minter = IBalancerMinter(0x239e55F427D44C3cc793f49bFB507ebe76638a2b);
@@ -136,7 +108,7 @@ contract BalancerTest is Test {
         vm.stopPrank();
     }
 
-    function _testComposableStablePool() external {
+    function testComposableStablePool() external {
         vm.startPrank(deployer);
 
         bytes32 poolId = IBasePool(GHO_LUSD_POOL).getPoolId();
@@ -201,7 +173,7 @@ contract BalancerTest is Test {
         vm.stopPrank();
     }
 
-    function _testOneTokenComposableStablePool() external {
+    function testOneTokenComposableStablePool() external {
         vm.startPrank(deployer);
 
         bytes32 poolId = IBasePool(GHO_BOOSTED_STABLE_POOL).getPoolId();

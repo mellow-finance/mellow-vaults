@@ -63,6 +63,7 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
         require(vaultTokens_.length == poolTokens.length, ExceptionsLibrary.INVALID_VALUE);
         for (uint256 i = 0; i < poolTokens.length; i++) {
             require(address(poolTokens[i]) == vaultTokens_[i], ExceptionsLibrary.INVALID_TOKEN);
+            IERC20(address(poolTokens[i])).safeApprove(address(balancerVault_), type(uint256).max);
         }
 
         _initialize(vaultTokens_, nft_);
@@ -79,7 +80,10 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
 
     /// @inheritdoc IBalancerV2Vault
     function claimRewards() external returns (uint256 amount) {
-        amount = balancerMinter.mint(address(this));
+        amount = balancerMinter.mint(address(stakingLiquidityGauge));
+        if (amount == 0) {
+            return 0;
+        }
 
         IBalancerV2VaultGovernance.StrategyParams memory rewardSwapParams_ = IBalancerV2VaultGovernance(
             address(_vaultGovernance)
@@ -100,6 +104,8 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
         limits[limits.length - 1] = -int256(minAmountOut);
         rewardSwapParams_.swaps[0].amount = amount;
 
+        IERC20(address(rewardSwapParams_.assets[0])).safeIncreaseAllowance(address(balancerVault), amount);
+        /// throws BAL#507 in case of slippage overflow
         int256[] memory swappedAmounts = balancerVault.batchSwap(
             IBalancerVault.SwapKind.GIVEN_IN,
             rewardSwapParams_.swaps,
