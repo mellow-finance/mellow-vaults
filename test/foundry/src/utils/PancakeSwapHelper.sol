@@ -91,11 +91,10 @@ contract PancakeSwapHelper {
     }
 
     /// @dev returns with "Invalid Token ID" for non-existent nfts
-    function calculateTvlBySqrtPriceX96(uint256 uniV3Nft, uint160 sqrtPriceX96)
-        public
-        view
-        returns (uint256[] memory tokenAmounts)
-    {
+    function calculateTvlBySqrtPriceX96(
+        uint256 uniV3Nft,
+        uint160 sqrtPriceX96
+    ) public view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         (tokenAmounts[0], tokenAmounts[1]) = PositionValue.total(positionManager, uniV3Nft, sqrtPriceX96);
     }
@@ -164,11 +163,9 @@ contract PancakeSwapHelper {
         token0Amount = capital - FullMath.mulDiv(token1Amount, CommonLibrary.Q96, spotPriceX96);
     }
 
-    function calculateCakePriceX96InUnderlying(IPancakeSwapVaultGovernance.StrategyParams memory params)
-        public
-        view
-        returns (uint256 priceX96)
-    {
+    function calculateCakePriceX96InUnderlying(
+        IPancakeSwapVaultGovernance.StrategyParams memory params
+    ) public view returns (uint256 priceX96) {
         IPancakeV3Pool poolForSwap = IPancakeV3Pool(params.poolForSwap);
         (int24 averageTick, , bool withFail) = OracleLibrary.consult(params.poolForSwap, params.averageTickTimespan);
         require(!withFail, ExceptionsLibrary.INVALID_STATE);
@@ -179,11 +176,10 @@ contract PancakeSwapHelper {
         }
     }
 
-    function _accumulateReward(uint32 currTimestamp, IPancakeV3LMPool lmPool)
-        private
-        view
-        returns (uint256 rewardGrowthGlobalX128)
-    {
+    function _accumulateReward(
+        uint32 currTimestamp,
+        IPancakeV3LMPool lmPool
+    ) private view returns (uint256 rewardGrowthGlobalX128) {
         unchecked {
             uint32 lastRewardTimestamp = lmPool.lastRewardTimestamp();
             rewardGrowthGlobalX128 = lmPool.rewardGrowthGlobalX128();
@@ -217,19 +213,23 @@ contract PancakeSwapHelper {
 
     function _getLMTicks(int24 tick, IPancakeV3LMPool lmPool) internal view returns (ILMPool.Info memory info) {
         unchecked {
-            // When tick had updated in thirdLMPool , read tick info from third LMPool, or read from second LMPool , if not , read from firstLMPool.
-            if (lmPool.thirdLMPool().lmTicksFlag(tick)) {
-                (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool.thirdLMPool().lmTicks(
-                    tick
-                );
-            } else if (lmPool.secondLMPool().lmTicksFlag(tick)) {
-                (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool.secondLMPool().lmTicks(
-                    tick
-                );
-            } else {
-                (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool.firstLMPool().lmTicks(
-                    tick
-                );
+            try lmPool.oldLMPool().lmTicks(tick) returns (ILMPool.Info memory info_) {
+                info = info_;
+            } catch {
+                // When tick had updated in thirdLMPool , read tick info from third LMPool, or read from second LMPool , if not , read from firstLMPool.
+                if (lmPool.thirdLMPool().lmTicksFlag(tick)) {
+                    (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool
+                        .thirdLMPool()
+                        .lmTicks(tick);
+                } else if (lmPool.secondLMPool().lmTicksFlag(tick)) {
+                    (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool
+                        .secondLMPool()
+                        .lmTicks(tick);
+                } else {
+                    (info.liquidityGross, info.liquidityNet, info.rewardGrowthOutsideX128) = lmPool
+                        .firstLMPool()
+                        .lmTicks(tick);
+                }
             }
         }
     }
@@ -282,17 +282,28 @@ contract PancakeSwapHelper {
         IPancakeV3LMPool lmPool
     ) internal view returns (uint256 initValue) {
         unchecked {
-            // If already chekced third LMPool , use current negativeRewardGrowthInsideInitValue.
-            if (lmPool.checkThirdLMPool(tickLower, tickUpper)) {
-                initValue = lmPool.negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
-            } else {
-                bool checkSecondLMPoolFlagInThirdLMPool = lmPool.thirdLMPool().checkSecondLMPool(tickLower, tickUpper);
-                // If already checked second LMPool , use third LMPool negativeRewardGrowthInsideInitValue.
-                if (checkSecondLMPoolFlagInThirdLMPool) {
-                    initValue = lmPool.thirdLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+            try lmPool.checkOldLMPool(tickLower, tickUpper) returns (bool flag) {
+                if (flag) {
+                    initValue = lmPool.negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
                 } else {
-                    // If not checked second LMPool , use second LMPool negativeRewardGrowthInsideInitValue.
-                    initValue = lmPool.secondLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                    initValue = lmPool.oldLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                }
+            } catch {
+                // If already chekced third LMPool , use current negativeRewardGrowthInsideInitValue.
+                if (lmPool.checkThirdLMPool(tickLower, tickUpper)) {
+                    initValue = lmPool.negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                } else {
+                    bool checkSecondLMPoolFlagInThirdLMPool = lmPool.thirdLMPool().checkSecondLMPool(
+                        tickLower,
+                        tickUpper
+                    );
+                    // If already checked second LMPool , use third LMPool negativeRewardGrowthInsideInitValue.
+                    if (checkSecondLMPoolFlagInThirdLMPool) {
+                        initValue = lmPool.thirdLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                    } else {
+                        // If not checked second LMPool , use second LMPool negativeRewardGrowthInsideInitValue.
+                        initValue = lmPool.secondLMPool().negativeRewardGrowthInsideInitValue(tickLower, tickUpper);
+                    }
                 }
             }
         }

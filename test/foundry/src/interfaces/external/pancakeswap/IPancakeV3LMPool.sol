@@ -22,6 +22,10 @@ interface IPancakeV3LMPool {
 
     function rewardGrowthGlobalX128() external view returns (uint256);
 
+    function oldLMPool() external view returns (IPancakeV3LMPool);
+
+    function checkOldLMPool(int24, int24) external view returns (bool);
+
     function lmTicks(int24) external view returns (ILMPool.Info memory);
 
     function lmLiquidity() external view returns (uint128);
@@ -32,8 +36,8 @@ interface IPancakeV3LMPool {
 
     function checkThirdLMPool(int24, int24) external view returns (bool);
 
-    function getRewardGrowthInside(int24 tickLower, int24 tickUpper)
-        external
-        view
-        returns (uint256 rewardGrowthInsideX128);
+    function getRewardGrowthInside(
+        int24 tickLower,
+        int24 tickUpper
+    ) external view returns (uint256 rewardGrowthInsideX128);
 }
