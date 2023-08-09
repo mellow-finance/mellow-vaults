@@ -17,21 +17,20 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
     IStakingLiquidityGauge public stakingLiquidityGauge;
     IBalancerMinter public balancerMinter;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         bytes32 poolId = pool.getPoolId();
         (IBalancerERC20[] memory poolTokens, uint256[] memory amounts, ) = balancerVault.getPoolTokens(poolId);
+        minTokenAmounts = new uint256[](poolTokens.length);
 
         uint256 totalSupply = pool.getActualSupply();
-        uint256 balance = IBalancerERC20(address(pool)).balanceOf(address(this));
-        IStakingLiquidityGauge stakingLiquidityGauge_ = stakingLiquidityGauge;
-        if (address(0) != address(stakingLiquidityGauge_)) {
-            balance += stakingLiquidityGauge_.balanceOf(address(this));
-        }
-
-        minTokenAmounts = new uint256[](poolTokens.length);
-        for (uint256 i = 0; i < minTokenAmounts.length; i++) {
-            minTokenAmounts[i] = FullMath.mulDiv(amounts[i], balance, totalSupply);
+        if (totalSupply > 0) {
+            uint256 balance = stakingLiquidityGauge.balanceOf(address(this));
+            for (uint256 i = 0; i < poolTokens.length; i++) {
+                minTokenAmounts[i] = FullMath.mulDiv(amounts[i], balance, totalSupply);
+            }
         }
 
         maxTokenAmounts = minTokenAmounts;
@@ -40,6 +39,15 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
     /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IBalancerV2Vault).interfaceId);
+    }
+
+    /// @inheritdoc IBalancerV2Vault
+    function getPriceToUSDX96(IAggregatorV3 oracle, IAsset token) public view returns (uint256 priceX96) {
+        (, int256 usdPrice, , , ) = oracle.latestRoundData();
+
+        uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
+        uint8 oracleDecimals = oracle.decimals();
+        priceX96 = FullMath.mulDiv(2 ** 96 * 10 ** 6, uint256(usdPrice), 10 ** (oracleDecimals + tokenDecimals));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -53,13 +61,19 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
         address stakingLiquidityGauge_,
         address balancerMinter_
     ) external {
+        require(
+            pool_ != address(0) &&
+                balancerVault_ != address(0) &&
+                stakingLiquidityGauge_ != address(0) &&
+                balancerMinter_ != address(0),
+            ExceptionsLibrary.ADDRESS_ZERO
+        );
         pool = IManagedPool(pool_);
         balancerVault = IBalancerVault(balancerVault_);
         balancerMinter = IBalancerMinter(balancerMinter_);
         stakingLiquidityGauge = IStakingLiquidityGauge(stakingLiquidityGauge_);
         (IBalancerERC20[] memory poolTokens, , ) = balancerVault.getPoolTokens(pool.getPoolId());
         IERC20(address(pool)).safeApprove(address(stakingLiquidityGauge), type(uint256).max);
-
         require(vaultTokens_.length == poolTokens.length, ExceptionsLibrary.INVALID_VALUE);
         for (uint256 i = 0; i < poolTokens.length; i++) {
             require(address(poolTokens[i]) == vaultTokens_[i], ExceptionsLibrary.INVALID_TOKEN);
@@ -67,15 +81,6 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
         }
 
         _initialize(vaultTokens_, nft_);
-    }
-
-    /// @inheritdoc IBalancerV2Vault
-    function getPriceToUSDX96(IAggregatorV3 oracle, IAsset token) public view returns (uint256 priceX96) {
-        (, int256 usdPrice, , , ) = oracle.latestRoundData();
-
-        uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
-        uint8 oracleDecimals = oracle.decimals();
-        priceX96 = FullMath.mulDiv(2 ** 96 * 10 ** 6, uint256(usdPrice), 10 ** (oracleDecimals + tokenDecimals));
     }
 
     /// @inheritdoc IBalancerV2Vault
@@ -91,13 +96,13 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
 
         int256[] memory limits = new int256[](rewardSwapParams_.assets.length);
 
-        uint256 rewardToUSDCPriceX96 = getPriceToUSDX96(rewardSwapParams_.rewardOracle, rewardSwapParams_.assets[0]);
-        uint256 underlyingToUSDCPriceX96 = getPriceToUSDX96(
+        uint256 rewardToUSDPriceX96 = getPriceToUSDX96(rewardSwapParams_.rewardOracle, rewardSwapParams_.assets[0]);
+        uint256 underlyingToUSDPriceX96 = getPriceToUSDX96(
             rewardSwapParams_.underlyingOracle,
             rewardSwapParams_.assets[limits.length - 1]
         );
 
-        uint256 minAmountOut = FullMath.mulDiv(amount, rewardToUSDCPriceX96, underlyingToUSDCPriceX96);
+        uint256 minAmountOut = FullMath.mulDiv(amount, rewardToUSDPriceX96, underlyingToUSDPriceX96);
         minAmountOut = FullMath.mulDiv(minAmountOut, D9 - rewardSwapParams_.slippageD, D9);
 
         limits[0] = int256(amount);
@@ -105,7 +110,7 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
         rewardSwapParams_.swaps[0].amount = amount;
 
         IERC20(address(rewardSwapParams_.assets[0])).safeIncreaseAllowance(address(balancerVault), amount);
-        /// throws BAL#507 in case of slippage overflow
+        /// throws BAL#507 in case of insufficient amount of tokenOut
         int256[] memory swappedAmounts = balancerVault.batchSwap(
             IBalancerVault.SwapKind.GIVEN_IN,
             rewardSwapParams_.swaps,
@@ -127,7 +132,7 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
 
     function _push(
         uint256[] memory tokenAmounts,
-        bytes memory
+        bytes memory opts
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         bytes32 poolId = pool.getPoolId();
         (IBalancerERC20[] memory poolTokens, , ) = balancerVault.getPoolTokens(poolId);
@@ -148,14 +153,18 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
             })
         );
 
+        uint256 liquidityAmount = IBalancerERC20(address(pool)).balanceOf(address(this));
+        if (opts.length > 0) {
+            require(liquidityAmount >= abi.decode(opts, (uint256)), ExceptionsLibrary.LIMIT_UNDERFLOW);
+        }
         actualTokenAmounts = tokenAmounts;
-        stakingLiquidityGauge.deposit(IBalancerERC20(address(pool)).balanceOf(address(this)), address(this));
+        stakingLiquidityGauge.deposit(liquidityAmount, address(this));
     }
 
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory
+        bytes memory opts
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
 
@@ -182,7 +191,9 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
                 actualTokenAmounts[i] = FullMath.mulDiv(amounts[i], liquidityToPull, totalSupply);
             }
         }
-
+        if (opts.length > 0) {
+            require(liquidityToPull <= abi.decode(opts, (uint256)), ExceptionsLibrary.LIMIT_OVERFLOW);
+        }
         stakingLiquidityGauge.withdraw(liquidityToPull);
 
         IAsset[] memory tokens = new IAsset[](poolTokens.length);
