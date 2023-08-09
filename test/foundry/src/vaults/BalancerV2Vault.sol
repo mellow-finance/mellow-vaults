@@ -20,8 +20,6 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    // TODO: add claim from stakingLiquidityGauge reward tokens
-
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         bytes32 poolId = pool.getPoolId();
@@ -88,7 +86,7 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
     }
 
     /// @inheritdoc IBalancerV2Vault
-    function claimRewards() external returns (uint256 amount) {
+    function claimBalancerRewardToken() external returns (uint256 amount) {
         amount = balancerMinter.mint(address(stakingLiquidityGauge));
         if (amount == 0) {
             return 0;
@@ -126,10 +124,21 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
         return uint256(-swappedAmounts[limits.length - 1]);
     }
 
+    /// @inheritdoc IBalancerV2Vault
+    function claimRewards() external {
+        stakingLiquidityGauge.claim_rewards(
+            IBalancerV2VaultGovernance(address(_vaultGovernance)).strategyParams(_nft).funds.recipient
+        );
+    }
+
     // -------------------  INTERNAL, VIEW  -------------------
 
     function _isReclaimForbidden(address) internal pure override returns (bool) {
         return false;
+    }
+
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -168,7 +177,7 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory opts
+        bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         stakingLiquidityGauge.withdraw(stakingLiquidityGauge.balanceOf(address(this)));

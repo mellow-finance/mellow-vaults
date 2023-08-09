@@ -18,5 +18,7 @@ interface IBalancerV2Vault is IIntegrationVault {
 
     function getPriceToUSDX96(IAggregatorV3 oracle, IAsset token) external view returns (uint256 priceX96);
 
-    function claimRewards() external returns (uint256 amount);
+    function claimRewards() external;
+
+    function claimBalancerRewardToken() external returns (uint256 amount);
 }

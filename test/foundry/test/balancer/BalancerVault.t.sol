@@ -237,45 +237,34 @@ contract BalancerTest is Test {
         deposit();
         deposit();
 
-        {
-            uint256 amount = balancerV2Vault.claimRewards();
-        }
+        balancerV2Vault.claimBalancerRewardToken();
+        deposit();
+        skip(60 * 60);
+        balancerV2Vault.claimBalancerRewardToken();
 
         deposit();
 
-        {
-            skip(60 * 60);
-            uint256 amount = balancerV2Vault.claimRewards();
-        }
+        skip(60 * 60);
+        withdraw();
 
-        deposit();
+        skip(60 * 60);
 
-        {
-            skip(60 * 60);
-            withdraw();
-        }
+        (uint256[] memory tvlBeforeClaim, ) = rootVault.tvl();
+        balancerV2Vault.claimBalancerRewardToken();
 
-        {
-            skip(60 * 60);
+        (uint256[] memory tvlAfterClaim, ) = rootVault.tvl();
+        uint256[] memory withdrawedAmount = withdraw();
 
-            (uint256[] memory tvlBeforeClaim, ) = rootVault.tvl();
-            uint256 amount = balancerV2Vault.claimRewards();
+        (uint256[] memory tvlAfterWithdraw, ) = rootVault.tvl();
+        console2.log("tvlBeforeClaim: ", tvlBeforeClaim[0], tvlBeforeClaim[1]);
+        console2.log("tvlAfterClaim: ", tvlAfterClaim[0], tvlAfterClaim[1]);
+        console2.log("tvlAfterWithdraw: ", tvlAfterWithdraw[0], tvlAfterWithdraw[1]);
+        console2.log("withdrawedAmount: ", withdrawedAmount[0], withdrawedAmount[1]);
 
-            (uint256[] memory tvlAfterClaim, ) = rootVault.tvl();
-            uint256[] memory withdrawedAmount = withdraw();
-
-            (uint256[] memory tvlAfterWithdraw, ) = rootVault.tvl();
-            console2.log("tvlBeforeClaim: ", tvlBeforeClaim[0], tvlBeforeClaim[1]);
-            console2.log("tvlAfterClaim: ", tvlAfterClaim[0], tvlAfterClaim[1]);
-            console2.log("tvlAfterWithdraw: ", tvlAfterWithdraw[0], tvlAfterWithdraw[1]);
-            console2.log("withdrawedAmount: ", withdrawedAmount[0], withdrawedAmount[1]);
-        }
-
-        {
-            skip(60 * 60);
-            uint256 amount = balancerV2Vault.claimRewards();
-            withdraw();
-        }
+        skip(60 * 60);
+        balancerV2Vault.claimBalancerRewardToken();
+        balancerV2Vault.claimRewards();
+        withdraw();
     }
 
     function testVault() external {
