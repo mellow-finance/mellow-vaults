@@ -39,50 +39,46 @@ contract DeployPancakeVault is Script {
 
     uint256 public nftStart;
 
-    address public protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
-    address public strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
+    address public protocolTreasury = 0xB39d6DDBa0131bCe0F3ffCE8e8fC777C3A4040c3;
+    address public strategyTreasury = 0x458140e51ceb854a341D5de9FA30f6855b78B1b8;
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address public operator = 0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E;
 
-    address public axl = 0x467719aD09025FcC6cF6F8311755809d45a5E5f3;
-    address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public usdc = 0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035;
+    address public weth = 0x4F9A0e7FD2Bf6067db6994CF12E4495Df938E6e9;
 
-    address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
-    address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
-    address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
-    address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
-    address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+    address public governance = 0xCD8237f2b332e482DaEaA609D9664b739e93097d;
+    address public registry = 0xc02a7B4658861108f9837007b2DF2007d6977116;
+    address public rootGovernance = 0x12ED6474A19f24e3a635E312d85fbAc177D66670;
+    address public erc20Governance = 0x15b1bC5DF5C44F469394D295959bBEC861893F09;
+    address public mellowOracle = 0x286CFBC4798Cf12a61cc57046c4eA0BCACaFDeBb;
 
     IPancakeNonfungiblePositionManager public positionManager =
         IPancakeNonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364);
-    IMasterChef public masterChef = IMasterChef(0x556B9306565093C855AEA9AE92A594704c2Cd59e);
+    IMasterChef public masterChef = IMasterChef(0xE9c7f3196Ab8C09F6616365E8873DaEb207C0391);
 
-    address public swapRouter = 0x13f4EA83D0bd40E75C8222255bc855a974568Dd4;
-
-    address public oneInchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
+    address public swapRouter = 0x678Aa4bF4E210cf2166753e054d5b7c31cc7fa86;
+    address public oneInchRouter = 0x678Aa4bF4E210cf2166753e054d5b7c31cc7fa86;
 
     PancakeSwapVaultGovernance public pancakeSwapVaultGovernance =
-        PancakeSwapVaultGovernance(0x99cb0f623B2679A6b83e0576950b2A4a55027557);
-
+        PancakeSwapVaultGovernance(0x070D1CE4eEFd798107A1C4f30b2c47375f3e5dc9);
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
-
-    DepositWrapper public depositWrapper = DepositWrapper(0x231002439E1BD5b610C3d98321EA760002b9Ff64);
-
+    DepositWrapper public depositWrapper;
     PancakeSwapHelper public vaultHelper;
 
     uint256 public constant Q96 = 2 ** 96;
 
     function firstDeposit(address strategy) public {
         uint256[] memory tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = 10 ** 6;
-        tokenAmounts[1] = 10 ** 6;
+        tokenAmounts[0] = 10 ** 13;
+        tokenAmounts[1] = 10 ** 4;
 
         if (IERC20(usdc).allowance(msg.sender, address(depositWrapper)) == 0) {
-            IERC20(usdc).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
+            IERC20(usdc).safeApprove(address(depositWrapper), type(uint128).max);
         }
 
-        if (IERC20(axl).allowance(msg.sender, address(depositWrapper)) == 0) {
-            IERC20(axl).safeApprove(address(depositWrapper), type(uint256).max);
+        if (IERC20(weth).allowance(msg.sender, address(depositWrapper)) == 0) {
+            IERC20(weth).safeApprove(address(depositWrapper), type(uint256).max);
         }
 
         depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
@@ -130,7 +126,7 @@ contract DeployPancakeVault is Script {
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = axl;
+        tokens[0] = weth;
         tokens[1] = usdc;
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
@@ -138,7 +134,7 @@ contract DeployPancakeVault is Script {
         IPancakeSwapVaultGovernance(pancakeSwapVaultGovernance).createVault(
             tokens,
             deployer,
-            2500,
+            500,
             address(vaultHelper),
             address(masterChef),
             address(erc20Vault)
@@ -149,12 +145,12 @@ contract DeployPancakeVault is Script {
         pancakeSwapVaultGovernance.setStrategyParams(
             pancakeSwapVault.nft(),
             IPancakeSwapVaultGovernance.StrategyParams({
-                swapSlippageD: 1e7,
-                poolForSwap: 0x11A6713B702817DB0Aa0964D1AfEe4E641319732,
-                cake: 0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898,
+                swapSlippageD: 1e8,
+                poolForSwap: 0xb4BAB40e5a869eF1b5ff440a170A57d9feb228e9,
+                cake: 0x0D1E753a25eBda689453309112904807625bEFBe,
                 underlyingToken: usdc,
                 smartRouter: swapRouter,
-                averageTickTimespan: 30
+                averageTickTimespan: 60
             })
         );
 
@@ -173,10 +169,6 @@ contract DeployPancakeVault is Script {
         }
     }
 
-    function deployGovernances() public {
-        pancakeSwapVaultGovernance = PancakeSwapVaultGovernance(0x99cb0f623B2679A6b83e0576950b2A4a55027557);
-    }
-
     function initializeStrategy(PancakeSwapPulseStrategyV2 strategy) public {
         strategy.initialize(
             PancakeSwapPulseStrategyV2.ImmutableParams({
@@ -189,7 +181,7 @@ contract DeployPancakeVault is Script {
         );
 
         uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e7;
+        minSwapAmounts[0] = 1e15;
         minSwapAmounts[1] = 1e7;
 
         strategy.updateMutableParams(
@@ -197,7 +189,7 @@ contract DeployPancakeVault is Script {
                 priceImpactD6: 0,
                 defaultIntervalWidth: 4200,
                 maxPositionLengthInTicks: 10000,
-                maxDeviationForVaultPool: 100,
+                maxDeviationForVaultPool: 50,
                 timespanForAverageTick: 30,
                 neighborhoodFactorD: 150000000,
                 extensionFactorD: 2000000000,
@@ -208,66 +200,53 @@ contract DeployPancakeVault is Script {
         );
 
         strategy.updateDesiredAmounts(
-            PancakeSwapPulseStrategyV2.DesiredAmounts({amount0Desired: 1e6, amount1Desired: 1e6})
+            PancakeSwapPulseStrategyV2.DesiredAmounts({amount0Desired: 1e9, amount1Desired: 1e5})
         );
     }
 
     PancakeSwapPulseStrategyV2 public baseStrategy =
-        PancakeSwapPulseStrategyV2(0xC68a8c6A29412827018A23058E0CEd132889Ea48);
-    PancakeSwapPulseV2Helper public strategyHelper =
-        PancakeSwapPulseV2Helper(0x8bc60087Ca542511De2F6865E4257775cf2B5ca8);
+        PancakeSwapPulseStrategyV2(0x25F964E9dbee1B8960B44eD19180811Af675B0DD);
+    TestPancakeHelper public strategyHelper = TestPancakeHelper(0x9a4eDFe062E27058803eEF406EE224bC67224913);
 
     // deploy
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
 
-        // PancakeChainlinkOracle oc = new PancakeChainlinkOracle(
-        //     axl,
-        //     usdc,
-        //     2500,
-        //     positionManager
-        // );
+        vaultHelper = PancakeSwapHelper(0x0d4B508ed0C80de789d49AC36421C2F18a449B24);
+        depositWrapper = DepositWrapper(0x67366cc5697d4837fD93EE4beb91EDe75bCec09D);
 
-        // console2.log(oc.description(), oc.latestAnswer());
+        TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
+            address(baseStrategy),
+            deployer,
+            new bytes(0)
+        );
 
-        // TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
-        //     address(baseStrategy),
-        //     deployer,
-        //     new bytes(0)
-        // );
+        deployVaults(address(newStrategy));
+        firstDeposit(address(newStrategy));
 
-        // vaultHelper = new PancakeSwapHelper(positionManager);
+        IERC20(weth).safeTransfer(address(newStrategy), 1e10);
+        IERC20(usdc).safeTransfer(address(newStrategy), 1e6);
 
-        // deployVaults(address(newStrategy));
-        // firstDeposit(address(newStrategy));
+        vm.stopBroadcast();
+        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
 
-        // IERC20(axl).safeTransfer(address(newStrategy), 1e7);
-        // IERC20(usdc).safeTransfer(address(newStrategy), 1e7);
+        PancakeSwapPulseStrategyV2 strategy = PancakeSwapPulseStrategyV2(address(newStrategy));
+        initializeStrategy(strategy);
 
-        // vm.stopBroadcast();
-        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        (bool neededNewInterval, bytes memory swapData) = strategyHelper.calculateAmountForSwap(strategy);
 
-        // PancakeSwapPulseStrategyV2 strategy = PancakeSwapPulseStrategyV2(address(newStrategy));
-        // initializeStrategy(strategy);
+        strategy.rebalance(type(uint256).max, swapData, 0);
 
-        // (uint256 amountIn, address from, address to, IERC20Vault erc20Vault_) = strategyHelper.calculateAmountForSwap(
-        //     strategy
-        // );
+        vm.stopBroadcast();
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
 
-        // console2.log(amountIn, from, to, address(erc20Vault_));
+        depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
 
-        // strategy.rebalance(type(uint256).max, new bytes(0), 0);
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = 1e15;
+        tokenAmounts[1] = 1e6;
 
-        // vm.stopBroadcast();
-        // vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-
-        // depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
-
-        // uint256[] memory tokenAmounts = new uint256[](2);
-        // tokenAmounts[0] = 5e7;
-        // tokenAmounts[1] = 5e7;
-
-        // depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
 
         vm.stopBroadcast();
     }
