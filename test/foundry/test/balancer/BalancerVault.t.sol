@@ -57,10 +57,10 @@ contract BalancerTest is Test {
     IBalancerV2Vault balancerV2Vault;
     SingleVaultStrategy strategy;
 
-    function withdraw() public {
+    function withdraw() public returns (uint256[] memory amounts) {
         vm.startPrank(deployer);
         uint256 lpAmount = rootVault.balanceOf(deployer) / 2;
-        rootVault.withdraw(deployer, lpAmount, new uint256[](2), new bytes[](2));
+        amounts = rootVault.withdraw(deployer, lpAmount, new uint256[](2), new bytes[](2));
         vm.stopPrank();
     }
 
@@ -239,7 +239,6 @@ contract BalancerTest is Test {
 
         {
             uint256 amount = balancerV2Vault.claimRewards();
-            console2.log(amount);
         }
 
         deposit();
@@ -247,29 +246,34 @@ contract BalancerTest is Test {
         {
             skip(60 * 60);
             uint256 amount = balancerV2Vault.claimRewards();
-            console2.log(amount);
         }
 
         deposit();
 
         {
             skip(60 * 60);
-            uint256 amount = balancerV2Vault.claimRewards();
-            console2.log(amount);
             withdraw();
         }
 
         {
             skip(60 * 60);
+
+            (uint256[] memory tvlBeforeClaim, ) = rootVault.tvl();
             uint256 amount = balancerV2Vault.claimRewards();
-            console2.log(amount);
-            withdraw();
+
+            (uint256[] memory tvlAfterClaim, ) = rootVault.tvl();
+            uint256[] memory withdrawedAmount = withdraw();
+
+            (uint256[] memory tvlAfterWithdraw, ) = rootVault.tvl();
+            console2.log("tvlBeforeClaim: ", tvlBeforeClaim[0], tvlBeforeClaim[1]);
+            console2.log("tvlAfterClaim: ", tvlAfterClaim[0], tvlAfterClaim[1]);
+            console2.log("tvlAfterWithdraw: ", tvlAfterWithdraw[0], tvlAfterWithdraw[1]);
+            console2.log("withdrawedAmount: ", withdrawedAmount[0], withdrawedAmount[1]);
         }
 
         {
             skip(60 * 60);
             uint256 amount = balancerV2Vault.claimRewards();
-            console2.log(amount);
             withdraw();
         }
     }
