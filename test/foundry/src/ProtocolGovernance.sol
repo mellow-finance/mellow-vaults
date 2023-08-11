@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -137,12 +137,9 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         return _params.withdrawLimit * unitPrices[token];
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(UnitPricesGovernance, IERC165, ERC165)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(UnitPricesGovernance, IERC165, ERC165) returns (bool) {
         return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
 
@@ -331,7 +328,11 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         return bytes32("1.0.0");
     }
 
-    function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {}
+    function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
+        require(newParams.maxTokensPerVault != 0 && newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
+        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(newParams.withdrawLimit >= MIN_WITHDRAW_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
+    }
 
     function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
         for (uint256 i = 0; i < permissionIds.length; ++i) {

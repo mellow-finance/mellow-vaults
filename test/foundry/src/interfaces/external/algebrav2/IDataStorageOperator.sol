@@ -22,7 +22,9 @@ interface IDataStorageOperator {
     /// @return tick The tick at blockTimestamp
     /// @return averageTick Time-weighted average tick
     /// @return windowStartIndex Index of closest timepoint >= WINDOW seconds ago
-    function timepoints(uint256 index)
+    function timepoints(
+        uint256 index
+    )
         external
         view
         returns (
@@ -62,10 +64,9 @@ interface IDataStorageOperator {
     /// @param secondsAgos Each amount of time to look back, in seconds, at which point to return a timepoint
     /// @return tickCumulatives The cumulative tick since the pool was first initialized, as of each `secondsAgo`
     /// @return volatilityCumulatives The cumulative volatility values since the pool was first initialized, as of each `secondsAgo`
-    function getTimepoints(uint32[] memory secondsAgos)
-        external
-        view
-        returns (int56[] memory tickCumulatives, uint112[] memory volatilityCumulatives);
+    function getTimepoints(
+        uint32[] memory secondsAgos
+    ) external view returns (int56[] memory tickCumulatives, uint112[] memory volatilityCumulatives);
 
     /// @notice Writes a dataStorage timepoint to the array
     /// @dev Writable at most once per block. Index represents the most recently written element. index must be tracked externally.

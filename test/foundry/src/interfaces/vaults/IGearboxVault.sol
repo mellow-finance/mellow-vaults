@@ -45,11 +45,7 @@ interface IGearboxVault is IIntegrationVault {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param helper_ address of helper
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        address helper_
-    ) external;
+    function initialize(uint256 nft_, address[] memory vaultTokens_, address helper_) external;
 
     /// @notice Updates marginalFactorD9 (can be successfully called only by an admin or a strategist)
     /// @param marginalFactorD_ New marginalFactorD9

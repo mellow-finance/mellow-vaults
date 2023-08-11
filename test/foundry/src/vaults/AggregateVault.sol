@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
-import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
@@ -95,10 +94,10 @@ contract AggregateVault is IAggregateVault, Vault {
         _initialize(vaultTokens_, nft_);
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory vaultOptions)
-        internal
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory vaultOptions
+    ) internal returns (uint256[] memory actualTokenAmounts) {
         require(_nft != 0, ExceptionsLibrary.INIT);
         IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
         uint256 destNft = _subvaultNfts[0];

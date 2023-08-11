@@ -60,11 +60,10 @@ contract TicksFeesReader {
         }
     }
 
-    function getNearestInitializedTicks(IPoolStorage pool, int24 tick)
-        external
-        view
-        returns (int24 previous, int24 next)
-    {
+    function getNearestInitializedTicks(
+        IPoolStorage pool,
+        int24 tick
+    ) external view returns (int24 previous, int24 next) {
         // if queried tick already initialized, fetch and return values
         (previous, next) = pool.initializedTicks(tick);
         if (previous != 0 || next != 0) return (previous, next);
@@ -137,11 +136,9 @@ contract TicksFeesReader {
         token1Owed = QtyDeltaMath.getQty1FromBurnRTokens(sqrtP, deltaL);
     }
 
-    function _syncFeeGrowthGlobal(IPoolStorage pool)
-        internal
-        view
-        returns (uint256 feeGrowthGlobal, uint256 rTotalSupply)
-    {
+    function _syncFeeGrowthGlobal(
+        IPoolStorage pool
+    ) internal view returns (uint256 feeGrowthGlobal, uint256 rTotalSupply) {
         (uint128 baseL, uint128 reinvestL, uint128 reinvestLLast) = pool.getLiquidityState();
         feeGrowthGlobal = pool.getFeeGrowthGlobal();
         rTotalSupply = IERC20(address(pool)).totalSupply();

@@ -1,12 +1,10 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that stores ERC20 tokens.
@@ -45,12 +43,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(uint256[] memory tokenAmounts, bytes memory)
-        internal
-        pure
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory
+    ) internal pure override returns (uint256[] memory actualTokenAmounts) {
         // no-op, tokens are already on balance
         return tokenAmounts;
     }

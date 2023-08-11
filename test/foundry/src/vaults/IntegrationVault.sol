@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/external/erc/IERC1271.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
@@ -11,7 +10,6 @@ import "../interfaces/validators/IValidator.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
-import "./VaultGovernance.sol";
 import "./Vault.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
@@ -117,12 +115,9 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     }
 
     /// @inheritdoc IIntegrationVault
-    function reclaimTokens(address[] memory tokens)
-        external
-        virtual
-        nonReentrant
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function reclaimTokens(
+        address[] memory tokens
+    ) external virtual nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 nft_ = _nft;
         require(nft_ != 0, ExceptionsLibrary.INIT);
         IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
@@ -204,21 +199,16 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _validateAndProjectTokens(address[] memory tokens, uint256[] memory tokenAmounts)
-        internal
-        view
-        returns (uint256[] memory pTokenAmounts)
-    {
+    function _validateAndProjectTokens(
+        address[] memory tokens,
+        uint256[] memory tokenAmounts
+    ) internal view returns (uint256[] memory pTokenAmounts) {
         require(CommonLibrary.isSortedAndUnique(tokens), ExceptionsLibrary.INVARIANT);
         require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INVALID_VALUE);
         pTokenAmounts = CommonLibrary.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
-    function _root(
-        IVaultRegistry registry,
-        uint256 thisNft,
-        address thisOwner
-    ) internal view returns (IVaultRoot) {
+    function _root(IVaultRegistry registry, uint256 thisNft, address thisOwner) internal view returns (IVaultRoot) {
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
         require((thisNft != 0) && (thisOwnerNft != 0), ExceptionsLibrary.INIT);
 
@@ -245,10 +235,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     // -------------------  INTERNAL, MUTATING  -------------------
 
     /// Guaranteed to have exact signature matchinn vault tokens
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
-        internal
-        virtual
-        returns (uint256[] memory actualTokenAmounts);
+    function _push(
+        uint256[] memory tokenAmounts,
+        bytes memory options
+    ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
     /// Guaranteed to have exact signature matchinn vault tokens
     function _pull(

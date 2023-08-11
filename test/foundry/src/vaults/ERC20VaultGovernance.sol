@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "../interfaces/vaults/IERC20VaultGovernance.sol";
@@ -26,10 +26,10 @@ contract ERC20VaultGovernance is ContractMeta, IERC20VaultGovernance, VaultGover
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IERC20VaultGovernance
-    function createVault(address[] memory vaultTokens_, address owner_)
-        external
-        returns (IERC20Vault vault, uint256 nft)
-    {
+    function createVault(
+        address[] memory vaultTokens_,
+        address owner_
+    ) external returns (IERC20Vault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
         vault = IERC20Vault(vaddr);

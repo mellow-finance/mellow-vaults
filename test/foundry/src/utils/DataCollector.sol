@@ -19,7 +19,7 @@ import "./DefaultAccessControl.sol";
 contract DataCollector is DefaultAccessControl {
     INonfungiblePositionManager public immutable positionManager;
     IVaultRegistry public immutable vaultRegistry;
-    IUniswapV3Factory public factory;
+    IUniswapV3Factory public immutable factory;
     address public immutable usdc;
     UniV3Helper public immutable uniV3Helper;
     MellowOracle public immutable mellowOracle;
@@ -69,6 +69,7 @@ contract DataCollector is DefaultAccessControl {
         positionManager = positionManager_;
         vaultRegistry = vaultRegistry_;
         uniV3Helper = uniV3Helper_;
+        factory = IUniswapV3Factory(positionManager_.factory());
         mellowOracle = mellowOracle_;
     }
 
