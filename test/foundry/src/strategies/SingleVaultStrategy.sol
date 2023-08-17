@@ -27,7 +27,7 @@ contract SingleVaultStrategy is ContractMeta, ILpCallback {
     function withdrawCallback() external {}
 
     function _contractName() internal pure override returns (bytes32) {
-        return bytes32("BalancerCompoundingStrategy");
+        return bytes32("SingleVaultStrategy");
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
