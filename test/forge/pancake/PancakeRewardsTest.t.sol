@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "forge-std/Test.sol";
-import "forge-std/Vm.sol";
-import "forge-std/console2.sol";
+import "forge-std/src/Test.sol";
+import "forge-std/src/Vm.sol";
+import "forge-std/src/console2.sol";
 
 import "../../../src/interfaces/external/pancakeswap/ISmartRouter.sol";
 

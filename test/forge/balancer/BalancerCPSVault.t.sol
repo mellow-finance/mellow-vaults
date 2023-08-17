@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "forge-std/Test.sol";
-import "forge-std/Vm.sol";
-import "forge-std/console2.sol";
+import "forge-std/src/Test.sol";
+import "forge-std/src/Vm.sol";
+import "forge-std/src/console2.sol";
 
 import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../../src/interfaces/external/balancer/vault/IVault.sol";
 import {IBasePool} from "../../../src/interfaces/external/balancer/vault/IBasePool.sol";
@@ -48,7 +48,7 @@ contract BalancerCSPTest is Test {
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
     DepositWrapper public depositWrapper = DepositWrapper(0x231002439E1BD5b610C3d98321EA760002b9Ff64);
 
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant Q96 = 2**96;
 
     IERC20RootVault rootVault;
     IERC20Vault erc20Vault;
@@ -281,6 +281,6 @@ contract BalancerCSPTest is Test {
             IAsset(0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f)
         );
 
-        console2.log((1e18 * balToUSDC) / 2 ** 96, (1e18 * ghoToUSDC) / 2 ** 96);
+        console2.log((1e18 * balToUSDC) / 2**96, (1e18 * ghoToUSDC) / 2**96);
     }
 }

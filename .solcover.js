@@ -5,5 +5,6 @@ module.exports = {
     "libraries/external/",
     "vaults/MellowVault.sol",
     "vaults/MellowVaultGovernance.sol",
+    "script/"
   ],
 };

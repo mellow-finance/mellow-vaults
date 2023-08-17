@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "forge-std/Test.sol";
-import "forge-std/Vm.sol";
-import "forge-std/console2.sol";
+import "forge-std/src/Test.sol";
+import "forge-std/src/Vm.sol";
+import "forge-std/src/console2.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -62,7 +62,7 @@ contract OlympusTest is Test {
     BasePulseStrategy public strategy = new BasePulseStrategy(positionManager);
     OlympusStrategy public olympusStrategy;
 
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant Q96 = 2**96;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -240,8 +240,8 @@ contract OlympusTest is Test {
         bytes memory swapData = abi.encodeWithSelector(router.swap.selector, amountIn, from, to, address(erc20Vault));
 
         actualizeRouter(from);
-        deal(usdc, address(strategy), 10 ** 6);
-        deal(ohm, address(strategy), 10 ** 6);
+        deal(usdc, address(strategy), 10**6);
+        deal(ohm, address(strategy), 10**6);
 
         vm.startPrank(sAdmin);
         strategy.rebalance(type(uint256).max, interval, swapData, 0);
