@@ -63,7 +63,7 @@ jobs:
           version: nightly
 
       - name: Run foundry tests
-        run: cd test/foundry && forge install && forge build --sizes && forge test -vv --fork-block-number=15867000 --fork-url=${{secrets.MAINNET_RPC}} --match-path='test/mainnet/*.sol'
+        run: forge test --use 0.8.9 --fork-url=${{secrets.MAINNET_RPC}}
         id: test
 
       - name: Count LOC
