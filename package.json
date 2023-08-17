@@ -33,12 +33,22 @@
     "coverage": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && node --max-old-space-size=8192 ./node_modules/hardhat/internal/cli/cli.js coverage --max-memory 4096 --config hardhat.test.config.ts",
     "coverage:fast": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && node --max-old-space-size=8192 ./node_modules/hardhat/internal/cli/cli.js coverage --max-memory 4096  --config hardhat.fast-test.config.ts",
     "size": "rm -rf artifacts && hardhat size-contracts --config hardhat.size-test.config.ts",
-    "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol",
-    "prettier:changed": "./node_modules/.bin/prettier -w ./node_modules/.bin/prettier -w  $(git status | grep '.sol' | grep -v 'deleted:' | cut -d ' ' -f 4)",
-    "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol",
     "clean": "rm -rf artifacts && rm -rf test/types",
     "lstrategy-slippage": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.test.config.ts lstrategy-slippage --tickchange 100 --erc20ratio 5 --percentagechange 90",
-    "lstrategy-backtest": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.backtest.config.ts lstrategy-backtest --filename price_data.csv --width 60 --weth 10 --wsteth 10"
+    "lstrategy-backtest": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.backtest.config.ts lstrategy-backtest --filename price_data.csv --width 60 --weth 10 --wsteth 10",
+    "prettier": "prettier --write ./src/**",
+    "prettier:check": "prettier --check ./src/**",
+    "prettier:changed": "prettier -w  $(git status | grep '.sol' | grep -v 'deleted:' | cut -d ' ' -f 4)",
+    "forge:test:pancake": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path './test/forge/pancake/*.sol'",
+    "forge:test:retro": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/forge/retro/*.sol'",
+    "forge:test:olympus": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/forge/olympus/*.sol'",
+    "forge:test:balancer": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'test/forge/balancer/*.sol'",
+    "forge:deploy:pancake": "forge script --use 0.8.9 src/script/DeployPancakeVault.s.sol:DeployPancakeVault --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+    "forge:deploy:balancer-v2": "forge script --use 0.8.9 src/script/BalancerV2Deployment.s.sol:BalancerV2Deployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+    "forge:deploy:olympus": "forge script --use 0.8.9 src/script/OlympusDeployment.s.sol:OlympusDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+    "forge:deploy:polygon": "forge script --use 0.8.9 src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGONSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+    "forge:compile": "forge build --use 0.8.9 ",
+    "forge:size": "forge build --sizes --force --via-ir --use 0.8.9"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
@@ -67,8 +77,7 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.4.0",
-    "@openzeppelin3/contracts": "npm:@openzeppelin/contracts@3.4.1-solc-0.7-2",
+    "@openzeppelin/contracts": "^4.9.3",
     "@types/dotenv": "^8.2.0",
     "@uniswap/sdk-core": "^3.0.1",
     "@uniswap/v2-core": "^1.0.1",

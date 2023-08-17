@@ -295,7 +295,7 @@ export const combineVaults = async (
         "vaultForNft",
         firstNft
     );
-    const vault = await hre.ethers.getContractAt("IVault", firstAddress);
+    const vault = await hre.ethers.getContractAt("Vault", firstAddress);
     const tokens = await vault.vaultTokens();
     const coder = hre.ethers.utils.defaultAbiCoder;
 
