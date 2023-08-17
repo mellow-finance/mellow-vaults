@@ -63,7 +63,7 @@ jobs:
           version: nightly
 
       - name: Run foundry tests
-        run: forge test --use 0.8.9 --fork-url=${{secrets.MAINNET_RPC}}
+        run: forge test --use=0.8.9 --fork-url=${{secrets.MAINNET_RPC}}
         id: test
 
       - name: Count LOC
