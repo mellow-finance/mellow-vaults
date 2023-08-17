@@ -66,11 +66,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                                         BigNumber.from(86400),
                                     oracle: this.mellowOracle.address,
                                 },
-                                (
-                                    await ethers.getContract(
-                                        "ERC20RootVaultHelper"
-                                    )
-                                ).address,
+                                "0xACEE4A703f27eA1EbCd550511aAE58ad012624CC",
                             ],
                             autoMine: true,
                         }
