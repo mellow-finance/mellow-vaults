@@ -1,0 +1,2217 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "commitDelayedProtocolParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "commitDelayedStrategyParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "commitInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint24",
+          "name": "fee_",
+          "type": "uint24"
+        },
+        {
+          "internalType": "address",
+          "name": "uniV3Helper_",
+          "type": "address"
+        }
+      ],
+      "name": "createVault",
+      "outputs": [
+        {
+          "internalType": "contract IUniV3Vault",
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract INonfungiblePositionManager",
+              "name": "positionManager",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IUniV3VaultGovernance.DelayedProtocolParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint32",
+              "name": "safetyIndicesSet",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct IUniV3VaultGovernance.DelayedStrategyParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract INonfungiblePositionManager",
+              "name": "positionManager",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IUniV3VaultGovernance.DelayedProtocolParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageDelayedProtocolParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint32",
+              "name": "safetyIndicesSet",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct IUniV3VaultGovernance.DelayedStrategyParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageDelayedStrategyParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedDelayedProtocolParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract INonfungiblePositionManager",
+              "name": "positionManager",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IOracle",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IUniV3VaultGovernance.DelayedProtocolParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "stagedDelayedStrategyParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint32",
+              "name": "safetyIndicesSet",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct IUniV3VaultGovernance.DelayedStrategyParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedInternalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "commitDelayedProtocolParams()": "98347a5d",
+    "commitDelayedStrategyParams(uint256)": "0bdedd56",
+    "commitInternalParams()": "d4a07d34",
+    "createVault(address[],address,uint24,address)": "66c153e9",
+    "delayedProtocolParams()": "d34cc380",
+    "delayedProtocolParamsTimestamp()": "e4af6e79",
+    "delayedProtocolPerVaultParamsTimestamp(uint256)": "511ce798",
+    "delayedStrategyParams(uint256)": "8860d248",
+    "delayedStrategyParamsTimestamp(uint256)": "6707acee",
+    "internalParams()": "7ac46fbb",
+    "internalParamsTimestamp()": "1c7f4c73",
+    "stageDelayedProtocolParams((address,address))": "b2fe31ad",
+    "stageDelayedStrategyParams(uint256,(uint32))": "25281714",
+    "stageInternalParams((address,address,address))": "09946538",
+    "stagedDelayedProtocolParams()": "c2cbdc67",
+    "stagedDelayedStrategyParams(uint256)": "59f3dae7",
+    "stagedInternalParams()": "86c6be3e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"commitDelayedProtocolParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"commitDelayedStrategyParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"commitInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"owner_\",\"type\":\"address\"},{\"internalType\":\"uint24\",\"name\":\"fee_\",\"type\":\"uint24\"},{\"internalType\":\"address\",\"name\":\"uniV3Helper_\",\"type\":\"address\"}],\"name\":\"createVault\",\"outputs\":[{\"internalType\":\"contract IUniV3Vault\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract INonfungiblePositionManager\",\"name\":\"positionManager\",\"type\":\"address\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"internalType\":\"struct IUniV3VaultGovernance.DelayedProtocolParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint32\",\"name\":\"safetyIndicesSet\",\"type\":\"uint32\"}],\"internalType\":\"struct IUniV3VaultGovernance.DelayedStrategyParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract INonfungiblePositionManager\",\"name\":\"positionManager\",\"type\":\"address\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"internalType\":\"struct IUniV3VaultGovernance.DelayedProtocolParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"stageDelayedProtocolParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"safetyIndicesSet\",\"type\":\"uint32\"}],\"internalType\":\"struct IUniV3VaultGovernance.DelayedStrategyParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"stageDelayedStrategyParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedDelayedProtocolParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract INonfungiblePositionManager\",\"name\":\"positionManager\",\"type\":\"address\"},{\"internalType\":\"contract IOracle\",\"name\":\"oracle\",\"type\":\"address\"}],\"internalType\":\"struct IUniV3VaultGovernance.DelayedProtocolParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"stagedDelayedStrategyParams\",\"outputs\":[{\"components\":[{\"internalType\":\"uint32\",\"name\":\"safetyIndicesSet\",\"type\":\"uint32\"}],\"internalType\":\"struct IUniV3VaultGovernance.DelayedStrategyParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedInternalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"commitDelayedStrategyParams(uint256)\":{\"details\":\"Can only be called after delayedStrategyParamsTimestamp\",\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"createVault(address[],address,uint24,address)\":{\"params\":{\"fee_\":\"Fee of the UniV3 pool\",\"owner_\":\"Owner of the vault NFT\",\"uniV3Helper_\":\"address of helper for UniV3 arithmetic with ticks\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"delayedStrategyParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"delayedStrategyParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"stageDelayedProtocolParams((address,address))\":{\"params\":{\"params\":\"New params\"}},\"stageDelayedStrategyParams(uint256,(uint32))\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\",\"params\":\"New params\"}},\"stageInternalParams((address,address,address))\":{\"params\":{\"newParams\":\"New Internal Params\"}},\"stagedDelayedStrategyParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"stagedInternalParams()\":{\"details\":\"The Internal Params could be committed after internalParamsTimestamp\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitDelayedProtocolParams()\":{\"notice\":\"Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"commitDelayedStrategyParams(uint256)\":{\"notice\":\"Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\"},\"commitInternalParams()\":{\"notice\":\"Commit staged Internal Params.\"},\"createVault(address[],address,uint24,address)\":{\"notice\":\"Deploys a new vault.\"},\"delayedProtocolParams()\":{\"notice\":\"Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"delayedProtocolParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.\"},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\"},\"delayedStrategyParams(uint256)\":{\"notice\":\"Delayed Strategy Params\"},\"delayedStrategyParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\"},\"internalParams()\":{\"notice\":\"Internal Params of the contract.\"},\"internalParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Internal Params could be committed.\"},\"stageDelayedProtocolParams((address,address))\":{\"notice\":\"Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"stageDelayedStrategyParams(uint256,(uint32))\":{\"notice\":\"Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\"},\"stageInternalParams((address,address,address))\":{\"notice\":\"Stage new Internal Params.\"},\"stagedDelayedProtocolParams()\":{\"notice\":\"Delayed Protocol Params staged for commit after delay.\"},\"stagedDelayedStrategyParams(uint256)\":{\"notice\":\"Delayed Strategy Params staged for commit after delay.\"},\"stagedInternalParams()\":{\"notice\":\"Staged new Internal Params.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IUniV3VaultGovernance.sol\":\"IUniV3VaultGovernance\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol\":{\"keccak256\":\"0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708\",\"dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/external/univ3/INonfungiblePositionManager.sol\":{\"keccak256\":\"0x32517469aaa5ae7beac8d9a10fb6baed6e289a19438e011cf43721e5f1f02e9c\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c5751907bb255cc21291591e3c7fd69757265eb931725847299e24d35e339318\",\"dweb:/ipfs/QmRV7q8mGgtaWdLGq3h9BsQAwk4aRHRBZyBLLerEXxdpjv\"]},\"src/interfaces/external/univ3/IPeripheryImmutableState.sol\":{\"keccak256\":\"0xd5479265cf39acdf3421c9a2a5631f7926063035121fa203cbd8d42256c3844a\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://7a5050548bfb445317d880929a270dd576de66077df2087d2c4df962bf25c8f0\",\"dweb:/ipfs/QmVf9oTxtbXXyM99Wwqx2zrQ6Dq4Yrh8CLsNVhhqKNNqAq\"]},\"src/interfaces/external/univ3/IUniswapV3Pool.sol\":{\"keccak256\":\"0x62f62c24b47eb5dd9f936d2820e619e912174df0b7d7d4967d50c3d50808db33\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c5dd959b25e1698bee4970fe5d0b02c4816d9643a27b2629d56e9b636de7edb0\",\"dweb:/ipfs/QmPWs3BVj6Rq2LA5EuD51RyYaJDVh5ujyPQE8MXcEKgG81\"]},\"src/interfaces/external/univ3/pool/IUniswapV3PoolActions.sol\":{\"keccak256\":\"0x5fa1e1b97dee54f669e23892f3d793c2a84c73637e77acb002fe4afac9b82156\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://a061fd4602680704233fb54dd0943c57c3854bfba2f53606b335ff08265e091e\",\"dweb:/ipfs/QmUK4oysXcapBmeEKn1uYWrhjJhDsfE5hs1qqc7PZ7HrHR\"]},\"src/interfaces/external/univ3/pool/IUniswapV3PoolDerivedState.sol\":{\"keccak256\":\"0xa629bf71090499616022a05b87a6ddadbb515dab405841d9c79103fb3d69dc29\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://d0e06e72853e797812ad9a3d9dd23eed8d50fd89e5b97293e5dbc7fabf48e209\",\"dweb:/ipfs/Qmf6Tg9v3vPfjHr77Ehbz7dfiSCEvVQxDnJ6jSn9q83Kqn\"]},\"src/interfaces/external/univ3/pool/IUniswapV3PoolImmutables.sol\":{\"keccak256\":\"0x66058efb8bd05600362f2d45da21f0917a9475cd8216266ba845b027bb78b06d\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://80351000698c538b1fb1f37ff34b164957ece3d49fca0b1b1e86a1c555cae5fe\",\"dweb:/ipfs/QmVMkUbXKgqhPZXaxHQ18cGmhwf6Z86HjgHoMafkfdJAcH\"]},\"src/interfaces/external/univ3/pool/IUniswapV3PoolState.sol\":{\"keccak256\":\"0xfa240a0f875fb9ca68fc66a4f9f5f9c895e962a14f1b98d92b014adab3b7114b\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://5ac2ae9b2f7a9a12a92cad894036931e6f5088445f65ddff2b8710403da40e96\",\"dweb:/ipfs/QmdYGndxi4p3Tipq2zJSJZkxFUxoPqY8zc86AxULaCcumq\"]},\"src/interfaces/oracles/IOracle.sol\":{\"keccak256\":\"0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5\",\"dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IUniV3Vault.sol\":{\"keccak256\":\"0x973aa61a1a0f0c4faa1c485d18a0cbe48bff87f50944fdec014ee10d0b2cea23\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://d378f601ff90c0972823b6ed7490fbb37ec6554a93dd39f25b55f6fb7e5ff239\",\"dweb:/ipfs/QmfTz6p6cnXh3DVC2gUfuTT768GGhevrwBzgFRtxxciA9W\"]},\"src/interfaces/vaults/IUniV3VaultGovernance.sol\":{\"keccak256\":\"0x24f22668da989014a3af032f453baeef86695e3672f55de893b595cf8288f0d4\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://59c3667d6af361f344dfc43bdf7e9f84c35ec7de0a5ae3c9f4302ce873cf3718\",\"dweb:/ipfs/QmXFGdyGxdzNsdKpqeWtB151L5hAK4tKSvo1sL2rbLY8G5\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitDelayedProtocolParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitDelayedStrategyParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitInternalParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "owner_",
+              "type": "address"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee_",
+              "type": "uint24"
+            },
+            {
+              "internalType": "address",
+              "name": "uniV3Helper_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "createVault",
+          "outputs": [
+            {
+              "internalType": "contract IUniV3Vault",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParams",
+          "outputs": [
+            {
+              "internalType": "struct IUniV3VaultGovernance.DelayedProtocolParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract INonfungiblePositionManager",
+                  "name": "positionManager",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParams",
+          "outputs": [
+            {
+              "internalType": "struct IUniV3VaultGovernance.DelayedStrategyParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint32",
+                  "name": "safetyIndicesSet",
+                  "type": "uint32"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IUniV3VaultGovernance.DelayedProtocolParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract INonfungiblePositionManager",
+                  "name": "positionManager",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageDelayedProtocolParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "struct IUniV3VaultGovernance.DelayedStrategyParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint32",
+                  "name": "safetyIndicesSet",
+                  "type": "uint32"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageDelayedStrategyParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedDelayedProtocolParams",
+          "outputs": [
+            {
+              "internalType": "struct IUniV3VaultGovernance.DelayedProtocolParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract INonfungiblePositionManager",
+                  "name": "positionManager",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IOracle",
+                  "name": "oracle",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedDelayedStrategyParams",
+          "outputs": [
+            {
+              "internalType": "struct IUniV3VaultGovernance.DelayedStrategyParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint32",
+                  "name": "safetyIndicesSet",
+                  "type": "uint32"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedInternalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "commitDelayedStrategyParams(uint256)": {
+            "details": "Can only be called after delayedStrategyParamsTimestamp",
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "createVault(address[],address,uint24,address)": {
+            "params": {
+              "fee_": "Fee of the UniV3 pool",
+              "owner_": "Owner of the vault NFT",
+              "uniV3Helper_": "address of helper for UniV3 arithmetic with ticks",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "delayedStrategyParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "stageDelayedProtocolParams((address,address))": {
+            "params": {
+              "params": "New params"
+            }
+          },
+          "stageDelayedStrategyParams(uint256,(uint32))": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault",
+              "params": "New params"
+            }
+          },
+          "stageInternalParams((address,address,address))": {
+            "params": {
+              "newParams": "New Internal Params"
+            }
+          },
+          "stagedDelayedStrategyParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "stagedInternalParams()": {
+            "details": "The Internal Params could be committed after internalParamsTimestamp"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitDelayedProtocolParams()": {
+            "notice": "Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "commitDelayedStrategyParams(uint256)": {
+            "notice": "Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay."
+          },
+          "commitInternalParams()": {
+            "notice": "Commit staged Internal Params."
+          },
+          "createVault(address[],address,uint24,address)": {
+            "notice": "Deploys a new vault."
+          },
+          "delayedProtocolParams()": {
+            "notice": "Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "delayedProtocolParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed."
+          },
+          "delayedStrategyParams(uint256)": {
+            "notice": "Delayed Strategy Params"
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed."
+          },
+          "internalParams()": {
+            "notice": "Internal Params of the contract."
+          },
+          "internalParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Internal Params could be committed."
+          },
+          "stageDelayedProtocolParams((address,address))": {
+            "notice": "Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "stageDelayedStrategyParams(uint256,(uint32))": {
+            "notice": "Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay."
+          },
+          "stageInternalParams((address,address,address))": {
+            "notice": "Stage new Internal Params."
+          },
+          "stagedDelayedProtocolParams()": {
+            "notice": "Delayed Protocol Params staged for commit after delay."
+          },
+          "stagedDelayedStrategyParams(uint256)": {
+            "notice": "Delayed Strategy Params staged for commit after delay."
+          },
+          "stagedInternalParams()": {
+            "notice": "Staged new Internal Params."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IUniV3VaultGovernance.sol": "IUniV3VaultGovernance"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol": {
+        "keccak256": "0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da",
+        "urls": [
+          "bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708",
+          "dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/univ3/INonfungiblePositionManager.sol": {
+        "keccak256": "0x32517469aaa5ae7beac8d9a10fb6baed6e289a19438e011cf43721e5f1f02e9c",
+        "urls": [
+          "bzz-raw://c5751907bb255cc21291591e3c7fd69757265eb931725847299e24d35e339318",
+          "dweb:/ipfs/QmRV7q8mGgtaWdLGq3h9BsQAwk4aRHRBZyBLLerEXxdpjv"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/univ3/IPeripheryImmutableState.sol": {
+        "keccak256": "0xd5479265cf39acdf3421c9a2a5631f7926063035121fa203cbd8d42256c3844a",
+        "urls": [
+          "bzz-raw://7a5050548bfb445317d880929a270dd576de66077df2087d2c4df962bf25c8f0",
+          "dweb:/ipfs/QmVf9oTxtbXXyM99Wwqx2zrQ6Dq4Yrh8CLsNVhhqKNNqAq"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/univ3/IUniswapV3Pool.sol": {
+        "keccak256": "0x62f62c24b47eb5dd9f936d2820e619e912174df0b7d7d4967d50c3d50808db33",
+        "urls": [
+          "bzz-raw://c5dd959b25e1698bee4970fe5d0b02c4816d9643a27b2629d56e9b636de7edb0",
+          "dweb:/ipfs/QmPWs3BVj6Rq2LA5EuD51RyYaJDVh5ujyPQE8MXcEKgG81"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/univ3/pool/IUniswapV3PoolActions.sol": {
+        "keccak256": "0x5fa1e1b97dee54f669e23892f3d793c2a84c73637e77acb002fe4afac9b82156",
+        "urls": [
+          "bzz-raw://a061fd4602680704233fb54dd0943c57c3854bfba2f53606b335ff08265e091e",
+          "dweb:/ipfs/QmUK4oysXcapBmeEKn1uYWrhjJhDsfE5hs1qqc7PZ7HrHR"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/univ3/pool/IUniswapV3PoolDerivedState.sol": {
+        "keccak256": "0xa629bf71090499616022a05b87a6ddadbb515dab405841d9c79103fb3d69dc29",
+        "urls": [
+          "bzz-raw://d0e06e72853e797812ad9a3d9dd23eed8d50fd89e5b97293e5dbc7fabf48e209",
+          "dweb:/ipfs/Qmf6Tg9v3vPfjHr77Ehbz7dfiSCEvVQxDnJ6jSn9q83Kqn"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/univ3/pool/IUniswapV3PoolImmutables.sol": {
+        "keccak256": "0x66058efb8bd05600362f2d45da21f0917a9475cd8216266ba845b027bb78b06d",
+        "urls": [
+          "bzz-raw://80351000698c538b1fb1f37ff34b164957ece3d49fca0b1b1e86a1c555cae5fe",
+          "dweb:/ipfs/QmVMkUbXKgqhPZXaxHQ18cGmhwf6Z86HjgHoMafkfdJAcH"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/univ3/pool/IUniswapV3PoolState.sol": {
+        "keccak256": "0xfa240a0f875fb9ca68fc66a4f9f5f9c895e962a14f1b98d92b014adab3b7114b",
+        "urls": [
+          "bzz-raw://5ac2ae9b2f7a9a12a92cad894036931e6f5088445f65ddff2b8710403da40e96",
+          "dweb:/ipfs/QmdYGndxi4p3Tipq2zJSJZkxFUxoPqY8zc86AxULaCcumq"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/oracles/IOracle.sol": {
+        "keccak256": "0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53",
+        "urls": [
+          "bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5",
+          "dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IUniV3Vault.sol": {
+        "keccak256": "0x973aa61a1a0f0c4faa1c485d18a0cbe48bff87f50944fdec014ee10d0b2cea23",
+        "urls": [
+          "bzz-raw://d378f601ff90c0972823b6ed7490fbb37ec6554a93dd39f25b55f6fb7e5ff239",
+          "dweb:/ipfs/QmfTz6p6cnXh3DVC2gUfuTT768GGhevrwBzgFRtxxciA9W"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IUniV3VaultGovernance.sol": {
+        "keccak256": "0x24f22668da989014a3af032f453baeef86695e3672f55de893b595cf8288f0d4",
+        "urls": [
+          "bzz-raw://59c3667d6af361f344dfc43bdf7e9f84c35ec7de0a5ae3c9f4302ce873cf3718",
+          "dweb:/ipfs/QmXFGdyGxdzNsdKpqeWtB151L5hAK4tKSvo1sL2rbLY8G5"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IUniV3VaultGovernance.sol",
+    "id": 78543,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IERC721Receiver": [
+        46705
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "INonfungiblePositionManager": [
+        74891
+      ],
+      "IOracle": [
+        75605
+      ],
+      "IPeripheryImmutableState": [
+        74907
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUniV3Vault": [
+        78447
+      ],
+      "IUniV3VaultGovernance": [
+        78542
+      ],
+      "IUniswapV3Pool": [
+        75196
+      ],
+      "IUniswapV3PoolActions": [
+        75292
+      ],
+      "IUniswapV3PoolDerivedState": [
+        75309
+      ],
+      "IUniswapV3PoolImmutables": [
+        75349
+      ],
+      "IUniswapV3PoolState": [
+        75457
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:3071:354",
+    "nodes": [
+      {
+        "id": 78449,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:354",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 78450,
+        "nodeType": "ImportDirective",
+        "src": "70:59:354",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/univ3/INonfungiblePositionManager.sol",
+        "file": "../external/univ3/INonfungiblePositionManager.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78543,
+        "sourceUnit": 74892,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78451,
+        "nodeType": "ImportDirective",
+        "src": "130:32:354",
+        "nodes": [],
+        "absolutePath": "src/interfaces/oracles/IOracle.sol",
+        "file": "../oracles/IOracle.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78543,
+        "sourceUnit": 75606,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78452,
+        "nodeType": "ImportDirective",
+        "src": "163:32:354",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IVaultGovernance.sol",
+        "file": "./IVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78543,
+        "sourceUnit": 78669,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78453,
+        "nodeType": "ImportDirective",
+        "src": "196:27:354",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IUniV3Vault.sol",
+        "file": "./IUniV3Vault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78543,
+        "sourceUnit": 78448,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78542,
+        "nodeType": "ContractDefinition",
+        "src": "225:2890:354",
+        "nodes": [
+          {
+            "id": 78462,
+            "nodeType": "StructDefinition",
+            "src": "461:113:354",
+            "nodes": [],
+            "canonicalName": "IUniV3VaultGovernance.DelayedProtocolParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 78458,
+                "mutability": "mutable",
+                "name": "positionManager",
+                "nameLocation": "528:15:354",
+                "nodeType": "VariableDeclaration",
+                "scope": 78462,
+                "src": "500:43:354",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_INonfungiblePositionManager_$74891",
+                  "typeString": "contract INonfungiblePositionManager"
+                },
+                "typeName": {
+                  "id": 78457,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 78456,
+                    "name": "INonfungiblePositionManager",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 74891,
+                    "src": "500:27:354"
+                  },
+                  "referencedDeclaration": 74891,
+                  "src": "500:27:354",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_INonfungiblePositionManager_$74891",
+                    "typeString": "contract INonfungiblePositionManager"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 78461,
+                "mutability": "mutable",
+                "name": "oracle",
+                "nameLocation": "561:6:354",
+                "nodeType": "VariableDeclaration",
+                "scope": 78462,
+                "src": "553:14:354",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IOracle_$75605",
+                  "typeString": "contract IOracle"
+                },
+                "typeName": {
+                  "id": 78460,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 78459,
+                    "name": "IOracle",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 75605,
+                    "src": "553:7:354"
+                  },
+                  "referencedDeclaration": 75605,
+                  "src": "553:7:354",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IOracle_$75605",
+                    "typeString": "contract IOracle"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelayedProtocolParams",
+            "nameLocation": "468:21:354",
+            "scope": 78542,
+            "visibility": "public"
+          },
+          {
+            "id": 78465,
+            "nodeType": "StructDefinition",
+            "src": "638:69:354",
+            "nodes": [],
+            "canonicalName": "IUniV3VaultGovernance.DelayedStrategyParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 78464,
+                "mutability": "mutable",
+                "name": "safetyIndicesSet",
+                "nameLocation": "684:16:354",
+                "nodeType": "VariableDeclaration",
+                "scope": 78465,
+                "src": "677:23:354",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint32",
+                  "typeString": "uint32"
+                },
+                "typeName": {
+                  "id": 78463,
+                  "name": "uint32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "677:6:354",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelayedStrategyParams",
+            "nameLocation": "645:21:354",
+            "scope": 78542,
+            "visibility": "public"
+          },
+          {
+            "id": 78472,
+            "nodeType": "FunctionDefinition",
+            "src": "843:86:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78466,
+              "nodeType": "StructuredDocumentation",
+              "src": "713:125:354",
+              "text": "@notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+            },
+            "functionSelector": "d34cc380",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedProtocolParams",
+            "nameLocation": "852:21:354",
+            "parameters": {
+              "id": 78467,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "873:2:354"
+            },
+            "returnParameters": {
+              "id": 78471,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78470,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78472,
+                  "src": "899:28:354",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$78462_memory_ptr",
+                    "typeString": "struct IUniV3VaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 78469,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78468,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78462,
+                      "src": "899:21:354"
+                    },
+                    "referencedDeclaration": 78462,
+                    "src": "899:21:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$78462_storage_ptr",
+                      "typeString": "struct IUniV3VaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "898:30:354"
+            },
+            "scope": 78542,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78479,
+            "nodeType": "FunctionDefinition",
+            "src": "1006:92:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78473,
+              "nodeType": "StructuredDocumentation",
+              "src": "935:66:354",
+              "text": "@notice Delayed Protocol Params staged for commit after delay."
+            },
+            "functionSelector": "c2cbdc67",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedDelayedProtocolParams",
+            "nameLocation": "1015:27:354",
+            "parameters": {
+              "id": 78474,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1042:2:354"
+            },
+            "returnParameters": {
+              "id": 78478,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78477,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78479,
+                  "src": "1068:28:354",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$78462_memory_ptr",
+                    "typeString": "struct IUniV3VaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 78476,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78475,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78462,
+                      "src": "1068:21:354"
+                    },
+                    "referencedDeclaration": 78462,
+                    "src": "1068:21:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$78462_storage_ptr",
+                      "typeString": "struct IUniV3VaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1067:30:354"
+            },
+            "scope": 78542,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78486,
+            "nodeType": "FunctionDefinition",
+            "src": "1273:84:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78480,
+              "nodeType": "StructuredDocumentation",
+              "src": "1104:164:354",
+              "text": "@notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\n @param params New params"
+            },
+            "functionSelector": "b2fe31ad",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageDelayedProtocolParams",
+            "nameLocation": "1282:26:354",
+            "parameters": {
+              "id": 78484,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78483,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "1340:6:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78486,
+                  "src": "1309:37:354",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$78462_calldata_ptr",
+                    "typeString": "struct IUniV3VaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 78482,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78481,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78462,
+                      "src": "1309:21:354"
+                    },
+                    "referencedDeclaration": 78462,
+                    "src": "1309:21:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$78462_storage_ptr",
+                      "typeString": "struct IUniV3VaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1308:39:354"
+            },
+            "returnParameters": {
+              "id": 78485,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1356:0:354"
+            },
+            "scope": 78542,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78490,
+            "nodeType": "FunctionDefinition",
+            "src": "1500:48:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78487,
+              "nodeType": "StructuredDocumentation",
+              "src": "1363:132:354",
+              "text": "@notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+            },
+            "functionSelector": "98347a5d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitDelayedProtocolParams",
+            "nameLocation": "1509:27:354",
+            "parameters": {
+              "id": 78488,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1536:2:354"
+            },
+            "returnParameters": {
+              "id": 78489,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1547:0:354"
+            },
+            "scope": 78542,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78499,
+            "nodeType": "FunctionDefinition",
+            "src": "1644:97:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78491,
+              "nodeType": "StructuredDocumentation",
+              "src": "1554:85:354",
+              "text": "@notice Delayed Strategy Params\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "8860d248",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedStrategyParams",
+            "nameLocation": "1653:21:354",
+            "parameters": {
+              "id": 78494,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78493,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1683:3:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78499,
+                  "src": "1675:11:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78492,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1675:7:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1674:13:354"
+            },
+            "returnParameters": {
+              "id": 78498,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78497,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78499,
+                  "src": "1711:28:354",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedStrategyParams_$78465_memory_ptr",
+                    "typeString": "struct IUniV3VaultGovernance.DelayedStrategyParams"
+                  },
+                  "typeName": {
+                    "id": 78496,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78495,
+                      "name": "DelayedStrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78465,
+                      "src": "1711:21:354"
+                    },
+                    "referencedDeclaration": 78465,
+                    "src": "1711:21:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedStrategyParams_$78465_storage_ptr",
+                      "typeString": "struct IUniV3VaultGovernance.DelayedStrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1710:30:354"
+            },
+            "scope": 78542,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78508,
+            "nodeType": "FunctionDefinition",
+            "src": "1868:103:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78500,
+              "nodeType": "StructuredDocumentation",
+              "src": "1747:116:354",
+              "text": "@notice Delayed Strategy Params staged for commit after delay.\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "59f3dae7",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedDelayedStrategyParams",
+            "nameLocation": "1877:27:354",
+            "parameters": {
+              "id": 78503,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78502,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1913:3:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78508,
+                  "src": "1905:11:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78501,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1905:7:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1904:13:354"
+            },
+            "returnParameters": {
+              "id": 78507,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78506,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78508,
+                  "src": "1941:28:354",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedStrategyParams_$78465_memory_ptr",
+                    "typeString": "struct IUniV3VaultGovernance.DelayedStrategyParams"
+                  },
+                  "typeName": {
+                    "id": 78505,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78504,
+                      "name": "DelayedStrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78465,
+                      "src": "1941:21:354"
+                    },
+                    "referencedDeclaration": 78465,
+                    "src": "1941:21:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedStrategyParams_$78465_storage_ptr",
+                      "typeString": "struct IUniV3VaultGovernance.DelayedStrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1940:30:354"
+            },
+            "scope": 78542,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78517,
+            "nodeType": "FunctionDefinition",
+            "src": "2208:97:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78509,
+              "nodeType": "StructuredDocumentation",
+              "src": "1977:226:354",
+              "text": "@notice Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\n @param nft VaultRegistry NFT of the vault\n @param params New params"
+            },
+            "functionSelector": "25281714",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageDelayedStrategyParams",
+            "nameLocation": "2217:26:354",
+            "parameters": {
+              "id": 78515,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78511,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "2252:3:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78517,
+                  "src": "2244:11:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78510,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2244:7:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78514,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "2288:6:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78517,
+                  "src": "2257:37:354",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedStrategyParams_$78465_calldata_ptr",
+                    "typeString": "struct IUniV3VaultGovernance.DelayedStrategyParams"
+                  },
+                  "typeName": {
+                    "id": 78513,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78512,
+                      "name": "DelayedStrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78465,
+                      "src": "2257:21:354"
+                    },
+                    "referencedDeclaration": 78465,
+                    "src": "2257:21:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedStrategyParams_$78465_storage_ptr",
+                      "typeString": "struct IUniV3VaultGovernance.DelayedStrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2243:52:354"
+            },
+            "returnParameters": {
+              "id": 78516,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2304:0:354"
+            },
+            "scope": 78542,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78523,
+            "nodeType": "FunctionDefinition",
+            "src": "2579:59:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78518,
+              "nodeType": "StructuredDocumentation",
+              "src": "2311:263:354",
+              "text": "@notice Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.\n @dev Can only be called after delayedStrategyParamsTimestamp\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "0bdedd56",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitDelayedStrategyParams",
+            "nameLocation": "2588:27:354",
+            "parameters": {
+              "id": 78521,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78520,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "2624:3:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78523,
+                  "src": "2616:11:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78519,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2616:7:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2615:13:354"
+            },
+            "returnParameters": {
+              "id": 78522,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2637:0:354"
+            },
+            "scope": 78542,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78541,
+            "nodeType": "FunctionDefinition",
+            "src": "2922:191:354",
+            "nodes": [],
+            "documentation": {
+              "id": 78524,
+              "nodeType": "StructuredDocumentation",
+              "src": "2644:273:354",
+              "text": "@notice Deploys a new vault.\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault\n @param owner_ Owner of the vault NFT\n @param fee_ Fee of the UniV3 pool\n @param uniV3Helper_ address of helper for UniV3 arithmetic with ticks"
+            },
+            "functionSelector": "66c153e9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createVault",
+            "nameLocation": "2931:11:354",
+            "parameters": {
+              "id": 78534,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78527,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "2969:12:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78541,
+                  "src": "2952:29:354",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 78525,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2952:7:354",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 78526,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2952:9:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78529,
+                  "mutability": "mutable",
+                  "name": "owner_",
+                  "nameLocation": "2999:6:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78541,
+                  "src": "2991:14:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78528,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2991:7:354",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78531,
+                  "mutability": "mutable",
+                  "name": "fee_",
+                  "nameLocation": "3022:4:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78541,
+                  "src": "3015:11:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint24",
+                    "typeString": "uint24"
+                  },
+                  "typeName": {
+                    "id": 78530,
+                    "name": "uint24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3015:6:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint24",
+                      "typeString": "uint24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78533,
+                  "mutability": "mutable",
+                  "name": "uniV3Helper_",
+                  "nameLocation": "3044:12:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78541,
+                  "src": "3036:20:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78532,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3036:7:354",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2942:120:354"
+            },
+            "returnParameters": {
+              "id": 78540,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78537,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "3093:5:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78541,
+                  "src": "3081:17:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IUniV3Vault_$78447",
+                    "typeString": "contract IUniV3Vault"
+                  },
+                  "typeName": {
+                    "id": 78536,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78535,
+                      "name": "IUniV3Vault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78447,
+                      "src": "3081:11:354"
+                    },
+                    "referencedDeclaration": 78447,
+                    "src": "3081:11:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IUniV3Vault_$78447",
+                      "typeString": "contract IUniV3Vault"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78539,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "3108:3:354",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78541,
+                  "src": "3100:11:354",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78538,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3100:7:354",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3080:32:354"
+            },
+            "scope": 78542,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 78454,
+              "name": "IVaultGovernance",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 78668,
+              "src": "260:16:354"
+            },
+            "id": 78455,
+            "nodeType": "InheritanceSpecifier",
+            "src": "260:16:354"
+          }
+        ],
+        "canonicalName": "IUniV3VaultGovernance",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          78542,
+          78668
+        ],
+        "name": "IUniV3VaultGovernance",
+        "nameLocation": "235:21:354",
+        "scope": 78543,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 354
+}

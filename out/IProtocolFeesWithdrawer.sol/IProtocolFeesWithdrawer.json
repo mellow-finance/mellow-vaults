@@ -1,0 +1,1399 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "TokenAllowlisted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "TokenDenylisted",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "allowlistToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "denylistToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getDenylistedToken",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getDenylistedTokensLength",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getProtocolFeesCollector",
+      "outputs": [
+        {
+          "internalType": "contract IProtocolFeesCollector",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "isWithdrawableToken",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20[]",
+          "name": "tokens",
+          "type": "address[]"
+        }
+      ],
+      "name": "isWithdrawableTokens",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawCollectedFees",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "allowlistToken(address)": "de0b27c9",
+    "denylistToken(address)": "194d810f",
+    "getDenylistedToken(uint256)": "fd3a0cdd",
+    "getDenylistedTokensLength()": "8dd26fc6",
+    "getProtocolFeesCollector()": "d2946c2b",
+    "isWithdrawableToken(address)": "cdf0e934",
+    "isWithdrawableTokens(address[])": "a21dfaee",
+    "withdrawCollectedFees(address[],uint256[],address)": "6daefab6"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"contract IERC20\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"TokenAllowlisted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"contract IERC20\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"TokenDenylisted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"allowlistToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"denylistToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getDenylistedToken\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDenylistedTokensLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getProtocolFeesCollector\",\"outputs\":[{\"internalType\":\"contract IProtocolFeesCollector\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isWithdrawableToken\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IERC20[]\",\"name\":\"tokens\",\"type\":\"address[]\"}],\"name\":\"isWithdrawableTokens\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IERC20[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"withdrawCollectedFees\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Balancer Labs\",\"kind\":\"dev\",\"methods\":{\"isWithdrawableTokens(address[])\":{\"details\":\"Returns false if any token is denylisted.\"},\"withdrawCollectedFees(address[],uint256[],address)\":{\"details\":\"Reverts if attempting to withdraw a denylisted token.\",\"params\":{\"amounts\":\"- an array of the amounts of each token to withdraw.\",\"recipient\":\"- the address to which to send the withdrawn tokens.\",\"tokens\":\"- an array of token addresses to withdraw.\"}}},\"title\":\"Protocol Fees Withdrawer\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"allowlistToken(address)\":{\"notice\":\"Marks the provided token as eligible for withdrawal from the Protocol Fee Collector\"},\"denylistToken(address)\":{\"notice\":\"Marks the provided token as ineligible for withdrawal from the Protocol Fee Collector\"},\"getDenylistedToken(uint256)\":{\"notice\":\"Returns the denylisted token at the given `index`.\"},\"getDenylistedTokensLength()\":{\"notice\":\"Returns the number of denylisted tokens.\"},\"getProtocolFeesCollector()\":{\"notice\":\"Returns the address of the Protocol Fee Collector.\"},\"isWithdrawableToken(address)\":{\"notice\":\"Returns whether the provided token may be withdrawn from the Protocol Fee Collector\"},\"isWithdrawableTokens(address[])\":{\"notice\":\"Returns whether the provided array of tokens may be withdrawn from the Protocol Fee Collector\"},\"withdrawCollectedFees(address[],uint256[],address)\":{\"notice\":\"Withdraws fees from the Protocol Fee Collector.\"}},\"notice\":\"Safety layer around the Protocol Fees Collector which allows withdrawals of specific tokens to be blocked. This is useful for the case in where tokens that shouldn't be distributed are unexpectedly paid into the Protocol Fees Collector.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/standalone-utils/IProtocolFeesWithdrawer.sol\":\"IProtocolFeesWithdrawer\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol\":{\"keccak256\":\"0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1\",\"dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa\"]},\"src/interfaces/external/balancer/solidity-utils/helpers/ISignaturesValidator.sol\":{\"keccak256\":\"0x52bd09272e9ec2cff838df757e8b690ff4ca3f4f07e9edd9b711e31e474dd979\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://92ae86c99ce4b92fc666a4c6053bc5ae2932d07b23471647cae7c541c68071b3\",\"dweb:/ipfs/QmeKHMVTVLfG5MKQ7ewM7uwB41WEXkDKhkkL3qCd7mokFo\"]},\"src/interfaces/external/balancer/solidity-utils/helpers/ITemporarilyPausable.sol\":{\"keccak256\":\"0xf952ad04a5d4e8523212315e19b8d874e13ceadb7dbc1f5025510da1e153405c\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://81d7e364e8c7a76879f9be650559d3de53879918ab721372931d0e51daa464b5\",\"dweb:/ipfs/QmNyXjvxr3cXzVeBaPrApS9fdjufyN6dXtjGy746xxtj2z\"]},\"src/interfaces/external/balancer/solidity-utils/misc/IWETH.sol\":{\"keccak256\":\"0x90278f677649701309ab0902f5bca2fd0d9603e5ce7193b15cf05a7c5582c3b9\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://991dce71671de9fb0f5fafda69994705e358a5cb235bc3acf961dbc9895b6dd6\",\"dweb:/ipfs/QmP7479cjgvMa2DjXNSB6gvHZ2WibU4TGb3DTjqw6UuFb6\"]},\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol\":{\"keccak256\":\"0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f\",\"dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U\"]},\"src/interfaces/external/balancer/standalone-utils/IProtocolFeesWithdrawer.sol\":{\"keccak256\":\"0xfc16b06189547b7784338fd7e5f400f05f461dc64e1a65e7fe5daea04ace1c04\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://f1c5afc68fc62dea3fcbdda180097d89d94b3b7e790245f54bf2ad2c6053088f\",\"dweb:/ipfs/QmYHDt6fnS98i1zxGfwD4NLXPYiRQtPEt2k5vaqjW9RLck\"]},\"src/interfaces/external/balancer/vault/IAsset.sol\":{\"keccak256\":\"0x746354db670eb3b94179963b522c4deb0b9854483ab293e3025689749923ebef\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://bcd5a7e0519f94c25f4e3b568b8c0446b2240bd3808c56c3b498a6fed459b2e4\",\"dweb:/ipfs/QmRXvcCy9oKhwPMr8QQ74pg9jormcgq3GHmLSGTDhUWAsn\"]},\"src/interfaces/external/balancer/vault/IAuthorizer.sol\":{\"keccak256\":\"0x4adfebbc478ab323d0679386ef8e2384f5205eb280f72757c151eca62ea4f91b\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://49a34c9ad9cb559931b465cea2d570ab015751c6dbc4a52eab8c36b5b949eec1\",\"dweb:/ipfs/QmUiUSZz8gjANUcTqaPCfNkUp3gpjt8Qq2z4UWuQWhaK34\"]},\"src/interfaces/external/balancer/vault/IFlashLoanRecipient.sol\":{\"keccak256\":\"0xef16377e5ee7ac8151fe8abc3f7b8f0a420008ae1c1336f3cbaea5e171403a43\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://ca460a387ce27682beecc1f93a07c7ef6139504f2d4e2fce715abe82b6d2b039\",\"dweb:/ipfs/QmS8QgcAqhtHepcf8LYGToutbhsUXaTE7UNLQQi4fBJsUC\"]},\"src/interfaces/external/balancer/vault/IProtocolFeesCollector.sol\":{\"keccak256\":\"0xa42e8b311517ce70dd7f2af6b497603a81c3dd678961a5ffd8a2968eff6b7b5a\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://9a11ea954c234e348896cec60165624d71e9fe7b44d7341d74e3bdc7790f2b6a\",\"dweb:/ipfs/QmNq1f6yAeJawBKpMmfNyoQ84nZquQ78YtT3tt3dMBtyCK\"]},\"src/interfaces/external/balancer/vault/IVault.sol\":{\"keccak256\":\"0x08d254ba643e02507305b570f794a75b5439d2ae799f761d26d3a2fd77f6d2fb\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://2de3bcdb5d5805a44e2c643bc76bc14858825b2b018049f89962c8bc532ac24d\",\"dweb:/ipfs/QmfWZGKRChzwe97R8nqShjKdRX5k8Tp9HKwr7UAq9rCg1m\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TokenAllowlisted",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TokenDenylisted",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "allowlistToken"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "denylistToken"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getDenylistedToken",
+          "outputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getDenylistedTokensLength",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getProtocolFeesCollector",
+          "outputs": [
+            {
+              "internalType": "contract IProtocolFeesCollector",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isWithdrawableToken",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20[]",
+              "name": "tokens",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isWithdrawableTokens",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "amounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawCollectedFees"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "isWithdrawableTokens(address[])": {
+            "details": "Returns false if any token is denylisted."
+          },
+          "withdrawCollectedFees(address[],uint256[],address)": {
+            "details": "Reverts if attempting to withdraw a denylisted token.",
+            "params": {
+              "amounts": "- an array of the amounts of each token to withdraw.",
+              "recipient": "- the address to which to send the withdrawn tokens.",
+              "tokens": "- an array of token addresses to withdraw."
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "allowlistToken(address)": {
+            "notice": "Marks the provided token as eligible for withdrawal from the Protocol Fee Collector"
+          },
+          "denylistToken(address)": {
+            "notice": "Marks the provided token as ineligible for withdrawal from the Protocol Fee Collector"
+          },
+          "getDenylistedToken(uint256)": {
+            "notice": "Returns the denylisted token at the given `index`."
+          },
+          "getDenylistedTokensLength()": {
+            "notice": "Returns the number of denylisted tokens."
+          },
+          "getProtocolFeesCollector()": {
+            "notice": "Returns the address of the Protocol Fee Collector."
+          },
+          "isWithdrawableToken(address)": {
+            "notice": "Returns whether the provided token may be withdrawn from the Protocol Fee Collector"
+          },
+          "isWithdrawableTokens(address[])": {
+            "notice": "Returns whether the provided array of tokens may be withdrawn from the Protocol Fee Collector"
+          },
+          "withdrawCollectedFees(address[],uint256[],address)": {
+            "notice": "Withdraws fees from the Protocol Fee Collector."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/standalone-utils/IProtocolFeesWithdrawer.sol": "IProtocolFeesWithdrawer"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol": {
+        "keccak256": "0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842",
+        "urls": [
+          "bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1",
+          "dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/helpers/ISignaturesValidator.sol": {
+        "keccak256": "0x52bd09272e9ec2cff838df757e8b690ff4ca3f4f07e9edd9b711e31e474dd979",
+        "urls": [
+          "bzz-raw://92ae86c99ce4b92fc666a4c6053bc5ae2932d07b23471647cae7c541c68071b3",
+          "dweb:/ipfs/QmeKHMVTVLfG5MKQ7ewM7uwB41WEXkDKhkkL3qCd7mokFo"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/helpers/ITemporarilyPausable.sol": {
+        "keccak256": "0xf952ad04a5d4e8523212315e19b8d874e13ceadb7dbc1f5025510da1e153405c",
+        "urls": [
+          "bzz-raw://81d7e364e8c7a76879f9be650559d3de53879918ab721372931d0e51daa464b5",
+          "dweb:/ipfs/QmNyXjvxr3cXzVeBaPrApS9fdjufyN6dXtjGy746xxtj2z"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/misc/IWETH.sol": {
+        "keccak256": "0x90278f677649701309ab0902f5bca2fd0d9603e5ce7193b15cf05a7c5582c3b9",
+        "urls": [
+          "bzz-raw://991dce71671de9fb0f5fafda69994705e358a5cb235bc3acf961dbc9895b6dd6",
+          "dweb:/ipfs/QmP7479cjgvMa2DjXNSB6gvHZ2WibU4TGb3DTjqw6UuFb6"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol": {
+        "keccak256": "0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835",
+        "urls": [
+          "bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f",
+          "dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/balancer/standalone-utils/IProtocolFeesWithdrawer.sol": {
+        "keccak256": "0xfc16b06189547b7784338fd7e5f400f05f461dc64e1a65e7fe5daea04ace1c04",
+        "urls": [
+          "bzz-raw://f1c5afc68fc62dea3fcbdda180097d89d94b3b7e790245f54bf2ad2c6053088f",
+          "dweb:/ipfs/QmYHDt6fnS98i1zxGfwD4NLXPYiRQtPEt2k5vaqjW9RLck"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IAsset.sol": {
+        "keccak256": "0x746354db670eb3b94179963b522c4deb0b9854483ab293e3025689749923ebef",
+        "urls": [
+          "bzz-raw://bcd5a7e0519f94c25f4e3b568b8c0446b2240bd3808c56c3b498a6fed459b2e4",
+          "dweb:/ipfs/QmRXvcCy9oKhwPMr8QQ74pg9jormcgq3GHmLSGTDhUWAsn"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IAuthorizer.sol": {
+        "keccak256": "0x4adfebbc478ab323d0679386ef8e2384f5205eb280f72757c151eca62ea4f91b",
+        "urls": [
+          "bzz-raw://49a34c9ad9cb559931b465cea2d570ab015751c6dbc4a52eab8c36b5b949eec1",
+          "dweb:/ipfs/QmUiUSZz8gjANUcTqaPCfNkUp3gpjt8Qq2z4UWuQWhaK34"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IFlashLoanRecipient.sol": {
+        "keccak256": "0xef16377e5ee7ac8151fe8abc3f7b8f0a420008ae1c1336f3cbaea5e171403a43",
+        "urls": [
+          "bzz-raw://ca460a387ce27682beecc1f93a07c7ef6139504f2d4e2fce715abe82b6d2b039",
+          "dweb:/ipfs/QmS8QgcAqhtHepcf8LYGToutbhsUXaTE7UNLQQi4fBJsUC"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IProtocolFeesCollector.sol": {
+        "keccak256": "0xa42e8b311517ce70dd7f2af6b497603a81c3dd678961a5ffd8a2968eff6b7b5a",
+        "urls": [
+          "bzz-raw://9a11ea954c234e348896cec60165624d71e9fe7b44d7341d74e3bdc7790f2b6a",
+          "dweb:/ipfs/QmNq1f6yAeJawBKpMmfNyoQ84nZquQ78YtT3tt3dMBtyCK"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IVault.sol": {
+        "keccak256": "0x08d254ba643e02507305b570f794a75b5439d2ae799f761d26d3a2fd77f6d2fb",
+        "urls": [
+          "bzz-raw://2de3bcdb5d5805a44e2c643bc76bc14858825b2b018049f89962c8bc532ac24d",
+          "dweb:/ipfs/QmfWZGKRChzwe97R8nqShjKdRX5k8Tp9HKwr7UAq9rCg1m"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/standalone-utils/IProtocolFeesWithdrawer.sol",
+    "id": 61147,
+    "exportedSymbols": {
+      "IAuthorizer": [
+        61823
+      ],
+      "IERC20": [
+        60345
+      ],
+      "IProtocolFeesCollector": [
+        62141
+      ],
+      "IProtocolFeesWithdrawer": [
+        61146
+      ],
+      "IVault": [
+        63277
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:2275:167",
+    "nodes": [
+      {
+        "id": 61065,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:167",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 61066,
+        "nodeType": "ImportDirective",
+        "src": "713:45:167",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/vault/IProtocolFeesCollector.sol",
+        "file": "../vault/IProtocolFeesCollector.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 61147,
+        "sourceUnit": 62142,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 61146,
+        "nodeType": "ContractDefinition",
+        "src": "1082:1880:167",
+        "nodes": [
+          {
+            "id": 61072,
+            "nodeType": "EventDefinition",
+            "src": "1122:37:167",
+            "nodes": [],
+            "anonymous": false,
+            "name": "TokenAllowlisted",
+            "nameLocation": "1128:16:167",
+            "parameters": {
+              "id": 61071,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61070,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1152:5:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61072,
+                  "src": "1145:12:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 61069,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61068,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "1145:6:167"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "1145:6:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1144:14:167"
+            }
+          },
+          {
+            "id": 61077,
+            "nodeType": "EventDefinition",
+            "src": "1164:36:167",
+            "nodes": [],
+            "anonymous": false,
+            "name": "TokenDenylisted",
+            "nameLocation": "1170:15:167",
+            "parameters": {
+              "id": 61076,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61075,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1193:5:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61077,
+                  "src": "1186:12:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 61074,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61073,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "1186:6:167"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "1186:6:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1185:14:167"
+            }
+          },
+          {
+            "id": 61084,
+            "nodeType": "FunctionDefinition",
+            "src": "1288:83:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61078,
+              "nodeType": "StructuredDocumentation",
+              "src": "1206:77:167",
+              "text": " @notice Returns the address of the Protocol Fee Collector."
+            },
+            "functionSelector": "d2946c2b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getProtocolFeesCollector",
+            "nameLocation": "1297:24:167",
+            "parameters": {
+              "id": 61079,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1321:2:167"
+            },
+            "returnParameters": {
+              "id": 61083,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61082,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61084,
+                  "src": "1347:22:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IProtocolFeesCollector_$62141",
+                    "typeString": "contract IProtocolFeesCollector"
+                  },
+                  "typeName": {
+                    "id": 61081,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61080,
+                      "name": "IProtocolFeesCollector",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 62141,
+                      "src": "1347:22:167"
+                    },
+                    "referencedDeclaration": 62141,
+                    "src": "1347:22:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IProtocolFeesCollector_$62141",
+                      "typeString": "contract IProtocolFeesCollector"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1346:24:167"
+            },
+            "scope": 61146,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61093,
+            "nodeType": "FunctionDefinition",
+            "src": "1492:72:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61085,
+              "nodeType": "StructuredDocumentation",
+              "src": "1377:110:167",
+              "text": " @notice Returns whether the provided token may be withdrawn from the Protocol Fee Collector"
+            },
+            "functionSelector": "cdf0e934",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isWithdrawableToken",
+            "nameLocation": "1501:19:167",
+            "parameters": {
+              "id": 61089,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61088,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1528:5:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61093,
+                  "src": "1521:12:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 61087,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61086,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "1521:6:167"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "1521:6:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1520:14:167"
+            },
+            "returnParameters": {
+              "id": 61092,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61091,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61093,
+                  "src": "1558:4:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 61090,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1558:4:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1557:6:167"
+            },
+            "scope": 61146,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61103,
+            "nodeType": "FunctionDefinition",
+            "src": "1749:85:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61094,
+              "nodeType": "StructuredDocumentation",
+              "src": "1570:174:167",
+              "text": " @notice Returns whether the provided array of tokens may be withdrawn from the Protocol Fee Collector\n @dev Returns false if any token is denylisted."
+            },
+            "functionSelector": "a21dfaee",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isWithdrawableTokens",
+            "nameLocation": "1758:20:167",
+            "parameters": {
+              "id": 61099,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61098,
+                  "mutability": "mutable",
+                  "name": "tokens",
+                  "nameLocation": "1797:6:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61103,
+                  "src": "1779:24:167",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_contract$_IERC20_$60345_$dyn_calldata_ptr",
+                    "typeString": "contract IERC20[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 61096,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 61095,
+                        "name": "IERC20",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 60345,
+                        "src": "1779:6:167"
+                      },
+                      "referencedDeclaration": 60345,
+                      "src": "1779:6:167",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20_$60345",
+                        "typeString": "contract IERC20"
+                      }
+                    },
+                    "id": 61097,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1779:8:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_contract$_IERC20_$60345_$dyn_storage_ptr",
+                      "typeString": "contract IERC20[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1778:26:167"
+            },
+            "returnParameters": {
+              "id": 61102,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61101,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61103,
+                  "src": "1828:4:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 61100,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1828:4:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1827:6:167"
+            },
+            "scope": 61146,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61112,
+            "nodeType": "FunctionDefinition",
+            "src": "1922:74:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61104,
+              "nodeType": "StructuredDocumentation",
+              "src": "1840:77:167",
+              "text": " @notice Returns the denylisted token at the given `index`."
+            },
+            "functionSelector": "fd3a0cdd",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getDenylistedToken",
+            "nameLocation": "1931:18:167",
+            "parameters": {
+              "id": 61107,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61106,
+                  "mutability": "mutable",
+                  "name": "index",
+                  "nameLocation": "1958:5:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61112,
+                  "src": "1950:13:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61105,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1950:7:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1949:15:167"
+            },
+            "returnParameters": {
+              "id": 61111,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61110,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61112,
+                  "src": "1988:6:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 61109,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61108,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "1988:6:167"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "1988:6:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1987:8:167"
+            },
+            "scope": 61146,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61118,
+            "nodeType": "FunctionDefinition",
+            "src": "2074:69:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61113,
+              "nodeType": "StructuredDocumentation",
+              "src": "2002:67:167",
+              "text": " @notice Returns the number of denylisted tokens."
+            },
+            "functionSelector": "8dd26fc6",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getDenylistedTokensLength",
+            "nameLocation": "2083:25:167",
+            "parameters": {
+              "id": 61114,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2108:2:167"
+            },
+            "returnParameters": {
+              "id": 61117,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61116,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61118,
+                  "src": "2134:7:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61115,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2134:7:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2133:9:167"
+            },
+            "scope": 61146,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61131,
+            "nodeType": "FunctionDefinition",
+            "src": "2510:113:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61119,
+              "nodeType": "StructuredDocumentation",
+              "src": "2149:356:167",
+              "text": " @notice Withdraws fees from the Protocol Fee Collector.\n @dev Reverts if attempting to withdraw a denylisted token.\n @param tokens - an array of token addresses to withdraw.\n @param amounts - an array of the amounts of each token to withdraw.\n @param recipient - the address to which to send the withdrawn tokens."
+            },
+            "functionSelector": "6daefab6",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawCollectedFees",
+            "nameLocation": "2519:21:167",
+            "parameters": {
+              "id": 61129,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61123,
+                  "mutability": "mutable",
+                  "name": "tokens",
+                  "nameLocation": "2559:6:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61131,
+                  "src": "2541:24:167",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_contract$_IERC20_$60345_$dyn_calldata_ptr",
+                    "typeString": "contract IERC20[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 61121,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 61120,
+                        "name": "IERC20",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 60345,
+                        "src": "2541:6:167"
+                      },
+                      "referencedDeclaration": 60345,
+                      "src": "2541:6:167",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20_$60345",
+                        "typeString": "contract IERC20"
+                      }
+                    },
+                    "id": 61122,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2541:8:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_contract$_IERC20_$60345_$dyn_storage_ptr",
+                      "typeString": "contract IERC20[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61126,
+                  "mutability": "mutable",
+                  "name": "amounts",
+                  "nameLocation": "2586:7:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61131,
+                  "src": "2567:26:167",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_calldata_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 61124,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2567:7:167",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 61125,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2567:9:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61128,
+                  "mutability": "mutable",
+                  "name": "recipient",
+                  "nameLocation": "2603:9:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61131,
+                  "src": "2595:17:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 61127,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2595:7:167",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2540:73:167"
+            },
+            "returnParameters": {
+              "id": 61130,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2622:0:167"
+            },
+            "scope": 61146,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61138,
+            "nodeType": "FunctionDefinition",
+            "src": "2746:46:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61132,
+              "nodeType": "StructuredDocumentation",
+              "src": "2629:112:167",
+              "text": " @notice Marks the provided token as ineligible for withdrawal from the Protocol Fee Collector"
+            },
+            "functionSelector": "194d810f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "denylistToken",
+            "nameLocation": "2755:13:167",
+            "parameters": {
+              "id": 61136,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61135,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "2776:5:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61138,
+                  "src": "2769:12:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 61134,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61133,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "2769:6:167"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "2769:6:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2768:14:167"
+            },
+            "returnParameters": {
+              "id": 61137,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2791:0:167"
+            },
+            "scope": 61146,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61145,
+            "nodeType": "FunctionDefinition",
+            "src": "2913:47:167",
+            "nodes": [],
+            "documentation": {
+              "id": 61139,
+              "nodeType": "StructuredDocumentation",
+              "src": "2798:110:167",
+              "text": " @notice Marks the provided token as eligible for withdrawal from the Protocol Fee Collector"
+            },
+            "functionSelector": "de0b27c9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "allowlistToken",
+            "nameLocation": "2922:14:167",
+            "parameters": {
+              "id": 61143,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61142,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "2944:5:167",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61145,
+                  "src": "2937:12:167",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 61141,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61140,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "2937:6:167"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "2937:6:167",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2936:14:167"
+            },
+            "returnParameters": {
+              "id": 61144,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2959:0:167"
+            },
+            "scope": 61146,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IProtocolFeesWithdrawer",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 61067,
+          "nodeType": "StructuredDocumentation",
+          "src": "760:321:167",
+          "text": " @author Balancer Labs\n @title Protocol Fees Withdrawer\n @notice Safety layer around the Protocol Fees Collector which allows withdrawals of specific tokens to be blocked.\n This is useful for the case in where tokens that shouldn't be distributed are unexpectedly paid into the Protocol\n Fees Collector."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          61146
+        ],
+        "name": "IProtocolFeesWithdrawer",
+        "nameLocation": "1092:23:167",
+        "scope": 61147,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 167
+}

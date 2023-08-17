@@ -1,0 +1,456 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "contract IUniswapV2Factory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "safetyIndicesSet",
+          "type": "uint256"
+        }
+      ],
+      "name": "priceX96",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "pricesX96",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "safetyIndices",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "safetyIndex",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "factory()": "c45a0155",
+    "priceX96(address,address,uint256)": "6d80125b",
+    "safetyIndex()": "e312650b"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"contract IUniswapV2Factory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"safetyIndicesSet\",\"type\":\"uint256\"}],\"name\":\"priceX96\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"pricesX96\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"safetyIndices\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"safetyIndex\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"priceX96(address,address,uint256)\":{\"details\":\"The price is token1 / token0 i.e. how many weis of token1 required for 1 wei of token0. The safety indexes are: 1 - unsafe, this is typically a spot price that can be easily manipulated, 2 - 4 - more or less safe, this is typically a uniV3 oracle, where the safety is defined by the timespan of the average price 5 - safe - this is typically a chailink oracle\",\"params\":{\"safetyIndicesSet\":\"Bitmask of safety indices that are allowed for the return prices. For set of safety indexes = { 1 }, safetyIndicesSet = 0x2\",\"token0\":\"Reference to token0\",\"token1\":\"Reference to token1\"},\"returns\":{\"pricesX96\":\"Prices that satisfy safetyIndex and tokens\",\"safetyIndices\":\"Safety indices for those prices\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"factory()\":{\"notice\":\"Reference to UniV2 factory\"},\"priceX96(address,address,uint256)\":{\"notice\":\"Oracle price for tokens as a Q64.96 value.Returns pricing information based on the indexes of non-zero bits in safetyIndicesSet.It is possible that not all indices will have their respective prices returned.\"},\"safetyIndex()\":{\"notice\":\"Index of safety bit\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/oracles/IUniV2Oracle.sol\":\"IUniV2Oracle\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/univ2/IUniswapV2Factory.sol\":{\"keccak256\":\"0x437adf77dab5a2ee33b834470c2743cb2fa97a079a5b0d21fc8a4a33cd01d59f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://424f8c1ea10df88f78aef96122b6822b799b7bb16adb27eb010acd80f4a7f9be\",\"dweb:/ipfs/QmfDYynstpmTuxwA8RvLzjHyGGuMJnmLLHNRzKAxqeLiUa\"]},\"src/interfaces/oracles/IOracle.sol\":{\"keccak256\":\"0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5\",\"dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg\"]},\"src/interfaces/oracles/IUniV2Oracle.sol\":{\"keccak256\":\"0xc25032fcb8478560fcaefcf6c7f3420739cb3f949ad0ab9046ed8d8bd6b6813d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://aecaabc7a2542895c3893d05951f68eeb0958a604adce088c08c80f7cb772fd4\",\"dweb:/ipfs/Qmch9D9dwkuZLKrmuaL2Sw2GkTKEy2v5aKNDghvCn1WVTY\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "factory",
+          "outputs": [
+            {
+              "internalType": "contract IUniswapV2Factory",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "safetyIndicesSet",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "priceX96",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "pricesX96",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "safetyIndices",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "safetyIndex",
+          "outputs": [
+            {
+              "internalType": "uint8",
+              "name": "",
+              "type": "uint8"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "priceX96(address,address,uint256)": {
+            "details": "The price is token1 / token0 i.e. how many weis of token1 required for 1 wei of token0. The safety indexes are: 1 - unsafe, this is typically a spot price that can be easily manipulated, 2 - 4 - more or less safe, this is typically a uniV3 oracle, where the safety is defined by the timespan of the average price 5 - safe - this is typically a chailink oracle",
+            "params": {
+              "safetyIndicesSet": "Bitmask of safety indices that are allowed for the return prices. For set of safety indexes = { 1 }, safetyIndicesSet = 0x2",
+              "token0": "Reference to token0",
+              "token1": "Reference to token1"
+            },
+            "returns": {
+              "pricesX96": "Prices that satisfy safetyIndex and tokens",
+              "safetyIndices": "Safety indices for those prices"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "factory()": {
+            "notice": "Reference to UniV2 factory"
+          },
+          "priceX96(address,address,uint256)": {
+            "notice": "Oracle price for tokens as a Q64.96 value.Returns pricing information based on the indexes of non-zero bits in safetyIndicesSet.It is possible that not all indices will have their respective prices returned."
+          },
+          "safetyIndex()": {
+            "notice": "Index of safety bit"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/oracles/IUniV2Oracle.sol": "IUniV2Oracle"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/univ2/IUniswapV2Factory.sol": {
+        "keccak256": "0x437adf77dab5a2ee33b834470c2743cb2fa97a079a5b0d21fc8a4a33cd01d59f",
+        "urls": [
+          "bzz-raw://424f8c1ea10df88f78aef96122b6822b799b7bb16adb27eb010acd80f4a7f9be",
+          "dweb:/ipfs/QmfDYynstpmTuxwA8RvLzjHyGGuMJnmLLHNRzKAxqeLiUa"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/oracles/IOracle.sol": {
+        "keccak256": "0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53",
+        "urls": [
+          "bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5",
+          "dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/oracles/IUniV2Oracle.sol": {
+        "keccak256": "0xc25032fcb8478560fcaefcf6c7f3420739cb3f949ad0ab9046ed8d8bd6b6813d",
+        "urls": [
+          "bzz-raw://aecaabc7a2542895c3893d05951f68eeb0958a604adce088c08c80f7cb772fd4",
+          "dweb:/ipfs/Qmch9D9dwkuZLKrmuaL2Sw2GkTKEy2v5aKNDghvCn1WVTY"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/oracles/IUniV2Oracle.sol",
+    "id": 75626,
+    "exportedSymbols": {
+      "IOracle": [
+        75605
+      ],
+      "IUniV2Oracle": [
+        75625
+      ],
+      "IUniswapV2Factory": [
+        74286
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:337:313",
+    "nodes": [
+      {
+        "id": 75607,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:313",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 75608,
+        "nodeType": "ImportDirective",
+        "src": "57:49:313",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/univ2/IUniswapV2Factory.sol",
+        "file": "../external/univ2/IUniswapV2Factory.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 75626,
+        "sourceUnit": 74287,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75609,
+        "nodeType": "ImportDirective",
+        "src": "107:23:313",
+        "nodes": [],
+        "absolutePath": "src/interfaces/oracles/IOracle.sol",
+        "file": "./IOracle.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 75626,
+        "sourceUnit": 75606,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75625,
+        "nodeType": "ContractDefinition",
+        "src": "132:236:313",
+        "nodes": [
+          {
+            "id": 75618,
+            "nodeType": "FunctionDefinition",
+            "src": "215:56:313",
+            "nodes": [],
+            "documentation": {
+              "id": 75612,
+              "nodeType": "StructuredDocumentation",
+              "src": "172:38:313",
+              "text": "@notice Reference to UniV2 factory"
+            },
+            "functionSelector": "c45a0155",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "factory",
+            "nameLocation": "224:7:313",
+            "parameters": {
+              "id": 75613,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "231:2:313"
+            },
+            "returnParameters": {
+              "id": 75617,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75616,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75618,
+                  "src": "252:17:313",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IUniswapV2Factory_$74286",
+                    "typeString": "contract IUniswapV2Factory"
+                  },
+                  "typeName": {
+                    "id": 75615,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 75614,
+                      "name": "IUniswapV2Factory",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 74286,
+                      "src": "252:17:313"
+                    },
+                    "referencedDeclaration": 74286,
+                    "src": "252:17:313",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IUniswapV2Factory_$74286",
+                      "typeString": "contract IUniswapV2Factory"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "251:19:313"
+            },
+            "scope": 75625,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 75624,
+            "nodeType": "FunctionDefinition",
+            "src": "313:53:313",
+            "nodes": [],
+            "documentation": {
+              "id": 75619,
+              "nodeType": "StructuredDocumentation",
+              "src": "277:31:313",
+              "text": "@notice Index of safety bit"
+            },
+            "functionSelector": "e312650b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "safetyIndex",
+            "nameLocation": "322:11:313",
+            "parameters": {
+              "id": 75620,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "333:2:313"
+            },
+            "returnParameters": {
+              "id": 75623,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75622,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75624,
+                  "src": "359:5:313",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 75621,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "359:5:313",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "358:7:313"
+            },
+            "scope": 75625,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 75610,
+              "name": "IOracle",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 75605,
+              "src": "158:7:313"
+            },
+            "id": 75611,
+            "nodeType": "InheritanceSpecifier",
+            "src": "158:7:313"
+          }
+        ],
+        "canonicalName": "IUniV2Oracle",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          75625,
+          75605
+        ],
+        "name": "IUniV2Oracle",
+        "nameLocation": "142:12:313",
+        "scope": 75626,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 313
+}

@@ -1,0 +1,2380 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IAlgebraEternalFarming",
+          "name": "farming",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "rewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "bonusRewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IAlgebraPool",
+              "name": "pool",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "endTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IIncentiveKey.IncentiveKey",
+          "name": "key",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "calculateCollectableRewards",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "rewardAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "bonusRewardAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint160",
+          "name": "sqrtRatioX96",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "calculateLiquidityToPull",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "rewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "bonusRewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IAlgebraPool",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "startTime",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "endTime",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct IIncentiveKey.IncentiveKey",
+              "name": "key",
+              "type": "tuple"
+            },
+            {
+              "internalType": "address",
+              "name": "bonusTokenToUnderlying",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "rewardTokenToUnderlying",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "swapSlippageD",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "rewardPoolTimespan",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct IQuickSwapVaultGovernance.StrategyParams",
+          "name": "strategyParams",
+          "type": "tuple"
+        },
+        {
+          "internalType": "contract IFarmingCenter",
+          "name": "farmingCenter",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        }
+      ],
+      "name": "calculateTvl",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint32",
+          "name": "timespan",
+          "type": "uint32"
+        }
+      ],
+      "name": "convertTokenToUnderlying",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint160",
+          "name": "sqrtRatioX96",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        }
+      ],
+      "name": "liquidityToTokenAmounts",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint160",
+          "name": "sqrtRatioX96",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "tokenAmountsToLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint160",
+          "name": "sqrtRatioX96",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "tokenAmountsToMaxLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "calculateCollectableRewards(address,(address,address,address,uint256,uint256),uint256)": "2b674502",
+    "calculateLiquidityToPull(uint256,uint160,uint256[])": "e5573ac2",
+    "calculateTvl(uint256,((address,address,address,uint256,uint256),address,address,uint256,uint32),address,address)": "a510a401",
+    "convertTokenToUnderlying(uint256,address,address,uint32)": "75a7bc50",
+    "liquidityToTokenAmounts(uint256,uint160,uint128)": "b5ce1db9",
+    "tokenAmountsToLiquidity(uint256,uint160,uint256[])": "85b28657",
+    "tokenAmountsToMaxLiquidity(uint256,uint160,uint256[])": "69272a6b"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IAlgebraEternalFarming\",\"name\":\"farming\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"contract IERC20Minimal\",\"name\":\"rewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IERC20Minimal\",\"name\":\"bonusRewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IAlgebraPool\",\"name\":\"pool\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"}],\"internalType\":\"struct IIncentiveKey.IncentiveKey\",\"name\":\"key\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"calculateCollectableRewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"bonusRewardAmount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"internalType\":\"uint160\",\"name\":\"sqrtRatioX96\",\"type\":\"uint160\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"}],\"name\":\"calculateLiquidityToPull\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"components\":[{\"components\":[{\"internalType\":\"contract IERC20Minimal\",\"name\":\"rewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IERC20Minimal\",\"name\":\"bonusRewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IAlgebraPool\",\"name\":\"pool\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"}],\"internalType\":\"struct IIncentiveKey.IncentiveKey\",\"name\":\"key\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"bonusTokenToUnderlying\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rewardTokenToUnderlying\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"swapSlippageD\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"rewardPoolTimespan\",\"type\":\"uint32\"}],\"internalType\":\"struct IQuickSwapVaultGovernance.StrategyParams\",\"name\":\"strategyParams\",\"type\":\"tuple\"},{\"internalType\":\"contract IFarmingCenter\",\"name\":\"farmingCenter\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"}],\"name\":\"calculateTvl\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"timespan\",\"type\":\"uint32\"}],\"name\":\"convertTokenToUnderlying\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"internalType\":\"uint160\",\"name\":\"sqrtRatioX96\",\"type\":\"uint160\"},{\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"}],\"name\":\"liquidityToTokenAmounts\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"internalType\":\"uint160\",\"name\":\"sqrtRatioX96\",\"type\":\"uint160\"},{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"name\":\"tokenAmountsToLiquidity\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"internalType\":\"uint160\",\"name\":\"sqrtRatioX96\",\"type\":\"uint160\"},{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"name\":\"tokenAmountsToMaxLiquidity\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/utils/IQuickSwapHelper.sol\":\"IQuickSwapHelper\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol\":{\"keccak256\":\"0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708\",\"dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol\":{\"keccak256\":\"0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34\",\"dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol\":{\"keccak256\":\"0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146\",\"dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/external/quickswap/IAlgebraEternalFarming.sol\":{\"keccak256\":\"0x508ded73b3e5b04422bfc2274bc87ca7e6ad630119bc9a5b3449fed601578864\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://e7e97db9413d4c77652c9a2fca8077dfc707de3e72864cced5fea7d2f9b63520\",\"dweb:/ipfs/QmaYB3ragMT2WWo4SbkRrAoNNYjTJcSotVwPdWuJggMCuQ\"]},\"src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol\":{\"keccak256\":\"0x7faebe5008d24f2871c962e1ca3c14e5b75ff11fc024a85179f03512d5423913\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://3651b67f97562e23f7fc9ac0bdeb964150422cd6ba93b76fadc2f148f4f7a7ea\",\"dweb:/ipfs/QmPiYRDdgHE7hFoCHdXLeF99amNCsbuiY5zMJGphoMwHKg\"]},\"src/interfaces/external/quickswap/IAlgebraFactory.sol\":{\"keccak256\":\"0x1a5bdb5897ec134b6f739be18553cab2598f2502d5543410c6a9a5900e181049\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://a4c5f0a0f050f8cbb6912bc6e411c9da48a97a4e914852f89765facd0f700c26\",\"dweb:/ipfs/QmUvFZEP3W9fSf8CQZBn6GrKj1ikX488VXUhw2RUCZJndT\"]},\"src/interfaces/external/quickswap/IAlgebraFarming.sol\":{\"keccak256\":\"0xc969d9606ecbe14130580694636b48cefff8993e072bdf010cf950698c044cde\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://90206c5831a4a80239f9a19d80fae167e179c3f4a254691856c38e2da719aa4e\",\"dweb:/ipfs/QmbW3QMXukuRDouqRjZYGJHy9L71yoM9qwnxk5Fwq5DRih\"]},\"src/interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol\":{\"keccak256\":\"0x748d1da7089c2e67cbb89cf32f3b2e0c5b68fa8bfe3b2224fdb013ce5018f5b9\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://4e8da442662dbb2686517ffd7c510536a300df5fd628a44110dfd66e4dfe9118\",\"dweb:/ipfs/QmYsVLngrQraRH6qvfxRKajBwDC6vbgfDvi5tquB1AK2Aw\"]},\"src/interfaces/external/quickswap/IAlgebraPool.sol\":{\"keccak256\":\"0x02eae359613685be534c86446df6789b258dc542695878b197d7c3507c0bf3d5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c53eb72ebe4528b44e67eeef53655e94af45cd879dcdc66e9972d3a652241b03\",\"dweb:/ipfs/QmZrZDSAErvr2PLFbb4oTMAog6BD2NmMfmvgNH4FPX6NLb\"]},\"src/interfaces/external/quickswap/IAlgebraPoolDeployer.sol\":{\"keccak256\":\"0x9679c5a3f636b65dc19a5a2dc76fa8500695170787fefa5b4f0306044e5cc637\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://330f326d9cf607ca7ac250d24f4f0b2117b1bb69977c7c150846713caa1d556a\",\"dweb:/ipfs/QmZNQhce7K6uNAaaSGh858PBrSxMb9NuUhhATKtAxxGBon\"]},\"src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol\":{\"keccak256\":\"0xa75adbad960516b5c255b734caa01a970ff1ba27d7a7812e7cb80b95f09829c5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://f9fdb3c44733dddd52b82be55f816e1a8c2bb1c222dc80e373dc9b4783b19bb0\",\"dweb:/ipfs/QmbULE7ZEyYutnCGH9ezrfVc4LNqyptwSjBYPtkgsToQD1\"]},\"src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol\":{\"keccak256\":\"0xf078d9ec2d8f5451f9b7927ab1da0788fc5eefcc4951641b1840a939860c5a52\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://514f98170722ef31765ced410f939c8ec92f878d384560de93c534279539943d\",\"dweb:/ipfs/QmXGwqz9cTHcWxJWbrmcugNUmYeREaPgo238x1YmCM1Rfv\"]},\"src/interfaces/external/quickswap/IAlgebraPoolState.sol\":{\"keccak256\":\"0x7952dc437f7f6ac5933d2477cde00e77522cfb97943898a763e12654f4182ec2\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://54fc3daee446ababc863dcf4495dad13befa9438a26211d13b5c21c005278aaa\",\"dweb:/ipfs/QmdYxiEeFJpjMRHxc2v9cvMgPfB1uCmXHUbYQfhGSfdLET\"]},\"src/interfaces/external/quickswap/IAlgebraSwapCallback.sol\":{\"keccak256\":\"0x0e8ee107fbd0cf4ea76c63b9c80323bbb797b999000c1d288bc22fa27c6a5848\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://24781e079f4893f31f6542e1eb22f153f8fa398a71f953c74ed3a6c29225d279\",\"dweb:/ipfs/QmcNwjFyWUAHKgkPMP3emn6kdLH2eZCZgNezuCKMEwjcq1\"]},\"src/interfaces/external/quickswap/IAlgebraSwapRouter.sol\":{\"keccak256\":\"0x231861c4733f7630e30e376a31fd8ebb732723de17ff206e12bf448f9d3c0903\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://4aab1f66a51687aa945aebfedd716bb5e6ae41fd5ff112c6d0efbaa56ecd9202\",\"dweb:/ipfs/QmWeDuJeCj5DvvFPQeM2p1pbFtBgxJbVaEFS7vGZrESN7d\"]},\"src/interfaces/external/quickswap/IAlgebraVirtualPool.sol\":{\"keccak256\":\"0x4c3e6cd89e7578df2496425787acc67c4275a586dcfc37510fc11f7a24e43407\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://87820690aa1df0506525236cfa979147d26ae7641a0cfee176fbc481c3b43676\",\"dweb:/ipfs/QmZEszmYZR15tRVCWheS62cw8VbBF4pBL1DJEp8E31ftsR\"]},\"src/interfaces/external/quickswap/IAlgebraVirtualPoolBase.sol\":{\"keccak256\":\"0x9ade2fbf7155e224d896b4f4e300bebd880ad91c58bccbe4aa75fb67dee62286\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://f21ae8cbc0f01ed2e6567dab18bcbf642ce3a82b1ce8600510d14d2153557cfa\",\"dweb:/ipfs/QmWky37EjMVh6uRyjxRhenwrPuxVUqTZSvC2ESkRkXT7it\"]},\"src/interfaces/external/quickswap/IDragonLair.sol\":{\"keccak256\":\"0x0a9d79b8f568935e2bf38f2f65b52dadce8eb13739ead1611df3ed0a3264f8b2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://81df0f6bd7061948269602ca346ad6d91a59f28a355b4dcf6eb36182b14448e5\",\"dweb:/ipfs/QmQySzrtNKPa6WDAQiE81XFxcTrabJUbZPv5HqYWoXXvN1\"]},\"src/interfaces/external/quickswap/IERC20Minimal.sol\":{\"keccak256\":\"0xae86fd456b2debc8df50066a3d8f570bf07174ef089374ee012c3f56438665d4\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://8a647c2a7ae4b8cd12926e33ef917fcc3d491047cd9235e743db6af61a83bc81\",\"dweb:/ipfs/QmXFhzpmLiCfT4ZeXQxhmFNWzL3Mf6t6PgceDgAtoWM1RZ\"]},\"src/interfaces/external/quickswap/IERC721Permit.sol\":{\"keccak256\":\"0x8ba99444f79b7c00ec747f69b1ef7084d751536cb880769f0bcdbdc967be1038\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://2729f42c8f45acf3897138c2ac085141aa462450058bf7a0156ad4d8dbdfac9d\",\"dweb:/ipfs/QmZCk5oNUQKdSwa1FDu9FpWrzgDuVBy1Wk8eygC2driNTc\"]},\"src/interfaces/external/quickswap/IFarmingCenter.sol\":{\"keccak256\":\"0x4aa568d5326671113fc95ce3b2b75004378b9ad69acc42b400459d03d56eef9f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7bbebdc6f0fc8eb17bbef8949588722a136aa0db96ce6b6ed2176d02c26f316\",\"dweb:/ipfs/Qmeb2ykvvJantBEBBgkKVzwM8TDEmdSHaSd9hzLotSwJXJ\"]},\"src/interfaces/external/quickswap/IIncentiveKey.sol\":{\"keccak256\":\"0xa55899db3f56078bdf7ba9285b0857c0e63033e6483bb7971afb4856317d05e4\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://0c68a1905e5765fcd09d9687a8e82d6dea1e25ce20d969ab6c830aed82536ecc\",\"dweb:/ipfs/QmSEmM2EhpGua6UXrbVZundqkRhoHuPCtfK7eCbbGE569p\"]},\"src/interfaces/external/quickswap/IPeripheryImmutableState.sol\":{\"keccak256\":\"0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685\",\"dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u\"]},\"src/interfaces/external/quickswap/IPeripheryPayments.sol\":{\"keccak256\":\"0x4de12e9bbd92769551c950e10dd7995aa39e009487c9523f1c6dcf8f37afa47b\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c11620b8ad005c5907eccfa394344dda850b44aad29b437c95b0b321b18b15dd\",\"dweb:/ipfs/QmQ7ziKM3GkVvuj644c9H8vhvB3N5xe3Z5HjbjMRGzQNCx\"]},\"src/interfaces/external/quickswap/IPoolInitializer.sol\":{\"keccak256\":\"0xc13eb6f11ceb388bffae85e7965c79213eb8108c9f8744691200f707adc86f4e\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://115e0510940bb6416ea9e3a2aaab988051af6203ec68c8e3f1d2b79e822c5ea2\",\"dweb:/ipfs/QmcM9C2q75Jw4XZ5zX4svs8eR9yhSTYFJXLA3fHzRoCHLm\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/utils/IQuickSwapHelper.sol\":{\"keccak256\":\"0x0d24c6472f5a575d660561c351d7ad3a927b255fe3b46c309083a0e3dbff6ad3\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://18cab205369651fd886759473f5befa21a99e4a8e9374329d379bd20fc4c2541\",\"dweb:/ipfs/QmdAKKuTaCA4zMJaYDqmrJoraFXVzjknAeeGeWnmBsezTv\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IQuickSwapVault.sol\":{\"keccak256\":\"0xa49dbc4f7400393585219c0e5e584042c5e81d02dedef3261946086757bb8b19\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ea2eb1c87b11b8884f3801e05dcd58ff60fd1a27ededf11e1a8f03c3c5c6eaaf\",\"dweb:/ipfs/QmTZ2azv6yysJoTiuT7M5Y1UMyvkQVs3rCCjr7uemvWZ9Q\"]},\"src/interfaces/vaults/IQuickSwapVaultGovernance.sol\":{\"keccak256\":\"0xb11227a38068b1a94382969a2d311a2edc417a0657e2f094f480956a6e472dcc\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://b3dbb465ffe780028fde2acf1deb377398a1c05e52e63d47896f7dd95319b3e1\",\"dweb:/ipfs/QmbVMLW5PKZNyqccZzZoVh8gvxG8drSfzSPLgSyUTJb7qe\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IAlgebraEternalFarming",
+              "name": "farming",
+              "type": "address"
+            },
+            {
+              "internalType": "struct IIncentiveKey.IncentiveKey",
+              "name": "key",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "rewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "bonusRewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IAlgebraPool",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "startTime",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "endTime",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "calculateCollectableRewards",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "rewardAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "bonusRewardAmount",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtRatioX96",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "calculateLiquidityToPull",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "struct IQuickSwapVaultGovernance.StrategyParams",
+              "name": "strategyParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "struct IIncentiveKey.IncentiveKey",
+                  "name": "key",
+                  "type": "tuple",
+                  "components": [
+                    {
+                      "internalType": "contract IERC20Minimal",
+                      "name": "rewardToken",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "contract IERC20Minimal",
+                      "name": "bonusRewardToken",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "contract IAlgebraPool",
+                      "name": "pool",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "startTime",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "endTime",
+                      "type": "uint256"
+                    }
+                  ]
+                },
+                {
+                  "internalType": "address",
+                  "name": "bonusTokenToUnderlying",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "rewardTokenToUnderlying",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "swapSlippageD",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "rewardPoolTimespan",
+                  "type": "uint32"
+                }
+              ]
+            },
+            {
+              "internalType": "contract IFarmingCenter",
+              "name": "farmingCenter",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "calculateTvl",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timespan",
+              "type": "uint32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "convertTokenToUnderlying",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtRatioX96",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "liquidityToTokenAmounts",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount0",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount1",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtRatioX96",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "amounts",
+              "type": "uint256[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tokenAmountsToLiquidity",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtRatioX96",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "amounts",
+              "type": "uint256[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tokenAmountsToMaxLiquidity",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/utils/IQuickSwapHelper.sol": "IQuickSwapHelper"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol": {
+        "keccak256": "0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da",
+        "urls": [
+          "bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708",
+          "dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol": {
+        "keccak256": "0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf",
+        "urls": [
+          "bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34",
+          "dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+        "keccak256": "0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9",
+        "urls": [
+          "bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146",
+          "dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/quickswap/IAlgebraEternalFarming.sol": {
+        "keccak256": "0x508ded73b3e5b04422bfc2274bc87ca7e6ad630119bc9a5b3449fed601578864",
+        "urls": [
+          "bzz-raw://e7e97db9413d4c77652c9a2fca8077dfc707de3e72864cced5fea7d2f9b63520",
+          "dweb:/ipfs/QmaYB3ragMT2WWo4SbkRrAoNNYjTJcSotVwPdWuJggMCuQ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol": {
+        "keccak256": "0x7faebe5008d24f2871c962e1ca3c14e5b75ff11fc024a85179f03512d5423913",
+        "urls": [
+          "bzz-raw://3651b67f97562e23f7fc9ac0bdeb964150422cd6ba93b76fadc2f148f4f7a7ea",
+          "dweb:/ipfs/QmPiYRDdgHE7hFoCHdXLeF99amNCsbuiY5zMJGphoMwHKg"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraFactory.sol": {
+        "keccak256": "0x1a5bdb5897ec134b6f739be18553cab2598f2502d5543410c6a9a5900e181049",
+        "urls": [
+          "bzz-raw://a4c5f0a0f050f8cbb6912bc6e411c9da48a97a4e914852f89765facd0f700c26",
+          "dweb:/ipfs/QmUvFZEP3W9fSf8CQZBn6GrKj1ikX488VXUhw2RUCZJndT"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraFarming.sol": {
+        "keccak256": "0xc969d9606ecbe14130580694636b48cefff8993e072bdf010cf950698c044cde",
+        "urls": [
+          "bzz-raw://90206c5831a4a80239f9a19d80fae167e179c3f4a254691856c38e2da719aa4e",
+          "dweb:/ipfs/QmbW3QMXukuRDouqRjZYGJHy9L71yoM9qwnxk5Fwq5DRih"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol": {
+        "keccak256": "0x748d1da7089c2e67cbb89cf32f3b2e0c5b68fa8bfe3b2224fdb013ce5018f5b9",
+        "urls": [
+          "bzz-raw://4e8da442662dbb2686517ffd7c510536a300df5fd628a44110dfd66e4dfe9118",
+          "dweb:/ipfs/QmYsVLngrQraRH6qvfxRKajBwDC6vbgfDvi5tquB1AK2Aw"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPool.sol": {
+        "keccak256": "0x02eae359613685be534c86446df6789b258dc542695878b197d7c3507c0bf3d5",
+        "urls": [
+          "bzz-raw://c53eb72ebe4528b44e67eeef53655e94af45cd879dcdc66e9972d3a652241b03",
+          "dweb:/ipfs/QmZrZDSAErvr2PLFbb4oTMAog6BD2NmMfmvgNH4FPX6NLb"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolDeployer.sol": {
+        "keccak256": "0x9679c5a3f636b65dc19a5a2dc76fa8500695170787fefa5b4f0306044e5cc637",
+        "urls": [
+          "bzz-raw://330f326d9cf607ca7ac250d24f4f0b2117b1bb69977c7c150846713caa1d556a",
+          "dweb:/ipfs/QmZNQhce7K6uNAaaSGh858PBrSxMb9NuUhhATKtAxxGBon"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol": {
+        "keccak256": "0xa75adbad960516b5c255b734caa01a970ff1ba27d7a7812e7cb80b95f09829c5",
+        "urls": [
+          "bzz-raw://f9fdb3c44733dddd52b82be55f816e1a8c2bb1c222dc80e373dc9b4783b19bb0",
+          "dweb:/ipfs/QmbULE7ZEyYutnCGH9ezrfVc4LNqyptwSjBYPtkgsToQD1"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol": {
+        "keccak256": "0xf078d9ec2d8f5451f9b7927ab1da0788fc5eefcc4951641b1840a939860c5a52",
+        "urls": [
+          "bzz-raw://514f98170722ef31765ced410f939c8ec92f878d384560de93c534279539943d",
+          "dweb:/ipfs/QmXGwqz9cTHcWxJWbrmcugNUmYeREaPgo238x1YmCM1Rfv"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolState.sol": {
+        "keccak256": "0x7952dc437f7f6ac5933d2477cde00e77522cfb97943898a763e12654f4182ec2",
+        "urls": [
+          "bzz-raw://54fc3daee446ababc863dcf4495dad13befa9438a26211d13b5c21c005278aaa",
+          "dweb:/ipfs/QmdYxiEeFJpjMRHxc2v9cvMgPfB1uCmXHUbYQfhGSfdLET"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraSwapCallback.sol": {
+        "keccak256": "0x0e8ee107fbd0cf4ea76c63b9c80323bbb797b999000c1d288bc22fa27c6a5848",
+        "urls": [
+          "bzz-raw://24781e079f4893f31f6542e1eb22f153f8fa398a71f953c74ed3a6c29225d279",
+          "dweb:/ipfs/QmcNwjFyWUAHKgkPMP3emn6kdLH2eZCZgNezuCKMEwjcq1"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraSwapRouter.sol": {
+        "keccak256": "0x231861c4733f7630e30e376a31fd8ebb732723de17ff206e12bf448f9d3c0903",
+        "urls": [
+          "bzz-raw://4aab1f66a51687aa945aebfedd716bb5e6ae41fd5ff112c6d0efbaa56ecd9202",
+          "dweb:/ipfs/QmWeDuJeCj5DvvFPQeM2p1pbFtBgxJbVaEFS7vGZrESN7d"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraVirtualPool.sol": {
+        "keccak256": "0x4c3e6cd89e7578df2496425787acc67c4275a586dcfc37510fc11f7a24e43407",
+        "urls": [
+          "bzz-raw://87820690aa1df0506525236cfa979147d26ae7641a0cfee176fbc481c3b43676",
+          "dweb:/ipfs/QmZEszmYZR15tRVCWheS62cw8VbBF4pBL1DJEp8E31ftsR"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraVirtualPoolBase.sol": {
+        "keccak256": "0x9ade2fbf7155e224d896b4f4e300bebd880ad91c58bccbe4aa75fb67dee62286",
+        "urls": [
+          "bzz-raw://f21ae8cbc0f01ed2e6567dab18bcbf642ce3a82b1ce8600510d14d2153557cfa",
+          "dweb:/ipfs/QmWky37EjMVh6uRyjxRhenwrPuxVUqTZSvC2ESkRkXT7it"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IDragonLair.sol": {
+        "keccak256": "0x0a9d79b8f568935e2bf38f2f65b52dadce8eb13739ead1611df3ed0a3264f8b2",
+        "urls": [
+          "bzz-raw://81df0f6bd7061948269602ca346ad6d91a59f28a355b4dcf6eb36182b14448e5",
+          "dweb:/ipfs/QmQySzrtNKPa6WDAQiE81XFxcTrabJUbZPv5HqYWoXXvN1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/quickswap/IERC20Minimal.sol": {
+        "keccak256": "0xae86fd456b2debc8df50066a3d8f570bf07174ef089374ee012c3f56438665d4",
+        "urls": [
+          "bzz-raw://8a647c2a7ae4b8cd12926e33ef917fcc3d491047cd9235e743db6af61a83bc81",
+          "dweb:/ipfs/QmXFhzpmLiCfT4ZeXQxhmFNWzL3Mf6t6PgceDgAtoWM1RZ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IERC721Permit.sol": {
+        "keccak256": "0x8ba99444f79b7c00ec747f69b1ef7084d751536cb880769f0bcdbdc967be1038",
+        "urls": [
+          "bzz-raw://2729f42c8f45acf3897138c2ac085141aa462450058bf7a0156ad4d8dbdfac9d",
+          "dweb:/ipfs/QmZCk5oNUQKdSwa1FDu9FpWrzgDuVBy1Wk8eygC2driNTc"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IFarmingCenter.sol": {
+        "keccak256": "0x4aa568d5326671113fc95ce3b2b75004378b9ad69acc42b400459d03d56eef9f",
+        "urls": [
+          "bzz-raw://d7bbebdc6f0fc8eb17bbef8949588722a136aa0db96ce6b6ed2176d02c26f316",
+          "dweb:/ipfs/Qmeb2ykvvJantBEBBgkKVzwM8TDEmdSHaSd9hzLotSwJXJ"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/quickswap/IIncentiveKey.sol": {
+        "keccak256": "0xa55899db3f56078bdf7ba9285b0857c0e63033e6483bb7971afb4856317d05e4",
+        "urls": [
+          "bzz-raw://0c68a1905e5765fcd09d9687a8e82d6dea1e25ce20d969ab6c830aed82536ecc",
+          "dweb:/ipfs/QmSEmM2EhpGua6UXrbVZundqkRhoHuPCtfK7eCbbGE569p"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IPeripheryImmutableState.sol": {
+        "keccak256": "0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15",
+        "urls": [
+          "bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685",
+          "dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IPeripheryPayments.sol": {
+        "keccak256": "0x4de12e9bbd92769551c950e10dd7995aa39e009487c9523f1c6dcf8f37afa47b",
+        "urls": [
+          "bzz-raw://c11620b8ad005c5907eccfa394344dda850b44aad29b437c95b0b321b18b15dd",
+          "dweb:/ipfs/QmQ7ziKM3GkVvuj644c9H8vhvB3N5xe3Z5HjbjMRGzQNCx"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IPoolInitializer.sol": {
+        "keccak256": "0xc13eb6f11ceb388bffae85e7965c79213eb8108c9f8744691200f707adc86f4e",
+        "urls": [
+          "bzz-raw://115e0510940bb6416ea9e3a2aaab988051af6203ec68c8e3f1d2b79e822c5ea2",
+          "dweb:/ipfs/QmcM9C2q75Jw4XZ5zX4svs8eR9yhSTYFJXLA3fHzRoCHLm"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IQuickSwapHelper.sol": {
+        "keccak256": "0x0d24c6472f5a575d660561c351d7ad3a927b255fe3b46c309083a0e3dbff6ad3",
+        "urls": [
+          "bzz-raw://18cab205369651fd886759473f5befa21a99e4a8e9374329d379bd20fc4c2541",
+          "dweb:/ipfs/QmdAKKuTaCA4zMJaYDqmrJoraFXVzjknAeeGeWnmBsezTv"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IQuickSwapVault.sol": {
+        "keccak256": "0xa49dbc4f7400393585219c0e5e584042c5e81d02dedef3261946086757bb8b19",
+        "urls": [
+          "bzz-raw://ea2eb1c87b11b8884f3801e05dcd58ff60fd1a27ededf11e1a8f03c3c5c6eaaf",
+          "dweb:/ipfs/QmTZ2azv6yysJoTiuT7M5Y1UMyvkQVs3rCCjr7uemvWZ9Q"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IQuickSwapVaultGovernance.sol": {
+        "keccak256": "0xb11227a38068b1a94382969a2d311a2edc417a0657e2f094f480956a6e472dcc",
+        "urls": [
+          "bzz-raw://b3dbb465ffe780028fde2acf1deb377398a1c05e52e63d47896f7dd95319b3e1",
+          "dweb:/ipfs/QmbVMLW5PKZNyqccZzZoVh8gvxG8drSfzSPLgSyUTJb7qe"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/utils/IQuickSwapHelper.sol",
+    "id": 76033,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IAlgebraEternalFarming": [
+        71582
+      ],
+      "IAlgebraEternalVirtualPool": [
+        71645
+      ],
+      "IAlgebraFactory": [
+        71776
+      ],
+      "IAlgebraFarming": [
+        72038
+      ],
+      "IAlgebraNonfungiblePositionManager": [
+        72236
+      ],
+      "IAlgebraPool": [
+        72249
+      ],
+      "IAlgebraPoolDeployer": [
+        72290
+      ],
+      "IAlgebraPoolDerivedState": [
+        72327
+      ],
+      "IAlgebraPoolImmutables": [
+        72367
+      ],
+      "IAlgebraPoolState": [
+        72487
+      ],
+      "IAlgebraSwapCallback": [
+        72501
+      ],
+      "IAlgebraSwapRouter": [
+        72608
+      ],
+      "IAlgebraVirtualPool": [
+        72632
+      ],
+      "IAlgebraVirtualPoolBase": [
+        72710
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IDragonLair": [
+        72725
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC20Minimal": [
+        72797
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IERC721Enumerable": [
+        46736
+      ],
+      "IERC721Metadata": [
+        46763
+      ],
+      "IERC721Permit": [
+        72832
+      ],
+      "IERC721Receiver": [
+        46705
+      ],
+      "IFarmingCenter": [
+        72966
+      ],
+      "IIncentiveKey": [
+        72985
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IPeripheryImmutableState": [
+        73007
+      ],
+      "IPeripheryPayments": [
+        73033
+      ],
+      "IPoolInitializer": [
+        73050
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IQuickSwapHelper": [
+        76032
+      ],
+      "IQuickSwapVault": [
+        78317
+      ],
+      "IQuickSwapVaultGovernance": [
+        78371
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1746:322",
+    "nodes": [
+      {
+        "id": 75932,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:322",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 75933,
+        "nodeType": "ImportDirective",
+        "src": "70:58:322",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraEternalFarming.sol",
+        "file": "../external/quickswap/IAlgebraEternalFarming.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76033,
+        "sourceUnit": 71583,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75934,
+        "nodeType": "ImportDirective",
+        "src": "129:62:322",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol",
+        "file": "../external/quickswap/IAlgebraEternalVirtualPool.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76033,
+        "sourceUnit": 71646,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75935,
+        "nodeType": "ImportDirective",
+        "src": "192:51:322",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraFactory.sol",
+        "file": "../external/quickswap/IAlgebraFactory.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76033,
+        "sourceUnit": 71777,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75936,
+        "nodeType": "ImportDirective",
+        "src": "244:48:322",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraPool.sol",
+        "file": "../external/quickswap/IAlgebraPool.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76033,
+        "sourceUnit": 72250,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75937,
+        "nodeType": "ImportDirective",
+        "src": "293:70:322",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol",
+        "file": "../external/quickswap/IAlgebraNonfungiblePositionManager.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76033,
+        "sourceUnit": 72237,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 75938,
+        "nodeType": "ImportDirective",
+        "src": "364:49:322",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IQuickSwapVaultGovernance.sol",
+        "file": "../vaults/IQuickSwapVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76033,
+        "sourceUnit": 78372,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76032,
+        "nodeType": "ContractDefinition",
+        "src": "415:1375:322",
+        "nodes": [
+          {
+            "id": 75954,
+            "nodeType": "FunctionDefinition",
+            "src": "448:237:322",
+            "nodes": [],
+            "functionSelector": "a510a401",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "calculateTvl",
+            "nameLocation": "457:12:322",
+            "parameters": {
+              "id": 75949,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75940,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "487:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75954,
+                  "src": "479:11:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75939,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "479:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75943,
+                  "mutability": "mutable",
+                  "name": "strategyParams",
+                  "nameLocation": "548:14:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75954,
+                  "src": "500:62:322",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_StrategyParams_$78336_memory_ptr",
+                    "typeString": "struct IQuickSwapVaultGovernance.StrategyParams"
+                  },
+                  "typeName": {
+                    "id": 75942,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 75941,
+                      "name": "IQuickSwapVaultGovernance.StrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78336,
+                      "src": "500:40:322"
+                    },
+                    "referencedDeclaration": 78336,
+                    "src": "500:40:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_StrategyParams_$78336_storage_ptr",
+                      "typeString": "struct IQuickSwapVaultGovernance.StrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75946,
+                  "mutability": "mutable",
+                  "name": "farmingCenter",
+                  "nameLocation": "587:13:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75954,
+                  "src": "572:28:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IFarmingCenter_$72966",
+                    "typeString": "contract IFarmingCenter"
+                  },
+                  "typeName": {
+                    "id": 75945,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 75944,
+                      "name": "IFarmingCenter",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72966,
+                      "src": "572:14:322"
+                    },
+                    "referencedDeclaration": 72966,
+                    "src": "572:14:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IFarmingCenter_$72966",
+                      "typeString": "contract IFarmingCenter"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75948,
+                  "mutability": "mutable",
+                  "name": "token0",
+                  "nameLocation": "618:6:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75954,
+                  "src": "610:14:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 75947,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "610:7:322",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "469:161:322"
+            },
+            "returnParameters": {
+              "id": 75953,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75952,
+                  "mutability": "mutable",
+                  "name": "tokenAmounts",
+                  "nameLocation": "671:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75954,
+                  "src": "654:29:322",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 75950,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "654:7:322",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 75951,
+                    "nodeType": "ArrayTypeName",
+                    "src": "654:9:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "653:31:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 75967,
+            "nodeType": "FunctionDefinition",
+            "src": "691:174:322",
+            "nodes": [],
+            "functionSelector": "b5ce1db9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "liquidityToTokenAmounts",
+            "nameLocation": "700:23:322",
+            "parameters": {
+              "id": 75961,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75956,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "741:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75967,
+                  "src": "733:11:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75955,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "733:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75958,
+                  "mutability": "mutable",
+                  "name": "sqrtRatioX96",
+                  "nameLocation": "762:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75967,
+                  "src": "754:20:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  },
+                  "typeName": {
+                    "id": 75957,
+                    "name": "uint160",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "754:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint160",
+                      "typeString": "uint160"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75960,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "792:9:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75967,
+                  "src": "784:17:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 75959,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "784:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "723:84:322"
+            },
+            "returnParameters": {
+              "id": 75966,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75963,
+                  "mutability": "mutable",
+                  "name": "amount0",
+                  "nameLocation": "839:7:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75967,
+                  "src": "831:15:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75962,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "831:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75965,
+                  "mutability": "mutable",
+                  "name": "amount1",
+                  "nameLocation": "856:7:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75967,
+                  "src": "848:15:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75964,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "848:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "830:34:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 75979,
+            "nodeType": "FunctionDefinition",
+            "src": "871:166:322",
+            "nodes": [],
+            "functionSelector": "85b28657",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "tokenAmountsToLiquidity",
+            "nameLocation": "880:23:322",
+            "parameters": {
+              "id": 75975,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75969,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "921:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75979,
+                  "src": "913:11:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75968,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "913:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75971,
+                  "mutability": "mutable",
+                  "name": "sqrtRatioX96",
+                  "nameLocation": "942:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75979,
+                  "src": "934:20:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  },
+                  "typeName": {
+                    "id": 75970,
+                    "name": "uint160",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "934:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint160",
+                      "typeString": "uint160"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75974,
+                  "mutability": "mutable",
+                  "name": "amounts",
+                  "nameLocation": "981:7:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75979,
+                  "src": "964:24:322",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 75972,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "964:7:322",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 75973,
+                    "nodeType": "ArrayTypeName",
+                    "src": "964:9:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "903:91:322"
+            },
+            "returnParameters": {
+              "id": 75978,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75977,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "1026:9:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75979,
+                  "src": "1018:17:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 75976,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1018:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1017:19:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 75991,
+            "nodeType": "FunctionDefinition",
+            "src": "1043:169:322",
+            "nodes": [],
+            "functionSelector": "69272a6b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "tokenAmountsToMaxLiquidity",
+            "nameLocation": "1052:26:322",
+            "parameters": {
+              "id": 75987,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75981,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1096:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75991,
+                  "src": "1088:11:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75980,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1088:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75983,
+                  "mutability": "mutable",
+                  "name": "sqrtRatioX96",
+                  "nameLocation": "1117:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75991,
+                  "src": "1109:20:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  },
+                  "typeName": {
+                    "id": 75982,
+                    "name": "uint160",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1109:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint160",
+                      "typeString": "uint160"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75986,
+                  "mutability": "mutable",
+                  "name": "amounts",
+                  "nameLocation": "1156:7:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75991,
+                  "src": "1139:24:322",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 75984,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1139:7:322",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 75985,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1139:9:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1078:91:322"
+            },
+            "returnParameters": {
+              "id": 75990,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75989,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "1201:9:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75991,
+                  "src": "1193:17:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 75988,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1193:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1192:19:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76003,
+            "nodeType": "FunctionDefinition",
+            "src": "1218:172:322",
+            "nodes": [],
+            "functionSelector": "e5573ac2",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "calculateLiquidityToPull",
+            "nameLocation": "1227:24:322",
+            "parameters": {
+              "id": 75999,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75993,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1269:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76003,
+                  "src": "1261:11:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 75992,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1261:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75995,
+                  "mutability": "mutable",
+                  "name": "sqrtRatioX96",
+                  "nameLocation": "1290:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76003,
+                  "src": "1282:20:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  },
+                  "typeName": {
+                    "id": 75994,
+                    "name": "uint160",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1282:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint160",
+                      "typeString": "uint160"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 75998,
+                  "mutability": "mutable",
+                  "name": "tokenAmounts",
+                  "nameLocation": "1329:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76003,
+                  "src": "1312:29:322",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 75996,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1312:7:322",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 75997,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1312:9:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1251:96:322"
+            },
+            "returnParameters": {
+              "id": 76002,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76001,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "1379:9:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76003,
+                  "src": "1371:17:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 76000,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1371:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1370:19:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76018,
+            "nodeType": "FunctionDefinition",
+            "src": "1396:223:322",
+            "nodes": [],
+            "functionSelector": "2b674502",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "calculateCollectableRewards",
+            "nameLocation": "1405:27:322",
+            "parameters": {
+              "id": 76012,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76006,
+                  "mutability": "mutable",
+                  "name": "farming",
+                  "nameLocation": "1465:7:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76018,
+                  "src": "1442:30:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IAlgebraEternalFarming_$71582",
+                    "typeString": "contract IAlgebraEternalFarming"
+                  },
+                  "typeName": {
+                    "id": 76005,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76004,
+                      "name": "IAlgebraEternalFarming",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 71582,
+                      "src": "1442:22:322"
+                    },
+                    "referencedDeclaration": 71582,
+                    "src": "1442:22:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IAlgebraEternalFarming_$71582",
+                      "typeString": "contract IAlgebraEternalFarming"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76009,
+                  "mutability": "mutable",
+                  "name": "key",
+                  "nameLocation": "1516:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76018,
+                  "src": "1482:37:322",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_IncentiveKey_$72984_memory_ptr",
+                    "typeString": "struct IIncentiveKey.IncentiveKey"
+                  },
+                  "typeName": {
+                    "id": 76008,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76007,
+                      "name": "IIncentiveKey.IncentiveKey",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72984,
+                      "src": "1482:26:322"
+                    },
+                    "referencedDeclaration": 72984,
+                    "src": "1482:26:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_IncentiveKey_$72984_storage_ptr",
+                      "typeString": "struct IIncentiveKey.IncentiveKey"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76011,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1537:3:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76018,
+                  "src": "1529:11:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76010,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1529:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1432:114:322"
+            },
+            "returnParameters": {
+              "id": 76017,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76014,
+                  "mutability": "mutable",
+                  "name": "rewardAmount",
+                  "nameLocation": "1578:12:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76018,
+                  "src": "1570:20:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76013,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1570:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76016,
+                  "mutability": "mutable",
+                  "name": "bonusRewardAmount",
+                  "nameLocation": "1600:17:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76018,
+                  "src": "1592:25:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76015,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1592:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1569:49:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76031,
+            "nodeType": "FunctionDefinition",
+            "src": "1625:163:322",
+            "nodes": [],
+            "functionSelector": "75a7bc50",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "convertTokenToUnderlying",
+            "nameLocation": "1634:24:322",
+            "parameters": {
+              "id": 76027,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76020,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "1676:6:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76031,
+                  "src": "1668:14:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76019,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1668:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76022,
+                  "mutability": "mutable",
+                  "name": "from",
+                  "nameLocation": "1700:4:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76031,
+                  "src": "1692:12:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 76021,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1692:7:322",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76024,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "1722:2:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76031,
+                  "src": "1714:10:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 76023,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1714:7:322",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76026,
+                  "mutability": "mutable",
+                  "name": "timespan",
+                  "nameLocation": "1741:8:322",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76031,
+                  "src": "1734:15:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 76025,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1734:6:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1658:97:322"
+            },
+            "returnParameters": {
+              "id": 76030,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76029,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76031,
+                  "src": "1779:7:322",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76028,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1779:7:322",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1778:9:322"
+            },
+            "scope": 76032,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IQuickSwapHelper",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          76032
+        ],
+        "name": "IQuickSwapHelper",
+        "nameLocation": "425:16:322",
+        "scope": 76033,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 322
+}

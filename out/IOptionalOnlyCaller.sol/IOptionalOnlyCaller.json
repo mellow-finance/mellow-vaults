@@ -1,0 +1,625 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "enabled",
+          "type": "bool"
+        }
+      ],
+      "name": "OnlyCallerOptIn",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "isOnlyCallerEnabled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "enabled",
+          "type": "bool"
+        }
+      ],
+      "name": "setOnlyCallerCheck",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setOnlyCallerCheckWithSignature",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "isOnlyCallerEnabled(address)": "a1648aa5",
+    "setOnlyCallerCheck(bool)": "e811f44b",
+    "setOnlyCallerCheckWithSignature(address,bool,bytes)": "fcaa54ee"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"enabled\",\"type\":\"bool\"}],\"name\":\"OnlyCallerOptIn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"isOnlyCallerEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"enabled\",\"type\":\"bool\"}],\"name\":\"setOnlyCallerCheck\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"enabled\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setOnlyCallerCheckWithSignature\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Interface for the OptionalOnlyCaller helper, used to opt in to a caller verification for a given address to methods that are otherwise callable by any address.\",\"events\":{\"OnlyCallerOptIn(address,bool)\":{\"details\":\"Emitted every time setOnlyCallerCheck is called.\"}},\"kind\":\"dev\",\"methods\":{\"isOnlyCallerEnabled(address)\":{\"details\":\"Returns true if caller verification is enabled for the given user, false otherwise.\"},\"setOnlyCallerCheck(bool)\":{\"details\":\"Enables / disables verification mechanism for caller.\",\"params\":{\"enabled\":\"- True if caller verification shall be enabled, false otherwise.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/solidity-utils/helpers/IOptionalOnlyCaller.sol\":\"IOptionalOnlyCaller\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/helpers/IOptionalOnlyCaller.sol\":{\"keccak256\":\"0x3b6232fc63e7cb65a313b92e745028f7dabda682b0a3d9dba4069df6ea22d362\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://2f82e95b812e8c9170aaf298e06ec251826361fb825bb26e47007245921f40c5\",\"dweb:/ipfs/QmbxPm3Dac9MUfi69bnHKYN1oAi5dkwr2FXAkCf9LUVzP5\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "bool",
+              "name": "enabled",
+              "type": "bool",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "OnlyCallerOptIn",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isOnlyCallerEnabled",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bool",
+              "name": "enabled",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setOnlyCallerCheck"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "enabled",
+              "type": "bool"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setOnlyCallerCheckWithSignature"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "isOnlyCallerEnabled(address)": {
+            "details": "Returns true if caller verification is enabled for the given user, false otherwise."
+          },
+          "setOnlyCallerCheck(bool)": {
+            "details": "Enables / disables verification mechanism for caller.",
+            "params": {
+              "enabled": "- True if caller verification shall be enabled, false otherwise."
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/solidity-utils/helpers/IOptionalOnlyCaller.sol": "IOptionalOnlyCaller"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/helpers/IOptionalOnlyCaller.sol": {
+        "keccak256": "0x3b6232fc63e7cb65a313b92e745028f7dabda682b0a3d9dba4069df6ea22d362",
+        "urls": [
+          "bzz-raw://2f82e95b812e8c9170aaf298e06ec251826361fb825bb26e47007245921f40c5",
+          "dweb:/ipfs/QmbxPm3Dac9MUfi69bnHKYN1oAi5dkwr2FXAkCf9LUVzP5"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/solidity-utils/helpers/IOptionalOnlyCaller.sol",
+    "id": 60112,
+    "exportedSymbols": {
+      "IOptionalOnlyCaller": [
+        60111
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:894:146",
+    "nodes": [
+      {
+        "id": 60079,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:146",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 60111,
+        "nodeType": "ContractDefinition",
+        "src": "892:689:146",
+        "nodes": [
+          {
+            "id": 60087,
+            "nodeType": "EventDefinition",
+            "src": "1005:50:146",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 60081,
+              "nodeType": "StructuredDocumentation",
+              "src": "928:72:146",
+              "text": " @dev Emitted every time setOnlyCallerCheck is called."
+            },
+            "name": "OnlyCallerOptIn",
+            "nameLocation": "1011:15:146",
+            "parameters": {
+              "id": 60086,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60083,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1035:4:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60087,
+                  "src": "1027:12:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60082,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1027:7:146",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60085,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "enabled",
+                  "nameLocation": "1046:7:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60087,
+                  "src": "1041:12:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 60084,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1041:4:146",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1026:28:146"
+            }
+          },
+          {
+            "id": 60093,
+            "nodeType": "FunctionDefinition",
+            "src": "1230:51:146",
+            "nodes": [],
+            "documentation": {
+              "id": 60088,
+              "nodeType": "StructuredDocumentation",
+              "src": "1061:164:146",
+              "text": " @dev Enables / disables verification mechanism for caller.\n @param enabled - True if caller verification shall be enabled, false otherwise."
+            },
+            "functionSelector": "e811f44b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setOnlyCallerCheck",
+            "nameLocation": "1239:18:146",
+            "parameters": {
+              "id": 60091,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60090,
+                  "mutability": "mutable",
+                  "name": "enabled",
+                  "nameLocation": "1263:7:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60093,
+                  "src": "1258:12:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 60089,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1258:4:146",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1257:14:146"
+            },
+            "returnParameters": {
+              "id": 60092,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1280:0:146"
+            },
+            "scope": 60111,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 60102,
+            "nodeType": "FunctionDefinition",
+            "src": "1287:102:146",
+            "nodes": [],
+            "functionSelector": "fcaa54ee",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setOnlyCallerCheckWithSignature",
+            "nameLocation": "1296:31:146",
+            "parameters": {
+              "id": 60100,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60095,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1336:4:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60102,
+                  "src": "1328:12:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60094,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1328:7:146",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60097,
+                  "mutability": "mutable",
+                  "name": "enabled",
+                  "nameLocation": "1347:7:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60102,
+                  "src": "1342:12:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 60096,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1342:4:146",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60099,
+                  "mutability": "mutable",
+                  "name": "signature",
+                  "nameLocation": "1369:9:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60102,
+                  "src": "1356:22:146",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 60098,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1356:5:146",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1327:52:146"
+            },
+            "returnParameters": {
+              "id": 60101,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1388:0:146"
+            },
+            "scope": 60111,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 60110,
+            "nodeType": "FunctionDefinition",
+            "src": "1507:72:146",
+            "nodes": [],
+            "documentation": {
+              "id": 60103,
+              "nodeType": "StructuredDocumentation",
+              "src": "1395:107:146",
+              "text": " @dev Returns true if caller verification is enabled for the given user, false otherwise."
+            },
+            "functionSelector": "a1648aa5",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isOnlyCallerEnabled",
+            "nameLocation": "1516:19:146",
+            "parameters": {
+              "id": 60106,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60105,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1544:4:146",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60110,
+                  "src": "1536:12:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60104,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1536:7:146",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1535:14:146"
+            },
+            "returnParameters": {
+              "id": 60109,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60108,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60110,
+                  "src": "1573:4:146",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 60107,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1573:4:146",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1572:6:146"
+            },
+            "scope": 60111,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IOptionalOnlyCaller",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 60080,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:178:146",
+          "text": " @dev Interface for the OptionalOnlyCaller helper, used to opt in to a caller\n verification for a given address to methods that are otherwise callable by any address."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          60111
+        ],
+        "name": "IOptionalOnlyCaller",
+        "nameLocation": "902:19:146",
+        "scope": 60112,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 146
+}

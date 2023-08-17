@@ -1,0 +1,1334 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "gauge",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "streamer",
+          "type": "address"
+        }
+      ],
+      "name": "RewardsOnlyGaugeCreated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "getChildChainStreamerImplementation",
+      "outputs": [
+        {
+          "internalType": "contract IChildChainStreamer",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getGaugeImplementation",
+      "outputs": [
+        {
+          "internalType": "contract ILiquidityGauge",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "gauge",
+          "type": "address"
+        }
+      ],
+      "name": "getGaugePool",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "gauge",
+          "type": "address"
+        }
+      ],
+      "name": "getGaugeStreamer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "name": "getPoolGauge",
+      "outputs": [
+        {
+          "internalType": "contract ILiquidityGauge",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "name": "getPoolStreamer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "gauge",
+          "type": "address"
+        }
+      ],
+      "name": "isGaugeFromFactory",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "streamer",
+          "type": "address"
+        }
+      ],
+      "name": "isStreamerFromFactory",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getChildChainStreamerImplementation()": "f9e0a13e",
+    "getGaugeImplementation()": "39312dee",
+    "getGaugePool(address)": "744a65dd",
+    "getGaugeStreamer(address)": "90b20087",
+    "getPoolGauge(address)": "a8ea6875",
+    "getPoolStreamer(address)": "8a4ffeb0",
+    "isGaugeFromFactory(address)": "ce3cc8bd",
+    "isStreamerFromFactory(address)": "cbda9327"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"gauge\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"streamer\",\"type\":\"address\"}],\"name\":\"RewardsOnlyGaugeCreated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getChildChainStreamerImplementation\",\"outputs\":[{\"internalType\":\"contract IChildChainStreamer\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getGaugeImplementation\",\"outputs\":[{\"internalType\":\"contract ILiquidityGauge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"gauge\",\"type\":\"address\"}],\"name\":\"getGaugePool\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"gauge\",\"type\":\"address\"}],\"name\":\"getGaugeStreamer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"name\":\"getPoolGauge\",\"outputs\":[{\"internalType\":\"contract ILiquidityGauge\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"name\":\"getPoolStreamer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"gauge\",\"type\":\"address\"}],\"name\":\"isGaugeFromFactory\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"streamer\",\"type\":\"address\"}],\"name\":\"isStreamerFromFactory\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getChildChainStreamerImplementation()\":{\"notice\":\"Returns the address of the implementation used for streamer deployments.\"},\"getGaugeImplementation()\":{\"notice\":\"Returns the address of the implementation used for gauge deployments.\"},\"getGaugePool(address)\":{\"notice\":\"Returns the address of the pool which `gauge` belongs.\"},\"getGaugeStreamer(address)\":{\"notice\":\"Returns the address of the streamer belonging to `gauge`.\"},\"getPoolGauge(address)\":{\"notice\":\"Returns the address of the gauge belonging to `pool`.\"},\"getPoolStreamer(address)\":{\"notice\":\"Returns the address of the streamer belonging to `pool`'s gauge.\"},\"isGaugeFromFactory(address)\":{\"notice\":\"Returns true if `gauge` was created by this factory.\"},\"isStreamerFromFactory(address)\":{\"notice\":\"Returns true if `streamer` was created by this factory.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IChildChainLiquidityGaugeFactory.sol\":\"IChildChainLiquidityGaugeFactory\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IChildChainLiquidityGaugeFactory.sol\":{\"keccak256\":\"0xc988a725f0a8cf0ddce1eee6ed57babf55f09bd0ec342277aac928affee2a2fe\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://645a4d51d2167025e5301a8ee8d1ca66b37cfc0540c69a6b34db5e432c798c27\",\"dweb:/ipfs/QmW4JPTZSS134s4EUrHbK5PizHTebKUerQT78BuKq8HA71\"]},\"src/interfaces/external/balancer/liquidity-mining/IChildChainStreamer.sol\":{\"keccak256\":\"0xbd805781eff7ce776de7b380a247c6de63f789c4f9ca7f628cf1bcabcbf4e98e\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://fbd07fecbb5ea9c0c6d02ca3e404a89f8c7ae74e9a953a88fb9b870686960d56\",\"dweb:/ipfs/QmchaVGRyuQ45xp3EjE6y5cG2uq2MX7xH8W21HragomBtF\"]},\"src/interfaces/external/balancer/liquidity-mining/ILiquidityGauge.sol\":{\"keccak256\":\"0xa22f0c0868adb9d06d097ecb0a8d8370a6e59d223ef1e07a58340191c402e9ea\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://558942e9f7ff6c6f2becffc28da21bf897e043ceea6bed95d2a362e0eceedbe6\",\"dweb:/ipfs/QmU51CezK36UmBpArAcBmXrDmC5ozDmTrconGfj8pr8NYL\"]},\"src/interfaces/external/balancer/liquidity-mining/ILiquidityGaugeFactory.sol\":{\"keccak256\":\"0xda0ac94f1b3f6025bfa0e4ddc446d372129042c5c7c22a43364db0c7b27cccf0\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3e0c802001ffe995d8f592aa4c1e938e49a2be3c645262733a4e63f849514792\",\"dweb:/ipfs/QmQT2H8A69NRHqYFnnBYcnmW7nhkr9fppt6MQB4C4XTwwD\"]},\"src/interfaces/external/balancer/liquidity-mining/IRewardTokenDistributor.sol\":{\"keccak256\":\"0xd9476c8423eab4c40a3f4a25d343c7ab194985ef5ad2498758ae8cfd569dcd2a\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://4eedabb61c239ecd3e6f2b675cf176db87bbd2b8e54f6190f47001a1a455f875\",\"dweb:/ipfs/QmRsR9KiVJWBuQK3EBRfCVxdDZBTYmfK7CeBebdkeBX6HE\"]},\"src/interfaces/external/balancer/liquidity-mining/IRewardsOnlyGauge.sol\":{\"keccak256\":\"0x682388499a502ed4a7853eb51780af598e7d894676ba4f17c9b7d4ea8ed8a3df\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://4f67b6aa24523f2e9d2c60b894ae39193a22db62ede0c7a2e9fbe8b9174a978b\",\"dweb:/ipfs/QmXkdWC9yvuB5hMtXaQkkbWRDyhPjA47yC63UHj2tieftD\"]},\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol\":{\"keccak256\":\"0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f\",\"dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "gauge",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "streamer",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RewardsOnlyGaugeCreated",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getChildChainStreamerImplementation",
+          "outputs": [
+            {
+              "internalType": "contract IChildChainStreamer",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getGaugeImplementation",
+          "outputs": [
+            {
+              "internalType": "contract ILiquidityGauge",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "gauge",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getGaugePool",
+          "outputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "gauge",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getGaugeStreamer",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getPoolGauge",
+          "outputs": [
+            {
+              "internalType": "contract ILiquidityGauge",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getPoolStreamer",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "gauge",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isGaugeFromFactory",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "streamer",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isStreamerFromFactory",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "getChildChainStreamerImplementation()": {
+            "notice": "Returns the address of the implementation used for streamer deployments."
+          },
+          "getGaugeImplementation()": {
+            "notice": "Returns the address of the implementation used for gauge deployments."
+          },
+          "getGaugePool(address)": {
+            "notice": "Returns the address of the pool which `gauge` belongs."
+          },
+          "getGaugeStreamer(address)": {
+            "notice": "Returns the address of the streamer belonging to `gauge`."
+          },
+          "getPoolGauge(address)": {
+            "notice": "Returns the address of the gauge belonging to `pool`."
+          },
+          "getPoolStreamer(address)": {
+            "notice": "Returns the address of the streamer belonging to `pool`'s gauge."
+          },
+          "isGaugeFromFactory(address)": {
+            "notice": "Returns true if `gauge` was created by this factory."
+          },
+          "isStreamerFromFactory(address)": {
+            "notice": "Returns true if `streamer` was created by this factory."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IChildChainLiquidityGaugeFactory.sol": "IChildChainLiquidityGaugeFactory"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IChildChainLiquidityGaugeFactory.sol": {
+        "keccak256": "0xc988a725f0a8cf0ddce1eee6ed57babf55f09bd0ec342277aac928affee2a2fe",
+        "urls": [
+          "bzz-raw://645a4d51d2167025e5301a8ee8d1ca66b37cfc0540c69a6b34db5e432c798c27",
+          "dweb:/ipfs/QmW4JPTZSS134s4EUrHbK5PizHTebKUerQT78BuKq8HA71"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/IChildChainStreamer.sol": {
+        "keccak256": "0xbd805781eff7ce776de7b380a247c6de63f789c4f9ca7f628cf1bcabcbf4e98e",
+        "urls": [
+          "bzz-raw://fbd07fecbb5ea9c0c6d02ca3e404a89f8c7ae74e9a953a88fb9b870686960d56",
+          "dweb:/ipfs/QmchaVGRyuQ45xp3EjE6y5cG2uq2MX7xH8W21HragomBtF"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/ILiquidityGauge.sol": {
+        "keccak256": "0xa22f0c0868adb9d06d097ecb0a8d8370a6e59d223ef1e07a58340191c402e9ea",
+        "urls": [
+          "bzz-raw://558942e9f7ff6c6f2becffc28da21bf897e043ceea6bed95d2a362e0eceedbe6",
+          "dweb:/ipfs/QmU51CezK36UmBpArAcBmXrDmC5ozDmTrconGfj8pr8NYL"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/ILiquidityGaugeFactory.sol": {
+        "keccak256": "0xda0ac94f1b3f6025bfa0e4ddc446d372129042c5c7c22a43364db0c7b27cccf0",
+        "urls": [
+          "bzz-raw://3e0c802001ffe995d8f592aa4c1e938e49a2be3c645262733a4e63f849514792",
+          "dweb:/ipfs/QmQT2H8A69NRHqYFnnBYcnmW7nhkr9fppt6MQB4C4XTwwD"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/IRewardTokenDistributor.sol": {
+        "keccak256": "0xd9476c8423eab4c40a3f4a25d343c7ab194985ef5ad2498758ae8cfd569dcd2a",
+        "urls": [
+          "bzz-raw://4eedabb61c239ecd3e6f2b675cf176db87bbd2b8e54f6190f47001a1a455f875",
+          "dweb:/ipfs/QmRsR9KiVJWBuQK3EBRfCVxdDZBTYmfK7CeBebdkeBX6HE"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/IRewardsOnlyGauge.sol": {
+        "keccak256": "0x682388499a502ed4a7853eb51780af598e7d894676ba4f17c9b7d4ea8ed8a3df",
+        "urls": [
+          "bzz-raw://4f67b6aa24523f2e9d2c60b894ae39193a22db62ede0c7a2e9fbe8b9174a978b",
+          "dweb:/ipfs/QmXkdWC9yvuB5hMtXaQkkbWRDyhPjA47yC63UHj2tieftD"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol": {
+        "keccak256": "0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835",
+        "urls": [
+          "bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f",
+          "dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IChildChainLiquidityGaugeFactory.sol",
+    "id": 56882,
+    "exportedSymbols": {
+      "IChildChainLiquidityGaugeFactory": [
+        56881
+      ],
+      "IChildChainStreamer": [
+        56911
+      ],
+      "IERC20": [
+        60345
+      ],
+      "ILiquidityGauge": [
+        57381
+      ],
+      "ILiquidityGaugeFactory": [
+        57394
+      ],
+      "IRewardTokenDistributor": [
+        57626
+      ],
+      "IRewardsOnlyGauge": [
+        57670
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:1593:102",
+    "nodes": [
+      {
+        "id": 56809,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:102",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 56810,
+        "nodeType": "PragmaDirective",
+        "src": "712:33:102",
+        "nodes": [],
+        "literals": [
+          "experimental",
+          "ABIEncoderV2"
+        ]
+      },
+      {
+        "id": 56811,
+        "nodeType": "ImportDirective",
+        "src": "747:35:102",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IChildChainStreamer.sol",
+        "file": "./IChildChainStreamer.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 56882,
+        "sourceUnit": 56912,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 56812,
+        "nodeType": "ImportDirective",
+        "src": "783:31:102",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/liquidity-mining/ILiquidityGauge.sol",
+        "file": "./ILiquidityGauge.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 56882,
+        "sourceUnit": 57382,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 56813,
+        "nodeType": "ImportDirective",
+        "src": "815:38:102",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/liquidity-mining/ILiquidityGaugeFactory.sol",
+        "file": "./ILiquidityGaugeFactory.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 56882,
+        "sourceUnit": 57395,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 56814,
+        "nodeType": "ImportDirective",
+        "src": "854:33:102",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IRewardsOnlyGauge.sol",
+        "file": "./IRewardsOnlyGauge.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 56882,
+        "sourceUnit": 57671,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 56881,
+        "nodeType": "ContractDefinition",
+        "src": "889:1391:102",
+        "nodes": [
+          {
+            "id": 56824,
+            "nodeType": "EventDefinition",
+            "src": "964:93:102",
+            "nodes": [],
+            "anonymous": false,
+            "name": "RewardsOnlyGaugeCreated",
+            "nameLocation": "970:23:102",
+            "parameters": {
+              "id": 56823,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56818,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "gauge",
+                  "nameLocation": "1010:5:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56824,
+                  "src": "994:21:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56817,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "994:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56820,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "1033:4:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56824,
+                  "src": "1017:20:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56819,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1017:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56822,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "streamer",
+                  "nameLocation": "1047:8:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56824,
+                  "src": "1039:16:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56821,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1039:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "993:63:102"
+            }
+          },
+          {
+            "id": 56831,
+            "nodeType": "FunctionDefinition",
+            "src": "1164:74:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56825,
+              "nodeType": "StructuredDocumentation",
+              "src": "1063:96:102",
+              "text": " @notice Returns the address of the implementation used for gauge deployments."
+            },
+            "functionSelector": "39312dee",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getGaugeImplementation",
+            "nameLocation": "1173:22:102",
+            "parameters": {
+              "id": 56826,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1195:2:102"
+            },
+            "returnParameters": {
+              "id": 56830,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56829,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56831,
+                  "src": "1221:15:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_ILiquidityGauge_$57381",
+                    "typeString": "contract ILiquidityGauge"
+                  },
+                  "typeName": {
+                    "id": 56828,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 56827,
+                      "name": "ILiquidityGauge",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 57381,
+                      "src": "1221:15:102"
+                    },
+                    "referencedDeclaration": 57381,
+                    "src": "1221:15:102",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_ILiquidityGauge_$57381",
+                      "typeString": "contract ILiquidityGauge"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1220:17:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56838,
+            "nodeType": "FunctionDefinition",
+            "src": "1348:91:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56832,
+              "nodeType": "StructuredDocumentation",
+              "src": "1244:99:102",
+              "text": " @notice Returns the address of the implementation used for streamer deployments."
+            },
+            "functionSelector": "f9e0a13e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getChildChainStreamerImplementation",
+            "nameLocation": "1357:35:102",
+            "parameters": {
+              "id": 56833,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1392:2:102"
+            },
+            "returnParameters": {
+              "id": 56837,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56836,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56838,
+                  "src": "1418:19:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IChildChainStreamer_$56911",
+                    "typeString": "contract IChildChainStreamer"
+                  },
+                  "typeName": {
+                    "id": 56835,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 56834,
+                      "name": "IChildChainStreamer",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 56911,
+                      "src": "1418:19:102"
+                    },
+                    "referencedDeclaration": 56911,
+                    "src": "1418:19:102",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IChildChainStreamer_$56911",
+                      "typeString": "contract IChildChainStreamer"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1417:21:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56847,
+            "nodeType": "FunctionDefinition",
+            "src": "1530:76:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56839,
+              "nodeType": "StructuredDocumentation",
+              "src": "1445:80:102",
+              "text": " @notice Returns the address of the gauge belonging to `pool`."
+            },
+            "functionSelector": "a8ea6875",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getPoolGauge",
+            "nameLocation": "1539:12:102",
+            "parameters": {
+              "id": 56842,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56841,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "1560:4:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56847,
+                  "src": "1552:12:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56840,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1552:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1551:14:102"
+            },
+            "returnParameters": {
+              "id": 56846,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56845,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56847,
+                  "src": "1589:15:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_ILiquidityGauge_$57381",
+                    "typeString": "contract ILiquidityGauge"
+                  },
+                  "typeName": {
+                    "id": 56844,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 56843,
+                      "name": "ILiquidityGauge",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 57381,
+                      "src": "1589:15:102"
+                    },
+                    "referencedDeclaration": 57381,
+                    "src": "1589:15:102",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_ILiquidityGauge_$57381",
+                      "typeString": "contract ILiquidityGauge"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1588:17:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56855,
+            "nodeType": "FunctionDefinition",
+            "src": "1701:73:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56848,
+              "nodeType": "StructuredDocumentation",
+              "src": "1612:84:102",
+              "text": " @notice Returns the address of the streamer belonging to `gauge`."
+            },
+            "functionSelector": "90b20087",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getGaugeStreamer",
+            "nameLocation": "1710:16:102",
+            "parameters": {
+              "id": 56851,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56850,
+                  "mutability": "mutable",
+                  "name": "gauge",
+                  "nameLocation": "1735:5:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56855,
+                  "src": "1727:13:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56849,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1727:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1726:15:102"
+            },
+            "returnParameters": {
+              "id": 56854,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56853,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56855,
+                  "src": "1765:7:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56852,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1765:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1764:9:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56863,
+            "nodeType": "FunctionDefinition",
+            "src": "1867:78:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56856,
+              "nodeType": "StructuredDocumentation",
+              "src": "1780:82:102",
+              "text": " @notice Returns true if `streamer` was created by this factory."
+            },
+            "functionSelector": "cbda9327",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isStreamerFromFactory",
+            "nameLocation": "1876:21:102",
+            "parameters": {
+              "id": 56859,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56858,
+                  "mutability": "mutable",
+                  "name": "streamer",
+                  "nameLocation": "1906:8:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56863,
+                  "src": "1898:16:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56857,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1898:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1897:18:102"
+            },
+            "returnParameters": {
+              "id": 56862,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56861,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56863,
+                  "src": "1939:4:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 56860,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1939:4:102",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1938:6:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56872,
+            "nodeType": "FunctionDefinition",
+            "src": "2037:68:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56864,
+              "nodeType": "StructuredDocumentation",
+              "src": "1951:81:102",
+              "text": " @notice Returns the address of the pool which `gauge` belongs."
+            },
+            "functionSelector": "744a65dd",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getGaugePool",
+            "nameLocation": "2046:12:102",
+            "parameters": {
+              "id": 56867,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56866,
+                  "mutability": "mutable",
+                  "name": "gauge",
+                  "nameLocation": "2067:5:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56872,
+                  "src": "2059:13:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56865,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2059:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2058:15:102"
+            },
+            "returnParameters": {
+              "id": 56871,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56870,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56872,
+                  "src": "2097:6:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$60345",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "id": 56869,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 56868,
+                      "name": "IERC20",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 60345,
+                      "src": "2097:6:102"
+                    },
+                    "referencedDeclaration": 60345,
+                    "src": "2097:6:102",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$60345",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2096:8:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56880,
+            "nodeType": "FunctionDefinition",
+            "src": "2207:71:102",
+            "nodes": [],
+            "documentation": {
+              "id": 56873,
+              "nodeType": "StructuredDocumentation",
+              "src": "2111:91:102",
+              "text": " @notice Returns the address of the streamer belonging to `pool`'s gauge."
+            },
+            "functionSelector": "8a4ffeb0",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getPoolStreamer",
+            "nameLocation": "2216:15:102",
+            "parameters": {
+              "id": 56876,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56875,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "2240:4:102",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56880,
+                  "src": "2232:12:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56874,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2232:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2231:14:102"
+            },
+            "returnParameters": {
+              "id": 56879,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56878,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56880,
+                  "src": "2269:7:102",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56877,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2269:7:102",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2268:9:102"
+            },
+            "scope": 56881,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 56815,
+              "name": "ILiquidityGaugeFactory",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 57394,
+              "src": "935:22:102"
+            },
+            "id": 56816,
+            "nodeType": "InheritanceSpecifier",
+            "src": "935:22:102"
+          }
+        ],
+        "canonicalName": "IChildChainLiquidityGaugeFactory",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          56881,
+          57394
+        ],
+        "name": "IChildChainLiquidityGaugeFactory",
+        "nameLocation": "899:32:102",
+        "scope": 56882,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 102
+}

@@ -1,0 +1,200 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "investedUnderlyingBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "investedUnderlyingBalance()": "45d01e4a"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"investedUnderlyingBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/standalone-utils/ITetuStrategy.sol\":\"ITetuStrategy\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/standalone-utils/ITetuStrategy.sol\":{\"keccak256\":\"0x005643eb55327862f3d1142f57b994442129cb5cb36bef35975c72a07105d700\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://088d707dfcb5e44a8d4b95bcaedb14a217ecee7ebf83fab87f74d5336f15e249\",\"dweb:/ipfs/Qmc5wq1KvhiydL5N51EEfVRCvefyE95xNNkXFmFvEEtnt2\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "investedUnderlyingBalance",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/standalone-utils/ITetuStrategy.sol": "ITetuStrategy"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/standalone-utils/ITetuStrategy.sol": {
+        "keccak256": "0x005643eb55327862f3d1142f57b994442129cb5cb36bef35975c72a07105d700",
+        "urls": [
+          "bzz-raw://088d707dfcb5e44a8d4b95bcaedb14a217ecee7ebf83fab87f74d5336f15e249",
+          "dweb:/ipfs/Qmc5wq1KvhiydL5N51EEfVRCvefyE95xNNkXFmFvEEtnt2"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/standalone-utils/ITetuStrategy.sol",
+    "id": 61687,
+    "exportedSymbols": {
+      "ITetuStrategy": [
+        61686
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:127:174",
+    "nodes": [
+      {
+        "id": 61680,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:174",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 61686,
+        "nodeType": "ContractDefinition",
+        "src": "713:101:174",
+        "nodes": [
+          {
+            "id": 61685,
+            "nodeType": "FunctionDefinition",
+            "src": "743:69:174",
+            "nodes": [],
+            "functionSelector": "45d01e4a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "investedUnderlyingBalance",
+            "nameLocation": "752:25:174",
+            "parameters": {
+              "id": 61681,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "777:2:174"
+            },
+            "returnParameters": {
+              "id": 61684,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61683,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61685,
+                  "src": "803:7:174",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61682,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "803:7:174",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "802:9:174"
+            },
+            "scope": 61686,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "ITetuStrategy",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          61686
+        ],
+        "name": "ITetuStrategy",
+        "nameLocation": "723:13:174",
+        "scope": 61687,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 174
+}

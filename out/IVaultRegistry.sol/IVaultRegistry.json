@@ -1,0 +1,2179 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "approved",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "approved",
+          "type": "bool"
+        }
+      ],
+      "name": "ApprovalForAll",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "commitStagedProtocolGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getApproved",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "isApprovedForAll",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "isLocked",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "lockNft",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "vault",
+          "type": "address"
+        }
+      ],
+      "name": "nftForVault",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ownerOf",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolGovernance",
+      "outputs": [
+        {
+          "internalType": "contract IProtocolGovernance",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "registerVault",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "safeTransferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "safeTransferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "approved",
+          "type": "bool"
+        }
+      ],
+      "name": "setApprovalForAll",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IProtocolGovernance",
+          "name": "newProtocolGovernance",
+          "type": "address"
+        }
+      ],
+      "name": "stageProtocolGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedProtocolGovernance",
+      "outputs": [
+        {
+          "internalType": "contract IProtocolGovernance",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedProtocolGovernanceTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        }
+      ],
+      "name": "vaultForNft",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "vault",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaults",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultsCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "approve(address,uint256)": "095ea7b3",
+    "balanceOf(address)": "70a08231",
+    "commitStagedProtocolGovernance()": "0407ca13",
+    "getApproved(uint256)": "081812fc",
+    "isApprovedForAll(address,address)": "e985e9c5",
+    "isLocked(uint256)": "f6aacfb1",
+    "lockNft(uint256)": "4dcbc739",
+    "nftForVault(address)": "fcdabd27",
+    "ownerOf(uint256)": "6352211e",
+    "protocolGovernance()": "5227ce4c",
+    "registerVault(address,address)": "05c4fdf9",
+    "safeTransferFrom(address,address,uint256)": "42842e0e",
+    "safeTransferFrom(address,address,uint256,bytes)": "b88d4fde",
+    "setApprovalForAll(address,bool)": "a22cb465",
+    "stageProtocolGovernance(address)": "3be0539c",
+    "stagedProtocolGovernance()": "82e9f71f",
+    "stagedProtocolGovernanceTimestamp()": "95cdb9a5",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "transferFrom(address,address,uint256)": "23b872dd",
+    "vaultForNft(uint256)": "9c94d853",
+    "vaults()": "8220ef5b",
+    "vaultsCount()": "88977738"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"commitStagedProtocolGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"isLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"lockNft\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"name\":\"nftForVault\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"protocolGovernance\",\"outputs\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"registerVault\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"newProtocolGovernance\",\"type\":\"address\"}],\"name\":\"stageProtocolGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedProtocolGovernance\",\"outputs\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedProtocolGovernanceTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"}],\"name\":\"vaultForNft\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaults\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultsCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"approve(address,uint256)\":{\"details\":\"Gives permission to `to` to transfer `tokenId` token to another account. The approval is cleared when the token is transferred. Only a single account can be approved at a time, so approving the zero address clears previous approvals. Requirements: - The caller must own the token or be an approved operator. - `tokenId` must exist. Emits an {Approval} event.\"},\"balanceOf(address)\":{\"details\":\"Returns the number of tokens in ``owner``'s account.\"},\"getApproved(uint256)\":{\"details\":\"Returns the account approved for `tokenId` token. Requirements: - `tokenId` must exist.\"},\"isApprovedForAll(address,address)\":{\"details\":\"Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}\"},\"isLocked(uint256)\":{\"params\":{\"nft\":\"NFT to check for lock\"},\"returns\":{\"_0\":\"`true` if locked, false otherwise\"}},\"lockNft(uint256)\":{\"details\":\"Use this method when vault structure is set up and should become immutable. Can be called by owner.\",\"params\":{\"nft\":\"- NFT to lock\"}},\"nftForVault(address)\":{\"params\":{\"vault\":\"Address of the Vault contract\"},\"returns\":{\"nftId\":\"NFT ID\"}},\"ownerOf(uint256)\":{\"details\":\"Returns the owner of the `tokenId` token. Requirements: - `tokenId` must exist.\"},\"registerVault(address,address)\":{\"params\":{\"owner\":\"owner of the NFT\",\"vault\":\"address of the vault\"},\"returns\":{\"nft\":\"Nft minted for the given Vault\"}},\"safeTransferFrom(address,address,uint256)\":{\"details\":\"Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients are aware of the ERC721 protocol to prevent tokens from being forever locked. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event.\"},\"safeTransferFrom(address,address,uint256,bytes)\":{\"details\":\"Safely transfers `tokenId` token from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event.\"},\"setApprovalForAll(address,bool)\":{\"details\":\"Approve or remove `operator` as an operator for the caller. Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller. Requirements: - The `operator` cannot be the caller. Emits an {ApprovalForAll} event.\"},\"stageProtocolGovernance(address)\":{\"params\":{\"newProtocolGovernance\":\"new ProtocolGovernance\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"},\"transferFrom(address,address,uint256)\":{\"details\":\"Transfers `tokenId` token from `from` to `to`. WARNING: Note that the caller is responsible to confirm that the recipient is capable of receiving ERC721 or else they may be permanently lost. Usage of {safeTransferFrom} prevents loss, though the caller must understand this adds an external call which potentially creates a reentrancy vulnerability. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. Emits a {Transfer} event.\"},\"vaultForNft(uint256)\":{\"params\":{\"nftId\":\"NFT ID\"},\"returns\":{\"vault\":\"Address of the Vault contract\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitStagedProtocolGovernance()\":{\"notice\":\"Commit new ProtocolGovernance.\"},\"isLocked(uint256)\":{\"notice\":\"Checks if the nft is locked for all transfers\"},\"lockNft(uint256)\":{\"notice\":\"Lock NFT for transfers\"},\"nftForVault(address)\":{\"notice\":\"Get NFT ID for given Vault contract address.\"},\"protocolGovernance()\":{\"notice\":\"Address of the ProtocolGovernance.\"},\"registerVault(address,address)\":{\"notice\":\"Register new Vault and mint NFT.\"},\"stageProtocolGovernance(address)\":{\"notice\":\"Stage new ProtocolGovernance.\"},\"stagedProtocolGovernance()\":{\"notice\":\"Address of the staged ProtocolGovernance.\"},\"stagedProtocolGovernanceTimestamp()\":{\"notice\":\"Minimal timestamp when staged ProtocolGovernance can be applied.\"},\"vaultForNft(uint256)\":{\"notice\":\"Get Vault for the giver NFT ID.\"},\"vaults()\":{\"notice\":\"All Vaults registered.\"},\"vaultsCount()\":{\"notice\":\"Number of Vaults registered.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/IVaultRegistry.sol\":\"IVaultRegistry\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "approved",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Approval",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ApprovalForAll",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Transfer",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "approve"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "balanceOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "balance",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitStagedProtocolGovernance"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getApproved",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isApprovedForAll",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isLocked",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "lockNft"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "vault",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "nftForVault",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "ownerOf",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "protocolGovernance",
+          "outputs": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "registerVault",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "safeTransferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "safeTransferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setApprovalForAll"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "newProtocolGovernance",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageProtocolGovernance"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedProtocolGovernance",
+          "outputs": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedProtocolGovernanceTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultForNft",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "vault",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaults",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultsCount",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "approve(address,uint256)": {
+            "details": "Gives permission to `to` to transfer `tokenId` token to another account. The approval is cleared when the token is transferred. Only a single account can be approved at a time, so approving the zero address clears previous approvals. Requirements: - The caller must own the token or be an approved operator. - `tokenId` must exist. Emits an {Approval} event."
+          },
+          "balanceOf(address)": {
+            "details": "Returns the number of tokens in ``owner``'s account."
+          },
+          "getApproved(uint256)": {
+            "details": "Returns the account approved for `tokenId` token. Requirements: - `tokenId` must exist."
+          },
+          "isApprovedForAll(address,address)": {
+            "details": "Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}"
+          },
+          "isLocked(uint256)": {
+            "params": {
+              "nft": "NFT to check for lock"
+            },
+            "returns": {
+              "_0": "`true` if locked, false otherwise"
+            }
+          },
+          "lockNft(uint256)": {
+            "details": "Use this method when vault structure is set up and should become immutable. Can be called by owner.",
+            "params": {
+              "nft": "- NFT to lock"
+            }
+          },
+          "nftForVault(address)": {
+            "params": {
+              "vault": "Address of the Vault contract"
+            },
+            "returns": {
+              "nftId": "NFT ID"
+            }
+          },
+          "ownerOf(uint256)": {
+            "details": "Returns the owner of the `tokenId` token. Requirements: - `tokenId` must exist."
+          },
+          "registerVault(address,address)": {
+            "params": {
+              "owner": "owner of the NFT",
+              "vault": "address of the vault"
+            },
+            "returns": {
+              "nft": "Nft minted for the given Vault"
+            }
+          },
+          "safeTransferFrom(address,address,uint256)": {
+            "details": "Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients are aware of the ERC721 protocol to prevent tokens from being forever locked. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event."
+          },
+          "safeTransferFrom(address,address,uint256,bytes)": {
+            "details": "Safely transfers `tokenId` token from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event."
+          },
+          "setApprovalForAll(address,bool)": {
+            "details": "Approve or remove `operator` as an operator for the caller. Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller. Requirements: - The `operator` cannot be the caller. Emits an {ApprovalForAll} event."
+          },
+          "stageProtocolGovernance(address)": {
+            "params": {
+              "newProtocolGovernance": "new ProtocolGovernance"
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          },
+          "transferFrom(address,address,uint256)": {
+            "details": "Transfers `tokenId` token from `from` to `to`. WARNING: Note that the caller is responsible to confirm that the recipient is capable of receiving ERC721 or else they may be permanently lost. Usage of {safeTransferFrom} prevents loss, though the caller must understand this adds an external call which potentially creates a reentrancy vulnerability. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. Emits a {Transfer} event."
+          },
+          "vaultForNft(uint256)": {
+            "params": {
+              "nftId": "NFT ID"
+            },
+            "returns": {
+              "vault": "Address of the Vault contract"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitStagedProtocolGovernance()": {
+            "notice": "Commit new ProtocolGovernance."
+          },
+          "isLocked(uint256)": {
+            "notice": "Checks if the nft is locked for all transfers"
+          },
+          "lockNft(uint256)": {
+            "notice": "Lock NFT for transfers"
+          },
+          "nftForVault(address)": {
+            "notice": "Get NFT ID for given Vault contract address."
+          },
+          "protocolGovernance()": {
+            "notice": "Address of the ProtocolGovernance."
+          },
+          "registerVault(address,address)": {
+            "notice": "Register new Vault and mint NFT."
+          },
+          "stageProtocolGovernance(address)": {
+            "notice": "Stage new ProtocolGovernance."
+          },
+          "stagedProtocolGovernance()": {
+            "notice": "Address of the staged ProtocolGovernance."
+          },
+          "stagedProtocolGovernanceTimestamp()": {
+            "notice": "Minimal timestamp when staged ProtocolGovernance can be applied."
+          },
+          "vaultForNft(uint256)": {
+            "notice": "Get Vault for the giver NFT ID."
+          },
+          "vaults()": {
+            "notice": "All Vaults registered."
+          },
+          "vaultsCount()": {
+            "notice": "Number of Vaults registered."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/IVaultRegistry.sol": "IVaultRegistry"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/IVaultRegistry.sol",
+    "id": 53013,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVaultRegistry": [
+        53012
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:2258:64",
+    "nodes": [
+      {
+        "id": 52923,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:64",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 52924,
+        "nodeType": "ImportDirective",
+        "src": "57:58:64",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol",
+        "file": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 53013,
+        "sourceUnit": 46688,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 52925,
+        "nodeType": "ImportDirective",
+        "src": "116:35:64",
+        "nodes": [],
+        "absolutePath": "src/interfaces/IProtocolGovernance.sol",
+        "file": "./IProtocolGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 53013,
+        "sourceUnit": 52869,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 53012,
+        "nodeType": "ContractDefinition",
+        "src": "153:2136:64",
+        "nodes": [
+          {
+            "id": 52935,
+            "nodeType": "FunctionDefinition",
+            "src": "323:74:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52928,
+              "nodeType": "StructuredDocumentation",
+              "src": "195:123:64",
+              "text": "@notice Get Vault for the giver NFT ID.\n @param nftId NFT ID\n @return vault Address of the Vault contract"
+            },
+            "functionSelector": "9c94d853",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "vaultForNft",
+            "nameLocation": "332:11:64",
+            "parameters": {
+              "id": 52931,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52930,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "352:5:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52935,
+                  "src": "344:13:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52929,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "344:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "343:15:64"
+            },
+            "returnParameters": {
+              "id": 52934,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52933,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "390:5:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52935,
+                  "src": "382:13:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52932,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "382:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "381:15:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52943,
+            "nodeType": "FunctionDefinition",
+            "src": "544:74:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52936,
+              "nodeType": "StructuredDocumentation",
+              "src": "403:136:64",
+              "text": "@notice Get NFT ID for given Vault contract address.\n @param vault Address of the Vault contract\n @return nftId NFT ID"
+            },
+            "functionSelector": "fcdabd27",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "nftForVault",
+            "nameLocation": "553:11:64",
+            "parameters": {
+              "id": 52939,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52938,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "573:5:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52943,
+                  "src": "565:13:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52937,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "565:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "564:15:64"
+            },
+            "returnParameters": {
+              "id": 52942,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52941,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "611:5:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52943,
+                  "src": "603:13:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52940,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "603:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "602:15:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52951,
+            "nodeType": "FunctionDefinition",
+            "src": "777:60:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52944,
+              "nodeType": "StructuredDocumentation",
+              "src": "624:148:64",
+              "text": "@notice Checks if the nft is locked for all transfers\n @param nft NFT to check for lock\n @return `true` if locked, false otherwise"
+            },
+            "functionSelector": "f6aacfb1",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isLocked",
+            "nameLocation": "786:8:64",
+            "parameters": {
+              "id": 52947,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52946,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "803:3:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52951,
+                  "src": "795:11:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52945,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "795:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "794:13:64"
+            },
+            "returnParameters": {
+              "id": 52950,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52949,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52951,
+                  "src": "831:4:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 52948,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "831:4:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "830:6:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52961,
+            "nodeType": "FunctionDefinition",
+            "src": "1023:84:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52952,
+              "nodeType": "StructuredDocumentation",
+              "src": "843:175:64",
+              "text": "@notice Register new Vault and mint NFT.\n @param vault address of the vault\n @param owner owner of the NFT\n @return nft Nft minted for the given Vault"
+            },
+            "functionSelector": "05c4fdf9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "registerVault",
+            "nameLocation": "1032:13:64",
+            "parameters": {
+              "id": 52957,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52954,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "1054:5:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52961,
+                  "src": "1046:13:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52953,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1046:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 52956,
+                  "mutability": "mutable",
+                  "name": "owner",
+                  "nameLocation": "1069:5:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52961,
+                  "src": "1061:13:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52955,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1061:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1045:30:64"
+            },
+            "returnParameters": {
+              "id": 52960,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52959,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1102:3:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52961,
+                  "src": "1094:11:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52958,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1094:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1093:13:64"
+            },
+            "scope": 53012,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52967,
+            "nodeType": "FunctionDefinition",
+            "src": "1158:55:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52962,
+              "nodeType": "StructuredDocumentation",
+              "src": "1113:40:64",
+              "text": "@notice Number of Vaults registered."
+            },
+            "functionSelector": "88977738",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "vaultsCount",
+            "nameLocation": "1167:11:64",
+            "parameters": {
+              "id": 52963,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1178:2:64"
+            },
+            "returnParameters": {
+              "id": 52966,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52965,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52967,
+                  "src": "1204:7:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52964,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1204:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1203:9:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52974,
+            "nodeType": "FunctionDefinition",
+            "src": "1258:59:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52968,
+              "nodeType": "StructuredDocumentation",
+              "src": "1219:34:64",
+              "text": "@notice All Vaults registered."
+            },
+            "functionSelector": "8220ef5b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "vaults",
+            "nameLocation": "1267:6:64",
+            "parameters": {
+              "id": 52969,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1273:2:64"
+            },
+            "returnParameters": {
+              "id": 52973,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52972,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52974,
+                  "src": "1299:16:64",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 52970,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1299:7:64",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 52971,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1299:9:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1298:18:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52981,
+            "nodeType": "FunctionDefinition",
+            "src": "1374:74:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52975,
+              "nodeType": "StructuredDocumentation",
+              "src": "1323:46:64",
+              "text": "@notice Address of the ProtocolGovernance."
+            },
+            "functionSelector": "5227ce4c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "protocolGovernance",
+            "nameLocation": "1383:18:64",
+            "parameters": {
+              "id": 52976,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1401:2:64"
+            },
+            "returnParameters": {
+              "id": 52980,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52979,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52981,
+                  "src": "1427:19:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                    "typeString": "contract IProtocolGovernance"
+                  },
+                  "typeName": {
+                    "id": 52978,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 52977,
+                      "name": "IProtocolGovernance",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 52868,
+                      "src": "1427:19:64"
+                    },
+                    "referencedDeclaration": 52868,
+                    "src": "1427:19:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                      "typeString": "contract IProtocolGovernance"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1426:21:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52988,
+            "nodeType": "FunctionDefinition",
+            "src": "1512:80:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52982,
+              "nodeType": "StructuredDocumentation",
+              "src": "1454:53:64",
+              "text": "@notice Address of the staged ProtocolGovernance."
+            },
+            "functionSelector": "82e9f71f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedProtocolGovernance",
+            "nameLocation": "1521:24:64",
+            "parameters": {
+              "id": 52983,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1545:2:64"
+            },
+            "returnParameters": {
+              "id": 52987,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52986,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52988,
+                  "src": "1571:19:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                    "typeString": "contract IProtocolGovernance"
+                  },
+                  "typeName": {
+                    "id": 52985,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 52984,
+                      "name": "IProtocolGovernance",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 52868,
+                      "src": "1571:19:64"
+                    },
+                    "referencedDeclaration": 52868,
+                    "src": "1571:19:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                      "typeString": "contract IProtocolGovernance"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1570:21:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52994,
+            "nodeType": "FunctionDefinition",
+            "src": "1679:77:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52989,
+              "nodeType": "StructuredDocumentation",
+              "src": "1598:76:64",
+              "text": "@notice Minimal timestamp when staged ProtocolGovernance can be applied."
+            },
+            "functionSelector": "95cdb9a5",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedProtocolGovernanceTimestamp",
+            "nameLocation": "1688:33:64",
+            "parameters": {
+              "id": 52990,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1721:2:64"
+            },
+            "returnParameters": {
+              "id": 52993,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52992,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52994,
+                  "src": "1747:7:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52991,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1747:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1746:9:64"
+            },
+            "scope": 53012,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53001,
+            "nodeType": "FunctionDefinition",
+            "src": "1868:85:64",
+            "nodes": [],
+            "documentation": {
+              "id": 52995,
+              "nodeType": "StructuredDocumentation",
+              "src": "1762:101:64",
+              "text": "@notice Stage new ProtocolGovernance.\n @param newProtocolGovernance new ProtocolGovernance"
+            },
+            "functionSelector": "3be0539c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageProtocolGovernance",
+            "nameLocation": "1877:23:64",
+            "parameters": {
+              "id": 52999,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52998,
+                  "mutability": "mutable",
+                  "name": "newProtocolGovernance",
+                  "nameLocation": "1921:21:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53001,
+                  "src": "1901:41:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                    "typeString": "contract IProtocolGovernance"
+                  },
+                  "typeName": {
+                    "id": 52997,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 52996,
+                      "name": "IProtocolGovernance",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 52868,
+                      "src": "1901:19:64"
+                    },
+                    "referencedDeclaration": 52868,
+                    "src": "1901:19:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                      "typeString": "contract IProtocolGovernance"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1900:43:64"
+            },
+            "returnParameters": {
+              "id": 53000,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1952:0:64"
+            },
+            "scope": 53012,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53005,
+            "nodeType": "FunctionDefinition",
+            "src": "2006:51:64",
+            "nodes": [],
+            "documentation": {
+              "id": 53002,
+              "nodeType": "StructuredDocumentation",
+              "src": "1959:42:64",
+              "text": "@notice Commit new ProtocolGovernance."
+            },
+            "functionSelector": "0407ca13",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitStagedProtocolGovernance",
+            "nameLocation": "2015:30:64",
+            "parameters": {
+              "id": 53003,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2045:2:64"
+            },
+            "returnParameters": {
+              "id": 53004,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2056:0:64"
+            },
+            "scope": 53012,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53011,
+            "nodeType": "FunctionDefinition",
+            "src": "2248:39:64",
+            "nodes": [],
+            "documentation": {
+              "id": 53006,
+              "nodeType": "StructuredDocumentation",
+              "src": "2063:180:64",
+              "text": "@notice Lock NFT for transfers\n @dev Use this method when vault structure is set up and should become immutable. Can be called by owner.\n @param nft - NFT to lock"
+            },
+            "functionSelector": "4dcbc739",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "lockNft",
+            "nameLocation": "2257:7:64",
+            "parameters": {
+              "id": 53009,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53008,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "2273:3:64",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53011,
+                  "src": "2265:11:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 53007,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2265:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2264:13:64"
+            },
+            "returnParameters": {
+              "id": 53010,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2286:0:64"
+            },
+            "scope": 53012,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 52926,
+              "name": "IERC721",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 46687,
+              "src": "181:7:64"
+            },
+            "id": 52927,
+            "nodeType": "InheritanceSpecifier",
+            "src": "181:7:64"
+          }
+        ],
+        "canonicalName": "IVaultRegistry",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          53012,
+          46687,
+          48073
+        ],
+        "name": "IVaultRegistry",
+        "nameLocation": "163:14:64",
+        "scope": 53013,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 64
+}

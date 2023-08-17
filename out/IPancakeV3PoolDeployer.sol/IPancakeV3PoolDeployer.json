@@ -1,0 +1,646 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "factory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        },
+        {
+          "internalType": "uint24",
+          "name": "fee",
+          "type": "uint24"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickSpacing",
+          "type": "int24"
+        }
+      ],
+      "name": "deploy",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "parameters",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "factory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        },
+        {
+          "internalType": "uint24",
+          "name": "fee",
+          "type": "uint24"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickSpacing",
+          "type": "int24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "deploy(address,address,address,uint24,int24)": "fad5359f",
+    "parameters()": "89035730"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"factory\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"internalType\":\"uint24\",\"name\":\"fee\",\"type\":\"uint24\"},{\"internalType\":\"int24\",\"name\":\"tickSpacing\",\"type\":\"int24\"}],\"name\":\"deploy\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"parameters\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"factory\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"internalType\":\"uint24\",\"name\":\"fee\",\"type\":\"uint24\"},{\"internalType\":\"int24\",\"name\":\"tickSpacing\",\"type\":\"int24\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"This is used to avoid having constructor arguments in the pool contract, which results in the init code hash of the pool being constant allowing the CREATE2 address of the pool to be cheaply computed on-chain\",\"kind\":\"dev\",\"methods\":{\"parameters()\":{\"details\":\"Called by the pool constructor to fetch the parameters of the pool Returns factory The factory address Returns token0 The first token of the pool by address sort order Returns token1 The second token of the pool by address sort order Returns fee The fee collected upon every swap in the pool, denominated in hundredths of a bip Returns tickSpacing The minimum number of ticks between initialized ticks\"}},\"title\":\"An interface for a contract that is capable of deploying PancakeSwap V3 Pools\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"parameters()\":{\"notice\":\"Get the parameters to be used in constructing the pool, set transiently during pool creation.\"}},\"notice\":\"A contract that constructs a pool must implement this to pass arguments to the pool\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/pancakeswap/IPancakeV3PoolDeployer.sol\":\"IPancakeV3PoolDeployer\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/pancakeswap/IPancakeV3PoolDeployer.sol\":{\"keccak256\":\"0xf06a35d695e9ad4e61a6d60846b91ef15a4feeae8b18907dc4d0796308f46fec\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://d3109bcee87c1e625b0b999a75578eead760989e32fe01b07f4024d3650964f4\",\"dweb:/ipfs/QmSkMP1FBR4JqYEydkNs2cc1Hx1qum6PCwT7qKtMx8e9Jk\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "factory",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickSpacing",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "deploy",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "parameters",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "factory",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickSpacing",
+              "type": "int24"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "parameters()": {
+            "details": "Called by the pool constructor to fetch the parameters of the pool Returns factory The factory address Returns token0 The first token of the pool by address sort order Returns token1 The second token of the pool by address sort order Returns fee The fee collected upon every swap in the pool, denominated in hundredths of a bip Returns tickSpacing The minimum number of ticks between initialized ticks"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "parameters()": {
+            "notice": "Get the parameters to be used in constructing the pool, set transiently during pool creation."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/pancakeswap/IPancakeV3PoolDeployer.sol": "IPancakeV3PoolDeployer"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/pancakeswap/IPancakeV3PoolDeployer.sol": {
+        "keccak256": "0xf06a35d695e9ad4e61a6d60846b91ef15a4feeae8b18907dc4d0796308f46fec",
+        "urls": [
+          "bzz-raw://d3109bcee87c1e625b0b999a75578eead760989e32fe01b07f4024d3650964f4",
+          "dweb:/ipfs/QmSkMP1FBR4JqYEydkNs2cc1Hx1qum6PCwT7qKtMx8e9Jk"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/pancakeswap/IPancakeV3PoolDeployer.sol",
+    "id": 69590,
+    "exportedSymbols": {
+      "IPancakeV3PoolDeployer": [
+        69589
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1438:239",
+    "nodes": [
+      {
+        "id": 69558,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:239",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 69589,
+        "nodeType": "ContractDefinition",
+        "src": "477:1005:239",
+        "nodes": [
+          {
+            "id": 69573,
+            "nodeType": "FunctionDefinition",
+            "src": "1081:219:239",
+            "nodes": [],
+            "documentation": {
+              "id": 69560,
+              "nodeType": "StructuredDocumentation",
+              "src": "516:560:239",
+              "text": "@notice Get the parameters to be used in constructing the pool, set transiently during pool creation.\n @dev Called by the pool constructor to fetch the parameters of the pool\n Returns factory The factory address\n Returns token0 The first token of the pool by address sort order\n Returns token1 The second token of the pool by address sort order\n Returns fee The fee collected upon every swap in the pool, denominated in hundredths of a bip\n Returns tickSpacing The minimum number of ticks between initialized ticks"
+            },
+            "functionSelector": "89035730",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "parameters",
+            "nameLocation": "1090:10:239",
+            "parameters": {
+              "id": 69561,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1100:2:239"
+            },
+            "returnParameters": {
+              "id": 69572,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 69563,
+                  "mutability": "mutable",
+                  "name": "factory",
+                  "nameLocation": "1171:7:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69573,
+                  "src": "1163:15:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69562,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1163:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69565,
+                  "mutability": "mutable",
+                  "name": "token0",
+                  "nameLocation": "1200:6:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69573,
+                  "src": "1192:14:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69564,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1192:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69567,
+                  "mutability": "mutable",
+                  "name": "token1",
+                  "nameLocation": "1228:6:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69573,
+                  "src": "1220:14:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69566,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1220:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69569,
+                  "mutability": "mutable",
+                  "name": "fee",
+                  "nameLocation": "1255:3:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69573,
+                  "src": "1248:10:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint24",
+                    "typeString": "uint24"
+                  },
+                  "typeName": {
+                    "id": 69568,
+                    "name": "uint24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1248:6:239",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint24",
+                      "typeString": "uint24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69571,
+                  "mutability": "mutable",
+                  "name": "tickSpacing",
+                  "nameLocation": "1278:11:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69573,
+                  "src": "1272:17:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 69570,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1272:5:239",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1149:150:239"
+            },
+            "scope": 69589,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 69588,
+            "nodeType": "FunctionDefinition",
+            "src": "1306:174:239",
+            "nodes": [],
+            "functionSelector": "fad5359f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "deploy",
+            "nameLocation": "1315:6:239",
+            "parameters": {
+              "id": 69584,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 69575,
+                  "mutability": "mutable",
+                  "name": "factory",
+                  "nameLocation": "1339:7:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69588,
+                  "src": "1331:15:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69574,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1331:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69577,
+                  "mutability": "mutable",
+                  "name": "token0",
+                  "nameLocation": "1364:6:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69588,
+                  "src": "1356:14:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69576,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1356:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69579,
+                  "mutability": "mutable",
+                  "name": "token1",
+                  "nameLocation": "1388:6:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69588,
+                  "src": "1380:14:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69578,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1380:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69581,
+                  "mutability": "mutable",
+                  "name": "fee",
+                  "nameLocation": "1411:3:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69588,
+                  "src": "1404:10:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint24",
+                    "typeString": "uint24"
+                  },
+                  "typeName": {
+                    "id": 69580,
+                    "name": "uint24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1404:6:239",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint24",
+                      "typeString": "uint24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 69583,
+                  "mutability": "mutable",
+                  "name": "tickSpacing",
+                  "nameLocation": "1430:11:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69588,
+                  "src": "1424:17:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 69582,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1424:5:239",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1321:126:239"
+            },
+            "returnParameters": {
+              "id": 69587,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 69586,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "1474:4:239",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69588,
+                  "src": "1466:12:239",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69585,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1466:7:239",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1465:14:239"
+            },
+            "scope": 69589,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IPancakeV3PoolDeployer",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 69559,
+          "nodeType": "StructuredDocumentation",
+          "src": "70:407:239",
+          "text": "@title An interface for a contract that is capable of deploying PancakeSwap V3 Pools\n @notice A contract that constructs a pool must implement this to pass arguments to the pool\n @dev This is used to avoid having constructor arguments in the pool contract, which results in the init code hash\n of the pool being constant allowing the CREATE2 address of the pool to be cheaply computed on-chain"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          69589
+        ],
+        "name": "IPancakeV3PoolDeployer",
+        "nameLocation": "487:22:239",
+        "scope": 69590,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 239
+}

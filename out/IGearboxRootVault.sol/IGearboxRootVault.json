@@ -1,0 +1,4290 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "depositors",
+          "type": "address[]"
+        }
+      ],
+      "name": "addDepositorsToAllowlist",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "name": "allowance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "lpTokenAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "cancelWithdrawal",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountRemained",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "currentEpoch",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minLpTokens",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "vaultOptions",
+          "type": "bytes"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "depositorsAllowlist",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "epoch",
+          "type": "uint256"
+        }
+      ],
+      "name": "epochToPriceForLpTokenD18",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "erc20Vault",
+      "outputs": [
+        {
+          "internalType": "contract IIntegrationVault",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "gearboxVault",
+      "outputs": [
+        {
+          "internalType": "contract IIntegrationVault",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        }
+      ],
+      "name": "hasSubvault",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "strategy_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "subvaultNfts_",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initialized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "invokeExecution",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isClosed",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "isVaultToken",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastEpochChangeTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastFeeCharge",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "latestRequestEpoch",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lpPriceHighWaterMarkD18",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "lpTokensWaitingForClaim",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nft",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "primaryToken",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "primaryTokensToClaim",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pullExistentials",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "lpTokenAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "registerWithdrawal",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountRegistered",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "depositors",
+          "type": "address[]"
+        }
+      ],
+      "name": "removeDepositorsFromAllowlist",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "reopen",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "shutdown",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "subvaultAt",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "subvaultNfts",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        }
+      ],
+      "name": "subvaultOneBasedIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalCurrentEpochLpWitdrawalRequests",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalLpTokensWaitingWithdrawal",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tvl",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "minTokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "maxTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultGovernance",
+      "outputs": [
+        {
+          "internalType": "contract IVaultGovernance",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultTokens",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "vaultsOptions",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawalRequests",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "addDepositorsToAllowlist(address[])": "91b7ab47",
+    "allowance(address,address)": "dd62ed3e",
+    "approve(address,uint256)": "095ea7b3",
+    "balanceOf(address)": "70a08231",
+    "cancelWithdrawal(uint256)": "3efcfda4",
+    "currentEpoch()": "76671808",
+    "deposit(uint256[],uint256,bytes)": "54a3f474",
+    "depositorsAllowlist()": "a09eb0e7",
+    "epochToPriceForLpTokenD18(uint256)": "6d372639",
+    "erc20Vault()": "090f9221",
+    "gearboxVault()": "46dd883d",
+    "hasSubvault(uint256)": "9d9fd0d9",
+    "initialize(uint256,address[],address,uint256[],address)": "6a72a804",
+    "initialized()": "158ef93e",
+    "invokeExecution()": "c8045c88",
+    "isClosed()": "c2b6b58c",
+    "isVaultToken(address)": "338c4ccb",
+    "lastEpochChangeTimestamp()": "1806080c",
+    "lastFeeCharge()": "3da7463f",
+    "latestRequestEpoch(address)": "e2fd4199",
+    "lpPriceHighWaterMarkD18()": "24004a66",
+    "lpTokensWaitingForClaim(address)": "a6eea12a",
+    "nft()": "47ccca02",
+    "primaryToken()": "91ac094c",
+    "primaryTokensToClaim(address)": "dccc5573",
+    "pullExistentials()": "d2c219b0",
+    "registerWithdrawal(uint256)": "4c24c68b",
+    "removeDepositorsFromAllowlist(address[])": "e273d23e",
+    "reopen()": "ccc108d7",
+    "shutdown()": "fc0e74d1",
+    "subvaultAt(uint256)": "9bd0911b",
+    "subvaultNfts()": "79183973",
+    "subvaultOneBasedIndex(uint256)": "9ddc875f",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "totalCurrentEpochLpWitdrawalRequests()": "26351fa2",
+    "totalLpTokensWaitingWithdrawal()": "342d84ae",
+    "totalSupply()": "18160ddd",
+    "transfer(address,uint256)": "a9059cbb",
+    "transferFrom(address,address,uint256)": "23b872dd",
+    "tvl()": "e5328e06",
+    "vaultGovernance()": "fe255a5e",
+    "vaultTokens()": "69722233",
+    "withdraw(address,bytes[])": "1afd1b71",
+    "withdrawalRequests(address)": "27b380f3"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"depositors\",\"type\":\"address[]\"}],\"name\":\"addDepositorsToAllowlist\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"lpTokenAmount\",\"type\":\"uint256\"}],\"name\":\"cancelWithdrawal\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountRemained\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256\",\"name\":\"minLpTokens\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"vaultOptions\",\"type\":\"bytes\"}],\"name\":\"deposit\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositorsAllowlist\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"epoch\",\"type\":\"uint256\"}],\"name\":\"epochToPriceForLpTokenD18\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"erc20Vault\",\"outputs\":[{\"internalType\":\"contract IIntegrationVault\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"gearboxVault\",\"outputs\":[{\"internalType\":\"contract IIntegrationVault\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"}],\"name\":\"hasSubvault\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"strategy_\",\"type\":\"address\"},{\"internalType\":\"uint256[]\",\"name\":\"subvaultNfts_\",\"type\":\"uint256[]\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"invokeExecution\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isClosed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isVaultToken\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lastEpochChangeTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lastFeeCharge\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"latestRequestEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lpPriceHighWaterMarkD18\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"lpTokensWaitingForClaim\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"primaryToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"primaryTokensToClaim\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pullExistentials\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"lpTokenAmount\",\"type\":\"uint256\"}],\"name\":\"registerWithdrawal\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountRegistered\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"depositors\",\"type\":\"address[]\"}],\"name\":\"removeDepositorsFromAllowlist\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reopen\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shutdown\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"subvaultAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"subvaultNfts\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"}],\"name\":\"subvaultOneBasedIndex\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalCurrentEpochLpWitdrawalRequests\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalLpTokensWaitingWithdrawal\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tvl\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"minTokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"maxTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultGovernance\",\"outputs\":[{\"internalType\":\"contract IVaultGovernance\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultTokens\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"bytes[]\",\"name\":\"vaultsOptions\",\"type\":\"bytes[]\"}],\"name\":\"withdraw\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"withdrawalRequests\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"addDepositorsToAllowlist(address[])\":{\"details\":\"The action can be done only by user with admins, owners or by approved rights\",\"params\":{\"depositors\":\"Array of new depositors\"}},\"allowance(address,address)\":{\"details\":\"Returns the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through {transferFrom}. This is zero by default. This value changes when {approve} or {transferFrom} are called.\"},\"approve(address,uint256)\":{\"details\":\"Sets `amount` as the allowance of `spender` over the caller's tokens. Returns a boolean value indicating whether the operation succeeded. IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards: https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729 Emits an {Approval} event.\"},\"balanceOf(address)\":{\"details\":\"Returns the amount of tokens owned by `account`.\"},\"cancelWithdrawal(uint256)\":{\"params\":{\"lpTokenAmount\":\"Amount the sender wants to cancel\"},\"returns\":{\"amountRemained\":\"Amount for which the withdrawal request remains\"}},\"deposit(uint256[],uint256,bytes)\":{\"params\":{\"minLpTokens\":\"Minimal value of LP tokens\",\"tokenAmounts\":\"Array of amounts of tokens for deposit\",\"vaultOptions\":\"Options of vaults\"},\"returns\":{\"actualTokenAmounts\":\"Arrays of actual token amounts after deposit\"}},\"epochToPriceForLpTokenD18(uint256)\":{\"params\":{\"epoch\":\"Epoch for which the request is made\"}},\"hasSubvault(uint256)\":{\"params\":{\"nft_\":\"index of subvault for check\"},\"returns\":{\"_0\":\"`true` if subvault present, `false` otherwise\"}},\"initialize(uint256,address[],address,uint256[],address)\":{\"details\":\"Can only be initialized by vault governance\",\"params\":{\"nft_\":\"NFT of the vault in the VaultRegistry\",\"strategy_\":\"The address that will have approvals for subvaultNfts\",\"subvaultNfts_\":\"The NFTs of the subvaults that will be aggregated by this ERC20RootVault\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"isVaultToken(address)\":{\"params\":{\"token\":\"Address of the token to check\"},\"returns\":{\"_0\":\"`true` if this token is managed by Vault\"}},\"latestRequestEpoch(address)\":{\"params\":{\"addr\":\"Address for which the request is made\"}},\"lpTokensWaitingForClaim(address)\":{\"params\":{\"addr\":\"Address for which the request is made\"}},\"primaryTokensToClaim(address)\":{\"params\":{\"addr\":\"Address for which the request is made\"}},\"registerWithdrawal(uint256)\":{\"params\":{\"lpTokenAmount\":\"Amount the sender wants to withdraw\"},\"returns\":{\"amountRegistered\":\"Amount which was actually registered\"}},\"removeDepositorsFromAllowlist(address[])\":{\"details\":\"The action can be done only by user with admins, owners or by approved rights\",\"params\":{\"depositors\":\"Array of depositors for remove\"}},\"subvaultAt(uint256)\":{\"params\":{\"index\":\"Index of subvault\"},\"returns\":{\"_0\":\"address Address of the contract\"}},\"subvaultNfts()\":{\"returns\":{\"_0\":\"subvaultNfts Subvaults of NTFs\"}},\"subvaultOneBasedIndex(uint256)\":{\"params\":{\"nft_\":\"Nft for getting subvault\"},\"returns\":{\"_0\":\"index Index of subvault\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"},\"totalSupply()\":{\"details\":\"Returns the amount of tokens in existence.\"},\"transfer(address,uint256)\":{\"details\":\"Moves `amount` tokens from the caller's account to `to`. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event.\"},\"transferFrom(address,address,uint256)\":{\"details\":\"Moves `amount` tokens from `from` to `to` using the allowance mechanism. `amount` is then deducted from the caller's allowance. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event.\"},\"tvl()\":{\"details\":\"Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not\",\"returns\":{\"maxTokenAmounts\":\"Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\",\"minTokenAmounts\":\"Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\"}},\"withdraw(address,bytes[])\":{\"params\":{\"to\":\"Address to which the withdrawal will be sent\",\"vaultsOptions\":\"Options of vaults\"},\"returns\":{\"actualTokenAmounts\":\"Arrays of actual token amounts after withdrawal\"}},\"withdrawalRequests(address)\":{\"params\":{\"addr\":\"Address for which the request is made\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"addDepositorsToAllowlist(address[])\":{\"notice\":\"Add new depositors in the depositorsAllowlist\"},\"cancelWithdrawal(uint256)\":{\"notice\":\"The function of cancelling withdrawal of lp tokens amount\"},\"currentEpoch()\":{\"notice\":\"Current epoch, where the epoch means the number of completed withdrawal executions plus 1\"},\"deposit(uint256[],uint256,bytes)\":{\"notice\":\"The function of depositing the amount of tokens in exchange\"},\"depositorsAllowlist()\":{\"notice\":\"List of addresses of depositors from which interaction with private vaults is allowed\"},\"epochToPriceForLpTokenD18(uint256)\":{\"notice\":\"The lp token price for a specific epoch end\"},\"erc20Vault()\":{\"notice\":\"ERC20 vault that is the first subvault of the system\"},\"gearboxVault()\":{\"notice\":\"Gearbox vault that is the second subvault of the system\"},\"hasSubvault(uint256)\":{\"notice\":\"Checks if subvault is present\"},\"initialize(uint256,address[],address,uint256[],address)\":{\"notice\":\"Initialized a new contract.\"},\"initialized()\":{\"notice\":\"Checks if the vault is initialized\"},\"invokeExecution()\":{\"notice\":\"The function of invoking the execution of withdrawal orders and transfers corresponding funds to ERC20 vault\"},\"isClosed()\":{\"notice\":\"The flag of whether the vault is closed for deposits\"},\"isVaultToken(address)\":{\"notice\":\"Checks if a token is vault token\"},\"lastEpochChangeTimestamp()\":{\"notice\":\"Timestamp of the latest epoch change\"},\"lastFeeCharge()\":{\"notice\":\"The timestamp of last charging of fees\"},\"latestRequestEpoch(address)\":{\"notice\":\"The latest epoch in which a request was made for a specific address\"},\"lpPriceHighWaterMarkD18()\":{\"notice\":\"LP parameter that controls the charge in performance fees\"},\"lpTokensWaitingForClaim(address)\":{\"notice\":\"Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed for a specific address\"},\"nft()\":{\"notice\":\"VaultRegistry NFT for this vault\"},\"primaryToken()\":{\"notice\":\"The only token that the vault accepts for deposits/withdrawals\"},\"primaryTokensToClaim(address)\":{\"notice\":\"Total value of vault tokens awaiting on the ERC20 vault to be claimed for a specific address\"},\"pullExistentials()\":{\"notice\":\"Existential amounts for each token\"},\"registerWithdrawal(uint256)\":{\"notice\":\"The function of registering withdrawal of lp tokens amount\"},\"removeDepositorsFromAllowlist(address[])\":{\"notice\":\"Remove depositors from the depositorsAllowlist\"},\"reopen()\":{\"notice\":\"The function of opening deposits back in case of a previous shutdown\"},\"shutdown()\":{\"notice\":\"The function of invoking the emergency execution of withdrawal orders, transfers corresponding funds to ERC20 vault and stops deposits\"},\"subvaultAt(uint256)\":{\"notice\":\"Get subvault by index\"},\"subvaultNfts()\":{\"notice\":\"Get all subvalutNfts in the current Vault\"},\"subvaultOneBasedIndex(uint256)\":{\"notice\":\"Get index of subvault by nft\"},\"totalCurrentEpochLpWitdrawalRequests()\":{\"notice\":\"Total value of lp tokens withdrawal requests during the current epoch\"},\"totalLpTokensWaitingWithdrawal()\":{\"notice\":\"Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed\"},\"tvl()\":{\"notice\":\"Total value locked for this contract.\"},\"vaultGovernance()\":{\"notice\":\"Address of the Vault Governance for this contract.\"},\"vaultTokens()\":{\"notice\":\"ERC20 tokens under Vault management.\"},\"withdraw(address,bytes[])\":{\"notice\":\"The function of withdrawing the amount of tokens in exchange\"},\"withdrawalRequests(address)\":{\"notice\":\"Total value of lp tokens withdrawal requests during the current epoch for a specific address\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IGearboxRootVault.sol\":\"IGearboxRootVault\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x287b55befed2961a7eabd7d7b1b2839cbca8a5b80ef8dcbb25ed3d4c2002c305\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bd39944e8fc06be6dbe2dd1d8449b5336e23c6a7ba3e8e9ae5ae0f37f35283f5\",\"dweb:/ipfs/QmPV3FGYjVwvKSgAXKUN3r9T9GwniZz83CxBpM7vyj2G53\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/vaults/IAggregateVault.sol\":{\"keccak256\":\"0x22c60a8c3758f52aeeabf448cff491582357bed969cf9328cd93623ed12df3f9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://34fc54a3c550f28f0d77bdecad9e2b1083a79f37b6d783277c06741b1ecae35a\",\"dweb:/ipfs/QmdAXG1NpbzNPH6o8NxsVSVmnoUdtQeP9cNxmQ44Dm6qCT\"]},\"src/interfaces/vaults/IGearboxRootVault.sol\":{\"keccak256\":\"0xb979bd59a14f0ab0e98a3be33a2c7200c1fe59d0791ec59b6e2c25cf5bf969cc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c679d1e360b6205d4921bb691fe2de0fba29afb830e345d44551c688e7b06d97\",\"dweb:/ipfs/Qmd9VQ4W2tLFzYNKXLvK9miYC5mRFBxBrv1e59nzhL7Rhr\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]},\"src/interfaces/vaults/IVaultRoot.sol\":{\"keccak256\":\"0xfc566a9133afe6942e196bcfde5b5e1920094d6f1656885b25b72b91f48c10ef\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://79470664780741869fe81ad1eed10b2afd7d9432ee70be1599f242f102a4deaa\",\"dweb:/ipfs/QmUUPv5juGLrdngD5ZQNcsHxvQzWPG1c8aLjA2nsUC6uJz\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Approval",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Transfer",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "depositors",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "addDepositorsToAllowlist"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "allowance",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "approve",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "balanceOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "lpTokenAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "cancelWithdrawal",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountRemained",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "currentEpoch",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minLpTokens",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "vaultOptions",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "deposit",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "depositorsAllowlist",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "epoch",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "epochToPriceForLpTokenD18",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "erc20Vault",
+          "outputs": [
+            {
+              "internalType": "contract IIntegrationVault",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "gearboxVault",
+          "outputs": [
+            {
+              "internalType": "contract IIntegrationVault",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "hasSubvault",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "strategy_",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "subvaultNfts_",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "initialize"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "initialized",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "invokeExecution"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isClosed",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isVaultToken",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lastEpochChangeTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lastFeeCharge",
+          "outputs": [
+            {
+              "internalType": "uint64",
+              "name": "",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "addr",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "latestRequestEpoch",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lpPriceHighWaterMarkD18",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "addr",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lpTokensWaitingForClaim",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "nft",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "primaryToken",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "addr",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "primaryTokensToClaim",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "pullExistentials",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "lpTokenAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "registerWithdrawal",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountRegistered",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "depositors",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "removeDepositorsFromAllowlist"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "reopen"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "shutdown"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultAt",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultNfts",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultOneBasedIndex",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalCurrentEpochLpWitdrawalRequests",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalLpTokensWaitingWithdrawal",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalSupply",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transfer",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferFrom",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tvl",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "minTokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "maxTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultGovernance",
+          "outputs": [
+            {
+              "internalType": "contract IVaultGovernance",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultTokens",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes[]",
+              "name": "vaultsOptions",
+              "type": "bytes[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdraw",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "addr",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "withdrawalRequests",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "addDepositorsToAllowlist(address[])": {
+            "details": "The action can be done only by user with admins, owners or by approved rights",
+            "params": {
+              "depositors": "Array of new depositors"
+            }
+          },
+          "allowance(address,address)": {
+            "details": "Returns the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through {transferFrom}. This is zero by default. This value changes when {approve} or {transferFrom} are called."
+          },
+          "approve(address,uint256)": {
+            "details": "Sets `amount` as the allowance of `spender` over the caller's tokens. Returns a boolean value indicating whether the operation succeeded. IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards: https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729 Emits an {Approval} event."
+          },
+          "balanceOf(address)": {
+            "details": "Returns the amount of tokens owned by `account`."
+          },
+          "cancelWithdrawal(uint256)": {
+            "params": {
+              "lpTokenAmount": "Amount the sender wants to cancel"
+            },
+            "returns": {
+              "amountRemained": "Amount for which the withdrawal request remains"
+            }
+          },
+          "deposit(uint256[],uint256,bytes)": {
+            "params": {
+              "minLpTokens": "Minimal value of LP tokens",
+              "tokenAmounts": "Array of amounts of tokens for deposit",
+              "vaultOptions": "Options of vaults"
+            },
+            "returns": {
+              "actualTokenAmounts": "Arrays of actual token amounts after deposit"
+            }
+          },
+          "epochToPriceForLpTokenD18(uint256)": {
+            "params": {
+              "epoch": "Epoch for which the request is made"
+            }
+          },
+          "hasSubvault(uint256)": {
+            "params": {
+              "nft_": "index of subvault for check"
+            },
+            "returns": {
+              "_0": "`true` if subvault present, `false` otherwise"
+            }
+          },
+          "initialize(uint256,address[],address,uint256[],address)": {
+            "details": "Can only be initialized by vault governance",
+            "params": {
+              "nft_": "NFT of the vault in the VaultRegistry",
+              "strategy_": "The address that will have approvals for subvaultNfts",
+              "subvaultNfts_": "The NFTs of the subvaults that will be aggregated by this ERC20RootVault",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "isVaultToken(address)": {
+            "params": {
+              "token": "Address of the token to check"
+            },
+            "returns": {
+              "_0": "`true` if this token is managed by Vault"
+            }
+          },
+          "latestRequestEpoch(address)": {
+            "params": {
+              "addr": "Address for which the request is made"
+            }
+          },
+          "lpTokensWaitingForClaim(address)": {
+            "params": {
+              "addr": "Address for which the request is made"
+            }
+          },
+          "primaryTokensToClaim(address)": {
+            "params": {
+              "addr": "Address for which the request is made"
+            }
+          },
+          "registerWithdrawal(uint256)": {
+            "params": {
+              "lpTokenAmount": "Amount the sender wants to withdraw"
+            },
+            "returns": {
+              "amountRegistered": "Amount which was actually registered"
+            }
+          },
+          "removeDepositorsFromAllowlist(address[])": {
+            "details": "The action can be done only by user with admins, owners or by approved rights",
+            "params": {
+              "depositors": "Array of depositors for remove"
+            }
+          },
+          "subvaultAt(uint256)": {
+            "params": {
+              "index": "Index of subvault"
+            },
+            "returns": {
+              "_0": "address Address of the contract"
+            }
+          },
+          "subvaultNfts()": {
+            "returns": {
+              "_0": "subvaultNfts Subvaults of NTFs"
+            }
+          },
+          "subvaultOneBasedIndex(uint256)": {
+            "params": {
+              "nft_": "Nft for getting subvault"
+            },
+            "returns": {
+              "_0": "index Index of subvault"
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          },
+          "totalSupply()": {
+            "details": "Returns the amount of tokens in existence."
+          },
+          "transfer(address,uint256)": {
+            "details": "Moves `amount` tokens from the caller's account to `to`. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event."
+          },
+          "transferFrom(address,address,uint256)": {
+            "details": "Moves `amount` tokens from `from` to `to` using the allowance mechanism. `amount` is then deducted from the caller's allowance. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event."
+          },
+          "tvl()": {
+            "details": "Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not",
+            "returns": {
+              "maxTokenAmounts": "Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)",
+              "minTokenAmounts": "Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)"
+            }
+          },
+          "withdraw(address,bytes[])": {
+            "params": {
+              "to": "Address to which the withdrawal will be sent",
+              "vaultsOptions": "Options of vaults"
+            },
+            "returns": {
+              "actualTokenAmounts": "Arrays of actual token amounts after withdrawal"
+            }
+          },
+          "withdrawalRequests(address)": {
+            "params": {
+              "addr": "Address for which the request is made"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "addDepositorsToAllowlist(address[])": {
+            "notice": "Add new depositors in the depositorsAllowlist"
+          },
+          "cancelWithdrawal(uint256)": {
+            "notice": "The function of cancelling withdrawal of lp tokens amount"
+          },
+          "currentEpoch()": {
+            "notice": "Current epoch, where the epoch means the number of completed withdrawal executions plus 1"
+          },
+          "deposit(uint256[],uint256,bytes)": {
+            "notice": "The function of depositing the amount of tokens in exchange"
+          },
+          "depositorsAllowlist()": {
+            "notice": "List of addresses of depositors from which interaction with private vaults is allowed"
+          },
+          "epochToPriceForLpTokenD18(uint256)": {
+            "notice": "The lp token price for a specific epoch end"
+          },
+          "erc20Vault()": {
+            "notice": "ERC20 vault that is the first subvault of the system"
+          },
+          "gearboxVault()": {
+            "notice": "Gearbox vault that is the second subvault of the system"
+          },
+          "hasSubvault(uint256)": {
+            "notice": "Checks if subvault is present"
+          },
+          "initialize(uint256,address[],address,uint256[],address)": {
+            "notice": "Initialized a new contract."
+          },
+          "initialized()": {
+            "notice": "Checks if the vault is initialized"
+          },
+          "invokeExecution()": {
+            "notice": "The function of invoking the execution of withdrawal orders and transfers corresponding funds to ERC20 vault"
+          },
+          "isClosed()": {
+            "notice": "The flag of whether the vault is closed for deposits"
+          },
+          "isVaultToken(address)": {
+            "notice": "Checks if a token is vault token"
+          },
+          "lastEpochChangeTimestamp()": {
+            "notice": "Timestamp of the latest epoch change"
+          },
+          "lastFeeCharge()": {
+            "notice": "The timestamp of last charging of fees"
+          },
+          "latestRequestEpoch(address)": {
+            "notice": "The latest epoch in which a request was made for a specific address"
+          },
+          "lpPriceHighWaterMarkD18()": {
+            "notice": "LP parameter that controls the charge in performance fees"
+          },
+          "lpTokensWaitingForClaim(address)": {
+            "notice": "Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed for a specific address"
+          },
+          "nft()": {
+            "notice": "VaultRegistry NFT for this vault"
+          },
+          "primaryToken()": {
+            "notice": "The only token that the vault accepts for deposits/withdrawals"
+          },
+          "primaryTokensToClaim(address)": {
+            "notice": "Total value of vault tokens awaiting on the ERC20 vault to be claimed for a specific address"
+          },
+          "pullExistentials()": {
+            "notice": "Existential amounts for each token"
+          },
+          "registerWithdrawal(uint256)": {
+            "notice": "The function of registering withdrawal of lp tokens amount"
+          },
+          "removeDepositorsFromAllowlist(address[])": {
+            "notice": "Remove depositors from the depositorsAllowlist"
+          },
+          "reopen()": {
+            "notice": "The function of opening deposits back in case of a previous shutdown"
+          },
+          "shutdown()": {
+            "notice": "The function of invoking the emergency execution of withdrawal orders, transfers corresponding funds to ERC20 vault and stops deposits"
+          },
+          "subvaultAt(uint256)": {
+            "notice": "Get subvault by index"
+          },
+          "subvaultNfts()": {
+            "notice": "Get all subvalutNfts in the current Vault"
+          },
+          "subvaultOneBasedIndex(uint256)": {
+            "notice": "Get index of subvault by nft"
+          },
+          "totalCurrentEpochLpWitdrawalRequests()": {
+            "notice": "Total value of lp tokens withdrawal requests during the current epoch"
+          },
+          "totalLpTokensWaitingWithdrawal()": {
+            "notice": "Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed"
+          },
+          "tvl()": {
+            "notice": "Total value locked for this contract."
+          },
+          "vaultGovernance()": {
+            "notice": "Address of the Vault Governance for this contract."
+          },
+          "vaultTokens()": {
+            "notice": "ERC20 tokens under Vault management."
+          },
+          "withdraw(address,bytes[])": {
+            "notice": "The function of withdrawing the amount of tokens in exchange"
+          },
+          "withdrawalRequests(address)": {
+            "notice": "Total value of lp tokens withdrawal requests during the current epoch for a specific address"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IGearboxRootVault.sol": "IGearboxRootVault"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+        "keccak256": "0x287b55befed2961a7eabd7d7b1b2839cbca8a5b80ef8dcbb25ed3d4c2002c305",
+        "urls": [
+          "bzz-raw://bd39944e8fc06be6dbe2dd1d8449b5336e23c6a7ba3e8e9ae5ae0f37f35283f5",
+          "dweb:/ipfs/QmPV3FGYjVwvKSgAXKUN3r9T9GwniZz83CxBpM7vyj2G53"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IAggregateVault.sol": {
+        "keccak256": "0x22c60a8c3758f52aeeabf448cff491582357bed969cf9328cd93623ed12df3f9",
+        "urls": [
+          "bzz-raw://34fc54a3c550f28f0d77bdecad9e2b1083a79f37b6d783277c06741b1ecae35a",
+          "dweb:/ipfs/QmdAXG1NpbzNPH6o8NxsVSVmnoUdtQeP9cNxmQ44Dm6qCT"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IGearboxRootVault.sol": {
+        "keccak256": "0xb979bd59a14f0ab0e98a3be33a2c7200c1fe59d0791ec59b6e2c25cf5bf969cc",
+        "urls": [
+          "bzz-raw://c679d1e360b6205d4921bb691fe2de0fba29afb830e345d44551c688e7b06d97",
+          "dweb:/ipfs/Qmd9VQ4W2tLFzYNKXLvK9miYC5mRFBxBrv1e59nzhL7Rhr"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultRoot.sol": {
+        "keccak256": "0xfc566a9133afe6942e196bcfde5b5e1920094d6f1656885b25b72b91f48c10ef",
+        "urls": [
+          "bzz-raw://79470664780741869fe81ad1eed10b2afd7d9432ee70be1599f242f102a4deaa",
+          "dweb:/ipfs/QmUUPv5juGLrdngD5ZQNcsHxvQzWPG1c8aLjA2nsUC6uJz"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IGearboxRootVault.sol",
+    "id": 77395,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IAggregateVault": [
+        76190
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC20": [
+        45207
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IGearboxRootVault": [
+        77394
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "IVaultRoot": [
+        78702
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:6252:341",
+    "nodes": [
+      {
+        "id": 77193,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:341",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 77194,
+        "nodeType": "ImportDirective",
+        "src": "57:56:341",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "file": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77395,
+        "sourceUnit": 45208,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77195,
+        "nodeType": "ImportDirective",
+        "src": "114:31:341",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IAggregateVault.sol",
+        "file": "./IAggregateVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77395,
+        "sourceUnit": 76191,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77196,
+        "nodeType": "ImportDirective",
+        "src": "146:33:341",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IIntegrationVault.sol",
+        "file": "./IIntegrationVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77395,
+        "sourceUnit": 77768,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77394,
+        "nodeType": "ContractDefinition",
+        "src": "181:6102:341",
+        "nodes": [
+          {
+            "id": 77216,
+            "nodeType": "FunctionDefinition",
+            "src": "658:180:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77201,
+              "nodeType": "StructuredDocumentation",
+              "src": "242:411:341",
+              "text": "@notice Initialized a new contract.\n @dev Can only be initialized by vault governance\n @param nft_ NFT of the vault in the VaultRegistry\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault\n @param strategy_ The address that will have approvals for subvaultNfts\n @param subvaultNfts_ The NFTs of the subvaults that will be aggregated by this ERC20RootVault"
+            },
+            "functionSelector": "6a72a804",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "initialize",
+            "nameLocation": "667:10:341",
+            "parameters": {
+              "id": 77214,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77203,
+                  "mutability": "mutable",
+                  "name": "nft_",
+                  "nameLocation": "695:4:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77216,
+                  "src": "687:12:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77202,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "687:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77206,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "726:12:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77216,
+                  "src": "709:29:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77204,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "709:7:341",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 77205,
+                    "nodeType": "ArrayTypeName",
+                    "src": "709:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77208,
+                  "mutability": "mutable",
+                  "name": "strategy_",
+                  "nameLocation": "756:9:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77216,
+                  "src": "748:17:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77207,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "748:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77211,
+                  "mutability": "mutable",
+                  "name": "subvaultNfts_",
+                  "nameLocation": "792:13:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77216,
+                  "src": "775:30:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77209,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "775:7:341",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 77210,
+                    "nodeType": "ArrayTypeName",
+                    "src": "775:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77213,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77216,
+                  "src": "815:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77212,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "815:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "677:151:341"
+            },
+            "returnParameters": {
+              "id": 77215,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "837:0:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77222,
+            "nodeType": "FunctionDefinition",
+            "src": "899:56:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77217,
+              "nodeType": "StructuredDocumentation",
+              "src": "844:50:341",
+              "text": "@notice The timestamp of last charging of fees"
+            },
+            "functionSelector": "3da7463f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "lastFeeCharge",
+            "nameLocation": "908:13:341",
+            "parameters": {
+              "id": 77218,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "921:2:341"
+            },
+            "returnParameters": {
+              "id": 77221,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77220,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77222,
+                  "src": "947:6:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint64",
+                    "typeString": "uint64"
+                  },
+                  "typeName": {
+                    "id": 77219,
+                    "name": "uint64",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "947:6:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint64",
+                      "typeString": "uint64"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "946:8:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77229,
+            "nodeType": "FunctionDefinition",
+            "src": "1033:66:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77223,
+              "nodeType": "StructuredDocumentation",
+              "src": "961:67:341",
+              "text": "@notice Gearbox vault that is the second subvault of the system"
+            },
+            "functionSelector": "46dd883d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "gearboxVault",
+            "nameLocation": "1042:12:341",
+            "parameters": {
+              "id": 77224,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1054:2:341"
+            },
+            "returnParameters": {
+              "id": 77228,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77227,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77229,
+                  "src": "1080:17:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IIntegrationVault_$77767",
+                    "typeString": "contract IIntegrationVault"
+                  },
+                  "typeName": {
+                    "id": 77226,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77225,
+                      "name": "IIntegrationVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77767,
+                      "src": "1080:17:341"
+                    },
+                    "referencedDeclaration": 77767,
+                    "src": "1080:17:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IIntegrationVault_$77767",
+                      "typeString": "contract IIntegrationVault"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1079:19:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77236,
+            "nodeType": "FunctionDefinition",
+            "src": "1174:64:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77230,
+              "nodeType": "StructuredDocumentation",
+              "src": "1105:64:341",
+              "text": "@notice ERC20 vault that is the first subvault of the system"
+            },
+            "functionSelector": "090f9221",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "erc20Vault",
+            "nameLocation": "1183:10:341",
+            "parameters": {
+              "id": 77231,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1193:2:341"
+            },
+            "returnParameters": {
+              "id": 77235,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77234,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77236,
+                  "src": "1219:17:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IIntegrationVault_$77767",
+                    "typeString": "contract IIntegrationVault"
+                  },
+                  "typeName": {
+                    "id": 77233,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77232,
+                      "name": "IIntegrationVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77767,
+                      "src": "1219:17:341"
+                    },
+                    "referencedDeclaration": 77767,
+                    "src": "1219:17:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IIntegrationVault_$77767",
+                      "typeString": "contract IIntegrationVault"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1218:19:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77242,
+            "nodeType": "FunctionDefinition",
+            "src": "1323:56:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77237,
+              "nodeType": "StructuredDocumentation",
+              "src": "1244:74:341",
+              "text": "@notice The only token that the vault accepts for deposits/withdrawals"
+            },
+            "functionSelector": "91ac094c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "primaryToken",
+            "nameLocation": "1332:12:341",
+            "parameters": {
+              "id": 77238,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1344:2:341"
+            },
+            "returnParameters": {
+              "id": 77241,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77240,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77242,
+                  "src": "1370:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77239,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1370:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1369:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77248,
+            "nodeType": "FunctionDefinition",
+            "src": "1454:49:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77243,
+              "nodeType": "StructuredDocumentation",
+              "src": "1385:64:341",
+              "text": "@notice The flag of whether the vault is closed for deposits"
+            },
+            "functionSelector": "c2b6b58c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isClosed",
+            "nameLocation": "1463:8:341",
+            "parameters": {
+              "id": 77244,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1471:2:341"
+            },
+            "returnParameters": {
+              "id": 77247,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77246,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77248,
+                  "src": "1497:4:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 77245,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1497:4:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1496:6:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77254,
+            "nodeType": "FunctionDefinition",
+            "src": "1583:67:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77249,
+              "nodeType": "StructuredDocumentation",
+              "src": "1509:69:341",
+              "text": "@notice LP parameter that controls the charge in performance fees"
+            },
+            "functionSelector": "24004a66",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "lpPriceHighWaterMarkD18",
+            "nameLocation": "1592:23:341",
+            "parameters": {
+              "id": 77250,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1615:2:341"
+            },
+            "returnParameters": {
+              "id": 77253,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77252,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77254,
+                  "src": "1641:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77251,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1641:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1640:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77261,
+            "nodeType": "FunctionDefinition",
+            "src": "1758:72:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77255,
+              "nodeType": "StructuredDocumentation",
+              "src": "1656:97:341",
+              "text": "@notice List of addresses of depositors from which interaction with private vaults is allowed"
+            },
+            "functionSelector": "a09eb0e7",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "depositorsAllowlist",
+            "nameLocation": "1767:19:341",
+            "parameters": {
+              "id": 77256,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1786:2:341"
+            },
+            "returnParameters": {
+              "id": 77260,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77259,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77261,
+                  "src": "1812:16:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77257,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1812:7:341",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 77258,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1812:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1811:18:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77268,
+            "nodeType": "FunctionDefinition",
+            "src": "2039:74:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77262,
+              "nodeType": "StructuredDocumentation",
+              "src": "1836:198:341",
+              "text": "@notice Add new depositors in the depositorsAllowlist\n @param depositors Array of new depositors\n @dev The action can be done only by user with admins, owners or by approved rights"
+            },
+            "functionSelector": "91b7ab47",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "addDepositorsToAllowlist",
+            "nameLocation": "2048:24:341",
+            "parameters": {
+              "id": 77266,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77265,
+                  "mutability": "mutable",
+                  "name": "depositors",
+                  "nameLocation": "2092:10:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77268,
+                  "src": "2073:29:341",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_calldata_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77263,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2073:7:341",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 77264,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2073:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2072:31:341"
+            },
+            "returnParameters": {
+              "id": 77267,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2112:0:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77275,
+            "nodeType": "FunctionDefinition",
+            "src": "2330:79:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77269,
+              "nodeType": "StructuredDocumentation",
+              "src": "2119:206:341",
+              "text": "@notice Remove depositors from the depositorsAllowlist\n @param depositors Array of depositors for remove\n @dev The action can be done only by user with admins, owners or by approved rights"
+            },
+            "functionSelector": "e273d23e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "removeDepositorsFromAllowlist",
+            "nameLocation": "2339:29:341",
+            "parameters": {
+              "id": 77273,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77272,
+                  "mutability": "mutable",
+                  "name": "depositors",
+                  "nameLocation": "2388:10:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77275,
+                  "src": "2369:29:341",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_calldata_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77270,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2369:7:341",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 77271,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2369:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2368:31:341"
+            },
+            "returnParameters": {
+              "id": 77274,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2408:0:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77289,
+            "nodeType": "FunctionDefinition",
+            "src": "2738:181:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77276,
+              "nodeType": "StructuredDocumentation",
+              "src": "2415:318:341",
+              "text": "@notice The function of depositing the amount of tokens in exchange\n @param tokenAmounts Array of amounts of tokens for deposit\n @param minLpTokens Minimal value of LP tokens\n @param vaultOptions Options of vaults\n @return actualTokenAmounts Arrays of actual token amounts after deposit"
+            },
+            "functionSelector": "54a3f474",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "deposit",
+            "nameLocation": "2747:7:341",
+            "parameters": {
+              "id": 77284,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77279,
+                  "mutability": "mutable",
+                  "name": "tokenAmounts",
+                  "nameLocation": "2781:12:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77289,
+                  "src": "2764:29:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77277,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2764:7:341",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 77278,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2764:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77281,
+                  "mutability": "mutable",
+                  "name": "minLpTokens",
+                  "nameLocation": "2811:11:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77289,
+                  "src": "2803:19:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77280,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2803:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77283,
+                  "mutability": "mutable",
+                  "name": "vaultOptions",
+                  "nameLocation": "2845:12:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77289,
+                  "src": "2832:25:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 77282,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2832:5:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2754:109:341"
+            },
+            "returnParameters": {
+              "id": 77288,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77287,
+                  "mutability": "mutable",
+                  "name": "actualTokenAmounts",
+                  "nameLocation": "2899:18:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77289,
+                  "src": "2882:35:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77285,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2882:7:341",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 77286,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2882:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2881:37:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77295,
+            "nodeType": "FunctionDefinition",
+            "src": "3031:56:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77290,
+              "nodeType": "StructuredDocumentation",
+              "src": "2925:101:341",
+              "text": "@notice Current epoch, where the epoch means the number of completed withdrawal executions plus 1"
+            },
+            "functionSelector": "76671808",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "currentEpoch",
+            "nameLocation": "3040:12:341",
+            "parameters": {
+              "id": 77291,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3052:2:341"
+            },
+            "returnParameters": {
+              "id": 77294,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77293,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77295,
+                  "src": "3078:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77292,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3078:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3077:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77301,
+            "nodeType": "FunctionDefinition",
+            "src": "3179:80:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77296,
+              "nodeType": "StructuredDocumentation",
+              "src": "3093:81:341",
+              "text": "@notice Total value of lp tokens withdrawal requests during the current epoch"
+            },
+            "functionSelector": "26351fa2",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "totalCurrentEpochLpWitdrawalRequests",
+            "nameLocation": "3188:36:341",
+            "parameters": {
+              "id": 77297,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3224:2:341"
+            },
+            "returnParameters": {
+              "id": 77300,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77299,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77301,
+                  "src": "3250:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77298,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3250:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3249:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77307,
+            "nodeType": "FunctionDefinition",
+            "src": "3385:74:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77302,
+              "nodeType": "StructuredDocumentation",
+              "src": "3265:115:341",
+              "text": "@notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed"
+            },
+            "functionSelector": "342d84ae",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "totalLpTokensWaitingWithdrawal",
+            "nameLocation": "3394:30:341",
+            "parameters": {
+              "id": 77303,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3424:2:341"
+            },
+            "returnParameters": {
+              "id": 77306,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77305,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77307,
+                  "src": "3450:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77304,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3450:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3449:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77313,
+            "nodeType": "FunctionDefinition",
+            "src": "3518:68:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77308,
+              "nodeType": "StructuredDocumentation",
+              "src": "3465:48:341",
+              "text": "@notice Timestamp of the latest epoch change"
+            },
+            "functionSelector": "1806080c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "lastEpochChangeTimestamp",
+            "nameLocation": "3527:24:341",
+            "parameters": {
+              "id": 77309,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3551:2:341"
+            },
+            "returnParameters": {
+              "id": 77312,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77311,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77313,
+                  "src": "3577:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77310,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3577:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3576:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77321,
+            "nodeType": "FunctionDefinition",
+            "src": "3759:76:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77314,
+              "nodeType": "StructuredDocumentation",
+              "src": "3592:162:341",
+              "text": "@notice Total value of vault tokens awaiting on the ERC20 vault to be claimed for a specific address\n @param addr Address for which the request is made"
+            },
+            "functionSelector": "dccc5573",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "primaryTokensToClaim",
+            "nameLocation": "3768:20:341",
+            "parameters": {
+              "id": 77317,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77316,
+                  "mutability": "mutable",
+                  "name": "addr",
+                  "nameLocation": "3797:4:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77321,
+                  "src": "3789:12:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77315,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3789:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3788:14:341"
+            },
+            "returnParameters": {
+              "id": 77320,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77319,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77321,
+                  "src": "3826:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77318,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3826:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3825:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77329,
+            "nodeType": "FunctionDefinition",
+            "src": "4042:79:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77322,
+              "nodeType": "StructuredDocumentation",
+              "src": "3841:196:341",
+              "text": "@notice Total value of lp tokens whose corresponding vault tokens are awaiting on the ERC20 vault to be claimed for a specific address\n @param addr Address for which the request is made"
+            },
+            "functionSelector": "a6eea12a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "lpTokensWaitingForClaim",
+            "nameLocation": "4051:23:341",
+            "parameters": {
+              "id": 77325,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77324,
+                  "mutability": "mutable",
+                  "name": "addr",
+                  "nameLocation": "4083:4:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77329,
+                  "src": "4075:12:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77323,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4075:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4074:14:341"
+            },
+            "returnParameters": {
+              "id": 77328,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77327,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77329,
+                  "src": "4112:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77326,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4112:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4111:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77337,
+            "nodeType": "FunctionDefinition",
+            "src": "4294:74:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77330,
+              "nodeType": "StructuredDocumentation",
+              "src": "4127:162:341",
+              "text": "@notice Total value of lp tokens withdrawal requests during the current epoch for a specific address\n @param addr Address for which the request is made"
+            },
+            "functionSelector": "27b380f3",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawalRequests",
+            "nameLocation": "4303:18:341",
+            "parameters": {
+              "id": 77333,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77332,
+                  "mutability": "mutable",
+                  "name": "addr",
+                  "nameLocation": "4330:4:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77337,
+                  "src": "4322:12:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77331,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4322:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4321:14:341"
+            },
+            "returnParameters": {
+              "id": 77336,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77335,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77337,
+                  "src": "4359:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77334,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4359:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4358:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77345,
+            "nodeType": "FunctionDefinition",
+            "src": "4516:74:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77338,
+              "nodeType": "StructuredDocumentation",
+              "src": "4374:137:341",
+              "text": "@notice The latest epoch in which a request was made for a specific address\n @param addr Address for which the request is made"
+            },
+            "functionSelector": "e2fd4199",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "latestRequestEpoch",
+            "nameLocation": "4525:18:341",
+            "parameters": {
+              "id": 77341,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77340,
+                  "mutability": "mutable",
+                  "name": "addr",
+                  "nameLocation": "4552:4:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77345,
+                  "src": "4544:12:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77339,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4544:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4543:14:341"
+            },
+            "returnParameters": {
+              "id": 77344,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77343,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77345,
+                  "src": "4581:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77342,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4581:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4580:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77353,
+            "nodeType": "FunctionDefinition",
+            "src": "4713:82:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77346,
+              "nodeType": "StructuredDocumentation",
+              "src": "4596:112:341",
+              "text": "@notice The lp token price for a specific epoch end\n @param epoch Epoch for which the request is made"
+            },
+            "functionSelector": "6d372639",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "epochToPriceForLpTokenD18",
+            "nameLocation": "4722:25:341",
+            "parameters": {
+              "id": 77349,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77348,
+                  "mutability": "mutable",
+                  "name": "epoch",
+                  "nameLocation": "4756:5:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77353,
+                  "src": "4748:13:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77347,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4748:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4747:15:341"
+            },
+            "returnParameters": {
+              "id": 77352,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77351,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77353,
+                  "src": "4786:7:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77350,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4786:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4785:9:341"
+            },
+            "scope": 77394,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77365,
+            "nodeType": "FunctionDefinition",
+            "src": "5071:115:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77354,
+              "nodeType": "StructuredDocumentation",
+              "src": "4801:265:341",
+              "text": "@notice The function of withdrawing the amount of tokens in exchange\n @param to Address to which the withdrawal will be sent\n @param vaultsOptions Options of vaults\n @return actualTokenAmounts Arrays of actual token amounts after withdrawal"
+            },
+            "functionSelector": "1afd1b71",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdraw",
+            "nameLocation": "5080:8:341",
+            "parameters": {
+              "id": 77360,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77356,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "5097:2:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77365,
+                  "src": "5089:10:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77355,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5089:7:341",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77359,
+                  "mutability": "mutable",
+                  "name": "vaultsOptions",
+                  "nameLocation": "5116:13:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77365,
+                  "src": "5101:28:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_bytes_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "bytes[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77357,
+                      "name": "bytes",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "5101:5:341",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes_storage_ptr",
+                        "typeString": "bytes"
+                      }
+                    },
+                    "id": 77358,
+                    "nodeType": "ArrayTypeName",
+                    "src": "5101:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_bytes_storage_$dyn_storage_ptr",
+                      "typeString": "bytes[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5088:42:341"
+            },
+            "returnParameters": {
+              "id": 77364,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77363,
+                  "mutability": "mutable",
+                  "name": "actualTokenAmounts",
+                  "nameLocation": "5166:18:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77365,
+                  "src": "5149:35:341",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77361,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "5149:7:341",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 77362,
+                    "nodeType": "ArrayTypeName",
+                    "src": "5149:9:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5148:37:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77373,
+            "nodeType": "FunctionDefinition",
+            "src": "5402:95:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77366,
+              "nodeType": "StructuredDocumentation",
+              "src": "5192:205:341",
+              "text": "@notice The function of registering withdrawal of lp tokens amount\n @param lpTokenAmount Amount the sender wants to withdraw\n @return amountRegistered Amount which was actually registered"
+            },
+            "functionSelector": "4c24c68b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "registerWithdrawal",
+            "nameLocation": "5411:18:341",
+            "parameters": {
+              "id": 77369,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77368,
+                  "mutability": "mutable",
+                  "name": "lpTokenAmount",
+                  "nameLocation": "5438:13:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77373,
+                  "src": "5430:21:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77367,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5430:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5429:23:341"
+            },
+            "returnParameters": {
+              "id": 77372,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77371,
+                  "mutability": "mutable",
+                  "name": "amountRegistered",
+                  "nameLocation": "5479:16:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77373,
+                  "src": "5471:24:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77370,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5471:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5470:26:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77381,
+            "nodeType": "FunctionDefinition",
+            "src": "5719:91:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77374,
+              "nodeType": "StructuredDocumentation",
+              "src": "5503:211:341",
+              "text": "@notice The function of cancelling withdrawal of lp tokens amount\n @param lpTokenAmount Amount the sender wants to cancel\n @return amountRemained Amount for which the withdrawal request remains"
+            },
+            "functionSelector": "3efcfda4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "cancelWithdrawal",
+            "nameLocation": "5728:16:341",
+            "parameters": {
+              "id": 77377,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77376,
+                  "mutability": "mutable",
+                  "name": "lpTokenAmount",
+                  "nameLocation": "5753:13:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77381,
+                  "src": "5745:21:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77375,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5745:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5744:23:341"
+            },
+            "returnParameters": {
+              "id": 77380,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77379,
+                  "mutability": "mutable",
+                  "name": "amountRemained",
+                  "nameLocation": "5794:14:341",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77381,
+                  "src": "5786:22:341",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77378,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5786:7:341",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5785:24:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77385,
+            "nodeType": "FunctionDefinition",
+            "src": "5941:36:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77382,
+              "nodeType": "StructuredDocumentation",
+              "src": "5816:120:341",
+              "text": "@notice The function of invoking the execution of withdrawal orders and transfers corresponding funds to ERC20 vault"
+            },
+            "functionSelector": "c8045c88",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "invokeExecution",
+            "nameLocation": "5950:15:341",
+            "parameters": {
+              "id": 77383,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5965:2:341"
+            },
+            "returnParameters": {
+              "id": 77384,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5976:0:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77389,
+            "nodeType": "FunctionDefinition",
+            "src": "6134:29:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77386,
+              "nodeType": "StructuredDocumentation",
+              "src": "5983:146:341",
+              "text": "@notice The function of invoking the emergency execution of withdrawal orders, transfers corresponding funds to ERC20 vault and stops deposits"
+            },
+            "functionSelector": "fc0e74d1",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "shutdown",
+            "nameLocation": "6143:8:341",
+            "parameters": {
+              "id": 77387,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6151:2:341"
+            },
+            "returnParameters": {
+              "id": 77388,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6162:0:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77393,
+            "nodeType": "FunctionDefinition",
+            "src": "6254:27:341",
+            "nodes": [],
+            "documentation": {
+              "id": 77390,
+              "nodeType": "StructuredDocumentation",
+              "src": "6169:80:341",
+              "text": "@notice The function of opening deposits back in case of a previous shutdown"
+            },
+            "functionSelector": "ccc108d7",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "reopen",
+            "nameLocation": "6263:6:341",
+            "parameters": {
+              "id": 77391,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6269:2:341"
+            },
+            "returnParameters": {
+              "id": 77392,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6280:0:341"
+            },
+            "scope": 77394,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 77197,
+              "name": "IAggregateVault",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 76190,
+              "src": "212:15:341"
+            },
+            "id": 77198,
+            "nodeType": "InheritanceSpecifier",
+            "src": "212:15:341"
+          },
+          {
+            "baseName": {
+              "id": 77199,
+              "name": "IERC20",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 45207,
+              "src": "229:6:341"
+            },
+            "id": 77200,
+            "nodeType": "InheritanceSpecifier",
+            "src": "229:6:341"
+          }
+        ],
+        "canonicalName": "IGearboxRootVault",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          77394,
+          45207,
+          76190,
+          78702,
+          78599,
+          48073
+        ],
+        "name": "IGearboxRootVault",
+        "nameLocation": "191:17:341",
+        "scope": 77395,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 341
+}

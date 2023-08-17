@@ -1,0 +1,767 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        }
+      ],
+      "name": "hasSubvault",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initialized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "isVaultToken",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nft",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pullExistentials",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "subvaultAt",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "subvaultNfts",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        }
+      ],
+      "name": "subvaultOneBasedIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tvl",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "minTokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "maxTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultGovernance",
+      "outputs": [
+        {
+          "internalType": "contract IVaultGovernance",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultTokens",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "hasSubvault(uint256)": "9d9fd0d9",
+    "initialized()": "158ef93e",
+    "isVaultToken(address)": "338c4ccb",
+    "nft()": "47ccca02",
+    "pullExistentials()": "d2c219b0",
+    "subvaultAt(uint256)": "9bd0911b",
+    "subvaultNfts()": "79183973",
+    "subvaultOneBasedIndex(uint256)": "9ddc875f",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "tvl()": "e5328e06",
+    "vaultGovernance()": "fe255a5e",
+    "vaultTokens()": "69722233"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"}],\"name\":\"hasSubvault\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isVaultToken\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pullExistentials\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"subvaultAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"subvaultNfts\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"}],\"name\":\"subvaultOneBasedIndex\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tvl\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"minTokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"maxTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultGovernance\",\"outputs\":[{\"internalType\":\"contract IVaultGovernance\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultTokens\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"hasSubvault(uint256)\":{\"params\":{\"nft_\":\"index of subvault for check\"},\"returns\":{\"_0\":\"`true` if subvault present, `false` otherwise\"}},\"isVaultToken(address)\":{\"params\":{\"token\":\"Address of the token to check\"},\"returns\":{\"_0\":\"`true` if this token is managed by Vault\"}},\"subvaultAt(uint256)\":{\"params\":{\"index\":\"Index of subvault\"},\"returns\":{\"_0\":\"address Address of the contract\"}},\"subvaultNfts()\":{\"returns\":{\"_0\":\"subvaultNfts Subvaults of NTFs\"}},\"subvaultOneBasedIndex(uint256)\":{\"params\":{\"nft_\":\"Nft for getting subvault\"},\"returns\":{\"_0\":\"index Index of subvault\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"},\"tvl()\":{\"details\":\"Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not\",\"returns\":{\"maxTokenAmounts\":\"Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\",\"minTokenAmounts\":\"Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"hasSubvault(uint256)\":{\"notice\":\"Checks if subvault is present\"},\"initialized()\":{\"notice\":\"Checks if the vault is initialized\"},\"isVaultToken(address)\":{\"notice\":\"Checks if a token is vault token\"},\"nft()\":{\"notice\":\"VaultRegistry NFT for this vault\"},\"pullExistentials()\":{\"notice\":\"Existential amounts for each token\"},\"subvaultAt(uint256)\":{\"notice\":\"Get subvault by index\"},\"subvaultNfts()\":{\"notice\":\"Get all subvalutNfts in the current Vault\"},\"subvaultOneBasedIndex(uint256)\":{\"notice\":\"Get index of subvault by nft\"},\"tvl()\":{\"notice\":\"Total value locked for this contract.\"},\"vaultGovernance()\":{\"notice\":\"Address of the Vault Governance for this contract.\"},\"vaultTokens()\":{\"notice\":\"ERC20 tokens under Vault management.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IAggregateVault.sol\":\"IAggregateVault\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/vaults/IAggregateVault.sol\":{\"keccak256\":\"0x22c60a8c3758f52aeeabf448cff491582357bed969cf9328cd93623ed12df3f9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://34fc54a3c550f28f0d77bdecad9e2b1083a79f37b6d783277c06741b1ecae35a\",\"dweb:/ipfs/QmdAXG1NpbzNPH6o8NxsVSVmnoUdtQeP9cNxmQ44Dm6qCT\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]},\"src/interfaces/vaults/IVaultRoot.sol\":{\"keccak256\":\"0xfc566a9133afe6942e196bcfde5b5e1920094d6f1656885b25b72b91f48c10ef\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://79470664780741869fe81ad1eed10b2afd7d9432ee70be1599f242f102a4deaa\",\"dweb:/ipfs/QmUUPv5juGLrdngD5ZQNcsHxvQzWPG1c8aLjA2nsUC6uJz\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "hasSubvault",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "initialized",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isVaultToken",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "nft",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "pullExistentials",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultAt",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultNfts",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvaultOneBasedIndex",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tvl",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "minTokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "maxTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultGovernance",
+          "outputs": [
+            {
+              "internalType": "contract IVaultGovernance",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultTokens",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "hasSubvault(uint256)": {
+            "params": {
+              "nft_": "index of subvault for check"
+            },
+            "returns": {
+              "_0": "`true` if subvault present, `false` otherwise"
+            }
+          },
+          "isVaultToken(address)": {
+            "params": {
+              "token": "Address of the token to check"
+            },
+            "returns": {
+              "_0": "`true` if this token is managed by Vault"
+            }
+          },
+          "subvaultAt(uint256)": {
+            "params": {
+              "index": "Index of subvault"
+            },
+            "returns": {
+              "_0": "address Address of the contract"
+            }
+          },
+          "subvaultNfts()": {
+            "returns": {
+              "_0": "subvaultNfts Subvaults of NTFs"
+            }
+          },
+          "subvaultOneBasedIndex(uint256)": {
+            "params": {
+              "nft_": "Nft for getting subvault"
+            },
+            "returns": {
+              "_0": "index Index of subvault"
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          },
+          "tvl()": {
+            "details": "Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not",
+            "returns": {
+              "maxTokenAmounts": "Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)",
+              "minTokenAmounts": "Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "hasSubvault(uint256)": {
+            "notice": "Checks if subvault is present"
+          },
+          "initialized()": {
+            "notice": "Checks if the vault is initialized"
+          },
+          "isVaultToken(address)": {
+            "notice": "Checks if a token is vault token"
+          },
+          "nft()": {
+            "notice": "VaultRegistry NFT for this vault"
+          },
+          "pullExistentials()": {
+            "notice": "Existential amounts for each token"
+          },
+          "subvaultAt(uint256)": {
+            "notice": "Get subvault by index"
+          },
+          "subvaultNfts()": {
+            "notice": "Get all subvalutNfts in the current Vault"
+          },
+          "subvaultOneBasedIndex(uint256)": {
+            "notice": "Get index of subvault by nft"
+          },
+          "tvl()": {
+            "notice": "Total value locked for this contract."
+          },
+          "vaultGovernance()": {
+            "notice": "Address of the Vault Governance for this contract."
+          },
+          "vaultTokens()": {
+            "notice": "ERC20 tokens under Vault management."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IAggregateVault.sol": "IAggregateVault"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IAggregateVault.sol": {
+        "keccak256": "0x22c60a8c3758f52aeeabf448cff491582357bed969cf9328cd93623ed12df3f9",
+        "urls": [
+          "bzz-raw://34fc54a3c550f28f0d77bdecad9e2b1083a79f37b6d783277c06741b1ecae35a",
+          "dweb:/ipfs/QmdAXG1NpbzNPH6o8NxsVSVmnoUdtQeP9cNxmQ44Dm6qCT"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultRoot.sol": {
+        "keccak256": "0xfc566a9133afe6942e196bcfde5b5e1920094d6f1656885b25b72b91f48c10ef",
+        "urls": [
+          "bzz-raw://79470664780741869fe81ad1eed10b2afd7d9432ee70be1599f242f102a4deaa",
+          "dweb:/ipfs/QmUUPv5juGLrdngD5ZQNcsHxvQzWPG1c8aLjA2nsUC6uJz"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IAggregateVault.sol",
+    "id": 76191,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IAggregateVault": [
+        76190
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "IVaultRoot": [
+        78702
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:127:328",
+    "nodes": [
+      {
+        "id": 76183,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:328",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 76184,
+        "nodeType": "ImportDirective",
+        "src": "57:22:328",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IVault.sol",
+        "file": "./IVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76191,
+        "sourceUnit": 78600,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76185,
+        "nodeType": "ImportDirective",
+        "src": "80:26:328",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IVaultRoot.sol",
+        "file": "./IVaultRoot.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76191,
+        "sourceUnit": 78703,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76190,
+        "nodeType": "ContractDefinition",
+        "src": "108:50:328",
+        "nodes": [],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 76186,
+              "name": "IVault",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 78599,
+              "src": "137:6:328"
+            },
+            "id": 76187,
+            "nodeType": "InheritanceSpecifier",
+            "src": "137:6:328"
+          },
+          {
+            "baseName": {
+              "id": 76188,
+              "name": "IVaultRoot",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 78702,
+              "src": "145:10:328"
+            },
+            "id": 76189,
+            "nodeType": "InheritanceSpecifier",
+            "src": "145:10:328"
+          }
+        ],
+        "canonicalName": "IAggregateVault",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          76190,
+          78702,
+          78599,
+          48073
+        ],
+        "name": "IAggregateVault",
+        "nameLocation": "118:15:328",
+        "scope": 76191,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 328
+}

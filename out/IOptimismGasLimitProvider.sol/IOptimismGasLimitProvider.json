@@ -1,0 +1,282 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "getOptimismGasLimit",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "gasLimit",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "gasLimit",
+          "type": "uint32"
+        }
+      ],
+      "name": "setOptimismGasLimit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getOptimismGasLimit()": "a0566e72",
+    "setOptimismGasLimit(uint32)": "bf5fa772"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"getOptimismGasLimit\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"gasLimit\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"gasLimit\",\"type\":\"uint32\"}],\"name\":\"setOptimismGasLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IOptimismGasLimitProvider.sol\":\"IOptimismGasLimitProvider\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IOptimismGasLimitProvider.sol\":{\"keccak256\":\"0x1562167434f29f4d6adaef1a9ec879a6529ece8d988575b4bf437b8bf7b8f337\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://0d69ed22ca5edae9d0dc31bd38ae17c0e9a7bfaaccbd5a7a799d8e884b1f094b\",\"dweb:/ipfs/QmShkBrUovUc9W2RRFg77a2r8bXYb9EN7hvoff7Pu5DKZC\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getOptimismGasLimit",
+          "outputs": [
+            {
+              "internalType": "uint32",
+              "name": "gasLimit",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint32",
+              "name": "gasLimit",
+              "type": "uint32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setOptimismGasLimit"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IOptimismGasLimitProvider.sol": "IOptimismGasLimitProvider"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IOptimismGasLimitProvider.sol": {
+        "keccak256": "0x1562167434f29f4d6adaef1a9ec879a6529ece8d988575b4bf437b8bf7b8f337",
+        "urls": [
+          "bzz-raw://0d69ed22ca5edae9d0dc31bd38ae17c0e9a7bfaaccbd5a7a799d8e884b1f094b",
+          "dweb:/ipfs/QmShkBrUovUc9W2RRFg77a2r8bXYb9EN7hvoff7Pu5DKZC"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IOptimismGasLimitProvider.sol",
+    "id": 57544,
+    "exportedSymbols": {
+      "IOptimismGasLimitProvider": [
+        57543
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:202:115",
+    "nodes": [
+      {
+        "id": 57532,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:115",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 57543,
+        "nodeType": "ContractDefinition",
+        "src": "713:176:115",
+        "nodes": [
+          {
+            "id": 57537,
+            "nodeType": "FunctionDefinition",
+            "src": "755:71:115",
+            "nodes": [],
+            "functionSelector": "a0566e72",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getOptimismGasLimit",
+            "nameLocation": "764:19:115",
+            "parameters": {
+              "id": 57533,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "783:2:115"
+            },
+            "returnParameters": {
+              "id": 57536,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57535,
+                  "mutability": "mutable",
+                  "name": "gasLimit",
+                  "nameLocation": "816:8:115",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57537,
+                  "src": "809:15:115",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 57534,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "809:6:115",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "808:17:115"
+            },
+            "scope": 57543,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 57542,
+            "nodeType": "FunctionDefinition",
+            "src": "832:55:115",
+            "nodes": [],
+            "functionSelector": "bf5fa772",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setOptimismGasLimit",
+            "nameLocation": "841:19:115",
+            "parameters": {
+              "id": 57540,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57539,
+                  "mutability": "mutable",
+                  "name": "gasLimit",
+                  "nameLocation": "868:8:115",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57542,
+                  "src": "861:15:115",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 57538,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "861:6:115",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "860:17:115"
+            },
+            "returnParameters": {
+              "id": 57541,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "886:0:115"
+            },
+            "scope": 57543,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IOptimismGasLimitProvider",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          57543
+        ],
+        "name": "IOptimismGasLimitProvider",
+        "nameLocation": "723:25:115",
+        "scope": 57544,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 115
+}

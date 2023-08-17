@@ -1,0 +1,916 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "addresses",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "latestVersion",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "names",
+      "outputs": [
+        {
+          "internalType": "string[]",
+          "name": "",
+          "type": "string[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "registerContract",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "version",
+          "type": "string"
+        }
+      ],
+      "name": "versionAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "versions",
+      "outputs": [
+        {
+          "internalType": "string[]",
+          "name": "result",
+          "type": "string[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "addresses()": "da0321cd",
+    "latestVersion(string)": "070f8f5a",
+    "names()": "056da048",
+    "registerContract(address)": "22a5dde4",
+    "versionAddress(string,string)": "4e388996",
+    "versions(string)": "5107f348"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"addresses\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"latestVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"names\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"registerContract\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"name\":\"versionAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"versions\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"result\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"latestVersion(string)\":{\"params\":{\"name\":\"Name of the contract\"}},\"registerContract(address)\":{\"params\":{\"target\":\"Address of the contract to be registered\"}},\"versionAddress(string,string)\":{\"params\":{\"name\":\"Name of the contract\",\"version\":\"Version of the contract\"}},\"versions(string)\":{\"params\":{\"name\":\"Name of the contract\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"addresses()\":{\"notice\":\"Addresses of the registered contracts\"},\"latestVersion(string)\":{\"notice\":\"Latest version of the contract\"},\"names()\":{\"notice\":\"Names of the registered contracts\"},\"registerContract(address)\":{\"notice\":\"Register a new contract\"},\"versionAddress(string,string)\":{\"notice\":\"Address of the contract at a given version\"},\"versions(string)\":{\"notice\":\"All versions of the contract\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/IContractRegistry.sol\":\"IContractRegistry\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/IContractRegistry.sol\":{\"keccak256\":\"0x94c69a2ee8e8a8980aa1aa9bd6bd8ead25f9e3e51ec77887a72fcf67a3916d3d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b1de87f896f9e64e55908f557c76d40414b3e445224fc23bf372932ed68128b1\",\"dweb:/ipfs/QmNqHN8cXtmPH1b5YHKbAh6JqTwoKZotPA1kZ17NHY3wRq\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "addresses",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "latestVersion",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "names",
+          "outputs": [
+            {
+              "internalType": "string[]",
+              "name": "",
+              "type": "string[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "registerContract"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "version",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "versionAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "versions",
+          "outputs": [
+            {
+              "internalType": "string[]",
+              "name": "result",
+              "type": "string[]"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "latestVersion(string)": {
+            "params": {
+              "name": "Name of the contract"
+            }
+          },
+          "registerContract(address)": {
+            "params": {
+              "target": "Address of the contract to be registered"
+            }
+          },
+          "versionAddress(string,string)": {
+            "params": {
+              "name": "Name of the contract",
+              "version": "Version of the contract"
+            }
+          },
+          "versions(string)": {
+            "params": {
+              "name": "Name of the contract"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "addresses()": {
+            "notice": "Addresses of the registered contracts"
+          },
+          "latestVersion(string)": {
+            "notice": "Latest version of the contract"
+          },
+          "names()": {
+            "notice": "Names of the registered contracts"
+          },
+          "registerContract(address)": {
+            "notice": "Register a new contract"
+          },
+          "versionAddress(string,string)": {
+            "notice": "Address of the contract at a given version"
+          },
+          "versions(string)": {
+            "notice": "All versions of the contract"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/IContractRegistry.sol": "IContractRegistry"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/IContractRegistry.sol": {
+        "keccak256": "0x94c69a2ee8e8a8980aa1aa9bd6bd8ead25f9e3e51ec77887a72fcf67a3916d3d",
+        "urls": [
+          "bzz-raw://b1de87f896f9e64e55908f557c76d40414b3e445224fc23bf372932ed68128b1",
+          "dweb:/ipfs/QmNqHN8cXtmPH1b5YHKbAh6JqTwoKZotPA1kZ17NHY3wRq"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/IContractRegistry.sol",
+    "id": 52469,
+    "exportedSymbols": {
+      "IContractRegistry": [
+        52468
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:1198:59",
+    "nodes": [
+      {
+        "id": 52418,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:59",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 52468,
+        "nodeType": "ContractDefinition",
+        "src": "57:1172:59",
+        "nodes": [
+          {
+            "id": 52425,
+            "nodeType": "FunctionDefinition",
+            "src": "210:62:59",
+            "nodes": [],
+            "documentation": {
+              "id": 52419,
+              "nodeType": "StructuredDocumentation",
+              "src": "156:49:59",
+              "text": "@notice Addresses of the registered contracts"
+            },
+            "functionSelector": "da0321cd",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "addresses",
+            "nameLocation": "219:9:59",
+            "parameters": {
+              "id": 52420,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "228:2:59"
+            },
+            "returnParameters": {
+              "id": 52424,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52423,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52425,
+                  "src": "254:16:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 52421,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "254:7:59",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 52422,
+                    "nodeType": "ArrayTypeName",
+                    "src": "254:9:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "253:18:59"
+            },
+            "scope": 52468,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52432,
+            "nodeType": "FunctionDefinition",
+            "src": "328:57:59",
+            "nodes": [],
+            "documentation": {
+              "id": 52426,
+              "nodeType": "StructuredDocumentation",
+              "src": "278:45:59",
+              "text": "@notice Names of the registered contracts"
+            },
+            "functionSelector": "056da048",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "names",
+            "nameLocation": "337:5:59",
+            "parameters": {
+              "id": 52427,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "342:2:59"
+            },
+            "returnParameters": {
+              "id": 52431,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52430,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52432,
+                  "src": "368:15:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_string_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "string[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 52428,
+                      "name": "string",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "368:6:59",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_string_storage_ptr",
+                        "typeString": "string"
+                      }
+                    },
+                    "id": 52429,
+                    "nodeType": "ArrayTypeName",
+                    "src": "368:8:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_string_storage_$dyn_storage_ptr",
+                      "typeString": "string[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "367:17:59"
+            },
+            "scope": 52468,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52442,
+            "nodeType": "FunctionDefinition",
+            "src": "479:90:59",
+            "nodes": [],
+            "documentation": {
+              "id": 52433,
+              "nodeType": "StructuredDocumentation",
+              "src": "391:83:59",
+              "text": "@notice Latest version of the contract\n @param name Name of the contract"
+            },
+            "functionSelector": "070f8f5a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "latestVersion",
+            "nameLocation": "488:13:59",
+            "parameters": {
+              "id": 52436,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52435,
+                  "mutability": "mutable",
+                  "name": "name",
+                  "nameLocation": "516:4:59",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52442,
+                  "src": "502:18:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 52434,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "502:6:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "501:20:59"
+            },
+            "returnParameters": {
+              "id": 52441,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52438,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52442,
+                  "src": "545:13:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 52437,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "545:6:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 52440,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52442,
+                  "src": "560:7:59",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52439,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "560:7:59",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "544:24:59"
+            },
+            "scope": 52468,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52451,
+            "nodeType": "FunctionDefinition",
+            "src": "661:85:59",
+            "nodes": [],
+            "documentation": {
+              "id": 52443,
+              "nodeType": "StructuredDocumentation",
+              "src": "575:81:59",
+              "text": "@notice All versions of the contract\n @param name Name of the contract"
+            },
+            "functionSelector": "5107f348",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "versions",
+            "nameLocation": "670:8:59",
+            "parameters": {
+              "id": 52446,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52445,
+                  "mutability": "mutable",
+                  "name": "name",
+                  "nameLocation": "693:4:59",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52451,
+                  "src": "679:18:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 52444,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "679:6:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "678:20:59"
+            },
+            "returnParameters": {
+              "id": 52450,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52449,
+                  "mutability": "mutable",
+                  "name": "result",
+                  "nameLocation": "738:6:59",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52451,
+                  "src": "722:22:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_string_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "string[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 52447,
+                      "name": "string",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "722:6:59",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_string_storage_ptr",
+                        "typeString": "string"
+                      }
+                    },
+                    "id": 52448,
+                    "nodeType": "ArrayTypeName",
+                    "src": "722:8:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_string_storage_$dyn_storage_ptr",
+                      "typeString": "string[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "721:24:59"
+            },
+            "scope": 52468,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52461,
+            "nodeType": "FunctionDefinition",
+            "src": "899:99:59",
+            "nodes": [],
+            "documentation": {
+              "id": 52452,
+              "nodeType": "StructuredDocumentation",
+              "src": "752:142:59",
+              "text": "@notice Address of the contract at a given version\n @param name Name of the contract\n @param version Version of the contract"
+            },
+            "functionSelector": "4e388996",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "versionAddress",
+            "nameLocation": "908:14:59",
+            "parameters": {
+              "id": 52457,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52454,
+                  "mutability": "mutable",
+                  "name": "name",
+                  "nameLocation": "937:4:59",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52461,
+                  "src": "923:18:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 52453,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "923:6:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 52456,
+                  "mutability": "mutable",
+                  "name": "version",
+                  "nameLocation": "957:7:59",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52461,
+                  "src": "943:21:59",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 52455,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "943:6:59",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "922:43:59"
+            },
+            "returnParameters": {
+              "id": 52460,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52459,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52461,
+                  "src": "989:7:59",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52458,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "989:7:59",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "988:9:59"
+            },
+            "scope": 52468,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52467,
+            "nodeType": "FunctionDefinition",
+            "src": "1176:51:59",
+            "nodes": [],
+            "documentation": {
+              "id": 52462,
+              "nodeType": "StructuredDocumentation",
+              "src": "1073:98:59",
+              "text": "@notice Register a new contract\n @param target Address of the contract to be registered"
+            },
+            "functionSelector": "22a5dde4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "registerContract",
+            "nameLocation": "1185:16:59",
+            "parameters": {
+              "id": 52465,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52464,
+                  "mutability": "mutable",
+                  "name": "target",
+                  "nameLocation": "1210:6:59",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52467,
+                  "src": "1202:14:59",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52463,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1202:7:59",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1201:16:59"
+            },
+            "returnParameters": {
+              "id": 52466,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1226:0:59"
+            },
+            "scope": 52468,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IContractRegistry",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          52468
+        ],
+        "name": "IContractRegistry",
+        "nameLocation": "67:17:59",
+        "scope": 52469,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 59
+}

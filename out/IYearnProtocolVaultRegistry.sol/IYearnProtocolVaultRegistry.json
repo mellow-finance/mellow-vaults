@@ -1,0 +1,242 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "vault",
+          "type": "address"
+        }
+      ],
+      "name": "latestVault",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "latestVault(address)": "e177dc70"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"name\":\"latestVault\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol\":\"IYearnProtocolVaultRegistry\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol\":{\"keccak256\":\"0xe4a29ef08a83d0fd955b7146f3be07367a54f590525aaeea738e3fc8bb140ee5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5c33bfd5dc94b66306bb54e6737639011a90c751a57d0db355937ac34932b462\",\"dweb:/ipfs/QmWEDGw64oQMJfUVPy293bQyj5fudspwuaai3eqNMHjZ4T\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "vault",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "latestVault",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol": "IYearnProtocolVaultRegistry"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol": {
+        "keccak256": "0xe4a29ef08a83d0fd955b7146f3be07367a54f590525aaeea738e3fc8bb140ee5",
+        "urls": [
+          "bzz-raw://5c33bfd5dc94b66306bb54e6737639011a90c751a57d0db355937ac34932b462",
+          "dweb:/ipfs/QmWEDGw64oQMJfUVPy293bQyj5fudspwuaai3eqNMHjZ4T"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol",
+    "id": 75504,
+    "exportedSymbols": {
+      "IYearnProtocolVaultRegistry": [
+        75503
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:140:309",
+    "nodes": [
+      {
+        "id": 75495,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:309",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 75503,
+        "nodeType": "ContractDefinition",
+        "src": "57:114:309",
+        "nodes": [
+          {
+            "id": 75502,
+            "nodeType": "FunctionDefinition",
+            "src": "101:68:309",
+            "nodes": [],
+            "functionSelector": "e177dc70",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "latestVault",
+            "nameLocation": "110:11:309",
+            "parameters": {
+              "id": 75498,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75497,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "130:5:309",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75502,
+                  "src": "122:13:309",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 75496,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "122:7:309",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "121:15:309"
+            },
+            "returnParameters": {
+              "id": 75501,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 75500,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 75502,
+                  "src": "160:7:309",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 75499,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "160:7:309",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "159:9:309"
+            },
+            "scope": 75503,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IYearnProtocolVaultRegistry",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          75503
+        ],
+        "name": "IYearnProtocolVaultRegistry",
+        "nameLocation": "67:27:309",
+        "scope": 75504,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 309
+}

@@ -1,0 +1,1591 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "enum IVault.SwapKind",
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "poolId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "assetInIndex",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "assetOutIndex",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "userData",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct IVault.BatchSwapStep[]",
+          "name": "swaps",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "contract IAsset[]",
+          "name": "assets",
+          "type": "address[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "fromInternalBalance",
+              "type": "bool"
+            },
+            {
+              "internalType": "address payable",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "toInternalBalance",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IVault.FundManagement",
+          "name": "funds",
+          "type": "tuple"
+        }
+      ],
+      "name": "queryBatchSwap",
+      "outputs": [
+        {
+          "internalType": "int256[]",
+          "name": "assetDeltas",
+          "type": "int256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "contract IAsset[]",
+              "name": "assets",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "minAmountsOut",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "userData",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bool",
+              "name": "toInternalBalance",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IVault.ExitPoolRequest",
+          "name": "request",
+          "type": "tuple"
+        }
+      ],
+      "name": "queryExit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "bptIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "amountsOut",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "contract IAsset[]",
+              "name": "assets",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "maxAmountsIn",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "userData",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bool",
+              "name": "fromInternalBalance",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IVault.JoinPoolRequest",
+          "name": "request",
+          "type": "tuple"
+        }
+      ],
+      "name": "queryJoin",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "bptOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "amountsIn",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "poolId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "enum IVault.SwapKind",
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
+              "internalType": "contract IAsset",
+              "name": "assetIn",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IAsset",
+              "name": "assetOut",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "userData",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct IVault.SingleSwap",
+          "name": "singleSwap",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "fromInternalBalance",
+              "type": "bool"
+            },
+            {
+              "internalType": "address payable",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "toInternalBalance",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IVault.FundManagement",
+          "name": "funds",
+          "type": "tuple"
+        }
+      ],
+      "name": "querySwap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "queryBatchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool))": "f84d066e",
+    "queryExit(bytes32,address,address,(address[],uint256[],bytes,bool))": "c7b2c52c",
+    "queryJoin(bytes32,address,address,(address[],uint256[],bytes,bool))": "9ebbf05d",
+    "querySwap((bytes32,uint8,address,address,uint256,bytes),(address,bool,address,bool))": "e969f6b3"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"enum IVault.SwapKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"poolId\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"assetInIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"assetOutIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"userData\",\"type\":\"bytes\"}],\"internalType\":\"struct IVault.BatchSwapStep[]\",\"name\":\"swaps\",\"type\":\"tuple[]\"},{\"internalType\":\"contract IAsset[]\",\"name\":\"assets\",\"type\":\"address[]\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"fromInternalBalance\",\"type\":\"bool\"},{\"internalType\":\"address payable\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"toInternalBalance\",\"type\":\"bool\"}],\"internalType\":\"struct IVault.FundManagement\",\"name\":\"funds\",\"type\":\"tuple\"}],\"name\":\"queryBatchSwap\",\"outputs\":[{\"internalType\":\"int256[]\",\"name\":\"assetDeltas\",\"type\":\"int256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"poolId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"contract IAsset[]\",\"name\":\"assets\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"minAmountsOut\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"userData\",\"type\":\"bytes\"},{\"internalType\":\"bool\",\"name\":\"toInternalBalance\",\"type\":\"bool\"}],\"internalType\":\"struct IVault.ExitPoolRequest\",\"name\":\"request\",\"type\":\"tuple\"}],\"name\":\"queryExit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"bptIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"amountsOut\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"poolId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"contract IAsset[]\",\"name\":\"assets\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"maxAmountsIn\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"userData\",\"type\":\"bytes\"},{\"internalType\":\"bool\",\"name\":\"fromInternalBalance\",\"type\":\"bool\"}],\"internalType\":\"struct IVault.JoinPoolRequest\",\"name\":\"request\",\"type\":\"tuple\"}],\"name\":\"queryJoin\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"bptOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"amountsIn\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"poolId\",\"type\":\"bytes32\"},{\"internalType\":\"enum IVault.SwapKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"contract IAsset\",\"name\":\"assetIn\",\"type\":\"address\"},{\"internalType\":\"contract IAsset\",\"name\":\"assetOut\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"userData\",\"type\":\"bytes\"}],\"internalType\":\"struct IVault.SingleSwap\",\"name\":\"singleSwap\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"fromInternalBalance\",\"type\":\"bool\"},{\"internalType\":\"address payable\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"toInternalBalance\",\"type\":\"bool\"}],\"internalType\":\"struct IVault.FundManagement\",\"name\":\"funds\",\"type\":\"tuple\"}],\"name\":\"querySwap\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Provides a way to perform queries on swaps, joins and exits, simulating these operations and returning the exact result they would have if called on the Vault given the current state. Note that the results will be affected by other transactions interacting with the Pools involved. All query functions can be called both on-chain and off-chain. If calling them from a contract, note that all query functions are not `view`. Despite this, these functions produce no net state change, and for all intents and purposes can be thought of as if they were indeed `view`. However, calling them via STATICCALL will fail. If calling them from an off-chain client, make sure to use eth_call: most clients default to eth_sendTransaction for non-view functions. In all cases, the `fromInternalBalance` and `toInternalBalance` fields are entirely ignored: we just use the same structs for simplicity.\",\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/standalone-utils/IBalancerQueries.sol\":\"IBalancerQueries\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol\":{\"keccak256\":\"0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1\",\"dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa\"]},\"src/interfaces/external/balancer/solidity-utils/helpers/ISignaturesValidator.sol\":{\"keccak256\":\"0x52bd09272e9ec2cff838df757e8b690ff4ca3f4f07e9edd9b711e31e474dd979\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://92ae86c99ce4b92fc666a4c6053bc5ae2932d07b23471647cae7c541c68071b3\",\"dweb:/ipfs/QmeKHMVTVLfG5MKQ7ewM7uwB41WEXkDKhkkL3qCd7mokFo\"]},\"src/interfaces/external/balancer/solidity-utils/helpers/ITemporarilyPausable.sol\":{\"keccak256\":\"0xf952ad04a5d4e8523212315e19b8d874e13ceadb7dbc1f5025510da1e153405c\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://81d7e364e8c7a76879f9be650559d3de53879918ab721372931d0e51daa464b5\",\"dweb:/ipfs/QmNyXjvxr3cXzVeBaPrApS9fdjufyN6dXtjGy746xxtj2z\"]},\"src/interfaces/external/balancer/solidity-utils/misc/IWETH.sol\":{\"keccak256\":\"0x90278f677649701309ab0902f5bca2fd0d9603e5ce7193b15cf05a7c5582c3b9\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://991dce71671de9fb0f5fafda69994705e358a5cb235bc3acf961dbc9895b6dd6\",\"dweb:/ipfs/QmP7479cjgvMa2DjXNSB6gvHZ2WibU4TGb3DTjqw6UuFb6\"]},\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol\":{\"keccak256\":\"0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f\",\"dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U\"]},\"src/interfaces/external/balancer/standalone-utils/IBalancerQueries.sol\":{\"keccak256\":\"0x2a9c32a63be03c636c08bf479230460793275953e20db26360890d2e7e89e09d\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://f2dd60338f3badc8fc0868c76ad980ece338e950ee7004c0428a071ed824053a\",\"dweb:/ipfs/QmQthnP3WTdi7dDDffwhRikCLwhju5QEjCfwftwirLUnqv\"]},\"src/interfaces/external/balancer/vault/IAsset.sol\":{\"keccak256\":\"0x746354db670eb3b94179963b522c4deb0b9854483ab293e3025689749923ebef\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://bcd5a7e0519f94c25f4e3b568b8c0446b2240bd3808c56c3b498a6fed459b2e4\",\"dweb:/ipfs/QmRXvcCy9oKhwPMr8QQ74pg9jormcgq3GHmLSGTDhUWAsn\"]},\"src/interfaces/external/balancer/vault/IAuthorizer.sol\":{\"keccak256\":\"0x4adfebbc478ab323d0679386ef8e2384f5205eb280f72757c151eca62ea4f91b\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://49a34c9ad9cb559931b465cea2d570ab015751c6dbc4a52eab8c36b5b949eec1\",\"dweb:/ipfs/QmUiUSZz8gjANUcTqaPCfNkUp3gpjt8Qq2z4UWuQWhaK34\"]},\"src/interfaces/external/balancer/vault/IFlashLoanRecipient.sol\":{\"keccak256\":\"0xef16377e5ee7ac8151fe8abc3f7b8f0a420008ae1c1336f3cbaea5e171403a43\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://ca460a387ce27682beecc1f93a07c7ef6139504f2d4e2fce715abe82b6d2b039\",\"dweb:/ipfs/QmS8QgcAqhtHepcf8LYGToutbhsUXaTE7UNLQQi4fBJsUC\"]},\"src/interfaces/external/balancer/vault/IProtocolFeesCollector.sol\":{\"keccak256\":\"0xa42e8b311517ce70dd7f2af6b497603a81c3dd678961a5ffd8a2968eff6b7b5a\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://9a11ea954c234e348896cec60165624d71e9fe7b44d7341d74e3bdc7790f2b6a\",\"dweb:/ipfs/QmNq1f6yAeJawBKpMmfNyoQ84nZquQ78YtT3tt3dMBtyCK\"]},\"src/interfaces/external/balancer/vault/IVault.sol\":{\"keccak256\":\"0x08d254ba643e02507305b570f794a75b5439d2ae799f761d26d3a2fd77f6d2fb\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://2de3bcdb5d5805a44e2c643bc76bc14858825b2b018049f89962c8bc532ac24d\",\"dweb:/ipfs/QmfWZGKRChzwe97R8nqShjKdRX5k8Tp9HKwr7UAq9rCg1m\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "enum IVault.SwapKind",
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
+              "internalType": "struct IVault.BatchSwapStep[]",
+              "name": "swaps",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "poolId",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "assetInIndex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "assetOutIndex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "userData",
+                  "type": "bytes"
+                }
+              ]
+            },
+            {
+              "internalType": "contract IAsset[]",
+              "name": "assets",
+              "type": "address[]"
+            },
+            {
+              "internalType": "struct IVault.FundManagement",
+              "name": "funds",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "sender",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "fromInternalBalance",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "address payable",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "toInternalBalance",
+                  "type": "bool"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "queryBatchSwap",
+          "outputs": [
+            {
+              "internalType": "int256[]",
+              "name": "assetDeltas",
+              "type": "int256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "poolId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "struct IVault.ExitPoolRequest",
+              "name": "request",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IAsset[]",
+                  "name": "assets",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "minAmountsOut",
+                  "type": "uint256[]"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "userData",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "toInternalBalance",
+                  "type": "bool"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "queryExit",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "bptIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "amountsOut",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "poolId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "struct IVault.JoinPoolRequest",
+              "name": "request",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IAsset[]",
+                  "name": "assets",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "maxAmountsIn",
+                  "type": "uint256[]"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "userData",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "fromInternalBalance",
+                  "type": "bool"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "queryJoin",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "bptOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "amountsIn",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVault.SingleSwap",
+              "name": "singleSwap",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "poolId",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "enum IVault.SwapKind",
+                  "name": "kind",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "contract IAsset",
+                  "name": "assetIn",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IAsset",
+                  "name": "assetOut",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "userData",
+                  "type": "bytes"
+                }
+              ]
+            },
+            {
+              "internalType": "struct IVault.FundManagement",
+              "name": "funds",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "sender",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "fromInternalBalance",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "address payable",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "toInternalBalance",
+                  "type": "bool"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "querySwap",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/standalone-utils/IBalancerQueries.sol": "IBalancerQueries"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol": {
+        "keccak256": "0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842",
+        "urls": [
+          "bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1",
+          "dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/helpers/ISignaturesValidator.sol": {
+        "keccak256": "0x52bd09272e9ec2cff838df757e8b690ff4ca3f4f07e9edd9b711e31e474dd979",
+        "urls": [
+          "bzz-raw://92ae86c99ce4b92fc666a4c6053bc5ae2932d07b23471647cae7c541c68071b3",
+          "dweb:/ipfs/QmeKHMVTVLfG5MKQ7ewM7uwB41WEXkDKhkkL3qCd7mokFo"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/helpers/ITemporarilyPausable.sol": {
+        "keccak256": "0xf952ad04a5d4e8523212315e19b8d874e13ceadb7dbc1f5025510da1e153405c",
+        "urls": [
+          "bzz-raw://81d7e364e8c7a76879f9be650559d3de53879918ab721372931d0e51daa464b5",
+          "dweb:/ipfs/QmNyXjvxr3cXzVeBaPrApS9fdjufyN6dXtjGy746xxtj2z"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/misc/IWETH.sol": {
+        "keccak256": "0x90278f677649701309ab0902f5bca2fd0d9603e5ce7193b15cf05a7c5582c3b9",
+        "urls": [
+          "bzz-raw://991dce71671de9fb0f5fafda69994705e358a5cb235bc3acf961dbc9895b6dd6",
+          "dweb:/ipfs/QmP7479cjgvMa2DjXNSB6gvHZ2WibU4TGb3DTjqw6UuFb6"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol": {
+        "keccak256": "0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835",
+        "urls": [
+          "bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f",
+          "dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/balancer/standalone-utils/IBalancerQueries.sol": {
+        "keccak256": "0x2a9c32a63be03c636c08bf479230460793275953e20db26360890d2e7e89e09d",
+        "urls": [
+          "bzz-raw://f2dd60338f3badc8fc0868c76ad980ece338e950ee7004c0428a071ed824053a",
+          "dweb:/ipfs/QmQthnP3WTdi7dDDffwhRikCLwhju5QEjCfwftwirLUnqv"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IAsset.sol": {
+        "keccak256": "0x746354db670eb3b94179963b522c4deb0b9854483ab293e3025689749923ebef",
+        "urls": [
+          "bzz-raw://bcd5a7e0519f94c25f4e3b568b8c0446b2240bd3808c56c3b498a6fed459b2e4",
+          "dweb:/ipfs/QmRXvcCy9oKhwPMr8QQ74pg9jormcgq3GHmLSGTDhUWAsn"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IAuthorizer.sol": {
+        "keccak256": "0x4adfebbc478ab323d0679386ef8e2384f5205eb280f72757c151eca62ea4f91b",
+        "urls": [
+          "bzz-raw://49a34c9ad9cb559931b465cea2d570ab015751c6dbc4a52eab8c36b5b949eec1",
+          "dweb:/ipfs/QmUiUSZz8gjANUcTqaPCfNkUp3gpjt8Qq2z4UWuQWhaK34"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IFlashLoanRecipient.sol": {
+        "keccak256": "0xef16377e5ee7ac8151fe8abc3f7b8f0a420008ae1c1336f3cbaea5e171403a43",
+        "urls": [
+          "bzz-raw://ca460a387ce27682beecc1f93a07c7ef6139504f2d4e2fce715abe82b6d2b039",
+          "dweb:/ipfs/QmS8QgcAqhtHepcf8LYGToutbhsUXaTE7UNLQQi4fBJsUC"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IProtocolFeesCollector.sol": {
+        "keccak256": "0xa42e8b311517ce70dd7f2af6b497603a81c3dd678961a5ffd8a2968eff6b7b5a",
+        "urls": [
+          "bzz-raw://9a11ea954c234e348896cec60165624d71e9fe7b44d7341d74e3bdc7790f2b6a",
+          "dweb:/ipfs/QmNq1f6yAeJawBKpMmfNyoQ84nZquQ78YtT3tt3dMBtyCK"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/vault/IVault.sol": {
+        "keccak256": "0x08d254ba643e02507305b570f794a75b5439d2ae799f761d26d3a2fd77f6d2fb",
+        "urls": [
+          "bzz-raw://2de3bcdb5d5805a44e2c643bc76bc14858825b2b018049f89962c8bc532ac24d",
+          "dweb:/ipfs/QmfWZGKRChzwe97R8nqShjKdRX5k8Tp9HKwr7UAq9rCg1m"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/standalone-utils/IBalancerQueries.sol",
+    "id": 60547,
+    "exportedSymbols": {
+      "IAsset": [
+        61808
+      ],
+      "IAuthentication": [
+        60077
+      ],
+      "IAuthorizer": [
+        61823
+      ],
+      "IBalancerQueries": [
+        60546
+      ],
+      "IERC20": [
+        60345
+      ],
+      "IFlashLoanRecipient": [
+        62001
+      ],
+      "IProtocolFeesCollector": [
+        62141
+      ],
+      "ISignaturesValidator": [
+        60129
+      ],
+      "ITemporarilyPausable": [
+        60148
+      ],
+      "IVault": [
+        63277
+      ],
+      "IWETH": [
+        60253
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:1877:159",
+    "nodes": [
+      {
+        "id": 60477,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:159",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 60478,
+        "nodeType": "PragmaDirective",
+        "src": "712:33:159",
+        "nodes": [],
+        "literals": [
+          "experimental",
+          "ABIEncoderV2"
+        ]
+      },
+      {
+        "id": 60479,
+        "nodeType": "ImportDirective",
+        "src": "747:29:159",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/vault/IVault.sol",
+        "file": "../vault/IVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 60547,
+        "sourceUnit": 63278,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 60546,
+        "nodeType": "ContractDefinition",
+        "src": "1724:840:159",
+        "nodes": [
+          {
+            "id": 60491,
+            "nodeType": "FunctionDefinition",
+            "src": "1757:141:159",
+            "nodes": [],
+            "functionSelector": "e969f6b3",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "querySwap",
+            "nameLocation": "1766:9:159",
+            "parameters": {
+              "id": 60487,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60483,
+                  "mutability": "mutable",
+                  "name": "singleSwap",
+                  "nameLocation": "1810:10:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60491,
+                  "src": "1785:35:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_SingleSwap_$63108_memory_ptr",
+                    "typeString": "struct IVault.SingleSwap"
+                  },
+                  "typeName": {
+                    "id": 60482,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 60481,
+                      "name": "IVault.SingleSwap",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 63108,
+                      "src": "1785:17:159"
+                    },
+                    "referencedDeclaration": 63108,
+                    "src": "1785:17:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_SingleSwap_$63108_storage_ptr",
+                      "typeString": "struct IVault.SingleSwap"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60486,
+                  "mutability": "mutable",
+                  "name": "funds",
+                  "nameLocation": "1859:5:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60491,
+                  "src": "1830:34:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_FundManagement_$63169_memory_ptr",
+                    "typeString": "struct IVault.FundManagement"
+                  },
+                  "typeName": {
+                    "id": 60485,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 60484,
+                      "name": "IVault.FundManagement",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 63169,
+                      "src": "1830:21:159"
+                    },
+                    "referencedDeclaration": 63169,
+                    "src": "1830:21:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_FundManagement_$63169_storage_ptr",
+                      "typeString": "struct IVault.FundManagement"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1775:95:159"
+            },
+            "returnParameters": {
+              "id": 60490,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60489,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60491,
+                  "src": "1889:7:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 60488,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1889:7:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1888:9:159"
+            },
+            "scope": 60546,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 60511,
+            "nodeType": "FunctionDefinition",
+            "src": "1904:228:159",
+            "nodes": [],
+            "functionSelector": "f84d066e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "queryBatchSwap",
+            "nameLocation": "1913:14:159",
+            "parameters": {
+              "id": 60506,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60494,
+                  "mutability": "mutable",
+                  "name": "kind",
+                  "nameLocation": "1953:4:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60511,
+                  "src": "1937:20:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_SwapKind_$63076",
+                    "typeString": "enum IVault.SwapKind"
+                  },
+                  "typeName": {
+                    "id": 60493,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 60492,
+                      "name": "IVault.SwapKind",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 63076,
+                      "src": "1937:15:159"
+                    },
+                    "referencedDeclaration": 63076,
+                    "src": "1937:15:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_SwapKind_$63076",
+                      "typeString": "enum IVault.SwapKind"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60498,
+                  "mutability": "mutable",
+                  "name": "swaps",
+                  "nameLocation": "1997:5:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60511,
+                  "src": "1967:35:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_BatchSwapStep_$63145_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct IVault.BatchSwapStep[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 60496,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 60495,
+                        "name": "IVault.BatchSwapStep",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 63145,
+                        "src": "1967:20:159"
+                      },
+                      "referencedDeclaration": 63145,
+                      "src": "1967:20:159",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_BatchSwapStep_$63145_storage_ptr",
+                        "typeString": "struct IVault.BatchSwapStep"
+                      }
+                    },
+                    "id": 60497,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1967:22:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_BatchSwapStep_$63145_storage_$dyn_storage_ptr",
+                      "typeString": "struct IVault.BatchSwapStep[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60502,
+                  "mutability": "mutable",
+                  "name": "assets",
+                  "nameLocation": "2028:6:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60511,
+                  "src": "2012:22:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_contract$_IAsset_$61808_$dyn_memory_ptr",
+                    "typeString": "contract IAsset[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 60500,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 60499,
+                        "name": "IAsset",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 61808,
+                        "src": "2012:6:159"
+                      },
+                      "referencedDeclaration": 61808,
+                      "src": "2012:6:159",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IAsset_$61808",
+                        "typeString": "contract IAsset"
+                      }
+                    },
+                    "id": 60501,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2012:8:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_contract$_IAsset_$61808_$dyn_storage_ptr",
+                      "typeString": "contract IAsset[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60505,
+                  "mutability": "mutable",
+                  "name": "funds",
+                  "nameLocation": "2073:5:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60511,
+                  "src": "2044:34:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_FundManagement_$63169_memory_ptr",
+                    "typeString": "struct IVault.FundManagement"
+                  },
+                  "typeName": {
+                    "id": 60504,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 60503,
+                      "name": "IVault.FundManagement",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 63169,
+                      "src": "2044:21:159"
+                    },
+                    "referencedDeclaration": 63169,
+                    "src": "2044:21:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_FundManagement_$63169_storage_ptr",
+                      "typeString": "struct IVault.FundManagement"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1927:157:159"
+            },
+            "returnParameters": {
+              "id": 60510,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60509,
+                  "mutability": "mutable",
+                  "name": "assetDeltas",
+                  "nameLocation": "2119:11:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60511,
+                  "src": "2103:27:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_int256_$dyn_memory_ptr",
+                    "typeString": "int256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 60507,
+                      "name": "int256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2103:6:159",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_int256",
+                        "typeString": "int256"
+                      }
+                    },
+                    "id": 60508,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2103:8:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_int256_$dyn_storage_ptr",
+                      "typeString": "int256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2102:29:159"
+            },
+            "scope": 60546,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 60528,
+            "nodeType": "FunctionDefinition",
+            "src": "2138:209:159",
+            "nodes": [],
+            "functionSelector": "9ebbf05d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "queryJoin",
+            "nameLocation": "2147:9:159",
+            "parameters": {
+              "id": 60521,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60513,
+                  "mutability": "mutable",
+                  "name": "poolId",
+                  "nameLocation": "2174:6:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60528,
+                  "src": "2166:14:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 60512,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2166:7:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60515,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "2198:6:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60528,
+                  "src": "2190:14:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60514,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2190:7:159",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60517,
+                  "mutability": "mutable",
+                  "name": "recipient",
+                  "nameLocation": "2222:9:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60528,
+                  "src": "2214:17:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60516,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2214:7:159",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60520,
+                  "mutability": "mutable",
+                  "name": "request",
+                  "nameLocation": "2271:7:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60528,
+                  "src": "2241:37:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_JoinPoolRequest_$63028_memory_ptr",
+                    "typeString": "struct IVault.JoinPoolRequest"
+                  },
+                  "typeName": {
+                    "id": 60519,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 60518,
+                      "name": "IVault.JoinPoolRequest",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 63028,
+                      "src": "2241:22:159"
+                    },
+                    "referencedDeclaration": 63028,
+                    "src": "2241:22:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_JoinPoolRequest_$63028_storage_ptr",
+                      "typeString": "struct IVault.JoinPoolRequest"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2156:128:159"
+            },
+            "returnParameters": {
+              "id": 60527,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60523,
+                  "mutability": "mutable",
+                  "name": "bptOut",
+                  "nameLocation": "2311:6:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60528,
+                  "src": "2303:14:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 60522,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2303:7:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60526,
+                  "mutability": "mutable",
+                  "name": "amountsIn",
+                  "nameLocation": "2336:9:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60528,
+                  "src": "2319:26:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 60524,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2319:7:159",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 60525,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2319:9:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2302:44:159"
+            },
+            "scope": 60546,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 60545,
+            "nodeType": "FunctionDefinition",
+            "src": "2353:209:159",
+            "nodes": [],
+            "functionSelector": "c7b2c52c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "queryExit",
+            "nameLocation": "2362:9:159",
+            "parameters": {
+              "id": 60538,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60530,
+                  "mutability": "mutable",
+                  "name": "poolId",
+                  "nameLocation": "2389:6:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60545,
+                  "src": "2381:14:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 60529,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2381:7:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60532,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "2413:6:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60545,
+                  "src": "2405:14:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60531,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2405:7:159",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60534,
+                  "mutability": "mutable",
+                  "name": "recipient",
+                  "nameLocation": "2437:9:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60545,
+                  "src": "2429:17:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60533,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2429:7:159",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60537,
+                  "mutability": "mutable",
+                  "name": "request",
+                  "nameLocation": "2486:7:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60545,
+                  "src": "2456:37:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_ExitPoolRequest_$63053_memory_ptr",
+                    "typeString": "struct IVault.ExitPoolRequest"
+                  },
+                  "typeName": {
+                    "id": 60536,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 60535,
+                      "name": "IVault.ExitPoolRequest",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 63053,
+                      "src": "2456:22:159"
+                    },
+                    "referencedDeclaration": 63053,
+                    "src": "2456:22:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_ExitPoolRequest_$63053_storage_ptr",
+                      "typeString": "struct IVault.ExitPoolRequest"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2371:128:159"
+            },
+            "returnParameters": {
+              "id": 60544,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60540,
+                  "mutability": "mutable",
+                  "name": "bptIn",
+                  "nameLocation": "2526:5:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60545,
+                  "src": "2518:13:159",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 60539,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2518:7:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60543,
+                  "mutability": "mutable",
+                  "name": "amountsOut",
+                  "nameLocation": "2550:10:159",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60545,
+                  "src": "2533:27:159",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 60541,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2533:7:159",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 60542,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2533:9:159",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2517:44:159"
+            },
+            "scope": 60546,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IBalancerQueries",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 60480,
+          "nodeType": "StructuredDocumentation",
+          "src": "778:945:159",
+          "text": " @dev Provides a way to perform queries on swaps, joins and exits, simulating these operations and returning the exact\n result they would have if called on the Vault given the current state. Note that the results will be affected by\n other transactions interacting with the Pools involved.\n All query functions can be called both on-chain and off-chain.\n If calling them from a contract, note that all query functions are not `view`. Despite this, these functions produce\n no net state change, and for all intents and purposes can be thought of as if they were indeed `view`. However,\n calling them via STATICCALL will fail.\n If calling them from an off-chain client, make sure to use eth_call: most clients default to eth_sendTransaction for\n non-view functions.\n In all cases, the `fromInternalBalance` and `toInternalBalance` fields are entirely ignored: we just use the same\n structs for simplicity."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          60546
+        ],
+        "name": "IBalancerQueries",
+        "nameLocation": "1734:16:159",
+        "scope": 60547,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 159
+}

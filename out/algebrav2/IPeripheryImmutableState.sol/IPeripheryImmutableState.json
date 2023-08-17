@@ -1,0 +1,409 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "WNativeToken",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolDeployer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "WNativeToken()": "8af3ac85",
+    "factory()": "c45a0155",
+    "poolDeployer()": "3119049a"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"WNativeToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolDeployer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Credit to Uniswap Labs under GPL-2.0-or-later license: https://github.com/Uniswap/v3-periphery\",\"kind\":\"dev\",\"methods\":{\"WNativeToken()\":{\"returns\":{\"_0\":\"Returns the address of WNativeToken\"}},\"factory()\":{\"returns\":{\"_0\":\"Returns the address of the Algebra factory\"}},\"poolDeployer()\":{\"returns\":{\"_0\":\"Returns the address of the pool Deployer\"}}},\"title\":\"Immutable state\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Functions that return immutable state of the router\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/algebrav2/IPeripheryImmutableState.sol\":\"IPeripheryImmutableState\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/algebrav2/IPeripheryImmutableState.sol\":{\"keccak256\":\"0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685\",\"dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "WNativeToken",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "factory",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "poolDeployer",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "WNativeToken()": {
+            "returns": {
+              "_0": "Returns the address of WNativeToken"
+            }
+          },
+          "factory()": {
+            "returns": {
+              "_0": "Returns the address of the Algebra factory"
+            }
+          },
+          "poolDeployer()": {
+            "returns": {
+              "_0": "Returns the address of the pool Deployer"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/algebrav2/IPeripheryImmutableState.sol": "IPeripheryImmutableState"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/algebrav2/IPeripheryImmutableState.sol": {
+        "keccak256": "0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15",
+        "urls": [
+          "bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685",
+          "dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/algebrav2/IPeripheryImmutableState.sol",
+    "id": 54330,
+    "exportedSymbols": {
+      "IPeripheryImmutableState": [
+        54329
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:611:76",
+    "nodes": [
+      {
+        "id": 54309,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:76",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 54329,
+        "nodeType": "ContractDefinition",
+        "src": "269:386:76",
+        "nodes": [
+          {
+            "id": 54316,
+            "nodeType": "FunctionDefinition",
+            "src": "369:51:76",
+            "nodes": [],
+            "documentation": {
+              "id": 54311,
+              "nodeType": "StructuredDocumentation",
+              "src": "310:54:76",
+              "text": "@return Returns the address of the Algebra factory"
+            },
+            "functionSelector": "c45a0155",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "factory",
+            "nameLocation": "378:7:76",
+            "parameters": {
+              "id": 54312,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "385:2:76"
+            },
+            "returnParameters": {
+              "id": 54315,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 54314,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 54316,
+                  "src": "411:7:76",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 54313,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "411:7:76",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "410:9:76"
+            },
+            "scope": 54329,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 54322,
+            "nodeType": "FunctionDefinition",
+            "src": "483:56:76",
+            "nodes": [],
+            "documentation": {
+              "id": 54317,
+              "nodeType": "StructuredDocumentation",
+              "src": "426:52:76",
+              "text": "@return Returns the address of the pool Deployer"
+            },
+            "functionSelector": "3119049a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "poolDeployer",
+            "nameLocation": "492:12:76",
+            "parameters": {
+              "id": 54318,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "504:2:76"
+            },
+            "returnParameters": {
+              "id": 54321,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 54320,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 54322,
+                  "src": "530:7:76",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 54319,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "530:7:76",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "529:9:76"
+            },
+            "scope": 54329,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 54328,
+            "nodeType": "FunctionDefinition",
+            "src": "597:56:76",
+            "nodes": [],
+            "documentation": {
+              "id": 54323,
+              "nodeType": "StructuredDocumentation",
+              "src": "545:47:76",
+              "text": "@return Returns the address of WNativeToken"
+            },
+            "functionSelector": "8af3ac85",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "WNativeToken",
+            "nameLocation": "606:12:76",
+            "parameters": {
+              "id": 54324,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "618:2:76"
+            },
+            "returnParameters": {
+              "id": 54327,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 54326,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 54328,
+                  "src": "644:7:76",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 54325,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "644:7:76",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "643:9:76"
+            },
+            "scope": 54329,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IPeripheryImmutableState",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 54310,
+          "nodeType": "StructuredDocumentation",
+          "src": "70:199:76",
+          "text": "@title Immutable state\n @notice Functions that return immutable state of the router\n @dev Credit to Uniswap Labs under GPL-2.0-or-later license:\n https://github.com/Uniswap/v3-periphery"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          54329
+        ],
+        "name": "IPeripheryImmutableState",
+        "nameLocation": "279:24:76",
+        "scope": 54330,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 76
+}

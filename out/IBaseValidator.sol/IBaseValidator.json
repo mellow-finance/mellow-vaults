@@ -1,0 +1,731 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "commitValidatorParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IBaseValidator.ValidatorParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageValidatorParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedValidatorParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IBaseValidator.ValidatorParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedValidatorParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "validatorParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IBaseValidator.ValidatorParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "commitValidatorParams()": "e6ab042c",
+    "stageValidatorParams((address))": "47c0a4ed",
+    "stagedValidatorParams()": "4c39da1b",
+    "stagedValidatorParamsTimestamp()": "0768b496",
+    "validatorParams()": "57acc302"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"commitValidatorParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"}],\"internalType\":\"struct IBaseValidator.ValidatorParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageValidatorParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedValidatorParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"}],\"internalType\":\"struct IBaseValidator.ValidatorParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedValidatorParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"validatorParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"}],\"internalType\":\"struct IBaseValidator.ValidatorParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"stageValidatorParams((address))\":{\"params\":{\"newParams\":\"New params for commit\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitValidatorParams()\":{\"notice\":\"Commit new validator params.\"},\"stageValidatorParams((address))\":{\"notice\":\"Stage new validator params for commit.\"},\"stagedValidatorParams()\":{\"notice\":\"Validator params staged to commit.\"},\"stagedValidatorParamsTimestamp()\":{\"notice\":\"Timestamp after which validator params can be committed.\"},\"validatorParams()\":{\"notice\":\"Current validator params.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/validators/IBaseValidator.sol\":\"IBaseValidator\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/validators/IBaseValidator.sol\":{\"keccak256\":\"0x91fa24f9202986d93ef9adf34ba8c17b8b9699ac365a54604abe70d54277a908\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://33f59c4ce1794edbdaf3b4b184e8df3d1dbfab69e87c5ec5c8bda0220d324e11\",\"dweb:/ipfs/QmWstawnPNGrjcmLKZ2Td3gRnK29d5HERF5QevEcLxqx2p\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitValidatorParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IBaseValidator.ValidatorParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageValidatorParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedValidatorParams",
+          "outputs": [
+            {
+              "internalType": "struct IBaseValidator.ValidatorParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedValidatorParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "validatorParams",
+          "outputs": [
+            {
+              "internalType": "struct IBaseValidator.ValidatorParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "stageValidatorParams((address))": {
+            "params": {
+              "newParams": "New params for commit"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitValidatorParams()": {
+            "notice": "Commit new validator params."
+          },
+          "stageValidatorParams((address))": {
+            "notice": "Stage new validator params for commit."
+          },
+          "stagedValidatorParams()": {
+            "notice": "Validator params staged to commit."
+          },
+          "stagedValidatorParamsTimestamp()": {
+            "notice": "Timestamp after which validator params can be committed."
+          },
+          "validatorParams()": {
+            "notice": "Current validator params."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/validators/IBaseValidator.sol": "IBaseValidator"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/validators/IBaseValidator.sol": {
+        "keccak256": "0x91fa24f9202986d93ef9adf34ba8c17b8b9699ac365a54604abe70d54277a908",
+        "urls": [
+          "bzz-raw://33f59c4ce1794edbdaf3b4b184e8df3d1dbfab69e87c5ec5c8bda0220d324e11",
+          "dweb:/ipfs/QmWstawnPNGrjcmLKZ2Td3gRnK29d5HERF5QevEcLxqx2p"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/validators/IBaseValidator.sol",
+    "id": 76072,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IBaseValidator": [
+        76071
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:967:323",
+    "nodes": [
+      {
+        "id": 76034,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:323",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 76035,
+        "nodeType": "ImportDirective",
+        "src": "57:36:323",
+        "nodes": [],
+        "absolutePath": "src/interfaces/IProtocolGovernance.sol",
+        "file": "../IProtocolGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76072,
+        "sourceUnit": 52869,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76071,
+        "nodeType": "ContractDefinition",
+        "src": "95:903:323",
+        "nodes": [
+          {
+            "id": 76039,
+            "nodeType": "StructDefinition",
+            "src": "230:78:323",
+            "nodes": [],
+            "canonicalName": "IBaseValidator.ValidatorParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 76038,
+                "mutability": "mutable",
+                "name": "protocolGovernance",
+                "nameLocation": "283:18:323",
+                "nodeType": "VariableDeclaration",
+                "scope": 76039,
+                "src": "263:38:323",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                  "typeString": "contract IProtocolGovernance"
+                },
+                "typeName": {
+                  "id": 76037,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 76036,
+                    "name": "IProtocolGovernance",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 52868,
+                    "src": "263:19:323"
+                  },
+                  "referencedDeclaration": 52868,
+                  "src": "263:19:323",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IProtocolGovernance_$52868",
+                    "typeString": "contract IProtocolGovernance"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "ValidatorParams",
+            "nameLocation": "237:15:323",
+            "scope": 76071,
+            "visibility": "public"
+          },
+          {
+            "id": 76046,
+            "nodeType": "FunctionDefinition",
+            "src": "365:80:323",
+            "nodes": [],
+            "documentation": {
+              "id": 76040,
+              "nodeType": "StructuredDocumentation",
+              "src": "314:46:323",
+              "text": "@notice Validator params staged to commit."
+            },
+            "functionSelector": "4c39da1b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedValidatorParams",
+            "nameLocation": "374:21:323",
+            "parameters": {
+              "id": 76041,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "395:2:323"
+            },
+            "returnParameters": {
+              "id": 76045,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76044,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76046,
+                  "src": "421:22:323",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_ValidatorParams_$76039_memory_ptr",
+                    "typeString": "struct IBaseValidator.ValidatorParams"
+                  },
+                  "typeName": {
+                    "id": 76043,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76042,
+                      "name": "ValidatorParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 76039,
+                      "src": "421:15:323"
+                    },
+                    "referencedDeclaration": 76039,
+                    "src": "421:15:323",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_ValidatorParams_$76039_storage_ptr",
+                      "typeString": "struct IBaseValidator.ValidatorParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "420:24:323"
+            },
+            "scope": 76071,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76052,
+            "nodeType": "FunctionDefinition",
+            "src": "524:74:323",
+            "nodes": [],
+            "documentation": {
+              "id": 76047,
+              "nodeType": "StructuredDocumentation",
+              "src": "451:68:323",
+              "text": "@notice Timestamp after which validator params can be committed."
+            },
+            "functionSelector": "0768b496",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedValidatorParamsTimestamp",
+            "nameLocation": "533:30:323",
+            "parameters": {
+              "id": 76048,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "563:2:323"
+            },
+            "returnParameters": {
+              "id": 76051,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76050,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76052,
+                  "src": "589:7:323",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76049,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "589:7:323",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "588:9:323"
+            },
+            "scope": 76071,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76059,
+            "nodeType": "FunctionDefinition",
+            "src": "646:74:323",
+            "nodes": [],
+            "documentation": {
+              "id": 76053,
+              "nodeType": "StructuredDocumentation",
+              "src": "604:37:323",
+              "text": "@notice Current validator params."
+            },
+            "functionSelector": "57acc302",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "validatorParams",
+            "nameLocation": "655:15:323",
+            "parameters": {
+              "id": 76054,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "670:2:323"
+            },
+            "returnParameters": {
+              "id": 76058,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76057,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76059,
+                  "src": "696:22:323",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_ValidatorParams_$76039_memory_ptr",
+                    "typeString": "struct IBaseValidator.ValidatorParams"
+                  },
+                  "typeName": {
+                    "id": 76056,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76055,
+                      "name": "ValidatorParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 76039,
+                      "src": "696:15:323"
+                    },
+                    "referencedDeclaration": 76039,
+                    "src": "696:15:323",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_ValidatorParams_$76039_storage_ptr",
+                      "typeString": "struct IBaseValidator.ValidatorParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "695:24:323"
+            },
+            "scope": 76071,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76066,
+            "nodeType": "FunctionDefinition",
+            "src": "828:75:323",
+            "nodes": [],
+            "documentation": {
+              "id": 76060,
+              "nodeType": "StructuredDocumentation",
+              "src": "726:97:323",
+              "text": "@notice Stage new validator params for commit.\n @param newParams New params for commit"
+            },
+            "functionSelector": "47c0a4ed",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageValidatorParams",
+            "nameLocation": "837:20:323",
+            "parameters": {
+              "id": 76064,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76063,
+                  "mutability": "mutable",
+                  "name": "newParams",
+                  "nameLocation": "883:9:323",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76066,
+                  "src": "858:34:323",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_ValidatorParams_$76039_calldata_ptr",
+                    "typeString": "struct IBaseValidator.ValidatorParams"
+                  },
+                  "typeName": {
+                    "id": 76062,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76061,
+                      "name": "ValidatorParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 76039,
+                      "src": "858:15:323"
+                    },
+                    "referencedDeclaration": 76039,
+                    "src": "858:15:323",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_ValidatorParams_$76039_storage_ptr",
+                      "typeString": "struct IBaseValidator.ValidatorParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "857:36:323"
+            },
+            "returnParameters": {
+              "id": 76065,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "902:0:323"
+            },
+            "scope": 76071,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76070,
+            "nodeType": "FunctionDefinition",
+            "src": "954:42:323",
+            "nodes": [],
+            "documentation": {
+              "id": 76067,
+              "nodeType": "StructuredDocumentation",
+              "src": "909:40:323",
+              "text": "@notice Commit new validator params."
+            },
+            "functionSelector": "e6ab042c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitValidatorParams",
+            "nameLocation": "963:21:323",
+            "parameters": {
+              "id": 76068,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "984:2:323"
+            },
+            "returnParameters": {
+              "id": 76069,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "995:0:323"
+            },
+            "scope": 76071,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IBaseValidator",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          76071
+        ],
+        "name": "IBaseValidator",
+        "nameLocation": "105:14:323",
+        "scope": 76072,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 323
+}

@@ -1,0 +1,430 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "getArbitrumFees",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "gasLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "gasPrice",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxSubmissionCost",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "gasLimit",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "gasPrice",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "maxSubmissionCost",
+          "type": "uint64"
+        }
+      ],
+      "name": "setArbitrumFees",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getArbitrumFees()": "ac8288c0",
+    "setArbitrumFees(uint64,uint64,uint64)": "e9bde604"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"getArbitrumFees\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"gasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"gasPrice\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxSubmissionCost\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"gasLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"gasPrice\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"maxSubmissionCost\",\"type\":\"uint64\"}],\"name\":\"setArbitrumFees\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IArbitrumFeeProvider.sol\":\"IArbitrumFeeProvider\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IArbitrumFeeProvider.sol\":{\"keccak256\":\"0x2070822fc602a62dde7a97ea1ad2ea69c3d1caf3b5c90db60da665f54cf5177f\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://2c740108b80ee574f4441986dc0d461414c7e1652516b5e362c341f6362b3a7e\",\"dweb:/ipfs/QmbL4rkeUwoS8RNWK4cjGnQRPfouHrGvPJYx1fS2mdru1a\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getArbitrumFees",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "gasLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "gasPrice",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxSubmissionCost",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint64",
+              "name": "gasLimit",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "gasPrice",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "maxSubmissionCost",
+              "type": "uint64"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setArbitrumFees"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IArbitrumFeeProvider.sol": "IArbitrumFeeProvider"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IArbitrumFeeProvider.sol": {
+        "keccak256": "0x2070822fc602a62dde7a97ea1ad2ea69c3d1caf3b5c90db60da665f54cf5177f",
+        "urls": [
+          "bzz-raw://2c740108b80ee574f4441986dc0d461414c7e1652516b5e362c341f6362b3a7e",
+          "dweb:/ipfs/QmbL4rkeUwoS8RNWK4cjGnQRPfouHrGvPJYx1fS2mdru1a"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IArbitrumFeeProvider.sol",
+    "id": 56438,
+    "exportedSymbols": {
+      "IArbitrumFeeProvider": [
+        56437
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:278:94",
+    "nodes": [
+      {
+        "id": 56418,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:94",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 56437,
+        "nodeType": "ContractDefinition",
+        "src": "713:252:94",
+        "nodes": [
+          {
+            "id": 56427,
+            "nodeType": "FunctionDefinition",
+            "src": "750:113:94",
+            "nodes": [],
+            "functionSelector": "ac8288c0",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getArbitrumFees",
+            "nameLocation": "759:15:94",
+            "parameters": {
+              "id": 56419,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "774:2:94"
+            },
+            "returnParameters": {
+              "id": 56426,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56421,
+                  "mutability": "mutable",
+                  "name": "gasLimit",
+                  "nameLocation": "808:8:94",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56427,
+                  "src": "800:16:94",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56420,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "800:7:94",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56423,
+                  "mutability": "mutable",
+                  "name": "gasPrice",
+                  "nameLocation": "826:8:94",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56427,
+                  "src": "818:16:94",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56422,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "818:7:94",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56425,
+                  "mutability": "mutable",
+                  "name": "maxSubmissionCost",
+                  "nameLocation": "844:17:94",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56427,
+                  "src": "836:25:94",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56424,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "836:7:94",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "799:63:94"
+            },
+            "scope": 56437,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56436,
+            "nodeType": "FunctionDefinition",
+            "src": "869:94:94",
+            "nodes": [],
+            "functionSelector": "e9bde604",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setArbitrumFees",
+            "nameLocation": "878:15:94",
+            "parameters": {
+              "id": 56434,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56429,
+                  "mutability": "mutable",
+                  "name": "gasLimit",
+                  "nameLocation": "901:8:94",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56436,
+                  "src": "894:15:94",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint64",
+                    "typeString": "uint64"
+                  },
+                  "typeName": {
+                    "id": 56428,
+                    "name": "uint64",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "894:6:94",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint64",
+                      "typeString": "uint64"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56431,
+                  "mutability": "mutable",
+                  "name": "gasPrice",
+                  "nameLocation": "918:8:94",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56436,
+                  "src": "911:15:94",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint64",
+                    "typeString": "uint64"
+                  },
+                  "typeName": {
+                    "id": 56430,
+                    "name": "uint64",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "911:6:94",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint64",
+                      "typeString": "uint64"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56433,
+                  "mutability": "mutable",
+                  "name": "maxSubmissionCost",
+                  "nameLocation": "935:17:94",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56436,
+                  "src": "928:24:94",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint64",
+                    "typeString": "uint64"
+                  },
+                  "typeName": {
+                    "id": 56432,
+                    "name": "uint64",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "928:6:94",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint64",
+                      "typeString": "uint64"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "893:60:94"
+            },
+            "returnParameters": {
+              "id": 56435,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "962:0:94"
+            },
+            "scope": 56437,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IArbitrumFeeProvider",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          56437
+        ],
+        "name": "IArbitrumFeeProvider",
+        "nameLocation": "723:20:94",
+        "scope": 56438,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 94
+}

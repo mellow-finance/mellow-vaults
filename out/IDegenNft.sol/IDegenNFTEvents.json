@@ -1,0 +1,1050 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "NewCreditFacadeAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "NewCreditFacadeRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "NewMinterSet",
+      "type": "event"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"NewCreditFacadeAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"NewCreditFacadeRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"NewMinterSet\",\"type\":\"event\"}],\"devdoc\":{\"events\":{\"NewCreditFacadeAdded(address)\":{\"details\":\"Minted each time when new credit facade added\"},\"NewCreditFacadeRemoved(address)\":{\"details\":\"Minted each time when new credit facade added\"},\"NewMinterSet(address)\":{\"details\":\"Minted when new minter set\"}},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/IDegenNft.sol\":\"IDegenNFTEvents\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol\":{\"keccak256\":\"0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146\",\"dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IDegenNft.sol\":{\"keccak256\":\"0x12d47644d7b37769fb1b9646b1f8cbae2e79d0f4898c2688650d74c2ddcc1007\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://88fd0bd16b2ec5f3a4e5768424b3940d34f964848568420c1e610338836ddab3\",\"dweb:/ipfs/QmPpQiBRKUiLnDAWCUpPLzwbpA3MtUiFLqowt3q6BM1kRA\"]},\"src/interfaces/external/gearbox/helpers/IVersion.sol\":{\"keccak256\":\"0x4ca08c37d06931a13902066f6476b1de63d831e5898f09da0cc3b3de6d168aa6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://179e1d106bb9b5e0928e1b3a79c0e6dc7ded68946434a6d0640f0ef7f78b481a\",\"dweb:/ipfs/QmVqvWpeCq9qF5utQ7xUXGAxuFagd5JCyQi7KWX5iQ98ug\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "NewCreditFacadeAdded",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "NewCreditFacadeRemoved",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "NewMinterSet",
+          "anonymous": false
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/IDegenNft.sol": "IDegenNFTEvents"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+        "keccak256": "0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9",
+        "urls": [
+          "bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146",
+          "dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IDegenNft.sol": {
+        "keccak256": "0x12d47644d7b37769fb1b9646b1f8cbae2e79d0f4898c2688650d74c2ddcc1007",
+        "urls": [
+          "bzz-raw://88fd0bd16b2ec5f3a4e5768424b3940d34f964848568420c1e610338836ddab3",
+          "dweb:/ipfs/QmPpQiBRKUiLnDAWCUpPLzwbpA3MtUiFLqowt3q6BM1kRA"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/gearbox/helpers/IVersion.sol": {
+        "keccak256": "0x4ca08c37d06931a13902066f6476b1de63d831e5898f09da0cc3b3de6d168aa6",
+        "urls": [
+          "bzz-raw://179e1d106bb9b5e0928e1b3a79c0e6dc7ded68946434a6d0640f0ef7f78b481a",
+          "dweb:/ipfs/QmVqvWpeCq9qF5utQ7xUXGAxuFagd5JCyQi7KWX5iQ98ug"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/IDegenNft.sol",
+    "id": 52606,
+    "exportedSymbols": {
+      "IDegenNFT": [
+        52605
+      ],
+      "IDegenNFTEvents": [
+        52557
+      ],
+      "IDegenNFTExceptions": [
+        52541
+      ],
+      "IERC721Metadata": [
+        46763
+      ],
+      "IVersion": [
+        65465
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "123:2012:61",
+    "nodes": [
+      {
+        "id": 52524,
+        "nodeType": "PragmaDirective",
+        "src": "123:23:61",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 52526,
+        "nodeType": "ImportDirective",
+        "src": "147:65:61",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/gearbox/helpers/IVersion.sol",
+        "file": "./external/gearbox/helpers/IVersion.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 52606,
+        "sourceUnit": 65466,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 52525,
+              "name": "IVersion",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "src": "155:8:61",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 52528,
+        "nodeType": "ImportDirective",
+        "src": "213:100:61",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol",
+        "file": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 52606,
+        "sourceUnit": 46764,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 52527,
+              "name": "IERC721Metadata",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "src": "221:15:61",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 52541,
+        "nodeType": "ContractDefinition",
+        "src": "315:552:61",
+        "nodes": [
+          {
+            "id": 52531,
+            "nodeType": "ErrorDefinition",
+            "src": "435:48:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52529,
+              "nodeType": "StructuredDocumentation",
+              "src": "351:79:61",
+              "text": "@dev Thrown if an access-restricted function was called by non-CreditFacade"
+            },
+            "name": "CreditFacadeOrConfiguratorOnlyException",
+            "nameLocation": "441:39:61",
+            "parameters": {
+              "id": 52530,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "480:2:61"
+            }
+          },
+          {
+            "id": 52534,
+            "nodeType": "ErrorDefinition",
+            "src": "567:28:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52532,
+              "nodeType": "StructuredDocumentation",
+              "src": "489:73:61",
+              "text": "@dev Thrown if an access-restricted function was called by non-minter"
+            },
+            "name": "MinterOnlyException",
+            "nameLocation": "573:19:61",
+            "parameters": {
+              "id": 52533,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "592:2:61"
+            }
+          },
+          {
+            "id": 52537,
+            "nodeType": "ErrorDefinition",
+            "src": "691:37:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52535,
+              "nodeType": "StructuredDocumentation",
+              "src": "601:85:61",
+              "text": "@dev Thrown if trying to add a burner address that is not a correct Credit Facade"
+            },
+            "name": "InvalidCreditFacadeException",
+            "nameLocation": "697:28:61",
+            "parameters": {
+              "id": 52536,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "725:2:61"
+            }
+          },
+          {
+            "id": 52540,
+            "nodeType": "ErrorDefinition",
+            "src": "828:37:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52538,
+              "nodeType": "StructuredDocumentation",
+              "src": "734:89:61",
+              "text": "@dev Thrown if the account's balance is not sufficient for an action (usually a burn)"
+            },
+            "name": "InsufficientBalanceException",
+            "nameLocation": "834:28:61",
+            "parameters": {
+              "id": 52539,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "862:2:61"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IDegenNFTExceptions",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          52541
+        ],
+        "name": "IDegenNFTExceptions",
+        "nameLocation": "325:19:61",
+        "scope": 52606,
+        "usedErrors": [
+          52531,
+          52534,
+          52537,
+          52540
+        ]
+      },
+      {
+        "id": 52557,
+        "nodeType": "ContractDefinition",
+        "src": "869:330:61",
+        "nodes": [
+          {
+            "id": 52546,
+            "nodeType": "EventDefinition",
+            "src": "941:36:61",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 52542,
+              "nodeType": "StructuredDocumentation",
+              "src": "901:35:61",
+              "text": "@dev Minted when new minter set"
+            },
+            "name": "NewMinterSet",
+            "nameLocation": "947:12:61",
+            "parameters": {
+              "id": 52545,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52544,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52546,
+                  "src": "960:15:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52543,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "960:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "959:17:61"
+            }
+          },
+          {
+            "id": 52551,
+            "nodeType": "EventDefinition",
+            "src": "1042:44:61",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 52547,
+              "nodeType": "StructuredDocumentation",
+              "src": "983:54:61",
+              "text": "@dev Minted each time when new credit facade added"
+            },
+            "name": "NewCreditFacadeAdded",
+            "nameLocation": "1048:20:61",
+            "parameters": {
+              "id": 52550,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52549,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52551,
+                  "src": "1069:15:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52548,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1069:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1068:17:61"
+            }
+          },
+          {
+            "id": 52556,
+            "nodeType": "EventDefinition",
+            "src": "1151:46:61",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 52552,
+              "nodeType": "StructuredDocumentation",
+              "src": "1092:54:61",
+              "text": "@dev Minted each time when new credit facade added"
+            },
+            "name": "NewCreditFacadeRemoved",
+            "nameLocation": "1157:22:61",
+            "parameters": {
+              "id": 52555,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52554,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52556,
+                  "src": "1180:15:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52553,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1180:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1179:17:61"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IDegenNFTEvents",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          52557
+        ],
+        "name": "IDegenNFTEvents",
+        "nameLocation": "879:15:61",
+        "scope": 52606,
+        "usedErrors": []
+      },
+      {
+        "id": 52605,
+        "nodeType": "ContractDefinition",
+        "src": "1201:933:61",
+        "nodes": [
+          {
+            "id": 52571,
+            "nodeType": "FunctionDefinition",
+            "src": "1337:50:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52566,
+              "nodeType": "StructuredDocumentation",
+              "src": "1294:38:61",
+              "text": "@dev address of the current minter"
+            },
+            "functionSelector": "07546172",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "minter",
+            "nameLocation": "1346:6:61",
+            "parameters": {
+              "id": 52567,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1352:2:61"
+            },
+            "returnParameters": {
+              "id": 52570,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52569,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52571,
+                  "src": "1378:7:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52568,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1378:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1377:9:61"
+            },
+            "scope": 52605,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52577,
+            "nodeType": "FunctionDefinition",
+            "src": "1459:55:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52572,
+              "nodeType": "StructuredDocumentation",
+              "src": "1393:61:61",
+              "text": "@dev Stores the total number of tokens on holder accounts"
+            },
+            "functionSelector": "18160ddd",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "totalSupply",
+            "nameLocation": "1468:11:61",
+            "parameters": {
+              "id": 52573,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1479:2:61"
+            },
+            "returnParameters": {
+              "id": 52576,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52575,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52577,
+                  "src": "1505:7:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52574,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1505:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1504:9:61"
+            },
+            "scope": 52605,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52583,
+            "nodeType": "FunctionDefinition",
+            "src": "1570:57:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52578,
+              "nodeType": "StructuredDocumentation",
+              "src": "1520:45:61",
+              "text": "@dev Stores the base URI for NFT metadata"
+            },
+            "functionSelector": "6c0360eb",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "baseURI",
+            "nameLocation": "1579:7:61",
+            "parameters": {
+              "id": 52579,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1586:2:61"
+            },
+            "returnParameters": {
+              "id": 52582,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52581,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52583,
+                  "src": "1612:13:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 52580,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1612:6:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1611:15:61"
+            },
+            "scope": 52605,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52591,
+            "nodeType": "FunctionDefinition",
+            "src": "1798:51:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52584,
+              "nodeType": "StructuredDocumentation",
+              "src": "1633:160:61",
+              "text": "@dev Mints a specified amount of tokens to the address\n @param to Address the tokens are minted to\n @param amount The number of tokens to mint"
+            },
+            "functionSelector": "40c10f19",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "mint",
+            "nameLocation": "1807:4:61",
+            "parameters": {
+              "id": 52589,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52586,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "1820:2:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52591,
+                  "src": "1812:10:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52585,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1812:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 52588,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "1832:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52591,
+                  "src": "1824:14:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52587,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1824:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1811:28:61"
+            },
+            "returnParameters": {
+              "id": 52590,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1848:0:61"
+            },
+            "scope": 52605,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52599,
+            "nodeType": "FunctionDefinition",
+            "src": "2028:53:61",
+            "nodes": [],
+            "documentation": {
+              "id": 52592,
+              "nodeType": "StructuredDocumentation",
+              "src": "1855:168:61",
+              "text": "@dev Burns a number of tokens from a specified address\n @param from The address a token will be burnt from\n @param amount The number of tokens to burn"
+            },
+            "functionSelector": "9dc29fac",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "burn",
+            "nameLocation": "2037:4:61",
+            "parameters": {
+              "id": 52597,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52594,
+                  "mutability": "mutable",
+                  "name": "from",
+                  "nameLocation": "2050:4:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52599,
+                  "src": "2042:12:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52593,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2042:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 52596,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "2064:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52599,
+                  "src": "2056:14:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 52595,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2056:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2041:30:61"
+            },
+            "returnParameters": {
+              "id": 52598,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2080:0:61"
+            },
+            "scope": 52605,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 52604,
+            "nodeType": "FunctionDefinition",
+            "src": "2087:45:61",
+            "nodes": [],
+            "functionSelector": "fca3b5aa",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setMinter",
+            "nameLocation": "2096:9:61",
+            "parameters": {
+              "id": 52602,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 52601,
+                  "mutability": "mutable",
+                  "name": "minter_",
+                  "nameLocation": "2114:7:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 52604,
+                  "src": "2106:15:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 52600,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2106:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2105:17:61"
+            },
+            "returnParameters": {
+              "id": 52603,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2131:0:61"
+            },
+            "scope": 52605,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 52558,
+              "name": "IDegenNFTExceptions",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 52541,
+              "src": "1224:19:61"
+            },
+            "id": 52559,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1224:19:61"
+          },
+          {
+            "baseName": {
+              "id": 52560,
+              "name": "IDegenNFTEvents",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 52557,
+              "src": "1245:15:61"
+            },
+            "id": 52561,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1245:15:61"
+          },
+          {
+            "baseName": {
+              "id": 52562,
+              "name": "IVersion",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 65465,
+              "src": "1262:8:61"
+            },
+            "id": 52563,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1262:8:61"
+          },
+          {
+            "baseName": {
+              "id": 52564,
+              "name": "IERC721Metadata",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 46763,
+              "src": "1272:15:61"
+            },
+            "id": 52565,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1272:15:61"
+          }
+        ],
+        "canonicalName": "IDegenNFT",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          52605,
+          46763,
+          46687,
+          48073,
+          65465,
+          52557,
+          52541
+        ],
+        "name": "IDegenNFT",
+        "nameLocation": "1211:9:61",
+        "scope": 52606,
+        "usedErrors": [
+          52531,
+          52534,
+          52537,
+          52540
+        ]
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 61
+}

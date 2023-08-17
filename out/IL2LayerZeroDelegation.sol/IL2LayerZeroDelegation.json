@@ -1,0 +1,273 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "onVeBalBridged",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "onVeBalSupplyUpdate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "onVeBalBridged(address)": "df130bfe",
+    "onVeBalSupplyUpdate()": "96345fb5"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"onVeBalBridged\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"onVeBalSupplyUpdate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"onVeBalBridged(address)\":{\"params\":{\"user\":\"The user whose veBAL balance was updated.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"onVeBalBridged(address)\":{\"notice\":\"Called whenever the veBAL balance of a user is updated in a L2 chain.\"},\"onVeBalSupplyUpdate()\":{\"notice\":\"Called whenever the total veBAL supply is updated in a L2 chain.\"}},\"notice\":\"Minimal hook interface to be called whenever the veBAL balance of a user is updated in a L2 chain.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IL2LayerZeroDelegation.sol\":\"IL2LayerZeroDelegation\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IL2LayerZeroDelegation.sol\":{\"keccak256\":\"0xf17e6d0907187683d5cb2052e7baabc4483798b83f38f473045763f8512ad41f\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://17d691ebab47e017958e3f4b0abe03188f3024409738ca57e49c58e9a527ad5d\",\"dweb:/ipfs/QmbPKYgdR4L7TkQtaxrAm1t4LNUe6dfQaARW6swt9stw59\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onVeBalBridged"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onVeBalSupplyUpdate"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "onVeBalBridged(address)": {
+            "params": {
+              "user": "The user whose veBAL balance was updated."
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "onVeBalBridged(address)": {
+            "notice": "Called whenever the veBAL balance of a user is updated in a L2 chain."
+          },
+          "onVeBalSupplyUpdate()": {
+            "notice": "Called whenever the total veBAL supply is updated in a L2 chain."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IL2LayerZeroDelegation.sol": "IL2LayerZeroDelegation"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IL2LayerZeroDelegation.sol": {
+        "keccak256": "0xf17e6d0907187683d5cb2052e7baabc4483798b83f38f473045763f8512ad41f",
+        "urls": [
+          "bzz-raw://17d691ebab47e017958e3f4b0abe03188f3024409738ca57e49c58e9a527ad5d",
+          "dweb:/ipfs/QmbPKYgdR4L7TkQtaxrAm1t4LNUe6dfQaARW6swt9stw59"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IL2LayerZeroDelegation.sol",
+    "id": 57306,
+    "exportedSymbols": {
+      "IL2LayerZeroDelegation": [
+        57305
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:536:107",
+    "nodes": [
+      {
+        "id": 57293,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:107",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 57305,
+        "nodeType": "ContractDefinition",
+        "src": "831:392:107",
+        "nodes": [
+          {
+            "id": 57300,
+            "nodeType": "FunctionDefinition",
+            "src": "1032:47:107",
+            "nodes": [],
+            "documentation": {
+              "id": 57295,
+              "nodeType": "StructuredDocumentation",
+              "src": "870:157:107",
+              "text": " @notice Called whenever the veBAL balance of a user is updated in a L2 chain.\n @param user The user whose veBAL balance was updated."
+            },
+            "functionSelector": "df130bfe",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "onVeBalBridged",
+            "nameLocation": "1041:14:107",
+            "parameters": {
+              "id": 57298,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57297,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1064:4:107",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57300,
+                  "src": "1056:12:107",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 57296,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1056:7:107",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1055:14:107"
+            },
+            "returnParameters": {
+              "id": 57299,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1078:0:107"
+            },
+            "scope": 57305,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 57304,
+            "nodeType": "FunctionDefinition",
+            "src": "1181:40:107",
+            "nodes": [],
+            "documentation": {
+              "id": 57301,
+              "nodeType": "StructuredDocumentation",
+              "src": "1085:91:107",
+              "text": " @notice Called whenever the total veBAL supply is updated in a L2 chain."
+            },
+            "functionSelector": "96345fb5",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "onVeBalSupplyUpdate",
+            "nameLocation": "1190:19:107",
+            "parameters": {
+              "id": 57302,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1209:2:107"
+            },
+            "returnParameters": {
+              "id": 57303,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1220:0:107"
+            },
+            "scope": 57305,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IL2LayerZeroDelegation",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 57294,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:117:107",
+          "text": " @notice Minimal hook interface to be called whenever the veBAL balance of a user is updated in a L2 chain."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          57305
+        ],
+        "name": "IL2LayerZeroDelegation",
+        "nameLocation": "841:22:107",
+        "scope": 57306,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 107
+}

@@ -1,0 +1,1647 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "commitDelayedProtocolParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "commitInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        }
+      ],
+      "name": "createVault",
+      "outputs": [
+        {
+          "internalType": "contract IYearnVault",
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IYearnProtocolVaultRegistry",
+              "name": "yearnVaultRegistry",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IYearnVaultGovernance.DelayedProtocolParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "yToken",
+          "type": "address"
+        }
+      ],
+      "name": "setYTokenForToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IYearnProtocolVaultRegistry",
+              "name": "yearnVaultRegistry",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IYearnVaultGovernance.DelayedProtocolParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageDelayedProtocolParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedDelayedProtocolParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IYearnProtocolVaultRegistry",
+              "name": "yearnVaultRegistry",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IYearnVaultGovernance.DelayedProtocolParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedInternalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "yTokenForToken",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "commitDelayedProtocolParams()": "98347a5d",
+    "commitInternalParams()": "d4a07d34",
+    "createVault(address[],address)": "0fb27e4d",
+    "delayedProtocolParams()": "d34cc380",
+    "delayedProtocolParamsTimestamp()": "e4af6e79",
+    "delayedProtocolPerVaultParamsTimestamp(uint256)": "511ce798",
+    "delayedStrategyParamsTimestamp(uint256)": "6707acee",
+    "internalParams()": "7ac46fbb",
+    "internalParamsTimestamp()": "1c7f4c73",
+    "setYTokenForToken(address,address)": "76acd782",
+    "stageDelayedProtocolParams((address))": "b32c12d8",
+    "stageInternalParams((address,address,address))": "09946538",
+    "stagedDelayedProtocolParams()": "c2cbdc67",
+    "stagedInternalParams()": "86c6be3e",
+    "yTokenForToken(address)": "56c9ff9a"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"commitDelayedProtocolParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"commitInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"owner_\",\"type\":\"address\"}],\"name\":\"createVault\",\"outputs\":[{\"internalType\":\"contract IYearnVault\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IYearnProtocolVaultRegistry\",\"name\":\"yearnVaultRegistry\",\"type\":\"address\"}],\"internalType\":\"struct IYearnVaultGovernance.DelayedProtocolParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"yToken\",\"type\":\"address\"}],\"name\":\"setYTokenForToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IYearnProtocolVaultRegistry\",\"name\":\"yearnVaultRegistry\",\"type\":\"address\"}],\"internalType\":\"struct IYearnVaultGovernance.DelayedProtocolParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"stageDelayedProtocolParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedDelayedProtocolParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IYearnProtocolVaultRegistry\",\"name\":\"yearnVaultRegistry\",\"type\":\"address\"}],\"internalType\":\"struct IYearnVaultGovernance.DelayedProtocolParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedInternalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"yTokenForToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"createVault(address[],address)\":{\"params\":{\"owner_\":\"Owner of the vault NFT\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"delayedStrategyParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"setYTokenForToken(address,address)\":{\"details\":\"Can only be called by Protocol Admin\",\"params\":{\"token\":\"ERC-20 token for yToken\",\"yToken\":\"for ERC-20 token\"}},\"stageDelayedProtocolParams((address))\":{\"details\":\"Can only be called after delayedProtocolParamsTimestamp.\",\"params\":{\"params\":\"New params\"}},\"stageInternalParams((address,address,address))\":{\"params\":{\"newParams\":\"New Internal Params\"}},\"stagedInternalParams()\":{\"details\":\"The Internal Params could be committed after internalParamsTimestamp\"},\"yTokenForToken(address)\":{\"params\":{\"token\":\"ERC-20 token for the yToken\"},\"returns\":{\"_0\":\"If there's a yToken returns its address, otherwise returns 0\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitDelayedProtocolParams()\":{\"notice\":\"Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"commitInternalParams()\":{\"notice\":\"Commit staged Internal Params.\"},\"createVault(address[],address)\":{\"notice\":\"Deploys a new vault.\"},\"delayedProtocolParams()\":{\"notice\":\"Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"delayedProtocolParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.\"},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\"},\"delayedStrategyParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\"},\"internalParams()\":{\"notice\":\"Internal Params of the contract.\"},\"internalParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Internal Params could be committed.\"},\"setYTokenForToken(address,address)\":{\"notice\":\"Sets the manual override for yToken vaults map\"},\"stageDelayedProtocolParams((address))\":{\"notice\":\"Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\"},\"stageInternalParams((address,address,address))\":{\"notice\":\"Stage new Internal Params.\"},\"stagedDelayedProtocolParams()\":{\"notice\":\"Delayed Protocol Params staged for commit after delay.\"},\"stagedInternalParams()\":{\"notice\":\"Staged new Internal Params.\"},\"yTokenForToken(address)\":{\"notice\":\"Determines a corresponding Yearn vault for token\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IYearnVaultGovernance.sol\":\"IYearnVaultGovernance\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol\":{\"keccak256\":\"0xe4a29ef08a83d0fd955b7146f3be07367a54f590525aaeea738e3fc8bb140ee5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5c33bfd5dc94b66306bb54e6737639011a90c751a57d0db355937ac34932b462\",\"dweb:/ipfs/QmWEDGw64oQMJfUVPy293bQyj5fudspwuaai3eqNMHjZ4T\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]},\"src/interfaces/vaults/IYearnVault.sol\":{\"keccak256\":\"0x7711da14c4f708795d89da2e64ea1e513925dc44d4a01c7ab50fcfde709d0927\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a76af3af77190f0a7c1576dba3d38408009af3bb58afac60f5f19c089af523e8\",\"dweb:/ipfs/QmSPkUKE1XHek59WuLhvfYPN2xSFUycF1KpLWPVtgagEku\"]},\"src/interfaces/vaults/IYearnVaultGovernance.sol\":{\"keccak256\":\"0x0a10df252dcc6f9e8c15eb0574a96fc71b3fcf42edf31a4d139ce6533e9641f1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0641ecc8f47536c4119f0adb8c400f82052b90f5ec052d1be44b93fcb7741ba0\",\"dweb:/ipfs/QmWJ5AAMfjTv6KzS9ucGAn369X7DMdQsF1R2WrzZop8k1b\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitDelayedProtocolParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitInternalParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "owner_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "createVault",
+          "outputs": [
+            {
+              "internalType": "contract IYearnVault",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParams",
+          "outputs": [
+            {
+              "internalType": "struct IYearnVaultGovernance.DelayedProtocolParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IYearnProtocolVaultRegistry",
+                  "name": "yearnVaultRegistry",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "yToken",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setYTokenForToken"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IYearnVaultGovernance.DelayedProtocolParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IYearnProtocolVaultRegistry",
+                  "name": "yearnVaultRegistry",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageDelayedProtocolParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedDelayedProtocolParams",
+          "outputs": [
+            {
+              "internalType": "struct IYearnVaultGovernance.DelayedProtocolParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IYearnProtocolVaultRegistry",
+                  "name": "yearnVaultRegistry",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedInternalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "yTokenForToken",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "createVault(address[],address)": {
+            "params": {
+              "owner_": "Owner of the vault NFT",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "setYTokenForToken(address,address)": {
+            "details": "Can only be called by Protocol Admin",
+            "params": {
+              "token": "ERC-20 token for yToken",
+              "yToken": "for ERC-20 token"
+            }
+          },
+          "stageDelayedProtocolParams((address))": {
+            "details": "Can only be called after delayedProtocolParamsTimestamp.",
+            "params": {
+              "params": "New params"
+            }
+          },
+          "stageInternalParams((address,address,address))": {
+            "params": {
+              "newParams": "New Internal Params"
+            }
+          },
+          "stagedInternalParams()": {
+            "details": "The Internal Params could be committed after internalParamsTimestamp"
+          },
+          "yTokenForToken(address)": {
+            "params": {
+              "token": "ERC-20 token for the yToken"
+            },
+            "returns": {
+              "_0": "If there's a yToken returns its address, otherwise returns 0"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitDelayedProtocolParams()": {
+            "notice": "Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "commitInternalParams()": {
+            "notice": "Commit staged Internal Params."
+          },
+          "createVault(address[],address)": {
+            "notice": "Deploys a new vault."
+          },
+          "delayedProtocolParams()": {
+            "notice": "Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "delayedProtocolParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed."
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed."
+          },
+          "internalParams()": {
+            "notice": "Internal Params of the contract."
+          },
+          "internalParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Internal Params could be committed."
+          },
+          "setYTokenForToken(address,address)": {
+            "notice": "Sets the manual override for yToken vaults map"
+          },
+          "stageDelayedProtocolParams((address))": {
+            "notice": "Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+          },
+          "stageInternalParams((address,address,address))": {
+            "notice": "Stage new Internal Params."
+          },
+          "stagedDelayedProtocolParams()": {
+            "notice": "Delayed Protocol Params staged for commit after delay."
+          },
+          "stagedInternalParams()": {
+            "notice": "Staged new Internal Params."
+          },
+          "yTokenForToken(address)": {
+            "notice": "Determines a corresponding Yearn vault for token"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IYearnVaultGovernance.sol": "IYearnVaultGovernance"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol": {
+        "keccak256": "0xe4a29ef08a83d0fd955b7146f3be07367a54f590525aaeea738e3fc8bb140ee5",
+        "urls": [
+          "bzz-raw://5c33bfd5dc94b66306bb54e6737639011a90c751a57d0db355937ac34932b462",
+          "dweb:/ipfs/QmWEDGw64oQMJfUVPy293bQyj5fudspwuaai3eqNMHjZ4T"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IYearnVault.sol": {
+        "keccak256": "0x7711da14c4f708795d89da2e64ea1e513925dc44d4a01c7ab50fcfde709d0927",
+        "urls": [
+          "bzz-raw://a76af3af77190f0a7c1576dba3d38408009af3bb58afac60f5f19c089af523e8",
+          "dweb:/ipfs/QmSPkUKE1XHek59WuLhvfYPN2xSFUycF1KpLWPVtgagEku"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IYearnVaultGovernance.sol": {
+        "keccak256": "0x0a10df252dcc6f9e8c15eb0574a96fc71b3fcf42edf31a4d139ce6533e9641f1",
+        "urls": [
+          "bzz-raw://0641ecc8f47536c4119f0adb8c400f82052b90f5ec052d1be44b93fcb7741ba0",
+          "dweb:/ipfs/QmWJ5AAMfjTv6KzS9ucGAn369X7DMdQsF1R2WrzZop8k1b"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IYearnVaultGovernance.sol",
+    "id": 78791,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "IYearnProtocolVaultRegistry": [
+        75503
+      ],
+      "IYearnVault": [
+        78723
+      ],
+      "IYearnVaultGovernance": [
+        78790
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:2221:359",
+    "nodes": [
+      {
+        "id": 78725,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:359",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 78726,
+        "nodeType": "ImportDirective",
+        "src": "57:59:359",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/yearn/IYearnProtocolVaultRegistry.sol",
+        "file": "../external/yearn/IYearnProtocolVaultRegistry.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78791,
+        "sourceUnit": 75504,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78727,
+        "nodeType": "ImportDirective",
+        "src": "117:32:359",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IVaultGovernance.sol",
+        "file": "./IVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78791,
+        "sourceUnit": 78669,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78728,
+        "nodeType": "ImportDirective",
+        "src": "150:27:359",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IYearnVault.sol",
+        "file": "./IYearnVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78791,
+        "sourceUnit": 78724,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78790,
+        "nodeType": "ContractDefinition",
+        "src": "179:2073:359",
+        "nodes": [
+          {
+            "id": 78734,
+            "nodeType": "StructDefinition",
+            "src": "405:92:359",
+            "nodes": [],
+            "canonicalName": "IYearnVaultGovernance.DelayedProtocolParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 78733,
+                "mutability": "mutable",
+                "name": "yearnVaultRegistry",
+                "nameLocation": "472:18:359",
+                "nodeType": "VariableDeclaration",
+                "scope": 78734,
+                "src": "444:46:359",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IYearnProtocolVaultRegistry_$75503",
+                  "typeString": "contract IYearnProtocolVaultRegistry"
+                },
+                "typeName": {
+                  "id": 78732,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 78731,
+                    "name": "IYearnProtocolVaultRegistry",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 75503,
+                    "src": "444:27:359"
+                  },
+                  "referencedDeclaration": 75503,
+                  "src": "444:27:359",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IYearnProtocolVaultRegistry_$75503",
+                    "typeString": "contract IYearnProtocolVaultRegistry"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelayedProtocolParams",
+            "nameLocation": "412:21:359",
+            "scope": 78790,
+            "visibility": "public"
+          },
+          {
+            "id": 78742,
+            "nodeType": "FunctionDefinition",
+            "src": "694:71:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78735,
+              "nodeType": "StructuredDocumentation",
+              "src": "503:186:359",
+              "text": "@notice Determines a corresponding Yearn vault for token\n @param token ERC-20 token for the yToken\n @return If there's a yToken returns its address, otherwise returns 0"
+            },
+            "functionSelector": "56c9ff9a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "yTokenForToken",
+            "nameLocation": "703:14:359",
+            "parameters": {
+              "id": 78738,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78737,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "726:5:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78742,
+                  "src": "718:13:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78736,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "718:7:359",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "717:15:359"
+            },
+            "returnParameters": {
+              "id": 78741,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78740,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78742,
+                  "src": "756:7:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78739,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "756:7:359",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "755:9:359"
+            },
+            "scope": 78790,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78749,
+            "nodeType": "FunctionDefinition",
+            "src": "842:92:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78743,
+              "nodeType": "StructuredDocumentation",
+              "src": "771:66:359",
+              "text": "@notice Delayed Protocol Params staged for commit after delay."
+            },
+            "functionSelector": "c2cbdc67",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stagedDelayedProtocolParams",
+            "nameLocation": "851:27:359",
+            "parameters": {
+              "id": 78744,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "878:2:359"
+            },
+            "returnParameters": {
+              "id": 78748,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78747,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78749,
+                  "src": "904:28:359",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$78734_memory_ptr",
+                    "typeString": "struct IYearnVaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 78746,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78745,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78734,
+                      "src": "904:21:359"
+                    },
+                    "referencedDeclaration": 78734,
+                    "src": "904:21:359",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$78734_storage_ptr",
+                      "typeString": "struct IYearnVaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "903:30:359"
+            },
+            "scope": 78790,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78756,
+            "nodeType": "FunctionDefinition",
+            "src": "1070:86:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78750,
+              "nodeType": "StructuredDocumentation",
+              "src": "940:125:359",
+              "text": "@notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+            },
+            "functionSelector": "d34cc380",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "delayedProtocolParams",
+            "nameLocation": "1079:21:359",
+            "parameters": {
+              "id": 78751,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1100:2:359"
+            },
+            "returnParameters": {
+              "id": 78755,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78754,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78756,
+                  "src": "1126:28:359",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$78734_memory_ptr",
+                    "typeString": "struct IYearnVaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 78753,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78752,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78734,
+                      "src": "1126:21:359"
+                    },
+                    "referencedDeclaration": 78734,
+                    "src": "1126:21:359",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$78734_storage_ptr",
+                      "typeString": "struct IYearnVaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1125:30:359"
+            },
+            "scope": 78790,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78763,
+            "nodeType": "FunctionDefinition",
+            "src": "1401:84:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78757,
+              "nodeType": "StructuredDocumentation",
+              "src": "1162:234:359",
+              "text": "@notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.\n @dev Can only be called after delayedProtocolParamsTimestamp.\n @param params New params"
+            },
+            "functionSelector": "b32c12d8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stageDelayedProtocolParams",
+            "nameLocation": "1410:26:359",
+            "parameters": {
+              "id": 78761,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78760,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "1468:6:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78763,
+                  "src": "1437:37:359",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_DelayedProtocolParams_$78734_calldata_ptr",
+                    "typeString": "struct IYearnVaultGovernance.DelayedProtocolParams"
+                  },
+                  "typeName": {
+                    "id": 78759,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78758,
+                      "name": "DelayedProtocolParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78734,
+                      "src": "1437:21:359"
+                    },
+                    "referencedDeclaration": 78734,
+                    "src": "1437:21:359",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_DelayedProtocolParams_$78734_storage_ptr",
+                      "typeString": "struct IYearnVaultGovernance.DelayedProtocolParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1436:39:359"
+            },
+            "returnParameters": {
+              "id": 78762,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1484:0:359"
+            },
+            "scope": 78790,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78767,
+            "nodeType": "FunctionDefinition",
+            "src": "1628:48:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78764,
+              "nodeType": "StructuredDocumentation",
+              "src": "1491:132:359",
+              "text": "@notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay."
+            },
+            "functionSelector": "98347a5d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "commitDelayedProtocolParams",
+            "nameLocation": "1637:27:359",
+            "parameters": {
+              "id": 78765,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1664:2:359"
+            },
+            "returnParameters": {
+              "id": 78766,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1675:0:359"
+            },
+            "scope": 78790,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78775,
+            "nodeType": "FunctionDefinition",
+            "src": "1879:67:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78768,
+              "nodeType": "StructuredDocumentation",
+              "src": "1682:192:359",
+              "text": "@notice Sets the manual override for yToken vaults map\n @dev Can only be called by Protocol Admin\n @param token ERC-20 token for yToken\n @param yToken for ERC-20 token"
+            },
+            "functionSelector": "76acd782",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setYTokenForToken",
+            "nameLocation": "1888:17:359",
+            "parameters": {
+              "id": 78773,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78770,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1914:5:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78775,
+                  "src": "1906:13:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78769,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1906:7:359",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78772,
+                  "mutability": "mutable",
+                  "name": "yToken",
+                  "nameLocation": "1929:6:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78775,
+                  "src": "1921:14:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78771,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1921:7:359",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1905:31:359"
+            },
+            "returnParameters": {
+              "id": 78774,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1945:0:359"
+            },
+            "scope": 78790,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78789,
+            "nodeType": "FunctionDefinition",
+            "src": "2110:140:359",
+            "nodes": [],
+            "documentation": {
+              "id": 78776,
+              "nodeType": "StructuredDocumentation",
+              "src": "1952:153:359",
+              "text": "@notice Deploys a new vault.\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault\n @param owner_ Owner of the vault NFT"
+            },
+            "functionSelector": "0fb27e4d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createVault",
+            "nameLocation": "2119:11:359",
+            "parameters": {
+              "id": 78782,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78779,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "2157:12:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78789,
+                  "src": "2140:29:359",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 78777,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2140:7:359",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 78778,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2140:9:359",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78781,
+                  "mutability": "mutable",
+                  "name": "owner_",
+                  "nameLocation": "2187:6:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78789,
+                  "src": "2179:14:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 78780,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2179:7:359",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2130:69:359"
+            },
+            "returnParameters": {
+              "id": 78788,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78785,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "2230:5:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78789,
+                  "src": "2218:17:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IYearnVault_$78723",
+                    "typeString": "contract IYearnVault"
+                  },
+                  "typeName": {
+                    "id": 78784,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 78783,
+                      "name": "IYearnVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 78723,
+                      "src": "2218:11:359"
+                    },
+                    "referencedDeclaration": 78723,
+                    "src": "2218:11:359",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IYearnVault_$78723",
+                      "typeString": "contract IYearnVault"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78787,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "2245:3:359",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78789,
+                  "src": "2237:11:359",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78786,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2237:7:359",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2217:32:359"
+            },
+            "scope": 78790,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 78729,
+              "name": "IVaultGovernance",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 78668,
+              "src": "214:16:359"
+            },
+            "id": 78730,
+            "nodeType": "InheritanceSpecifier",
+            "src": "214:16:359"
+          }
+        ],
+        "canonicalName": "IYearnVaultGovernance",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          78790,
+          78668
+        ],
+        "name": "IYearnVaultGovernance",
+        "nameLocation": "189:21:359",
+        "scope": 78791,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 359
+}

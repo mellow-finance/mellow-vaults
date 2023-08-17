@@ -1,0 +1,1620 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "int24",
+          "name": "tickLower",
+          "type": "int24"
+        },
+        {
+          "indexed": true,
+          "internalType": "int24",
+          "name": "tickUpper",
+          "type": "int24"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "qty",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty1",
+          "type": "uint256"
+        }
+      ],
+      "name": "Burn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty1",
+          "type": "uint256"
+        }
+      ],
+      "name": "BurnRTokens",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty1",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "paid0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "paid1",
+          "type": "uint256"
+        }
+      ],
+      "name": "Flash",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint160",
+          "name": "sqrtP",
+          "type": "uint160"
+        },
+        {
+          "indexed": false,
+          "internalType": "int24",
+          "name": "tick",
+          "type": "int24"
+        }
+      ],
+      "name": "Initialize",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "int24",
+          "name": "tickLower",
+          "type": "int24"
+        },
+        {
+          "indexed": true,
+          "internalType": "int24",
+          "name": "tickUpper",
+          "type": "int24"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "qty",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "qty1",
+          "type": "uint256"
+        }
+      ],
+      "name": "Mint",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "deltaQty0",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "deltaQty1",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint160",
+          "name": "sqrtP",
+          "type": "uint160"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "int24",
+          "name": "currentTick",
+          "type": "int24"
+        }
+      ],
+      "name": "Swap",
+      "type": "event"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"int24\",\"name\":\"tickLower\",\"type\":\"int24\"},{\"indexed\":true,\"internalType\":\"int24\",\"name\":\"tickUpper\",\"type\":\"int24\"},{\"indexed\":false,\"internalType\":\"uint128\",\"name\":\"qty\",\"type\":\"uint128\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty1\",\"type\":\"uint256\"}],\"name\":\"Burn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty1\",\"type\":\"uint256\"}],\"name\":\"BurnRTokens\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"paid0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"paid1\",\"type\":\"uint256\"}],\"name\":\"Flash\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint160\",\"name\":\"sqrtP\",\"type\":\"uint160\"},{\"indexed\":false,\"internalType\":\"int24\",\"name\":\"tick\",\"type\":\"int24\"}],\"name\":\"Initialize\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"int24\",\"name\":\"tickLower\",\"type\":\"int24\"},{\"indexed\":true,\"internalType\":\"int24\",\"name\":\"tickUpper\",\"type\":\"int24\"},{\"indexed\":false,\"internalType\":\"uint128\",\"name\":\"qty\",\"type\":\"uint128\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"qty1\",\"type\":\"uint256\"}],\"name\":\"Mint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"deltaQty0\",\"type\":\"int256\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"deltaQty1\",\"type\":\"int256\"},{\"indexed\":false,\"internalType\":\"uint160\",\"name\":\"sqrtP\",\"type\":\"uint160\"},{\"indexed\":false,\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"},{\"indexed\":false,\"internalType\":\"int24\",\"name\":\"currentTick\",\"type\":\"int24\"}],\"name\":\"Swap\",\"type\":\"event\"}],\"devdoc\":{\"events\":{\"Burn(address,int24,int24,uint128,uint256,uint256)\":{\"details\":\"transfers reinvestment tokens for any collected fees earned by the position\",\"params\":{\"owner\":\"address of owner of the position\",\"qty\":\"liquidity removed\",\"qty0\":\"token0 quantity withdrawn from removal of liquidity\",\"qty1\":\"token1 quantity withdrawn from removal of liquidity\",\"tickLower\":\"position's lower tick\",\"tickUpper\":\"position's upper tick\"}},\"BurnRTokens(address,uint256,uint256,uint256)\":{\"params\":{\"owner\":\"address which burnt the reinvestment tokens\",\"qty\":\"reinvestment token quantity burnt\",\"qty0\":\"token0 quantity sent to owner for burning reinvestment tokens\",\"qty1\":\"token1 quantity sent to owner for burning reinvestment tokens\"}},\"Flash(address,address,uint256,uint256,uint256,uint256)\":{\"params\":{\"paid0\":\"token0 quantity paid for the flash, which can exceed qty0 + fee\",\"paid1\":\"token1 quantity paid for the flash, which can exceed qty0 + fee\",\"qty0\":\"token0 quantity loaned to the recipient\",\"qty1\":\"token1 quantity loaned to the recipient\",\"recipient\":\"The address that received the flash loan quantities\",\"sender\":\"The address that initiated the flash loan, and that received the callback\"}},\"Initialize(uint160,int24)\":{\"details\":\"Mint/Burn/Swap cannot be emitted by the pool before Initialize\",\"params\":{\"sqrtP\":\"The initial price of the pool\",\"tick\":\"The initial tick of the pool\"}},\"Mint(address,address,int24,int24,uint128,uint256,uint256)\":{\"details\":\"transfers reinvestment tokens for any collected fees earned by the position\",\"params\":{\"owner\":\"address of owner of the position\",\"qty\":\"liquidity minted to the position range\",\"qty0\":\"token0 quantity needed to mint the liquidity\",\"qty1\":\"token1 quantity needed to mint the liquidity\",\"sender\":\"address that minted the liquidity\",\"tickLower\":\"position's lower tick\",\"tickUpper\":\"position's upper tick\"}},\"Swap(address,address,int256,int256,uint160,uint128,int24)\":{\"params\":{\"currentTick\":\"Log base 1.0001 of pool's price after the swap\",\"deltaQty0\":\"Change in pool's token0 balance\",\"deltaQty1\":\"Change in pool's token1 balance\",\"liquidity\":\"Pool's liquidity after the swap\",\"recipient\":\"Address that received the swap output\",\"sender\":\"Address that initiated the swap call, and that received the callback\",\"sqrtP\":\"Pool's sqrt price after the swap\"}}},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"events\":{\"Burn(address,int24,int24,uint128,uint256,uint256)\":{\"notice\":\"Emitted when a position's liquidity is removed\"},\"BurnRTokens(address,uint256,uint256,uint256)\":{\"notice\":\"Emitted when reinvestment tokens are burnt\"},\"Flash(address,address,uint256,uint256,uint256,uint256)\":{\"notice\":\"Emitted by the pool for any flash loans of token0/token1\"},\"Initialize(uint160,int24)\":{\"notice\":\"Emitted only once per pool when #initialize is first called\"},\"Mint(address,address,int24,int24,uint128,uint256,uint256)\":{\"notice\":\"Emitted when liquidity is minted for a given position\"},\"Swap(address,address,int256,int256,uint160,uint128,int24)\":{\"notice\":\"Emitted for swaps by the pool between token0 and token1\"}},\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/kyber/pool/IPoolEvents.sol\":\"IPoolEvents\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/kyber/pool/IPoolEvents.sol\":{\"keccak256\":\"0x4be3e91b65d0c2afe3c38ca699ee7e70b67aec1d25376c825059225c33ea6c62\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://512cdecac86a853f0406a8bc6b0d1340938840ab2b293c4d71d1bb1ad533726c\",\"dweb:/ipfs/QmX8ohu3gKecXBX5vEYm5LPdTcbTAe56ijxsmmyJJ1cnKi\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24",
+              "indexed": true
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24",
+              "indexed": true
+            },
+            {
+              "internalType": "uint128",
+              "name": "qty",
+              "type": "uint128",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty1",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Burn",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty1",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "BurnRTokens",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty1",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "paid0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "paid1",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Flash",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint160",
+              "name": "sqrtP",
+              "type": "uint160",
+              "indexed": false
+            },
+            {
+              "internalType": "int24",
+              "name": "tick",
+              "type": "int24",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Initialize",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24",
+              "indexed": true
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24",
+              "indexed": true
+            },
+            {
+              "internalType": "uint128",
+              "name": "qty",
+              "type": "uint128",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "qty1",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Mint",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "int256",
+              "name": "deltaQty0",
+              "type": "int256",
+              "indexed": false
+            },
+            {
+              "internalType": "int256",
+              "name": "deltaQty1",
+              "type": "int256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtP",
+              "type": "uint160",
+              "indexed": false
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128",
+              "indexed": false
+            },
+            {
+              "internalType": "int24",
+              "name": "currentTick",
+              "type": "int24",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Swap",
+          "anonymous": false
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/kyber/pool/IPoolEvents.sol": "IPoolEvents"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/kyber/pool/IPoolEvents.sol": {
+        "keccak256": "0x4be3e91b65d0c2afe3c38ca699ee7e70b67aec1d25376c825059225c33ea6c62",
+        "urls": [
+          "bzz-raw://512cdecac86a853f0406a8bc6b0d1340938840ab2b293c4d71d1bb1ad533726c",
+          "dweb:/ipfs/QmX8ohu3gKecXBX5vEYm5LPdTcbTAe56ijxsmmyJJ1cnKi"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/kyber/pool/IPoolEvents.sol",
+    "id": 68580,
+    "exportedSymbols": {
+      "IPoolEvents": [
+        68579
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:3668:226",
+    "nodes": [
+      {
+        "id": 68496,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:226",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 68579,
+        "nodeType": "ContractDefinition",
+        "src": "57:3642:226",
+        "nodes": [
+          {
+            "id": 68503,
+            "nodeType": "EventDefinition",
+            "src": "337:44:226",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 68497,
+              "nodeType": "StructuredDocumentation",
+              "src": "85:247:226",
+              "text": "@notice Emitted only once per pool when #initialize is first called\n @dev Mint/Burn/Swap cannot be emitted by the pool before Initialize\n @param sqrtP The initial price of the pool\n @param tick The initial tick of the pool"
+            },
+            "name": "Initialize",
+            "nameLocation": "343:10:226",
+            "parameters": {
+              "id": 68502,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68499,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "sqrtP",
+                  "nameLocation": "362:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68503,
+                  "src": "354:13:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  },
+                  "typeName": {
+                    "id": 68498,
+                    "name": "uint160",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "354:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint160",
+                      "typeString": "uint160"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68501,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "tick",
+                  "nameLocation": "375:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68503,
+                  "src": "369:10:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 68500,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "369:5:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "353:27:226"
+            }
+          },
+          {
+            "id": 68520,
+            "nodeType": "EventDefinition",
+            "src": "938:203:226",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 68504,
+              "nodeType": "StructuredDocumentation",
+              "src": "387:546:226",
+              "text": "@notice Emitted when liquidity is minted for a given position\n @dev transfers reinvestment tokens for any collected fees earned by the position\n @param sender address that minted the liquidity\n @param owner address of owner of the position\n @param tickLower position's lower tick\n @param tickUpper position's upper tick\n @param qty liquidity minted to the position range\n @param qty0 token0 quantity needed to mint the liquidity\n @param qty1 token1 quantity needed to mint the liquidity"
+            },
+            "name": "Mint",
+            "nameLocation": "944:4:226",
+            "parameters": {
+              "id": 68519,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68506,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "966:6:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "958:14:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68505,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "958:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68508,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "owner",
+                  "nameLocation": "998:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "982:21:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68507,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "982:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68510,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tickLower",
+                  "nameLocation": "1027:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "1013:23:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 68509,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1013:5:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68512,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tickUpper",
+                  "nameLocation": "1060:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "1046:23:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 68511,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1046:5:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68514,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty",
+                  "nameLocation": "1087:3:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "1079:11:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 68513,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1079:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68516,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty0",
+                  "nameLocation": "1108:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "1100:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68515,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1100:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68518,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty1",
+                  "nameLocation": "1130:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68520,
+                  "src": "1122:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68517,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1122:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "948:192:226"
+            }
+          },
+          {
+            "id": 68535,
+            "nodeType": "EventDefinition",
+            "src": "1628:179:226",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 68521,
+              "nodeType": "StructuredDocumentation",
+              "src": "1147:476:226",
+              "text": "@notice Emitted when a position's liquidity is removed\n @dev transfers reinvestment tokens for any collected fees earned by the position\n @param owner address of owner of the position\n @param tickLower position's lower tick\n @param tickUpper position's upper tick\n @param qty liquidity removed\n @param qty0 token0 quantity withdrawn from removal of liquidity\n @param qty1 token1 quantity withdrawn from removal of liquidity"
+            },
+            "name": "Burn",
+            "nameLocation": "1634:4:226",
+            "parameters": {
+              "id": 68534,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68523,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "owner",
+                  "nameLocation": "1664:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68535,
+                  "src": "1648:21:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68522,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1648:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68525,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tickLower",
+                  "nameLocation": "1693:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68535,
+                  "src": "1679:23:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 68524,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1679:5:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68527,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tickUpper",
+                  "nameLocation": "1726:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68535,
+                  "src": "1712:23:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 68526,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1712:5:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68529,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty",
+                  "nameLocation": "1753:3:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68535,
+                  "src": "1745:11:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 68528,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1745:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68531,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty0",
+                  "nameLocation": "1774:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68535,
+                  "src": "1766:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68530,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1766:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68533,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty1",
+                  "nameLocation": "1796:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68535,
+                  "src": "1788:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68532,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1788:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1638:168:226"
+            }
+          },
+          {
+            "id": 68546,
+            "nodeType": "EventDefinition",
+            "src": "2154:82:226",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 68536,
+              "nodeType": "StructuredDocumentation",
+              "src": "1813:336:226",
+              "text": "@notice Emitted when reinvestment tokens are burnt\n @param owner address which burnt the reinvestment tokens\n @param qty reinvestment token quantity burnt\n @param qty0 token0 quantity sent to owner for burning reinvestment tokens\n @param qty1 token1 quantity sent to owner for burning reinvestment tokens"
+            },
+            "name": "BurnRTokens",
+            "nameLocation": "2160:11:226",
+            "parameters": {
+              "id": 68545,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68538,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "owner",
+                  "nameLocation": "2188:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68546,
+                  "src": "2172:21:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68537,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2172:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68540,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty",
+                  "nameLocation": "2203:3:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68546,
+                  "src": "2195:11:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68539,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2195:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68542,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty0",
+                  "nameLocation": "2216:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68546,
+                  "src": "2208:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68541,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2208:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68544,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty1",
+                  "nameLocation": "2230:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68546,
+                  "src": "2222:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68543,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2222:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2171:64:226"
+            }
+          },
+          {
+            "id": 68563,
+            "nodeType": "EventDefinition",
+            "src": "2767:213:226",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 68547,
+              "nodeType": "StructuredDocumentation",
+              "src": "2242:520:226",
+              "text": "@notice Emitted for swaps by the pool between token0 and token1\n @param sender Address that initiated the swap call, and that received the callback\n @param recipient Address that received the swap output\n @param deltaQty0 Change in pool's token0 balance\n @param deltaQty1 Change in pool's token1 balance\n @param sqrtP Pool's sqrt price after the swap\n @param liquidity Pool's liquidity after the swap\n @param currentTick Log base 1.0001 of pool's price after the swap"
+            },
+            "name": "Swap",
+            "nameLocation": "2773:4:226",
+            "parameters": {
+              "id": 68562,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68549,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "2803:6:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2787:22:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68548,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2787:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68551,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "recipient",
+                  "nameLocation": "2835:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2819:25:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68550,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2819:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68553,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "deltaQty0",
+                  "nameLocation": "2861:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2854:16:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  },
+                  "typeName": {
+                    "id": 68552,
+                    "name": "int256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2854:6:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int256",
+                      "typeString": "int256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68555,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "deltaQty1",
+                  "nameLocation": "2887:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2880:16:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  },
+                  "typeName": {
+                    "id": 68554,
+                    "name": "int256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2880:6:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int256",
+                      "typeString": "int256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68557,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "sqrtP",
+                  "nameLocation": "2914:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2906:13:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint160",
+                    "typeString": "uint160"
+                  },
+                  "typeName": {
+                    "id": 68556,
+                    "name": "uint160",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2906:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint160",
+                      "typeString": "uint160"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68559,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "2937:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2929:17:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 68558,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2929:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68561,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "currentTick",
+                  "nameLocation": "2962:11:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68563,
+                  "src": "2956:17:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 68560,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2956:5:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2777:202:226"
+            }
+          },
+          {
+            "id": 68578,
+            "nodeType": "EventDefinition",
+            "src": "3522:175:226",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 68564,
+              "nodeType": "StructuredDocumentation",
+              "src": "2986:531:226",
+              "text": "@notice Emitted by the pool for any flash loans of token0/token1\n @param sender The address that initiated the flash loan, and that received the callback\n @param recipient The address that received the flash loan quantities\n @param qty0 token0 quantity loaned to the recipient\n @param qty1 token1 quantity loaned to the recipient\n @param paid0 token0 quantity paid for the flash, which can exceed qty0 + fee\n @param paid1 token1 quantity paid for the flash, which can exceed qty0 + fee"
+            },
+            "name": "Flash",
+            "nameLocation": "3528:5:226",
+            "parameters": {
+              "id": 68577,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68566,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "3559:6:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68578,
+                  "src": "3543:22:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68565,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3543:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68568,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "recipient",
+                  "nameLocation": "3591:9:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68578,
+                  "src": "3575:25:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 68567,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3575:7:226",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68570,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty0",
+                  "nameLocation": "3618:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68578,
+                  "src": "3610:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68569,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3610:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68572,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "qty1",
+                  "nameLocation": "3640:4:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68578,
+                  "src": "3632:12:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68571,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3632:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68574,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "paid0",
+                  "nameLocation": "3662:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68578,
+                  "src": "3654:13:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68573,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3654:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68576,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "paid1",
+                  "nameLocation": "3685:5:226",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68578,
+                  "src": "3677:13:226",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68575,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3677:7:226",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3533:163:226"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IPoolEvents",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          68579
+        ],
+        "name": "IPoolEvents",
+        "nameLocation": "67:11:226",
+        "scope": 68580,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 226
+}

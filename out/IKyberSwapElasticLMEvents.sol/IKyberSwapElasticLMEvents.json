@@ -1,0 +1,1731 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "pId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "startTime",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "endTime",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "vestingDuration",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "feeTarget",
+          "type": "uint256"
+        }
+      ],
+      "name": "AddPool",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Deposit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "EmergencyEnabled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        }
+      ],
+      "name": "EmergencyWithdraw",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "reward",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "EmergencyWithdrawForOwner",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "pId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "liq",
+          "type": "uint256"
+        }
+      ],
+      "name": "Exit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "reward",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Harvest",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "pId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "liq",
+          "type": "uint256"
+        }
+      ],
+      "name": "Join",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "pid",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "startTime",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "endTime",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "vestingDuration",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "feeTarget",
+          "type": "uint256"
+        }
+      ],
+      "name": "RenewPool",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "pId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "liq",
+          "type": "uint256"
+        }
+      ],
+      "name": "SyncLiq",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Withdraw",
+      "type": "event"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"poolAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"startTime\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"endTime\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"vestingDuration\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"feeTarget\",\"type\":\"uint256\"}],\"name\":\"AddPool\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"EmergencyEnabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"}],\"name\":\"EmergencyWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"reward\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"EmergencyWithdrawForOwner\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"liq\",\"type\":\"uint256\"}],\"name\":\"Exit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"reward\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Harvest\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"liq\",\"type\":\"uint256\"}],\"name\":\"Join\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pid\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"startTime\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"endTime\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"vestingDuration\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"feeTarget\",\"type\":\"uint256\"}],\"name\":\"RenewPool\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"liq\",\"type\":\"uint256\"}],\"name\":\"SyncLiq\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nftId\",\"type\":\"uint256\"}],\"name\":\"Withdraw\",\"type\":\"event\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol\":\"IKyberSwapElasticLMEvents\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol\":{\"keccak256\":\"0x9ba2fbd81de0b7e1c2c862a842e1ac80406cdba9ae815eabd8f46c90525a6bae\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://31ad77d95ec01875fbefe3cf95a6c66b0b6580e3834731f015b1bc29d427e411\",\"dweb:/ipfs/QmR9pnNr15km9HnKTG9mrhU59YyJmhH1ghWnca3rBzDhHH\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "pId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "poolAddress",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint32",
+              "name": "startTime",
+              "type": "uint32",
+              "indexed": false
+            },
+            {
+              "internalType": "uint32",
+              "name": "endTime",
+              "type": "uint32",
+              "indexed": false
+            },
+            {
+              "internalType": "uint32",
+              "name": "vestingDuration",
+              "type": "uint32",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "feeTarget",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "AddPool",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Deposit",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "type": "event",
+          "name": "EmergencyEnabled",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "EmergencyWithdraw",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "reward",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "EmergencyWithdrawForOwner",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "pId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "liq",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Exit",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "reward",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Harvest",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "pId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "liq",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Join",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "pid",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint32",
+              "name": "startTime",
+              "type": "uint32",
+              "indexed": false
+            },
+            {
+              "internalType": "uint32",
+              "name": "endTime",
+              "type": "uint32",
+              "indexed": false
+            },
+            {
+              "internalType": "uint32",
+              "name": "vestingDuration",
+              "type": "uint32",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "feeTarget",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RenewPool",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "pId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "liq",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "SyncLiq",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Withdraw",
+          "anonymous": false
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol": "IKyberSwapElasticLMEvents"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol": {
+        "keccak256": "0x9ba2fbd81de0b7e1c2c862a842e1ac80406cdba9ae815eabd8f46c90525a6bae",
+        "urls": [
+          "bzz-raw://31ad77d95ec01875fbefe3cf95a6c66b0b6580e3834731f015b1bc29d427e411",
+          "dweb:/ipfs/QmR9pnNr15km9HnKTG9mrhU59YyJmhH1ghWnca3rBzDhHH"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol",
+    "id": 67199,
+    "exportedSymbols": {
+      "IKyberSwapElasticLMEvents": [
+        67198
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:1007:216",
+    "nodes": [
+      {
+        "id": 67111,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:216",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 67198,
+        "nodeType": "ContractDefinition",
+        "src": "57:981:216",
+        "nodes": [
+          {
+            "id": 67125,
+            "nodeType": "EventDefinition",
+            "src": "99:187:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "AddPool",
+            "nameLocation": "105:7:216",
+            "parameters": {
+              "id": 67124,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67113,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "pId",
+                  "nameLocation": "138:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67125,
+                  "src": "122:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67112,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "122:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67115,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "poolAddress",
+                  "nameLocation": "159:11:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67125,
+                  "src": "151:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67114,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "151:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67117,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "startTime",
+                  "nameLocation": "187:9:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67125,
+                  "src": "180:16:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 67116,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "180:6:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67119,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "endTime",
+                  "nameLocation": "213:7:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67125,
+                  "src": "206:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 67118,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "206:6:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67121,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "vestingDuration",
+                  "nameLocation": "237:15:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67125,
+                  "src": "230:22:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 67120,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "230:6:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67123,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "feeTarget",
+                  "nameLocation": "270:9:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67125,
+                  "src": "262:17:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67122,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "262:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "112:173:216"
+            }
+          },
+          {
+            "id": 67137,
+            "nodeType": "EventDefinition",
+            "src": "292:114:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "RenewPool",
+            "nameLocation": "298:9:216",
+            "parameters": {
+              "id": 67136,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67127,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "pid",
+                  "nameLocation": "324:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67137,
+                  "src": "308:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67126,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "308:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67129,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "startTime",
+                  "nameLocation": "336:9:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67137,
+                  "src": "329:16:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 67128,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "329:6:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67131,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "endTime",
+                  "nameLocation": "354:7:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67137,
+                  "src": "347:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 67130,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "347:6:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67133,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "vestingDuration",
+                  "nameLocation": "370:15:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67137,
+                  "src": "363:22:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 67132,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "363:6:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67135,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "feeTarget",
+                  "nameLocation": "395:9:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67137,
+                  "src": "387:17:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67134,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "387:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "307:98:216"
+            }
+          },
+          {
+            "id": 67143,
+            "nodeType": "EventDefinition",
+            "src": "412:53:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "Deposit",
+            "nameLocation": "418:7:216",
+            "parameters": {
+              "id": 67142,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67139,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "434:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67143,
+                  "src": "426:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67138,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "426:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67141,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "458:5:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67143,
+                  "src": "442:21:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67140,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "442:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "425:39:216"
+            }
+          },
+          {
+            "id": 67149,
+            "nodeType": "EventDefinition",
+            "src": "471:54:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "Withdraw",
+            "nameLocation": "477:8:216",
+            "parameters": {
+              "id": 67148,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67145,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "494:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67149,
+                  "src": "486:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67144,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "486:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67147,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "518:5:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67149,
+                  "src": "502:21:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67146,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "502:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "485:39:216"
+            }
+          },
+          {
+            "id": 67157,
+            "nodeType": "EventDefinition",
+            "src": "531:76:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "Join",
+            "nameLocation": "537:4:216",
+            "parameters": {
+              "id": 67156,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67151,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "558:5:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67157,
+                  "src": "542:21:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67150,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "542:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67153,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "pId",
+                  "nameLocation": "581:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67157,
+                  "src": "565:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67152,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "565:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67155,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "liq",
+                  "nameLocation": "602:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67157,
+                  "src": "586:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67154,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "586:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "541:65:216"
+            }
+          },
+          {
+            "id": 67167,
+            "nodeType": "EventDefinition",
+            "src": "613:88:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "Exit",
+            "nameLocation": "619:4:216",
+            "parameters": {
+              "id": 67166,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67159,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "632:2:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67167,
+                  "src": "624:10:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67158,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "624:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67161,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "652:5:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67167,
+                  "src": "636:21:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67160,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "636:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67163,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "pId",
+                  "nameLocation": "675:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67167,
+                  "src": "659:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67162,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "659:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67165,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "liq",
+                  "nameLocation": "696:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67167,
+                  "src": "680:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67164,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "680:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "623:77:216"
+            }
+          },
+          {
+            "id": 67175,
+            "nodeType": "EventDefinition",
+            "src": "707:79:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "SyncLiq",
+            "nameLocation": "713:7:216",
+            "parameters": {
+              "id": 67174,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67169,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "737:5:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67175,
+                  "src": "721:21:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67168,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "721:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67171,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "pId",
+                  "nameLocation": "760:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67175,
+                  "src": "744:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67170,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "744:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67173,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "liq",
+                  "nameLocation": "781:3:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67175,
+                  "src": "765:19:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67172,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "765:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "720:65:216"
+            }
+          },
+          {
+            "id": 67183,
+            "nodeType": "EventDefinition",
+            "src": "792:66:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "Harvest",
+            "nameLocation": "798:7:216",
+            "parameters": {
+              "id": 67182,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67177,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "814:2:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67183,
+                  "src": "806:10:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67176,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "806:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67179,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "reward",
+                  "nameLocation": "826:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67183,
+                  "src": "818:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67178,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "818:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67181,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "850:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67183,
+                  "src": "834:22:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67180,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "834:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "805:52:216"
+            }
+          },
+          {
+            "id": 67185,
+            "nodeType": "EventDefinition",
+            "src": "864:25:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "EmergencyEnabled",
+            "nameLocation": "870:16:216",
+            "parameters": {
+              "id": 67184,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "886:2:216"
+            }
+          },
+          {
+            "id": 67191,
+            "nodeType": "EventDefinition",
+            "src": "895:72:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "EmergencyWithdrawForOwner",
+            "nameLocation": "901:25:216",
+            "parameters": {
+              "id": 67190,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67187,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "reward",
+                  "nameLocation": "935:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67191,
+                  "src": "927:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67186,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "927:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67189,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "amount",
+                  "nameLocation": "959:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67191,
+                  "src": "943:22:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67188,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "943:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "926:40:216"
+            }
+          },
+          {
+            "id": 67197,
+            "nodeType": "EventDefinition",
+            "src": "973:63:216",
+            "nodes": [],
+            "anonymous": false,
+            "name": "EmergencyWithdraw",
+            "nameLocation": "979:17:216",
+            "parameters": {
+              "id": 67196,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67193,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "sender",
+                  "nameLocation": "1005:6:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67197,
+                  "src": "997:14:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 67192,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "997:7:216",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67195,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "nftId",
+                  "nameLocation": "1029:5:216",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67197,
+                  "src": "1013:21:216",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67194,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1013:7:216",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "996:39:216"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IKyberSwapElasticLMEvents",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          67198
+        ],
+        "name": "IKyberSwapElasticLMEvents",
+        "nameLocation": "67:25:216",
+        "scope": 67199,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 216
+}

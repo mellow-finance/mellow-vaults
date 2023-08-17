@@ -1,0 +1,2573 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "newDefaultCommunityFee",
+          "type": "uint8"
+        }
+      ],
+      "name": "DefaultCommunityFee",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "alpha1",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "alpha2",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint32",
+              "name": "beta1",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "beta2",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint16",
+              "name": "gamma1",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "gamma2",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "baseFee",
+              "type": "uint16"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct AlgebraFeeConfiguration",
+          "name": "newConfig",
+          "type": "tuple"
+        }
+      ],
+      "name": "DefaultFeeConfiguration",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newFarmingAddress",
+          "type": "address"
+        }
+      ],
+      "name": "FarmingAddress",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "name": "Pool",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "RenounceOwnershipFinish",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "finishTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "RenounceOwnershipStart",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "RenounceOwnershipStop",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "POOLS_ADMINISTRATOR_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "communityVault",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenA",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenB",
+          "type": "address"
+        }
+      ],
+      "name": "createPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "defaultCommunityFee",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "farmingAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "hasRoleOrOwner",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenA",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenB",
+          "type": "address"
+        }
+      ],
+      "name": "poolByPair",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolDeployer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnershipStartTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "newDefaultCommunityFee",
+          "type": "uint8"
+        }
+      ],
+      "name": "setDefaultCommunityFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "alpha1",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "alpha2",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint32",
+              "name": "beta1",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "beta2",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint16",
+              "name": "gamma1",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "gamma2",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "baseFee",
+              "type": "uint16"
+            }
+          ],
+          "internalType": "struct AlgebraFeeConfiguration",
+          "name": "newConfig",
+          "type": "tuple"
+        }
+      ],
+      "name": "setDefaultFeeConfiguration",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newFarmingAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setFarmingAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "startRenounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stopRenounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "POOLS_ADMINISTRATOR_ROLE()": "b500a48b",
+    "communityVault()": "53e97868",
+    "createPool(address,address)": "e3433615",
+    "defaultCommunityFee()": "2f8a39dd",
+    "farmingAddress()": "8a2ade58",
+    "hasRoleOrOwner(bytes32,address)": "e8ae2b69",
+    "owner()": "8da5cb5b",
+    "poolByPair(address,address)": "d9a641e1",
+    "poolDeployer()": "3119049a",
+    "renounceOwnershipStartTimestamp()": "084bfff9",
+    "setDefaultCommunityFee(uint8)": "371e3521",
+    "setDefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))": "f718949a",
+    "setFarmingAddress(address)": "b001f618",
+    "startRenounceOwnership()": "469388c4",
+    "stopRenounceOwnership()": "238a1d74"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"newDefaultCommunityFee\",\"type\":\"uint8\"}],\"name\":\"DefaultCommunityFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"uint16\",\"name\":\"alpha1\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"alpha2\",\"type\":\"uint16\"},{\"internalType\":\"uint32\",\"name\":\"beta1\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"beta2\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"gamma1\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"gamma2\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"baseFee\",\"type\":\"uint16\"}],\"indexed\":false,\"internalType\":\"struct AlgebraFeeConfiguration\",\"name\":\"newConfig\",\"type\":\"tuple\"}],\"name\":\"DefaultFeeConfiguration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newFarmingAddress\",\"type\":\"address\"}],\"name\":\"FarmingAddress\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"name\":\"Pool\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"RenounceOwnershipFinish\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"finishTimestamp\",\"type\":\"uint256\"}],\"name\":\"RenounceOwnershipStart\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"RenounceOwnershipStop\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"POOLS_ADMINISTRATOR_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"communityVault\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"}],\"name\":\"createPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"defaultCommunityFee\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"farmingAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRoleOrOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"}],\"name\":\"poolByPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolDeployer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnershipStartTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"newDefaultCommunityFee\",\"type\":\"uint8\"}],\"name\":\"setDefaultCommunityFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint16\",\"name\":\"alpha1\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"alpha2\",\"type\":\"uint16\"},{\"internalType\":\"uint32\",\"name\":\"beta1\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"beta2\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"gamma1\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"gamma2\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"baseFee\",\"type\":\"uint16\"}],\"internalType\":\"struct AlgebraFeeConfiguration\",\"name\":\"newConfig\",\"type\":\"tuple\"}],\"name\":\"setDefaultFeeConfiguration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newFarmingAddress\",\"type\":\"address\"}],\"name\":\"setFarmingAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"startRenounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stopRenounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Credit to Uniswap Labs under GPL-2.0-or-later license: https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces\",\"events\":{\"DefaultCommunityFee(uint8)\":{\"params\":{\"newDefaultCommunityFee\":\"The new default community fee value\"}},\"DefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))\":{\"details\":\"See the AdaptiveFee library for more details\",\"params\":{\"newConfig\":\"The structure with dynamic fee parameters\"}},\"FarmingAddress(address)\":{\"params\":{\"newFarmingAddress\":\"The farming address after the address was changed\"}},\"Pool(address,address,address)\":{\"params\":{\"pool\":\"The address of the created pool\",\"token0\":\"The first token of the pool by address sort order\",\"token1\":\"The second token of the pool by address sort order\"}},\"RenounceOwnershipFinish(uint256)\":{\"params\":{\"timestamp\":\"The timestamp of ownership renouncement\"}},\"RenounceOwnershipStart(uint256,uint256)\":{\"params\":{\"finishTimestamp\":\"The timestamp when ownership renounce will be possible to finish\",\"timestamp\":\"The timestamp of event\"}},\"RenounceOwnershipStop(uint256)\":{\"params\":{\"timestamp\":\"The timestamp of event\"}}},\"kind\":\"dev\",\"methods\":{\"communityVault()\":{\"returns\":{\"_0\":\"The address to which community fees are transferred\"}},\"createPool(address,address)\":{\"details\":\"tokenA and tokenB may be passed in either order: token0/token1 or token1/token0. The call will revert if the pool already exists or the token arguments are invalid.\",\"params\":{\"tokenA\":\"One of the two tokens in the desired pool\",\"tokenB\":\"The other of the two tokens in the desired pool\"},\"returns\":{\"pool\":\"The address of the newly created pool\"}},\"defaultCommunityFee()\":{\"returns\":{\"_0\":\"Fee which will be set at the creation of the pool\"}},\"farmingAddress()\":{\"details\":\"Is retrieved from the pools to restrict calling certain functions not by a tokenomics contract\",\"returns\":{\"_0\":\"The tokenomics contract address\"}},\"hasRoleOrOwner(bytes32,address)\":{\"details\":\"Returns `true` if `account` has been granted `role` or `account` is owner.\"},\"owner()\":{\"details\":\"Can be changed by the current owner via transferOwnership(address newOwner)\",\"returns\":{\"_0\":\"The address of the factory owner\"}},\"poolByPair(address,address)\":{\"details\":\"tokenA and tokenB may be passed in either token0/token1 or token1/token0 order\",\"params\":{\"tokenA\":\"The contract address of either token0 or token1\",\"tokenB\":\"The contract address of the other token\"},\"returns\":{\"pool\":\"The pool address\"}},\"poolDeployer()\":{\"returns\":{\"_0\":\"The address of the poolDeployer\"}},\"renounceOwnershipStartTimestamp()\":{\"returns\":{\"timestamp\":\"The timestamp of the beginning of the renounceOwnership process\"}},\"setDefaultCommunityFee(uint8)\":{\"details\":\"updates default community fee for new pools\",\"params\":{\"newDefaultCommunityFee\":\"The new community fee, _must_ be <= MAX_COMMUNITY_FEE\"}},\"setDefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))\":{\"details\":\"changes coefficients for sigmoids: \\u03b1 / (1 + e^( (\\u03b2-x) / \\u03b3)) alpha1 + alpha2 + baseFee (max possible fee) must be <= type(uint16).max and gammas must be > 0\",\"params\":{\"newConfig\":\"new default fee configuration. See the #AdaptiveFee.sol library for details\"}},\"setFarmingAddress(address)\":{\"details\":\"updates tokenomics address on the factory\",\"params\":{\"newFarmingAddress\":\"The new tokenomics contract address\"}}},\"title\":\"The interface for the Algebra Factory\",\"version\":1},\"userdoc\":{\"events\":{\"DefaultCommunityFee(uint8)\":{\"notice\":\"Emitted when the default community fee is changed\"},\"DefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))\":{\"notice\":\"Emitted when the default fee configuration is changed\"},\"FarmingAddress(address)\":{\"notice\":\"Emitted when the farming address is changed\"},\"Pool(address,address,address)\":{\"notice\":\"Emitted when a pool is created\"},\"RenounceOwnershipFinish(uint256)\":{\"notice\":\"Emitted when a process of ownership renounce finished\"},\"RenounceOwnershipStart(uint256,uint256)\":{\"notice\":\"Emitted when a process of ownership renounce is started\"},\"RenounceOwnershipStop(uint256)\":{\"notice\":\"Emitted when a process of ownership renounce cancelled\"}},\"kind\":\"user\",\"methods\":{\"POOLS_ADMINISTRATOR_ROLE()\":{\"notice\":\"role that can change communityFee and tickspacing in pools\"},\"communityVault()\":{\"notice\":\"Returns the current communityVaultAddress\"},\"createPool(address,address)\":{\"notice\":\"Creates a pool for the given two tokens\"},\"defaultCommunityFee()\":{\"notice\":\"Returns the default community fee\"},\"owner()\":{\"notice\":\"Returns the current owner of the factory\"},\"poolByPair(address,address)\":{\"notice\":\"Returns the pool address for a given pair of tokens, or address 0 if it does not exist\"},\"poolDeployer()\":{\"notice\":\"Returns the current poolDeployerAddress\"},\"setDefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))\":{\"notice\":\"Changes initial fee configuration for new pools\"},\"startRenounceOwnership()\":{\"notice\":\"Starts process of renounceOwnership. After that, a certain period of time must pass before the ownership renounce can be completed.\"},\"stopRenounceOwnership()\":{\"notice\":\"Stops process of renounceOwnership and removes timer.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/algebrav2/IAlgebraFactory.sol\":\"IAlgebraFactory\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/algebrav2/IAlgebraFactory.sol\":{\"keccak256\":\"0x3905e3c93663ddfc7738a45817c53e81eb5bb27b5b64b977495f307dc5fbfaf8\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://1f83f511826f1a374660c1cb0496414d8eb0e15cfc0c6e2e195ca91cc01ef101\",\"dweb:/ipfs/QmbeDDXg5EUqXtwdHtLwJMPGiwyaJpMz8PM8KRfC8KV5ZN\"]},\"src/interfaces/external/algebrav2/base/AlgebraFeeConfiguration.sol\":{\"keccak256\":\"0xab8f96c60154b85a682a629d82b583d92351976695dc771a5ac7efa1567b1c01\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c592afcfc0c3f437d447ad32590fe5bc7aa63ea3d5ad9c7249c7b4efb73d488a\",\"dweb:/ipfs/QmdVPG6YLQjwJ3fzSK1vJ6LttFDLiccr2yWrvBDyzyx8YF\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "newDefaultCommunityFee",
+              "type": "uint8",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "DefaultCommunityFee",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct AlgebraFeeConfiguration",
+              "name": "newConfig",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "alpha1",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "alpha2",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "beta1",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "beta2",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "gamma1",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "gamma2",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "baseFee",
+                  "type": "uint16"
+                }
+              ],
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "DefaultFeeConfiguration",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newFarmingAddress",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "FarmingAddress",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Pool",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RenounceOwnershipFinish",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "finishTimestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RenounceOwnershipStart",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RenounceOwnershipStop",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "POOLS_ADMINISTRATOR_ROLE",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "communityVault",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenA",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenB",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "createPool",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "defaultCommunityFee",
+          "outputs": [
+            {
+              "internalType": "uint8",
+              "name": "",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "farmingAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "hasRoleOrOwner",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenA",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenB",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "poolByPair",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "poolDeployer",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "renounceOwnershipStartTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "newDefaultCommunityFee",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setDefaultCommunityFee"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct AlgebraFeeConfiguration",
+              "name": "newConfig",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "alpha1",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "alpha2",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "beta1",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "beta2",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "gamma1",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "gamma2",
+                  "type": "uint16"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "baseFee",
+                  "type": "uint16"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setDefaultFeeConfiguration"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newFarmingAddress",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setFarmingAddress"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "startRenounceOwnership"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stopRenounceOwnership"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "communityVault()": {
+            "returns": {
+              "_0": "The address to which community fees are transferred"
+            }
+          },
+          "createPool(address,address)": {
+            "details": "tokenA and tokenB may be passed in either order: token0/token1 or token1/token0. The call will revert if the pool already exists or the token arguments are invalid.",
+            "params": {
+              "tokenA": "One of the two tokens in the desired pool",
+              "tokenB": "The other of the two tokens in the desired pool"
+            },
+            "returns": {
+              "pool": "The address of the newly created pool"
+            }
+          },
+          "defaultCommunityFee()": {
+            "returns": {
+              "_0": "Fee which will be set at the creation of the pool"
+            }
+          },
+          "farmingAddress()": {
+            "details": "Is retrieved from the pools to restrict calling certain functions not by a tokenomics contract",
+            "returns": {
+              "_0": "The tokenomics contract address"
+            }
+          },
+          "hasRoleOrOwner(bytes32,address)": {
+            "details": "Returns `true` if `account` has been granted `role` or `account` is owner."
+          },
+          "owner()": {
+            "details": "Can be changed by the current owner via transferOwnership(address newOwner)",
+            "returns": {
+              "_0": "The address of the factory owner"
+            }
+          },
+          "poolByPair(address,address)": {
+            "details": "tokenA and tokenB may be passed in either token0/token1 or token1/token0 order",
+            "params": {
+              "tokenA": "The contract address of either token0 or token1",
+              "tokenB": "The contract address of the other token"
+            },
+            "returns": {
+              "pool": "The pool address"
+            }
+          },
+          "poolDeployer()": {
+            "returns": {
+              "_0": "The address of the poolDeployer"
+            }
+          },
+          "renounceOwnershipStartTimestamp()": {
+            "returns": {
+              "timestamp": "The timestamp of the beginning of the renounceOwnership process"
+            }
+          },
+          "setDefaultCommunityFee(uint8)": {
+            "details": "updates default community fee for new pools",
+            "params": {
+              "newDefaultCommunityFee": "The new community fee, _must_ be <= MAX_COMMUNITY_FEE"
+            }
+          },
+          "setDefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))": {
+            "details": "changes coefficients for sigmoids: α / (1 + e^( (β-x) / γ)) alpha1 + alpha2 + baseFee (max possible fee) must be <= type(uint16).max and gammas must be > 0",
+            "params": {
+              "newConfig": "new default fee configuration. See the #AdaptiveFee.sol library for details"
+            }
+          },
+          "setFarmingAddress(address)": {
+            "details": "updates tokenomics address on the factory",
+            "params": {
+              "newFarmingAddress": "The new tokenomics contract address"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "POOLS_ADMINISTRATOR_ROLE()": {
+            "notice": "role that can change communityFee and tickspacing in pools"
+          },
+          "communityVault()": {
+            "notice": "Returns the current communityVaultAddress"
+          },
+          "createPool(address,address)": {
+            "notice": "Creates a pool for the given two tokens"
+          },
+          "defaultCommunityFee()": {
+            "notice": "Returns the default community fee"
+          },
+          "owner()": {
+            "notice": "Returns the current owner of the factory"
+          },
+          "poolByPair(address,address)": {
+            "notice": "Returns the pool address for a given pair of tokens, or address 0 if it does not exist"
+          },
+          "poolDeployer()": {
+            "notice": "Returns the current poolDeployerAddress"
+          },
+          "setDefaultFeeConfiguration((uint16,uint16,uint32,uint32,uint16,uint16,uint16))": {
+            "notice": "Changes initial fee configuration for new pools"
+          },
+          "startRenounceOwnership()": {
+            "notice": "Starts process of renounceOwnership. After that, a certain period of time must pass before the ownership renounce can be completed."
+          },
+          "stopRenounceOwnership()": {
+            "notice": "Stops process of renounceOwnership and removes timer."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/algebrav2/IAlgebraFactory.sol": "IAlgebraFactory"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/algebrav2/IAlgebraFactory.sol": {
+        "keccak256": "0x3905e3c93663ddfc7738a45817c53e81eb5bb27b5b64b977495f307dc5fbfaf8",
+        "urls": [
+          "bzz-raw://1f83f511826f1a374660c1cb0496414d8eb0e15cfc0c6e2e195ca91cc01ef101",
+          "dweb:/ipfs/QmbeDDXg5EUqXtwdHtLwJMPGiwyaJpMz8PM8KRfC8KV5ZN"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/base/AlgebraFeeConfiguration.sol": {
+        "keccak256": "0xab8f96c60154b85a682a629d82b583d92351976695dc771a5ac7efa1567b1c01",
+        "urls": [
+          "bzz-raw://c592afcfc0c3f437d447ad32590fe5bc7aa63ea3d5ad9c7249c7b4efb73d488a",
+          "dweb:/ipfs/QmdVPG6YLQjwJ3fzSK1vJ6LttFDLiccr2yWrvBDyzyx8YF"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/algebrav2/IAlgebraFactory.sol",
+    "id": 53927,
+    "exportedSymbols": {
+      "AlgebraFeeConfiguration": [
+        55613
+      ],
+      "IAlgebraFactory": [
+        53926
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:5640:71",
+    "nodes": [
+      {
+        "id": 53781,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:71",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 53782,
+        "nodeType": "PragmaDirective",
+        "src": "69:19:71",
+        "nodes": [],
+        "literals": [
+          "abicoder",
+          "v2"
+        ]
+      },
+      {
+        "id": 53783,
+        "nodeType": "ImportDirective",
+        "src": "90:44:71",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/algebrav2/base/AlgebraFeeConfiguration.sol",
+        "file": "./base/AlgebraFeeConfiguration.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 53927,
+        "sourceUnit": 55614,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 53926,
+        "nodeType": "ContractDefinition",
+        "src": "319:5365:71",
+        "nodes": [
+          {
+            "id": 53791,
+            "nodeType": "EventDefinition",
+            "src": "567:73:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53785,
+              "nodeType": "StructuredDocumentation",
+              "src": "351:211:71",
+              "text": "@notice Emitted when a process of ownership renounce is started\n @param timestamp The timestamp of event\n @param finishTimestamp The timestamp when ownership renounce will be possible to finish"
+            },
+            "name": "RenounceOwnershipStart",
+            "nameLocation": "573:22:71",
+            "parameters": {
+              "id": 53790,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53787,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "timestamp",
+                  "nameLocation": "604:9:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53791,
+                  "src": "596:17:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 53786,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "596:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 53789,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "finishTimestamp",
+                  "nameLocation": "623:15:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53791,
+                  "src": "615:23:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 53788,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "615:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "595:44:71"
+            }
+          },
+          {
+            "id": 53796,
+            "nodeType": "EventDefinition",
+            "src": "765:47:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53792,
+              "nodeType": "StructuredDocumentation",
+              "src": "646:114:71",
+              "text": "@notice Emitted when a process of ownership renounce cancelled\n @param timestamp The timestamp of event"
+            },
+            "name": "RenounceOwnershipStop",
+            "nameLocation": "771:21:71",
+            "parameters": {
+              "id": 53795,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53794,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "timestamp",
+                  "nameLocation": "801:9:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53796,
+                  "src": "793:17:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 53793,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "793:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "792:19:71"
+            }
+          },
+          {
+            "id": 53801,
+            "nodeType": "EventDefinition",
+            "src": "953:49:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53797,
+              "nodeType": "StructuredDocumentation",
+              "src": "818:130:71",
+              "text": "@notice Emitted when a process of ownership renounce finished\n @param timestamp The timestamp of ownership renouncement"
+            },
+            "name": "RenounceOwnershipFinish",
+            "nameLocation": "959:23:71",
+            "parameters": {
+              "id": 53800,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53799,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "timestamp",
+                  "nameLocation": "991:9:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53801,
+                  "src": "983:17:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 53798,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "983:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "982:19:71"
+            }
+          },
+          {
+            "id": 53810,
+            "nodeType": "EventDefinition",
+            "src": "1252:73:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53802,
+              "nodeType": "StructuredDocumentation",
+              "src": "1008:239:71",
+              "text": "@notice Emitted when a pool is created\n @param token0 The first token of the pool by address sort order\n @param token1 The second token of the pool by address sort order\n @param pool The address of the created pool"
+            },
+            "name": "Pool",
+            "nameLocation": "1258:4:71",
+            "parameters": {
+              "id": 53809,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53804,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "token0",
+                  "nameLocation": "1279:6:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53810,
+                  "src": "1263:22:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53803,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1263:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 53806,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "token1",
+                  "nameLocation": "1303:6:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53810,
+                  "src": "1287:22:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53805,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1287:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 53808,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "1319:4:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53810,
+                  "src": "1311:12:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53807,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1311:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1262:62:71"
+            }
+          },
+          {
+            "id": 53815,
+            "nodeType": "EventDefinition",
+            "src": "1474:56:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53811,
+              "nodeType": "StructuredDocumentation",
+              "src": "1331:138:71",
+              "text": "@notice Emitted when the farming address is changed\n @param newFarmingAddress The farming address after the address was changed"
+            },
+            "name": "FarmingAddress",
+            "nameLocation": "1480:14:71",
+            "parameters": {
+              "id": 53814,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53813,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "newFarmingAddress",
+                  "nameLocation": "1511:17:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53815,
+                  "src": "1495:33:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53812,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1495:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1494:35:71"
+            }
+          },
+          {
+            "id": 53821,
+            "nodeType": "EventDefinition",
+            "src": "1731:65:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53816,
+              "nodeType": "StructuredDocumentation",
+              "src": "1536:190:71",
+              "text": "@notice Emitted when the default fee configuration is changed\n @param newConfig The structure with dynamic fee parameters\n @dev See the AdaptiveFee library for more details"
+            },
+            "name": "DefaultFeeConfiguration",
+            "nameLocation": "1737:23:71",
+            "parameters": {
+              "id": 53820,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53819,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "newConfig",
+                  "nameLocation": "1785:9:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53821,
+                  "src": "1761:33:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_AlgebraFeeConfiguration_$55613_memory_ptr",
+                    "typeString": "struct AlgebraFeeConfiguration"
+                  },
+                  "typeName": {
+                    "id": 53818,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 53817,
+                      "name": "AlgebraFeeConfiguration",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 55613,
+                      "src": "1761:23:71"
+                    },
+                    "referencedDeclaration": 55613,
+                    "src": "1761:23:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_AlgebraFeeConfiguration_$55613_storage_ptr",
+                      "typeString": "struct AlgebraFeeConfiguration"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1760:35:71"
+            }
+          },
+          {
+            "id": 53826,
+            "nodeType": "EventDefinition",
+            "src": "1942:56:71",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 53822,
+              "nodeType": "StructuredDocumentation",
+              "src": "1802:135:71",
+              "text": "@notice Emitted when the default community fee is changed\n @param newDefaultCommunityFee The new default community fee value"
+            },
+            "name": "DefaultCommunityFee",
+            "nameLocation": "1948:19:71",
+            "parameters": {
+              "id": 53825,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53824,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "newDefaultCommunityFee",
+                  "nameLocation": "1974:22:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53826,
+                  "src": "1968:28:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 53823,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1968:5:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1967:30:71"
+            }
+          },
+          {
+            "id": 53832,
+            "nodeType": "FunctionDefinition",
+            "src": "2079:68:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53827,
+              "nodeType": "StructuredDocumentation",
+              "src": "2004:70:71",
+              "text": "@notice role that can change communityFee and tickspacing in pools"
+            },
+            "functionSelector": "b500a48b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "POOLS_ADMINISTRATOR_ROLE",
+            "nameLocation": "2088:24:71",
+            "parameters": {
+              "id": 53828,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2112:2:71"
+            },
+            "returnParameters": {
+              "id": 53831,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53830,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53832,
+                  "src": "2138:7:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 53829,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2138:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2137:9:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53842,
+            "nodeType": "FunctionDefinition",
+            "src": "2241:84:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53833,
+              "nodeType": "StructuredDocumentation",
+              "src": "2153:83:71",
+              "text": "@dev Returns `true` if `account` has been granted `role` or `account` is owner."
+            },
+            "functionSelector": "e8ae2b69",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "hasRoleOrOwner",
+            "nameLocation": "2250:14:71",
+            "parameters": {
+              "id": 53838,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53835,
+                  "mutability": "mutable",
+                  "name": "role",
+                  "nameLocation": "2273:4:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53842,
+                  "src": "2265:12:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 53834,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2265:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 53837,
+                  "mutability": "mutable",
+                  "name": "account",
+                  "nameLocation": "2287:7:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53842,
+                  "src": "2279:15:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53836,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2279:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2264:31:71"
+            },
+            "returnParameters": {
+              "id": 53841,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53840,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53842,
+                  "src": "2319:4:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 53839,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2319:4:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2318:6:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53848,
+            "nodeType": "FunctionDefinition",
+            "src": "2526:49:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53843,
+              "nodeType": "StructuredDocumentation",
+              "src": "2331:190:71",
+              "text": "@notice Returns the current owner of the factory\n @dev Can be changed by the current owner via transferOwnership(address newOwner)\n @return The address of the factory owner"
+            },
+            "functionSelector": "8da5cb5b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "owner",
+            "nameLocation": "2535:5:71",
+            "parameters": {
+              "id": 53844,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2540:2:71"
+            },
+            "returnParameters": {
+              "id": 53847,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53846,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53848,
+                  "src": "2566:7:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53845,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2566:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2565:9:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53854,
+            "nodeType": "FunctionDefinition",
+            "src": "2685:56:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53849,
+              "nodeType": "StructuredDocumentation",
+              "src": "2581:99:71",
+              "text": "@notice Returns the current poolDeployerAddress\n @return The address of the poolDeployer"
+            },
+            "functionSelector": "3119049a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "poolDeployer",
+            "nameLocation": "2694:12:71",
+            "parameters": {
+              "id": 53850,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2706:2:71"
+            },
+            "returnParameters": {
+              "id": 53853,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53852,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53854,
+                  "src": "2732:7:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53851,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2732:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2731:9:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53860,
+            "nodeType": "FunctionDefinition",
+            "src": "2903:58:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53855,
+              "nodeType": "StructuredDocumentation",
+              "src": "2747:151:71",
+              "text": "@dev Is retrieved from the pools to restrict calling certain functions not by a tokenomics contract\n @return The tokenomics contract address"
+            },
+            "functionSelector": "8a2ade58",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "farmingAddress",
+            "nameLocation": "2912:14:71",
+            "parameters": {
+              "id": 53856,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2926:2:71"
+            },
+            "returnParameters": {
+              "id": 53859,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53858,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53860,
+                  "src": "2952:7:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53857,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2952:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2951:9:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53866,
+            "nodeType": "FunctionDefinition",
+            "src": "3093:58:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53861,
+              "nodeType": "StructuredDocumentation",
+              "src": "2967:121:71",
+              "text": "@notice Returns the current communityVaultAddress\n @return The address to which community fees are transferred"
+            },
+            "functionSelector": "53e97868",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "communityVault",
+            "nameLocation": "3102:14:71",
+            "parameters": {
+              "id": 53862,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3116:2:71"
+            },
+            "returnParameters": {
+              "id": 53865,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53864,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53866,
+                  "src": "3142:7:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53863,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3142:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3141:9:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53872,
+            "nodeType": "FunctionDefinition",
+            "src": "3273:61:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53867,
+              "nodeType": "StructuredDocumentation",
+              "src": "3157:111:71",
+              "text": "@notice Returns the default community fee\n @return Fee which will be set at the creation of the pool"
+            },
+            "functionSelector": "2f8a39dd",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "defaultCommunityFee",
+            "nameLocation": "3282:19:71",
+            "parameters": {
+              "id": 53868,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3301:2:71"
+            },
+            "returnParameters": {
+              "id": 53871,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53870,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53872,
+                  "src": "3327:5:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 53869,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3327:5:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3326:7:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53882,
+            "nodeType": "FunctionDefinition",
+            "src": "3705:89:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53873,
+              "nodeType": "StructuredDocumentation",
+              "src": "3340:360:71",
+              "text": "@notice Returns the pool address for a given pair of tokens, or address 0 if it does not exist\n @dev tokenA and tokenB may be passed in either token0/token1 or token1/token0 order\n @param tokenA The contract address of either token0 or token1\n @param tokenB The contract address of the other token\n @return pool The pool address"
+            },
+            "functionSelector": "d9a641e1",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "poolByPair",
+            "nameLocation": "3714:10:71",
+            "parameters": {
+              "id": 53878,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53875,
+                  "mutability": "mutable",
+                  "name": "tokenA",
+                  "nameLocation": "3733:6:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53882,
+                  "src": "3725:14:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53874,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3725:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 53877,
+                  "mutability": "mutable",
+                  "name": "tokenB",
+                  "nameLocation": "3749:6:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53882,
+                  "src": "3741:14:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53876,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3741:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3724:32:71"
+            },
+            "returnParameters": {
+              "id": 53881,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53880,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "3788:4:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53882,
+                  "src": "3780:12:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53879,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3780:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3779:14:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53888,
+            "nodeType": "FunctionDefinition",
+            "src": "3890:85:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53883,
+              "nodeType": "StructuredDocumentation",
+              "src": "3800:85:71",
+              "text": "@return timestamp The timestamp of the beginning of the renounceOwnership process"
+            },
+            "functionSelector": "084bfff9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "renounceOwnershipStartTimestamp",
+            "nameLocation": "3899:31:71",
+            "parameters": {
+              "id": 53884,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3930:2:71"
+            },
+            "returnParameters": {
+              "id": 53887,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53886,
+                  "mutability": "mutable",
+                  "name": "timestamp",
+                  "nameLocation": "3964:9:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53888,
+                  "src": "3956:17:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 53885,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3956:7:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3955:19:71"
+            },
+            "scope": 53926,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53898,
+            "nodeType": "FunctionDefinition",
+            "src": "4416:84:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53889,
+              "nodeType": "StructuredDocumentation",
+              "src": "3981:430:71",
+              "text": "@notice Creates a pool for the given two tokens\n @param tokenA One of the two tokens in the desired pool\n @param tokenB The other of the two tokens in the desired pool\n @dev tokenA and tokenB may be passed in either order: token0/token1 or token1/token0.\n The call will revert if the pool already exists or the token arguments are invalid.\n @return pool The address of the newly created pool"
+            },
+            "functionSelector": "e3433615",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createPool",
+            "nameLocation": "4425:10:71",
+            "parameters": {
+              "id": 53894,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53891,
+                  "mutability": "mutable",
+                  "name": "tokenA",
+                  "nameLocation": "4444:6:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53898,
+                  "src": "4436:14:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53890,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4436:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 53893,
+                  "mutability": "mutable",
+                  "name": "tokenB",
+                  "nameLocation": "4460:6:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53898,
+                  "src": "4452:14:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53892,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4452:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4435:32:71"
+            },
+            "returnParameters": {
+              "id": 53897,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53896,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nameLocation": "4494:4:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53898,
+                  "src": "4486:12:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53895,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4486:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4485:14:71"
+            },
+            "scope": 53926,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53904,
+            "nodeType": "FunctionDefinition",
+            "src": "4630:63:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53899,
+              "nodeType": "StructuredDocumentation",
+              "src": "4506:119:71",
+              "text": "@dev updates tokenomics address on the factory\n @param newFarmingAddress The new tokenomics contract address"
+            },
+            "functionSelector": "b001f618",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setFarmingAddress",
+            "nameLocation": "4639:17:71",
+            "parameters": {
+              "id": 53902,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53901,
+                  "mutability": "mutable",
+                  "name": "newFarmingAddress",
+                  "nameLocation": "4665:17:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53904,
+                  "src": "4657:25:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 53900,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4657:7:71",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4656:27:71"
+            },
+            "returnParameters": {
+              "id": 53903,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4692:0:71"
+            },
+            "scope": 53926,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53910,
+            "nodeType": "FunctionDefinition",
+            "src": "4848:71:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53905,
+              "nodeType": "StructuredDocumentation",
+              "src": "4699:144:71",
+              "text": "@dev updates default community fee for new pools\n @param newDefaultCommunityFee The new community fee, _must_ be <= MAX_COMMUNITY_FEE"
+            },
+            "functionSelector": "371e3521",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setDefaultCommunityFee",
+            "nameLocation": "4857:22:71",
+            "parameters": {
+              "id": 53908,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53907,
+                  "mutability": "mutable",
+                  "name": "newDefaultCommunityFee",
+                  "nameLocation": "4886:22:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53910,
+                  "src": "4880:28:71",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 53906,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4880:5:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4879:30:71"
+            },
+            "returnParameters": {
+              "id": 53909,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4918:0:71"
+            },
+            "scope": 53926,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53917,
+            "nodeType": "FunctionDefinition",
+            "src": "5270:89:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53911,
+              "nodeType": "StructuredDocumentation",
+              "src": "4925:340:71",
+              "text": "@notice Changes initial fee configuration for new pools\n @dev changes coefficients for sigmoids: α / (1 + e^( (β-x) / γ))\n alpha1 + alpha2 + baseFee (max possible fee) must be <= type(uint16).max and gammas must be > 0\n @param newConfig new default fee configuration. See the #AdaptiveFee.sol library for details"
+            },
+            "functionSelector": "f718949a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setDefaultFeeConfiguration",
+            "nameLocation": "5279:26:71",
+            "parameters": {
+              "id": 53915,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 53914,
+                  "mutability": "mutable",
+                  "name": "newConfig",
+                  "nameLocation": "5339:9:71",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 53917,
+                  "src": "5306:42:71",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_AlgebraFeeConfiguration_$55613_calldata_ptr",
+                    "typeString": "struct AlgebraFeeConfiguration"
+                  },
+                  "typeName": {
+                    "id": 53913,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 53912,
+                      "name": "AlgebraFeeConfiguration",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 55613,
+                      "src": "5306:23:71"
+                    },
+                    "referencedDeclaration": 55613,
+                    "src": "5306:23:71",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_AlgebraFeeConfiguration_$55613_storage_ptr",
+                      "typeString": "struct AlgebraFeeConfiguration"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5305:44:71"
+            },
+            "returnParameters": {
+              "id": 53916,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5358:0:71"
+            },
+            "scope": 53926,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53921,
+            "nodeType": "FunctionDefinition",
+            "src": "5521:43:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53918,
+              "nodeType": "StructuredDocumentation",
+              "src": "5365:151:71",
+              "text": "@notice Starts process of renounceOwnership. After that, a certain period\n of time must pass before the ownership renounce can be completed."
+            },
+            "functionSelector": "469388c4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "startRenounceOwnership",
+            "nameLocation": "5530:22:71",
+            "parameters": {
+              "id": 53919,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5552:2:71"
+            },
+            "returnParameters": {
+              "id": 53920,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5563:0:71"
+            },
+            "scope": 53926,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 53925,
+            "nodeType": "FunctionDefinition",
+            "src": "5640:42:71",
+            "nodes": [],
+            "documentation": {
+              "id": 53922,
+              "nodeType": "StructuredDocumentation",
+              "src": "5570:65:71",
+              "text": "@notice Stops process of renounceOwnership and removes timer."
+            },
+            "functionSelector": "238a1d74",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stopRenounceOwnership",
+            "nameLocation": "5649:21:71",
+            "parameters": {
+              "id": 53923,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5670:2:71"
+            },
+            "returnParameters": {
+              "id": 53924,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5681:0:71"
+            },
+            "scope": 53926,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAlgebraFactory",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 53784,
+          "nodeType": "StructuredDocumentation",
+          "src": "136:183:71",
+          "text": "@title The interface for the Algebra Factory\n @dev Credit to Uniswap Labs under GPL-2.0-or-later license:\n https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          53926
+        ],
+        "name": "IAlgebraFactory",
+        "nameLocation": "329:15:71",
+        "scope": 53927,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 71
+}

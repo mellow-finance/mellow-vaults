@@ -1,0 +1,1232 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "DEFAULT_MAX_LOSS",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "externalCall",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "result",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initialized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_hash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "isValidSignature",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "magicValue",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "isVaultToken",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nft",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "options",
+          "type": "bytes"
+        }
+      ],
+      "name": "pull",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pullExistentials",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "options",
+          "type": "bytes"
+        }
+      ],
+      "name": "push",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        }
+      ],
+      "name": "reclaimTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "options",
+          "type": "bytes"
+        }
+      ],
+      "name": "transferAndPush",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tvl",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "minTokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "maxTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultGovernance",
+      "outputs": [
+        {
+          "internalType": "contract IVaultGovernance",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultTokens",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "DEFAULT_MAX_LOSS()": "ae1a02e9",
+    "externalCall(address,bytes4,bytes)": "2e2f4cc2",
+    "initialize(uint256,address[])": "a920b78c",
+    "initialized()": "158ef93e",
+    "isValidSignature(bytes32,bytes)": "1626ba7e",
+    "isVaultToken(address)": "338c4ccb",
+    "nft()": "47ccca02",
+    "pull(address,address[],uint256[],bytes)": "2062d754",
+    "pullExistentials()": "d2c219b0",
+    "push(address[],uint256[],bytes)": "566ca6b4",
+    "reclaimTokens(address[])": "05e1c942",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "transferAndPush(address,address[],uint256[],bytes)": "27a35e5a",
+    "tvl()": "e5328e06",
+    "vaultGovernance()": "fe255a5e",
+    "vaultTokens()": "69722233"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"DEFAULT_MAX_LOSS\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"externalCall\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"result\",\"type\":\"bytes\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"isValidSignature\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"magicValue\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isVaultToken\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"options\",\"type\":\"bytes\"}],\"name\":\"pull\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pullExistentials\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"options\",\"type\":\"bytes\"}],\"name\":\"push\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"}],\"name\":\"reclaimTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"options\",\"type\":\"bytes\"}],\"name\":\"transferAndPush\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tvl\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"minTokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"maxTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultGovernance\",\"outputs\":[{\"internalType\":\"contract IVaultGovernance\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultTokens\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"externalCall(address,bytes4,bytes)\":{\"details\":\"Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. Since this method allows sending arbitrary transactions, the destinations of the calls are whitelisted by Protocol Governance.\",\"params\":{\"data\":\"Abi encoded parameters to `to::selector`\",\"selector\":\"Selector of the call\",\"to\":\"Address of the reward pool\"},\"returns\":{\"result\":\"Result of execution of the call\"}},\"initialize(uint256,address[])\":{\"details\":\"Can only be initialized by vault governance\",\"params\":{\"nft_\":\"NFT of the vault in the VaultRegistry\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"isValidSignature(bytes32,bytes)\":{\"details\":\"Should return whether the signature provided is valid for the provided hash MUST return the bytes4 magic value 0x1626ba7e when function passes. MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5) MUST allow external calls\",\"params\":{\"_hash\":\"Hash of the data to be signed\",\"_signature\":\"Signature byte array associated with _hash\"},\"returns\":{\"magicValue\":\"0x1626ba7e if valid, 0xffffffff otherwise\"}},\"isVaultToken(address)\":{\"params\":{\"token\":\"Address of the token to check\"},\"returns\":{\"_0\":\"`true` if this token is managed by Vault\"}},\"pull(address,address[],uint256[],bytes)\":{\"details\":\"Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. When called by vault owner this method just pulls the tokens from the protocol to the `to` address When called by strategy on vault other than zero vault it pulls the tokens to zero vault (required `to` == zero vault) When called by strategy on zero vault it pulls the tokens to zero vault, pushes tokens on the `to` vault, and reclaims everything that's left. Thus any vault other than zero vault cannot have any tokens on it Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Pull is fulfilled on the best effort basis, i.e. if the tokenAmounts overflows available funds it withdraws all the funds.\",\"params\":{\"options\":\"Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions\",\"to\":\"Address to receive the tokens\",\"tokenAmounts\":\"Amounts of tokens to pull\",\"tokens\":\"Tokens to pull\"},\"returns\":{\"actualTokenAmounts\":\"The amounts actually withdrawn. It could be less than tokenAmounts (but not higher)\"}},\"push(address[],uint256[],bytes)\":{\"details\":\"Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.\",\"params\":{\"options\":\"Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions\",\"tokenAmounts\":\"Amounts of tokens to push\",\"tokens\":\"Tokens to push\"},\"returns\":{\"actualTokenAmounts\":\"The amounts actually invested. It could be less than tokenAmounts (but not higher)\"}},\"reclaimTokens(address[])\":{\"details\":\"Cannot be called from zero vault.\",\"params\":{\"tokens\":\"Tokens to claim\"},\"returns\":{\"actualTokenAmounts\":\"Amounts reclaimed\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"},\"transferAndPush(address,address[],uint256[],bytes)\":{\"params\":{\"options\":\"Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions\",\"tokenAmounts\":\"Amounts of tokens to push\",\"tokens\":\"Tokens to push\"},\"returns\":{\"actualTokenAmounts\":\"The amounts actually invested. It could be less than tokenAmounts (but not higher)\"}},\"tvl()\":{\"details\":\"Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not\",\"returns\":{\"maxTokenAmounts\":\"Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\",\"minTokenAmounts\":\"Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"DEFAULT_MAX_LOSS()\":{\"notice\":\"Default maximal loss for withdraw\"},\"externalCall(address,bytes4,bytes)\":{\"notice\":\"Execute one of whitelisted calls.\"},\"initialize(uint256,address[])\":{\"notice\":\"Initialized a new contract.\"},\"initialized()\":{\"notice\":\"Checks if the vault is initialized\"},\"isValidSignature(bytes32,bytes)\":{\"notice\":\"Verifies offchain signature.\"},\"isVaultToken(address)\":{\"notice\":\"Checks if a token is vault token\"},\"nft()\":{\"notice\":\"VaultRegistry NFT for this vault\"},\"pull(address,address[],uint256[],bytes)\":{\"notice\":\"Pulls tokens from the underlying protocol to the `to` address.\"},\"pullExistentials()\":{\"notice\":\"Existential amounts for each token\"},\"push(address[],uint256[],bytes)\":{\"notice\":\"Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from the contract balance and convert it to yUSDC.\"},\"reclaimTokens(address[])\":{\"notice\":\"Claim ERC20 tokens from vault balance to zero vault.\"},\"transferAndPush(address,address[],uint256[],bytes)\":{\"notice\":\"The same as `push` method above but transfers tokens to vault balance prior to calling push. After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full).\"},\"tvl()\":{\"notice\":\"Total value locked for this contract.\"},\"vaultGovernance()\":{\"notice\":\"Address of the Vault Governance for this contract.\"},\"vaultTokens()\":{\"notice\":\"ERC20 tokens under Vault management.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IYearnVault.sol\":\"IYearnVault\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]},\"src/interfaces/vaults/IYearnVault.sol\":{\"keccak256\":\"0x7711da14c4f708795d89da2e64ea1e513925dc44d4a01c7ab50fcfde709d0927\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a76af3af77190f0a7c1576dba3d38408009af3bb58afac60f5f19c089af523e8\",\"dweb:/ipfs/QmSPkUKE1XHek59WuLhvfYPN2xSFUycF1KpLWPVtgagEku\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "DEFAULT_MAX_LOSS",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "externalCall",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "result",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "initialize"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "initialized",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_hash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_signature",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isValidSignature",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "magicValue",
+              "type": "bytes4"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isVaultToken",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "nft",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "options",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "pull",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "pullExistentials",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "options",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "push",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "reclaimTokens",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "options",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferAndPush",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tvl",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "minTokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "maxTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultGovernance",
+          "outputs": [
+            {
+              "internalType": "contract IVaultGovernance",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultTokens",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "externalCall(address,bytes4,bytes)": {
+            "details": "Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. Since this method allows sending arbitrary transactions, the destinations of the calls are whitelisted by Protocol Governance.",
+            "params": {
+              "data": "Abi encoded parameters to `to::selector`",
+              "selector": "Selector of the call",
+              "to": "Address of the reward pool"
+            },
+            "returns": {
+              "result": "Result of execution of the call"
+            }
+          },
+          "initialize(uint256,address[])": {
+            "details": "Can only be initialized by vault governance",
+            "params": {
+              "nft_": "NFT of the vault in the VaultRegistry",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "isValidSignature(bytes32,bytes)": {
+            "details": "Should return whether the signature provided is valid for the provided hash MUST return the bytes4 magic value 0x1626ba7e when function passes. MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5) MUST allow external calls",
+            "params": {
+              "_hash": "Hash of the data to be signed",
+              "_signature": "Signature byte array associated with _hash"
+            },
+            "returns": {
+              "magicValue": "0x1626ba7e if valid, 0xffffffff otherwise"
+            }
+          },
+          "isVaultToken(address)": {
+            "params": {
+              "token": "Address of the token to check"
+            },
+            "returns": {
+              "_0": "`true` if this token is managed by Vault"
+            }
+          },
+          "pull(address,address[],uint256[],bytes)": {
+            "details": "Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. When called by vault owner this method just pulls the tokens from the protocol to the `to` address When called by strategy on vault other than zero vault it pulls the tokens to zero vault (required `to` == zero vault) When called by strategy on zero vault it pulls the tokens to zero vault, pushes tokens on the `to` vault, and reclaims everything that's left. Thus any vault other than zero vault cannot have any tokens on it Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Pull is fulfilled on the best effort basis, i.e. if the tokenAmounts overflows available funds it withdraws all the funds.",
+            "params": {
+              "options": "Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions",
+              "to": "Address to receive the tokens",
+              "tokenAmounts": "Amounts of tokens to pull",
+              "tokens": "Tokens to pull"
+            },
+            "returns": {
+              "actualTokenAmounts": "The amounts actually withdrawn. It could be less than tokenAmounts (but not higher)"
+            }
+          },
+          "push(address[],uint256[],bytes)": {
+            "details": "Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.",
+            "params": {
+              "options": "Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions",
+              "tokenAmounts": "Amounts of tokens to push",
+              "tokens": "Tokens to push"
+            },
+            "returns": {
+              "actualTokenAmounts": "The amounts actually invested. It could be less than tokenAmounts (but not higher)"
+            }
+          },
+          "reclaimTokens(address[])": {
+            "details": "Cannot be called from zero vault.",
+            "params": {
+              "tokens": "Tokens to claim"
+            },
+            "returns": {
+              "actualTokenAmounts": "Amounts reclaimed"
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          },
+          "transferAndPush(address,address[],uint256[],bytes)": {
+            "params": {
+              "options": "Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions",
+              "tokenAmounts": "Amounts of tokens to push",
+              "tokens": "Tokens to push"
+            },
+            "returns": {
+              "actualTokenAmounts": "The amounts actually invested. It could be less than tokenAmounts (but not higher)"
+            }
+          },
+          "tvl()": {
+            "details": "Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not",
+            "returns": {
+              "maxTokenAmounts": "Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)",
+              "minTokenAmounts": "Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "DEFAULT_MAX_LOSS()": {
+            "notice": "Default maximal loss for withdraw"
+          },
+          "externalCall(address,bytes4,bytes)": {
+            "notice": "Execute one of whitelisted calls."
+          },
+          "initialize(uint256,address[])": {
+            "notice": "Initialized a new contract."
+          },
+          "initialized()": {
+            "notice": "Checks if the vault is initialized"
+          },
+          "isValidSignature(bytes32,bytes)": {
+            "notice": "Verifies offchain signature."
+          },
+          "isVaultToken(address)": {
+            "notice": "Checks if a token is vault token"
+          },
+          "nft()": {
+            "notice": "VaultRegistry NFT for this vault"
+          },
+          "pull(address,address[],uint256[],bytes)": {
+            "notice": "Pulls tokens from the underlying protocol to the `to` address."
+          },
+          "pullExistentials()": {
+            "notice": "Existential amounts for each token"
+          },
+          "push(address[],uint256[],bytes)": {
+            "notice": "Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from the contract balance and convert it to yUSDC."
+          },
+          "reclaimTokens(address[])": {
+            "notice": "Claim ERC20 tokens from vault balance to zero vault."
+          },
+          "transferAndPush(address,address[],uint256[],bytes)": {
+            "notice": "The same as `push` method above but transfers tokens to vault balance prior to calling push. After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full)."
+          },
+          "tvl()": {
+            "notice": "Total value locked for this contract."
+          },
+          "vaultGovernance()": {
+            "notice": "Address of the Vault Governance for this contract."
+          },
+          "vaultTokens()": {
+            "notice": "ERC20 tokens under Vault management."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IYearnVault.sol": "IYearnVault"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IYearnVault.sol": {
+        "keccak256": "0x7711da14c4f708795d89da2e64ea1e513925dc44d4a01c7ab50fcfde709d0927",
+        "urls": [
+          "bzz-raw://a76af3af77190f0a7c1576dba3d38408009af3bb58afac60f5f19c089af523e8",
+          "dweb:/ipfs/QmSPkUKE1XHek59WuLhvfYPN2xSFUycF1KpLWPVtgagEku"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IYearnVault.sol",
+    "id": 78724,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "IYearnVault": [
+        78723
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:537:358",
+    "nodes": [
+      {
+        "id": 78704,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:358",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 78705,
+        "nodeType": "ImportDirective",
+        "src": "57:33:358",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IIntegrationVault.sol",
+        "file": "./IIntegrationVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 78724,
+        "sourceUnit": 77768,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 78723,
+        "nodeType": "ContractDefinition",
+        "src": "92:476:358",
+        "nodes": [
+          {
+            "id": 78716,
+            "nodeType": "FunctionDefinition",
+            "src": "376:74:358",
+            "nodes": [],
+            "documentation": {
+              "id": 78708,
+              "nodeType": "StructuredDocumentation",
+              "src": "141:230:358",
+              "text": "@notice Initialized a new contract.\n @dev Can only be initialized by vault governance\n @param nft_ NFT of the vault in the VaultRegistry\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault"
+            },
+            "functionSelector": "a920b78c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "initialize",
+            "nameLocation": "385:10:358",
+            "parameters": {
+              "id": 78714,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78710,
+                  "mutability": "mutable",
+                  "name": "nft_",
+                  "nameLocation": "404:4:358",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78716,
+                  "src": "396:12:358",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78709,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "396:7:358",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 78713,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "427:12:358",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78716,
+                  "src": "410:29:358",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 78711,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "410:7:358",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 78712,
+                    "nodeType": "ArrayTypeName",
+                    "src": "410:9:358",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "395:45:358"
+            },
+            "returnParameters": {
+              "id": 78715,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "449:0:358"
+            },
+            "scope": 78723,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 78722,
+            "nodeType": "FunctionDefinition",
+            "src": "506:60:358",
+            "nodes": [],
+            "documentation": {
+              "id": 78717,
+              "nodeType": "StructuredDocumentation",
+              "src": "456:45:358",
+              "text": "@notice Default maximal loss for withdraw"
+            },
+            "functionSelector": "ae1a02e9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "DEFAULT_MAX_LOSS",
+            "nameLocation": "515:16:358",
+            "parameters": {
+              "id": 78718,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "531:2:358"
+            },
+            "returnParameters": {
+              "id": 78721,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 78720,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 78722,
+                  "src": "557:7:358",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 78719,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "557:7:358",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "556:9:358"
+            },
+            "scope": 78723,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 78706,
+              "name": "IIntegrationVault",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 77767,
+              "src": "117:17:358"
+            },
+            "id": 78707,
+            "nodeType": "InheritanceSpecifier",
+            "src": "117:17:358"
+          }
+        ],
+        "canonicalName": "IYearnVault",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          78723,
+          77767,
+          64026,
+          78599,
+          48073
+        ],
+        "name": "IYearnVault",
+        "nameLocation": "102:11:358",
+        "scope": 78724,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 358
+}

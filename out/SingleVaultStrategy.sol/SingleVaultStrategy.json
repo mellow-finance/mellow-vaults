@@ -1,0 +1,1660 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20Vault",
+          "name": "erc20Vault_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "subvault_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "contractName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "contractNameBytes",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "contractVersion",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "contractVersionBytes",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "depositCallback",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "erc20Vault",
+      "outputs": [
+        {
+          "internalType": "contract IERC20Vault",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "subvault",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawCallback",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x60c060405234801561001057600080fd5b5060405161089d38038061089d83398101604081905261002f9161005e565b6001600160a01b039182166080521660a052610098565b6001600160a01b038116811461005b57600080fd5b50565b6000806040838503121561007157600080fd5b825161007c81610046565b602084015190925061008d81610046565b809150509250929050565b60805160a0516107c56100d860003960008181610127015261029f01526000818160af015281816101900152818161027001526102c001526107c56000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c8063a0a8e4601161005b578063a0a8e4601461011a578063b3ab252a14610122578063b4559f3e14610149578063e521826f1461014b57600080fd5b806306a462391461008d578063090f9221146100aa5780630e3e80ac146100e957806375d0c0dc14610105575b600080fd5b640312e302e360dc1b5b6040519081526020015b60405180910390f35b6100d17f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100a1565b7253696e676c655661756c74537472617465677960681b610097565b61010d610158565b6040516100a19190610439565b61010d610179565b6100d17f000000000000000000000000000000000000000000000000000000000000000081565b005b61014961018c565b905090565b60606101537253696e676c655661756c74537472617465677960681b6103cd565b6060610153640312e302e360dc1b6103cd565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663e5328e066040518163ffffffff1660e01b815260040160006040518083038186803b1580156101e757600080fd5b505afa1580156101fb573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526102239190810190610564565b50905060008160008151811061023b5761023b6105c8565b60200260200101511180610269575060008160018151811061025f5761025f6105c8565b6020026020010151115b156103ca577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316632062d7547f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663697222336040518163ffffffff1660e01b815260040160006040518083038186803b15801561031757600080fd5b505afa15801561032b573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261035391908101906105de565b846040518463ffffffff1660e01b815260040161037293929190610685565b600060405180830381600087803b15801561038c57600080fd5b505af11580156103a0573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526103c89190810190610729565b505b50565b604080516020808252818301909252606091602082018180368337019050509050602060005b602081101561042b5783816020811061040e5761040e6105c8565b1a61041b5780915061042b565b61042481610766565b90506103f3565b508152602081019190915290565b600060208083528351808285015260005b818110156104665785810183015185820160400152820161044a565b81811115610478576000604083870101525b50601f01601f1916929092016040019392505050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff811182821017156104cd576104cd61048e565b604052919050565b600067ffffffffffffffff8211156104ef576104ef61048e565b5060051b60200190565b600082601f83011261050a57600080fd5b8151602061051f61051a836104d5565b6104a4565b82815260059290921b8401810191818101908684111561053e57600080fd5b8286015b848110156105595780518352918301918301610542565b509695505050505050565b6000806040838503121561057757600080fd5b825167ffffffffffffffff8082111561058f57600080fd5b61059b868387016104f9565b935060208501519150808211156105b157600080fd5b506105be858286016104f9565b9150509250929050565b634e487b7160e01b600052603260045260246000fd5b600060208083850312156105f157600080fd5b825167ffffffffffffffff81111561060857600080fd5b8301601f8101851361061957600080fd5b805161062761051a826104d5565b81815260059190911b8201830190838101908783111561064657600080fd5b928401925b8284101561067a5783516001600160a01b038116811461066b5760008081fd5b8252928401929084019061064b565b979650505050505050565b6001600160a01b0384811682526080602080840182905285519184018290526000928682019290919060a0860190855b818110156106d35785518516835294830194918301916001016106b5565b5050858103604087015286518082529082019350915080860160005b8381101561070b578151855293820193908201906001016106ef565b50505050828103606084015260008152602081019695505050505050565b60006020828403121561073b57600080fd5b815167ffffffffffffffff81111561075257600080fd5b61075e848285016104f9565b949350505050565b600060001982141561078857634e487b7160e01b600052601160045260246000fd5b506001019056fea264697066735822122012609459d1700496cf43862bd95213b782db815782751f254caa28fcfe93601f64736f6c63430008090033",
+    "sourceMap": "201:890:404:-:0;;;350:127;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;-1:-1:-1;;;;;416:24:404;;;;;450:20;;;201:890;;14:144:488;-1:-1:-1;;;;;102:31:488;;92:42;;82:70;;148:1;145;138:12;82:70;14:144;:::o;163:432::-;263:6;271;324:2;312:9;303:7;299:23;295:32;292:52;;;340:1;337;330:12;292:52;372:9;366:16;391:44;429:5;391:44;:::i;:::-;504:2;489:18;;483:25;454:5;;-1:-1:-1;517:46:488;483:25;517:46;:::i;:::-;582:7;572:17;;;163:432;;;;;:::o;:::-;201:890:404;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x608060405234801561001057600080fd5b50600436106100885760003560e01c8063a0a8e4601161005b578063a0a8e4601461011a578063b3ab252a14610122578063b4559f3e14610149578063e521826f1461014b57600080fd5b806306a462391461008d578063090f9221146100aa5780630e3e80ac146100e957806375d0c0dc14610105575b600080fd5b640312e302e360dc1b5b6040519081526020015b60405180910390f35b6100d17f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100a1565b7253696e676c655661756c74537472617465677960681b610097565b61010d610158565b6040516100a19190610439565b61010d610179565b6100d17f000000000000000000000000000000000000000000000000000000000000000081565b005b61014961018c565b905090565b60606101537253696e676c655661756c74537472617465677960681b6103cd565b6060610153640312e302e360dc1b6103cd565b60007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663e5328e066040518163ffffffff1660e01b815260040160006040518083038186803b1580156101e757600080fd5b505afa1580156101fb573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526102239190810190610564565b50905060008160008151811061023b5761023b6105c8565b60200260200101511180610269575060008160018151811061025f5761025f6105c8565b6020026020010151115b156103ca577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316632062d7547f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663697222336040518163ffffffff1660e01b815260040160006040518083038186803b15801561031757600080fd5b505afa15801561032b573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261035391908101906105de565b846040518463ffffffff1660e01b815260040161037293929190610685565b600060405180830381600087803b15801561038c57600080fd5b505af11580156103a0573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526103c89190810190610729565b505b50565b604080516020808252818301909252606091602082018180368337019050509050602060005b602081101561042b5783816020811061040e5761040e6105c8565b1a61041b5780915061042b565b61042481610766565b90506103f3565b508152602081019190915290565b600060208083528351808285015260005b818110156104665785810183015185820160400152820161044a565b81811115610478576000604083870101525b50601f01601f1916929092016040019392505050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff811182821017156104cd576104cd61048e565b604052919050565b600067ffffffffffffffff8211156104ef576104ef61048e565b5060051b60200190565b600082601f83011261050a57600080fd5b8151602061051f61051a836104d5565b6104a4565b82815260059290921b8401810191818101908684111561053e57600080fd5b8286015b848110156105595780518352918301918301610542565b509695505050505050565b6000806040838503121561057757600080fd5b825167ffffffffffffffff8082111561058f57600080fd5b61059b868387016104f9565b935060208501519150808211156105b157600080fd5b506105be858286016104f9565b9150509250929050565b634e487b7160e01b600052603260045260246000fd5b600060208083850312156105f157600080fd5b825167ffffffffffffffff81111561060857600080fd5b8301601f8101851361061957600080fd5b805161062761051a826104d5565b81815260059190911b8201830190838101908783111561064657600080fd5b928401925b8284101561067a5783516001600160a01b038116811461066b5760008081fd5b8252928401929084019061064b565b979650505050505050565b6001600160a01b0384811682526080602080840182905285519184018290526000928682019290919060a0860190855b818110156106d35785518516835294830194918301916001016106b5565b5050858103604087015286518082529082019350915080860160005b8381101561070b578151855293820193908201906001016106ef565b50505050828103606084015260008152602081019695505050505050565b60006020828403121561073b57600080fd5b815167ffffffffffffffff81111561075257600080fd5b61075e848285016104f9565b949350505050565b600060001982141561078857634e487b7160e01b600052601160045260246000fd5b506001019056fea264697066735822122012609459d1700496cf43862bd95213b782db815782751f254caa28fcfe93601f64736f6c63430008090033",
+    "sourceMap": "201:890:404:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;592:106:410;-1:-1:-1;;;592:106:410;;;160:25:488;;;148:2;133:18;592:106:410;;;;;;;;265:39:404;;;;;;;;-1:-1:-1;;;;;381:32:488;;;363:51;;351:2;336:18;265:39:404;196:224:488;355:100:410;-1:-1:-1;;;355:100:410;592:106;230:119;;;:::i;:::-;;;;;;;:::i;461:125::-;;;:::i;310:33:404:-;;;;;809:39;;515:256;;;:::i;673:18:410:-;666:25;;592:106;:::o;230:119::-;277:13;309:33;-1:-1:-1;;;309:16:410;:33::i;461:125::-;511:13;543:36;-1:-1:-1;;;309:16:410;:33::i;515:256:404:-;562:29;597:10;-1:-1:-1;;;;;597:14:404;;:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;597:16:404;;;;;;;;;;;;:::i;:::-;561:52;;;645:1;627:12;640:1;627:15;;;;;;;;:::i;:::-;;;;;;;:19;:42;;;;668:1;650:12;663:1;650:15;;;;;;;;:::i;:::-;;;;;;;:19;627:42;623:142;;;685:10;-1:-1:-1;;;;;685:15:404;;701:8;711:10;-1:-1:-1;;;;;711:22:404;;:24;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;711:24:404;;;;;;;;;;;;:::i;:::-;737:12;685:69;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;685:69:404;;;;;;;;;;;;:::i;:::-;;623:142;551:220;515:256::o;914:381:410:-;1005:14;;;1016:2;1005:14;;;;;;;;;974:15;;1005:14;;;;;;;;;;-1:-1:-1;;1001:18:410;-1:-1:-1;1043:2:410;1029:11;1055:142;1079:2;1075:1;:6;1055:142;;;1112:1;1114;1112:4;;;;;;;:::i;:::-;;1102:85;;1148:1;1142:7;;1167:5;;1102:85;1083:3;;;:::i;:::-;;;1055:142;;;-1:-1:-1;1229:14:410;;1270:4;1263:12;;1256:23;;;;1236:1;914:381::o;567:597:488:-;679:4;708:2;737;726:9;719:21;769:6;763:13;812:6;807:2;796:9;792:18;785:34;837:1;847:140;861:6;858:1;855:13;847:140;;;956:14;;;952:23;;946:30;922:17;;;941:2;918:26;911:66;876:10;;847:140;;;1005:6;1002:1;999:13;996:91;;;1075:1;1070:2;1061:6;1050:9;1046:22;1042:31;1035:42;996:91;-1:-1:-1;1148:2:488;1127:15;-1:-1:-1;;1123:29:488;1108:45;;;;1155:2;1104:54;;567:597;-1:-1:-1;;;567:597:488:o;1377:127::-;1438:10;1433:3;1429:20;1426:1;1419:31;1469:4;1466:1;1459:15;1493:4;1490:1;1483:15;1509:275;1580:2;1574:9;1645:2;1626:13;;-1:-1:-1;;1622:27:488;1610:40;;1680:18;1665:34;;1701:22;;;1662:62;1659:88;;;1727:18;;:::i;:::-;1763:2;1756:22;1509:275;;-1:-1:-1;1509:275:488:o;1789:183::-;1849:4;1882:18;1874:6;1871:30;1868:56;;;1904:18;;:::i;:::-;-1:-1:-1;1949:1:488;1945:14;1961:4;1941:25;;1789:183::o;1977:659::-;2042:5;2095:3;2088:4;2080:6;2076:17;2072:27;2062:55;;2113:1;2110;2103:12;2062:55;2142:6;2136:13;2168:4;2192:60;2208:43;2248:2;2208:43;:::i;:::-;2192:60;:::i;:::-;2286:15;;;2372:1;2368:10;;;;2356:23;;2352:32;;;2317:12;;;;2396:15;;;2393:35;;;2424:1;2421;2414:12;2393:35;2460:2;2452:6;2448:15;2472:135;2488:6;2483:3;2480:15;2472:135;;;2554:10;;2542:23;;2585:12;;;;2505;;2472:135;;;-1:-1:-1;2625:5:488;1977:659;-1:-1:-1;;;;;;1977:659:488:o;2641:614::-;2770:6;2778;2831:2;2819:9;2810:7;2806:23;2802:32;2799:52;;;2847:1;2844;2837:12;2799:52;2880:9;2874:16;2909:18;2950:2;2942:6;2939:14;2936:34;;;2966:1;2963;2956:12;2936:34;2989:72;3053:7;3044:6;3033:9;3029:22;2989:72;:::i;:::-;2979:82;;3107:2;3096:9;3092:18;3086:25;3070:41;;3136:2;3126:8;3123:16;3120:36;;;3152:1;3149;3142:12;3120:36;;3175:74;3241:7;3230:8;3219:9;3215:24;3175:74;:::i;:::-;3165:84;;;2641:614;;;;;:::o;3260:127::-;3321:10;3316:3;3312:20;3309:1;3302:31;3352:4;3349:1;3342:15;3376:4;3373:1;3366:15;3392:1065;3487:6;3518:2;3561;3549:9;3540:7;3536:23;3532:32;3529:52;;;3577:1;3574;3567:12;3529:52;3610:9;3604:16;3643:18;3635:6;3632:30;3629:50;;;3675:1;3672;3665:12;3629:50;3698:22;;3751:4;3743:13;;3739:27;-1:-1:-1;3729:55:488;;3780:1;3777;3770:12;3729:55;3809:2;3803:9;3832:60;3848:43;3888:2;3848:43;:::i;3832:60::-;3926:15;;;4008:1;4004:10;;;;3996:19;;3992:28;;;3957:12;;;;4032:19;;;4029:39;;;4064:1;4061;4054:12;4029:39;4088:11;;;;4108:319;4124:6;4119:3;4116:15;4108:319;;;4191:10;;-1:-1:-1;;;;;4234:31:488;;4224:42;;4214:140;;4308:1;4337:2;4333;4326:14;4214:140;4367:18;;4141:12;;;;4405;;;;4108:319;;;4446:5;3392:1065;-1:-1:-1;;;;;;;3392:1065:488:o;4462:1475::-;-1:-1:-1;;;;;4927:15:488;;;4909:34;;4858:3;4962:2;4980:18;;;4973:31;;;5053:13;;4843:19;;;5075:22;;;4810:4;;5155:15;;;;4881:19;;4962:2;4889:3;5113:19;;;4810:4;5198:178;5212:6;5209:1;5206:13;5198:178;;;5277:13;;5273:22;;5261:35;;5351:15;;;;5316:12;;;;5234:1;5227:9;5198:178;;;-1:-1:-1;;5412:19:488;;;5407:2;5392:18;;5385:47;5482:13;;5504:21;;;5543:12;;;;-1:-1:-1;5482:13:488;-1:-1:-1;5580:15:488;;;5615:1;5625:189;5641:8;5636:3;5633:17;5625:189;;;5710:15;;5696:30;;5748:14;;;;5787:17;;;;5669:1;5660:11;5625:189;;;-1:-1:-1;;;;5850:21:488;;;5845:2;5830:18;;5823:49;516:1;504:14;;551:4;542:14;;5881:50;4462:1475;-1:-1:-1;;;;;;4462:1475:488:o;5942:363::-;6037:6;6090:2;6078:9;6069:7;6065:23;6061:32;6058:52;;;6106:1;6103;6096:12;6058:52;6139:9;6133:16;6172:18;6164:6;6161:30;6158:50;;;6204:1;6201;6194:12;6158:50;6227:72;6291:7;6282:6;6271:9;6267:22;6227:72;:::i;:::-;6217:82;5942:363;-1:-1:-1;;;;5942:363:488:o;6310:232::-;6349:3;-1:-1:-1;;6370:17:488;;6367:140;;;6429:10;6424:3;6420:20;6417:1;6410:31;6464:4;6461:1;6454:15;6492:4;6489:1;6482:15;6367:140;-1:-1:-1;6534:1:488;6523:13;;6310:232::o",
+    "linkReferences": {},
+    "immutableReferences": {
+      "113351": [
+        {
+          "start": 175,
+          "length": 32
+        },
+        {
+          "start": 400,
+          "length": 32
+        },
+        {
+          "start": 624,
+          "length": 32
+        },
+        {
+          "start": 704,
+          "length": 32
+        }
+      ],
+      "113353": [
+        {
+          "start": 295,
+          "length": 32
+        },
+        {
+          "start": 671,
+          "length": 32
+        }
+      ]
+    }
+  },
+  "methodIdentifiers": {
+    "contractName()": "75d0c0dc",
+    "contractNameBytes()": "0e3e80ac",
+    "contractVersion()": "a0a8e460",
+    "contractVersionBytes()": "06a46239",
+    "depositCallback()": "e521826f",
+    "erc20Vault()": "090f9221",
+    "subvault()": "b3ab252a",
+    "withdrawCallback()": "b4559f3e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IERC20Vault\",\"name\":\"erc20Vault_\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"subvault_\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"contractName\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"contractNameBytes\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"contractVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"contractVersionBytes\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositCallback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"erc20Vault\",\"outputs\":[{\"internalType\":\"contract IERC20Vault\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"subvault\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"withdrawCallback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"depositCallback()\":{\"notice\":\"Function, that ERC20RootVault calling after deposit\"},\"withdrawCallback()\":{\"notice\":\"Function, that ERC20RootVault calling after withdraw\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/strategies/SingleVaultStrategy.sol\":\"SingleVaultStrategy\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/utils/IContractMeta.sol\":{\"keccak256\":\"0x7ce236cea17798c2c9e60a659e727ef188f6579315b8227d0c6ad067a33900fb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://31c232f85d6565414bdf292adacc3054ab2355878e4d4508fc86fc2787436f24\",\"dweb:/ipfs/QmVhEUkN5Rwqpyufn7qqT88LLdq885igE57Pk4LzgJb9Kp\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/utils/ILpCallback.sol\":{\"keccak256\":\"0xaf74795451f4cf6ebaaee736f80f109d66af7e713cbd76e3761977938ba6208e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4c2ef8f6cd87f34e4a05a16c6e9f5c0126bae37549de1ae09eec0ac5c2c3e012\",\"dweb:/ipfs/QmRB7zYZ873jENaixkEp3GmDZw1tFRRkA6bWpfkkWkozUh\"]},\"src/interfaces/vaults/IERC20Vault.sol\":{\"keccak256\":\"0xe819fd0b6fbad8e6b2c71e986b5859a432308a196b91c209aa0bf1e10bdddf27\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a0e8b853eed75d97003f269143c4c041070062011296aecbcfefee4879e88d94\",\"dweb:/ipfs/QmWLFHp3LRSzuTu8SRsdxUJ5rxKAMx6F6JgqPBheedbTFx\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]},\"src/strategies/SingleVaultStrategy.sol\":{\"keccak256\":\"0x99315e8571f25e56661692f64b3c645370fa58dc63564cd4b4a0ab35cb5979b3\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://0db97630bff4c86f86f5c752ad120167e18a6a62952d138678432c1dd5f6a511\",\"dweb:/ipfs/QmZhGzaU8bwxcLdSvrsS9dVQSkgJcpJdm1ursEtRzErLKn\"]},\"src/utils/ContractMeta.sol\":{\"keccak256\":\"0x6e1fe2b6e0907a5388a5775be53bbfb55883aacc0ccb7597dfc6475fa9834c3f\",\"license\":\"BUSL-1.1\",\"urls\":[\"bzz-raw://9f8a2c5073a97b514829bac140bf84391cc5702185c4d6813e47b61ce53515e6\",\"dweb:/ipfs/QmeuMJq2ciSaDZC8qiUGLPfAHBjpCE4v79fZiaWm8egAks\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20Vault",
+              "name": "erc20Vault_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "subvault_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "contractName",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "contractNameBytes",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "contractVersion",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "contractVersionBytes",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "depositCallback"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "erc20Vault",
+          "outputs": [
+            {
+              "internalType": "contract IERC20Vault",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "subvault",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawCallback"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "depositCallback()": {
+            "notice": "Function, that ERC20RootVault calling after deposit"
+          },
+          "withdrawCallback()": {
+            "notice": "Function, that ERC20RootVault calling after withdraw"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/strategies/SingleVaultStrategy.sol": "SingleVaultStrategy"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IContractMeta.sol": {
+        "keccak256": "0x7ce236cea17798c2c9e60a659e727ef188f6579315b8227d0c6ad067a33900fb",
+        "urls": [
+          "bzz-raw://31c232f85d6565414bdf292adacc3054ab2355878e4d4508fc86fc2787436f24",
+          "dweb:/ipfs/QmVhEUkN5Rwqpyufn7qqT88LLdq885igE57Pk4LzgJb9Kp"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/ILpCallback.sol": {
+        "keccak256": "0xaf74795451f4cf6ebaaee736f80f109d66af7e713cbd76e3761977938ba6208e",
+        "urls": [
+          "bzz-raw://4c2ef8f6cd87f34e4a05a16c6e9f5c0126bae37549de1ae09eec0ac5c2c3e012",
+          "dweb:/ipfs/QmRB7zYZ873jENaixkEp3GmDZw1tFRRkA6bWpfkkWkozUh"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IERC20Vault.sol": {
+        "keccak256": "0xe819fd0b6fbad8e6b2c71e986b5859a432308a196b91c209aa0bf1e10bdddf27",
+        "urls": [
+          "bzz-raw://a0e8b853eed75d97003f269143c4c041070062011296aecbcfefee4879e88d94",
+          "dweb:/ipfs/QmWLFHp3LRSzuTu8SRsdxUJ5rxKAMx6F6JgqPBheedbTFx"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      },
+      "src/strategies/SingleVaultStrategy.sol": {
+        "keccak256": "0x99315e8571f25e56661692f64b3c645370fa58dc63564cd4b4a0ab35cb5979b3",
+        "urls": [
+          "bzz-raw://0db97630bff4c86f86f5c752ad120167e18a6a62952d138678432c1dd5f6a511",
+          "dweb:/ipfs/QmZhGzaU8bwxcLdSvrsS9dVQSkgJcpJdm1ursEtRzErLKn"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/utils/ContractMeta.sol": {
+        "keccak256": "0x6e1fe2b6e0907a5388a5775be53bbfb55883aacc0ccb7597dfc6475fa9834c3f",
+        "urls": [
+          "bzz-raw://9f8a2c5073a97b514829bac140bf84391cc5702185c4d6813e47b61ce53515e6",
+          "dweb:/ipfs/QmeuMJq2ciSaDZC8qiUGLPfAHBjpCE4v79fZiaWm8egAks"
+        ],
+        "license": "BUSL-1.1"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/strategies/SingleVaultStrategy.sol",
+    "id": 113439,
+    "exportedSymbols": {
+      "ContractMeta": [
+        114987
+      ],
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IContractMeta": [
+        75764
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC20Vault": [
+        77170
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "ILpCallback": [
+        75930
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "SingleVaultStrategy": [
+        113438
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1047:404",
+    "nodes": [
+      {
+        "id": 113341,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:404",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 113342,
+        "nodeType": "ImportDirective",
+        "src": "70:45:404",
+        "nodes": [],
+        "absolutePath": "src/interfaces/utils/ILpCallback.sol",
+        "file": "../interfaces/utils/ILpCallback.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 113439,
+        "sourceUnit": 75931,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 113343,
+        "nodeType": "ImportDirective",
+        "src": "116:46:404",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IERC20Vault.sol",
+        "file": "../interfaces/vaults/IERC20Vault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 113439,
+        "sourceUnit": 77171,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 113344,
+        "nodeType": "ImportDirective",
+        "src": "164:35:404",
+        "nodes": [],
+        "absolutePath": "src/utils/ContractMeta.sol",
+        "file": "../utils/ContractMeta.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 113439,
+        "sourceUnit": 114988,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 113438,
+        "nodeType": "ContractDefinition",
+        "src": "201:890:404",
+        "nodes": [
+          {
+            "id": 113351,
+            "nodeType": "VariableDeclaration",
+            "src": "265:39:404",
+            "nodes": [],
+            "constant": false,
+            "functionSelector": "090f9221",
+            "mutability": "immutable",
+            "name": "erc20Vault",
+            "nameLocation": "294:10:404",
+            "scope": 113438,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+              "typeString": "contract IERC20Vault"
+            },
+            "typeName": {
+              "id": 113350,
+              "nodeType": "UserDefinedTypeName",
+              "pathNode": {
+                "id": 113349,
+                "name": "IERC20Vault",
+                "nodeType": "IdentifierPath",
+                "referencedDeclaration": 77170,
+                "src": "265:11:404"
+              },
+              "referencedDeclaration": 77170,
+              "src": "265:11:404",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                "typeString": "contract IERC20Vault"
+              }
+            },
+            "visibility": "public"
+          },
+          {
+            "id": 113353,
+            "nodeType": "VariableDeclaration",
+            "src": "310:33:404",
+            "nodes": [],
+            "constant": false,
+            "functionSelector": "b3ab252a",
+            "mutability": "immutable",
+            "name": "subvault",
+            "nameLocation": "335:8:404",
+            "scope": 113438,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 113352,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "310:7:404",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "public"
+          },
+          {
+            "id": 113370,
+            "nodeType": "FunctionDefinition",
+            "src": "350:127:404",
+            "nodes": [],
+            "body": {
+              "id": 113369,
+              "nodeType": "Block",
+              "src": "406:71:404",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "id": 113363,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 113361,
+                      "name": "erc20Vault",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 113351,
+                      "src": "416:10:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                        "typeString": "contract IERC20Vault"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "id": 113362,
+                      "name": "erc20Vault_",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 113356,
+                      "src": "429:11:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                        "typeString": "contract IERC20Vault"
+                      }
+                    },
+                    "src": "416:24:404",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                      "typeString": "contract IERC20Vault"
+                    }
+                  },
+                  "id": 113364,
+                  "nodeType": "ExpressionStatement",
+                  "src": "416:24:404"
+                },
+                {
+                  "expression": {
+                    "id": 113367,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 113365,
+                      "name": "subvault",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 113353,
+                      "src": "450:8:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "id": 113366,
+                      "name": "subvault_",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 113358,
+                      "src": "461:9:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "450:20:404",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 113368,
+                  "nodeType": "ExpressionStatement",
+                  "src": "450:20:404"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "parameters": {
+              "id": 113359,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 113356,
+                  "mutability": "mutable",
+                  "name": "erc20Vault_",
+                  "nameLocation": "374:11:404",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 113370,
+                  "src": "362:23:404",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                    "typeString": "contract IERC20Vault"
+                  },
+                  "typeName": {
+                    "id": 113355,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 113354,
+                      "name": "IERC20Vault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77170,
+                      "src": "362:11:404"
+                    },
+                    "referencedDeclaration": 77170,
+                    "src": "362:11:404",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                      "typeString": "contract IERC20Vault"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 113358,
+                  "mutability": "mutable",
+                  "name": "subvault_",
+                  "nameLocation": "395:9:404",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 113370,
+                  "src": "387:17:404",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 113357,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "387:7:404",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "361:44:404"
+            },
+            "returnParameters": {
+              "id": 113360,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "406:0:404"
+            },
+            "scope": 113438,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "id": 113408,
+            "nodeType": "FunctionDefinition",
+            "src": "515:256:404",
+            "nodes": [],
+            "body": {
+              "id": 113407,
+              "nodeType": "Block",
+              "src": "551:220:404",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    113378,
+                    null
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 113378,
+                      "mutability": "mutable",
+                      "name": "tokenAmounts",
+                      "nameLocation": "579:12:404",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 113407,
+                      "src": "562:29:404",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                        "typeString": "uint256[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 113376,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "562:7:404",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "id": 113377,
+                        "nodeType": "ArrayTypeName",
+                        "src": "562:9:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                          "typeString": "uint256[]"
+                        }
+                      },
+                      "visibility": "internal"
+                    },
+                    null
+                  ],
+                  "id": 113382,
+                  "initialValue": {
+                    "arguments": [],
+                    "expression": {
+                      "argumentTypes": [],
+                      "expression": {
+                        "id": 113379,
+                        "name": "erc20Vault",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 113351,
+                        "src": "597:10:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                          "typeString": "contract IERC20Vault"
+                        }
+                      },
+                      "id": 113380,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "tvl",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 78591,
+                      "src": "597:14:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$__$returns$_t_array$_t_uint256_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$",
+                        "typeString": "function () view external returns (uint256[] memory,uint256[] memory)"
+                      }
+                    },
+                    "id": 113381,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "597:16:404",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$_t_array$_t_uint256_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$",
+                      "typeString": "tuple(uint256[] memory,uint256[] memory)"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "561:52:404"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    },
+                    "id": 113393,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "commonType": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "id": 113387,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "baseExpression": {
+                          "id": 113383,
+                          "name": "tokenAmounts",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 113378,
+                          "src": "627:12:404",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                            "typeString": "uint256[] memory"
+                          }
+                        },
+                        "id": 113385,
+                        "indexExpression": {
+                          "hexValue": "30",
+                          "id": 113384,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "640:1:404",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "627:15:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": ">",
+                      "rightExpression": {
+                        "hexValue": "30",
+                        "id": 113386,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "645:1:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      },
+                      "src": "627:19:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "||",
+                    "rightExpression": {
+                      "commonType": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "id": 113392,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "baseExpression": {
+                          "id": 113388,
+                          "name": "tokenAmounts",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 113378,
+                          "src": "650:12:404",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                            "typeString": "uint256[] memory"
+                          }
+                        },
+                        "id": 113390,
+                        "indexExpression": {
+                          "hexValue": "31",
+                          "id": 113389,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "663:1:404",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_1_by_1",
+                            "typeString": "int_const 1"
+                          },
+                          "value": "1"
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "650:15:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": ">",
+                      "rightExpression": {
+                        "hexValue": "30",
+                        "id": 113391,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "668:1:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      },
+                      "src": "650:19:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "src": "627:42:404",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 113406,
+                  "nodeType": "IfStatement",
+                  "src": "623:142:404",
+                  "trueBody": {
+                    "id": 113405,
+                    "nodeType": "Block",
+                    "src": "671:94:404",
+                    "statements": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "id": 113397,
+                              "name": "subvault",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 113353,
+                              "src": "701:8:404",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            {
+                              "arguments": [],
+                              "expression": {
+                                "argumentTypes": [],
+                                "expression": {
+                                  "id": 113398,
+                                  "name": "erc20Vault",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 113351,
+                                  "src": "711:10:404",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                                    "typeString": "contract IERC20Vault"
+                                  }
+                                },
+                                "id": 113399,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "vaultTokens",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 78573,
+                                "src": "711:22:404",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_function_external_view$__$returns$_t_array$_t_address_$dyn_memory_ptr_$",
+                                  "typeString": "function () view external returns (address[] memory)"
+                                }
+                              },
+                              "id": 113400,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "kind": "functionCall",
+                              "lValueRequested": false,
+                              "names": [],
+                              "nodeType": "FunctionCall",
+                              "src": "711:24:404",
+                              "tryCall": false,
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                                "typeString": "address[] memory"
+                              }
+                            },
+                            {
+                              "id": 113401,
+                              "name": "tokenAmounts",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 113378,
+                              "src": "737:12:404",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                                "typeString": "uint256[] memory"
+                              }
+                            },
+                            {
+                              "hexValue": "",
+                              "id": 113402,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "kind": "string",
+                              "lValueRequested": false,
+                              "nodeType": "Literal",
+                              "src": "751:2:404",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "typeString": "literal_string \"\""
+                              },
+                              "value": ""
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              },
+                              {
+                                "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                                "typeString": "address[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                                "typeString": "uint256[] memory"
+                              },
+                              {
+                                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "typeString": "literal_string \"\""
+                              }
+                            ],
+                            "expression": {
+                              "id": 113394,
+                              "name": "erc20Vault",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 113351,
+                              "src": "685:10:404",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_contract$_IERC20Vault_$77170",
+                                "typeString": "contract IERC20Vault"
+                              }
+                            },
+                            "id": 113396,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "pull",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 77744,
+                            "src": "685:15:404",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_array$_t_address_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$_t_bytes_memory_ptr_$returns$_t_array$_t_uint256_$dyn_memory_ptr_$",
+                              "typeString": "function (address,address[] memory,uint256[] memory,bytes memory) external returns (uint256[] memory)"
+                            }
+                          },
+                          "id": 113403,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "685:69:404",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                            "typeString": "uint256[] memory"
+                          }
+                        },
+                        "id": 113404,
+                        "nodeType": "ExpressionStatement",
+                        "src": "685:69:404"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "baseFunctions": [
+              75925
+            ],
+            "documentation": {
+              "id": 113371,
+              "nodeType": "StructuredDocumentation",
+              "src": "483:27:404",
+              "text": "@inheritdoc ILpCallback"
+            },
+            "functionSelector": "e521826f",
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "depositCallback",
+            "nameLocation": "524:15:404",
+            "parameters": {
+              "id": 113372,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "539:2:404"
+            },
+            "returnParameters": {
+              "id": 113373,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "551:0:404"
+            },
+            "scope": 113438,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 113413,
+            "nodeType": "FunctionDefinition",
+            "src": "809:39:404",
+            "nodes": [],
+            "body": {
+              "id": 113412,
+              "nodeType": "Block",
+              "src": "846:2:404",
+              "nodes": [],
+              "statements": []
+            },
+            "baseFunctions": [
+              75929
+            ],
+            "documentation": {
+              "id": 113409,
+              "nodeType": "StructuredDocumentation",
+              "src": "777:27:404",
+              "text": "@inheritdoc ILpCallback"
+            },
+            "functionSelector": "b4559f3e",
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawCallback",
+            "nameLocation": "818:16:404",
+            "parameters": {
+              "id": 113410,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "834:2:404"
+            },
+            "returnParameters": {
+              "id": 113411,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "846:0:404"
+            },
+            "scope": 113438,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 113425,
+            "nodeType": "FunctionDefinition",
+            "src": "854:120:404",
+            "nodes": [],
+            "body": {
+              "id": 113424,
+              "nodeType": "Block",
+              "src": "920:54:404",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "hexValue": "53696e676c655661756c745374726174656779",
+                        "id": 113421,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "945:21:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_25854959d0d574737727bbe5b3b88b516378880a827eb438bad2d51d003af329",
+                          "typeString": "literal_string \"SingleVaultStrategy\""
+                        },
+                        "value": "SingleVaultStrategy"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_25854959d0d574737727bbe5b3b88b516378880a827eb438bad2d51d003af329",
+                          "typeString": "literal_string \"SingleVaultStrategy\""
+                        }
+                      ],
+                      "id": 113420,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "ElementaryTypeNameExpression",
+                      "src": "937:7:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_bytes32_$",
+                        "typeString": "type(bytes32)"
+                      },
+                      "typeName": {
+                        "id": 113419,
+                        "name": "bytes32",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "937:7:404",
+                        "typeDescriptions": {}
+                      }
+                    },
+                    "id": 113422,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": true,
+                    "kind": "typeConversion",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "937:30:404",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "functionReturnParameters": 113418,
+                  "id": 113423,
+                  "nodeType": "Return",
+                  "src": "930:37:404"
+                }
+              ]
+            },
+            "baseFunctions": [
+              114934
+            ],
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "_contractName",
+            "nameLocation": "863:13:404",
+            "overrides": {
+              "id": 113415,
+              "nodeType": "OverrideSpecifier",
+              "overrides": [],
+              "src": "893:8:404"
+            },
+            "parameters": {
+              "id": 113414,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "876:2:404"
+            },
+            "returnParameters": {
+              "id": 113418,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 113417,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 113425,
+                  "src": "911:7:404",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 113416,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "911:7:404",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "910:9:404"
+            },
+            "scope": 113438,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 113437,
+            "nodeType": "FunctionDefinition",
+            "src": "980:109:404",
+            "nodes": [],
+            "body": {
+              "id": 113436,
+              "nodeType": "Block",
+              "src": "1049:40:404",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "hexValue": "312e302e30",
+                        "id": 113433,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1074:7:404",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_06c015bd22b4c69690933c1058878ebdfef31f9aaae40bbe86d8a09fe1b2972c",
+                          "typeString": "literal_string \"1.0.0\""
+                        },
+                        "value": "1.0.0"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_06c015bd22b4c69690933c1058878ebdfef31f9aaae40bbe86d8a09fe1b2972c",
+                          "typeString": "literal_string \"1.0.0\""
+                        }
+                      ],
+                      "id": 113432,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "ElementaryTypeNameExpression",
+                      "src": "1066:7:404",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_bytes32_$",
+                        "typeString": "type(bytes32)"
+                      },
+                      "typeName": {
+                        "id": 113431,
+                        "name": "bytes32",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1066:7:404",
+                        "typeDescriptions": {}
+                      }
+                    },
+                    "id": 113434,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": true,
+                    "kind": "typeConversion",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1066:16:404",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "functionReturnParameters": 113430,
+                  "id": 113435,
+                  "nodeType": "Return",
+                  "src": "1059:23:404"
+                }
+              ]
+            },
+            "baseFunctions": [
+              114939
+            ],
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "_contractVersion",
+            "nameLocation": "989:16:404",
+            "overrides": {
+              "id": 113427,
+              "nodeType": "OverrideSpecifier",
+              "overrides": [],
+              "src": "1022:8:404"
+            },
+            "parameters": {
+              "id": 113426,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1005:2:404"
+            },
+            "returnParameters": {
+              "id": 113430,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 113429,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 113437,
+                  "src": "1040:7:404",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 113428,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1040:7:404",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1039:9:404"
+            },
+            "scope": 113438,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 113345,
+              "name": "ContractMeta",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 114987,
+              "src": "233:12:404"
+            },
+            "id": 113346,
+            "nodeType": "InheritanceSpecifier",
+            "src": "233:12:404"
+          },
+          {
+            "baseName": {
+              "id": 113347,
+              "name": "ILpCallback",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 75930,
+              "src": "247:11:404"
+            },
+            "id": 113348,
+            "nodeType": "InheritanceSpecifier",
+            "src": "247:11:404"
+          }
+        ],
+        "canonicalName": "SingleVaultStrategy",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          113438,
+          75930,
+          114987,
+          75764
+        ],
+        "name": "SingleVaultStrategy",
+        "nameLocation": "210:19:404",
+        "scope": 113439,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 404
+}

@@ -1,0 +1,250 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "getActionId",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getActionId(bytes4)": "851c1bb3"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"}],\"name\":\"getActionId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"getActionId(bytes4)\":{\"details\":\"Returns the action identifier associated with the external function described by `selector`.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol\":\"IAuthentication\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol\":{\"keccak256\":\"0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1\",\"dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getActionId",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "getActionId(bytes4)": {
+            "details": "Returns the action identifier associated with the external function described by `selector`."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol": "IAuthentication"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol": {
+        "keccak256": "0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842",
+        "urls": [
+          "bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1",
+          "dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol",
+    "id": 60078,
+    "exportedSymbols": {
+      "IAuthentication": [
+        60077
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:251:145",
+    "nodes": [
+      {
+        "id": 60068,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:145",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 60077,
+        "nodeType": "ContractDefinition",
+        "src": "713:225:145",
+        "nodes": [
+          {
+            "id": 60076,
+            "nodeType": "FunctionDefinition",
+            "src": "866:70:145",
+            "nodes": [],
+            "documentation": {
+              "id": 60069,
+              "nodeType": "StructuredDocumentation",
+              "src": "745:116:145",
+              "text": " @dev Returns the action identifier associated with the external function described by `selector`."
+            },
+            "functionSelector": "851c1bb3",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getActionId",
+            "nameLocation": "875:11:145",
+            "parameters": {
+              "id": 60072,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60071,
+                  "mutability": "mutable",
+                  "name": "selector",
+                  "nameLocation": "894:8:145",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60076,
+                  "src": "887:15:145",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes4",
+                    "typeString": "bytes4"
+                  },
+                  "typeName": {
+                    "id": 60070,
+                    "name": "bytes4",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "887:6:145",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "886:17:145"
+            },
+            "returnParameters": {
+              "id": 60075,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60074,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60076,
+                  "src": "927:7:145",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 60073,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "927:7:145",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "926:9:145"
+            },
+            "scope": 60077,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAuthentication",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          60077
+        ],
+        "name": "IAuthentication",
+        "nameLocation": "723:15:145",
+        "scope": 60078,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 145
+}

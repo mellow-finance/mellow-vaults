@@ -1,0 +1,1599 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "token0Amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "token1Amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "addRewards",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "currentTimestamp",
+          "type": "uint32"
+        },
+        {
+          "internalType": "int24",
+          "name": "bottomTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "topTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "int128",
+          "name": "liquidityDelta",
+          "type": "int128"
+        },
+        {
+          "internalType": "int24",
+          "name": "currentTick",
+          "type": "int24"
+        }
+      ],
+      "name": "applyLiquidityDeltaToPosition",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "nextTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "bool",
+          "name": "zeroToOne",
+          "type": "bool"
+        }
+      ],
+      "name": "cross",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "currentLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "bottomTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "topTick",
+          "type": "int24"
+        }
+      ],
+      "name": "getInnerRewardsGrowth",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "rewardGrowthInside0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "rewardGrowthInside1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "bottomTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "topTick",
+          "type": "int24"
+        }
+      ],
+      "name": "getInnerSecondsPerLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "innerSecondsSpentPerLiquidity",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "globalSecondsPerLiquidityCumulative",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "globalTick",
+      "outputs": [
+        {
+          "internalType": "int24",
+          "name": "",
+          "type": "int24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "currentTimestamp",
+          "type": "uint32"
+        }
+      ],
+      "name": "increaseCumulative",
+      "outputs": [
+        {
+          "internalType": "enum IAlgebraVirtualPool.Status",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "prevTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardRate0",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardRate1",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardReserve0",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardReserve1",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "rate0",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "rate1",
+          "type": "uint128"
+        }
+      ],
+      "name": "setRates",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "tickId",
+          "type": "int24"
+        }
+      ],
+      "name": "ticks",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidityTotal",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int128",
+          "name": "liquidityDelta",
+          "type": "int128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "outerFeeGrowth0Token",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "outerFeeGrowth1Token",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int56",
+          "name": "outerTickCumulative",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "outerSecondsPerLiquidity",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint32",
+          "name": "outerSecondsSpent",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "initialized",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "timeOutside",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalRewardGrowth0",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalRewardGrowth1",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "addRewards(uint256,uint256)": "fc41aa09",
+    "applyLiquidityDeltaToPosition(uint32,int24,int24,int128,int24)": "0f1019bc",
+    "cross(int24,bool)": "01342b19",
+    "currentLiquidity()": "46caf2ae",
+    "getInnerRewardsGrowth(int24,int24)": "0bd6f200",
+    "getInnerSecondsPerLiquidity(int24,int24)": "1fcd27fd",
+    "globalSecondsPerLiquidityCumulative()": "ae855939",
+    "globalTick()": "8e76c332",
+    "increaseCumulative(uint32)": "7f376059",
+    "prevTimestamp()": "d576dfc0",
+    "rewardRate0()": "2ca1a895",
+    "rewardRate1()": "a1ec508a",
+    "rewardReserve0()": "735dd189",
+    "rewardReserve1()": "5354d98a",
+    "setRates(uint128,uint128)": "7f463bb8",
+    "ticks(int24)": "f30dba93",
+    "timeOutside()": "8eebc5d6",
+    "totalRewardGrowth0()": "a69252af",
+    "totalRewardGrowth1()": "63f0580b"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"token0Amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"token1Amount\",\"type\":\"uint256\"}],\"name\":\"addRewards\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"currentTimestamp\",\"type\":\"uint32\"},{\"internalType\":\"int24\",\"name\":\"bottomTick\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"topTick\",\"type\":\"int24\"},{\"internalType\":\"int128\",\"name\":\"liquidityDelta\",\"type\":\"int128\"},{\"internalType\":\"int24\",\"name\":\"currentTick\",\"type\":\"int24\"}],\"name\":\"applyLiquidityDeltaToPosition\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"nextTick\",\"type\":\"int24\"},{\"internalType\":\"bool\",\"name\":\"zeroToOne\",\"type\":\"bool\"}],\"name\":\"cross\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentLiquidity\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"bottomTick\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"topTick\",\"type\":\"int24\"}],\"name\":\"getInnerRewardsGrowth\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"rewardGrowthInside0\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardGrowthInside1\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"bottomTick\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"topTick\",\"type\":\"int24\"}],\"name\":\"getInnerSecondsPerLiquidity\",\"outputs\":[{\"internalType\":\"uint160\",\"name\":\"innerSecondsSpentPerLiquidity\",\"type\":\"uint160\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"globalSecondsPerLiquidityCumulative\",\"outputs\":[{\"internalType\":\"uint160\",\"name\":\"\",\"type\":\"uint160\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"globalTick\",\"outputs\":[{\"internalType\":\"int24\",\"name\":\"\",\"type\":\"int24\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"currentTimestamp\",\"type\":\"uint32\"}],\"name\":\"increaseCumulative\",\"outputs\":[{\"internalType\":\"enum IAlgebraVirtualPool.Status\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"prevTimestamp\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardRate0\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardRate1\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardReserve0\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardReserve1\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint128\",\"name\":\"rate0\",\"type\":\"uint128\"},{\"internalType\":\"uint128\",\"name\":\"rate1\",\"type\":\"uint128\"}],\"name\":\"setRates\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"tickId\",\"type\":\"int24\"}],\"name\":\"ticks\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidityTotal\",\"type\":\"uint128\"},{\"internalType\":\"int128\",\"name\":\"liquidityDelta\",\"type\":\"int128\"},{\"internalType\":\"uint256\",\"name\":\"outerFeeGrowth0Token\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"outerFeeGrowth1Token\",\"type\":\"uint256\"},{\"internalType\":\"int56\",\"name\":\"outerTickCumulative\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"outerSecondsPerLiquidity\",\"type\":\"uint160\"},{\"internalType\":\"uint32\",\"name\":\"outerSecondsSpent\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"initialized\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"timeOutside\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalRewardGrowth0\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalRewardGrowth1\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"applyLiquidityDeltaToPosition(uint32,int24,int24,int128,int24)\":{\"details\":\"This function is called when anyone farms their liquidity. The position in a virtual pool should be changed accordingly\",\"params\":{\"bottomTick\":\"The bottom tick of a position\",\"currentTick\":\"The current tick in the main pool\",\"currentTimestamp\":\"The timestamp of current block\",\"liquidityDelta\":\"The amount of liquidity in a position\",\"topTick\":\"The top tick of a position\"}},\"cross(int24,bool)\":{\"details\":\"This function is called by the main pool when an initialized tick is crossed there. If the tick is also initialized in a virtual pool it should be crossed too\",\"params\":{\"nextTick\":\"The crossed tick\",\"zeroToOne\":\"The direction\"}},\"getInnerSecondsPerLiquidity(int24,int24)\":{\"params\":{\"bottomTick\":\"The bottom tick of a position\",\"topTick\":\"The top tick of a position\"},\"returns\":{\"innerSecondsSpentPerLiquidity\":\"The seconds per liquidity inside the position\"}},\"increaseCumulative(uint32)\":{\"details\":\"This function is called from the main pool before every swap To increase seconds per liquidity cumulative considering previous timestamp and liquidity. The liquidity is stored in a virtual pool\",\"params\":{\"currentTimestamp\":\"The timestamp of the current swap\"},\"returns\":{\"_0\":\"Status The status of virtual pool\"}},\"setRates(uint128,uint128)\":{\"params\":{\"rate0\":\"The new rate of main token distribution per sec\",\"rate1\":\"The new rate of bonus token distribution per sec\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getInnerSecondsPerLiquidity(int24,int24)\":{\"notice\":\"This function is used to calculate the seconds per liquidity inside a certain position\"},\"setRates(uint128,uint128)\":{\"notice\":\"Change reward rates\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol\":\"IAlgebraEternalVirtualPool\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol\":{\"keccak256\":\"0x7faebe5008d24f2871c962e1ca3c14e5b75ff11fc024a85179f03512d5423913\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://3651b67f97562e23f7fc9ac0bdeb964150422cd6ba93b76fadc2f148f4f7a7ea\",\"dweb:/ipfs/QmPiYRDdgHE7hFoCHdXLeF99amNCsbuiY5zMJGphoMwHKg\"]},\"src/interfaces/external/quickswap/IAlgebraVirtualPool.sol\":{\"keccak256\":\"0x4c3e6cd89e7578df2496425787acc67c4275a586dcfc37510fc11f7a24e43407\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://87820690aa1df0506525236cfa979147d26ae7641a0cfee176fbc481c3b43676\",\"dweb:/ipfs/QmZEszmYZR15tRVCWheS62cw8VbBF4pBL1DJEp8E31ftsR\"]},\"src/interfaces/external/quickswap/IAlgebraVirtualPoolBase.sol\":{\"keccak256\":\"0x9ade2fbf7155e224d896b4f4e300bebd880ad91c58bccbe4aa75fb67dee62286\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://f21ae8cbc0f01ed2e6567dab18bcbf642ce3a82b1ce8600510d14d2153557cfa\",\"dweb:/ipfs/QmWky37EjMVh6uRyjxRhenwrPuxVUqTZSvC2ESkRkXT7it\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "token0Amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "token1Amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "addRewards"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint32",
+              "name": "currentTimestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "int24",
+              "name": "bottomTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "topTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int128",
+              "name": "liquidityDelta",
+              "type": "int128"
+            },
+            {
+              "internalType": "int24",
+              "name": "currentTick",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "applyLiquidityDeltaToPosition"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "nextTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "bool",
+              "name": "zeroToOne",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "cross"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "currentLiquidity",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "",
+              "type": "uint128"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "bottomTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "topTick",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getInnerRewardsGrowth",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "rewardGrowthInside0",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rewardGrowthInside1",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "bottomTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "topTick",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getInnerSecondsPerLiquidity",
+          "outputs": [
+            {
+              "internalType": "uint160",
+              "name": "innerSecondsSpentPerLiquidity",
+              "type": "uint160"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "globalSecondsPerLiquidityCumulative",
+          "outputs": [
+            {
+              "internalType": "uint160",
+              "name": "",
+              "type": "uint160"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "globalTick",
+          "outputs": [
+            {
+              "internalType": "int24",
+              "name": "",
+              "type": "int24"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint32",
+              "name": "currentTimestamp",
+              "type": "uint32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "increaseCumulative",
+          "outputs": [
+            {
+              "internalType": "enum IAlgebraVirtualPool.Status",
+              "name": "",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "prevTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint32",
+              "name": "",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "rewardRate0",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "rewardRate1",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "rewardReserve0",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "rewardReserve1",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint128",
+              "name": "rate0",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "rate1",
+              "type": "uint128"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setRates"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "tickId",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "ticks",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "liquidityTotal",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int128",
+              "name": "liquidityDelta",
+              "type": "int128"
+            },
+            {
+              "internalType": "uint256",
+              "name": "outerFeeGrowth0Token",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "outerFeeGrowth1Token",
+              "type": "uint256"
+            },
+            {
+              "internalType": "int56",
+              "name": "outerTickCumulative",
+              "type": "int56"
+            },
+            {
+              "internalType": "uint160",
+              "name": "outerSecondsPerLiquidity",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint32",
+              "name": "outerSecondsSpent",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "initialized",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "timeOutside",
+          "outputs": [
+            {
+              "internalType": "uint32",
+              "name": "",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalRewardGrowth0",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalRewardGrowth1",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "applyLiquidityDeltaToPosition(uint32,int24,int24,int128,int24)": {
+            "details": "This function is called when anyone farms their liquidity. The position in a virtual pool should be changed accordingly",
+            "params": {
+              "bottomTick": "The bottom tick of a position",
+              "currentTick": "The current tick in the main pool",
+              "currentTimestamp": "The timestamp of current block",
+              "liquidityDelta": "The amount of liquidity in a position",
+              "topTick": "The top tick of a position"
+            }
+          },
+          "cross(int24,bool)": {
+            "details": "This function is called by the main pool when an initialized tick is crossed there. If the tick is also initialized in a virtual pool it should be crossed too",
+            "params": {
+              "nextTick": "The crossed tick",
+              "zeroToOne": "The direction"
+            }
+          },
+          "getInnerSecondsPerLiquidity(int24,int24)": {
+            "params": {
+              "bottomTick": "The bottom tick of a position",
+              "topTick": "The top tick of a position"
+            },
+            "returns": {
+              "innerSecondsSpentPerLiquidity": "The seconds per liquidity inside the position"
+            }
+          },
+          "increaseCumulative(uint32)": {
+            "details": "This function is called from the main pool before every swap To increase seconds per liquidity cumulative considering previous timestamp and liquidity. The liquidity is stored in a virtual pool",
+            "params": {
+              "currentTimestamp": "The timestamp of the current swap"
+            },
+            "returns": {
+              "_0": "Status The status of virtual pool"
+            }
+          },
+          "setRates(uint128,uint128)": {
+            "params": {
+              "rate0": "The new rate of main token distribution per sec",
+              "rate1": "The new rate of bonus token distribution per sec"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "getInnerSecondsPerLiquidity(int24,int24)": {
+            "notice": "This function is used to calculate the seconds per liquidity inside a certain position"
+          },
+          "setRates(uint128,uint128)": {
+            "notice": "Change reward rates"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol": "IAlgebraEternalVirtualPool"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol": {
+        "keccak256": "0x7faebe5008d24f2871c962e1ca3c14e5b75ff11fc024a85179f03512d5423913",
+        "urls": [
+          "bzz-raw://3651b67f97562e23f7fc9ac0bdeb964150422cd6ba93b76fadc2f148f4f7a7ea",
+          "dweb:/ipfs/QmPiYRDdgHE7hFoCHdXLeF99amNCsbuiY5zMJGphoMwHKg"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraVirtualPool.sol": {
+        "keccak256": "0x4c3e6cd89e7578df2496425787acc67c4275a586dcfc37510fc11f7a24e43407",
+        "urls": [
+          "bzz-raw://87820690aa1df0506525236cfa979147d26ae7641a0cfee176fbc481c3b43676",
+          "dweb:/ipfs/QmZEszmYZR15tRVCWheS62cw8VbBF4pBL1DJEp8E31ftsR"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraVirtualPoolBase.sol": {
+        "keccak256": "0x9ade2fbf7155e224d896b4f4e300bebd880ad91c58bccbe4aa75fb67dee62286",
+        "urls": [
+          "bzz-raw://f21ae8cbc0f01ed2e6567dab18bcbf642ce3a82b1ce8600510d14d2153557cfa",
+          "dweb:/ipfs/QmWky37EjMVh6uRyjxRhenwrPuxVUqTZSvC2ESkRkXT7it"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/quickswap/IAlgebraEternalVirtualPool.sol",
+    "id": 71646,
+    "exportedSymbols": {
+      "IAlgebraEternalVirtualPool": [
+        71645
+      ],
+      "IAlgebraVirtualPool": [
+        72632
+      ],
+      "IAlgebraVirtualPoolBase": [
+        72710
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1031:270",
+    "nodes": [
+      {
+        "id": 71584,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:270",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 71585,
+        "nodeType": "PragmaDirective",
+        "src": "69:19:270",
+        "nodes": [],
+        "literals": [
+          "abicoder",
+          "v2"
+        ]
+      },
+      {
+        "id": 71586,
+        "nodeType": "ImportDirective",
+        "src": "90:39:270",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraVirtualPoolBase.sol",
+        "file": "./IAlgebraVirtualPoolBase.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 71646,
+        "sourceUnit": 72711,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 71645,
+        "nodeType": "ContractDefinition",
+        "src": "131:944:270",
+        "nodes": [
+          {
+            "id": 71593,
+            "nodeType": "FunctionDefinition",
+            "src": "201:55:270",
+            "nodes": [],
+            "functionSelector": "2ca1a895",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "rewardRate0",
+            "nameLocation": "210:11:270",
+            "parameters": {
+              "id": 71589,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "221:2:270"
+            },
+            "returnParameters": {
+              "id": 71592,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71591,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71593,
+                  "src": "247:7:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71590,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "247:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "246:9:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71598,
+            "nodeType": "FunctionDefinition",
+            "src": "262:55:270",
+            "nodes": [],
+            "functionSelector": "a1ec508a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "rewardRate1",
+            "nameLocation": "271:11:270",
+            "parameters": {
+              "id": 71594,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "282:2:270"
+            },
+            "returnParameters": {
+              "id": 71597,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71596,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71598,
+                  "src": "308:7:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71595,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "308:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "307:9:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71603,
+            "nodeType": "FunctionDefinition",
+            "src": "323:58:270",
+            "nodes": [],
+            "functionSelector": "735dd189",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "rewardReserve0",
+            "nameLocation": "332:14:270",
+            "parameters": {
+              "id": 71599,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "346:2:270"
+            },
+            "returnParameters": {
+              "id": 71602,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71601,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71603,
+                  "src": "372:7:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71600,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "372:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "371:9:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71608,
+            "nodeType": "FunctionDefinition",
+            "src": "387:58:270",
+            "nodes": [],
+            "functionSelector": "5354d98a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "rewardReserve1",
+            "nameLocation": "396:14:270",
+            "parameters": {
+              "id": 71604,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "410:2:270"
+            },
+            "returnParameters": {
+              "id": 71607,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71606,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71608,
+                  "src": "436:7:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71605,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "436:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "435:9:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71613,
+            "nodeType": "FunctionDefinition",
+            "src": "451:62:270",
+            "nodes": [],
+            "functionSelector": "a69252af",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "totalRewardGrowth0",
+            "nameLocation": "460:18:270",
+            "parameters": {
+              "id": 71609,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "478:2:270"
+            },
+            "returnParameters": {
+              "id": 71612,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71611,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71613,
+                  "src": "504:7:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71610,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "504:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "503:9:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71618,
+            "nodeType": "FunctionDefinition",
+            "src": "519:62:270",
+            "nodes": [],
+            "functionSelector": "63f0580b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "totalRewardGrowth1",
+            "nameLocation": "528:18:270",
+            "parameters": {
+              "id": 71614,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "546:2:270"
+            },
+            "returnParameters": {
+              "id": 71617,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71616,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71618,
+                  "src": "572:7:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71615,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "572:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "571:9:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71626,
+            "nodeType": "FunctionDefinition",
+            "src": "762:57:270",
+            "nodes": [],
+            "documentation": {
+              "id": 71619,
+              "nodeType": "StructuredDocumentation",
+              "src": "587:170:270",
+              "text": "@notice Change reward rates\n @param rate0 The new rate of main token distribution per sec\n @param rate1 The new rate of bonus token distribution per sec"
+            },
+            "functionSelector": "7f463bb8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setRates",
+            "nameLocation": "771:8:270",
+            "parameters": {
+              "id": 71624,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71621,
+                  "mutability": "mutable",
+                  "name": "rate0",
+                  "nameLocation": "788:5:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71626,
+                  "src": "780:13:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 71620,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "780:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 71623,
+                  "mutability": "mutable",
+                  "name": "rate1",
+                  "nameLocation": "803:5:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71626,
+                  "src": "795:13:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 71622,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "795:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "779:30:270"
+            },
+            "returnParameters": {
+              "id": 71625,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "818:0:270"
+            },
+            "scope": 71645,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71633,
+            "nodeType": "FunctionDefinition",
+            "src": "825:73:270",
+            "nodes": [],
+            "functionSelector": "fc41aa09",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "addRewards",
+            "nameLocation": "834:10:270",
+            "parameters": {
+              "id": 71631,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71628,
+                  "mutability": "mutable",
+                  "name": "token0Amount",
+                  "nameLocation": "853:12:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71633,
+                  "src": "845:20:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71627,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "845:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 71630,
+                  "mutability": "mutable",
+                  "name": "token1Amount",
+                  "nameLocation": "875:12:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71633,
+                  "src": "867:20:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71629,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "867:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "844:44:270"
+            },
+            "returnParameters": {
+              "id": 71632,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "897:0:270"
+            },
+            "scope": 71645,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 71644,
+            "nodeType": "FunctionDefinition",
+            "src": "904:169:270",
+            "nodes": [],
+            "functionSelector": "0bd6f200",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getInnerRewardsGrowth",
+            "nameLocation": "913:21:270",
+            "parameters": {
+              "id": 71638,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71635,
+                  "mutability": "mutable",
+                  "name": "bottomTick",
+                  "nameLocation": "941:10:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71644,
+                  "src": "935:16:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 71634,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "935:5:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 71637,
+                  "mutability": "mutable",
+                  "name": "topTick",
+                  "nameLocation": "959:7:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71644,
+                  "src": "953:13:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 71636,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "953:5:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "934:33:270"
+            },
+            "returnParameters": {
+              "id": 71643,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 71640,
+                  "mutability": "mutable",
+                  "name": "rewardGrowthInside0",
+                  "nameLocation": "1023:19:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71644,
+                  "src": "1015:27:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71639,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1015:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 71642,
+                  "mutability": "mutable",
+                  "name": "rewardGrowthInside1",
+                  "nameLocation": "1052:19:270",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 71644,
+                  "src": "1044:27:270",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 71641,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1044:7:270",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1014:58:270"
+            },
+            "scope": 71645,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 71587,
+              "name": "IAlgebraVirtualPoolBase",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 72710,
+              "src": "171:23:270"
+            },
+            "id": 71588,
+            "nodeType": "InheritanceSpecifier",
+            "src": "171:23:270"
+          }
+        ],
+        "canonicalName": "IAlgebraEternalVirtualPool",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          71645,
+          72710,
+          72632
+        ],
+        "name": "IAlgebraEternalVirtualPool",
+        "nameLocation": "141:26:270",
+        "scope": 71646,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 270
+}

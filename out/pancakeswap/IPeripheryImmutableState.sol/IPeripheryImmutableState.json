@@ -1,0 +1,409 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "WETH9",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "deployer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "WETH9()": "4aa4a4fc",
+    "deployer()": "d5f39488",
+    "factory()": "c45a0155"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"WETH9\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"deployer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"WETH9()\":{\"returns\":{\"_0\":\"Returns the address of WETH9\"}},\"deployer()\":{\"returns\":{\"_0\":\"Returns the address of the PancakeSwap V3 deployer\"}},\"factory()\":{\"returns\":{\"_0\":\"Returns the address of the PancakeSwap V3 factory\"}}},\"title\":\"Immutable state\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Functions that return immutable state of the router\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/pancakeswap/IPeripheryImmutableState.sol\":\"IPeripheryImmutableState\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/pancakeswap/IPeripheryImmutableState.sol\":{\"keccak256\":\"0x13cc0099846b5329a0808ba52498087129a628ca69f838a626e8e19c928320cc\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://3369b299016ef5fc0364f699a4c85ac87f267629a1add8090536a0cd52e9e946\",\"dweb:/ipfs/QmTz7FP8fyPGdQsPbMyZRv34eNcuNw8QwAVSph38tyxpYa\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "WETH9",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "deployer",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "factory",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "WETH9()": {
+            "returns": {
+              "_0": "Returns the address of WETH9"
+            }
+          },
+          "deployer()": {
+            "returns": {
+              "_0": "Returns the address of the PancakeSwap V3 deployer"
+            }
+          },
+          "factory()": {
+            "returns": {
+              "_0": "Returns the address of the PancakeSwap V3 factory"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/pancakeswap/IPeripheryImmutableState.sol": "IPeripheryImmutableState"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/pancakeswap/IPeripheryImmutableState.sol": {
+        "keccak256": "0x13cc0099846b5329a0808ba52498087129a628ca69f838a626e8e19c928320cc",
+        "urls": [
+          "bzz-raw://3369b299016ef5fc0364f699a4c85ac87f267629a1add8090536a0cd52e9e946",
+          "dweb:/ipfs/QmTz7FP8fyPGdQsPbMyZRv34eNcuNw8QwAVSph38tyxpYa"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/pancakeswap/IPeripheryImmutableState.sol",
+    "id": 69612,
+    "exportedSymbols": {
+      "IPeripheryImmutableState": [
+        69611
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:502:240",
+    "nodes": [
+      {
+        "id": 69591,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:240",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 69611,
+        "nodeType": "ContractDefinition",
+        "src": "161:385:240",
+        "nodes": [
+          {
+            "id": 69598,
+            "nodeType": "FunctionDefinition",
+            "src": "269:52:240",
+            "nodes": [],
+            "documentation": {
+              "id": 69593,
+              "nodeType": "StructuredDocumentation",
+              "src": "202:62:240",
+              "text": "@return Returns the address of the PancakeSwap V3 deployer"
+            },
+            "functionSelector": "d5f39488",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "deployer",
+            "nameLocation": "278:8:240",
+            "parameters": {
+              "id": 69594,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "286:2:240"
+            },
+            "returnParameters": {
+              "id": 69597,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 69596,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69598,
+                  "src": "312:7:240",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69595,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "312:7:240",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "311:9:240"
+            },
+            "scope": 69611,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 69604,
+            "nodeType": "FunctionDefinition",
+            "src": "393:51:240",
+            "nodes": [],
+            "documentation": {
+              "id": 69599,
+              "nodeType": "StructuredDocumentation",
+              "src": "327:61:240",
+              "text": "@return Returns the address of the PancakeSwap V3 factory"
+            },
+            "functionSelector": "c45a0155",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "factory",
+            "nameLocation": "402:7:240",
+            "parameters": {
+              "id": 69600,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "409:2:240"
+            },
+            "returnParameters": {
+              "id": 69603,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 69602,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69604,
+                  "src": "435:7:240",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69601,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "435:7:240",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "434:9:240"
+            },
+            "scope": 69611,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 69610,
+            "nodeType": "FunctionDefinition",
+            "src": "495:49:240",
+            "nodes": [],
+            "documentation": {
+              "id": 69605,
+              "nodeType": "StructuredDocumentation",
+              "src": "450:40:240",
+              "text": "@return Returns the address of WETH9"
+            },
+            "functionSelector": "4aa4a4fc",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "WETH9",
+            "nameLocation": "504:5:240",
+            "parameters": {
+              "id": 69606,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "509:2:240"
+            },
+            "returnParameters": {
+              "id": 69609,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 69608,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 69610,
+                  "src": "535:7:240",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 69607,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "535:7:240",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "534:9:240"
+            },
+            "scope": 69611,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IPeripheryImmutableState",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 69592,
+          "nodeType": "StructuredDocumentation",
+          "src": "70:91:240",
+          "text": "@title Immutable state\n @notice Functions that return immutable state of the router"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          69611
+        ],
+        "name": "IPeripheryImmutableState",
+        "nameLocation": "171:24:240",
+        "scope": 69612,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 240
+}

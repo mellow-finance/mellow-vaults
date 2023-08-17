@@ -1,0 +1,986 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "TokenIsNotInAllowedList",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "_gearboxAdapterType",
+      "outputs": [
+        {
+          "internalType": "enum AdapterType",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "_gearboxAdapterVersion",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "creditFacade",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "creditManager",
+      "outputs": [
+        {
+          "internalType": "contract ICreditManagerV2",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "crv",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_pid",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_stake",
+          "type": "bool"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_pid",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_stake",
+          "type": "bool"
+        }
+      ],
+      "name": "depositAll",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lockFees",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lockRewards",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "minter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "i",
+          "type": "uint256"
+        }
+      ],
+      "name": "poolInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "lptoken",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "gauge",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "crvRewards",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "stash",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "shutdown",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IBooster.PoolInfo",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolLength",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "registry",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "staker",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakerRewards",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "targetContract",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updateStakedPhantomTokensMap",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_pid",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_pid",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdrawAll",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "_gearboxAdapterType()": "ce30bbdb",
+    "_gearboxAdapterVersion()": "78aa73a4",
+    "creditFacade()": "2f7a1881",
+    "creditManager()": "c12c21c0",
+    "crv()": "6a4874a1",
+    "deposit(uint256,uint256,bool)": "43a0d066",
+    "depositAll(uint256,bool)": "60759fce",
+    "lockFees()": "ab366292",
+    "lockRewards()": "376d771a",
+    "minter()": "07546172",
+    "poolInfo(uint256)": "1526fe27",
+    "poolLength()": "081e3eda",
+    "registry()": "7b103999",
+    "staker()": "5ebaf1db",
+    "stakerRewards()": "cfb9cfba",
+    "targetContract()": "bd90df70",
+    "updateStakedPhantomTokensMap()": "9b51ecd3",
+    "withdraw(uint256,uint256)": "441a3e70",
+    "withdrawAll(uint256)": "958e2d31"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"TokenIsNotInAllowedList\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"_gearboxAdapterType\",\"outputs\":[{\"internalType\":\"enum AdapterType\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"_gearboxAdapterVersion\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"creditFacade\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"creditManager\",\"outputs\":[{\"internalType\":\"contract ICreditManagerV2\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"crv\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_pid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_stake\",\"type\":\"bool\"}],\"name\":\"deposit\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_pid\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_stake\",\"type\":\"bool\"}],\"name\":\"depositAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lockFees\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lockRewards\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"poolInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"lptoken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"gauge\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"crvRewards\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"stash\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"shutdown\",\"type\":\"bool\"}],\"internalType\":\"struct IBooster.PoolInfo\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"staker\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stakerRewards\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"updateStakedPhantomTokensMap\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_pid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_pid\",\"type\":\"uint256\"}],\"name\":\"withdrawAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"errors\":{\"TokenIsNotInAllowedList(address)\":[{\"details\":\"Thrown when the adapter attempts to use a token      that is not recognized as collateral in the connected      Credit Manager\"}]},\"kind\":\"dev\",\"methods\":{\"_gearboxAdapterType()\":{\"details\":\"Returns the adapter type\"},\"_gearboxAdapterVersion()\":{\"details\":\"Returns the adapter version\"},\"creditFacade()\":{\"details\":\"Returns the Credit Facade connected to the adapter's Credit Manager\"},\"creditManager()\":{\"details\":\"Returns the Credit Manager connected to the adapter\"},\"targetContract()\":{\"details\":\"Returns the address of the contract the adapter is interacting with\"},\"updateStakedPhantomTokensMap()\":{\"details\":\"Scans the Credit Manager's allowed contracts for Convex pool      adapters and adds the corresponding phantom tokens to an internal mapping\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"updateStakedPhantomTokensMap()\":{\"notice\":\"Admin function. The mapping is used to determine an output token from the         pool's pid, when deposit is called with stake == true\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/gearbox/IConvexV1BoosterAdapter.sol\":\"IConvexV1BoosterAdapter\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/gearbox/IConvexV1BoosterAdapter.sol\":{\"keccak256\":\"0x43dbffa7321a110e9d38c9a6fc33ca0fbddc1cf06b9d27793e0624a9f5bb226c\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://b29f19e97bb725b45706f66a86acc31c3d8a5be0e6888f16624cda473a5e4535\",\"dweb:/ipfs/QmWEgwe1Lai9MBEgMa7YLFnwNiqUng39JA6M5nXjuxQqrz\"]},\"src/interfaces/external/gearbox/helpers/IAdapter.sol\":{\"keccak256\":\"0xa80b0d1b8178f75309aea48304c46522a5aeeeeb7a91013b0482da01b06e4cfb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://097e49823c8445dd1eb8dfe20daf276d29ddea97ee38d941b18bb08e6c634510\",\"dweb:/ipfs/QmedmvL5vT63JvYnSRUNC1iNhL6Wf9v8w1Jtvu2FZKRMDC\"]},\"src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol\":{\"keccak256\":\"0xf9aefda5462194b70878870317f741dde46e2f8df6d851d7bca463040d7bfba6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8e3d1a6bde67ed1194a2fbe8e872a5aa0c5bec5aa9cb0cd70ee904d8be666851\",\"dweb:/ipfs/QmTqPiMMh9vkc5o4ytXQUUsKHZComobm3cveRwqJCKKSFU\"]},\"src/interfaces/external/gearbox/helpers/IPriceOracle.sol\":{\"keccak256\":\"0x604d96744b07bdfb25e68b01d1831d4437c48c41072053040bdeaaf047faecf4\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1121a26d6e9c2ed1927a97c47ab636f01b694401f72f5e54ea4d9ecb33d94d9f\",\"dweb:/ipfs/QmUtVdWDQUfZXgXDVM4oGdmUMtj8fJWMNBCjg8njv65krP\"]},\"src/interfaces/external/gearbox/helpers/IVersion.sol\":{\"keccak256\":\"0x4ca08c37d06931a13902066f6476b1de63d831e5898f09da0cc3b3de6d168aa6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://179e1d106bb9b5e0928e1b3a79c0e6dc7ded68946434a6d0640f0ef7f78b481a\",\"dweb:/ipfs/QmVqvWpeCq9qF5utQ7xUXGAxuFagd5JCyQi7KWX5iQ98ug\"]},\"src/interfaces/external/gearbox/helpers/convex/IBooster.sol\":{\"keccak256\":\"0x8dacac831279ad16a8771e8b77b382b1c17d216ac11fd5edf82124755de0a027\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c9fbe1e96d5f4b79facf81978275bbc16674717871b3b8f75cc0b08c2eeff6f3\",\"dweb:/ipfs/QmZqDDxD9tX2zxmkVAWav7Zp58tPNsFJJ3qAnQwMMk1kiA\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "TokenIsNotInAllowedList"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "_gearboxAdapterType",
+          "outputs": [
+            {
+              "internalType": "enum AdapterType",
+              "name": "",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "_gearboxAdapterVersion",
+          "outputs": [
+            {
+              "internalType": "uint16",
+              "name": "",
+              "type": "uint16"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "creditFacade",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "creditManager",
+          "outputs": [
+            {
+              "internalType": "contract ICreditManagerV2",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "crv",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_pid",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "_stake",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "deposit",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_pid",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "_stake",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "depositAll",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lockFees",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lockRewards",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "minter",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "i",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "poolInfo",
+          "outputs": [
+            {
+              "internalType": "struct IBooster.PoolInfo",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "lptoken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "gauge",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "crvRewards",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "stash",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "shutdown",
+                  "type": "bool"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "poolLength",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "registry",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "staker",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stakerRewards",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetContract",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "updateStakedPhantomTokensMap"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_pid",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdraw",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_pid",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawAll",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "_gearboxAdapterType()": {
+            "details": "Returns the adapter type"
+          },
+          "_gearboxAdapterVersion()": {
+            "details": "Returns the adapter version"
+          },
+          "creditFacade()": {
+            "details": "Returns the Credit Facade connected to the adapter's Credit Manager"
+          },
+          "creditManager()": {
+            "details": "Returns the Credit Manager connected to the adapter"
+          },
+          "targetContract()": {
+            "details": "Returns the address of the contract the adapter is interacting with"
+          },
+          "updateStakedPhantomTokensMap()": {
+            "details": "Scans the Credit Manager's allowed contracts for Convex pool      adapters and adds the corresponding phantom tokens to an internal mapping"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "updateStakedPhantomTokensMap()": {
+            "notice": "Admin function. The mapping is used to determine an output token from the         pool's pid, when deposit is called with stake == true"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/gearbox/IConvexV1BoosterAdapter.sol": "IConvexV1BoosterAdapter"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/gearbox/IConvexV1BoosterAdapter.sol": {
+        "keccak256": "0x43dbffa7321a110e9d38c9a6fc33ca0fbddc1cf06b9d27793e0624a9f5bb226c",
+        "urls": [
+          "bzz-raw://b29f19e97bb725b45706f66a86acc31c3d8a5be0e6888f16624cda473a5e4535",
+          "dweb:/ipfs/QmWEgwe1Lai9MBEgMa7YLFnwNiqUng39JA6M5nXjuxQqrz"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/gearbox/helpers/IAdapter.sol": {
+        "keccak256": "0xa80b0d1b8178f75309aea48304c46522a5aeeeeb7a91013b0482da01b06e4cfb",
+        "urls": [
+          "bzz-raw://097e49823c8445dd1eb8dfe20daf276d29ddea97ee38d941b18bb08e6c634510",
+          "dweb:/ipfs/QmedmvL5vT63JvYnSRUNC1iNhL6Wf9v8w1Jtvu2FZKRMDC"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/gearbox/helpers/ICreditManagerV2.sol": {
+        "keccak256": "0xf9aefda5462194b70878870317f741dde46e2f8df6d851d7bca463040d7bfba6",
+        "urls": [
+          "bzz-raw://8e3d1a6bde67ed1194a2fbe8e872a5aa0c5bec5aa9cb0cd70ee904d8be666851",
+          "dweb:/ipfs/QmTqPiMMh9vkc5o4ytXQUUsKHZComobm3cveRwqJCKKSFU"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/gearbox/helpers/IPriceOracle.sol": {
+        "keccak256": "0x604d96744b07bdfb25e68b01d1831d4437c48c41072053040bdeaaf047faecf4",
+        "urls": [
+          "bzz-raw://1121a26d6e9c2ed1927a97c47ab636f01b694401f72f5e54ea4d9ecb33d94d9f",
+          "dweb:/ipfs/QmUtVdWDQUfZXgXDVM4oGdmUMtj8fJWMNBCjg8njv65krP"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/gearbox/helpers/IVersion.sol": {
+        "keccak256": "0x4ca08c37d06931a13902066f6476b1de63d831e5898f09da0cc3b3de6d168aa6",
+        "urls": [
+          "bzz-raw://179e1d106bb9b5e0928e1b3a79c0e6dc7ded68946434a6d0640f0ef7f78b481a",
+          "dweb:/ipfs/QmVqvWpeCq9qF5utQ7xUXGAxuFagd5JCyQi7KWX5iQ98ug"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/gearbox/helpers/convex/IBooster.sol": {
+        "keccak256": "0x8dacac831279ad16a8771e8b77b382b1c17d216ac11fd5edf82124755de0a027",
+        "urls": [
+          "bzz-raw://c9fbe1e96d5f4b79facf81978275bbc16674717871b3b8f75cc0b08c2eeff6f3",
+          "dweb:/ipfs/QmZqDDxD9tX2zxmkVAWav7Zp58tPNsFJJ3qAnQwMMk1kiA"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/gearbox/IConvexV1BoosterAdapter.sol",
+    "id": 64091,
+    "exportedSymbols": {
+      "IAdapter": [
+        64788
+      ],
+      "IBooster": [
+        65767
+      ],
+      "IConvexV1BoosterAdapter": [
+        64090
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "136:566:197",
+    "nodes": [
+      {
+        "id": 64077,
+        "nodeType": "PragmaDirective",
+        "src": "136:23:197",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 64079,
+        "nodeType": "ImportDirective",
+        "src": "161:48:197",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/gearbox/helpers/IAdapter.sol",
+        "file": "./helpers/IAdapter.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 64091,
+        "sourceUnit": 64789,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 64078,
+              "name": "IAdapter",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "src": "169:8:197",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 64081,
+        "nodeType": "ImportDirective",
+        "src": "210:55:197",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/gearbox/helpers/convex/IBooster.sol",
+        "file": "./helpers/convex/IBooster.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 64091,
+        "sourceUnit": 65768,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 64080,
+              "name": "IBooster",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "src": "218:8:197",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 64090,
+        "nodeType": "ContractDefinition",
+        "src": "267:434:197",
+        "nodes": [
+          {
+            "id": 64089,
+            "nodeType": "FunctionDefinition",
+            "src": "650:49:197",
+            "nodes": [],
+            "documentation": {
+              "id": 64086,
+              "nodeType": "StructuredDocumentation",
+              "src": "329:316:197",
+              "text": "@dev Scans the Credit Manager's allowed contracts for Convex pool\n      adapters and adds the corresponding phantom tokens to an internal mapping\n @notice Admin function. The mapping is used to determine an output token from the\n         pool's pid, when deposit is called with stake == true"
+            },
+            "functionSelector": "9b51ecd3",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "updateStakedPhantomTokensMap",
+            "nameLocation": "659:28:197",
+            "parameters": {
+              "id": 64087,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "687:2:197"
+            },
+            "returnParameters": {
+              "id": 64088,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "698:0:197"
+            },
+            "scope": 64090,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 64082,
+              "name": "IAdapter",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 64788,
+              "src": "304:8:197"
+            },
+            "id": 64083,
+            "nodeType": "InheritanceSpecifier",
+            "src": "304:8:197"
+          },
+          {
+            "baseName": {
+              "id": 64084,
+              "name": "IBooster",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 65767,
+              "src": "314:8:197"
+            },
+            "id": 64085,
+            "nodeType": "InheritanceSpecifier",
+            "src": "314:8:197"
+          }
+        ],
+        "canonicalName": "IConvexV1BoosterAdapter",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          64090,
+          65767,
+          64788,
+          64753
+        ],
+        "name": "IConvexV1BoosterAdapter",
+        "nameLocation": "277:23:197",
+        "scope": 64091,
+        "usedErrors": [
+          64752
+        ]
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 197
+}

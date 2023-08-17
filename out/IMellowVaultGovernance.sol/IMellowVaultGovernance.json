@@ -1,0 +1,1013 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "commitInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20RootVault",
+          "name": "underlyingVault",
+          "type": "address"
+        }
+      ],
+      "name": "createVault",
+      "outputs": [
+        {
+          "internalType": "contract IMellowVault",
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedInternalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "commitInternalParams()": "d4a07d34",
+    "createVault(address[],address,address)": "de2f76a4",
+    "delayedProtocolParamsTimestamp()": "e4af6e79",
+    "delayedProtocolPerVaultParamsTimestamp(uint256)": "511ce798",
+    "delayedStrategyParamsTimestamp(uint256)": "6707acee",
+    "internalParams()": "7ac46fbb",
+    "internalParamsTimestamp()": "1c7f4c73",
+    "stageInternalParams((address,address,address))": "09946538",
+    "stagedInternalParams()": "86c6be3e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"commitInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"owner_\",\"type\":\"address\"},{\"internalType\":\"contract IERC20RootVault\",\"name\":\"underlyingVault\",\"type\":\"address\"}],\"name\":\"createVault\",\"outputs\":[{\"internalType\":\"contract IMellowVault\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedInternalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"createVault(address[],address,address)\":{\"params\":{\"owner_\":\"Owner of the vault NFT\",\"underlyingVault\":\"Underlying mellow vault\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"delayedStrategyParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"stageInternalParams((address,address,address))\":{\"params\":{\"newParams\":\"New Internal Params\"}},\"stagedInternalParams()\":{\"details\":\"The Internal Params could be committed after internalParamsTimestamp\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitInternalParams()\":{\"notice\":\"Commit staged Internal Params.\"},\"createVault(address[],address,address)\":{\"notice\":\"Deploys a new vault.\"},\"delayedProtocolParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.\"},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\"},\"delayedStrategyParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\"},\"internalParams()\":{\"notice\":\"Internal Params of the contract.\"},\"internalParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Internal Params could be committed.\"},\"stageInternalParams((address,address,address))\":{\"notice\":\"Stage new Internal Params.\"},\"stagedInternalParams()\":{\"notice\":\"Staged new Internal Params.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IMellowVaultGovernance.sol\":\"IMellowVaultGovernance\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x287b55befed2961a7eabd7d7b1b2839cbca8a5b80ef8dcbb25ed3d4c2002c305\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bd39944e8fc06be6dbe2dd1d8449b5336e23c6a7ba3e8e9ae5ae0f37f35283f5\",\"dweb:/ipfs/QmPV3FGYjVwvKSgAXKUN3r9T9GwniZz83CxBpM7vyj2G53\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/oracles/IOracle.sol\":{\"keccak256\":\"0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5\",\"dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/utils/IERC20RootVaultHelper.sol\":{\"keccak256\":\"0x58a7fcc0db33c498d00b2ece9876a5fc272f362fb5f96d1b666fc10b5683a38f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8ebd1b47e1dee02800bbf211f45a13dc6accfb2e91c645711486bb9e3f5559cd\",\"dweb:/ipfs/QmYFVKRWs73onqQxiUw8AJHfHbhib6nshmAzvCr3T5pqpW\"]},\"src/interfaces/vaults/IAggregateVault.sol\":{\"keccak256\":\"0x22c60a8c3758f52aeeabf448cff491582357bed969cf9328cd93623ed12df3f9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://34fc54a3c550f28f0d77bdecad9e2b1083a79f37b6d783277c06741b1ecae35a\",\"dweb:/ipfs/QmdAXG1NpbzNPH6o8NxsVSVmnoUdtQeP9cNxmQ44Dm6qCT\"]},\"src/interfaces/vaults/IERC20RootVault.sol\":{\"keccak256\":\"0x81fae667b46299223c56ed34d77aa64d7d2a2b19d80167c23f0ba0dcbdd97cf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://69b4669c0267163c52c78904f8a090b60b171e76dacc2468c1b8e82e20df8b2a\",\"dweb:/ipfs/QmUwAJcY157nBGxdGEpBTYLmRNW5WbsF74qF7WT8hQVj3k\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IMellowVault.sol\":{\"keccak256\":\"0x9940eb465a11c86eafd5cecf0de2c66c59273338e709e43897ebdd34377ecfb8\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9b03dd6c094facbcd8873e06821dbf04b33bf55d716a1803da3f37f72bb8ddeb\",\"dweb:/ipfs/QmXoSZLM61SMMqPqba7cczpdtPJpDaMNQsUxu3iixSL3xh\"]},\"src/interfaces/vaults/IMellowVaultGovernance.sol\":{\"keccak256\":\"0xece875dd424dae46a0ed6067951895c184710a3e8529f86be6103d8c1041aec9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a7fc713e95222494fd9ecf750e44aaed6aed227c6a84b57504df74208c5afbce\",\"dweb:/ipfs/QmWSNio7LE5NDESVaKfCUfQjNh2PozRzUEdpE24yUu3QUd\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]},\"src/interfaces/vaults/IVaultRoot.sol\":{\"keccak256\":\"0xfc566a9133afe6942e196bcfde5b5e1920094d6f1656885b25b72b91f48c10ef\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://79470664780741869fe81ad1eed10b2afd7d9432ee70be1599f242f102a4deaa\",\"dweb:/ipfs/QmUUPv5juGLrdngD5ZQNcsHxvQzWPG1c8aLjA2nsUC6uJz\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitInternalParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "owner_",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IERC20RootVault",
+              "name": "underlyingVault",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "createVault",
+          "outputs": [
+            {
+              "internalType": "contract IMellowVault",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedInternalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "createVault(address[],address,address)": {
+            "params": {
+              "owner_": "Owner of the vault NFT",
+              "underlyingVault": "Underlying mellow vault",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "stageInternalParams((address,address,address))": {
+            "params": {
+              "newParams": "New Internal Params"
+            }
+          },
+          "stagedInternalParams()": {
+            "details": "The Internal Params could be committed after internalParamsTimestamp"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitInternalParams()": {
+            "notice": "Commit staged Internal Params."
+          },
+          "createVault(address[],address,address)": {
+            "notice": "Deploys a new vault."
+          },
+          "delayedProtocolParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed."
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed."
+          },
+          "internalParams()": {
+            "notice": "Internal Params of the contract."
+          },
+          "internalParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Internal Params could be committed."
+          },
+          "stageInternalParams((address,address,address))": {
+            "notice": "Stage new Internal Params."
+          },
+          "stagedInternalParams()": {
+            "notice": "Staged new Internal Params."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IMellowVaultGovernance.sol": "IMellowVaultGovernance"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+        "keccak256": "0x287b55befed2961a7eabd7d7b1b2839cbca8a5b80ef8dcbb25ed3d4c2002c305",
+        "urls": [
+          "bzz-raw://bd39944e8fc06be6dbe2dd1d8449b5336e23c6a7ba3e8e9ae5ae0f37f35283f5",
+          "dweb:/ipfs/QmPV3FGYjVwvKSgAXKUN3r9T9GwniZz83CxBpM7vyj2G53"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/oracles/IOracle.sol": {
+        "keccak256": "0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53",
+        "urls": [
+          "bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5",
+          "dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IERC20RootVaultHelper.sol": {
+        "keccak256": "0x58a7fcc0db33c498d00b2ece9876a5fc272f362fb5f96d1b666fc10b5683a38f",
+        "urls": [
+          "bzz-raw://8ebd1b47e1dee02800bbf211f45a13dc6accfb2e91c645711486bb9e3f5559cd",
+          "dweb:/ipfs/QmYFVKRWs73onqQxiUw8AJHfHbhib6nshmAzvCr3T5pqpW"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IAggregateVault.sol": {
+        "keccak256": "0x22c60a8c3758f52aeeabf448cff491582357bed969cf9328cd93623ed12df3f9",
+        "urls": [
+          "bzz-raw://34fc54a3c550f28f0d77bdecad9e2b1083a79f37b6d783277c06741b1ecae35a",
+          "dweb:/ipfs/QmdAXG1NpbzNPH6o8NxsVSVmnoUdtQeP9cNxmQ44Dm6qCT"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IERC20RootVault.sol": {
+        "keccak256": "0x81fae667b46299223c56ed34d77aa64d7d2a2b19d80167c23f0ba0dcbdd97cf1",
+        "urls": [
+          "bzz-raw://69b4669c0267163c52c78904f8a090b60b171e76dacc2468c1b8e82e20df8b2a",
+          "dweb:/ipfs/QmUwAJcY157nBGxdGEpBTYLmRNW5WbsF74qF7WT8hQVj3k"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IMellowVault.sol": {
+        "keccak256": "0x9940eb465a11c86eafd5cecf0de2c66c59273338e709e43897ebdd34377ecfb8",
+        "urls": [
+          "bzz-raw://9b03dd6c094facbcd8873e06821dbf04b33bf55d716a1803da3f37f72bb8ddeb",
+          "dweb:/ipfs/QmXoSZLM61SMMqPqba7cczpdtPJpDaMNQsUxu3iixSL3xh"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IMellowVaultGovernance.sol": {
+        "keccak256": "0xece875dd424dae46a0ed6067951895c184710a3e8529f86be6103d8c1041aec9",
+        "urls": [
+          "bzz-raw://a7fc713e95222494fd9ecf750e44aaed6aed227c6a84b57504df74208c5afbce",
+          "dweb:/ipfs/QmWSNio7LE5NDESVaKfCUfQjNh2PozRzUEdpE24yUu3QUd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultRoot.sol": {
+        "keccak256": "0xfc566a9133afe6942e196bcfde5b5e1920094d6f1656885b25b72b91f48c10ef",
+        "urls": [
+          "bzz-raw://79470664780741869fe81ad1eed10b2afd7d9432ee70be1599f242f102a4deaa",
+          "dweb:/ipfs/QmUUPv5juGLrdngD5ZQNcsHxvQzWPG1c8aLjA2nsUC6uJz"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IMellowVaultGovernance.sol",
+    "id": 77954,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IAggregateVault": [
+        76190
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC20": [
+        45207
+      ],
+      "IERC20RootVault": [
+        76955
+      ],
+      "IERC20RootVaultHelper": [
+        75804
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IMellowVault": [
+        77929
+      ],
+      "IMellowVaultGovernance": [
+        77953
+      ],
+      "IOracle": [
+        75605
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "IVaultRoot": [
+        78702
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:545:348",
+    "nodes": [
+      {
+        "id": 77931,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:348",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 77932,
+        "nodeType": "ImportDirective",
+        "src": "57:28:348",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IMellowVault.sol",
+        "file": "./IMellowVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77954,
+        "sourceUnit": 77930,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77933,
+        "nodeType": "ImportDirective",
+        "src": "86:32:348",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IVaultGovernance.sol",
+        "file": "./IVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77954,
+        "sourceUnit": 78669,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77953,
+        "nodeType": "ContractDefinition",
+        "src": "120:456:348",
+        "nodes": [
+          {
+            "id": 77952,
+            "nodeType": "FunctionDefinition",
+            "src": "392:182:348",
+            "nodes": [],
+            "documentation": {
+              "id": 77936,
+              "nodeType": "StructuredDocumentation",
+              "src": "179:208:348",
+              "text": "@notice Deploys a new vault.\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault\n @param owner_ Owner of the vault NFT\n @param underlyingVault Underlying mellow vault"
+            },
+            "functionSelector": "de2f76a4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createVault",
+            "nameLocation": "401:11:348",
+            "parameters": {
+              "id": 77945,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77939,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "439:12:348",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77952,
+                  "src": "422:29:348",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77937,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "422:7:348",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 77938,
+                    "nodeType": "ArrayTypeName",
+                    "src": "422:9:348",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77941,
+                  "mutability": "mutable",
+                  "name": "owner_",
+                  "nameLocation": "469:6:348",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77952,
+                  "src": "461:14:348",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77940,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "461:7:348",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77944,
+                  "mutability": "mutable",
+                  "name": "underlyingVault",
+                  "nameLocation": "501:15:348",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77952,
+                  "src": "485:31:348",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20RootVault_$76955",
+                    "typeString": "contract IERC20RootVault"
+                  },
+                  "typeName": {
+                    "id": 77943,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77942,
+                      "name": "IERC20RootVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 76955,
+                      "src": "485:15:348"
+                    },
+                    "referencedDeclaration": 76955,
+                    "src": "485:15:348",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20RootVault_$76955",
+                      "typeString": "contract IERC20RootVault"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "412:110:348"
+            },
+            "returnParameters": {
+              "id": 77951,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77948,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "554:5:348",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77952,
+                  "src": "541:18:348",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IMellowVault_$77929",
+                    "typeString": "contract IMellowVault"
+                  },
+                  "typeName": {
+                    "id": 77947,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77946,
+                      "name": "IMellowVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77929,
+                      "src": "541:12:348"
+                    },
+                    "referencedDeclaration": 77929,
+                    "src": "541:12:348",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IMellowVault_$77929",
+                      "typeString": "contract IMellowVault"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77950,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "569:3:348",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77952,
+                  "src": "561:11:348",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77949,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "561:7:348",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "540:33:348"
+            },
+            "scope": 77953,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 77934,
+              "name": "IVaultGovernance",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 78668,
+              "src": "156:16:348"
+            },
+            "id": 77935,
+            "nodeType": "InheritanceSpecifier",
+            "src": "156:16:348"
+          }
+        ],
+        "canonicalName": "IMellowVaultGovernance",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          77953,
+          78668
+        ],
+        "name": "IMellowVaultGovernance",
+        "nameLocation": "130:22:348",
+        "scope": 77954,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 348
+}

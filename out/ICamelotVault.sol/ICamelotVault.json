@@ -1,0 +1,2245 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "collectEarnings",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "collectedFees",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "erc20Vault",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "externalCall",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "result",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "contract IAlgebraFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "helper",
+      "outputs": [
+        {
+          "internalType": "contract ICamelotHelper",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "erc20Vault",
+          "type": "address"
+        },
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initialized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_hash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "isValidSignature",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "magicValue",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "isVaultToken",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nft",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "onERC721Received",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pool",
+      "outputs": [
+        {
+          "internalType": "contract IAlgebraPool",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "positionManager",
+      "outputs": [
+        {
+          "internalType": "contract IAlgebraNonfungiblePositionManager",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "positionNft",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "options",
+          "type": "bytes"
+        }
+      ],
+      "name": "pull",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pullExistentials",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "options",
+          "type": "bytes"
+        }
+      ],
+      "name": "push",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        }
+      ],
+      "name": "reclaimTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address[]",
+          "name": "tokens",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "tokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "options",
+          "type": "bytes"
+        }
+      ],
+      "name": "transferAndPush",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "actualTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tvl",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "minTokenAmounts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "maxTokenAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultGovernance",
+      "outputs": [
+        {
+          "internalType": "contract IVaultGovernance",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultTokens",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "collectEarnings()": "c27b2c2d",
+    "erc20Vault()": "090f9221",
+    "externalCall(address,bytes4,bytes)": "2e2f4cc2",
+    "factory()": "c45a0155",
+    "helper()": "63b0e66a",
+    "initialize(uint256,address,address[])": "463e34be",
+    "initialized()": "158ef93e",
+    "isValidSignature(bytes32,bytes)": "1626ba7e",
+    "isVaultToken(address)": "338c4ccb",
+    "nft()": "47ccca02",
+    "onERC721Received(address,address,uint256,bytes)": "150b7a02",
+    "pool()": "16f0115b",
+    "positionManager()": "791b98bc",
+    "positionNft()": "ef7d8037",
+    "pull(address,address[],uint256[],bytes)": "2062d754",
+    "pullExistentials()": "d2c219b0",
+    "push(address[],uint256[],bytes)": "566ca6b4",
+    "reclaimTokens(address[])": "05e1c942",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "transferAndPush(address,address[],uint256[],bytes)": "27a35e5a",
+    "tvl()": "e5328e06",
+    "vaultGovernance()": "fe255a5e",
+    "vaultTokens()": "69722233"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"collectEarnings\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"collectedFees\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"erc20Vault\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"externalCall\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"result\",\"type\":\"bytes\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"contract IAlgebraFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"helper\",\"outputs\":[{\"internalType\":\"contract ICamelotHelper\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft_\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"erc20Vault\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"isValidSignature\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"magicValue\",\"type\":\"bytes4\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isVaultToken\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"onERC721Received\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pool\",\"outputs\":[{\"internalType\":\"contract IAlgebraPool\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"positionManager\",\"outputs\":[{\"internalType\":\"contract IAlgebraNonfungiblePositionManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"positionNft\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"options\",\"type\":\"bytes\"}],\"name\":\"pull\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pullExistentials\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"options\",\"type\":\"bytes\"}],\"name\":\"push\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"}],\"name\":\"reclaimTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"tokens\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes\",\"name\":\"options\",\"type\":\"bytes\"}],\"name\":\"transferAndPush\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"actualTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tvl\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"minTokenAmounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"maxTokenAmounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultGovernance\",\"outputs\":[{\"internalType\":\"contract IVaultGovernance\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultTokens\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"collectEarnings()\":{\"returns\":{\"collectedFees\":\"array of length 2 with amounts of collected and transferred fees from Camelot position to ERC20Vault\"}},\"erc20Vault()\":{\"details\":\"address of erc20Vault\"},\"externalCall(address,bytes4,bytes)\":{\"details\":\"Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. Since this method allows sending arbitrary transactions, the destinations of the calls are whitelisted by Protocol Governance.\",\"params\":{\"data\":\"Abi encoded parameters to `to::selector`\",\"selector\":\"Selector of the call\",\"to\":\"Address of the reward pool\"},\"returns\":{\"result\":\"Result of execution of the call\"}},\"factory()\":{\"details\":\"pool factory for algebra pools\"},\"helper()\":{\"details\":\"helper contract for CamelotVault\"},\"initialize(uint256,address,address[])\":{\"details\":\"Can only be initialized by vault governance\",\"params\":{\"nft_\":\"NFT of the vault in the VaultRegistry\",\"vaultTokens_\":\"ERC20 tokens that will be managed by this Vault\"}},\"isValidSignature(bytes32,bytes)\":{\"details\":\"Should return whether the signature provided is valid for the provided hash MUST return the bytes4 magic value 0x1626ba7e when function passes. MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5) MUST allow external calls\",\"params\":{\"_hash\":\"Hash of the data to be signed\",\"_signature\":\"Signature byte array associated with _hash\"},\"returns\":{\"magicValue\":\"0x1626ba7e if valid, 0xffffffff otherwise\"}},\"isVaultToken(address)\":{\"params\":{\"token\":\"Address of the token to check\"},\"returns\":{\"_0\":\"`true` if this token is managed by Vault\"}},\"onERC721Received(address,address,uint256,bytes)\":{\"details\":\"Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom} by `operator` from `from`, this function is called. It must return its Solidity selector to confirm the token transfer. If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted. The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.\"},\"pool()\":{\"details\":\"Algebra Pool\"},\"positionManager()\":{\"details\":\"position manager for positions in algebra pools\"},\"positionNft()\":{\"details\":\"nft of position in algebra pool\"},\"pull(address,address[],uint256[],bytes)\":{\"details\":\"Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. When called by vault owner this method just pulls the tokens from the protocol to the `to` address When called by strategy on vault other than zero vault it pulls the tokens to zero vault (required `to` == zero vault) When called by strategy on zero vault it pulls the tokens to zero vault, pushes tokens on the `to` vault, and reclaims everything that's left. Thus any vault other than zero vault cannot have any tokens on it Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Pull is fulfilled on the best effort basis, i.e. if the tokenAmounts overflows available funds it withdraws all the funds.\",\"params\":{\"options\":\"Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions\",\"to\":\"Address to receive the tokens\",\"tokenAmounts\":\"Amounts of tokens to pull\",\"tokens\":\"Tokens to pull\"},\"returns\":{\"actualTokenAmounts\":\"The amounts actually withdrawn. It could be less than tokenAmounts (but not higher)\"}},\"push(address[],uint256[],bytes)\":{\"details\":\"Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.\",\"params\":{\"options\":\"Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions\",\"tokenAmounts\":\"Amounts of tokens to push\",\"tokens\":\"Tokens to push\"},\"returns\":{\"actualTokenAmounts\":\"The amounts actually invested. It could be less than tokenAmounts (but not higher)\"}},\"reclaimTokens(address[])\":{\"details\":\"Cannot be called from zero vault.\",\"params\":{\"tokens\":\"Tokens to claim\"},\"returns\":{\"actualTokenAmounts\":\"Amounts reclaimed\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"},\"transferAndPush(address,address[],uint256[],bytes)\":{\"params\":{\"options\":\"Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions\",\"tokenAmounts\":\"Amounts of tokens to push\",\"tokens\":\"Tokens to push\"},\"returns\":{\"actualTokenAmounts\":\"The amounts actually invested. It could be less than tokenAmounts (but not higher)\"}},\"tvl()\":{\"details\":\"Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not\",\"returns\":{\"maxTokenAmounts\":\"Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\",\"minTokenAmounts\":\"Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"externalCall(address,bytes4,bytes)\":{\"notice\":\"Execute one of whitelisted calls.\"},\"initialize(uint256,address,address[])\":{\"notice\":\"Initialized a new contract.\"},\"initialized()\":{\"notice\":\"Checks if the vault is initialized\"},\"isValidSignature(bytes32,bytes)\":{\"notice\":\"Verifies offchain signature.\"},\"isVaultToken(address)\":{\"notice\":\"Checks if a token is vault token\"},\"nft()\":{\"notice\":\"VaultRegistry NFT for this vault\"},\"pull(address,address[],uint256[],bytes)\":{\"notice\":\"Pulls tokens from the underlying protocol to the `to` address.\"},\"pullExistentials()\":{\"notice\":\"Existential amounts for each token\"},\"push(address[],uint256[],bytes)\":{\"notice\":\"Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from the contract balance and convert it to yUSDC.\"},\"reclaimTokens(address[])\":{\"notice\":\"Claim ERC20 tokens from vault balance to zero vault.\"},\"transferAndPush(address,address[],uint256[],bytes)\":{\"notice\":\"The same as `push` method above but transfers tokens to vault balance prior to calling push. After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full).\"},\"tvl()\":{\"notice\":\"Total value locked for this contract.\"},\"vaultGovernance()\":{\"notice\":\"Address of the Vault Governance for this contract.\"},\"vaultTokens()\":{\"notice\":\"ERC20 tokens under Vault management.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/ICamelotVault.sol\":\"ICamelotVault\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol\":{\"keccak256\":\"0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708\",\"dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol\":{\"keccak256\":\"0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34\",\"dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol\":{\"keccak256\":\"0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146\",\"dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/algebrav2/IAlgebraFactory.sol\":{\"keccak256\":\"0x3905e3c93663ddfc7738a45817c53e81eb5bb27b5b64b977495f307dc5fbfaf8\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://1f83f511826f1a374660c1cb0496414d8eb0e15cfc0c6e2e195ca91cc01ef101\",\"dweb:/ipfs/QmbeDDXg5EUqXtwdHtLwJMPGiwyaJpMz8PM8KRfC8KV5ZN\"]},\"src/interfaces/external/algebrav2/IAlgebraNonfungiblePositionManager.sol\":{\"keccak256\":\"0x6401477d9b4a0b4e9adf0673d208fc36f0db43e8496a41e34ecb1b1485bea04a\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://b1f71352663c8148ed5584dc989be91e139be192a8b2de1d6f469a937f70e884\",\"dweb:/ipfs/QmTuyQG1DGS5oteP8ysZaxUb7ns33omecXstY9RJG9BDm1\"]},\"src/interfaces/external/algebrav2/IAlgebraPool.sol\":{\"keccak256\":\"0x755cd326bb55a296788b31bbe28af7e60c7f109f80db1c9fc04535688166da4c\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://2446e2a6ed5c8728df7ee1b03a8c5344ec2d28e62640d10ec62b920e56e279d8\",\"dweb:/ipfs/QmUGjYtSFATTh4f2nzfwUthxNvafvkX6is2U8Pmh1SWQiM\"]},\"src/interfaces/external/algebrav2/IERC721Permit.sol\":{\"keccak256\":\"0xce5b1d0ab7779da2de91cc1be2d589c40134b518999cac45fc26cc17439bd649\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://6aabdb5b27b1918bd2f460a9c58b381c1407666aee3fac18384bd42867b411c0\",\"dweb:/ipfs/QmSoWDR2f1xJEjBqoLX7GybuWkoE1XAwW9weyoex569Ywa\"]},\"src/interfaces/external/algebrav2/IPeripheryImmutableState.sol\":{\"keccak256\":\"0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685\",\"dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u\"]},\"src/interfaces/external/algebrav2/IPeripheryPayments.sol\":{\"keccak256\":\"0x60df21c09ace29541e1a1cb11e77906be06af405bbe866d2cf83386c50b403e5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://021ee34d95ca79a60a97c3f36a1d5a3029ed744278e050bc6b38b439b269f707\",\"dweb:/ipfs/Qmb8tgHV6WJQ6hnARAfb6Y7NXbpnEzaRJHrFmLJ62HFzRj\"]},\"src/interfaces/external/algebrav2/IPoolInitializer.sol\":{\"keccak256\":\"0x8c1045e94b56cd6bad3502dd3113670ee2c0a7daee5089dd160097a60a215c26\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://96885785ee5d6f0cfc1cd8609fdde69a74ccf7e44d2ce216e782a3ed862e570e\",\"dweb:/ipfs/QmULkLsxDxDMkUxUqfWoobQqQnGaoBY1JMdogu86UX3bcq\"]},\"src/interfaces/external/algebrav2/base/AlgebraFeeConfiguration.sol\":{\"keccak256\":\"0xab8f96c60154b85a682a629d82b583d92351976695dc771a5ac7efa1567b1c01\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c592afcfc0c3f437d447ad32590fe5bc7aa63ea3d5ad9c7249c7b4efb73d488a\",\"dweb:/ipfs/QmdVPG6YLQjwJ3fzSK1vJ6LttFDLiccr2yWrvBDyzyx8YF\"]},\"src/interfaces/external/algebrav2/libraries/PoolAddress.sol\":{\"keccak256\":\"0x3c6db49cd6dac0674ed7422038d6b0993883cadce5f0aea12f3fd4dbaf461e6d\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://33df6a38dc11d2f91838e857425eb80f314b6869b37a0d3e13f732c43d3f1b42\",\"dweb:/ipfs/QmPXhNFeWmfog5nUNZDMYQGSHmbFEh8NBbNe1sg1ZCg4rh\"]},\"src/interfaces/external/algebrav2/pool/IAlgebraPoolActions.sol\":{\"keccak256\":\"0xf8e5d053036d17d1719f1599f11da5b9141d85ac819c4fd8ec3960b76cb8830e\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://2e84a86f035e84ff02daa9b2c41e0cc35429be7b114baa6f41572572676d30fa\",\"dweb:/ipfs/QmZcnQvCfExUCj7zbvxgqoAd24XYofq7udUESQrR6DZ1Q3\"]},\"src/interfaces/external/algebrav2/pool/IAlgebraPoolDerivedState.sol\":{\"keccak256\":\"0x3068b5e85207a209e841214738a2c79c5eebe1ba81ce5427f2d0598582fe7f32\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://961752a020e3e128bb49496dfac03ab6da8cad8675dc3947d7ed493a278bc9ed\",\"dweb:/ipfs/QmRu23SksgKD7G2TQsJBmhWJz1FJuuD78SAFGebYRPUvTQ\"]},\"src/interfaces/external/algebrav2/pool/IAlgebraPoolEvents.sol\":{\"keccak256\":\"0x38348849e3c1b18334b4897f21b67a500215f9da8e47ed04209767052c2a5b93\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://01d9f8a7d90521f7c27c9ce4907ce4626f1fd6e597f5912da80eb516c7c56f58\",\"dweb:/ipfs/QmbETzZdzpEowRAWsjupb1AdvwZYvdZoHsPpv6vHYem2nQ\"]},\"src/interfaces/external/algebrav2/pool/IAlgebraPoolImmutables.sol\":{\"keccak256\":\"0x527bd2f402e3c6b01107e70bcb6d159937de74663a0d914aefee924672facc1d\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://4bccbcf10e3726243f354853cfed495970731a292ff12be715fd75d8f726d48f\",\"dweb:/ipfs/QmQdh7AuAYt8uq72DmEHNgqHmz66AbkEdZXxevkgo13pdc\"]},\"src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol\":{\"keccak256\":\"0x0c309a0fa5aae5336b8fe6e5987bd1825918717da98eea395183ec4868159ae0\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://43eed8d7a7158af94acdec23661242a0aab5879614684b18e8af1e1b1f83d723\",\"dweb:/ipfs/QmeW9eNqAvt22SLtipSNdoUkgfUw53G6e7iUA7XYwQv5qR\"]},\"src/interfaces/external/algebrav2/pool/IAlgebraPoolState.sol\":{\"keccak256\":\"0xcd53e01bcc120d16a15847ba0e805bc5018de1a8d9177ea34c0976db2df3d902\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://cf0f48fa035b6558c3b774ed42f1de13a2457fe76aa766c93eaafc3ecb6e7ae3\",\"dweb:/ipfs/QmWpdDMVpFKCE2rLx9PfdD7Npd8Kck7Hfzp1i93k6iqtr3\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/utils/ICamelotHelper.sol\":{\"keccak256\":\"0xb45bc1db22753bde63810a872db8398dc1e555c5e8061e9968673ebc69c6a44a\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://1277064e5685a2b850ec10a632f269b48892446b0ea144467be3cdd67e5d69c6\",\"dweb:/ipfs/Qma3My77Ycmv97tcfRkbrHPzGRhrmoUe7g5CsHfCZm9Uwb\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/vaults/ICamelotVault.sol\":{\"keccak256\":\"0x8b0420e22fe1a8c59e6ee7ab4517b2a220c42d6e566ea7aee225d84ce30d41f2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://92e35e66aeb701eae1ca28df4d9f605501091d7fb3fd33e96892af8407a158bd\",\"dweb:/ipfs/QmZKVLmzZYYxEVNetBHH8jjZsAfQYMKqqoDc1uznyz8QxP\"]},\"src/interfaces/vaults/ICamelotVaultGovernance.sol\":{\"keccak256\":\"0x8187f0a77f9db2a2ce6f72800e6e7a71746e59d4b77a7bc55d43376485422860\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://44f8d795f930ab506d9f5b21aaa197a914033d379e68636e14068569d33e63fa\",\"dweb:/ipfs/QmVCrs3tmJDa4x5yz14Q1MVWoeYJjqjLN3SkJe7PhFBaeg\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "collectEarnings",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "collectedFees",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "erc20Vault",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "externalCall",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "result",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "factory",
+          "outputs": [
+            {
+              "internalType": "contract IAlgebraFactory",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "helper",
+          "outputs": [
+            {
+              "internalType": "contract ICamelotHelper",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "erc20Vault",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "initialize"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "initialized",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_hash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_signature",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isValidSignature",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "magicValue",
+              "type": "bytes4"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isVaultToken",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "nft",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onERC721Received",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "",
+              "type": "bytes4"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "pool",
+          "outputs": [
+            {
+              "internalType": "contract IAlgebraPool",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "positionManager",
+          "outputs": [
+            {
+              "internalType": "contract IAlgebraNonfungiblePositionManager",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "positionNft",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "options",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "pull",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "pullExistentials",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "options",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "push",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "reclaimTokens",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "tokens",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "options",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferAndPush",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "actualTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tvl",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "minTokenAmounts",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "maxTokenAmounts",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultGovernance",
+          "outputs": [
+            {
+              "internalType": "contract IVaultGovernance",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "vaultTokens",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "collectEarnings()": {
+            "returns": {
+              "collectedFees": "array of length 2 with amounts of collected and transferred fees from Camelot position to ERC20Vault"
+            }
+          },
+          "erc20Vault()": {
+            "details": "address of erc20Vault"
+          },
+          "externalCall(address,bytes4,bytes)": {
+            "details": "Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. Since this method allows sending arbitrary transactions, the destinations of the calls are whitelisted by Protocol Governance.",
+            "params": {
+              "data": "Abi encoded parameters to `to::selector`",
+              "selector": "Selector of the call",
+              "to": "Address of the reward pool"
+            },
+            "returns": {
+              "result": "Result of execution of the call"
+            }
+          },
+          "factory()": {
+            "details": "pool factory for algebra pools"
+          },
+          "helper()": {
+            "details": "helper contract for CamelotVault"
+          },
+          "initialize(uint256,address,address[])": {
+            "details": "Can only be initialized by vault governance",
+            "params": {
+              "nft_": "NFT of the vault in the VaultRegistry",
+              "vaultTokens_": "ERC20 tokens that will be managed by this Vault"
+            }
+          },
+          "isValidSignature(bytes32,bytes)": {
+            "details": "Should return whether the signature provided is valid for the provided hash MUST return the bytes4 magic value 0x1626ba7e when function passes. MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5) MUST allow external calls",
+            "params": {
+              "_hash": "Hash of the data to be signed",
+              "_signature": "Signature byte array associated with _hash"
+            },
+            "returns": {
+              "magicValue": "0x1626ba7e if valid, 0xffffffff otherwise"
+            }
+          },
+          "isVaultToken(address)": {
+            "params": {
+              "token": "Address of the token to check"
+            },
+            "returns": {
+              "_0": "`true` if this token is managed by Vault"
+            }
+          },
+          "onERC721Received(address,address,uint256,bytes)": {
+            "details": "Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom} by `operator` from `from`, this function is called. It must return its Solidity selector to confirm the token transfer. If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted. The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`."
+          },
+          "pool()": {
+            "details": "Algebra Pool"
+          },
+          "positionManager()": {
+            "details": "position manager for positions in algebra pools"
+          },
+          "positionNft()": {
+            "details": "nft of position in algebra pool"
+          },
+          "pull(address,address[],uint256[],bytes)": {
+            "details": "Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager. Strategy is approved address for the vault NFT. When called by vault owner this method just pulls the tokens from the protocol to the `to` address When called by strategy on vault other than zero vault it pulls the tokens to zero vault (required `to` == zero vault) When called by strategy on zero vault it pulls the tokens to zero vault, pushes tokens on the `to` vault, and reclaims everything that's left. Thus any vault other than zero vault cannot have any tokens on it Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Pull is fulfilled on the best effort basis, i.e. if the tokenAmounts overflows available funds it withdraws all the funds.",
+            "params": {
+              "options": "Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions",
+              "to": "Address to receive the tokens",
+              "tokenAmounts": "Amounts of tokens to pull",
+              "tokens": "Tokens to pull"
+            },
+            "returns": {
+              "actualTokenAmounts": "The amounts actually withdrawn. It could be less than tokenAmounts (but not higher)"
+            }
+          },
+          "push(address[],uint256[],bytes)": {
+            "details": "Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing. Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.",
+            "params": {
+              "options": "Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions",
+              "tokenAmounts": "Amounts of tokens to push",
+              "tokens": "Tokens to push"
+            },
+            "returns": {
+              "actualTokenAmounts": "The amounts actually invested. It could be less than tokenAmounts (but not higher)"
+            }
+          },
+          "reclaimTokens(address[])": {
+            "details": "Cannot be called from zero vault.",
+            "params": {
+              "tokens": "Tokens to claim"
+            },
+            "returns": {
+              "actualTokenAmounts": "Amounts reclaimed"
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          },
+          "transferAndPush(address,address[],uint256[],bytes)": {
+            "params": {
+              "options": "Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions",
+              "tokenAmounts": "Amounts of tokens to push",
+              "tokens": "Tokens to push"
+            },
+            "returns": {
+              "actualTokenAmounts": "The amounts actually invested. It could be less than tokenAmounts (but not higher)"
+            }
+          },
+          "tvl()": {
+            "details": "Generally it is the underlying token value of this contract in some other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract. The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not",
+            "returns": {
+              "maxTokenAmounts": "Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)",
+              "minTokenAmounts": "Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "externalCall(address,bytes4,bytes)": {
+            "notice": "Execute one of whitelisted calls."
+          },
+          "initialize(uint256,address,address[])": {
+            "notice": "Initialized a new contract."
+          },
+          "initialized()": {
+            "notice": "Checks if the vault is initialized"
+          },
+          "isValidSignature(bytes32,bytes)": {
+            "notice": "Verifies offchain signature."
+          },
+          "isVaultToken(address)": {
+            "notice": "Checks if a token is vault token"
+          },
+          "nft()": {
+            "notice": "VaultRegistry NFT for this vault"
+          },
+          "pull(address,address[],uint256[],bytes)": {
+            "notice": "Pulls tokens from the underlying protocol to the `to` address."
+          },
+          "pullExistentials()": {
+            "notice": "Existential amounts for each token"
+          },
+          "push(address[],uint256[],bytes)": {
+            "notice": "Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from the contract balance and convert it to yUSDC."
+          },
+          "reclaimTokens(address[])": {
+            "notice": "Claim ERC20 tokens from vault balance to zero vault."
+          },
+          "transferAndPush(address,address[],uint256[],bytes)": {
+            "notice": "The same as `push` method above but transfers tokens to vault balance prior to calling push. After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full)."
+          },
+          "tvl()": {
+            "notice": "Total value locked for this contract."
+          },
+          "vaultGovernance()": {
+            "notice": "Address of the Vault Governance for this contract."
+          },
+          "vaultTokens()": {
+            "notice": "ERC20 tokens under Vault management."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/ICamelotVault.sol": "ICamelotVault"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol": {
+        "keccak256": "0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da",
+        "urls": [
+          "bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708",
+          "dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol": {
+        "keccak256": "0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf",
+        "urls": [
+          "bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34",
+          "dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+        "keccak256": "0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9",
+        "urls": [
+          "bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146",
+          "dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/algebrav2/IAlgebraFactory.sol": {
+        "keccak256": "0x3905e3c93663ddfc7738a45817c53e81eb5bb27b5b64b977495f307dc5fbfaf8",
+        "urls": [
+          "bzz-raw://1f83f511826f1a374660c1cb0496414d8eb0e15cfc0c6e2e195ca91cc01ef101",
+          "dweb:/ipfs/QmbeDDXg5EUqXtwdHtLwJMPGiwyaJpMz8PM8KRfC8KV5ZN"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/IAlgebraNonfungiblePositionManager.sol": {
+        "keccak256": "0x6401477d9b4a0b4e9adf0673d208fc36f0db43e8496a41e34ecb1b1485bea04a",
+        "urls": [
+          "bzz-raw://b1f71352663c8148ed5584dc989be91e139be192a8b2de1d6f469a937f70e884",
+          "dweb:/ipfs/QmTuyQG1DGS5oteP8ysZaxUb7ns33omecXstY9RJG9BDm1"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/IAlgebraPool.sol": {
+        "keccak256": "0x755cd326bb55a296788b31bbe28af7e60c7f109f80db1c9fc04535688166da4c",
+        "urls": [
+          "bzz-raw://2446e2a6ed5c8728df7ee1b03a8c5344ec2d28e62640d10ec62b920e56e279d8",
+          "dweb:/ipfs/QmUGjYtSFATTh4f2nzfwUthxNvafvkX6is2U8Pmh1SWQiM"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/IERC721Permit.sol": {
+        "keccak256": "0xce5b1d0ab7779da2de91cc1be2d589c40134b518999cac45fc26cc17439bd649",
+        "urls": [
+          "bzz-raw://6aabdb5b27b1918bd2f460a9c58b381c1407666aee3fac18384bd42867b411c0",
+          "dweb:/ipfs/QmSoWDR2f1xJEjBqoLX7GybuWkoE1XAwW9weyoex569Ywa"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/IPeripheryImmutableState.sol": {
+        "keccak256": "0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15",
+        "urls": [
+          "bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685",
+          "dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/IPeripheryPayments.sol": {
+        "keccak256": "0x60df21c09ace29541e1a1cb11e77906be06af405bbe866d2cf83386c50b403e5",
+        "urls": [
+          "bzz-raw://021ee34d95ca79a60a97c3f36a1d5a3029ed744278e050bc6b38b439b269f707",
+          "dweb:/ipfs/Qmb8tgHV6WJQ6hnARAfb6Y7NXbpnEzaRJHrFmLJ62HFzRj"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/IPoolInitializer.sol": {
+        "keccak256": "0x8c1045e94b56cd6bad3502dd3113670ee2c0a7daee5089dd160097a60a215c26",
+        "urls": [
+          "bzz-raw://96885785ee5d6f0cfc1cd8609fdde69a74ccf7e44d2ce216e782a3ed862e570e",
+          "dweb:/ipfs/QmULkLsxDxDMkUxUqfWoobQqQnGaoBY1JMdogu86UX3bcq"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/base/AlgebraFeeConfiguration.sol": {
+        "keccak256": "0xab8f96c60154b85a682a629d82b583d92351976695dc771a5ac7efa1567b1c01",
+        "urls": [
+          "bzz-raw://c592afcfc0c3f437d447ad32590fe5bc7aa63ea3d5ad9c7249c7b4efb73d488a",
+          "dweb:/ipfs/QmdVPG6YLQjwJ3fzSK1vJ6LttFDLiccr2yWrvBDyzyx8YF"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/libraries/PoolAddress.sol": {
+        "keccak256": "0x3c6db49cd6dac0674ed7422038d6b0993883cadce5f0aea12f3fd4dbaf461e6d",
+        "urls": [
+          "bzz-raw://33df6a38dc11d2f91838e857425eb80f314b6869b37a0d3e13f732c43d3f1b42",
+          "dweb:/ipfs/QmPXhNFeWmfog5nUNZDMYQGSHmbFEh8NBbNe1sg1ZCg4rh"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolActions.sol": {
+        "keccak256": "0xf8e5d053036d17d1719f1599f11da5b9141d85ac819c4fd8ec3960b76cb8830e",
+        "urls": [
+          "bzz-raw://2e84a86f035e84ff02daa9b2c41e0cc35429be7b114baa6f41572572676d30fa",
+          "dweb:/ipfs/QmZcnQvCfExUCj7zbvxgqoAd24XYofq7udUESQrR6DZ1Q3"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolDerivedState.sol": {
+        "keccak256": "0x3068b5e85207a209e841214738a2c79c5eebe1ba81ce5427f2d0598582fe7f32",
+        "urls": [
+          "bzz-raw://961752a020e3e128bb49496dfac03ab6da8cad8675dc3947d7ed493a278bc9ed",
+          "dweb:/ipfs/QmRu23SksgKD7G2TQsJBmhWJz1FJuuD78SAFGebYRPUvTQ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolEvents.sol": {
+        "keccak256": "0x38348849e3c1b18334b4897f21b67a500215f9da8e47ed04209767052c2a5b93",
+        "urls": [
+          "bzz-raw://01d9f8a7d90521f7c27c9ce4907ce4626f1fd6e597f5912da80eb516c7c56f58",
+          "dweb:/ipfs/QmbETzZdzpEowRAWsjupb1AdvwZYvdZoHsPpv6vHYem2nQ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolImmutables.sol": {
+        "keccak256": "0x527bd2f402e3c6b01107e70bcb6d159937de74663a0d914aefee924672facc1d",
+        "urls": [
+          "bzz-raw://4bccbcf10e3726243f354853cfed495970731a292ff12be715fd75d8f726d48f",
+          "dweb:/ipfs/QmQdh7AuAYt8uq72DmEHNgqHmz66AbkEdZXxevkgo13pdc"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol": {
+        "keccak256": "0x0c309a0fa5aae5336b8fe6e5987bd1825918717da98eea395183ec4868159ae0",
+        "urls": [
+          "bzz-raw://43eed8d7a7158af94acdec23661242a0aab5879614684b18e8af1e1b1f83d723",
+          "dweb:/ipfs/QmeW9eNqAvt22SLtipSNdoUkgfUw53G6e7iUA7XYwQv5qR"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolState.sol": {
+        "keccak256": "0xcd53e01bcc120d16a15847ba0e805bc5018de1a8d9177ea34c0976db2df3d902",
+        "urls": [
+          "bzz-raw://cf0f48fa035b6558c3b774ed42f1de13a2457fe76aa766c93eaafc3ecb6e7ae3",
+          "dweb:/ipfs/QmWpdDMVpFKCE2rLx9PfdD7Npd8Kck7Hfzp1i93k6iqtr3"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/ICamelotHelper.sol": {
+        "keccak256": "0xb45bc1db22753bde63810a872db8398dc1e555c5e8061e9968673ebc69c6a44a",
+        "urls": [
+          "bzz-raw://1277064e5685a2b850ec10a632f269b48892446b0ea144467be3cdd67e5d69c6",
+          "dweb:/ipfs/Qma3My77Ycmv97tcfRkbrHPzGRhrmoUe7g5CsHfCZm9Uwb"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/ICamelotVault.sol": {
+        "keccak256": "0x8b0420e22fe1a8c59e6ee7ab4517b2a220c42d6e566ea7aee225d84ce30d41f2",
+        "urls": [
+          "bzz-raw://92e35e66aeb701eae1ca28df4d9f605501091d7fb3fd33e96892af8407a158bd",
+          "dweb:/ipfs/QmZKVLmzZYYxEVNetBHH8jjZsAfQYMKqqoDc1uznyz8QxP"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/ICamelotVaultGovernance.sol": {
+        "keccak256": "0x8187f0a77f9db2a2ce6f72800e6e7a71746e59d4b77a7bc55d43376485422860",
+        "urls": [
+          "bzz-raw://44f8d795f930ab506d9f5b21aaa197a914033d379e68636e14068569d33e63fa",
+          "dweb:/ipfs/QmVCrs3tmJDa4x5yz14Q1MVWoeYJjqjLN3SkJe7PhFBaeg"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/ICamelotVault.sol",
+    "id": 76515,
+    "exportedSymbols": {
+      "AlgebraFeeConfiguration": [
+        55613
+      ],
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IAlgebraFactory": [
+        53926
+      ],
+      "IAlgebraNonfungiblePositionManager": [
+        54152
+      ],
+      "IAlgebraPool": [
+        54174
+      ],
+      "IAlgebraPoolActions": [
+        55975
+      ],
+      "IAlgebraPoolDerivedState": [
+        55991
+      ],
+      "IAlgebraPoolEvents": [
+        56106
+      ],
+      "IAlgebraPoolImmutables": [
+        56146
+      ],
+      "IAlgebraPoolPermissionedActions": [
+        56170
+      ],
+      "IAlgebraPoolState": [
+        56320
+      ],
+      "ICamelotHelper": [
+        75741
+      ],
+      "ICamelotVault": [
+        76514
+      ],
+      "ICamelotVaultGovernance": [
+        76537
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IERC721Enumerable": [
+        46736
+      ],
+      "IERC721Metadata": [
+        46763
+      ],
+      "IERC721Permit": [
+        54307
+      ],
+      "IERC721Receiver": [
+        46705
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IPeripheryImmutableState": [
+        54329
+      ],
+      "IPeripheryPayments": [
+        54355
+      ],
+      "IPoolInitializer": [
+        54372
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ],
+      "PoolAddress": [
+        55861
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:1681:333",
+    "nodes": [
+      {
+        "id": 76444,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:333",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 76445,
+        "nodeType": "ImportDirective",
+        "src": "57:66:333",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol",
+        "file": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 46706,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76446,
+        "nodeType": "ImportDirective",
+        "src": "125:33:333",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IIntegrationVault.sol",
+        "file": "./IIntegrationVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 77768,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76447,
+        "nodeType": "ImportDirective",
+        "src": "159:39:333",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/ICamelotVaultGovernance.sol",
+        "file": "./ICamelotVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 76538,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76448,
+        "nodeType": "ImportDirective",
+        "src": "200:70:333",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/algebrav2/IAlgebraNonfungiblePositionManager.sol",
+        "file": "../external/algebrav2/IAlgebraNonfungiblePositionManager.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 54153,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76449,
+        "nodeType": "ImportDirective",
+        "src": "271:51:333",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/algebrav2/IAlgebraFactory.sol",
+        "file": "../external/algebrav2/IAlgebraFactory.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 53927,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76450,
+        "nodeType": "ImportDirective",
+        "src": "323:48:333",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/algebrav2/IAlgebraPool.sol",
+        "file": "../external/algebrav2/IAlgebraPool.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 54175,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76451,
+        "nodeType": "ImportDirective",
+        "src": "373:37:333",
+        "nodes": [],
+        "absolutePath": "src/interfaces/utils/ICamelotHelper.sol",
+        "file": "../utils/ICamelotHelper.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 76515,
+        "sourceUnit": 75742,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 76514,
+        "nodeType": "ContractDefinition",
+        "src": "412:1300:333",
+        "nodes": [
+          {
+            "id": 76461,
+            "nodeType": "FunctionDefinition",
+            "src": "525:55:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76456,
+              "nodeType": "StructuredDocumentation",
+              "src": "480:40:333",
+              "text": "@dev nft of position in algebra pool"
+            },
+            "functionSelector": "ef7d8037",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "positionNft",
+            "nameLocation": "534:11:333",
+            "parameters": {
+              "id": 76457,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "545:2:333"
+            },
+            "returnParameters": {
+              "id": 76460,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76459,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76461,
+                  "src": "571:7:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76458,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "571:7:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "570:9:333"
+            },
+            "scope": 76514,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76467,
+            "nodeType": "FunctionDefinition",
+            "src": "621:54:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76462,
+              "nodeType": "StructuredDocumentation",
+              "src": "586:30:333",
+              "text": "@dev address of erc20Vault"
+            },
+            "functionSelector": "090f9221",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "erc20Vault",
+            "nameLocation": "630:10:333",
+            "parameters": {
+              "id": 76463,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "640:2:333"
+            },
+            "returnParameters": {
+              "id": 76466,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76465,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76467,
+                  "src": "666:7:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 76464,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "666:7:333",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "665:9:333"
+            },
+            "scope": 76514,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76474,
+            "nodeType": "FunctionDefinition",
+            "src": "742:86:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76468,
+              "nodeType": "StructuredDocumentation",
+              "src": "681:56:333",
+              "text": "@dev position manager for positions in algebra pools"
+            },
+            "functionSelector": "791b98bc",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "positionManager",
+            "nameLocation": "751:15:333",
+            "parameters": {
+              "id": 76469,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "766:2:333"
+            },
+            "returnParameters": {
+              "id": 76473,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76472,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76474,
+                  "src": "792:34:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IAlgebraNonfungiblePositionManager_$54152",
+                    "typeString": "contract IAlgebraNonfungiblePositionManager"
+                  },
+                  "typeName": {
+                    "id": 76471,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76470,
+                      "name": "IAlgebraNonfungiblePositionManager",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 54152,
+                      "src": "792:34:333"
+                    },
+                    "referencedDeclaration": 54152,
+                    "src": "792:34:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IAlgebraNonfungiblePositionManager_$54152",
+                      "typeString": "contract IAlgebraNonfungiblePositionManager"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "791:36:333"
+            },
+            "scope": 76514,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76481,
+            "nodeType": "FunctionDefinition",
+            "src": "878:59:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76475,
+              "nodeType": "StructuredDocumentation",
+              "src": "834:39:333",
+              "text": "@dev pool factory for algebra pools"
+            },
+            "functionSelector": "c45a0155",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "factory",
+            "nameLocation": "887:7:333",
+            "parameters": {
+              "id": 76476,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "894:2:333"
+            },
+            "returnParameters": {
+              "id": 76480,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76479,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76481,
+                  "src": "920:15:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IAlgebraFactory_$53926",
+                    "typeString": "contract IAlgebraFactory"
+                  },
+                  "typeName": {
+                    "id": 76478,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76477,
+                      "name": "IAlgebraFactory",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 53926,
+                      "src": "920:15:333"
+                    },
+                    "referencedDeclaration": 53926,
+                    "src": "920:15:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IAlgebraFactory_$53926",
+                      "typeString": "contract IAlgebraFactory"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "919:17:333"
+            },
+            "scope": 76514,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76488,
+            "nodeType": "FunctionDefinition",
+            "src": "989:57:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76482,
+              "nodeType": "StructuredDocumentation",
+              "src": "943:41:333",
+              "text": "@dev helper contract for CamelotVault"
+            },
+            "functionSelector": "63b0e66a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "helper",
+            "nameLocation": "998:6:333",
+            "parameters": {
+              "id": 76483,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1004:2:333"
+            },
+            "returnParameters": {
+              "id": 76487,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76486,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76488,
+                  "src": "1030:14:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_ICamelotHelper_$75741",
+                    "typeString": "contract ICamelotHelper"
+                  },
+                  "typeName": {
+                    "id": 76485,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76484,
+                      "name": "ICamelotHelper",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 75741,
+                      "src": "1030:14:333"
+                    },
+                    "referencedDeclaration": 75741,
+                    "src": "1030:14:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_ICamelotHelper_$75741",
+                      "typeString": "contract ICamelotHelper"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1029:16:333"
+            },
+            "scope": 76514,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76495,
+            "nodeType": "FunctionDefinition",
+            "src": "1078:53:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76489,
+              "nodeType": "StructuredDocumentation",
+              "src": "1052:21:333",
+              "text": "@dev Algebra Pool"
+            },
+            "functionSelector": "16f0115b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "pool",
+            "nameLocation": "1087:4:333",
+            "parameters": {
+              "id": 76490,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1091:2:333"
+            },
+            "returnParameters": {
+              "id": 76494,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76493,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76495,
+                  "src": "1117:12:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IAlgebraPool_$54174",
+                    "typeString": "contract IAlgebraPool"
+                  },
+                  "typeName": {
+                    "id": 76492,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 76491,
+                      "name": "IAlgebraPool",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 54174,
+                      "src": "1117:12:333"
+                    },
+                    "referencedDeclaration": 54174,
+                    "src": "1117:12:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IAlgebraPool_$54174",
+                      "typeString": "contract IAlgebraPool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1116:14:333"
+            },
+            "scope": 76514,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76506,
+            "nodeType": "FunctionDefinition",
+            "src": "1372:124:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76496,
+              "nodeType": "StructuredDocumentation",
+              "src": "1137:230:333",
+              "text": "@notice Initialized a new contract.\n @dev Can only be initialized by vault governance\n @param nft_ NFT of the vault in the VaultRegistry\n @param vaultTokens_ ERC20 tokens that will be managed by this Vault"
+            },
+            "functionSelector": "463e34be",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "initialize",
+            "nameLocation": "1381:10:333",
+            "parameters": {
+              "id": 76504,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76498,
+                  "mutability": "mutable",
+                  "name": "nft_",
+                  "nameLocation": "1409:4:333",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76506,
+                  "src": "1401:12:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 76497,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1401:7:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76500,
+                  "mutability": "mutable",
+                  "name": "erc20Vault",
+                  "nameLocation": "1431:10:333",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76506,
+                  "src": "1423:18:333",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 76499,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1423:7:333",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 76503,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "1468:12:333",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76506,
+                  "src": "1451:29:333",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 76501,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1451:7:333",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 76502,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1451:9:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1391:95:333"
+            },
+            "returnParameters": {
+              "id": 76505,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1495:0:333"
+            },
+            "scope": 76514,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 76513,
+            "nodeType": "FunctionDefinition",
+            "src": "1633:77:333",
+            "nodes": [],
+            "documentation": {
+              "id": 76507,
+              "nodeType": "StructuredDocumentation",
+              "src": "1502:126:333",
+              "text": "@return collectedFees array of length 2 with amounts of collected and transferred fees from Camelot position to ERC20Vault"
+            },
+            "functionSelector": "c27b2c2d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "collectEarnings",
+            "nameLocation": "1642:15:333",
+            "parameters": {
+              "id": 76508,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1657:2:333"
+            },
+            "returnParameters": {
+              "id": 76512,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76511,
+                  "mutability": "mutable",
+                  "name": "collectedFees",
+                  "nameLocation": "1695:13:333",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76513,
+                  "src": "1678:30:333",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 76509,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1678:7:333",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 76510,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1678:9:333",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1677:32:333"
+            },
+            "scope": 76514,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 76452,
+              "name": "IERC721Receiver",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 46705,
+              "src": "439:15:333"
+            },
+            "id": 76453,
+            "nodeType": "InheritanceSpecifier",
+            "src": "439:15:333"
+          },
+          {
+            "baseName": {
+              "id": 76454,
+              "name": "IIntegrationVault",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 77767,
+              "src": "456:17:333"
+            },
+            "id": 76455,
+            "nodeType": "InheritanceSpecifier",
+            "src": "456:17:333"
+          }
+        ],
+        "canonicalName": "ICamelotVault",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          76514,
+          77767,
+          64026,
+          78599,
+          48073,
+          46705
+        ],
+        "name": "ICamelotVault",
+        "nameLocation": "422:13:333",
+        "scope": 76515,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 333
+}

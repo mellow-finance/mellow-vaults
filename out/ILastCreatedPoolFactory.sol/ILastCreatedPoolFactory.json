@@ -1,0 +1,402 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "disable",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "getActionId",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getLastCreatedPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isDisabled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "name": "isPoolFromFactory",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "disable()": "2f2770db",
+    "getActionId(bytes4)": "851c1bb3",
+    "getLastCreatedPool()": "5ed31282",
+    "isDisabled()": "6c57f5a9",
+    "isPoolFromFactory(address)": "6634b753"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"disable\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"}],\"name\":\"getActionId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getLastCreatedPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isDisabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"}],\"name\":\"isPoolFromFactory\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"disable()\":{\"details\":\"Disable the factory, preventing the creation of more pools. Already existing pools are unaffected. Once a factory is disabled, it cannot be re-enabled.\"},\"getActionId(bytes4)\":{\"details\":\"Returns the action identifier associated with the external function described by `selector`.\"},\"getLastCreatedPool()\":{\"details\":\"Returns the address of the last Pool created by this factory. This is typically only useful in complex Pool deployment schemes, where multiple subsystems need to know about each other. Note that this value will only be updated once construction of the last created Pool finishes.\"},\"isDisabled()\":{\"details\":\"Check whether the derived factory has been disabled.\"},\"isPoolFromFactory(address)\":{\"details\":\"Returns true if `pool` was created by this factory.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/pool-utils/ILastCreatedPoolFactory.sol\":\"ILastCreatedPoolFactory\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/pool-utils/IBasePoolFactory.sol\":{\"keccak256\":\"0x257887a3a1041f0db5942361a8d38e6b2888c1c23dc76725521c15033c8fe58f\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://8827504513f563a5bb6b5732f25e32765626317f74ffc216efac02b27ffe7018\",\"dweb:/ipfs/QmPvPvi4eC9ETzCAynNbBGgmCWs84cHtRBQAxmdYffuANg\"]},\"src/interfaces/external/balancer/pool-utils/ILastCreatedPoolFactory.sol\":{\"keccak256\":\"0x0f6e19d9af7512e9428ad7978c3a8f7a2f3758b72d848f29a1f5f21bad51dce8\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://ddf1223d769192130033d776b8d2c0e2c2084d262855e76d0f503b84ff9025aa\",\"dweb:/ipfs/QmfZQNjRvkZJy87ASL9XdXadN9DTLzsFb2VKkJ97fnwAAi\"]},\"src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol\":{\"keccak256\":\"0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1\",\"dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "disable"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getActionId",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getLastCreatedPool",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isDisabled",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isPoolFromFactory",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "disable()": {
+            "details": "Disable the factory, preventing the creation of more pools. Already existing pools are unaffected. Once a factory is disabled, it cannot be re-enabled."
+          },
+          "getActionId(bytes4)": {
+            "details": "Returns the action identifier associated with the external function described by `selector`."
+          },
+          "getLastCreatedPool()": {
+            "details": "Returns the address of the last Pool created by this factory. This is typically only useful in complex Pool deployment schemes, where multiple subsystems need to know about each other. Note that this value will only be updated once construction of the last created Pool finishes."
+          },
+          "isDisabled()": {
+            "details": "Check whether the derived factory has been disabled."
+          },
+          "isPoolFromFactory(address)": {
+            "details": "Returns true if `pool` was created by this factory."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/pool-utils/ILastCreatedPoolFactory.sol": "ILastCreatedPoolFactory"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/pool-utils/IBasePoolFactory.sol": {
+        "keccak256": "0x257887a3a1041f0db5942361a8d38e6b2888c1c23dc76725521c15033c8fe58f",
+        "urls": [
+          "bzz-raw://8827504513f563a5bb6b5732f25e32765626317f74ffc216efac02b27ffe7018",
+          "dweb:/ipfs/QmPvPvi4eC9ETzCAynNbBGgmCWs84cHtRBQAxmdYffuANg"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/pool-utils/ILastCreatedPoolFactory.sol": {
+        "keccak256": "0x0f6e19d9af7512e9428ad7978c3a8f7a2f3758b72d848f29a1f5f21bad51dce8",
+        "urls": [
+          "bzz-raw://ddf1223d769192130033d776b8d2c0e2c2084d262855e76d0f503b84ff9025aa",
+          "dweb:/ipfs/QmfZQNjRvkZJy87ASL9XdXadN9DTLzsFb2VKkJ97fnwAAi"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/helpers/IAuthentication.sol": {
+        "keccak256": "0x8032fd6d7f660d9536d252897336462bb932d1e91bd3b87c087be017a35dc842",
+        "urls": [
+          "bzz-raw://3724cffd85daa36371999e0e9ea56617df12fd7f2cc5c123139705766e3b89a1",
+          "dweb:/ipfs/QmaM2wHuKrpKcc8mRhdYmXqPVAimHjGK1xubPWXKafiKYa"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/pool-utils/ILastCreatedPoolFactory.sol",
+    "id": 58597,
+    "exportedSymbols": {
+      "IAuthentication": [
+        60077
+      ],
+      "IBasePoolFactory": [
+        58564
+      ],
+      "ILastCreatedPoolFactory": [
+        58596
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:547:134",
+    "nodes": [
+      {
+        "id": 58585,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:134",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 58586,
+        "nodeType": "PragmaDirective",
+        "src": "712:33:134",
+        "nodes": [],
+        "literals": [
+          "experimental",
+          "ABIEncoderV2"
+        ]
+      },
+      {
+        "id": 58587,
+        "nodeType": "ImportDirective",
+        "src": "747:32:134",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/pool-utils/IBasePoolFactory.sol",
+        "file": "./IBasePoolFactory.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 58597,
+        "sourceUnit": 58565,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 58596,
+        "nodeType": "ContractDefinition",
+        "src": "781:453:134",
+        "nodes": [
+          {
+            "id": 58595,
+            "nodeType": "FunctionDefinition",
+            "src": "1170:62:134",
+            "nodes": [],
+            "documentation": {
+              "id": 58590,
+              "nodeType": "StructuredDocumentation",
+              "src": "841:324:134",
+              "text": " @dev Returns the address of the last Pool created by this factory.\n This is typically only useful in complex Pool deployment schemes, where multiple subsystems need to know about\n each other. Note that this value will only be updated once construction of the last created Pool finishes."
+            },
+            "functionSelector": "5ed31282",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getLastCreatedPool",
+            "nameLocation": "1179:18:134",
+            "parameters": {
+              "id": 58591,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1197:2:134"
+            },
+            "returnParameters": {
+              "id": 58594,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 58593,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 58595,
+                  "src": "1223:7:134",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 58592,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1223:7:134",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1222:9:134"
+            },
+            "scope": 58596,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 58588,
+              "name": "IBasePoolFactory",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 58564,
+              "src": "818:16:134"
+            },
+            "id": 58589,
+            "nodeType": "InheritanceSpecifier",
+            "src": "818:16:134"
+          }
+        ],
+        "canonicalName": "ILastCreatedPoolFactory",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          58596,
+          58564,
+          60077
+        ],
+        "name": "ILastCreatedPoolFactory",
+        "nameLocation": "791:23:134",
+        "scope": 58597,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 134
+}

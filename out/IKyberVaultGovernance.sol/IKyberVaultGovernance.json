@@ -1,0 +1,1638 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "commitInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "vaultTokens_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint24",
+          "name": "fee_",
+          "type": "uint24"
+        }
+      ],
+      "name": "createVault",
+      "outputs": [
+        {
+          "internalType": "contract IKyberVault",
+          "name": "vault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayedProtocolParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedProtocolPerVaultParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "delayedStrategyParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "internalParamsTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "contract IKyberSwapElasticLM",
+              "name": "farm",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes[]",
+              "name": "paths",
+              "type": "bytes[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pid",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IKyberVaultGovernance.StrategyParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "setStrategyParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "newParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "stageInternalParams",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stagedInternalParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IProtocolGovernance",
+              "name": "protocolGovernance",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVaultRegistry",
+              "name": "registry",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IVault",
+              "name": "singleton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IVaultGovernance.InternalParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "nft",
+          "type": "uint256"
+        }
+      ],
+      "name": "strategyParams",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IKyberSwapElasticLM",
+              "name": "farm",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes[]",
+              "name": "paths",
+              "type": "bytes[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pid",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IKyberVaultGovernance.StrategyParams",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "commitInternalParams()": "d4a07d34",
+    "createVault(address[],address,uint24)": "a515d1bf",
+    "delayedProtocolParamsTimestamp()": "e4af6e79",
+    "delayedProtocolPerVaultParamsTimestamp(uint256)": "511ce798",
+    "delayedStrategyParamsTimestamp(uint256)": "6707acee",
+    "internalParams()": "7ac46fbb",
+    "internalParamsTimestamp()": "1c7f4c73",
+    "setStrategyParams(uint256,(address,bytes[],uint256))": "9f6ae799",
+    "stageInternalParams((address,address,address))": "09946538",
+    "stagedInternalParams()": "86c6be3e",
+    "strategyParams(uint256)": "12466b68"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"commitInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"vaultTokens_\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"owner_\",\"type\":\"address\"},{\"internalType\":\"uint24\",\"name\":\"fee_\",\"type\":\"uint24\"}],\"name\":\"createVault\",\"outputs\":[{\"internalType\":\"contract IKyberVault\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"delayedProtocolParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedProtocolPerVaultParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"delayedStrategyParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"internalParamsTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"contract IKyberSwapElasticLM\",\"name\":\"farm\",\"type\":\"address\"},{\"internalType\":\"bytes[]\",\"name\":\"paths\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"pid\",\"type\":\"uint256\"}],\"internalType\":\"struct IKyberVaultGovernance.StrategyParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"setStrategyParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"newParams\",\"type\":\"tuple\"}],\"name\":\"stageInternalParams\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stagedInternalParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IProtocolGovernance\",\"name\":\"protocolGovernance\",\"type\":\"address\"},{\"internalType\":\"contract IVaultRegistry\",\"name\":\"registry\",\"type\":\"address\"},{\"internalType\":\"contract IVault\",\"name\":\"singleton\",\"type\":\"address\"}],\"internalType\":\"struct IVaultGovernance.InternalParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"nft\",\"type\":\"uint256\"}],\"name\":\"strategyParams\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IKyberSwapElasticLM\",\"name\":\"farm\",\"type\":\"address\"},{\"internalType\":\"bytes[]\",\"name\":\"paths\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"pid\",\"type\":\"uint256\"}],\"internalType\":\"struct IKyberVaultGovernance.StrategyParams\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"delayedStrategyParamsTimestamp(uint256)\":{\"params\":{\"nft\":\"Nft of the vault\"}},\"setStrategyParams(uint256,(address,bytes[],uint256))\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}},\"stageInternalParams((address,address,address))\":{\"params\":{\"newParams\":\"New Internal Params\"}},\"stagedInternalParams()\":{\"details\":\"The Internal Params could be committed after internalParamsTimestamp\"},\"strategyParams(uint256)\":{\"params\":{\"nft\":\"VaultRegistry NFT of the vault\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"commitInternalParams()\":{\"notice\":\"Commit staged Internal Params.\"},\"delayedProtocolParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.\"},\"delayedProtocolPerVaultParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed.\"},\"delayedStrategyParamsTimestamp(uint256)\":{\"notice\":\"Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.\"},\"internalParams()\":{\"notice\":\"Internal Params of the contract.\"},\"internalParamsTimestamp()\":{\"notice\":\"Timestamp in unix time seconds after which staged Internal Params could be committed.\"},\"setStrategyParams(uint256,(address,bytes[],uint256))\":{\"notice\":\"Delayed Strategy Params staged for commit after delay.\"},\"stageInternalParams((address,address,address))\":{\"notice\":\"Stage new Internal Params.\"},\"stagedInternalParams()\":{\"notice\":\"Staged new Internal Params.\"},\"strategyParams(uint256)\":{\"notice\":\"Delayed Strategy Params\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IKyberVaultGovernance.sol\":\"IKyberVaultGovernance\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a\",\"dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol\":{\"keccak256\":\"0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276\",\"dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x287b55befed2961a7eabd7d7b1b2839cbca8a5b80ef8dcbb25ed3d4c2002c305\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bd39944e8fc06be6dbe2dd1d8449b5336e23c6a7ba3e8e9ae5ae0f37f35283f5\",\"dweb:/ipfs/QmPV3FGYjVwvKSgAXKUN3r9T9GwniZz83CxBpM7vyj2G53\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol\":{\"keccak256\":\"0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708\",\"dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol\":{\"keccak256\":\"0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34\",\"dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol\":{\"keccak256\":\"0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146\",\"dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/IProtocolGovernance.sol\":{\"keccak256\":\"0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281\",\"dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b\"]},\"src/interfaces/IUnitPricesGovernance.sol\":{\"keccak256\":\"0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87\",\"dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk\"]},\"src/interfaces/IVaultRegistry.sol\":{\"keccak256\":\"0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50\",\"dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1\"]},\"src/interfaces/external/erc/IERC1271.sol\":{\"keccak256\":\"0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779\",\"dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd\"]},\"src/interfaces/external/kyber/IFactory.sol\":{\"keccak256\":\"0x7020090b863672ca05473e78ac7d464324b3374ba275605a4d2c90d36c7b8e6a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8b240d005cb74c42057e10440017b69849471f3ce14ba274e4640516deb3a7c4\",\"dweb:/ipfs/QmQZBoL5BaP3fbfC2jLe7nQHu56Xd9i4YWVMdyLVpQ4374\"]},\"src/interfaces/external/kyber/IKyberSwapElasticLM.sol\":{\"keccak256\":\"0x7abd60f77b69e0bd36b6a3ddecb5bd4adb20b6fdcfc427798373daa30417438f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4563c45d12539ec2e7d26cadfdf5c325dcb881e2206a8f022ce9a94f6742b142\",\"dweb:/ipfs/QmaTvBJVZBG9cPYz2JLKZSsQKmeiSLh1XyA5x4pJj7Td8F\"]},\"src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol\":{\"keccak256\":\"0x9ba2fbd81de0b7e1c2c862a842e1ac80406cdba9ae815eabd8f46c90525a6bae\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://31ad77d95ec01875fbefe3cf95a6c66b0b6580e3834731f015b1bc29d427e411\",\"dweb:/ipfs/QmR9pnNr15km9HnKTG9mrhU59YyJmhH1ghWnca3rBzDhHH\"]},\"src/interfaces/external/kyber/IPool.sol\":{\"keccak256\":\"0x19b4d59be8b20f08c39dbaee99c8ae1a2d700a2248a380fde55b1e2b25da4c1f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cbcb8e747bcb294d92de94be807b9cb1891f1c6e463eda975eba68f53d85ea8a\",\"dweb:/ipfs/QmcpWt6RmYTQYJgco5fgaYL8xS4rJB6eYCF9jrHDq3qSob\"]},\"src/interfaces/external/kyber/callback/ISwapCallback.sol\":{\"keccak256\":\"0xc53863390ecc20903af7b5ad920cf45720c68ae0c18a1ed4a0b8239d851c93de\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3264ddf97ea2a6f569889b4446e539df13045c2348f315a3911360183635d0e1\",\"dweb:/ipfs/QmcMy15nsxvZZim72T81Bck17nNaNv6AV53sESMsvjboSo\"]},\"src/interfaces/external/kyber/periphery/IBasePositionManager.sol\":{\"keccak256\":\"0x392214c5e76603f6090cbb0e97e4ff2c167e09ff066ef893e9d8ac3ae794c9a2\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://bd3e1ca9eb26a518d9687fd89c755d3e4a3730c5b96d805596b29468bf2c61a6\",\"dweb:/ipfs/QmeQ1qvdnPAV93xEoF3VPVN8QiRPQnTj4tTVs6MBGQ7LBV\"]},\"src/interfaces/external/kyber/periphery/IERC721Permit.sol\":{\"keccak256\":\"0x68e8b2d986bab8a124bd54e6753ab78278c8c2b7009f5c00e0e3ef64c6901b88\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://b5e0377fa4de7f8bc667259cf2a231e76501afe1962df923b93d8f6514e3b8dd\",\"dweb:/ipfs/QmbP4rdhK8ni1fZaHJJ4ekiwJvygkUNE34TiEbBnBw7FoT\"]},\"src/interfaces/external/kyber/periphery/IRouter.sol\":{\"keccak256\":\"0xc1cb34baeb140f93fda62a12866ac3b6fa1cf554447334021576f09230b3826c\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://63a27e1d651517755b140b6694fe6b1fd8446b690d2cf02a7e1aeca5b17c969f\",\"dweb:/ipfs/QmP4pNPojoUfgtR84mhNnrm9ahPZwSuDvqRL7jRSSisV59\"]},\"src/interfaces/external/kyber/periphery/IRouterTokenHelper.sol\":{\"keccak256\":\"0x916f611c57de74870fb12c444245c771227b5b79e5464f0f9f9db9d238ea8915\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://4d805513ac1a18e27c47b9d9a59d5b2add44b5c18d45b42d016f9f97d555d618\",\"dweb:/ipfs/QmXBEkVC1kMvVHvDrCNz8cb6hXB39dr8L7oYA9ag1tJd79\"]},\"src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol\":{\"keccak256\":\"0xc11a814ea53f5e0260356724483457e2031cc4b9f3452c8918f6077786f49e3b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://e8dacbe617f9956a9357a952be497d6eff5d4e717523ea880d988c8ea22af3cd\",\"dweb:/ipfs/QmNhSRWuB2Zkf1NrL8PBrf7LbtKRcFdXZbJMH2QMz1Nm2K\"]},\"src/interfaces/external/kyber/pool/IPoolActions.sol\":{\"keccak256\":\"0xeb7eb2b63738d4976f29b18d97747be76f98c5293d22507572d3e90dd579fb21\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://54735eaeff174f6c11cb8e9bc7d67e3c8ad154df79c8342538a0752f90203212\",\"dweb:/ipfs/QmQn8u7KLDzzAGJmje83RVLBkgXwNrahQ8bVSjM2AhZpKN\"]},\"src/interfaces/external/kyber/pool/IPoolEvents.sol\":{\"keccak256\":\"0x4be3e91b65d0c2afe3c38ca699ee7e70b67aec1d25376c825059225c33ea6c62\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://512cdecac86a853f0406a8bc6b0d1340938840ab2b293c4d71d1bb1ad533726c\",\"dweb:/ipfs/QmX8ohu3gKecXBX5vEYm5LPdTcbTAe56ijxsmmyJJ1cnKi\"]},\"src/interfaces/external/kyber/pool/IPoolStorage.sol\":{\"keccak256\":\"0x5fd3c60f74570731b09e28a272ddddff0b0d48d249ae624761e66528bad3bcec\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6d72d29549a8c90dce2434147f344d81e64f5d83b1b3e4ef806aa1bcc7ba2af9\",\"dweb:/ipfs/QmcaddeVFRKoCzQDvdqQUmRuBY7pojrdaMBttDZcGsuxi5\"]},\"src/interfaces/oracles/IOracle.sol\":{\"keccak256\":\"0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5\",\"dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg\"]},\"src/interfaces/utils/IDefaultAccessControl.sol\":{\"keccak256\":\"0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add\",\"dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu\"]},\"src/interfaces/utils/IKyberHelper.sol\":{\"keccak256\":\"0x83c70bfcf2f1549197faab053a697473cf66fcfed62e64500fcb20c594309cf6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b5955c85a24f88105011c6882577066f60c944a68150aca9791a7b01637c8633\",\"dweb:/ipfs/QmXMsFbzbusXgHZvTwaRcCtjkBKoKDGze8kckQQbtkxpXp\"]},\"src/interfaces/vaults/IIntegrationVault.sol\":{\"keccak256\":\"0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d\",\"dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy\"]},\"src/interfaces/vaults/IKyberVault.sol\":{\"keccak256\":\"0x9dd77d810d2e022ccedfc512478e48952beccdd667e555a348484ee17eaf0947\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://4fb7a5e1e497699ee6895ac126ea6ed70ec7f211a175ebe2a4bb3cfd5cc400aa\",\"dweb:/ipfs/QmQ1JbRpe5Nkzkr2UeiwCb1xWuxneVGD81ZNP8j5di2DvQ\"]},\"src/interfaces/vaults/IKyberVaultGovernance.sol\":{\"keccak256\":\"0x833b3055dabcee7231fb75e650dc2af5a1f7ff3d2287511c6504c7122b4b8610\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://a2cd81d4a3a85794b5ff68a75eff19ceb005dbe887f6935c7b7ed61ee00ca079\",\"dweb:/ipfs/QmYi3P8yY8kSk44XZup5Bn1G4qHqc5rFadVDwsP8TQFmyv\"]},\"src/interfaces/vaults/IVault.sol\":{\"keccak256\":\"0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1\",\"dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw\"]},\"src/interfaces/vaults/IVaultGovernance.sol\":{\"keccak256\":\"0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375\",\"dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "commitInternalParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "vaultTokens_",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "owner_",
+              "type": "address"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee_",
+              "type": "uint24"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "createVault",
+          "outputs": [
+            {
+              "internalType": "contract IKyberVault",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedProtocolPerVaultParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "delayedStrategyParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "internalParamsTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            },
+            {
+              "internalType": "struct IKyberVaultGovernance.StrategyParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IKyberSwapElasticLM",
+                  "name": "farm",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "paths",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "pid",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setStrategyParams"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "newParams",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stageInternalParams"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stagedInternalParams",
+          "outputs": [
+            {
+              "internalType": "struct IVaultGovernance.InternalParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IProtocolGovernance",
+                  "name": "protocolGovernance",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVaultRegistry",
+                  "name": "registry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IVault",
+                  "name": "singleton",
+                  "type": "address"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "nft",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "strategyParams",
+          "outputs": [
+            {
+              "internalType": "struct IKyberVaultGovernance.StrategyParams",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IKyberSwapElasticLM",
+                  "name": "farm",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "paths",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "pid",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "params": {
+              "nft": "Nft of the vault"
+            }
+          },
+          "setStrategyParams(uint256,(address,bytes[],uint256))": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          },
+          "stageInternalParams((address,address,address))": {
+            "params": {
+              "newParams": "New Internal Params"
+            }
+          },
+          "stagedInternalParams()": {
+            "details": "The Internal Params could be committed after internalParamsTimestamp"
+          },
+          "strategyParams(uint256)": {
+            "params": {
+              "nft": "VaultRegistry NFT of the vault"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "commitInternalParams()": {
+            "notice": "Commit staged Internal Params."
+          },
+          "delayedProtocolParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed."
+          },
+          "delayedProtocolPerVaultParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Protocol Params Per Vault could be committed."
+          },
+          "delayedStrategyParamsTimestamp(uint256)": {
+            "notice": "Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed."
+          },
+          "internalParams()": {
+            "notice": "Internal Params of the contract."
+          },
+          "internalParamsTimestamp()": {
+            "notice": "Timestamp in unix time seconds after which staged Internal Params could be committed."
+          },
+          "setStrategyParams(uint256,(address,bytes[],uint256))": {
+            "notice": "Delayed Strategy Params staged for commit after delay."
+          },
+          "stageInternalParams((address,address,address))": {
+            "notice": "Stage new Internal Params."
+          },
+          "stagedInternalParams()": {
+            "notice": "Staged new Internal Params."
+          },
+          "strategyParams(uint256)": {
+            "notice": "Delayed Strategy Params"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IKyberVaultGovernance.sol": "IKyberVaultGovernance"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+        "urls": [
+          "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+          "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": {
+        "keccak256": "0xba4459ab871dfa300f5212c6c30178b63898c03533a1ede28436f11546626676",
+        "urls": [
+          "bzz-raw://3dcc7b09bfa6e18aab262ca372f4a9b1fc82e294b430706a4e1378cf58e6a276",
+          "dweb:/ipfs/QmT8oSAcesdctR15HMLhr2a1HRpXymxdjTfdtfTYJcj2N2"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+        "keccak256": "0x287b55befed2961a7eabd7d7b1b2839cbca8a5b80ef8dcbb25ed3d4c2002c305",
+        "urls": [
+          "bzz-raw://bd39944e8fc06be6dbe2dd1d8449b5336e23c6a7ba3e8e9ae5ae0f37f35283f5",
+          "dweb:/ipfs/QmPV3FGYjVwvKSgAXKUN3r9T9GwniZz83CxBpM7vyj2G53"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol": {
+        "keccak256": "0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da",
+        "urls": [
+          "bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708",
+          "dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol": {
+        "keccak256": "0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf",
+        "urls": [
+          "bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34",
+          "dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+        "keccak256": "0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9",
+        "urls": [
+          "bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146",
+          "dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IProtocolGovernance.sol": {
+        "keccak256": "0x56c5ffe3c7a0414fbe269fb65d5181c41c0937f2d854b35ac11d11d143b4025e",
+        "urls": [
+          "bzz-raw://c3c06dabc1ab8741d81f8f941230bb19d66c4a32707a984e2e48952f6d86a281",
+          "dweb:/ipfs/Qmb47fn3Wpe38NyJ5f4Gzbthd6HimRBNDVU82JWwsyR36b"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IUnitPricesGovernance.sol": {
+        "keccak256": "0x9fc3abc68aeebff7927937d8a3ebe876a26550c95da8941b7a123583c6812081",
+        "urls": [
+          "bzz-raw://a323e55a7dd91bbe02329783c6fa447b3dfec8aa963f10a7bcd4aee986d7ca87",
+          "dweb:/ipfs/QmRShHKXzDsxUDbSzhRQTZmagzYeP2Q7KAx1t4SVomn6Gk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/IVaultRegistry.sol": {
+        "keccak256": "0xbbff9405f05886e694fbb4ed6a39a85f05cd05ee28a8b689c62be86230b9be55",
+        "urls": [
+          "bzz-raw://1b9c10d208a2533045f2d00fccfdec42f20ac4a608e850e663be05075eeb3b50",
+          "dweb:/ipfs/QmRFPZZVBdYvTLEW5zLjHzivVKH4Ug9mJKom5yq18cVij1"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/erc/IERC1271.sol": {
+        "keccak256": "0x9f1bfb74bae3843c5ca1fc666cd9d7cef51a97b713b03d9de1023c7e3ba22d36",
+        "urls": [
+          "bzz-raw://9053f788f8a2e5ba615a9f3069de68526f6784f60925e6aac9639fa167ee2779",
+          "dweb:/ipfs/Qmc5Te45rStvUcDbArTk7jrqNoWuYTJJP4XiBK8PSYDDDd"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/IFactory.sol": {
+        "keccak256": "0x7020090b863672ca05473e78ac7d464324b3374ba275605a4d2c90d36c7b8e6a",
+        "urls": [
+          "bzz-raw://8b240d005cb74c42057e10440017b69849471f3ce14ba274e4640516deb3a7c4",
+          "dweb:/ipfs/QmQZBoL5BaP3fbfC2jLe7nQHu56Xd9i4YWVMdyLVpQ4374"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/IKyberSwapElasticLM.sol": {
+        "keccak256": "0x7abd60f77b69e0bd36b6a3ddecb5bd4adb20b6fdcfc427798373daa30417438f",
+        "urls": [
+          "bzz-raw://4563c45d12539ec2e7d26cadfdf5c325dcb881e2206a8f022ce9a94f6742b142",
+          "dweb:/ipfs/QmaTvBJVZBG9cPYz2JLKZSsQKmeiSLh1XyA5x4pJj7Td8F"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/IKyberSwapElasticLMEvents.sol": {
+        "keccak256": "0x9ba2fbd81de0b7e1c2c862a842e1ac80406cdba9ae815eabd8f46c90525a6bae",
+        "urls": [
+          "bzz-raw://31ad77d95ec01875fbefe3cf95a6c66b0b6580e3834731f015b1bc29d427e411",
+          "dweb:/ipfs/QmR9pnNr15km9HnKTG9mrhU59YyJmhH1ghWnca3rBzDhHH"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/IPool.sol": {
+        "keccak256": "0x19b4d59be8b20f08c39dbaee99c8ae1a2d700a2248a380fde55b1e2b25da4c1f",
+        "urls": [
+          "bzz-raw://cbcb8e747bcb294d92de94be807b9cb1891f1c6e463eda975eba68f53d85ea8a",
+          "dweb:/ipfs/QmcpWt6RmYTQYJgco5fgaYL8xS4rJB6eYCF9jrHDq3qSob"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/callback/ISwapCallback.sol": {
+        "keccak256": "0xc53863390ecc20903af7b5ad920cf45720c68ae0c18a1ed4a0b8239d851c93de",
+        "urls": [
+          "bzz-raw://3264ddf97ea2a6f569889b4446e539df13045c2348f315a3911360183635d0e1",
+          "dweb:/ipfs/QmcMy15nsxvZZim72T81Bck17nNaNv6AV53sESMsvjboSo"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/periphery/IBasePositionManager.sol": {
+        "keccak256": "0x392214c5e76603f6090cbb0e97e4ff2c167e09ff066ef893e9d8ac3ae794c9a2",
+        "urls": [
+          "bzz-raw://bd3e1ca9eb26a518d9687fd89c755d3e4a3730c5b96d805596b29468bf2c61a6",
+          "dweb:/ipfs/QmeQ1qvdnPAV93xEoF3VPVN8QiRPQnTj4tTVs6MBGQ7LBV"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/kyber/periphery/IERC721Permit.sol": {
+        "keccak256": "0x68e8b2d986bab8a124bd54e6753ab78278c8c2b7009f5c00e0e3ef64c6901b88",
+        "urls": [
+          "bzz-raw://b5e0377fa4de7f8bc667259cf2a231e76501afe1962df923b93d8f6514e3b8dd",
+          "dweb:/ipfs/QmbP4rdhK8ni1fZaHJJ4ekiwJvygkUNE34TiEbBnBw7FoT"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/kyber/periphery/IRouter.sol": {
+        "keccak256": "0xc1cb34baeb140f93fda62a12866ac3b6fa1cf554447334021576f09230b3826c",
+        "urls": [
+          "bzz-raw://63a27e1d651517755b140b6694fe6b1fd8446b690d2cf02a7e1aeca5b17c969f",
+          "dweb:/ipfs/QmP4pNPojoUfgtR84mhNnrm9ahPZwSuDvqRL7jRSSisV59"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/kyber/periphery/IRouterTokenHelper.sol": {
+        "keccak256": "0x916f611c57de74870fb12c444245c771227b5b79e5464f0f9f9db9d238ea8915",
+        "urls": [
+          "bzz-raw://4d805513ac1a18e27c47b9d9a59d5b2add44b5c18d45b42d016f9f97d555d618",
+          "dweb:/ipfs/QmXBEkVC1kMvVHvDrCNz8cb6hXB39dr8L7oYA9ag1tJd79"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol": {
+        "keccak256": "0xc11a814ea53f5e0260356724483457e2031cc4b9f3452c8918f6077786f49e3b",
+        "urls": [
+          "bzz-raw://e8dacbe617f9956a9357a952be497d6eff5d4e717523ea880d988c8ea22af3cd",
+          "dweb:/ipfs/QmNhSRWuB2Zkf1NrL8PBrf7LbtKRcFdXZbJMH2QMz1Nm2K"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/pool/IPoolActions.sol": {
+        "keccak256": "0xeb7eb2b63738d4976f29b18d97747be76f98c5293d22507572d3e90dd579fb21",
+        "urls": [
+          "bzz-raw://54735eaeff174f6c11cb8e9bc7d67e3c8ad154df79c8342538a0752f90203212",
+          "dweb:/ipfs/QmQn8u7KLDzzAGJmje83RVLBkgXwNrahQ8bVSjM2AhZpKN"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/pool/IPoolEvents.sol": {
+        "keccak256": "0x4be3e91b65d0c2afe3c38ca699ee7e70b67aec1d25376c825059225c33ea6c62",
+        "urls": [
+          "bzz-raw://512cdecac86a853f0406a8bc6b0d1340938840ab2b293c4d71d1bb1ad533726c",
+          "dweb:/ipfs/QmX8ohu3gKecXBX5vEYm5LPdTcbTAe56ijxsmmyJJ1cnKi"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/kyber/pool/IPoolStorage.sol": {
+        "keccak256": "0x5fd3c60f74570731b09e28a272ddddff0b0d48d249ae624761e66528bad3bcec",
+        "urls": [
+          "bzz-raw://6d72d29549a8c90dce2434147f344d81e64f5d83b1b3e4ef806aa1bcc7ba2af9",
+          "dweb:/ipfs/QmcaddeVFRKoCzQDvdqQUmRuBY7pojrdaMBttDZcGsuxi5"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/oracles/IOracle.sol": {
+        "keccak256": "0x2d89a1f771e68129d47ae26eccf76f969cd2877e9b7190687056f912c3524b53",
+        "urls": [
+          "bzz-raw://f378b9f29c18878e73e251ca97abeca819f0789834281ee1399db878f6baedf5",
+          "dweb:/ipfs/QmSrFYZWmGdVkgACwwZEfbkPt3kQCSkr6czBi9HVtzNSJg"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IDefaultAccessControl.sol": {
+        "keccak256": "0xf746069a0607df88bbe40abd9d0ce377eac023a06315072a902f0a1995514d60",
+        "urls": [
+          "bzz-raw://cef1e775b3ef0bdfab1871c54b6a7ba056e2baaef6f12a5ad5041ed500700add",
+          "dweb:/ipfs/QmRKQoRR5FzupKKJb8pTQHzBf3A9hWnk4JrPSQ31s7zLtu"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/utils/IKyberHelper.sol": {
+        "keccak256": "0x83c70bfcf2f1549197faab053a697473cf66fcfed62e64500fcb20c594309cf6",
+        "urls": [
+          "bzz-raw://b5955c85a24f88105011c6882577066f60c944a68150aca9791a7b01637c8633",
+          "dweb:/ipfs/QmXMsFbzbusXgHZvTwaRcCtjkBKoKDGze8kckQQbtkxpXp"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IIntegrationVault.sol": {
+        "keccak256": "0x63ce1a5b16b87b88693680d338279fdf1281f7a093ca8da6f915bb3cb9530c5e",
+        "urls": [
+          "bzz-raw://2deaa9cd44b8e508e21f79e59acbe80d2b20d30e3ab7b07131f5513424709d1d",
+          "dweb:/ipfs/QmUcfqcUPhuTt41TsvybCY9RDiMUVgp3seGTvmFYSXtjMy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IKyberVault.sol": {
+        "keccak256": "0x9dd77d810d2e022ccedfc512478e48952beccdd667e555a348484ee17eaf0947",
+        "urls": [
+          "bzz-raw://4fb7a5e1e497699ee6895ac126ea6ed70ec7f211a175ebe2a4bb3cfd5cc400aa",
+          "dweb:/ipfs/QmQ1JbRpe5Nkzkr2UeiwCb1xWuxneVGD81ZNP8j5di2DvQ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IKyberVaultGovernance.sol": {
+        "keccak256": "0x833b3055dabcee7231fb75e650dc2af5a1f7ff3d2287511c6504c7122b4b8610",
+        "urls": [
+          "bzz-raw://a2cd81d4a3a85794b5ff68a75eff19ceb005dbe887f6935c7b7ed61ee00ca079",
+          "dweb:/ipfs/QmYi3P8yY8kSk44XZup5Bn1G4qHqc5rFadVDwsP8TQFmyv"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/vaults/IVault.sol": {
+        "keccak256": "0x8f5a025c2b61e9840b4a67321610de985f4e478f5368cbcd9737c525cf582c43",
+        "urls": [
+          "bzz-raw://a6d397f0ddaa34fa8248c7624f72f31f8c8b66ee30965f8bbc3f434e2f3696b1",
+          "dweb:/ipfs/QmcTfSgQLGJFmpx6ozKYKNXQp6tPNgswg2m9ttSZyoDQiw"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/vaults/IVaultGovernance.sol": {
+        "keccak256": "0xb0295982be8e1730fb111e034f1ab4db0b8013674408a4ab851d978856387813",
+        "urls": [
+          "bzz-raw://120ed22cf68dd88aad37700e42cd775637184c636f0fde6b068a5ddb8bfce375",
+          "dweb:/ipfs/QmfA9CVkP5MMkXsuDFj86o8pRMtLEjeidmwWe43Henaxwu"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IKyberVaultGovernance.sol",
+    "id": 77904,
+    "exportedSymbols": {
+      "IAccessControl": [
+        43366
+      ],
+      "IAccessControlEnumerable": [
+        43391
+      ],
+      "IBasePositionManager": [
+        67457
+      ],
+      "IBasePositionManagerEvents": [
+        67677
+      ],
+      "IDefaultAccessControl": [
+        75786
+      ],
+      "IERC1271": [
+        64026
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IERC721Metadata": [
+        46763
+      ],
+      "IERC721Permit": [
+        67505
+      ],
+      "IERC721Receiver": [
+        46705
+      ],
+      "IIntegrationVault": [
+        77767
+      ],
+      "IKyberHelper": [
+        75886
+      ],
+      "IKyberSwapElasticLM": [
+        67109
+      ],
+      "IKyberSwapElasticLMEvents": [
+        67198
+      ],
+      "IKyberVault": [
+        77850
+      ],
+      "IKyberVaultGovernance": [
+        77903
+      ],
+      "IOracle": [
+        75605
+      ],
+      "IPool": [
+        67213
+      ],
+      "IPoolActions": [
+        68494
+      ],
+      "IPoolEvents": [
+        68579
+      ],
+      "IPoolStorage": [
+        68709
+      ],
+      "IProtocolGovernance": [
+        52868
+      ],
+      "IRouter": [
+        67605
+      ],
+      "IRouterTokenHelper": [
+        67630
+      ],
+      "ISwapCallback": [
+        67227
+      ],
+      "IUnitPricesGovernance": [
+        52921
+      ],
+      "IVault": [
+        78599
+      ],
+      "IVaultGovernance": [
+        78668
+      ],
+      "IVaultRegistry": [
+        53012
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1007:346",
+    "nodes": [
+      {
+        "id": 77852,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:346",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 77853,
+        "nodeType": "ImportDirective",
+        "src": "70:62:346",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/kyber/periphery/IBasePositionManager.sol",
+        "file": "../external/kyber/periphery/IBasePositionManager.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77904,
+        "sourceUnit": 67458,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77854,
+        "nodeType": "ImportDirective",
+        "src": "133:51:346",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/kyber/IKyberSwapElasticLM.sol",
+        "file": "../external/kyber/IKyberSwapElasticLM.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77904,
+        "sourceUnit": 67110,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77855,
+        "nodeType": "ImportDirective",
+        "src": "185:49:346",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/kyber/periphery/IRouter.sol",
+        "file": "../external/kyber/periphery/IRouter.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77904,
+        "sourceUnit": 67606,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77856,
+        "nodeType": "ImportDirective",
+        "src": "235:32:346",
+        "nodes": [],
+        "absolutePath": "src/interfaces/oracles/IOracle.sol",
+        "file": "../oracles/IOracle.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77904,
+        "sourceUnit": 75606,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77857,
+        "nodeType": "ImportDirective",
+        "src": "268:32:346",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IVaultGovernance.sol",
+        "file": "./IVaultGovernance.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77904,
+        "sourceUnit": 78669,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77858,
+        "nodeType": "ImportDirective",
+        "src": "301:27:346",
+        "nodes": [],
+        "absolutePath": "src/interfaces/vaults/IKyberVault.sol",
+        "file": "./IKyberVault.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 77904,
+        "sourceUnit": 77851,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 77903,
+        "nodeType": "ContractDefinition",
+        "src": "330:721:346",
+        "nodes": [
+          {
+            "id": 77869,
+            "nodeType": "StructDefinition",
+            "src": "388:107:346",
+            "nodes": [],
+            "canonicalName": "IKyberVaultGovernance.StrategyParams",
+            "members": [
+              {
+                "constant": false,
+                "id": 77863,
+                "mutability": "mutable",
+                "name": "farm",
+                "nameLocation": "440:4:346",
+                "nodeType": "VariableDeclaration",
+                "scope": 77869,
+                "src": "420:24:346",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IKyberSwapElasticLM_$67109",
+                  "typeString": "contract IKyberSwapElasticLM"
+                },
+                "typeName": {
+                  "id": 77862,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 77861,
+                    "name": "IKyberSwapElasticLM",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 67109,
+                    "src": "420:19:346"
+                  },
+                  "referencedDeclaration": 67109,
+                  "src": "420:19:346",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IKyberSwapElasticLM_$67109",
+                    "typeString": "contract IKyberSwapElasticLM"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 77866,
+                "mutability": "mutable",
+                "name": "paths",
+                "nameLocation": "462:5:346",
+                "nodeType": "VariableDeclaration",
+                "scope": 77869,
+                "src": "454:13:346",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_bytes_storage_$dyn_storage_ptr",
+                  "typeString": "bytes[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 77864,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "454:5:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "id": 77865,
+                  "nodeType": "ArrayTypeName",
+                  "src": "454:7:346",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_bytes_storage_$dyn_storage_ptr",
+                    "typeString": "bytes[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 77868,
+                "mutability": "mutable",
+                "name": "pid",
+                "nameLocation": "485:3:346",
+                "nodeType": "VariableDeclaration",
+                "scope": 77869,
+                "src": "477:11:346",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 77867,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "477:7:346",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "StrategyParams",
+            "nameLocation": "395:14:346",
+            "scope": 77903,
+            "visibility": "public"
+          },
+          {
+            "id": 77878,
+            "nodeType": "FunctionDefinition",
+            "src": "591:83:346",
+            "nodes": [],
+            "documentation": {
+              "id": 77870,
+              "nodeType": "StructuredDocumentation",
+              "src": "501:85:346",
+              "text": "@notice Delayed Strategy Params\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "12466b68",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "strategyParams",
+            "nameLocation": "600:14:346",
+            "parameters": {
+              "id": 77873,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77872,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "623:3:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77878,
+                  "src": "615:11:346",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77871,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "615:7:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "614:13:346"
+            },
+            "returnParameters": {
+              "id": 77877,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77876,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77878,
+                  "src": "651:21:346",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_StrategyParams_$77869_memory_ptr",
+                    "typeString": "struct IKyberVaultGovernance.StrategyParams"
+                  },
+                  "typeName": {
+                    "id": 77875,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77874,
+                      "name": "StrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77869,
+                      "src": "651:14:346"
+                    },
+                    "referencedDeclaration": 77869,
+                    "src": "651:14:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_StrategyParams_$77869_storage_ptr",
+                      "typeString": "struct IKyberVaultGovernance.StrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "650:23:346"
+            },
+            "scope": 77903,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77887,
+            "nodeType": "FunctionDefinition",
+            "src": "801:81:346",
+            "nodes": [],
+            "documentation": {
+              "id": 77879,
+              "nodeType": "StructuredDocumentation",
+              "src": "680:116:346",
+              "text": "@notice Delayed Strategy Params staged for commit after delay.\n @param nft VaultRegistry NFT of the vault"
+            },
+            "functionSelector": "9f6ae799",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setStrategyParams",
+            "nameLocation": "810:17:346",
+            "parameters": {
+              "id": 77885,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77881,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "836:3:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77887,
+                  "src": "828:11:346",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77880,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "828:7:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77884,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "865:6:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77887,
+                  "src": "841:30:346",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_StrategyParams_$77869_calldata_ptr",
+                    "typeString": "struct IKyberVaultGovernance.StrategyParams"
+                  },
+                  "typeName": {
+                    "id": 77883,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77882,
+                      "name": "StrategyParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77869,
+                      "src": "841:14:346"
+                    },
+                    "referencedDeclaration": 77869,
+                    "src": "841:14:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_StrategyParams_$77869_storage_ptr",
+                      "typeString": "struct IKyberVaultGovernance.StrategyParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "827:45:346"
+            },
+            "returnParameters": {
+              "id": 77886,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "881:0:346"
+            },
+            "scope": 77903,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 77902,
+            "nodeType": "FunctionDefinition",
+            "src": "888:161:346",
+            "nodes": [],
+            "functionSelector": "a515d1bf",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "createVault",
+            "nameLocation": "897:11:346",
+            "parameters": {
+              "id": 77895,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77890,
+                  "mutability": "mutable",
+                  "name": "vaultTokens_",
+                  "nameLocation": "935:12:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77902,
+                  "src": "918:29:346",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 77888,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "918:7:346",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 77889,
+                    "nodeType": "ArrayTypeName",
+                    "src": "918:9:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77892,
+                  "mutability": "mutable",
+                  "name": "owner_",
+                  "nameLocation": "965:6:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77902,
+                  "src": "957:14:346",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 77891,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "957:7:346",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77894,
+                  "mutability": "mutable",
+                  "name": "fee_",
+                  "nameLocation": "988:4:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77902,
+                  "src": "981:11:346",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint24",
+                    "typeString": "uint24"
+                  },
+                  "typeName": {
+                    "id": 77893,
+                    "name": "uint24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "981:6:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint24",
+                      "typeString": "uint24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "908:90:346"
+            },
+            "returnParameters": {
+              "id": 77901,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 77898,
+                  "mutability": "mutable",
+                  "name": "vault",
+                  "nameLocation": "1029:5:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77902,
+                  "src": "1017:17:346",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IKyberVault_$77850",
+                    "typeString": "contract IKyberVault"
+                  },
+                  "typeName": {
+                    "id": 77897,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 77896,
+                      "name": "IKyberVault",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 77850,
+                      "src": "1017:11:346"
+                    },
+                    "referencedDeclaration": 77850,
+                    "src": "1017:11:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IKyberVault_$77850",
+                      "typeString": "contract IKyberVault"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 77900,
+                  "mutability": "mutable",
+                  "name": "nft",
+                  "nameLocation": "1044:3:346",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 77902,
+                  "src": "1036:11:346",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 77899,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1036:7:346",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1016:32:346"
+            },
+            "scope": 77903,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 77859,
+              "name": "IVaultGovernance",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 78668,
+              "src": "365:16:346"
+            },
+            "id": 77860,
+            "nodeType": "InheritanceSpecifier",
+            "src": "365:16:346"
+          }
+        ],
+        "canonicalName": "IKyberVaultGovernance",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          77903,
+          78668
+        ],
+        "name": "IKyberVaultGovernance",
+        "nameLocation": "340:21:346",
+        "scope": 77904,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 346
+}

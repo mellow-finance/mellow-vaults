@@ -1,0 +1,1251 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "activeIncentive",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "virtualPool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "dataStorageOperator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "bottomTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "topTick",
+          "type": "int24"
+        }
+      ],
+      "name": "getInnerCumulatives",
+      "outputs": [
+        {
+          "internalType": "int56",
+          "name": "innerTickCumulative",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "innerSecondsSpentPerLiquidity",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint32",
+          "name": "innerSecondsSpent",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32[]",
+          "name": "secondsAgos",
+          "type": "uint32[]"
+        }
+      ],
+      "name": "getTimepoints",
+      "outputs": [
+        {
+          "internalType": "int56[]",
+          "name": "tickCumulatives",
+          "type": "int56[]"
+        },
+        {
+          "internalType": "uint160[]",
+          "name": "secondsPerLiquidityCumulatives",
+          "type": "uint160[]"
+        },
+        {
+          "internalType": "uint112[]",
+          "name": "volatilityCumulatives",
+          "type": "uint112[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "volumePerAvgLiquiditys",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "globalState",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "price",
+          "type": "uint160"
+        },
+        {
+          "internalType": "int24",
+          "name": "tick",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint16",
+          "name": "fee",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "timepointIndex",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint8",
+          "name": "communityFeeToken0",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "communityFeeToken1",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "unlocked",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "liquidity",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "liquidityCooldown",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "cooldownInSeconds",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "maxLiquidityPerTick",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        }
+      ],
+      "name": "positions",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidityAmount",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint32",
+          "name": "lastLiquidityAddTimestamp",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "innerFeeGrowth0Token",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "innerFeeGrowth1Token",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint128",
+          "name": "fees0",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "fees1",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tickSpacing",
+      "outputs": [
+        {
+          "internalType": "int24",
+          "name": "",
+          "type": "int24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int16",
+          "name": "wordPosition",
+          "type": "int16"
+        }
+      ],
+      "name": "tickTable",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "tick",
+          "type": "int24"
+        }
+      ],
+      "name": "ticks",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidityTotal",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int128",
+          "name": "liquidityDelta",
+          "type": "int128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "outerFeeGrowth0Token",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "outerFeeGrowth1Token",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int56",
+          "name": "outerTickCumulative",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "outerSecondsPerLiquidity",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint32",
+          "name": "outerSecondsSpent",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "initialized",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "timepoints",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "initialized",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint32",
+          "name": "blockTimestamp",
+          "type": "uint32"
+        },
+        {
+          "internalType": "int56",
+          "name": "tickCumulative",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "secondsPerLiquidityCumulative",
+          "type": "uint160"
+        },
+        {
+          "internalType": "uint88",
+          "name": "volatilityCumulative",
+          "type": "uint88"
+        },
+        {
+          "internalType": "int24",
+          "name": "averageTick",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint144",
+          "name": "volumePerLiquidityCumulative",
+          "type": "uint144"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "token0",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "token1",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalFeeGrowth0Token",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalFeeGrowth1Token",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "activeIncentive()": "facb0eb1",
+    "dataStorageOperator()": "29047dfa",
+    "factory()": "c45a0155",
+    "getInnerCumulatives(int24,int24)": "920c34e5",
+    "getTimepoints(uint32[])": "9d3a5241",
+    "globalState()": "e76c01e4",
+    "liquidity()": "1a686502",
+    "liquidityCooldown()": "17e25b3c",
+    "maxLiquidityPerTick()": "70cf754a",
+    "positions(bytes32)": "514ea4bf",
+    "tickSpacing()": "d0c93a7c",
+    "tickTable(int16)": "c677e3e0",
+    "ticks(int24)": "f30dba93",
+    "timepoints(uint256)": "74eceae6",
+    "token0()": "0dfe1681",
+    "token1()": "d21220a7",
+    "totalFeeGrowth0Token()": "6378ae44",
+    "totalFeeGrowth1Token()": "ecdecf42"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"activeIncentive\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"virtualPool\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dataStorageOperator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"bottomTick\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"topTick\",\"type\":\"int24\"}],\"name\":\"getInnerCumulatives\",\"outputs\":[{\"internalType\":\"int56\",\"name\":\"innerTickCumulative\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"innerSecondsSpentPerLiquidity\",\"type\":\"uint160\"},{\"internalType\":\"uint32\",\"name\":\"innerSecondsSpent\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"secondsAgos\",\"type\":\"uint32[]\"}],\"name\":\"getTimepoints\",\"outputs\":[{\"internalType\":\"int56[]\",\"name\":\"tickCumulatives\",\"type\":\"int56[]\"},{\"internalType\":\"uint160[]\",\"name\":\"secondsPerLiquidityCumulatives\",\"type\":\"uint160[]\"},{\"internalType\":\"uint112[]\",\"name\":\"volatilityCumulatives\",\"type\":\"uint112[]\"},{\"internalType\":\"uint256[]\",\"name\":\"volumePerAvgLiquiditys\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"globalState\",\"outputs\":[{\"internalType\":\"uint160\",\"name\":\"price\",\"type\":\"uint160\"},{\"internalType\":\"int24\",\"name\":\"tick\",\"type\":\"int24\"},{\"internalType\":\"uint16\",\"name\":\"fee\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"timepointIndex\",\"type\":\"uint16\"},{\"internalType\":\"uint8\",\"name\":\"communityFeeToken0\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"communityFeeToken1\",\"type\":\"uint8\"},{\"internalType\":\"bool\",\"name\":\"unlocked\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"liquidity\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"liquidityCooldown\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"cooldownInSeconds\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"maxLiquidityPerTick\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"}],\"name\":\"positions\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidityAmount\",\"type\":\"uint128\"},{\"internalType\":\"uint32\",\"name\":\"lastLiquidityAddTimestamp\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"innerFeeGrowth0Token\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"innerFeeGrowth1Token\",\"type\":\"uint256\"},{\"internalType\":\"uint128\",\"name\":\"fees0\",\"type\":\"uint128\"},{\"internalType\":\"uint128\",\"name\":\"fees1\",\"type\":\"uint128\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tickSpacing\",\"outputs\":[{\"internalType\":\"int24\",\"name\":\"\",\"type\":\"int24\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int16\",\"name\":\"wordPosition\",\"type\":\"int16\"}],\"name\":\"tickTable\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"tick\",\"type\":\"int24\"}],\"name\":\"ticks\",\"outputs\":[{\"internalType\":\"uint128\",\"name\":\"liquidityTotal\",\"type\":\"uint128\"},{\"internalType\":\"int128\",\"name\":\"liquidityDelta\",\"type\":\"int128\"},{\"internalType\":\"uint256\",\"name\":\"outerFeeGrowth0Token\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"outerFeeGrowth1Token\",\"type\":\"uint256\"},{\"internalType\":\"int56\",\"name\":\"outerTickCumulative\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"outerSecondsPerLiquidity\",\"type\":\"uint160\"},{\"internalType\":\"uint32\",\"name\":\"outerSecondsSpent\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"initialized\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"timepoints\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"initialized\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"blockTimestamp\",\"type\":\"uint32\"},{\"internalType\":\"int56\",\"name\":\"tickCumulative\",\"type\":\"int56\"},{\"internalType\":\"uint160\",\"name\":\"secondsPerLiquidityCumulative\",\"type\":\"uint160\"},{\"internalType\":\"uint88\",\"name\":\"volatilityCumulative\",\"type\":\"uint88\"},{\"internalType\":\"int24\",\"name\":\"averageTick\",\"type\":\"int24\"},{\"internalType\":\"uint144\",\"name\":\"volumePerLiquidityCumulative\",\"type\":\"uint144\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"token0\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"token1\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalFeeGrowth0Token\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalFeeGrowth1Token\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"The pool interface is broken up into many smaller pieces. Credit to Uniswap Labs under GPL-2.0-or-later license: https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces\",\"kind\":\"dev\",\"methods\":{\"activeIncentive()\":{\"details\":\"if there is no active incentive at the moment, virtualPool,endTimestamp,startTimestamp would be equal to 0\",\"returns\":{\"virtualPool\":\"The address of a virtual pool associated with the current active incentive\"}},\"dataStorageOperator()\":{\"returns\":{\"_0\":\"The operator address\"}},\"factory()\":{\"returns\":{\"_0\":\"The contract address\"}},\"getInnerCumulatives(int24,int24)\":{\"details\":\"Snapshots must only be compared to other snapshots, taken over a period for which a position existed. I.e., snapshots cannot be compared if a position is not held for the entire period between when the first snapshot is taken and the second snapshot is taken.\",\"params\":{\"bottomTick\":\"The lower tick of the range\",\"topTick\":\"The upper tick of the range\"},\"returns\":{\"innerSecondsSpent\":\"The snapshot of the number of seconds during which the price was in this range\",\"innerSecondsSpentPerLiquidity\":\"The snapshot of seconds per liquidity for the range\",\"innerTickCumulative\":\"The snapshot of the tick accumulator for the range\"}},\"getTimepoints(uint32[])\":{\"details\":\"To get a time weighted average tick or liquidity-in-range, you must call this with two values, one representing the beginning of the period and another for the end of the period. E.g., to get the last hour time-weighted average tick, you must call it with secondsAgos = [3600, 0].The time weighted average tick represents the geometric time weighted average price of the pool, in log base sqrt(1.0001) of token1 / token0. The TickMath library can be used to go from a tick value to a ratio.\",\"params\":{\"secondsAgos\":\"From how long ago each cumulative tick and liquidity value should be returned\"},\"returns\":{\"secondsPerLiquidityCumulatives\":\"Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block timestamp\",\"tickCumulatives\":\"Cumulative tick values as of each `secondsAgos` from the current block timestamp\",\"volatilityCumulatives\":\"Cumulative standard deviation as of each `secondsAgos`\",\"volumePerAvgLiquiditys\":\"Cumulative swap volume per liquidity as of each `secondsAgos`\"}},\"globalState()\":{\"returns\":{\"price\":\"The current price of the pool as a sqrt(token1/token0) Q64.96 value; Returns tick The current tick of the pool, i.e. according to the last tick transition that was run; Returns This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(price) if the price is on a tick boundary; Returns fee The last pool fee value in hundredths of a bip, i.e. 1e-6; Returns timepointIndex The index of the last written timepoint; Returns communityFeeToken0 The community fee percentage of the swap fee in thousandths (1e-3) for token0; Returns communityFeeToken1 The community fee percentage of the swap fee in thousandths (1e-3) for token1; Returns unlocked Whether the pool is currently locked to reentrancy;\"}},\"liquidity()\":{\"details\":\"This value has no relationship to the total liquidity across all ticks. Returned value cannot exceed type(uint128).max\"},\"maxLiquidityPerTick()\":{\"details\":\"This parameter is enforced per tick to prevent liquidity from overflowing a uint128 at any point, and also prevents out-of-range liquidity from being used to prevent adding in-range liquidity to a pool\",\"returns\":{\"_0\":\"The max amount of liquidity per tick\"}},\"positions(bytes32)\":{\"details\":\"This is a public mapping of structures, so the `return` natspec tags are omitted.\",\"params\":{\"key\":\"The position's key is a hash of a preimage composed by the owner, bottomTick and topTick\"},\"returns\":{\"liquidityAmount\":\"The amount of liquidity in the position; Returns lastLiquidityAddTimestamp Timestamp of last adding of liquidity; Returns innerFeeGrowth0Token Fee growth of token0 inside the tick range as of the last mint/burn/poke; Returns innerFeeGrowth1Token Fee growth of token1 inside the tick range as of the last mint/burn/poke; Returns fees0 The computed amount of token0 owed to the position as of the last mint/burn/poke; Returns fees1 The computed amount of token1 owed to the position as of the last mint/burn/poke\"}},\"tickSpacing()\":{\"details\":\"Ticks can only be used at multiples of this value e.g.: a tickSpacing of 60 means ticks can be initialized every 60th tick, i.e., ..., -120, -60, 0, 60, 120, ... This value is an int24 to avoid casting even though it is always positive.\",\"returns\":{\"_0\":\"The tick spacing\"}},\"ticks(int24)\":{\"details\":\"This is a public structure, so the `return` natspec tags are omitted.\",\"params\":{\"tick\":\"The tick to look up\"},\"returns\":{\"liquidityTotal\":\"the total amount of position liquidity that uses the pool either as tick lower or tick upper; Returns liquidityDelta how much liquidity changes when the pool price crosses the tick; Returns outerFeeGrowth0Token the fee growth on the other side of the tick from the current tick in token0; Returns outerFeeGrowth1Token the fee growth on the other side of the tick from the current tick in token1; Returns outerTickCumulative the cumulative tick value on the other side of the tick from the current tick; Returns outerSecondsPerLiquidity the seconds spent per liquidity on the other side of the tick from the current tick; Returns outerSecondsSpent the seconds spent on the other side of the tick from the current tick; Returns initialized Set to true if the tick is initialized, i.e. liquidityTotal is greater than 0 otherwise equal to false. Outside values can only be used if the tick is initialized. In addition, these values are only relative and must be used only in comparison to previous snapshots for a specific position.\"}},\"timepoints(uint256)\":{\"details\":\"You most likely want to use #getTimepoints() instead of this method to get an timepoint as of some amount of time ago, rather than at a specific index in the array. This is a public mapping of structures, so the `return` natspec tags are omitted.\",\"params\":{\"index\":\"The element of the timepoints array to fetch\"},\"returns\":{\"initialized\":\"whether the timepoint has been initialized and the values are safe to use; Returns blockTimestamp The timestamp of the timepoint; Returns tickCumulative the tick multiplied by seconds elapsed for the life of the pool as of the timepoint timestamp; Returns secondsPerLiquidityCumulative the seconds per in range liquidity for the life of the pool as of the timepoint timestamp; Returns volatilityCumulative Cumulative standard deviation for the life of the pool as of the timepoint timestamp; Returns averageTick Time-weighted average tick; Returns volumePerLiquidityCumulative Cumulative swap volume per liquidity for the life of the pool as of the timepoint timestamp;\"}},\"token0()\":{\"returns\":{\"_0\":\"The token contract address\"}},\"token1()\":{\"returns\":{\"_0\":\"The token contract address\"}},\"totalFeeGrowth0Token()\":{\"details\":\"This value can overflow the uint256\"},\"totalFeeGrowth1Token()\":{\"details\":\"This value can overflow the uint256\"}},\"title\":\"The interface for a Algebra Pool\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"activeIncentive()\":{\"notice\":\"Returns the information about active incentive\"},\"dataStorageOperator()\":{\"notice\":\"The contract that stores all the timepoints and can perform actions with them\"},\"factory()\":{\"notice\":\"The contract that deployed the pool, which must adhere to the IAlgebraFactory interface\"},\"getInnerCumulatives(int24,int24)\":{\"notice\":\"Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range\"},\"getTimepoints(uint32[])\":{\"notice\":\"Returns the cumulative tick and liquidity as of each timestamp `secondsAgo` from the current block timestamp\"},\"globalState()\":{\"notice\":\"The globalState structure in the pool stores many values but requires only one slot and is exposed as a single method to save gas when accessed externally.\"},\"liquidity()\":{\"notice\":\"The currently in range liquidity available to the pool\"},\"liquidityCooldown()\":{\"notice\":\"Returns the lock time for added liquidity\"},\"maxLiquidityPerTick()\":{\"notice\":\"The maximum amount of position liquidity that can use any tick in the range\"},\"positions(bytes32)\":{\"notice\":\"Returns the information about a position by the position's key\"},\"tickSpacing()\":{\"notice\":\"The pool tick spacing\"},\"tickTable(int16)\":{\"notice\":\"Returns 256 packed tick initialized boolean values. See TickTable for more information \"},\"ticks(int24)\":{\"notice\":\"Look up information about a specific tick in the pool\"},\"timepoints(uint256)\":{\"notice\":\"Returns data about a specific timepoint index\"},\"token0()\":{\"notice\":\"The first of the two tokens of the pool, sorted by address\"},\"token1()\":{\"notice\":\"The second of the two tokens of the pool, sorted by address\"},\"totalFeeGrowth0Token()\":{\"notice\":\"The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool\"},\"totalFeeGrowth1Token()\":{\"notice\":\"The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/quickswap/IAlgebraPool.sol\":\"IAlgebraPool\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/quickswap/IAlgebraPool.sol\":{\"keccak256\":\"0x02eae359613685be534c86446df6789b258dc542695878b197d7c3507c0bf3d5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c53eb72ebe4528b44e67eeef53655e94af45cd879dcdc66e9972d3a652241b03\",\"dweb:/ipfs/QmZrZDSAErvr2PLFbb4oTMAog6BD2NmMfmvgNH4FPX6NLb\"]},\"src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol\":{\"keccak256\":\"0xa75adbad960516b5c255b734caa01a970ff1ba27d7a7812e7cb80b95f09829c5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://f9fdb3c44733dddd52b82be55f816e1a8c2bb1c222dc80e373dc9b4783b19bb0\",\"dweb:/ipfs/QmbULE7ZEyYutnCGH9ezrfVc4LNqyptwSjBYPtkgsToQD1\"]},\"src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol\":{\"keccak256\":\"0xf078d9ec2d8f5451f9b7927ab1da0788fc5eefcc4951641b1840a939860c5a52\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://514f98170722ef31765ced410f939c8ec92f878d384560de93c534279539943d\",\"dweb:/ipfs/QmXGwqz9cTHcWxJWbrmcugNUmYeREaPgo238x1YmCM1Rfv\"]},\"src/interfaces/external/quickswap/IAlgebraPoolState.sol\":{\"keccak256\":\"0x7952dc437f7f6ac5933d2477cde00e77522cfb97943898a763e12654f4182ec2\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://54fc3daee446ababc863dcf4495dad13befa9438a26211d13b5c21c005278aaa\",\"dweb:/ipfs/QmdYxiEeFJpjMRHxc2v9cvMgPfB1uCmXHUbYQfhGSfdLET\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "activeIncentive",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "virtualPool",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "dataStorageOperator",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "factory",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "bottomTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "topTick",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getInnerCumulatives",
+          "outputs": [
+            {
+              "internalType": "int56",
+              "name": "innerTickCumulative",
+              "type": "int56"
+            },
+            {
+              "internalType": "uint160",
+              "name": "innerSecondsSpentPerLiquidity",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint32",
+              "name": "innerSecondsSpent",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint32[]",
+              "name": "secondsAgos",
+              "type": "uint32[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getTimepoints",
+          "outputs": [
+            {
+              "internalType": "int56[]",
+              "name": "tickCumulatives",
+              "type": "int56[]"
+            },
+            {
+              "internalType": "uint160[]",
+              "name": "secondsPerLiquidityCumulatives",
+              "type": "uint160[]"
+            },
+            {
+              "internalType": "uint112[]",
+              "name": "volatilityCumulatives",
+              "type": "uint112[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "volumePerAvgLiquiditys",
+              "type": "uint256[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "globalState",
+          "outputs": [
+            {
+              "internalType": "uint160",
+              "name": "price",
+              "type": "uint160"
+            },
+            {
+              "internalType": "int24",
+              "name": "tick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint16",
+              "name": "fee",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "timepointIndex",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint8",
+              "name": "communityFeeToken0",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "communityFeeToken1",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bool",
+              "name": "unlocked",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "liquidity",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "",
+              "type": "uint128"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "liquidityCooldown",
+          "outputs": [
+            {
+              "internalType": "uint32",
+              "name": "cooldownInSeconds",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "maxLiquidityPerTick",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "",
+              "type": "uint128"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "key",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "positions",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "liquidityAmount",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint32",
+              "name": "lastLiquidityAddTimestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "innerFeeGrowth0Token",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "innerFeeGrowth1Token",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint128",
+              "name": "fees0",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "fees1",
+              "type": "uint128"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tickSpacing",
+          "outputs": [
+            {
+              "internalType": "int24",
+              "name": "",
+              "type": "int24"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int16",
+              "name": "wordPosition",
+              "type": "int16"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tickTable",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "tick",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "ticks",
+          "outputs": [
+            {
+              "internalType": "uint128",
+              "name": "liquidityTotal",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int128",
+              "name": "liquidityDelta",
+              "type": "int128"
+            },
+            {
+              "internalType": "uint256",
+              "name": "outerFeeGrowth0Token",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "outerFeeGrowth1Token",
+              "type": "uint256"
+            },
+            {
+              "internalType": "int56",
+              "name": "outerTickCumulative",
+              "type": "int56"
+            },
+            {
+              "internalType": "uint160",
+              "name": "outerSecondsPerLiquidity",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint32",
+              "name": "outerSecondsSpent",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "initialized",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "timepoints",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "initialized",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "blockTimestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "int56",
+              "name": "tickCumulative",
+              "type": "int56"
+            },
+            {
+              "internalType": "uint160",
+              "name": "secondsPerLiquidityCumulative",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint88",
+              "name": "volatilityCumulative",
+              "type": "uint88"
+            },
+            {
+              "internalType": "int24",
+              "name": "averageTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint144",
+              "name": "volumePerLiquidityCumulative",
+              "type": "uint144"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "token0",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "token1",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalFeeGrowth0Token",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalFeeGrowth1Token",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "activeIncentive()": {
+            "details": "if there is no active incentive at the moment, virtualPool,endTimestamp,startTimestamp would be equal to 0",
+            "returns": {
+              "virtualPool": "The address of a virtual pool associated with the current active incentive"
+            }
+          },
+          "dataStorageOperator()": {
+            "returns": {
+              "_0": "The operator address"
+            }
+          },
+          "factory()": {
+            "returns": {
+              "_0": "The contract address"
+            }
+          },
+          "getInnerCumulatives(int24,int24)": {
+            "details": "Snapshots must only be compared to other snapshots, taken over a period for which a position existed. I.e., snapshots cannot be compared if a position is not held for the entire period between when the first snapshot is taken and the second snapshot is taken.",
+            "params": {
+              "bottomTick": "The lower tick of the range",
+              "topTick": "The upper tick of the range"
+            },
+            "returns": {
+              "innerSecondsSpent": "The snapshot of the number of seconds during which the price was in this range",
+              "innerSecondsSpentPerLiquidity": "The snapshot of seconds per liquidity for the range",
+              "innerTickCumulative": "The snapshot of the tick accumulator for the range"
+            }
+          },
+          "getTimepoints(uint32[])": {
+            "details": "To get a time weighted average tick or liquidity-in-range, you must call this with two values, one representing the beginning of the period and another for the end of the period. E.g., to get the last hour time-weighted average tick, you must call it with secondsAgos = [3600, 0].The time weighted average tick represents the geometric time weighted average price of the pool, in log base sqrt(1.0001) of token1 / token0. The TickMath library can be used to go from a tick value to a ratio.",
+            "params": {
+              "secondsAgos": "From how long ago each cumulative tick and liquidity value should be returned"
+            },
+            "returns": {
+              "secondsPerLiquidityCumulatives": "Cumulative seconds per liquidity-in-range value as of each `secondsAgos` from the current block timestamp",
+              "tickCumulatives": "Cumulative tick values as of each `secondsAgos` from the current block timestamp",
+              "volatilityCumulatives": "Cumulative standard deviation as of each `secondsAgos`",
+              "volumePerAvgLiquiditys": "Cumulative swap volume per liquidity as of each `secondsAgos`"
+            }
+          },
+          "globalState()": {
+            "returns": {
+              "price": "The current price of the pool as a sqrt(token1/token0) Q64.96 value; Returns tick The current tick of the pool, i.e. according to the last tick transition that was run; Returns This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(price) if the price is on a tick boundary; Returns fee The last pool fee value in hundredths of a bip, i.e. 1e-6; Returns timepointIndex The index of the last written timepoint; Returns communityFeeToken0 The community fee percentage of the swap fee in thousandths (1e-3) for token0; Returns communityFeeToken1 The community fee percentage of the swap fee in thousandths (1e-3) for token1; Returns unlocked Whether the pool is currently locked to reentrancy;"
+            }
+          },
+          "liquidity()": {
+            "details": "This value has no relationship to the total liquidity across all ticks. Returned value cannot exceed type(uint128).max"
+          },
+          "maxLiquidityPerTick()": {
+            "details": "This parameter is enforced per tick to prevent liquidity from overflowing a uint128 at any point, and also prevents out-of-range liquidity from being used to prevent adding in-range liquidity to a pool",
+            "returns": {
+              "_0": "The max amount of liquidity per tick"
+            }
+          },
+          "positions(bytes32)": {
+            "details": "This is a public mapping of structures, so the `return` natspec tags are omitted.",
+            "params": {
+              "key": "The position's key is a hash of a preimage composed by the owner, bottomTick and topTick"
+            },
+            "returns": {
+              "liquidityAmount": "The amount of liquidity in the position; Returns lastLiquidityAddTimestamp Timestamp of last adding of liquidity; Returns innerFeeGrowth0Token Fee growth of token0 inside the tick range as of the last mint/burn/poke; Returns innerFeeGrowth1Token Fee growth of token1 inside the tick range as of the last mint/burn/poke; Returns fees0 The computed amount of token0 owed to the position as of the last mint/burn/poke; Returns fees1 The computed amount of token1 owed to the position as of the last mint/burn/poke"
+            }
+          },
+          "tickSpacing()": {
+            "details": "Ticks can only be used at multiples of this value e.g.: a tickSpacing of 60 means ticks can be initialized every 60th tick, i.e., ..., -120, -60, 0, 60, 120, ... This value is an int24 to avoid casting even though it is always positive.",
+            "returns": {
+              "_0": "The tick spacing"
+            }
+          },
+          "ticks(int24)": {
+            "details": "This is a public structure, so the `return` natspec tags are omitted.",
+            "params": {
+              "tick": "The tick to look up"
+            },
+            "returns": {
+              "liquidityTotal": "the total amount of position liquidity that uses the pool either as tick lower or tick upper; Returns liquidityDelta how much liquidity changes when the pool price crosses the tick; Returns outerFeeGrowth0Token the fee growth on the other side of the tick from the current tick in token0; Returns outerFeeGrowth1Token the fee growth on the other side of the tick from the current tick in token1; Returns outerTickCumulative the cumulative tick value on the other side of the tick from the current tick; Returns outerSecondsPerLiquidity the seconds spent per liquidity on the other side of the tick from the current tick; Returns outerSecondsSpent the seconds spent on the other side of the tick from the current tick; Returns initialized Set to true if the tick is initialized, i.e. liquidityTotal is greater than 0 otherwise equal to false. Outside values can only be used if the tick is initialized. In addition, these values are only relative and must be used only in comparison to previous snapshots for a specific position."
+            }
+          },
+          "timepoints(uint256)": {
+            "details": "You most likely want to use #getTimepoints() instead of this method to get an timepoint as of some amount of time ago, rather than at a specific index in the array. This is a public mapping of structures, so the `return` natspec tags are omitted.",
+            "params": {
+              "index": "The element of the timepoints array to fetch"
+            },
+            "returns": {
+              "initialized": "whether the timepoint has been initialized and the values are safe to use; Returns blockTimestamp The timestamp of the timepoint; Returns tickCumulative the tick multiplied by seconds elapsed for the life of the pool as of the timepoint timestamp; Returns secondsPerLiquidityCumulative the seconds per in range liquidity for the life of the pool as of the timepoint timestamp; Returns volatilityCumulative Cumulative standard deviation for the life of the pool as of the timepoint timestamp; Returns averageTick Time-weighted average tick; Returns volumePerLiquidityCumulative Cumulative swap volume per liquidity for the life of the pool as of the timepoint timestamp;"
+            }
+          },
+          "token0()": {
+            "returns": {
+              "_0": "The token contract address"
+            }
+          },
+          "token1()": {
+            "returns": {
+              "_0": "The token contract address"
+            }
+          },
+          "totalFeeGrowth0Token()": {
+            "details": "This value can overflow the uint256"
+          },
+          "totalFeeGrowth1Token()": {
+            "details": "This value can overflow the uint256"
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "activeIncentive()": {
+            "notice": "Returns the information about active incentive"
+          },
+          "dataStorageOperator()": {
+            "notice": "The contract that stores all the timepoints and can perform actions with them"
+          },
+          "factory()": {
+            "notice": "The contract that deployed the pool, which must adhere to the IAlgebraFactory interface"
+          },
+          "getInnerCumulatives(int24,int24)": {
+            "notice": "Returns a snapshot of the tick cumulative, seconds per liquidity and seconds inside a tick range"
+          },
+          "getTimepoints(uint32[])": {
+            "notice": "Returns the cumulative tick and liquidity as of each timestamp `secondsAgo` from the current block timestamp"
+          },
+          "globalState()": {
+            "notice": "The globalState structure in the pool stores many values but requires only one slot and is exposed as a single method to save gas when accessed externally."
+          },
+          "liquidity()": {
+            "notice": "The currently in range liquidity available to the pool"
+          },
+          "liquidityCooldown()": {
+            "notice": "Returns the lock time for added liquidity"
+          },
+          "maxLiquidityPerTick()": {
+            "notice": "The maximum amount of position liquidity that can use any tick in the range"
+          },
+          "positions(bytes32)": {
+            "notice": "Returns the information about a position by the position's key"
+          },
+          "tickSpacing()": {
+            "notice": "The pool tick spacing"
+          },
+          "tickTable(int16)": {
+            "notice": "Returns 256 packed tick initialized boolean values. See TickTable for more information "
+          },
+          "ticks(int24)": {
+            "notice": "Look up information about a specific tick in the pool"
+          },
+          "timepoints(uint256)": {
+            "notice": "Returns data about a specific timepoint index"
+          },
+          "token0()": {
+            "notice": "The first of the two tokens of the pool, sorted by address"
+          },
+          "token1()": {
+            "notice": "The second of the two tokens of the pool, sorted by address"
+          },
+          "totalFeeGrowth0Token()": {
+            "notice": "The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool"
+          },
+          "totalFeeGrowth1Token()": {
+            "notice": "The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/quickswap/IAlgebraPool.sol": "IAlgebraPool"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/quickswap/IAlgebraPool.sol": {
+        "keccak256": "0x02eae359613685be534c86446df6789b258dc542695878b197d7c3507c0bf3d5",
+        "urls": [
+          "bzz-raw://c53eb72ebe4528b44e67eeef53655e94af45cd879dcdc66e9972d3a652241b03",
+          "dweb:/ipfs/QmZrZDSAErvr2PLFbb4oTMAog6BD2NmMfmvgNH4FPX6NLb"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol": {
+        "keccak256": "0xa75adbad960516b5c255b734caa01a970ff1ba27d7a7812e7cb80b95f09829c5",
+        "urls": [
+          "bzz-raw://f9fdb3c44733dddd52b82be55f816e1a8c2bb1c222dc80e373dc9b4783b19bb0",
+          "dweb:/ipfs/QmbULE7ZEyYutnCGH9ezrfVc4LNqyptwSjBYPtkgsToQD1"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol": {
+        "keccak256": "0xf078d9ec2d8f5451f9b7927ab1da0788fc5eefcc4951641b1840a939860c5a52",
+        "urls": [
+          "bzz-raw://514f98170722ef31765ced410f939c8ec92f878d384560de93c534279539943d",
+          "dweb:/ipfs/QmXGwqz9cTHcWxJWbrmcugNUmYeREaPgo238x1YmCM1Rfv"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolState.sol": {
+        "keccak256": "0x7952dc437f7f6ac5933d2477cde00e77522cfb97943898a763e12654f4182ec2",
+        "urls": [
+          "bzz-raw://54fc3daee446ababc863dcf4495dad13befa9438a26211d13b5c21c005278aaa",
+          "dweb:/ipfs/QmdYxiEeFJpjMRHxc2v9cvMgPfB1uCmXHUbYQfhGSfdLET"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/quickswap/IAlgebraPool.sol",
+    "id": 72250,
+    "exportedSymbols": {
+      "IAlgebraPool": [
+        72249
+      ],
+      "IAlgebraPoolDerivedState": [
+        72327
+      ],
+      "IAlgebraPoolImmutables": [
+        72367
+      ],
+      "IAlgebraPoolState": [
+        72487
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:524:274",
+    "nodes": [
+      {
+        "id": 72238,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:274",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 72239,
+        "nodeType": "ImportDirective",
+        "src": "70:38:274",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol",
+        "file": "./IAlgebraPoolImmutables.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72250,
+        "sourceUnit": 72368,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72240,
+        "nodeType": "ImportDirective",
+        "src": "109:33:274",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraPoolState.sol",
+        "file": "./IAlgebraPoolState.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72250,
+        "sourceUnit": 72488,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72241,
+        "nodeType": "ImportDirective",
+        "src": "143:40:274",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol",
+        "file": "./IAlgebraPoolDerivedState.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72250,
+        "sourceUnit": 72328,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72249,
+        "nodeType": "ContractDefinition",
+        "src": "429:139:274",
+        "nodes": [],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 72243,
+              "name": "IAlgebraPoolImmutables",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 72367,
+              "src": "455:22:274"
+            },
+            "id": 72244,
+            "nodeType": "InheritanceSpecifier",
+            "src": "455:22:274"
+          },
+          {
+            "baseName": {
+              "id": 72245,
+              "name": "IAlgebraPoolState",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 72487,
+              "src": "479:17:274"
+            },
+            "id": 72246,
+            "nodeType": "InheritanceSpecifier",
+            "src": "479:17:274"
+          },
+          {
+            "baseName": {
+              "id": 72247,
+              "name": "IAlgebraPoolDerivedState",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 72327,
+              "src": "498:24:274"
+            },
+            "id": 72248,
+            "nodeType": "InheritanceSpecifier",
+            "src": "498:24:274"
+          }
+        ],
+        "canonicalName": "IAlgebraPool",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 72242,
+          "nodeType": "StructuredDocumentation",
+          "src": "185:243:274",
+          "text": " @title The interface for a Algebra Pool\n @dev The pool interface is broken up into many smaller pieces.\n Credit to Uniswap Labs under GPL-2.0-or-later license:\n https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          72249,
+          72327,
+          72487,
+          72367
+        ],
+        "name": "IAlgebraPool",
+        "nameLocation": "439:12:274",
+        "scope": 72250,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 274
+}

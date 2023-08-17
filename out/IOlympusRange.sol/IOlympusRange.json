@@ -1,0 +1,277 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "wall_",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "high_",
+          "type": "bool"
+        }
+      ],
+      "name": "price",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "price(bool,bool)": "3778c2b2"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"wall_\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"high_\",\"type\":\"bool\"}],\"name\":\"price\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/olympus/IOlympusRange.sol\":\"IOlympusRange\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/olympus/IOlympusRange.sol\":{\"keccak256\":\"0xcfdc60b7ee7a4385fdce902382c529794c490e15b755e425801e81fda59b0183\",\"license\":\"AGPL-3.0\",\"urls\":[\"bzz-raw://d4263d05934baef6c520b01177809475e499e9cf33f815b3cdd583e4123aa340\",\"dweb:/ipfs/QmNfwqXLoZfcmzMe7QqxW7VyUd1dKt2DcanCySXT8oy7Q5\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bool",
+              "name": "wall_",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "high_",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "price",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/olympus/IOlympusRange.sol": "IOlympusRange"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/olympus/IOlympusRange.sol": {
+        "keccak256": "0xcfdc60b7ee7a4385fdce902382c529794c490e15b755e425801e81fda59b0183",
+        "urls": [
+          "bzz-raw://d4263d05934baef6c520b01177809475e499e9cf33f815b3cdd583e4123aa340",
+          "dweb:/ipfs/QmNfwqXLoZfcmzMe7QqxW7VyUd1dKt2DcanCySXT8oy7Q5"
+        ],
+        "license": "AGPL-3.0"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/olympus/IOlympusRange.sol",
+    "id": 68722,
+    "exportedSymbols": {
+      "IOlympusRange": [
+        68721
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "37:128:228",
+    "nodes": [
+      {
+        "id": 68711,
+        "nodeType": "PragmaDirective",
+        "src": "37:23:228",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 68721,
+        "nodeType": "ContractDefinition",
+        "src": "62:103:228",
+        "nodes": [
+          {
+            "id": 68720,
+            "nodeType": "FunctionDefinition",
+            "src": "92:71:228",
+            "nodes": [],
+            "functionSelector": "3778c2b2",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "price",
+            "nameLocation": "101:5:228",
+            "parameters": {
+              "id": 68716,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68713,
+                  "mutability": "mutable",
+                  "name": "wall_",
+                  "nameLocation": "112:5:228",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68720,
+                  "src": "107:10:228",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 68712,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "107:4:228",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 68715,
+                  "mutability": "mutable",
+                  "name": "high_",
+                  "nameLocation": "124:5:228",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68720,
+                  "src": "119:10:228",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 68714,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "119:4:228",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "106:24:228"
+            },
+            "returnParameters": {
+              "id": 68719,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 68718,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 68720,
+                  "src": "154:7:228",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 68717,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "154:7:228",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "153:9:228"
+            },
+            "scope": 68721,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IOlympusRange",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          68721
+        ],
+        "name": "IOlympusRange",
+        "nameLocation": "72:13:228",
+        "scope": 68722,
+        "usedErrors": []
+      }
+    ],
+    "license": "AGPL-3.0"
+  },
+  "id": 228
+}

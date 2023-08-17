@@ -1,0 +1,394 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "enabled",
+          "type": "bool"
+        }
+      ],
+      "name": "RecoveryModeStateChanged",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "disableRecoveryMode",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "enableRecoveryMode",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "inRecoveryMode",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "disableRecoveryMode()": "b7b814fc",
+    "enableRecoveryMode()": "54a844ba",
+    "inRecoveryMode()": "b35056b8"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"enabled\",\"type\":\"bool\"}],\"name\":\"RecoveryModeStateChanged\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"disableRecoveryMode\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"enableRecoveryMode\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"inRecoveryMode\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Interface for the RecoveryMode module.\",\"events\":{\"RecoveryModeStateChanged(bool)\":{\"details\":\"Emitted when the Recovery Mode status changes.\"}},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"disableRecoveryMode()\":{\"notice\":\"Disables Recovery Mode in the Pool, restoring protocol fee collection and disallowing proportional exits.\"},\"enableRecoveryMode()\":{\"notice\":\"Enables Recovery Mode in the Pool, disabling protocol fee collection and allowing for safe proportional exits with low computational complexity and no dependencies.\"},\"inRecoveryMode()\":{\"notice\":\"Returns true if the Pool is in Recovery Mode.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/pool-utils/IRecoveryMode.sol\":\"IRecoveryMode\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/pool-utils/IRecoveryMode.sol\":{\"keccak256\":\"0x4041739b38c0fa2865db4a4e8db2ecc928c1bc8adeb4fbe76bf45a9ef50a9387\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://f4f0402420cede0954b3ddf38127ac032da07d37a5dbd1cd6b1a356de5be8f69\",\"dweb:/ipfs/QmeMKwNzMie5KyZR7jb4SaPe8nysv7KmK6iF4jmPRnWQg4\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bool",
+              "name": "enabled",
+              "type": "bool",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RecoveryModeStateChanged",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "disableRecoveryMode"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "enableRecoveryMode"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "inRecoveryMode",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "disableRecoveryMode()": {
+            "notice": "Disables Recovery Mode in the Pool, restoring protocol fee collection and disallowing proportional exits."
+          },
+          "enableRecoveryMode()": {
+            "notice": "Enables Recovery Mode in the Pool, disabling protocol fee collection and allowing for safe proportional exits with low computational complexity and no dependencies."
+          },
+          "inRecoveryMode()": {
+            "notice": "Returns true if the Pool is in Recovery Mode."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/pool-utils/IRecoveryMode.sol": "IRecoveryMode"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/pool-utils/IRecoveryMode.sol": {
+        "keccak256": "0x4041739b38c0fa2865db4a4e8db2ecc928c1bc8adeb4fbe76bf45a9ef50a9387",
+        "urls": [
+          "bzz-raw://f4f0402420cede0954b3ddf38127ac032da07d37a5dbd1cd6b1a356de5be8f69",
+          "dweb:/ipfs/QmeMKwNzMie5KyZR7jb4SaPe8nysv7KmK6iF4jmPRnWQg4"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/pool-utils/IRecoveryMode.sol",
+    "id": 58945,
+    "exportedSymbols": {
+      "IRecoveryMode": [
+        58944
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:802:140",
+    "nodes": [
+      {
+        "id": 58923,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:140",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 58944,
+        "nodeType": "ContractDefinition",
+        "src": "768:721:140",
+        "nodes": [
+          {
+            "id": 58929,
+            "nodeType": "EventDefinition",
+            "src": "873:45:140",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 58925,
+              "nodeType": "StructuredDocumentation",
+              "src": "798:70:140",
+              "text": " @dev Emitted when the Recovery Mode status changes."
+            },
+            "name": "RecoveryModeStateChanged",
+            "nameLocation": "879:24:140",
+            "parameters": {
+              "id": 58928,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 58927,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "enabled",
+                  "nameLocation": "909:7:140",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 58929,
+                  "src": "904:12:140",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 58926,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "904:4:140",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "903:14:140"
+            }
+          },
+          {
+            "id": 58933,
+            "nodeType": "FunctionDefinition",
+            "src": "1127:39:140",
+            "nodes": [],
+            "documentation": {
+              "id": 58930,
+              "nodeType": "StructuredDocumentation",
+              "src": "924:198:140",
+              "text": " @notice Enables Recovery Mode in the Pool, disabling protocol fee collection and allowing for safe proportional\n exits with low computational complexity and no dependencies."
+            },
+            "functionSelector": "54a844ba",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "enableRecoveryMode",
+            "nameLocation": "1136:18:140",
+            "parameters": {
+              "id": 58931,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1154:2:140"
+            },
+            "returnParameters": {
+              "id": 58932,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1165:0:140"
+            },
+            "scope": 58944,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 58937,
+            "nodeType": "FunctionDefinition",
+            "src": "1309:40:140",
+            "nodes": [],
+            "documentation": {
+              "id": 58934,
+              "nodeType": "StructuredDocumentation",
+              "src": "1172:132:140",
+              "text": " @notice Disables Recovery Mode in the Pool, restoring protocol fee collection and disallowing proportional exits."
+            },
+            "functionSelector": "b7b814fc",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "disableRecoveryMode",
+            "nameLocation": "1318:19:140",
+            "parameters": {
+              "id": 58935,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1337:2:140"
+            },
+            "returnParameters": {
+              "id": 58936,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1348:0:140"
+            },
+            "scope": 58944,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 58943,
+            "nodeType": "FunctionDefinition",
+            "src": "1432:55:140",
+            "nodes": [],
+            "documentation": {
+              "id": 58938,
+              "nodeType": "StructuredDocumentation",
+              "src": "1355:72:140",
+              "text": " @notice Returns true if the Pool is in Recovery Mode."
+            },
+            "functionSelector": "b35056b8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "inRecoveryMode",
+            "nameLocation": "1441:14:140",
+            "parameters": {
+              "id": 58939,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1455:2:140"
+            },
+            "returnParameters": {
+              "id": 58942,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 58941,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 58943,
+                  "src": "1481:4:140",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 58940,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1481:4:140",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1480:6:140"
+            },
+            "scope": 58944,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IRecoveryMode",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 58924,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:54:140",
+          "text": " @dev Interface for the RecoveryMode module."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          58944
+        ],
+        "name": "IRecoveryMode",
+        "nameLocation": "778:13:140",
+        "scope": 58945,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 140
+}

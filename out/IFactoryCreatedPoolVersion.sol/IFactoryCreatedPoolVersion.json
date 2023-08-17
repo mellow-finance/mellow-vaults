@@ -1,0 +1,216 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "getPoolVersion",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getPoolVersion()": "3f819b6f"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"getPoolVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"getPoolVersion()\":{\"details\":\"Returns a JSON representation of the deployed pool version containing name, version number and task ID. This is typically only useful in complex Pool deployment schemes, where multiple subsystems need to know about each other. Note that this value will only be updated at factory creation time.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Simple interface to retrieve the version of pools deployed by a pool factory.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/pool-utils/IFactoryCreatedPoolVersion.sol\":\"IFactoryCreatedPoolVersion\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/pool-utils/IFactoryCreatedPoolVersion.sol\":{\"keccak256\":\"0x59eda61d30b8e74ba9cf4461b2049776eb92de7b8161c6fdb266b2bda5ab1d99\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://4a78382bb2c4d92563376b1a0cbf69ca2cc668d1e4369fa39a4cc4dff96e5d32\",\"dweb:/ipfs/QmbXgDBRdVLjmJPKqRtpL8TkYWUJYYJb6iym4KU2UtM1UA\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getPoolVersion",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "getPoolVersion()": {
+            "details": "Returns a JSON representation of the deployed pool version containing name, version number and task ID. This is typically only useful in complex Pool deployment schemes, where multiple subsystems need to know about each other. Note that this value will only be updated at factory creation time."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/pool-utils/IFactoryCreatedPoolVersion.sol": "IFactoryCreatedPoolVersion"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/pool-utils/IFactoryCreatedPoolVersion.sol": {
+        "keccak256": "0x59eda61d30b8e74ba9cf4461b2049776eb92de7b8161c6fdb266b2bda5ab1d99",
+        "urls": [
+          "bzz-raw://4a78382bb2c4d92563376b1a0cbf69ca2cc668d1e4369fa39a4cc4dff96e5d32",
+          "dweb:/ipfs/QmbXgDBRdVLjmJPKqRtpL8TkYWUJYYJb6iym4KU2UtM1UA"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/pool-utils/IFactoryCreatedPoolVersion.sol",
+    "id": 58584,
+    "exportedSymbols": {
+      "IFactoryCreatedPoolVersion": [
+        58583
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:576:133",
+    "nodes": [
+      {
+        "id": 58575,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:133",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 58583,
+        "nodeType": "ContractDefinition",
+        "src": "810:453:133",
+        "nodes": [
+          {
+            "id": 58582,
+            "nodeType": "FunctionDefinition",
+            "src": "1197:64:133",
+            "nodes": [],
+            "documentation": {
+              "id": 58577,
+              "nodeType": "StructuredDocumentation",
+              "src": "853:339:133",
+              "text": " @dev Returns a JSON representation of the deployed pool version containing name, version number and task ID.\n This is typically only useful in complex Pool deployment schemes, where multiple subsystems need to know about\n each other. Note that this value will only be updated at factory creation time."
+            },
+            "functionSelector": "3f819b6f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getPoolVersion",
+            "nameLocation": "1206:14:133",
+            "parameters": {
+              "id": 58578,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1220:2:133"
+            },
+            "returnParameters": {
+              "id": 58581,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 58580,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 58582,
+                  "src": "1246:13:133",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 58579,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1246:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1245:15:133"
+            },
+            "scope": 58583,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IFactoryCreatedPoolVersion",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 58576,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:96:133",
+          "text": " @notice Simple interface to retrieve the version of pools deployed by a pool factory."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          58583
+        ],
+        "name": "IFactoryCreatedPoolVersion",
+        "nameLocation": "820:26:133",
+        "scope": 58584,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 133
+}

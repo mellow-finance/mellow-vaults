@@ -1,0 +1,900 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "additionalRTokenOwed",
+          "type": "uint256"
+        }
+      ],
+      "name": "AddLiquidity",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "BurnPosition",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint80",
+          "name": "poolId",
+          "type": "uint80"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        }
+      ],
+      "name": "MintPosition",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "additionalRTokenOwed",
+          "type": "uint256"
+        }
+      ],
+      "name": "RemoveLiquidity",
+      "type": "event"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"additionalRTokenOwed\",\"type\":\"uint256\"}],\"name\":\"AddLiquidity\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"BurnPosition\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint80\",\"name\":\"poolId\",\"type\":\"uint80\"},{\"indexed\":false,\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"}],\"name\":\"MintPosition\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint128\",\"name\":\"liquidity\",\"type\":\"uint128\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"additionalRTokenOwed\",\"type\":\"uint256\"}],\"name\":\"RemoveLiquidity\",\"type\":\"event\"}],\"devdoc\":{\"events\":{\"AddLiquidity(uint256,uint128,uint256,uint256,uint256)\":{\"params\":{\"additionalRTokenOwed\":\"additional rToken earned\",\"amount0\":\"token0 quantity needed to increase liquidity\",\"amount1\":\"token1 quantity needed to increase liquidity\",\"liquidity\":\"the increase amount of liquidity\",\"tokenId\":\"id of the token\"}},\"BurnPosition(uint256)\":{\"params\":{\"tokenId\":\"id of the token\"}},\"MintPosition(uint256,uint80,uint128,uint256,uint256)\":{\"params\":{\"amount0\":\"token0 quantity needed to mint the liquidity\",\"amount1\":\"token1 quantity needed to mint the liquidity\",\"liquidity\":\"liquidity minted to the position range\",\"poolId\":\"poolId of the token\",\"tokenId\":\"the newly minted tokenId\"}},\"RemoveLiquidity(uint256,uint128,uint256,uint256,uint256)\":{\"params\":{\"additionalRTokenOwed\":\"additional rToken earned\",\"amount0\":\"token0 quantity returned when remove liquidity\",\"amount1\":\"token1 quantity returned when remove liquidity\",\"liquidity\":\"the decease amount of liquidity\",\"tokenId\":\"id of the token\"}}},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"events\":{\"AddLiquidity(uint256,uint128,uint256,uint256,uint256)\":{\"notice\":\"Emitted when add liquidity\"},\"BurnPosition(uint256)\":{\"notice\":\"Emitted when a token is burned\"},\"MintPosition(uint256,uint80,uint128,uint256,uint256)\":{\"notice\":\"Emitted when a token is minted for a given position\"},\"RemoveLiquidity(uint256,uint128,uint256,uint256,uint256)\":{\"notice\":\"Emitted when remove liquidity\"}},\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol\":\"IBasePositionManagerEvents\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol\":{\"keccak256\":\"0xc11a814ea53f5e0260356724483457e2031cc4b9f3452c8918f6077786f49e3b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://e8dacbe617f9956a9357a952be497d6eff5d4e717523ea880d988c8ea22af3cd\",\"dweb:/ipfs/QmNhSRWuB2Zkf1NrL8PBrf7LbtKRcFdXZbJMH2QMz1Nm2K\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount1",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "additionalRTokenOwed",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "AddLiquidity",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "BurnPosition",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint80",
+              "name": "poolId",
+              "type": "uint80",
+              "indexed": true
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount1",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "MintPosition",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount0",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount1",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "additionalRTokenOwed",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RemoveLiquidity",
+          "anonymous": false
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol": "IBasePositionManagerEvents"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol": {
+        "keccak256": "0xc11a814ea53f5e0260356724483457e2031cc4b9f3452c8918f6077786f49e3b",
+        "urls": [
+          "bzz-raw://e8dacbe617f9956a9357a952be497d6eff5d4e717523ea880d988c8ea22af3cd",
+          "dweb:/ipfs/QmNhSRWuB2Zkf1NrL8PBrf7LbtKRcFdXZbJMH2QMz1Nm2K"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/kyber/periphery/base_position_manager/IBasePositionManagerEvents.sol",
+    "id": 67678,
+    "exportedSymbols": {
+      "IBasePositionManagerEvents": [
+        67677
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:1772:223",
+    "nodes": [
+      {
+        "id": 67632,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:223",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 67677,
+        "nodeType": "ContractDefinition",
+        "src": "57:1746:223",
+        "nodes": [
+          {
+            "id": 67645,
+            "nodeType": "EventDefinition",
+            "src": "458:166:223",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 67633,
+              "nodeType": "StructuredDocumentation",
+              "src": "100:353:223",
+              "text": "@notice Emitted when a token is minted for a given position\n @param tokenId the newly minted tokenId\n @param poolId poolId of the token\n @param liquidity liquidity minted to the position range\n @param amount0 token0 quantity needed to mint the liquidity\n @param amount1 token1 quantity needed to mint the liquidity"
+            },
+            "name": "MintPosition",
+            "nameLocation": "464:12:223",
+            "parameters": {
+              "id": 67644,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67635,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "502:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67645,
+                  "src": "486:23:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67634,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "486:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67637,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "poolId",
+                  "nameLocation": "534:6:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67645,
+                  "src": "519:21:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint80",
+                    "typeString": "uint80"
+                  },
+                  "typeName": {
+                    "id": 67636,
+                    "name": "uint80",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "519:6:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint80",
+                      "typeString": "uint80"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67639,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "558:9:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67645,
+                  "src": "550:17:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 67638,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "550:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67641,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "amount0",
+                  "nameLocation": "585:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67645,
+                  "src": "577:15:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67640,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "577:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67643,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "amount1",
+                  "nameLocation": "610:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67645,
+                  "src": "602:15:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67642,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "602:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "476:147:223"
+            }
+          },
+          {
+            "id": 67650,
+            "nodeType": "EventDefinition",
+            "src": "716:44:223",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 67646,
+              "nodeType": "StructuredDocumentation",
+              "src": "630:81:223",
+              "text": "@notice Emitted when a token is burned\n @param tokenId id of the token"
+            },
+            "name": "BurnPosition",
+            "nameLocation": "722:12:223",
+            "parameters": {
+              "id": 67649,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67648,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "751:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67650,
+                  "src": "735:23:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67647,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "735:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "734:25:223"
+            }
+          },
+          {
+            "id": 67663,
+            "nodeType": "EventDefinition",
+            "src": "1103:173:223",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 67651,
+              "nodeType": "StructuredDocumentation",
+              "src": "766:332:223",
+              "text": "@notice Emitted when add liquidity\n @param tokenId id of the token\n @param liquidity the increase amount of liquidity\n @param amount0 token0 quantity needed to increase liquidity\n @param amount1 token1 quantity needed to increase liquidity\n @param additionalRTokenOwed additional rToken earned"
+            },
+            "name": "AddLiquidity",
+            "nameLocation": "1109:12:223",
+            "parameters": {
+              "id": 67662,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67653,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "1147:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67663,
+                  "src": "1131:23:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67652,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1131:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67655,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "1172:9:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67663,
+                  "src": "1164:17:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 67654,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1164:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67657,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "amount0",
+                  "nameLocation": "1199:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67663,
+                  "src": "1191:15:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67656,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1191:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67659,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "amount1",
+                  "nameLocation": "1224:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67663,
+                  "src": "1216:15:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67658,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1216:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67661,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "additionalRTokenOwed",
+                  "nameLocation": "1249:20:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67663,
+                  "src": "1241:28:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67660,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1241:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1121:154:223"
+            }
+          },
+          {
+            "id": 67676,
+            "nodeType": "EventDefinition",
+            "src": "1625:176:223",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 67664,
+              "nodeType": "StructuredDocumentation",
+              "src": "1282:338:223",
+              "text": "@notice Emitted when remove liquidity\n @param tokenId id of the token\n @param liquidity the decease amount of liquidity\n @param amount0 token0 quantity returned when remove liquidity\n @param amount1 token1 quantity returned when remove liquidity\n @param additionalRTokenOwed additional rToken earned"
+            },
+            "name": "RemoveLiquidity",
+            "nameLocation": "1631:15:223",
+            "parameters": {
+              "id": 67675,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 67666,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "1672:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67676,
+                  "src": "1656:23:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67665,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1656:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67668,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "liquidity",
+                  "nameLocation": "1697:9:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67676,
+                  "src": "1689:17:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint128",
+                    "typeString": "uint128"
+                  },
+                  "typeName": {
+                    "id": 67667,
+                    "name": "uint128",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1689:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint128",
+                      "typeString": "uint128"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67670,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "amount0",
+                  "nameLocation": "1724:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67676,
+                  "src": "1716:15:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67669,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1716:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67672,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "amount1",
+                  "nameLocation": "1749:7:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67676,
+                  "src": "1741:15:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67671,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1741:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 67674,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "additionalRTokenOwed",
+                  "nameLocation": "1774:20:223",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 67676,
+                  "src": "1766:28:223",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 67673,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1766:7:223",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1646:154:223"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IBasePositionManagerEvents",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          67677
+        ],
+        "name": "IBasePositionManagerEvents",
+        "nameLocation": "67:26:223",
+        "scope": 67678,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 223
+}

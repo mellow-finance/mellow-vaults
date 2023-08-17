@@ -1,0 +1,452 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "communityFee",
+          "type": "uint8"
+        }
+      ],
+      "name": "setCommunityFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newIncentiveAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setIncentive",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "newTickSpacing",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "newTickSpacingLimitOrders",
+          "type": "int24"
+        }
+      ],
+      "name": "setTickSpacing",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "setCommunityFee(uint8)": "779ab362",
+    "setIncentive(address)": "7c1fe0c8",
+    "setTickSpacing(int24,int24)": "7e9061b5"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"communityFee\",\"type\":\"uint8\"}],\"name\":\"setCommunityFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newIncentiveAddress\",\"type\":\"address\"}],\"name\":\"setIncentive\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int24\",\"name\":\"newTickSpacing\",\"type\":\"int24\"},{\"internalType\":\"int24\",\"name\":\"newTickSpacingLimitOrders\",\"type\":\"int24\"}],\"name\":\"setTickSpacing\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Credit to Uniswap Labs under GPL-2.0-or-later license: https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces\",\"kind\":\"dev\",\"methods\":{\"setCommunityFee(uint8)\":{\"params\":{\"communityFee\":\"new community fee percent in thousandths (1e-3)\"}},\"setIncentive(address)\":{\"params\":{\"newIncentiveAddress\":\"The address associated with the incentive\"}},\"setTickSpacing(int24,int24)\":{\"params\":{\"newTickSpacing\":\"The new tick spacing value\",\"newTickSpacingLimitOrders\":\"The new tick spacing value for limit orders\"}}},\"title\":\"Permissioned pool actions\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"setCommunityFee(uint8)\":{\"notice\":\"Set the community's % share of the fees. Cannot exceed 25% (250). Only factory owner or POOLS_ADMINISTRATOR_ROLE role\"},\"setIncentive(address)\":{\"notice\":\"Sets an active incentive. Only farming\"},\"setTickSpacing(int24,int24)\":{\"notice\":\"Set the new tick spacing values. Only factory owner or POOLS_ADMINISTRATOR_ROLE role\"}},\"notice\":\"Contains pool methods that may only be called by permissioned addresses\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol\":\"IAlgebraPoolPermissionedActions\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol\":{\"keccak256\":\"0x0c309a0fa5aae5336b8fe6e5987bd1825918717da98eea395183ec4868159ae0\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://43eed8d7a7158af94acdec23661242a0aab5879614684b18e8af1e1b1f83d723\",\"dweb:/ipfs/QmeW9eNqAvt22SLtipSNdoUkgfUw53G6e7iUA7XYwQv5qR\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "communityFee",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setCommunityFee"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newIncentiveAddress",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setIncentive"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int24",
+              "name": "newTickSpacing",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "newTickSpacingLimitOrders",
+              "type": "int24"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setTickSpacing"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "setCommunityFee(uint8)": {
+            "params": {
+              "communityFee": "new community fee percent in thousandths (1e-3)"
+            }
+          },
+          "setIncentive(address)": {
+            "params": {
+              "newIncentiveAddress": "The address associated with the incentive"
+            }
+          },
+          "setTickSpacing(int24,int24)": {
+            "params": {
+              "newTickSpacing": "The new tick spacing value",
+              "newTickSpacingLimitOrders": "The new tick spacing value for limit orders"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "setCommunityFee(uint8)": {
+            "notice": "Set the community's % share of the fees. Cannot exceed 25% (250). Only factory owner or POOLS_ADMINISTRATOR_ROLE role"
+          },
+          "setIncentive(address)": {
+            "notice": "Sets an active incentive. Only farming"
+          },
+          "setTickSpacing(int24,int24)": {
+            "notice": "Set the new tick spacing values. Only factory owner or POOLS_ADMINISTRATOR_ROLE role"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol": "IAlgebraPoolPermissionedActions"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol": {
+        "keccak256": "0x0c309a0fa5aae5336b8fe6e5987bd1825918717da98eea395183ec4868159ae0",
+        "urls": [
+          "bzz-raw://43eed8d7a7158af94acdec23661242a0aab5879614684b18e8af1e1b1f83d723",
+          "dweb:/ipfs/QmeW9eNqAvt22SLtipSNdoUkgfUw53G6e7iUA7XYwQv5qR"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/algebrav2/pool/IAlgebraPoolPermissionedActions.sol",
+    "id": 56171,
+    "exportedSymbols": {
+      "IAlgebraPoolPermissionedActions": [
+        56170
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1130:89",
+    "nodes": [
+      {
+        "id": 56148,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:89",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 56170,
+        "nodeType": "ContractDefinition",
+        "src": "325:849:89",
+        "nodes": [
+          {
+            "id": 56155,
+            "nodeType": "FunctionDefinition",
+            "src": "583:54:89",
+            "nodes": [],
+            "documentation": {
+              "id": 56150,
+              "nodeType": "StructuredDocumentation",
+              "src": "373:205:89",
+              "text": "@notice Set the community's % share of the fees. Cannot exceed 25% (250). Only factory owner or POOLS_ADMINISTRATOR_ROLE role\n @param communityFee new community fee percent in thousandths (1e-3)"
+            },
+            "functionSelector": "779ab362",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setCommunityFee",
+            "nameLocation": "592:15:89",
+            "parameters": {
+              "id": 56153,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56152,
+                  "mutability": "mutable",
+                  "name": "communityFee",
+                  "nameLocation": "614:12:89",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56155,
+                  "src": "608:18:89",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 56151,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "608:5:89",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "607:20:89"
+            },
+            "returnParameters": {
+              "id": 56154,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "636:0:89"
+            },
+            "scope": 56170,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56163,
+            "nodeType": "FunctionDefinition",
+            "src": "886:88:89",
+            "nodes": [],
+            "documentation": {
+              "id": 56156,
+              "nodeType": "StructuredDocumentation",
+              "src": "643:238:89",
+              "text": "@notice Set the new tick spacing values. Only factory owner or POOLS_ADMINISTRATOR_ROLE role\n @param newTickSpacing The new tick spacing value\n @param newTickSpacingLimitOrders The new tick spacing value for limit orders"
+            },
+            "functionSelector": "7e9061b5",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setTickSpacing",
+            "nameLocation": "895:14:89",
+            "parameters": {
+              "id": 56161,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56158,
+                  "mutability": "mutable",
+                  "name": "newTickSpacing",
+                  "nameLocation": "916:14:89",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56163,
+                  "src": "910:20:89",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 56157,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "910:5:89",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56160,
+                  "mutability": "mutable",
+                  "name": "newTickSpacingLimitOrders",
+                  "nameLocation": "938:25:89",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56163,
+                  "src": "932:31:89",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int24",
+                    "typeString": "int24"
+                  },
+                  "typeName": {
+                    "id": 56159,
+                    "name": "int24",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "932:5:89",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int24",
+                      "typeString": "int24"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "909:55:89"
+            },
+            "returnParameters": {
+              "id": 56162,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "973:0:89"
+            },
+            "scope": 56170,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56169,
+            "nodeType": "FunctionDefinition",
+            "src": "1112:60:89",
+            "nodes": [],
+            "documentation": {
+              "id": 56164,
+              "nodeType": "StructuredDocumentation",
+              "src": "980:127:89",
+              "text": "@notice Sets an active incentive. Only farming\n @param newIncentiveAddress The address associated with the incentive"
+            },
+            "functionSelector": "7c1fe0c8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setIncentive",
+            "nameLocation": "1121:12:89",
+            "parameters": {
+              "id": 56167,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56166,
+                  "mutability": "mutable",
+                  "name": "newIncentiveAddress",
+                  "nameLocation": "1142:19:89",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56169,
+                  "src": "1134:27:89",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56165,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1134:7:89",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1133:29:89"
+            },
+            "returnParameters": {
+              "id": 56168,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1171:0:89"
+            },
+            "scope": 56170,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAlgebraPoolPermissionedActions",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 56149,
+          "nodeType": "StructuredDocumentation",
+          "src": "70:255:89",
+          "text": "@title Permissioned pool actions\n @notice Contains pool methods that may only be called by permissioned addresses\n @dev Credit to Uniswap Labs under GPL-2.0-or-later license:\n https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          56170
+        ],
+        "name": "IAlgebraPoolPermissionedActions",
+        "nameLocation": "335:31:89",
+        "scope": 56171,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 89
+}

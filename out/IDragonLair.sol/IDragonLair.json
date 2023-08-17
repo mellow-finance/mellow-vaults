@@ -1,0 +1,322 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_dQuickAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "dQUICKForQUICK",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "quickAmount_",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_dQuickAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "leave",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "dQUICKForQUICK(uint256)": "ad19daf8",
+    "leave(uint256)": "67dfd4c9"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dQuickAmount\",\"type\":\"uint256\"}],\"name\":\"dQUICKForQUICK\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"quickAmount_\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dQuickAmount\",\"type\":\"uint256\"}],\"name\":\"leave\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/quickswap/IDragonLair.sol\":\"IDragonLair\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/quickswap/IDragonLair.sol\":{\"keccak256\":\"0x0a9d79b8f568935e2bf38f2f65b52dadce8eb13739ead1611df3ed0a3264f8b2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://81df0f6bd7061948269602ca346ad6d91a59f28a355b4dcf6eb36182b14448e5\",\"dweb:/ipfs/QmQySzrtNKPa6WDAQiE81XFxcTrabJUbZPv5HqYWoXXvN1\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_dQuickAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "dQUICKForQUICK",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "quickAmount_",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_dQuickAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "leave"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/quickswap/IDragonLair.sol": "IDragonLair"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/quickswap/IDragonLair.sol": {
+        "keccak256": "0x0a9d79b8f568935e2bf38f2f65b52dadce8eb13739ead1611df3ed0a3264f8b2",
+        "urls": [
+          "bzz-raw://81df0f6bd7061948269602ca346ad6d91a59f28a355b4dcf6eb36182b14448e5",
+          "dweb:/ipfs/QmQySzrtNKPa6WDAQiE81XFxcTrabJUbZPv5HqYWoXXvN1"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/quickswap/IDragonLair.sol",
+    "id": 72726,
+    "exportedSymbols": {
+      "IDragonLair": [
+        72725
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:201:283",
+    "nodes": [
+      {
+        "id": 72712,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:283",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 72725,
+        "nodeType": "ContractDefinition",
+        "src": "57:175:283",
+        "nodes": [
+          {
+            "id": 72717,
+            "nodeType": "FunctionDefinition",
+            "src": "85:47:283",
+            "nodes": [],
+            "functionSelector": "67dfd4c9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "leave",
+            "nameLocation": "94:5:283",
+            "parameters": {
+              "id": 72715,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72714,
+                  "mutability": "mutable",
+                  "name": "_dQuickAmount",
+                  "nameLocation": "108:13:283",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72717,
+                  "src": "100:21:283",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72713,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "100:7:283",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "99:23:283"
+            },
+            "returnParameters": {
+              "id": 72716,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "131:0:283"
+            },
+            "scope": 72725,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72724,
+            "nodeType": "FunctionDefinition",
+            "src": "138:92:283",
+            "nodes": [],
+            "functionSelector": "ad19daf8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "dQUICKForQUICK",
+            "nameLocation": "147:14:283",
+            "parameters": {
+              "id": 72720,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72719,
+                  "mutability": "mutable",
+                  "name": "_dQuickAmount",
+                  "nameLocation": "170:13:283",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72724,
+                  "src": "162:21:283",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72718,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "162:7:283",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "161:23:283"
+            },
+            "returnParameters": {
+              "id": 72723,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72722,
+                  "mutability": "mutable",
+                  "name": "quickAmount_",
+                  "nameLocation": "216:12:283",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72724,
+                  "src": "208:20:283",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72721,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "208:7:283",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "207:22:283"
+            },
+            "scope": 72725,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IDragonLair",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          72725
+        ],
+        "name": "IDragonLair",
+        "nameLocation": "67:11:283",
+        "scope": 72726,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 283
+}

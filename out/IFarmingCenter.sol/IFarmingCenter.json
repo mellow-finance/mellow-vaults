@@ -1,0 +1,3639 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "approved",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "approved",
+          "type": "bool"
+        }
+      ],
+      "name": "ApprovalForAll",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DOMAIN_SEPARATOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PERMIT_TYPEHASH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20Minimal",
+          "name": "rewardToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountRequestedIncentive",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountRequestedEternal",
+          "type": "uint256"
+        }
+      ],
+      "name": "claimReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "reward",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint128",
+              "name": "amount0Max",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "amount1Max",
+              "type": "uint128"
+            }
+          ],
+          "internalType": "struct IAlgebraNonfungiblePositionManager.CollectParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "collect",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "rewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "bonusRewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IAlgebraPool",
+              "name": "pool",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "endTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IIncentiveKey.IncentiveKey",
+          "name": "key",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "collectRewards",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "reward",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "bonusReward",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "deposits",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "L2TokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "numberOfFarms",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "inLimitFarming",
+          "type": "bool"
+        },
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "rewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "bonusRewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IAlgebraPool",
+              "name": "pool",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "endTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IIncentiveKey.IncentiveKey",
+          "name": "key",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokensLocked",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isLimit",
+          "type": "bool"
+        }
+      ],
+      "name": "enterFarming",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "eternalFarming",
+      "outputs": [
+        {
+          "internalType": "contract IAlgebraEternalFarming",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "rewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "bonusRewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IAlgebraPool",
+              "name": "pool",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "endTime",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IIncentiveKey.IncentiveKey",
+          "name": "key",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isLimit",
+          "type": "bool"
+        }
+      ],
+      "name": "exitFarming",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getApproved",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "isApprovedForAll",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "l2Nfts",
+      "outputs": [
+        {
+          "internalType": "uint96",
+          "name": "nonce",
+          "type": "uint96"
+        },
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nonfungiblePositionManager",
+      "outputs": [
+        {
+          "internalType": "contract IAlgebraNonfungiblePositionManager",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "onERC721Received",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ownerOf",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "permit",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "refundNativeToken",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "safeTransferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "safeTransferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "approved",
+          "type": "bool"
+        }
+      ],
+      "name": "setApprovalForAll",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountMinimum",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "sweepToken",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountMinimum",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "unwrapWNativeToken",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "virtualPoolAddresses",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "withdrawToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "DOMAIN_SEPARATOR()": "3644e515",
+    "PERMIT_TYPEHASH()": "30adf81f",
+    "approve(address,uint256)": "095ea7b3",
+    "balanceOf(address)": "70a08231",
+    "claimReward(address,address,uint256,uint256)": "fd188ca4",
+    "collect((uint256,address,uint128,uint128))": "fc6f7865",
+    "collectRewards((address,address,address,uint256,uint256),uint256)": "3e785878",
+    "deposits(uint256)": "b02c43d0",
+    "enterFarming((address,address,address,uint256,uint256),uint256,uint256,bool)": "22872ce2",
+    "eternalFarming()": "de2356d1",
+    "exitFarming((address,address,address,uint256,uint256),uint256,bool)": "34267cbc",
+    "getApproved(uint256)": "081812fc",
+    "isApprovedForAll(address,address)": "e985e9c5",
+    "l2Nfts(uint256)": "03a05df9",
+    "nonfungiblePositionManager()": "b44a2722",
+    "onERC721Received(address,address,uint256,bytes)": "150b7a02",
+    "ownerOf(uint256)": "6352211e",
+    "permit(address,uint256,uint256,uint8,bytes32,bytes32)": "7ac2ff7b",
+    "refundNativeToken()": "41865270",
+    "safeTransferFrom(address,address,uint256)": "42842e0e",
+    "safeTransferFrom(address,address,uint256,bytes)": "b88d4fde",
+    "setApprovalForAll(address,bool)": "a22cb465",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "sweepToken(address,uint256,address)": "df2ab5bb",
+    "transferFrom(address,address,uint256)": "23b872dd",
+    "unwrapWNativeToken(uint256,address)": "69bc35b2",
+    "virtualPoolAddresses(address)": "32dc5a25",
+    "withdrawToken(uint256,address,bytes)": "3c423f0b"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"approved\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DOMAIN_SEPARATOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PERMIT_TYPEHASH\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IERC20Minimal\",\"name\":\"rewardToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountRequestedIncentive\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountRequestedEternal\",\"type\":\"uint256\"}],\"name\":\"claimReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint128\",\"name\":\"amount0Max\",\"type\":\"uint128\"},{\"internalType\":\"uint128\",\"name\":\"amount1Max\",\"type\":\"uint128\"}],\"internalType\":\"struct IAlgebraNonfungiblePositionManager.CollectParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"collect\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IERC20Minimal\",\"name\":\"rewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IERC20Minimal\",\"name\":\"bonusRewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IAlgebraPool\",\"name\":\"pool\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"}],\"internalType\":\"struct IIncentiveKey.IncentiveKey\",\"name\":\"key\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"collectRewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"bonusReward\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"L2TokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"numberOfFarms\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"inLimitFarming\",\"type\":\"bool\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IERC20Minimal\",\"name\":\"rewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IERC20Minimal\",\"name\":\"bonusRewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IAlgebraPool\",\"name\":\"pool\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"}],\"internalType\":\"struct IIncentiveKey.IncentiveKey\",\"name\":\"key\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tokensLocked\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isLimit\",\"type\":\"bool\"}],\"name\":\"enterFarming\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"eternalFarming\",\"outputs\":[{\"internalType\":\"contract IAlgebraEternalFarming\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract IERC20Minimal\",\"name\":\"rewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IERC20Minimal\",\"name\":\"bonusRewardToken\",\"type\":\"address\"},{\"internalType\":\"contract IAlgebraPool\",\"name\":\"pool\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"}],\"internalType\":\"struct IIncentiveKey.IncentiveKey\",\"name\":\"key\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isLimit\",\"type\":\"bool\"}],\"name\":\"exitFarming\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"l2Nfts\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"nonce\",\"type\":\"uint96\"},{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nonfungiblePositionManager\",\"outputs\":[{\"internalType\":\"contract IAlgebraNonfungiblePositionManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"onERC721Received\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"permit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"refundNativeToken\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountMinimum\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"sweepToken\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountMinimum\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"unwrapWNativeToken\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"virtualPoolAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"DOMAIN_SEPARATOR()\":{\"returns\":{\"_0\":\"The domain separator used in encoding of permit signature\"}},\"PERMIT_TYPEHASH()\":{\"returns\":{\"_0\":\"The typehash for the permit\"}},\"approve(address,uint256)\":{\"details\":\"Gives permission to `to` to transfer `tokenId` token to another account. The approval is cleared when the token is transferred. Only a single account can be approved at a time, so approving the zero address clears previous approvals. Requirements: - The caller must own the token or be an approved operator. - `tokenId` must exist. Emits an {Approval} event.\"},\"balanceOf(address)\":{\"details\":\"Returns the number of tokens in ``owner``'s account.\"},\"claimReward(address,address,uint256,uint256)\":{\"details\":\"can be used via static call to get current rewards for user\",\"params\":{\"amountRequestedEternal\":\"Amount to claim in eternal farming\",\"amountRequestedIncentive\":\"Amount to claim in incentive (limit) farming\",\"rewardToken\":\"The token that is a reward\",\"to\":\"The address to be rewarded\"},\"returns\":{\"reward\":\"The summary amount of claimed rewards\"}},\"collect((uint256,address,uint128,uint128))\":{\"details\":\"\\\"proxies\\\" to NonfungiblePositionManager\",\"params\":{\"params\":\"tokenId The ID of the NFT for which tokens are being collected, recipient The account that should receive the tokens, amount0Max The maximum amount of token0 to collect, amount1Max The maximum amount of token1 to collect\"},\"returns\":{\"amount0\":\"The amount of fees collected in token0\",\"amount1\":\"The amount of fees collected in token1\"}},\"collectRewards((address,address,address,uint256,uint256),uint256)\":{\"params\":{\"key\":\"The incentive event key\",\"tokenId\":\"The id of position NFT\"},\"returns\":{\"bonusReward\":\"The amount of collected  bonus reward\",\"reward\":\"The amount of collected reward\"}},\"deposits(uint256)\":{\"params\":{\"tokenId\":\"The ID of the deposit (and token) that is being transferred\"},\"returns\":{\"L2TokenId\":\"The nft layer2 id, numberOfFarms The number of farms, inLimitFarming The parameter showing if the token is in the limit farm, owner The owner of deposit\"}},\"enterFarming((address,address,address,uint256,uint256),uint256,uint256,bool)\":{\"details\":\"token must be deposited in FarmingCenter\",\"params\":{\"isLimit\":\"Is incentive time-limited or eternal\",\"key\":\"The incentive event key\",\"tokenId\":\"The id of position NFT\",\"tokensLocked\":\"Amount of tokens to lock for liquidity multiplier (if tiers are used)\"}},\"exitFarming((address,address,address,uint256,uint256),uint256,bool)\":{\"params\":{\"isLimit\":\"Is incentive time-limited or eternal\",\"key\":\"The incentive event key\",\"tokenId\":\"The id of position NFT\"}},\"getApproved(uint256)\":{\"details\":\"Returns the account approved for `tokenId` token. Requirements: - `tokenId` must exist.\"},\"isApprovedForAll(address,address)\":{\"details\":\"Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}\"},\"onERC721Received(address,address,uint256,bytes)\":{\"details\":\"Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom} by `operator` from `from`, this function is called. It must return its Solidity selector to confirm the token transfer. If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted. The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.\"},\"ownerOf(uint256)\":{\"details\":\"Returns the owner of the `tokenId` token. Requirements: - `tokenId` must exist.\"},\"permit(address,uint256,uint256,uint8,bytes32,bytes32)\":{\"params\":{\"deadline\":\"The deadline timestamp by which the call must be mined for the approve to work\",\"r\":\"Must produce valid secp256k1 signature from the holder along with `v` and `s`\",\"s\":\"Must produce valid secp256k1 signature from the holder along with `r` and `v`\",\"spender\":\"The account that is being approved\",\"tokenId\":\"The ID of the token that is being approved for spending\",\"v\":\"Must produce valid secp256k1 signature from the holder along with `r` and `s`\"}},\"refundNativeToken()\":{\"details\":\"Useful for bundling with mint or increase liquidity that uses ether, or exact output swaps that use ether for the input amount\"},\"safeTransferFrom(address,address,uint256)\":{\"details\":\"Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients are aware of the ERC721 protocol to prevent tokens from being forever locked. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event.\"},\"safeTransferFrom(address,address,uint256,bytes)\":{\"details\":\"Safely transfers `tokenId` token from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event.\"},\"setApprovalForAll(address,bool)\":{\"details\":\"Approve or remove `operator` as an operator for the caller. Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller. Requirements: - The `operator` cannot be the caller. Emits an {ApprovalForAll} event.\"},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"},\"sweepToken(address,uint256,address)\":{\"details\":\"The amountMinimum parameter prevents malicious contracts from stealing the token from users\",\"params\":{\"amountMinimum\":\"The minimum amount of token required for a transfer\",\"recipient\":\"The destination address of the token\",\"token\":\"The contract address of the token which will be transferred to `recipient`\"}},\"transferFrom(address,address,uint256)\":{\"details\":\"Transfers `tokenId` token from `from` to `to`. WARNING: Note that the caller is responsible to confirm that the recipient is capable of receiving ERC721 or else they may be permanently lost. Usage of {safeTransferFrom} prevents loss, though the caller must understand this adds an external call which potentially creates a reentrancy vulnerability. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. Emits a {Transfer} event.\"},\"unwrapWNativeToken(uint256,address)\":{\"details\":\"The amountMinimum parameter prevents malicious contracts from stealing WNativeToken from users.\",\"params\":{\"amountMinimum\":\"The minimum amount of WNativeToken to unwrap\",\"recipient\":\"The address receiving NativeToken\"}},\"withdrawToken(uint256,address,bytes)\":{\"details\":\"can be used via static call to get current rewards for user\",\"params\":{\"data\":\"The additional data for NonfungiblePositionManager\",\"to\":\"New owner of position NFT\",\"tokenId\":\"The id of position NFT\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"DOMAIN_SEPARATOR()\":{\"notice\":\"The domain separator used in the permit signature\"},\"PERMIT_TYPEHASH()\":{\"notice\":\"The permit typehash used in the permit signature\"},\"claimReward(address,address,uint256,uint256)\":{\"notice\":\"Used to claim and send rewards from farming(s)\"},\"collect((uint256,address,uint128,uint128))\":{\"notice\":\"Collects up to a maximum amount of fees owed to a specific position to the recipient\"},\"collectRewards((address,address,address,uint256,uint256),uint256)\":{\"notice\":\"Used to collect reward from eternal farming. Then reward can be claimed.\"},\"deposits(uint256)\":{\"notice\":\"Returns information about a deposited NFT\"},\"enterFarming((address,address,address,uint256,uint256),uint256,uint256,bool)\":{\"notice\":\"Enters in incentive (time-limited or eternal farming) with NFT-position token\"},\"exitFarming((address,address,address,uint256,uint256),uint256,bool)\":{\"notice\":\"Exits from incentive (time-limited or eternal farming) with NFT-position token\"},\"nonfungiblePositionManager()\":{\"notice\":\"The nonfungible position manager with which this farming contract is compatible\"},\"permit(address,uint256,uint256,uint8,bytes32,bytes32)\":{\"notice\":\"Approve of a specific token ID for spending by spender via signature\"},\"refundNativeToken()\":{\"notice\":\"Refunds any NativeToken balance held by this contract to the `msg.sender`\"},\"sweepToken(address,uint256,address)\":{\"notice\":\"Transfers the full amount of a token held by this contract to recipient\"},\"unwrapWNativeToken(uint256,address)\":{\"notice\":\"Unwraps the contract's WNativeToken balance and sends it to recipient as NativeToken.\"},\"withdrawToken(uint256,address,bytes)\":{\"notice\":\"Withdraw Algebra NFT-position token\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/quickswap/IFarmingCenter.sol\":\"IFarmingCenter\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4\",\"dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol\":{\"keccak256\":\"0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708\",\"dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol\":{\"keccak256\":\"0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34\",\"dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol\":{\"keccak256\":\"0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146\",\"dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"src/interfaces/external/quickswap/IAlgebraEternalFarming.sol\":{\"keccak256\":\"0x508ded73b3e5b04422bfc2274bc87ca7e6ad630119bc9a5b3449fed601578864\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://e7e97db9413d4c77652c9a2fca8077dfc707de3e72864cced5fea7d2f9b63520\",\"dweb:/ipfs/QmaYB3ragMT2WWo4SbkRrAoNNYjTJcSotVwPdWuJggMCuQ\"]},\"src/interfaces/external/quickswap/IAlgebraFarming.sol\":{\"keccak256\":\"0xc969d9606ecbe14130580694636b48cefff8993e072bdf010cf950698c044cde\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://90206c5831a4a80239f9a19d80fae167e179c3f4a254691856c38e2da719aa4e\",\"dweb:/ipfs/QmbW3QMXukuRDouqRjZYGJHy9L71yoM9qwnxk5Fwq5DRih\"]},\"src/interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol\":{\"keccak256\":\"0x748d1da7089c2e67cbb89cf32f3b2e0c5b68fa8bfe3b2224fdb013ce5018f5b9\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://4e8da442662dbb2686517ffd7c510536a300df5fd628a44110dfd66e4dfe9118\",\"dweb:/ipfs/QmYsVLngrQraRH6qvfxRKajBwDC6vbgfDvi5tquB1AK2Aw\"]},\"src/interfaces/external/quickswap/IAlgebraPool.sol\":{\"keccak256\":\"0x02eae359613685be534c86446df6789b258dc542695878b197d7c3507c0bf3d5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c53eb72ebe4528b44e67eeef53655e94af45cd879dcdc66e9972d3a652241b03\",\"dweb:/ipfs/QmZrZDSAErvr2PLFbb4oTMAog6BD2NmMfmvgNH4FPX6NLb\"]},\"src/interfaces/external/quickswap/IAlgebraPoolDeployer.sol\":{\"keccak256\":\"0x9679c5a3f636b65dc19a5a2dc76fa8500695170787fefa5b4f0306044e5cc637\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://330f326d9cf607ca7ac250d24f4f0b2117b1bb69977c7c150846713caa1d556a\",\"dweb:/ipfs/QmZNQhce7K6uNAaaSGh858PBrSxMb9NuUhhATKtAxxGBon\"]},\"src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol\":{\"keccak256\":\"0xa75adbad960516b5c255b734caa01a970ff1ba27d7a7812e7cb80b95f09829c5\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://f9fdb3c44733dddd52b82be55f816e1a8c2bb1c222dc80e373dc9b4783b19bb0\",\"dweb:/ipfs/QmbULE7ZEyYutnCGH9ezrfVc4LNqyptwSjBYPtkgsToQD1\"]},\"src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol\":{\"keccak256\":\"0xf078d9ec2d8f5451f9b7927ab1da0788fc5eefcc4951641b1840a939860c5a52\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://514f98170722ef31765ced410f939c8ec92f878d384560de93c534279539943d\",\"dweb:/ipfs/QmXGwqz9cTHcWxJWbrmcugNUmYeREaPgo238x1YmCM1Rfv\"]},\"src/interfaces/external/quickswap/IAlgebraPoolState.sol\":{\"keccak256\":\"0x7952dc437f7f6ac5933d2477cde00e77522cfb97943898a763e12654f4182ec2\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://54fc3daee446ababc863dcf4495dad13befa9438a26211d13b5c21c005278aaa\",\"dweb:/ipfs/QmdYxiEeFJpjMRHxc2v9cvMgPfB1uCmXHUbYQfhGSfdLET\"]},\"src/interfaces/external/quickswap/IERC20Minimal.sol\":{\"keccak256\":\"0xae86fd456b2debc8df50066a3d8f570bf07174ef089374ee012c3f56438665d4\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://8a647c2a7ae4b8cd12926e33ef917fcc3d491047cd9235e743db6af61a83bc81\",\"dweb:/ipfs/QmXFhzpmLiCfT4ZeXQxhmFNWzL3Mf6t6PgceDgAtoWM1RZ\"]},\"src/interfaces/external/quickswap/IERC721Permit.sol\":{\"keccak256\":\"0x8ba99444f79b7c00ec747f69b1ef7084d751536cb880769f0bcdbdc967be1038\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://2729f42c8f45acf3897138c2ac085141aa462450058bf7a0156ad4d8dbdfac9d\",\"dweb:/ipfs/QmZCk5oNUQKdSwa1FDu9FpWrzgDuVBy1Wk8eygC2driNTc\"]},\"src/interfaces/external/quickswap/IFarmingCenter.sol\":{\"keccak256\":\"0x4aa568d5326671113fc95ce3b2b75004378b9ad69acc42b400459d03d56eef9f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7bbebdc6f0fc8eb17bbef8949588722a136aa0db96ce6b6ed2176d02c26f316\",\"dweb:/ipfs/Qmeb2ykvvJantBEBBgkKVzwM8TDEmdSHaSd9hzLotSwJXJ\"]},\"src/interfaces/external/quickswap/IIncentiveKey.sol\":{\"keccak256\":\"0xa55899db3f56078bdf7ba9285b0857c0e63033e6483bb7971afb4856317d05e4\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://0c68a1905e5765fcd09d9687a8e82d6dea1e25ce20d969ab6c830aed82536ecc\",\"dweb:/ipfs/QmSEmM2EhpGua6UXrbVZundqkRhoHuPCtfK7eCbbGE569p\"]},\"src/interfaces/external/quickswap/IPeripheryImmutableState.sol\":{\"keccak256\":\"0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685\",\"dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u\"]},\"src/interfaces/external/quickswap/IPeripheryPayments.sol\":{\"keccak256\":\"0x4de12e9bbd92769551c950e10dd7995aa39e009487c9523f1c6dcf8f37afa47b\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://c11620b8ad005c5907eccfa394344dda850b44aad29b437c95b0b321b18b15dd\",\"dweb:/ipfs/QmQ7ziKM3GkVvuj644c9H8vhvB3N5xe3Z5HjbjMRGzQNCx\"]},\"src/interfaces/external/quickswap/IPoolInitializer.sol\":{\"keccak256\":\"0xc13eb6f11ceb388bffae85e7965c79213eb8108c9f8744691200f707adc86f4e\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://115e0510940bb6416ea9e3a2aaab988051af6203ec68c8e3f1d2b79e822c5ea2\",\"dweb:/ipfs/QmcM9C2q75Jw4XZ5zX4svs8eR9yhSTYFJXLA3fHzRoCHLm\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "approved",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Approval",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ApprovalForAll",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Transfer",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "DOMAIN_SEPARATOR",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "PERMIT_TYPEHASH",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "approve"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "balanceOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "balance",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC20Minimal",
+              "name": "rewardToken",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountRequestedIncentive",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountRequestedEternal",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "claimReward",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "reward",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IAlgebraNonfungiblePositionManager.CollectParams",
+              "name": "params",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "tokenId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint128",
+                  "name": "amount0Max",
+                  "type": "uint128"
+                },
+                {
+                  "internalType": "uint128",
+                  "name": "amount1Max",
+                  "type": "uint128"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "collect",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount0",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount1",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IIncentiveKey.IncentiveKey",
+              "name": "key",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "rewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "bonusRewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IAlgebraPool",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "startTime",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "endTime",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "collectRewards",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "reward",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "bonusReward",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "deposits",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "L2TokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "numberOfFarms",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "inLimitFarming",
+              "type": "bool"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IIncentiveKey.IncentiveKey",
+              "name": "key",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "rewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "bonusRewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IAlgebraPool",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "startTime",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "endTime",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokensLocked",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLimit",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "enterFarming"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "eternalFarming",
+          "outputs": [
+            {
+              "internalType": "contract IAlgebraEternalFarming",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IIncentiveKey.IncentiveKey",
+              "name": "key",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "rewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20Minimal",
+                  "name": "bonusRewardToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IAlgebraPool",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "startTime",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "endTime",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLimit",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "exitFarming"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getApproved",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isApprovedForAll",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "l2Nfts",
+          "outputs": [
+            {
+              "internalType": "uint96",
+              "name": "nonce",
+              "type": "uint96"
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "nonfungiblePositionManager",
+          "outputs": [
+            {
+              "internalType": "contract IAlgebraNonfungiblePositionManager",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "onERC721Received",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "",
+              "type": "bytes4"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "ownerOf",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "v",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "r",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "s",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "permit"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "refundNativeToken"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "safeTransferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "safeTransferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setApprovalForAll"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountMinimum",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "sweepToken"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountMinimum",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "unwrapWNativeToken"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "virtualPoolAddresses",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawToken"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "DOMAIN_SEPARATOR()": {
+            "returns": {
+              "_0": "The domain separator used in encoding of permit signature"
+            }
+          },
+          "PERMIT_TYPEHASH()": {
+            "returns": {
+              "_0": "The typehash for the permit"
+            }
+          },
+          "approve(address,uint256)": {
+            "details": "Gives permission to `to` to transfer `tokenId` token to another account. The approval is cleared when the token is transferred. Only a single account can be approved at a time, so approving the zero address clears previous approvals. Requirements: - The caller must own the token or be an approved operator. - `tokenId` must exist. Emits an {Approval} event."
+          },
+          "balanceOf(address)": {
+            "details": "Returns the number of tokens in ``owner``'s account."
+          },
+          "claimReward(address,address,uint256,uint256)": {
+            "details": "can be used via static call to get current rewards for user",
+            "params": {
+              "amountRequestedEternal": "Amount to claim in eternal farming",
+              "amountRequestedIncentive": "Amount to claim in incentive (limit) farming",
+              "rewardToken": "The token that is a reward",
+              "to": "The address to be rewarded"
+            },
+            "returns": {
+              "reward": "The summary amount of claimed rewards"
+            }
+          },
+          "collect((uint256,address,uint128,uint128))": {
+            "details": "\"proxies\" to NonfungiblePositionManager",
+            "params": {
+              "params": "tokenId The ID of the NFT for which tokens are being collected, recipient The account that should receive the tokens, amount0Max The maximum amount of token0 to collect, amount1Max The maximum amount of token1 to collect"
+            },
+            "returns": {
+              "amount0": "The amount of fees collected in token0",
+              "amount1": "The amount of fees collected in token1"
+            }
+          },
+          "collectRewards((address,address,address,uint256,uint256),uint256)": {
+            "params": {
+              "key": "The incentive event key",
+              "tokenId": "The id of position NFT"
+            },
+            "returns": {
+              "bonusReward": "The amount of collected  bonus reward",
+              "reward": "The amount of collected reward"
+            }
+          },
+          "deposits(uint256)": {
+            "params": {
+              "tokenId": "The ID of the deposit (and token) that is being transferred"
+            },
+            "returns": {
+              "L2TokenId": "The nft layer2 id, numberOfFarms The number of farms, inLimitFarming The parameter showing if the token is in the limit farm, owner The owner of deposit"
+            }
+          },
+          "enterFarming((address,address,address,uint256,uint256),uint256,uint256,bool)": {
+            "details": "token must be deposited in FarmingCenter",
+            "params": {
+              "isLimit": "Is incentive time-limited or eternal",
+              "key": "The incentive event key",
+              "tokenId": "The id of position NFT",
+              "tokensLocked": "Amount of tokens to lock for liquidity multiplier (if tiers are used)"
+            }
+          },
+          "exitFarming((address,address,address,uint256,uint256),uint256,bool)": {
+            "params": {
+              "isLimit": "Is incentive time-limited or eternal",
+              "key": "The incentive event key",
+              "tokenId": "The id of position NFT"
+            }
+          },
+          "getApproved(uint256)": {
+            "details": "Returns the account approved for `tokenId` token. Requirements: - `tokenId` must exist."
+          },
+          "isApprovedForAll(address,address)": {
+            "details": "Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}"
+          },
+          "onERC721Received(address,address,uint256,bytes)": {
+            "details": "Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom} by `operator` from `from`, this function is called. It must return its Solidity selector to confirm the token transfer. If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted. The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`."
+          },
+          "ownerOf(uint256)": {
+            "details": "Returns the owner of the `tokenId` token. Requirements: - `tokenId` must exist."
+          },
+          "permit(address,uint256,uint256,uint8,bytes32,bytes32)": {
+            "params": {
+              "deadline": "The deadline timestamp by which the call must be mined for the approve to work",
+              "r": "Must produce valid secp256k1 signature from the holder along with `v` and `s`",
+              "s": "Must produce valid secp256k1 signature from the holder along with `r` and `v`",
+              "spender": "The account that is being approved",
+              "tokenId": "The ID of the token that is being approved for spending",
+              "v": "Must produce valid secp256k1 signature from the holder along with `r` and `s`"
+            }
+          },
+          "refundNativeToken()": {
+            "details": "Useful for bundling with mint or increase liquidity that uses ether, or exact output swaps that use ether for the input amount"
+          },
+          "safeTransferFrom(address,address,uint256)": {
+            "details": "Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients are aware of the ERC721 protocol to prevent tokens from being forever locked. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event."
+          },
+          "safeTransferFrom(address,address,uint256,bytes)": {
+            "details": "Safely transfers `tokenId` token from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event."
+          },
+          "setApprovalForAll(address,bool)": {
+            "details": "Approve or remove `operator` as an operator for the caller. Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller. Requirements: - The `operator` cannot be the caller. Emits an {ApprovalForAll} event."
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          },
+          "sweepToken(address,uint256,address)": {
+            "details": "The amountMinimum parameter prevents malicious contracts from stealing the token from users",
+            "params": {
+              "amountMinimum": "The minimum amount of token required for a transfer",
+              "recipient": "The destination address of the token",
+              "token": "The contract address of the token which will be transferred to `recipient`"
+            }
+          },
+          "transferFrom(address,address,uint256)": {
+            "details": "Transfers `tokenId` token from `from` to `to`. WARNING: Note that the caller is responsible to confirm that the recipient is capable of receiving ERC721 or else they may be permanently lost. Usage of {safeTransferFrom} prevents loss, though the caller must understand this adds an external call which potentially creates a reentrancy vulnerability. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. Emits a {Transfer} event."
+          },
+          "unwrapWNativeToken(uint256,address)": {
+            "details": "The amountMinimum parameter prevents malicious contracts from stealing WNativeToken from users.",
+            "params": {
+              "amountMinimum": "The minimum amount of WNativeToken to unwrap",
+              "recipient": "The address receiving NativeToken"
+            }
+          },
+          "withdrawToken(uint256,address,bytes)": {
+            "details": "can be used via static call to get current rewards for user",
+            "params": {
+              "data": "The additional data for NonfungiblePositionManager",
+              "to": "New owner of position NFT",
+              "tokenId": "The id of position NFT"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "DOMAIN_SEPARATOR()": {
+            "notice": "The domain separator used in the permit signature"
+          },
+          "PERMIT_TYPEHASH()": {
+            "notice": "The permit typehash used in the permit signature"
+          },
+          "claimReward(address,address,uint256,uint256)": {
+            "notice": "Used to claim and send rewards from farming(s)"
+          },
+          "collect((uint256,address,uint128,uint128))": {
+            "notice": "Collects up to a maximum amount of fees owed to a specific position to the recipient"
+          },
+          "collectRewards((address,address,address,uint256,uint256),uint256)": {
+            "notice": "Used to collect reward from eternal farming. Then reward can be claimed."
+          },
+          "deposits(uint256)": {
+            "notice": "Returns information about a deposited NFT"
+          },
+          "enterFarming((address,address,address,uint256,uint256),uint256,uint256,bool)": {
+            "notice": "Enters in incentive (time-limited or eternal farming) with NFT-position token"
+          },
+          "exitFarming((address,address,address,uint256,uint256),uint256,bool)": {
+            "notice": "Exits from incentive (time-limited or eternal farming) with NFT-position token"
+          },
+          "nonfungiblePositionManager()": {
+            "notice": "The nonfungible position manager with which this farming contract is compatible"
+          },
+          "permit(address,uint256,uint256,uint8,bytes32,bytes32)": {
+            "notice": "Approve of a specific token ID for spending by spender via signature"
+          },
+          "refundNativeToken()": {
+            "notice": "Refunds any NativeToken balance held by this contract to the `msg.sender`"
+          },
+          "sweepToken(address,uint256,address)": {
+            "notice": "Transfers the full amount of a token held by this contract to recipient"
+          },
+          "unwrapWNativeToken(uint256,address)": {
+            "notice": "Unwraps the contract's WNativeToken balance and sends it to recipient as NativeToken."
+          },
+          "withdrawToken(uint256,address,bytes)": {
+            "notice": "Withdraw Algebra NFT-position token"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/quickswap/IFarmingCenter.sol": "IFarmingCenter"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0x5bce51e11f7d194b79ea59fe00c9e8de9fa2c5530124960f29a24d4c740a3266",
+        "urls": [
+          "bzz-raw://7e66dfde185df46104c11bc89d08fa0760737aa59a2b8546a656473d810a8ea4",
+          "dweb:/ipfs/QmXvyqtXPaPss2PD7eqPoSao5Szm2n6UMoiG8TZZDjmChR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol": {
+        "keccak256": "0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da",
+        "urls": [
+          "bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708",
+          "dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Enumerable.sol": {
+        "keccak256": "0xd1556954440b31c97a142c6ba07d5cade45f96fafd52091d33a14ebe365aecbf",
+        "urls": [
+          "bzz-raw://26fef835622b46a5ba08b3ef6b46a22e94b5f285d0f0fb66b703bd30217d2c34",
+          "dweb:/ipfs/QmZ548qdwfL1qF7aXz3xh1GCdTiST81kGGuKRqVUfYmPZR"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+        "keccak256": "0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9",
+        "urls": [
+          "bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146",
+          "dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/quickswap/IAlgebraEternalFarming.sol": {
+        "keccak256": "0x508ded73b3e5b04422bfc2274bc87ca7e6ad630119bc9a5b3449fed601578864",
+        "urls": [
+          "bzz-raw://e7e97db9413d4c77652c9a2fca8077dfc707de3e72864cced5fea7d2f9b63520",
+          "dweb:/ipfs/QmaYB3ragMT2WWo4SbkRrAoNNYjTJcSotVwPdWuJggMCuQ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraFarming.sol": {
+        "keccak256": "0xc969d9606ecbe14130580694636b48cefff8993e072bdf010cf950698c044cde",
+        "urls": [
+          "bzz-raw://90206c5831a4a80239f9a19d80fae167e179c3f4a254691856c38e2da719aa4e",
+          "dweb:/ipfs/QmbW3QMXukuRDouqRjZYGJHy9L71yoM9qwnxk5Fwq5DRih"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol": {
+        "keccak256": "0x748d1da7089c2e67cbb89cf32f3b2e0c5b68fa8bfe3b2224fdb013ce5018f5b9",
+        "urls": [
+          "bzz-raw://4e8da442662dbb2686517ffd7c510536a300df5fd628a44110dfd66e4dfe9118",
+          "dweb:/ipfs/QmYsVLngrQraRH6qvfxRKajBwDC6vbgfDvi5tquB1AK2Aw"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPool.sol": {
+        "keccak256": "0x02eae359613685be534c86446df6789b258dc542695878b197d7c3507c0bf3d5",
+        "urls": [
+          "bzz-raw://c53eb72ebe4528b44e67eeef53655e94af45cd879dcdc66e9972d3a652241b03",
+          "dweb:/ipfs/QmZrZDSAErvr2PLFbb4oTMAog6BD2NmMfmvgNH4FPX6NLb"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolDeployer.sol": {
+        "keccak256": "0x9679c5a3f636b65dc19a5a2dc76fa8500695170787fefa5b4f0306044e5cc637",
+        "urls": [
+          "bzz-raw://330f326d9cf607ca7ac250d24f4f0b2117b1bb69977c7c150846713caa1d556a",
+          "dweb:/ipfs/QmZNQhce7K6uNAaaSGh858PBrSxMb9NuUhhATKtAxxGBon"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolDerivedState.sol": {
+        "keccak256": "0xa75adbad960516b5c255b734caa01a970ff1ba27d7a7812e7cb80b95f09829c5",
+        "urls": [
+          "bzz-raw://f9fdb3c44733dddd52b82be55f816e1a8c2bb1c222dc80e373dc9b4783b19bb0",
+          "dweb:/ipfs/QmbULE7ZEyYutnCGH9ezrfVc4LNqyptwSjBYPtkgsToQD1"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolImmutables.sol": {
+        "keccak256": "0xf078d9ec2d8f5451f9b7927ab1da0788fc5eefcc4951641b1840a939860c5a52",
+        "urls": [
+          "bzz-raw://514f98170722ef31765ced410f939c8ec92f878d384560de93c534279539943d",
+          "dweb:/ipfs/QmXGwqz9cTHcWxJWbrmcugNUmYeREaPgo238x1YmCM1Rfv"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IAlgebraPoolState.sol": {
+        "keccak256": "0x7952dc437f7f6ac5933d2477cde00e77522cfb97943898a763e12654f4182ec2",
+        "urls": [
+          "bzz-raw://54fc3daee446ababc863dcf4495dad13befa9438a26211d13b5c21c005278aaa",
+          "dweb:/ipfs/QmdYxiEeFJpjMRHxc2v9cvMgPfB1uCmXHUbYQfhGSfdLET"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IERC20Minimal.sol": {
+        "keccak256": "0xae86fd456b2debc8df50066a3d8f570bf07174ef089374ee012c3f56438665d4",
+        "urls": [
+          "bzz-raw://8a647c2a7ae4b8cd12926e33ef917fcc3d491047cd9235e743db6af61a83bc81",
+          "dweb:/ipfs/QmXFhzpmLiCfT4ZeXQxhmFNWzL3Mf6t6PgceDgAtoWM1RZ"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IERC721Permit.sol": {
+        "keccak256": "0x8ba99444f79b7c00ec747f69b1ef7084d751536cb880769f0bcdbdc967be1038",
+        "urls": [
+          "bzz-raw://2729f42c8f45acf3897138c2ac085141aa462450058bf7a0156ad4d8dbdfac9d",
+          "dweb:/ipfs/QmZCk5oNUQKdSwa1FDu9FpWrzgDuVBy1Wk8eygC2driNTc"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IFarmingCenter.sol": {
+        "keccak256": "0x4aa568d5326671113fc95ce3b2b75004378b9ad69acc42b400459d03d56eef9f",
+        "urls": [
+          "bzz-raw://d7bbebdc6f0fc8eb17bbef8949588722a136aa0db96ce6b6ed2176d02c26f316",
+          "dweb:/ipfs/Qmeb2ykvvJantBEBBgkKVzwM8TDEmdSHaSd9hzLotSwJXJ"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/quickswap/IIncentiveKey.sol": {
+        "keccak256": "0xa55899db3f56078bdf7ba9285b0857c0e63033e6483bb7971afb4856317d05e4",
+        "urls": [
+          "bzz-raw://0c68a1905e5765fcd09d9687a8e82d6dea1e25ce20d969ab6c830aed82536ecc",
+          "dweb:/ipfs/QmSEmM2EhpGua6UXrbVZundqkRhoHuPCtfK7eCbbGE569p"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IPeripheryImmutableState.sol": {
+        "keccak256": "0x0800c4b7adcd9d1cd99b059678da5faa7d93198e44f4785426fd83890066df15",
+        "urls": [
+          "bzz-raw://22d197e0a671881dfafd8f1ebe4adb81416e1b5a0b55abc80e8b508d44ca1685",
+          "dweb:/ipfs/QmfNuzafVCpimS2DhLtgiq3LVyNTFGQRzug2Cw55r31A9u"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IPeripheryPayments.sol": {
+        "keccak256": "0x4de12e9bbd92769551c950e10dd7995aa39e009487c9523f1c6dcf8f37afa47b",
+        "urls": [
+          "bzz-raw://c11620b8ad005c5907eccfa394344dda850b44aad29b437c95b0b321b18b15dd",
+          "dweb:/ipfs/QmQ7ziKM3GkVvuj644c9H8vhvB3N5xe3Z5HjbjMRGzQNCx"
+        ],
+        "license": "GPL-2.0-or-later"
+      },
+      "src/interfaces/external/quickswap/IPoolInitializer.sol": {
+        "keccak256": "0xc13eb6f11ceb388bffae85e7965c79213eb8108c9f8744691200f707adc86f4e",
+        "urls": [
+          "bzz-raw://115e0510940bb6416ea9e3a2aaab988051af6203ec68c8e3f1d2b79e822c5ea2",
+          "dweb:/ipfs/QmcM9C2q75Jw4XZ5zX4svs8eR9yhSTYFJXLA3fHzRoCHLm"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/quickswap/IFarmingCenter.sol",
+    "id": 72967,
+    "exportedSymbols": {
+      "IAlgebraEternalFarming": [
+        71582
+      ],
+      "IAlgebraNonfungiblePositionManager": [
+        72236
+      ],
+      "IAlgebraPool": [
+        72249
+      ],
+      "IAlgebraPoolDerivedState": [
+        72327
+      ],
+      "IAlgebraPoolImmutables": [
+        72367
+      ],
+      "IAlgebraPoolState": [
+        72487
+      ],
+      "IERC165": [
+        48073
+      ],
+      "IERC20Minimal": [
+        72797
+      ],
+      "IERC721": [
+        46687
+      ],
+      "IERC721Enumerable": [
+        46736
+      ],
+      "IERC721Metadata": [
+        46763
+      ],
+      "IERC721Permit": [
+        72832
+      ],
+      "IERC721Receiver": [
+        46705
+      ],
+      "IFarmingCenter": [
+        72966
+      ],
+      "IIncentiveKey": [
+        72985
+      ],
+      "IPeripheryImmutableState": [
+        73007
+      ],
+      "IPeripheryPayments": [
+        73033
+      ],
+      "IPoolInitializer": [
+        73050
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:4596:286",
+    "nodes": [
+      {
+        "id": 72834,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:286",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 72835,
+        "nodeType": "ImportDirective",
+        "src": "57:66:286",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol",
+        "file": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72967,
+        "sourceUnit": 46706,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72836,
+        "nodeType": "ImportDirective",
+        "src": "125:50:286",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraNonfungiblePositionManager.sol",
+        "file": "./IAlgebraNonfungiblePositionManager.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72967,
+        "sourceUnit": 72237,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72837,
+        "nodeType": "ImportDirective",
+        "src": "176:38:286",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IAlgebraEternalFarming.sol",
+        "file": "./IAlgebraEternalFarming.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72967,
+        "sourceUnit": 71583,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72838,
+        "nodeType": "ImportDirective",
+        "src": "215:34:286",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IPeripheryPayments.sol",
+        "file": "./IPeripheryPayments.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72967,
+        "sourceUnit": 73034,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72839,
+        "nodeType": "ImportDirective",
+        "src": "250:29:286",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/quickswap/IIncentiveKey.sol",
+        "file": "./IIncentiveKey.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 72967,
+        "sourceUnit": 72986,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 72966,
+        "nodeType": "ContractDefinition",
+        "src": "281:4346:286",
+        "nodes": [
+          {
+            "id": 72854,
+            "nodeType": "FunctionDefinition",
+            "src": "366:80:286",
+            "nodes": [],
+            "functionSelector": "32dc5a25",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "virtualPoolAddresses",
+            "nameLocation": "375:20:286",
+            "parameters": {
+              "id": 72848,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72847,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72854,
+                  "src": "396:7:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72846,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "396:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "395:9:286"
+            },
+            "returnParameters": {
+              "id": 72853,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72850,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72854,
+                  "src": "428:7:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72849,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "428:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72852,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72854,
+                  "src": "437:7:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72851,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "437:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "427:18:286"
+            },
+            "scope": 72966,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72861,
+            "nodeType": "FunctionDefinition",
+            "src": "548:97:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72855,
+              "nodeType": "StructuredDocumentation",
+              "src": "452:91:286",
+              "text": "@notice The nonfungible position manager with which this farming contract is compatible"
+            },
+            "functionSelector": "b44a2722",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "nonfungiblePositionManager",
+            "nameLocation": "557:26:286",
+            "parameters": {
+              "id": 72856,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "583:2:286"
+            },
+            "returnParameters": {
+              "id": 72860,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72859,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72861,
+                  "src": "609:34:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IAlgebraNonfungiblePositionManager_$72236",
+                    "typeString": "contract IAlgebraNonfungiblePositionManager"
+                  },
+                  "typeName": {
+                    "id": 72858,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72857,
+                      "name": "IAlgebraNonfungiblePositionManager",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72236,
+                      "src": "609:34:286"
+                    },
+                    "referencedDeclaration": 72236,
+                    "src": "609:34:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IAlgebraNonfungiblePositionManager_$72236",
+                      "typeString": "contract IAlgebraNonfungiblePositionManager"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "608:36:286"
+            },
+            "scope": 72966,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72867,
+            "nodeType": "FunctionDefinition",
+            "src": "651:73:286",
+            "nodes": [],
+            "functionSelector": "de2356d1",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "eternalFarming",
+            "nameLocation": "660:14:286",
+            "parameters": {
+              "id": 72862,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "674:2:286"
+            },
+            "returnParameters": {
+              "id": 72866,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72865,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72867,
+                  "src": "700:22:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IAlgebraEternalFarming_$71582",
+                    "typeString": "contract IAlgebraEternalFarming"
+                  },
+                  "typeName": {
+                    "id": 72864,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72863,
+                      "name": "IAlgebraEternalFarming",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 71582,
+                      "src": "700:22:286"
+                    },
+                    "referencedDeclaration": 71582,
+                    "src": "700:22:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IAlgebraEternalFarming_$71582",
+                      "typeString": "contract IAlgebraEternalFarming"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "699:24:286"
+            },
+            "scope": 72966,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72878,
+            "nodeType": "FunctionDefinition",
+            "src": "730:167:286",
+            "nodes": [],
+            "functionSelector": "03a05df9",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "l2Nfts",
+            "nameLocation": "739:6:286",
+            "parameters": {
+              "id": 72870,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72869,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72878,
+                  "src": "746:7:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72868,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "746:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "745:9:286"
+            },
+            "returnParameters": {
+              "id": 72877,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72872,
+                  "mutability": "mutable",
+                  "name": "nonce",
+                  "nameLocation": "822:5:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72878,
+                  "src": "815:12:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint96",
+                    "typeString": "uint96"
+                  },
+                  "typeName": {
+                    "id": 72871,
+                    "name": "uint96",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "815:6:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint96",
+                      "typeString": "uint96"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72874,
+                  "mutability": "mutable",
+                  "name": "operator",
+                  "nameLocation": "849:8:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72878,
+                  "src": "841:16:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72873,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "841:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72876,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "879:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72878,
+                  "src": "871:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72875,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "871:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "801:95:286"
+            },
+            "scope": 72966,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72892,
+            "nodeType": "FunctionDefinition",
+            "src": "1247:217:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72879,
+              "nodeType": "StructuredDocumentation",
+              "src": "903:339:286",
+              "text": "@notice Returns information about a deposited NFT\n @param tokenId The ID of the deposit (and token) that is being transferred\n @return L2TokenId The nft layer2 id,\n numberOfFarms The number of farms,\n inLimitFarming The parameter showing if the token is in the limit farm,\n owner The owner of deposit"
+            },
+            "functionSelector": "b02c43d0",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "deposits",
+            "nameLocation": "1256:8:286",
+            "parameters": {
+              "id": 72882,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72881,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "1273:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72892,
+                  "src": "1265:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72880,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1265:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1264:17:286"
+            },
+            "returnParameters": {
+              "id": 72891,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72884,
+                  "mutability": "mutable",
+                  "name": "L2TokenId",
+                  "nameLocation": "1350:9:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72892,
+                  "src": "1342:17:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72883,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1342:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72886,
+                  "mutability": "mutable",
+                  "name": "numberOfFarms",
+                  "nameLocation": "1380:13:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72892,
+                  "src": "1373:20:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  },
+                  "typeName": {
+                    "id": 72885,
+                    "name": "uint32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1373:6:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72888,
+                  "mutability": "mutable",
+                  "name": "inLimitFarming",
+                  "nameLocation": "1412:14:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72892,
+                  "src": "1407:19:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 72887,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1407:4:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72890,
+                  "mutability": "mutable",
+                  "name": "owner",
+                  "nameLocation": "1448:5:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72892,
+                  "src": "1440:13:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72889,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1440:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1328:135:286"
+            },
+            "scope": 72966,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72905,
+            "nodeType": "FunctionDefinition",
+            "src": "1865:161:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72893,
+              "nodeType": "StructuredDocumentation",
+              "src": "1470:390:286",
+              "text": "@notice Enters in incentive (time-limited or eternal farming) with NFT-position token\n @dev token must be deposited in FarmingCenter\n @param key The incentive event key\n @param tokenId The id of position NFT\n @param tokensLocked Amount of tokens to lock for liquidity multiplier (if tiers are used)\n @param isLimit Is incentive time-limited or eternal"
+            },
+            "functionSelector": "22872ce2",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "enterFarming",
+            "nameLocation": "1874:12:286",
+            "parameters": {
+              "id": 72903,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72896,
+                  "mutability": "mutable",
+                  "name": "key",
+                  "nameLocation": "1930:3:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72905,
+                  "src": "1896:37:286",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_IncentiveKey_$72984_memory_ptr",
+                    "typeString": "struct IIncentiveKey.IncentiveKey"
+                  },
+                  "typeName": {
+                    "id": 72895,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72894,
+                      "name": "IIncentiveKey.IncentiveKey",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72984,
+                      "src": "1896:26:286"
+                    },
+                    "referencedDeclaration": 72984,
+                    "src": "1896:26:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_IncentiveKey_$72984_storage_ptr",
+                      "typeString": "struct IIncentiveKey.IncentiveKey"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72898,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "1951:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72905,
+                  "src": "1943:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72897,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1943:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72900,
+                  "mutability": "mutable",
+                  "name": "tokensLocked",
+                  "nameLocation": "1976:12:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72905,
+                  "src": "1968:20:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72899,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1968:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72902,
+                  "mutability": "mutable",
+                  "name": "isLimit",
+                  "nameLocation": "2003:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72905,
+                  "src": "1998:12:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 72901,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1998:4:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1886:130:286"
+            },
+            "returnParameters": {
+              "id": 72904,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2025:0:286"
+            },
+            "scope": 72966,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72916,
+            "nodeType": "FunctionDefinition",
+            "src": "2276:130:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72906,
+              "nodeType": "StructuredDocumentation",
+              "src": "2032:239:286",
+              "text": "@notice Exits from incentive (time-limited or eternal farming) with NFT-position token\n @param key The incentive event key\n @param tokenId The id of position NFT\n @param isLimit Is incentive time-limited or eternal"
+            },
+            "functionSelector": "34267cbc",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "exitFarming",
+            "nameLocation": "2285:11:286",
+            "parameters": {
+              "id": 72914,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72909,
+                  "mutability": "mutable",
+                  "name": "key",
+                  "nameLocation": "2340:3:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72916,
+                  "src": "2306:37:286",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_IncentiveKey_$72984_memory_ptr",
+                    "typeString": "struct IIncentiveKey.IncentiveKey"
+                  },
+                  "typeName": {
+                    "id": 72908,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72907,
+                      "name": "IIncentiveKey.IncentiveKey",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72984,
+                      "src": "2306:26:286"
+                    },
+                    "referencedDeclaration": 72984,
+                    "src": "2306:26:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_IncentiveKey_$72984_storage_ptr",
+                      "typeString": "struct IIncentiveKey.IncentiveKey"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72911,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "2361:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72916,
+                  "src": "2353:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72910,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2353:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72913,
+                  "mutability": "mutable",
+                  "name": "isLimit",
+                  "nameLocation": "2383:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72916,
+                  "src": "2378:12:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 72912,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2378:4:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2296:100:286"
+            },
+            "returnParameters": {
+              "id": 72915,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2405:0:286"
+            },
+            "scope": 72966,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72927,
+            "nodeType": "FunctionDefinition",
+            "src": "2959:151:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72917,
+              "nodeType": "StructuredDocumentation",
+              "src": "2412:542:286",
+              "text": "@notice Collects up to a maximum amount of fees owed to a specific position to the recipient\n @dev \"proxies\" to NonfungiblePositionManager\n @param params tokenId The ID of the NFT for which tokens are being collected,\n recipient The account that should receive the tokens,\n amount0Max The maximum amount of token0 to collect,\n amount1Max The maximum amount of token1 to collect\n @return amount0 The amount of fees collected in token0\n @return amount1 The amount of fees collected in token1"
+            },
+            "functionSelector": "fc6f7865",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "collect",
+            "nameLocation": "2968:7:286",
+            "parameters": {
+              "id": 72921,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72920,
+                  "mutability": "mutable",
+                  "name": "params",
+                  "nameLocation": "3034:6:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72927,
+                  "src": "2976:64:286",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_CollectParams_$72218_calldata_ptr",
+                    "typeString": "struct IAlgebraNonfungiblePositionManager.CollectParams"
+                  },
+                  "typeName": {
+                    "id": 72919,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72918,
+                      "name": "IAlgebraNonfungiblePositionManager.CollectParams",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72218,
+                      "src": "2976:48:286"
+                    },
+                    "referencedDeclaration": 72218,
+                    "src": "2976:48:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_CollectParams_$72218_storage_ptr",
+                      "typeString": "struct IAlgebraNonfungiblePositionManager.CollectParams"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2975:66:286"
+            },
+            "returnParameters": {
+              "id": 72926,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72923,
+                  "mutability": "mutable",
+                  "name": "amount0",
+                  "nameLocation": "3084:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72927,
+                  "src": "3076:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72922,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3076:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72925,
+                  "mutability": "mutable",
+                  "name": "amount1",
+                  "nameLocation": "3101:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72927,
+                  "src": "3093:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72924,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3093:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3075:34:286"
+            },
+            "scope": 72966,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72940,
+            "nodeType": "FunctionDefinition",
+            "src": "3414:151:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72928,
+              "nodeType": "StructuredDocumentation",
+              "src": "3116:293:286",
+              "text": "@notice Used to collect reward from eternal farming. Then reward can be claimed.\n @param key The incentive event key\n @param tokenId The id of position NFT\n @return reward The amount of collected reward\n @return bonusReward The amount of collected  bonus reward"
+            },
+            "functionSelector": "3e785878",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "collectRewards",
+            "nameLocation": "3423:14:286",
+            "parameters": {
+              "id": 72934,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72931,
+                  "mutability": "mutable",
+                  "name": "key",
+                  "nameLocation": "3472:3:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72940,
+                  "src": "3438:37:286",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_IncentiveKey_$72984_memory_ptr",
+                    "typeString": "struct IIncentiveKey.IncentiveKey"
+                  },
+                  "typeName": {
+                    "id": 72930,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72929,
+                      "name": "IIncentiveKey.IncentiveKey",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72984,
+                      "src": "3438:26:286"
+                    },
+                    "referencedDeclaration": 72984,
+                    "src": "3438:26:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_IncentiveKey_$72984_storage_ptr",
+                      "typeString": "struct IIncentiveKey.IncentiveKey"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72933,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "3485:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72940,
+                  "src": "3477:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72932,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3477:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3437:56:286"
+            },
+            "returnParameters": {
+              "id": 72939,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72936,
+                  "mutability": "mutable",
+                  "name": "reward",
+                  "nameLocation": "3536:6:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72940,
+                  "src": "3528:14:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72935,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3528:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72938,
+                  "mutability": "mutable",
+                  "name": "bonusReward",
+                  "nameLocation": "3552:11:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72940,
+                  "src": "3544:19:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72937,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3544:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3527:37:286"
+            },
+            "scope": 72966,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72955,
+            "nodeType": "FunctionDefinition",
+            "src": "4025:198:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72941,
+              "nodeType": "StructuredDocumentation",
+              "src": "3571:449:286",
+              "text": "@notice Used to claim and send rewards from farming(s)\n @dev can be used via static call to get current rewards for user\n @param rewardToken The token that is a reward\n @param to The address to be rewarded\n @param amountRequestedIncentive Amount to claim in incentive (limit) farming\n @param amountRequestedEternal Amount to claim in eternal farming\n @return reward The summary amount of claimed rewards"
+            },
+            "functionSelector": "fd188ca4",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "claimReward",
+            "nameLocation": "4034:11:286",
+            "parameters": {
+              "id": 72951,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72944,
+                  "mutability": "mutable",
+                  "name": "rewardToken",
+                  "nameLocation": "4069:11:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72955,
+                  "src": "4055:25:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20Minimal_$72797",
+                    "typeString": "contract IERC20Minimal"
+                  },
+                  "typeName": {
+                    "id": 72943,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 72942,
+                      "name": "IERC20Minimal",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 72797,
+                      "src": "4055:13:286"
+                    },
+                    "referencedDeclaration": 72797,
+                    "src": "4055:13:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20Minimal_$72797",
+                      "typeString": "contract IERC20Minimal"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72946,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "4098:2:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72955,
+                  "src": "4090:10:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72945,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4090:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72948,
+                  "mutability": "mutable",
+                  "name": "amountRequestedIncentive",
+                  "nameLocation": "4118:24:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72955,
+                  "src": "4110:32:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72947,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4110:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72950,
+                  "mutability": "mutable",
+                  "name": "amountRequestedEternal",
+                  "nameLocation": "4160:22:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72955,
+                  "src": "4152:30:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72949,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4152:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4045:143:286"
+            },
+            "returnParameters": {
+              "id": 72954,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72953,
+                  "mutability": "mutable",
+                  "name": "reward",
+                  "nameLocation": "4215:6:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72955,
+                  "src": "4207:14:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72952,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4207:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4206:16:286"
+            },
+            "scope": 72966,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 72965,
+            "nodeType": "FunctionDefinition",
+            "src": "4515:110:286",
+            "nodes": [],
+            "documentation": {
+              "id": 72956,
+              "nodeType": "StructuredDocumentation",
+              "src": "4229:281:286",
+              "text": "@notice Withdraw Algebra NFT-position token\n @dev can be used via static call to get current rewards for user\n @param tokenId The id of position NFT\n @param to New owner of position NFT\n @param data The additional data for NonfungiblePositionManager"
+            },
+            "functionSelector": "3c423f0b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawToken",
+            "nameLocation": "4524:13:286",
+            "parameters": {
+              "id": 72963,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72958,
+                  "mutability": "mutable",
+                  "name": "tokenId",
+                  "nameLocation": "4555:7:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72965,
+                  "src": "4547:15:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 72957,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4547:7:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72960,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "4580:2:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72965,
+                  "src": "4572:10:286",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 72959,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4572:7:286",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72962,
+                  "mutability": "mutable",
+                  "name": "data",
+                  "nameLocation": "4605:4:286",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72965,
+                  "src": "4592:17:286",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 72961,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4592:5:286",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4537:78:286"
+            },
+            "returnParameters": {
+              "id": 72964,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4624:0:286"
+            },
+            "scope": 72966,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 72840,
+              "name": "IERC721Receiver",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 46705,
+              "src": "309:15:286"
+            },
+            "id": 72841,
+            "nodeType": "InheritanceSpecifier",
+            "src": "309:15:286"
+          },
+          {
+            "baseName": {
+              "id": 72842,
+              "name": "IERC721Permit",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 72832,
+              "src": "326:13:286"
+            },
+            "id": 72843,
+            "nodeType": "InheritanceSpecifier",
+            "src": "326:13:286"
+          },
+          {
+            "baseName": {
+              "id": 72844,
+              "name": "IPeripheryPayments",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 73033,
+              "src": "341:18:286"
+            },
+            "id": 72845,
+            "nodeType": "InheritanceSpecifier",
+            "src": "341:18:286"
+          }
+        ],
+        "canonicalName": "IFarmingCenter",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          72966,
+          73033,
+          72832,
+          46687,
+          48073,
+          46705
+        ],
+        "name": "IFarmingCenter",
+        "nameLocation": "291:14:286",
+        "scope": 72967,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 286
+}

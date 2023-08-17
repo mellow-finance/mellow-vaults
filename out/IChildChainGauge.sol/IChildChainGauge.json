@@ -1,0 +1,738 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "contract ILiquidityGaugeFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "lpToken",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "version",
+          "type": "string"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "integrate_fraction",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "user_checkpoint",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "version",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "factory()": "c45a0155",
+    "initialize(address,string)": "f399e22e",
+    "integrate_fraction(address)": "09400707",
+    "user_checkpoint(address)": "4b820093",
+    "version()": "54fd4d50"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"contract ILiquidityGaugeFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"lpToken\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"integrate_fraction\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"user_checkpoint\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"initialize(address,string)\":{\"params\":{\"lpToken\":\"Pool allowed to stake in this gauge.\",\"version\":\"Gauge version string identifier.\"}},\"integrate_fraction(address)\":{\"params\":{\"user\":\"User address.\"},\"returns\":{\"_0\":\"uint256 BAL amount to issue for the address.\"}},\"user_checkpoint(address)\":{\"params\":{\"user\":\"User address.\"},\"returns\":{\"_0\":\"bool Always true.\"}},\"version()\":{\"details\":\"Returns a JSON representation of the contract version containing name, version number and task ID.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"factory()\":{\"notice\":\"Returns gauge factory address.\"},\"initialize(address,string)\":{\"notice\":\"Proxy constructor.\"},\"integrate_fraction(address)\":{\"notice\":\"Returns BAL liquidity emissions calculated during checkpoints for the given user.\"},\"user_checkpoint(address)\":{\"notice\":\"Records a checkpoint for a given user.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IChildChainGauge.sol\":\"IChildChainGauge\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IChildChainGauge.sol\":{\"keccak256\":\"0x1474d7ca96ac2e02fbe3324087a99032de8e98ffe6f5de8ea13ebe0a5f5d7d6d\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://d41548c88a29297fa914eefd2907e33ab2e4a7e285591123787361a859437e4e\",\"dweb:/ipfs/Qmde4UxNFh5asK89zi81QC5RnW2DvubE63HuJbHKsYzbwW\"]},\"src/interfaces/external/balancer/liquidity-mining/ILiquidityGauge.sol\":{\"keccak256\":\"0xa22f0c0868adb9d06d097ecb0a8d8370a6e59d223ef1e07a58340191c402e9ea\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://558942e9f7ff6c6f2becffc28da21bf897e043ceea6bed95d2a362e0eceedbe6\",\"dweb:/ipfs/QmU51CezK36UmBpArAcBmXrDmC5ozDmTrconGfj8pr8NYL\"]},\"src/interfaces/external/balancer/liquidity-mining/ILiquidityGaugeFactory.sol\":{\"keccak256\":\"0xda0ac94f1b3f6025bfa0e4ddc446d372129042c5c7c22a43364db0c7b27cccf0\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3e0c802001ffe995d8f592aa4c1e938e49a2be3c645262733a4e63f849514792\",\"dweb:/ipfs/QmQT2H8A69NRHqYFnnBYcnmW7nhkr9fppt6MQB4C4XTwwD\"]},\"src/interfaces/external/balancer/solidity-utils/helpers/IVersion.sol\":{\"keccak256\":\"0x14f5b96518e9c08aa60fc0aff422fdccac30bb73f2c862f2fe7ea8ae2aac2bc8\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://c92dff7006e33187923bd13ec8994c4d9e0b926194783f78e4e9f30c0fda5f12\",\"dweb:/ipfs/QmVmKb4v7cFycgXtCPNA6bpA8WA9W9hDQGcqhVAwTaF149\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "factory",
+          "outputs": [
+            {
+              "internalType": "contract ILiquidityGaugeFactory",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "lpToken",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "version",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "initialize"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "integrate_fraction",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "user_checkpoint",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "version",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "initialize(address,string)": {
+            "params": {
+              "lpToken": "Pool allowed to stake in this gauge.",
+              "version": "Gauge version string identifier."
+            }
+          },
+          "integrate_fraction(address)": {
+            "params": {
+              "user": "User address."
+            },
+            "returns": {
+              "_0": "uint256 BAL amount to issue for the address."
+            }
+          },
+          "user_checkpoint(address)": {
+            "params": {
+              "user": "User address."
+            },
+            "returns": {
+              "_0": "bool Always true."
+            }
+          },
+          "version()": {
+            "details": "Returns a JSON representation of the contract version containing name, version number and task ID."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "factory()": {
+            "notice": "Returns gauge factory address."
+          },
+          "initialize(address,string)": {
+            "notice": "Proxy constructor."
+          },
+          "integrate_fraction(address)": {
+            "notice": "Returns BAL liquidity emissions calculated during checkpoints for the given user."
+          },
+          "user_checkpoint(address)": {
+            "notice": "Records a checkpoint for a given user."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IChildChainGauge.sol": "IChildChainGauge"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IChildChainGauge.sol": {
+        "keccak256": "0x1474d7ca96ac2e02fbe3324087a99032de8e98ffe6f5de8ea13ebe0a5f5d7d6d",
+        "urls": [
+          "bzz-raw://d41548c88a29297fa914eefd2907e33ab2e4a7e285591123787361a859437e4e",
+          "dweb:/ipfs/Qmde4UxNFh5asK89zi81QC5RnW2DvubE63HuJbHKsYzbwW"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/ILiquidityGauge.sol": {
+        "keccak256": "0xa22f0c0868adb9d06d097ecb0a8d8370a6e59d223ef1e07a58340191c402e9ea",
+        "urls": [
+          "bzz-raw://558942e9f7ff6c6f2becffc28da21bf897e043ceea6bed95d2a362e0eceedbe6",
+          "dweb:/ipfs/QmU51CezK36UmBpArAcBmXrDmC5ozDmTrconGfj8pr8NYL"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/liquidity-mining/ILiquidityGaugeFactory.sol": {
+        "keccak256": "0xda0ac94f1b3f6025bfa0e4ddc446d372129042c5c7c22a43364db0c7b27cccf0",
+        "urls": [
+          "bzz-raw://3e0c802001ffe995d8f592aa4c1e938e49a2be3c645262733a4e63f849514792",
+          "dweb:/ipfs/QmQT2H8A69NRHqYFnnBYcnmW7nhkr9fppt6MQB4C4XTwwD"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/solidity-utils/helpers/IVersion.sol": {
+        "keccak256": "0x14f5b96518e9c08aa60fc0aff422fdccac30bb73f2c862f2fe7ea8ae2aac2bc8",
+        "urls": [
+          "bzz-raw://c92dff7006e33187923bd13ec8994c4d9e0b926194783f78e4e9f30c0fda5f12",
+          "dweb:/ipfs/QmVmKb4v7cFycgXtCPNA6bpA8WA9W9hDQGcqhVAwTaF149"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IChildChainGauge.sol",
+    "id": 56808,
+    "exportedSymbols": {
+      "IChildChainGauge": [
+        56807
+      ],
+      "ILiquidityGauge": [
+        57381
+      ],
+      "ILiquidityGaugeFactory": [
+        57394
+      ],
+      "IVersion": [
+        60158
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:1243:101",
+    "nodes": [
+      {
+        "id": 56771,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:101",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 56772,
+        "nodeType": "ImportDirective",
+        "src": "713:48:101",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/solidity-utils/helpers/IVersion.sol",
+        "file": "../solidity-utils/helpers/IVersion.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 56808,
+        "sourceUnit": 60159,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 56773,
+        "nodeType": "ImportDirective",
+        "src": "762:38:101",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/liquidity-mining/ILiquidityGaugeFactory.sol",
+        "file": "./ILiquidityGaugeFactory.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 56808,
+        "sourceUnit": 57395,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 56807,
+        "nodeType": "ContractDefinition",
+        "src": "1025:905:101",
+        "nodes": [
+          {
+            "id": 56783,
+            "nodeType": "FunctionDefinition",
+            "src": "1234:69:101",
+            "nodes": [],
+            "documentation": {
+              "id": 56776,
+              "nodeType": "StructuredDocumentation",
+              "src": "1070:159:101",
+              "text": " @notice Proxy constructor.\n @param lpToken Pool allowed to stake in this gauge.\n @param version Gauge version string identifier."
+            },
+            "functionSelector": "f399e22e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "initialize",
+            "nameLocation": "1243:10:101",
+            "parameters": {
+              "id": 56781,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56778,
+                  "mutability": "mutable",
+                  "name": "lpToken",
+                  "nameLocation": "1262:7:101",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56783,
+                  "src": "1254:15:101",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56777,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1254:7:101",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56780,
+                  "mutability": "mutable",
+                  "name": "version",
+                  "nameLocation": "1285:7:101",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56783,
+                  "src": "1271:21:101",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 56779,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1271:6:101",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1253:40:101"
+            },
+            "returnParameters": {
+              "id": 56782,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1302:0:101"
+            },
+            "scope": 56807,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56791,
+            "nodeType": "FunctionDefinition",
+            "src": "1515:74:101",
+            "nodes": [],
+            "documentation": {
+              "id": 56784,
+              "nodeType": "StructuredDocumentation",
+              "src": "1309:201:101",
+              "text": " @notice Returns BAL liquidity emissions calculated during checkpoints for the given user.\n @param user User address.\n @return uint256 BAL amount to issue for the address."
+            },
+            "functionSelector": "09400707",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "integrate_fraction",
+            "nameLocation": "1524:18:101",
+            "parameters": {
+              "id": 56787,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56786,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1551:4:101",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56791,
+                  "src": "1543:12:101",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56785,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1543:7:101",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1542:14:101"
+            },
+            "returnParameters": {
+              "id": 56790,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56789,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56791,
+                  "src": "1580:7:101",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56788,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1580:7:101",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1579:9:101"
+            },
+            "scope": 56807,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56799,
+            "nodeType": "FunctionDefinition",
+            "src": "1731:63:101",
+            "nodes": [],
+            "documentation": {
+              "id": 56792,
+              "nodeType": "StructuredDocumentation",
+              "src": "1595:131:101",
+              "text": " @notice Records a checkpoint for a given user.\n @param user User address.\n @return bool Always true."
+            },
+            "functionSelector": "4b820093",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "user_checkpoint",
+            "nameLocation": "1740:15:101",
+            "parameters": {
+              "id": 56795,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56794,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1764:4:101",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56799,
+                  "src": "1756:12:101",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 56793,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1756:7:101",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1755:14:101"
+            },
+            "returnParameters": {
+              "id": 56798,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56797,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56799,
+                  "src": "1788:4:101",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 56796,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1788:4:101",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1787:6:101"
+            },
+            "scope": 56807,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56806,
+            "nodeType": "FunctionDefinition",
+            "src": "1862:66:101",
+            "nodes": [],
+            "documentation": {
+              "id": 56800,
+              "nodeType": "StructuredDocumentation",
+              "src": "1800:57:101",
+              "text": " @notice Returns gauge factory address."
+            },
+            "functionSelector": "c45a0155",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "factory",
+            "nameLocation": "1871:7:101",
+            "parameters": {
+              "id": 56801,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1878:2:101"
+            },
+            "returnParameters": {
+              "id": 56805,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56804,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56806,
+                  "src": "1904:22:101",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_ILiquidityGaugeFactory_$57394",
+                    "typeString": "contract ILiquidityGaugeFactory"
+                  },
+                  "typeName": {
+                    "id": 56803,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 56802,
+                      "name": "ILiquidityGaugeFactory",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 57394,
+                      "src": "1904:22:101"
+                    },
+                    "referencedDeclaration": 57394,
+                    "src": "1904:22:101",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_ILiquidityGaugeFactory_$57394",
+                      "typeString": "contract ILiquidityGaugeFactory"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1903:24:101"
+            },
+            "scope": 56807,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 56774,
+              "name": "IVersion",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 60158,
+              "src": "1055:8:101"
+            },
+            "id": 56775,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1055:8:101"
+          }
+        ],
+        "canonicalName": "IChildChainGauge",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          56807,
+          60158
+        ],
+        "name": "IChildChainGauge",
+        "nameLocation": "1035:16:101",
+        "scope": 56808,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 101
+}

@@ -1,0 +1,479 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "_dstChainId",
+          "type": "uint16"
+        }
+      ],
+      "name": "estimateSendUserBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nativeFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "zroFee",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_dstChainId",
+          "type": "uint16"
+        },
+        {
+          "internalType": "address payable",
+          "name": "_refundAddress",
+          "type": "address"
+        }
+      ],
+      "name": "sendUserBalance",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "estimateSendUserBalance(uint16)": "ecc4c583",
+    "sendUserBalance(address,uint16,address)": "57fb8345"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"_dstChainId\",\"type\":\"uint16\"}],\"name\":\"estimateSendUserBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"nativeFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"zroFee\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint16\",\"name\":\"_dstChainId\",\"type\":\"uint16\"},{\"internalType\":\"address payable\",\"name\":\"_refundAddress\",\"type\":\"address\"}],\"name\":\"sendUserBalance\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Interface for `OmniVotingEscrowAdaptor`.\",\"kind\":\"dev\",\"methods\":{\"estimateSendUserBalance(uint16)\":{\"details\":\"Reverts if `OmniVotingEscrow` is not set.\",\"params\":{\"_dstChainId\":\"- Destination chain ID.\"},\"returns\":{\"nativeFee\":\"- Native fee reported by the omni voting escrow.\",\"zroFee\":\"- Layer zero fee reported by the omni voting escrow.\"}},\"sendUserBalance(address,uint16,address)\":{\"details\":\"Reverts if `OmniVotingEscrow` is not set.\",\"params\":{\"_dstChainId\":\"- Destination chain ID.\",\"_refundAddress\":\"- Address where to return excess ETH.\",\"_user\":\"- User to bridge the balance from.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"estimateSendUserBalance(uint16)\":{\"notice\":\"Forwards `estimateSendUserBalance` call to omni voting escrow.\"},\"sendUserBalance(address,uint16,address)\":{\"notice\":\"Forwards `sendUserBalance` call to omni voting escrow.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrowAdaptor.sol\":\"IOmniVotingEscrowAdaptor\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrowAdaptor.sol\":{\"keccak256\":\"0x247b984ee8d295882d5fef17d6d0a40936fc96c6265d00d32ae795fb0a51387f\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://f3a8cee4a2a54d95601499142b474905fa9ba8cc3a92053df5609e172f7d825f\",\"dweb:/ipfs/QmQtoGQCvWZYjhBNVmQMAKpEnQ4GShW4XDuqGDHjkoYwzR\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint16",
+              "name": "_dstChainId",
+              "type": "uint16"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "estimateSendUserBalance",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "nativeFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "zroFee",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_user",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "_dstChainId",
+              "type": "uint16"
+            },
+            {
+              "internalType": "address payable",
+              "name": "_refundAddress",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "sendUserBalance"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "estimateSendUserBalance(uint16)": {
+            "details": "Reverts if `OmniVotingEscrow` is not set.",
+            "params": {
+              "_dstChainId": "- Destination chain ID."
+            },
+            "returns": {
+              "nativeFee": "- Native fee reported by the omni voting escrow.",
+              "zroFee": "- Layer zero fee reported by the omni voting escrow."
+            }
+          },
+          "sendUserBalance(address,uint16,address)": {
+            "details": "Reverts if `OmniVotingEscrow` is not set.",
+            "params": {
+              "_dstChainId": "- Destination chain ID.",
+              "_refundAddress": "- Address where to return excess ETH.",
+              "_user": "- User to bridge the balance from."
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "estimateSendUserBalance(uint16)": {
+            "notice": "Forwards `estimateSendUserBalance` call to omni voting escrow."
+          },
+          "sendUserBalance(address,uint16,address)": {
+            "notice": "Forwards `sendUserBalance` call to omni voting escrow."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrowAdaptor.sol": "IOmniVotingEscrowAdaptor"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrowAdaptor.sol": {
+        "keccak256": "0x247b984ee8d295882d5fef17d6d0a40936fc96c6265d00d32ae795fb0a51387f",
+        "urls": [
+          "bzz-raw://f3a8cee4a2a54d95601499142b474905fa9ba8cc3a92053df5609e172f7d825f",
+          "dweb:/ipfs/QmQtoGQCvWZYjhBNVmQMAKpEnQ4GShW4XDuqGDHjkoYwzR"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrowAdaptor.sol",
+    "id": 57459,
+    "exportedSymbols": {
+      "IOmniVotingEscrowAdaptor": [
+        57458
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:1011:113",
+    "nodes": [
+      {
+        "id": 57436,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:113",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 57458,
+        "nodeType": "ContractDefinition",
+        "src": "770:928:113",
+        "nodes": [
+          {
+            "id": 57447,
+            "nodeType": "FunctionDefinition",
+            "src": "1158:111:113",
+            "nodes": [],
+            "documentation": {
+              "id": 57438,
+              "nodeType": "StructuredDocumentation",
+              "src": "811:342:113",
+              "text": " @notice Forwards `estimateSendUserBalance` call to omni voting escrow.\n @dev Reverts if `OmniVotingEscrow` is not set.\n @param _dstChainId - Destination chain ID.\n @return nativeFee - Native fee reported by the omni voting escrow.\n @return zroFee - Layer zero fee reported by the omni voting escrow."
+            },
+            "functionSelector": "ecc4c583",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "estimateSendUserBalance",
+            "nameLocation": "1167:23:113",
+            "parameters": {
+              "id": 57441,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57440,
+                  "mutability": "mutable",
+                  "name": "_dstChainId",
+                  "nameLocation": "1198:11:113",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57447,
+                  "src": "1191:18:113",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint16",
+                    "typeString": "uint16"
+                  },
+                  "typeName": {
+                    "id": 57439,
+                    "name": "uint16",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1191:6:113",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint16",
+                      "typeString": "uint16"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1190:20:113"
+            },
+            "returnParameters": {
+              "id": 57446,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57443,
+                  "mutability": "mutable",
+                  "name": "nativeFee",
+                  "nameLocation": "1242:9:113",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57447,
+                  "src": "1234:17:113",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 57442,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1234:7:113",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57445,
+                  "mutability": "mutable",
+                  "name": "zroFee",
+                  "nameLocation": "1261:6:113",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57447,
+                  "src": "1253:14:113",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 57444,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1253:7:113",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1233:35:113"
+            },
+            "scope": 57458,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 57457,
+            "nodeType": "FunctionDefinition",
+            "src": "1587:109:113",
+            "nodes": [],
+            "documentation": {
+              "id": 57448,
+              "nodeType": "StructuredDocumentation",
+              "src": "1275:307:113",
+              "text": " @notice Forwards `sendUserBalance` call to omni voting escrow.\n @dev Reverts if `OmniVotingEscrow` is not set.\n @param _user - User to bridge the balance from.\n @param _dstChainId - Destination chain ID.\n @param _refundAddress - Address where to return excess ETH."
+            },
+            "functionSelector": "57fb8345",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "sendUserBalance",
+            "nameLocation": "1596:15:113",
+            "parameters": {
+              "id": 57455,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57450,
+                  "mutability": "mutable",
+                  "name": "_user",
+                  "nameLocation": "1620:5:113",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57457,
+                  "src": "1612:13:113",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 57449,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1612:7:113",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57452,
+                  "mutability": "mutable",
+                  "name": "_dstChainId",
+                  "nameLocation": "1634:11:113",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57457,
+                  "src": "1627:18:113",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint16",
+                    "typeString": "uint16"
+                  },
+                  "typeName": {
+                    "id": 57451,
+                    "name": "uint16",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1627:6:113",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint16",
+                      "typeString": "uint16"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57454,
+                  "mutability": "mutable",
+                  "name": "_refundAddress",
+                  "nameLocation": "1663:14:113",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57457,
+                  "src": "1647:30:113",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address_payable",
+                    "typeString": "address payable"
+                  },
+                  "typeName": {
+                    "id": 57453,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1647:15:113",
+                    "stateMutability": "payable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address_payable",
+                      "typeString": "address payable"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1611:67:113"
+            },
+            "returnParameters": {
+              "id": 57456,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1695:0:113"
+            },
+            "scope": 57458,
+            "stateMutability": "payable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IOmniVotingEscrowAdaptor",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 57437,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:56:113",
+          "text": " @dev Interface for `OmniVotingEscrowAdaptor`."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          57458
+        ],
+        "name": "IOmniVotingEscrowAdaptor",
+        "nameLocation": "780:24:113",
+        "scope": 57459,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 113
+}

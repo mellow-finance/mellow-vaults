@@ -1,0 +1,483 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "holder",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiry",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "permit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)": "8fcbaf0c"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"holder\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"expiry\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"permit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)\":{\"params\":{\"allowed\":\"Whether the spender is allowed or disallowed from spending\",\"expiry\":\"The time at which this expires (unix time)\",\"holder\":\"Token owner's address (Authorizer)\",\"nonce\":\"The permit nonce\",\"r\":\"r of the signature\",\"s\":\"s of the signature\",\"spender\":\"Spender's address\",\"v\":\"v of the signature\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)\":{\"notice\":\"update allowance with a signed permit\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20PermitDAI.sol\":\"IERC20PermitDAI\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20PermitDAI.sol\":{\"keccak256\":\"0x870986c20ddfcad5c5fd60229edf9e87678601e3aeaf5a3602976c2b4f38b212\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c0043ec2c8ebb438e6f7c4cab6960ee93bae8028bebf9d1de5da6312cc4a4424\",\"dweb:/ipfs/QmaCUfp95ZT4vGvDZpMwRCoR8tZFPUmr78uBBs2vqbh1NB\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "holder",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "expiry",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "allowed",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint8",
+              "name": "v",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "r",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "s",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "permit"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)": {
+            "params": {
+              "allowed": "Whether the spender is allowed or disallowed from spending",
+              "expiry": "The time at which this expires (unix time)",
+              "holder": "Token owner's address (Authorizer)",
+              "nonce": "The permit nonce",
+              "r": "r of the signature",
+              "s": "s of the signature",
+              "spender": "Spender's address",
+              "v": "v of the signature"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)": {
+            "notice": "update allowance with a signed permit"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20PermitDAI.sol": "IERC20PermitDAI"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20PermitDAI.sol": {
+        "keccak256": "0x870986c20ddfcad5c5fd60229edf9e87678601e3aeaf5a3602976c2b4f38b212",
+        "urls": [
+          "bzz-raw://c0043ec2c8ebb438e6f7c4cab6960ee93bae8028bebf9d1de5da6312cc4a4424",
+          "dweb:/ipfs/QmaCUfp95ZT4vGvDZpMwRCoR8tZFPUmr78uBBs2vqbh1NB"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20PermitDAI.sol",
+    "id": 60405,
+    "exportedSymbols": {
+      "IERC20PermitDAI": [
+        60404
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "33:754:155",
+    "nodes": [
+      {
+        "id": 60383,
+        "nodeType": "PragmaDirective",
+        "src": "33:23:155",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 60404,
+        "nodeType": "ContractDefinition",
+        "src": "58:728:155",
+        "nodes": [
+          {
+            "id": 60403,
+            "nodeType": "FunctionDefinition",
+            "src": "580:204:155",
+            "nodes": [],
+            "documentation": {
+              "id": 60384,
+              "nodeType": "StructuredDocumentation",
+              "src": "90:485:155",
+              "text": " @notice update allowance with a signed permit\n @param holder    Token owner's address (Authorizer)\n @param spender   Spender's address\n @param nonce     The permit nonce\n @param expiry    The time at which this expires (unix time)\n @param allowed   Whether the spender is allowed or disallowed from spending\n @param v         v of the signature\n @param r         r of the signature\n @param s         s of the signature"
+            },
+            "functionSelector": "8fcbaf0c",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "permit",
+            "nameLocation": "589:6:155",
+            "parameters": {
+              "id": 60401,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 60386,
+                  "mutability": "mutable",
+                  "name": "holder",
+                  "nameLocation": "613:6:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "605:14:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60385,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "605:7:155",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60388,
+                  "mutability": "mutable",
+                  "name": "spender",
+                  "nameLocation": "637:7:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "629:15:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 60387,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "629:7:155",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60390,
+                  "mutability": "mutable",
+                  "name": "nonce",
+                  "nameLocation": "662:5:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "654:13:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 60389,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "654:7:155",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60392,
+                  "mutability": "mutable",
+                  "name": "expiry",
+                  "nameLocation": "685:6:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "677:14:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 60391,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "677:7:155",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60394,
+                  "mutability": "mutable",
+                  "name": "allowed",
+                  "nameLocation": "706:7:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "701:12:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 60393,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "701:4:155",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60396,
+                  "mutability": "mutable",
+                  "name": "v",
+                  "nameLocation": "729:1:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "723:7:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 60395,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "723:5:155",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60398,
+                  "mutability": "mutable",
+                  "name": "r",
+                  "nameLocation": "748:1:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "740:9:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 60397,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "740:7:155",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 60400,
+                  "mutability": "mutable",
+                  "name": "s",
+                  "nameLocation": "767:1:155",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 60403,
+                  "src": "759:9:155",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 60399,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "759:7:155",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "595:179:155"
+            },
+            "returnParameters": {
+              "id": 60402,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "783:0:155"
+            },
+            "scope": 60404,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IERC20PermitDAI",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          60404
+        ],
+        "name": "IERC20PermitDAI",
+        "nameLocation": "68:15:155",
+        "scope": 60405,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 155
+}

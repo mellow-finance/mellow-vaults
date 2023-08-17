@@ -1,0 +1,1142 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        }
+      ],
+      "name": "assetStorage",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IShareToken",
+              "name": "collateralToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IShareToken",
+              "name": "collateralOnlyToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IShareToken",
+              "name": "debtToken",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalDeposits",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "collateralOnlyDeposits",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalBorrowAmount",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IBaseSilo.AssetStorage",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_depositor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_collateralOnly",
+          "type": "bool"
+        }
+      ],
+      "name": "depositFor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "collateralAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collateralShare",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_collateralOnly",
+          "type": "bool"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "withdrawnAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "withdrawnShare",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "assetStorage(address)": "bf273041",
+    "depositFor(address,address,uint256,bool)": "fbf178db",
+    "withdraw(address,uint256,bool)": "ead5d359"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_asset\",\"type\":\"address\"}],\"name\":\"assetStorage\",\"outputs\":[{\"components\":[{\"internalType\":\"contract IShareToken\",\"name\":\"collateralToken\",\"type\":\"address\"},{\"internalType\":\"contract IShareToken\",\"name\":\"collateralOnlyToken\",\"type\":\"address\"},{\"internalType\":\"contract IShareToken\",\"name\":\"debtToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"totalDeposits\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"collateralOnlyDeposits\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"totalBorrowAmount\",\"type\":\"uint256\"}],\"internalType\":\"struct IBaseSilo.AssetStorage\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_asset\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_depositor\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_collateralOnly\",\"type\":\"bool\"}],\"name\":\"depositFor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"collateralAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"collateralShare\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_asset\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_collateralOnly\",\"type\":\"bool\"}],\"name\":\"withdraw\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"withdrawnAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawnShare\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"assetStorage(address)\":{\"details\":\"returns the asset storage structAssetStorage struct contains necessary information for calculating shareToken exchange rates\"},\"depositFor(address,address,uint256,bool)\":{\"details\":\"Deposits funds into the Silo\",\"params\":{\"_amount\":\"The amount of the token to deposit\",\"_asset\":\"The address of the token to deposit\",\"_collateralOnly\":\": True means your shareToken is protected (cannot be swapped for interest)\",\"_depositor\":\"The address of the recipient of collateral tokens\"},\"returns\":{\"collateralAmount\":\"deposited amount\",\"collateralShare\":\"user collateral shares based on deposited amount\"}},\"withdraw(address,uint256,bool)\":{\"details\":\"Withdraw `_amount` of `_asset` tokens from the Silo to `msg.sender`\",\"params\":{\"_amount\":\"The amount of the token to withdraw\",\"_asset\":\"The address of the token to withdraw\",\"_collateralOnly\":\"True if withdrawing collateral only deposit\"},\"returns\":{\"withdrawnAmount\":\"withdrawn amount that was transferred to user\",\"withdrawnShare\":\"burned share based on `withdrawnAmount`\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/standalone-utils/ISilo.sol\":\"ISilo\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol\":{\"keccak256\":\"0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f\",\"dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U\"]},\"src/interfaces/external/balancer/standalone-utils/IShareToken.sol\":{\"keccak256\":\"0x58a36b22bb2da98e495a76ddb714544f7a78b6a03050d2f571320d1a2e0bdcb6\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://df0d5be7ac9955b251fc6a9e9ae83a95dca387c9f0ba1246d830c187ad167f67\",\"dweb:/ipfs/QmYCNmFpB4G7wRuwV7k3FDfHtmapLKLen4KJNgdWi7gVAo\"]},\"src/interfaces/external/balancer/standalone-utils/ISilo.sol\":{\"keccak256\":\"0xaebc0311475e46e81a281ad03679855a45e2a72057e14d3a79972d96a85e6c8a\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://8eee261820490f88501b6f7bcee165207b42e525c52a918fc4b8321c33fda35f\",\"dweb:/ipfs/QmQpFWcNDR2VPpodPTSMgDu9MG9N6tGwrHHQe5yEgEkmhm\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "assetStorage",
+          "outputs": [
+            {
+              "internalType": "struct IBaseSilo.AssetStorage",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "contract IShareToken",
+                  "name": "collateralToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IShareToken",
+                  "name": "collateralOnlyToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IShareToken",
+                  "name": "debtToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "totalDeposits",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "collateralOnlyDeposits",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "totalBorrowAmount",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_depositor",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "_collateralOnly",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "depositFor",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "collateralAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "collateralShare",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "_collateralOnly",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdraw",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "withdrawnAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "withdrawnShare",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "assetStorage(address)": {
+            "details": "returns the asset storage structAssetStorage struct contains necessary information for calculating shareToken exchange rates"
+          },
+          "depositFor(address,address,uint256,bool)": {
+            "details": "Deposits funds into the Silo",
+            "params": {
+              "_amount": "The amount of the token to deposit",
+              "_asset": "The address of the token to deposit",
+              "_collateralOnly": ": True means your shareToken is protected (cannot be swapped for interest)",
+              "_depositor": "The address of the recipient of collateral tokens"
+            },
+            "returns": {
+              "collateralAmount": "deposited amount",
+              "collateralShare": "user collateral shares based on deposited amount"
+            }
+          },
+          "withdraw(address,uint256,bool)": {
+            "details": "Withdraw `_amount` of `_asset` tokens from the Silo to `msg.sender`",
+            "params": {
+              "_amount": "The amount of the token to withdraw",
+              "_asset": "The address of the token to withdraw",
+              "_collateralOnly": "True if withdrawing collateral only deposit"
+            },
+            "returns": {
+              "withdrawnAmount": "withdrawn amount that was transferred to user",
+              "withdrawnShare": "burned share based on `withdrawnAmount`"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/standalone-utils/ISilo.sol": "ISilo"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol": {
+        "keccak256": "0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835",
+        "urls": [
+          "bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f",
+          "dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/balancer/standalone-utils/IShareToken.sol": {
+        "keccak256": "0x58a36b22bb2da98e495a76ddb714544f7a78b6a03050d2f571320d1a2e0bdcb6",
+        "urls": [
+          "bzz-raw://df0d5be7ac9955b251fc6a9e9ae83a95dca387c9f0ba1246d830c187ad167f67",
+          "dweb:/ipfs/QmYCNmFpB4G7wRuwV7k3FDfHtmapLKLen4KJNgdWi7gVAo"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/standalone-utils/ISilo.sol": {
+        "keccak256": "0xaebc0311475e46e81a281ad03679855a45e2a72057e14d3a79972d96a85e6c8a",
+        "urls": [
+          "bzz-raw://8eee261820490f88501b6f7bcee165207b42e525c52a918fc4b8321c33fda35f",
+          "dweb:/ipfs/QmQpFWcNDR2VPpodPTSMgDu9MG9N6tGwrHHQe5yEgEkmhm"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/standalone-utils/ISilo.sol",
+    "id": 61372,
+    "exportedSymbols": {
+      "IBaseSilo": [
+        61338
+      ],
+      "IShareToken": [
+        61308
+      ],
+      "ISilo": [
+        61371
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:2684:171",
+    "nodes": [
+      {
+        "id": 61310,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:171",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 61311,
+        "nodeType": "PragmaDirective",
+        "src": "712:33:171",
+        "nodes": [],
+        "literals": [
+          "experimental",
+          "ABIEncoderV2"
+        ]
+      },
+      {
+        "id": 61312,
+        "nodeType": "ImportDirective",
+        "src": "747:27:171",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/standalone-utils/IShareToken.sol",
+        "file": "./IShareToken.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 61372,
+        "sourceUnit": 61309,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 61338,
+        "nodeType": "ContractDefinition",
+        "src": "776:1266:171",
+        "nodes": [
+          {
+            "id": 61328,
+            "nodeType": "StructDefinition",
+            "src": "880:906:171",
+            "nodes": [],
+            "canonicalName": "IBaseSilo.AssetStorage",
+            "members": [
+              {
+                "constant": false,
+                "id": 61315,
+                "mutability": "mutable",
+                "name": "collateralToken",
+                "nameLocation": "988:15:171",
+                "nodeType": "VariableDeclaration",
+                "scope": 61328,
+                "src": "976:27:171",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IShareToken_$61308",
+                  "typeString": "contract IShareToken"
+                },
+                "typeName": {
+                  "id": 61314,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 61313,
+                    "name": "IShareToken",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 61308,
+                    "src": "976:11:171"
+                  },
+                  "referencedDeclaration": 61308,
+                  "src": "976:11:171",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IShareToken_$61308",
+                    "typeString": "contract IShareToken"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 61318,
+                "mutability": "mutable",
+                "name": "collateralOnlyToken",
+                "nameLocation": "1100:19:171",
+                "nodeType": "VariableDeclaration",
+                "scope": 61328,
+                "src": "1088:31:171",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IShareToken_$61308",
+                  "typeString": "contract IShareToken"
+                },
+                "typeName": {
+                  "id": 61317,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 61316,
+                    "name": "IShareToken",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 61308,
+                    "src": "1088:11:171"
+                  },
+                  "referencedDeclaration": 61308,
+                  "src": "1088:11:171",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IShareToken_$61308",
+                    "typeString": "contract IShareToken"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 61321,
+                "mutability": "mutable",
+                "name": "debtToken",
+                "nameLocation": "1211:9:171",
+                "nodeType": "VariableDeclaration",
+                "scope": 61328,
+                "src": "1199:21:171",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_IShareToken_$61308",
+                  "typeString": "contract IShareToken"
+                },
+                "typeName": {
+                  "id": 61320,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 61319,
+                    "name": "IShareToken",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 61308,
+                    "src": "1199:11:171"
+                  },
+                  "referencedDeclaration": 61308,
+                  "src": "1199:11:171",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IShareToken_$61308",
+                    "typeString": "contract IShareToken"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 61323,
+                "mutability": "mutable",
+                "name": "totalDeposits",
+                "nameLocation": "1416:13:171",
+                "nodeType": "VariableDeclaration",
+                "scope": 61328,
+                "src": "1408:21:171",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 61322,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1408:7:171",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 61325,
+                "mutability": "mutable",
+                "name": "collateralOnlyDeposits",
+                "nameLocation": "1637:22:171",
+                "nodeType": "VariableDeclaration",
+                "scope": 61328,
+                "src": "1629:30:171",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 61324,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1629:7:171",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 61327,
+                "mutability": "mutable",
+                "name": "totalBorrowAmount",
+                "nameLocation": "1762:17:171",
+                "nodeType": "VariableDeclaration",
+                "scope": 61328,
+                "src": "1754:25:171",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 61326,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1754:7:171",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "AssetStorage",
+            "nameLocation": "887:12:171",
+            "scope": 61338,
+            "visibility": "public"
+          },
+          {
+            "id": 61337,
+            "nodeType": "FunctionDefinition",
+            "src": "1958:82:171",
+            "nodes": [],
+            "documentation": {
+              "id": 61329,
+              "nodeType": "StructuredDocumentation",
+              "src": "1792:161:171",
+              "text": " @dev returns the asset storage struct\n @dev AssetStorage struct contains necessary information for calculating shareToken exchange rates"
+            },
+            "functionSelector": "bf273041",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "assetStorage",
+            "nameLocation": "1967:12:171",
+            "parameters": {
+              "id": 61332,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61331,
+                  "mutability": "mutable",
+                  "name": "_asset",
+                  "nameLocation": "1988:6:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61337,
+                  "src": "1980:14:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 61330,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1980:7:171",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1979:16:171"
+            },
+            "returnParameters": {
+              "id": 61336,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61335,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61337,
+                  "src": "2019:19:171",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_AssetStorage_$61328_memory_ptr",
+                    "typeString": "struct IBaseSilo.AssetStorage"
+                  },
+                  "typeName": {
+                    "id": 61334,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61333,
+                      "name": "AssetStorage",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 61328,
+                      "src": "2019:12:171"
+                    },
+                    "referencedDeclaration": 61328,
+                    "src": "2019:12:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_AssetStorage_$61328_storage_ptr",
+                      "typeString": "struct IBaseSilo.AssetStorage"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2018:21:171"
+            },
+            "scope": 61338,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IBaseSilo",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          61338
+        ],
+        "name": "IBaseSilo",
+        "nameLocation": "786:9:171",
+        "scope": 61372,
+        "usedErrors": []
+      },
+      {
+        "id": 61371,
+        "nodeType": "ContractDefinition",
+        "src": "2044:1327:171",
+        "nodes": [
+          {
+            "id": 61356,
+            "nodeType": "FunctionDefinition",
+            "src": "2558:202:171",
+            "nodes": [],
+            "documentation": {
+              "id": 61341,
+              "nodeType": "StructuredDocumentation",
+              "src": "2079:474:171",
+              "text": " @dev Deposits funds into the Silo\n @param _asset The address of the token to deposit\n @param _depositor The address of the recipient of collateral tokens\n @param _amount The amount of the token to deposit\n @param _collateralOnly: True means your shareToken is protected (cannot be swapped for interest)\n @return collateralAmount deposited amount\n @return collateralShare user collateral shares based on deposited amount"
+            },
+            "functionSelector": "fbf178db",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "depositFor",
+            "nameLocation": "2567:10:171",
+            "parameters": {
+              "id": 61350,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61343,
+                  "mutability": "mutable",
+                  "name": "_asset",
+                  "nameLocation": "2595:6:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61356,
+                  "src": "2587:14:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 61342,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2587:7:171",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61345,
+                  "mutability": "mutable",
+                  "name": "_depositor",
+                  "nameLocation": "2619:10:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61356,
+                  "src": "2611:18:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 61344,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2611:7:171",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61347,
+                  "mutability": "mutable",
+                  "name": "_amount",
+                  "nameLocation": "2647:7:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61356,
+                  "src": "2639:15:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61346,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2639:7:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61349,
+                  "mutability": "mutable",
+                  "name": "_collateralOnly",
+                  "nameLocation": "2669:15:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61356,
+                  "src": "2664:20:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 61348,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2664:4:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2577:113:171"
+            },
+            "returnParameters": {
+              "id": 61355,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61352,
+                  "mutability": "mutable",
+                  "name": "collateralAmount",
+                  "nameLocation": "2717:16:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61356,
+                  "src": "2709:24:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61351,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2709:7:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61354,
+                  "mutability": "mutable",
+                  "name": "collateralShare",
+                  "nameLocation": "2743:15:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61356,
+                  "src": "2735:23:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61353,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2735:7:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2708:51:171"
+            },
+            "scope": 61371,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61370,
+            "nodeType": "FunctionDefinition",
+            "src": "3199:170:171",
+            "nodes": [],
+            "documentation": {
+              "id": 61357,
+              "nodeType": "StructuredDocumentation",
+              "src": "2766:428:171",
+              "text": " @dev Withdraw `_amount` of `_asset` tokens from the Silo to `msg.sender`\n @param _asset The address of the token to withdraw\n @param _amount The amount of the token to withdraw\n @param _collateralOnly True if withdrawing collateral only deposit\n @return withdrawnAmount withdrawn amount that was transferred to user\n @return withdrawnShare burned share based on `withdrawnAmount`"
+            },
+            "functionSelector": "ead5d359",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdraw",
+            "nameLocation": "3208:8:171",
+            "parameters": {
+              "id": 61364,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61359,
+                  "mutability": "mutable",
+                  "name": "_asset",
+                  "nameLocation": "3234:6:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61370,
+                  "src": "3226:14:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 61358,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3226:7:171",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61361,
+                  "mutability": "mutable",
+                  "name": "_amount",
+                  "nameLocation": "3258:7:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61370,
+                  "src": "3250:15:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61360,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3250:7:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61363,
+                  "mutability": "mutable",
+                  "name": "_collateralOnly",
+                  "nameLocation": "3280:15:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61370,
+                  "src": "3275:20:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 61362,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3275:4:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3216:85:171"
+            },
+            "returnParameters": {
+              "id": 61369,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61366,
+                  "mutability": "mutable",
+                  "name": "withdrawnAmount",
+                  "nameLocation": "3328:15:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61370,
+                  "src": "3320:23:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61365,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3320:7:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 61368,
+                  "mutability": "mutable",
+                  "name": "withdrawnShare",
+                  "nameLocation": "3353:14:171",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61370,
+                  "src": "3345:22:171",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61367,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3345:7:171",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3319:49:171"
+            },
+            "scope": 61371,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 61339,
+              "name": "IBaseSilo",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 61338,
+              "src": "2063:9:171"
+            },
+            "id": 61340,
+            "nodeType": "InheritanceSpecifier",
+            "src": "2063:9:171"
+          }
+        ],
+        "canonicalName": "ISilo",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          61371,
+          61338
+        ],
+        "name": "ISilo",
+        "nameLocation": "2054:5:171",
+        "scope": 61372,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 171
+}

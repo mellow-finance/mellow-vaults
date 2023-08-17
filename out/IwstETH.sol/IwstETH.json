@@ -1,0 +1,1423 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "name": "allowance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_wstETHAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "getStETHByWstETH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_stETHAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "getWstETHByStETH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stETH",
+      "outputs": [
+        {
+          "internalType": "contract IstETH",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stEthPerToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tokensPerStEth",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_wstETHAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "unwrap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_stETHAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "wrap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "allowance(address,address)": "dd62ed3e",
+    "approve(address,uint256)": "095ea7b3",
+    "balanceOf(address)": "70a08231",
+    "getStETHByWstETH(uint256)": "bb2952fc",
+    "getWstETHByStETH(uint256)": "b0e38900",
+    "stETH()": "c1fe3e48",
+    "stEthPerToken()": "035faf82",
+    "tokensPerStEth()": "9576a0c8",
+    "totalSupply()": "18160ddd",
+    "transfer(address,uint256)": "a9059cbb",
+    "transferFrom(address,address,uint256)": "23b872dd",
+    "unwrap(uint256)": "de0e9a3e",
+    "wrap(uint256)": "ea598cb0"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_wstETHAmount\",\"type\":\"uint256\"}],\"name\":\"getStETHByWstETH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_stETHAmount\",\"type\":\"uint256\"}],\"name\":\"getWstETHByStETH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stETH\",\"outputs\":[{\"internalType\":\"contract IstETH\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stEthPerToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tokensPerStEth\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_wstETHAmount\",\"type\":\"uint256\"}],\"name\":\"unwrap\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_stETHAmount\",\"type\":\"uint256\"}],\"name\":\"wrap\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"It's an ERC20 token that represents the account's share of the total supply of stETH tokens. WstETH token's balance only changes on transfers, unlike StETH that is also changed when oracles report staking rewards and penalties. It's a \\\"power user\\\" token for DeFi protocols which don't support rebasable tokens. The contract is also a trustless wrapper that accepts stETH tokens and mints wstETH in return. Then the user unwraps, the contract burns user's wstETH and sends user locked stETH in return. The contract provides the staking shortcut: user can send ETH with regular transfer and get wstETH in return. The contract will send ETH to Lido submit method, staking it and wrapping the received stETH.\",\"kind\":\"dev\",\"methods\":{\"allowance(address,address)\":{\"details\":\"Returns the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through {transferFrom}. This is zero by default. This value changes when {approve} or {transferFrom} are called.\"},\"approve(address,uint256)\":{\"details\":\"Sets `amount` as the allowance of `spender` over the caller's tokens. Returns a boolean value indicating whether the operation succeeded. IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards: https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729 Emits an {Approval} event.\"},\"balanceOf(address)\":{\"details\":\"Returns the amount of tokens owned by `account`.\"},\"getStETHByWstETH(uint256)\":{\"params\":{\"_wstETHAmount\":\"amount of wstETH\"},\"returns\":{\"_0\":\"Amount of stETH for a given wstETH amount\"}},\"getWstETHByStETH(uint256)\":{\"params\":{\"_stETHAmount\":\"amount of stETH\"},\"returns\":{\"_0\":\"Amount of wstETH for a given stETH amount\"}},\"stEthPerToken()\":{\"returns\":{\"_0\":\"Amount of stETH for 1 wstETH\"}},\"tokensPerStEth()\":{\"returns\":{\"_0\":\"Amount of wstETH for a 1 stETH\"}},\"totalSupply()\":{\"details\":\"Returns the amount of tokens in existence.\"},\"transfer(address,uint256)\":{\"details\":\"Moves `amount` tokens from the caller's account to `recipient`. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event.\"},\"transferFrom(address,address,uint256)\":{\"details\":\"Moves `amount` tokens from `sender` to `recipient` using the allowance mechanism. `amount` is then deducted from the caller's allowance. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event.\"},\"unwrap(uint256)\":{\"details\":\"Requirements:  - `_wstETHAmount` must be non-zero  - msg.sender must have at least `_wstETHAmount` wstETH.\",\"params\":{\"_wstETHAmount\":\"amount of wstETH to uwrap in exchange for stETH\"},\"returns\":{\"_0\":\"Amount of stETH user receives after unwrap\"}},\"wrap(uint256)\":{\"details\":\"Requirements:  - `_stETHAmount` must be non-zero  - msg.sender must approve at least `_stETHAmount` stETH to this    contract.  - msg.sender must have at least `_stETHAmount` of stETH. User should first approve _stETHAmount to the WstETH contract\",\"params\":{\"_stETHAmount\":\"amount of stETH to wrap in exchange for wstETH\"},\"returns\":{\"_0\":\"Amount of wstETH user receives after wrap\"}}},\"title\":\"StETH token wrapper with static balances.\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getStETHByWstETH(uint256)\":{\"notice\":\"Get amount of stETH for a given amount of wstETH\"},\"getWstETHByStETH(uint256)\":{\"notice\":\"Get amount of wstETH for a given amount of stETH\"},\"stEthPerToken()\":{\"notice\":\"Get amount of wstETH for a one stETH\"},\"tokensPerStEth()\":{\"notice\":\"Get amount of stETH for a one wstETH\"},\"unwrap(uint256)\":{\"notice\":\"Exchanges wstETH to stETH\"},\"wrap(uint256)\":{\"notice\":\"Exchanges stETH to wstETH\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/standalone-utils/IwstETH.sol\":\"IwstETH\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol\":{\"keccak256\":\"0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f\",\"dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U\"]},\"src/interfaces/external/balancer/standalone-utils/IstETH.sol\":{\"keccak256\":\"0x294f0d5b2e3b9d48cb6f0af2e76bcc55a88761c9aa09217aa2654982fd9a9f73\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://b574879d60269ac709b060c3b8d771f1617598bf08fe6c83e90f65ea9877c9a1\",\"dweb:/ipfs/QmfLUZ6rpG7QP384VgDWy9ZzDc9JwpYBQHtZCHb7jjsab3\"]},\"src/interfaces/external/balancer/standalone-utils/IwstETH.sol\":{\"keccak256\":\"0x011fa3e955c9aa5bd0c7eda14c323d910f232c90f53de5a749a5b8ccf8b904f7\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://1ec4b10ecb8fbf83d3b66a55a04d4fbead0335906290237f94c07bb46a6e8a99\",\"dweb:/ipfs/QmVunzDgTthAZ9QQ4Bbj94NKWc8NC7mrjnEffdc9y42MUN\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Approval",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "Transfer",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "allowance",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "approve",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "balanceOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_wstETHAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getStETHByWstETH",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_stETHAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getWstETHByStETH",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stETH",
+          "outputs": [
+            {
+              "internalType": "contract IstETH",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "stEthPerToken",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tokensPerStEth",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalSupply",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transfer",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferFrom",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_wstETHAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "unwrap",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_stETHAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "wrap",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "allowance(address,address)": {
+            "details": "Returns the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through {transferFrom}. This is zero by default. This value changes when {approve} or {transferFrom} are called."
+          },
+          "approve(address,uint256)": {
+            "details": "Sets `amount` as the allowance of `spender` over the caller's tokens. Returns a boolean value indicating whether the operation succeeded. IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards: https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729 Emits an {Approval} event."
+          },
+          "balanceOf(address)": {
+            "details": "Returns the amount of tokens owned by `account`."
+          },
+          "getStETHByWstETH(uint256)": {
+            "params": {
+              "_wstETHAmount": "amount of wstETH"
+            },
+            "returns": {
+              "_0": "Amount of stETH for a given wstETH amount"
+            }
+          },
+          "getWstETHByStETH(uint256)": {
+            "params": {
+              "_stETHAmount": "amount of stETH"
+            },
+            "returns": {
+              "_0": "Amount of wstETH for a given stETH amount"
+            }
+          },
+          "stEthPerToken()": {
+            "returns": {
+              "_0": "Amount of stETH for 1 wstETH"
+            }
+          },
+          "tokensPerStEth()": {
+            "returns": {
+              "_0": "Amount of wstETH for a 1 stETH"
+            }
+          },
+          "totalSupply()": {
+            "details": "Returns the amount of tokens in existence."
+          },
+          "transfer(address,uint256)": {
+            "details": "Moves `amount` tokens from the caller's account to `recipient`. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event."
+          },
+          "transferFrom(address,address,uint256)": {
+            "details": "Moves `amount` tokens from `sender` to `recipient` using the allowance mechanism. `amount` is then deducted from the caller's allowance. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event."
+          },
+          "unwrap(uint256)": {
+            "details": "Requirements:  - `_wstETHAmount` must be non-zero  - msg.sender must have at least `_wstETHAmount` wstETH.",
+            "params": {
+              "_wstETHAmount": "amount of wstETH to uwrap in exchange for stETH"
+            },
+            "returns": {
+              "_0": "Amount of stETH user receives after unwrap"
+            }
+          },
+          "wrap(uint256)": {
+            "details": "Requirements:  - `_stETHAmount` must be non-zero  - msg.sender must approve at least `_stETHAmount` stETH to this    contract.  - msg.sender must have at least `_stETHAmount` of stETH. User should first approve _stETHAmount to the WstETH contract",
+            "params": {
+              "_stETHAmount": "amount of stETH to wrap in exchange for wstETH"
+            },
+            "returns": {
+              "_0": "Amount of wstETH user receives after wrap"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "getStETHByWstETH(uint256)": {
+            "notice": "Get amount of stETH for a given amount of wstETH"
+          },
+          "getWstETHByStETH(uint256)": {
+            "notice": "Get amount of wstETH for a given amount of stETH"
+          },
+          "stEthPerToken()": {
+            "notice": "Get amount of wstETH for a one stETH"
+          },
+          "tokensPerStEth()": {
+            "notice": "Get amount of stETH for a one wstETH"
+          },
+          "unwrap(uint256)": {
+            "notice": "Exchanges wstETH to stETH"
+          },
+          "wrap(uint256)": {
+            "notice": "Exchanges stETH to wstETH"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/standalone-utils/IwstETH.sol": "IwstETH"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol": {
+        "keccak256": "0xf8e8d118a7a8b2e134181f7da655f6266aa3a0f9134b2605747139fcb0c5d835",
+        "urls": [
+          "bzz-raw://9ec48567e7ad06acb670980d5cdf3fd7f3949bf12894f02d68c3bb43e75aa84f",
+          "dweb:/ipfs/QmaG3R2J9cz92YT77vFjYrjMNU2wHp4ypwYD62HqDUqS5U"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/external/balancer/standalone-utils/IstETH.sol": {
+        "keccak256": "0x294f0d5b2e3b9d48cb6f0af2e76bcc55a88761c9aa09217aa2654982fd9a9f73",
+        "urls": [
+          "bzz-raw://b574879d60269ac709b060c3b8d771f1617598bf08fe6c83e90f65ea9877c9a1",
+          "dweb:/ipfs/QmfLUZ6rpG7QP384VgDWy9ZzDc9JwpYBQHtZCHb7jjsab3"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/standalone-utils/IwstETH.sol": {
+        "keccak256": "0x011fa3e955c9aa5bd0c7eda14c323d910f232c90f53de5a749a5b8ccf8b904f7",
+        "urls": [
+          "bzz-raw://1ec4b10ecb8fbf83d3b66a55a04d4fbead0335906290237f94c07bb46a6e8a99",
+          "dweb:/ipfs/QmVunzDgTthAZ9QQ4Bbj94NKWc8NC7mrjnEffdc9y42MUN"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/standalone-utils/IwstETH.sol",
+    "id": 61805,
+    "exportedSymbols": {
+      "IERC20": [
+        60345
+      ],
+      "IstETH": [
+        61746
+      ],
+      "IwstETH": [
+        61804
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:3001:178",
+    "nodes": [
+      {
+        "id": 61748,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:178",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 61749,
+        "nodeType": "ImportDirective",
+        "src": "713:51:178",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/solidity-utils/openzeppelin/IERC20.sol",
+        "file": "../solidity-utils/openzeppelin/IERC20.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 61805,
+        "sourceUnit": 60346,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 61750,
+        "nodeType": "ImportDirective",
+        "src": "766:22:178",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/standalone-utils/IstETH.sol",
+        "file": "./IstETH.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 61805,
+        "sourceUnit": 61747,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 61804,
+        "nodeType": "ContractDefinition",
+        "src": "1774:1914:178",
+        "nodes": [
+          {
+            "id": 61759,
+            "nodeType": "FunctionDefinition",
+            "src": "1808:43:178",
+            "nodes": [],
+            "functionSelector": "c1fe3e48",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stETH",
+            "nameLocation": "1817:5:178",
+            "parameters": {
+              "id": 61754,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1822:2:178"
+            },
+            "returnParameters": {
+              "id": 61758,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61757,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61759,
+                  "src": "1843:6:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IstETH_$61746",
+                    "typeString": "contract IstETH"
+                  },
+                  "typeName": {
+                    "id": 61756,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 61755,
+                      "name": "IstETH",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 61746,
+                      "src": "1843:6:178"
+                    },
+                    "referencedDeclaration": 61746,
+                    "src": "1843:6:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IstETH_$61746",
+                      "typeString": "contract IstETH"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1842:8:178"
+            },
+            "scope": 61804,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61767,
+            "nodeType": "FunctionDefinition",
+            "src": "2339:63:178",
+            "nodes": [],
+            "documentation": {
+              "id": 61760,
+              "nodeType": "StructuredDocumentation",
+              "src": "1857:477:178",
+              "text": " @notice Exchanges stETH to wstETH\n @param _stETHAmount amount of stETH to wrap in exchange for wstETH\n @dev Requirements:\n  - `_stETHAmount` must be non-zero\n  - msg.sender must approve at least `_stETHAmount` stETH to this\n    contract.\n  - msg.sender must have at least `_stETHAmount` of stETH.\n User should first approve _stETHAmount to the WstETH contract\n @return Amount of wstETH user receives after wrap"
+            },
+            "functionSelector": "ea598cb0",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "wrap",
+            "nameLocation": "2348:4:178",
+            "parameters": {
+              "id": 61763,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61762,
+                  "mutability": "mutable",
+                  "name": "_stETHAmount",
+                  "nameLocation": "2361:12:178",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61767,
+                  "src": "2353:20:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61761,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2353:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2352:22:178"
+            },
+            "returnParameters": {
+              "id": 61766,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61765,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61767,
+                  "src": "2393:7:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61764,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2393:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2392:9:178"
+            },
+            "scope": 61804,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61775,
+            "nodeType": "FunctionDefinition",
+            "src": "2732:66:178",
+            "nodes": [],
+            "documentation": {
+              "id": 61768,
+              "nodeType": "StructuredDocumentation",
+              "src": "2408:319:178",
+              "text": " @notice Exchanges wstETH to stETH\n @param _wstETHAmount amount of wstETH to uwrap in exchange for stETH\n @dev Requirements:\n  - `_wstETHAmount` must be non-zero\n  - msg.sender must have at least `_wstETHAmount` wstETH.\n @return Amount of stETH user receives after unwrap"
+            },
+            "functionSelector": "de0e9a3e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "unwrap",
+            "nameLocation": "2741:6:178",
+            "parameters": {
+              "id": 61771,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61770,
+                  "mutability": "mutable",
+                  "name": "_wstETHAmount",
+                  "nameLocation": "2756:13:178",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61775,
+                  "src": "2748:21:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61769,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2748:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2747:23:178"
+            },
+            "returnParameters": {
+              "id": 61774,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61773,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61775,
+                  "src": "2789:7:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61772,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2789:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2788:9:178"
+            },
+            "scope": 61804,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61783,
+            "nodeType": "FunctionDefinition",
+            "src": "2984:80:178",
+            "nodes": [],
+            "documentation": {
+              "id": 61776,
+              "nodeType": "StructuredDocumentation",
+              "src": "2804:175:178",
+              "text": " @notice Get amount of wstETH for a given amount of stETH\n @param _stETHAmount amount of stETH\n @return Amount of wstETH for a given stETH amount"
+            },
+            "functionSelector": "b0e38900",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getWstETHByStETH",
+            "nameLocation": "2993:16:178",
+            "parameters": {
+              "id": 61779,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61778,
+                  "mutability": "mutable",
+                  "name": "_stETHAmount",
+                  "nameLocation": "3018:12:178",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61783,
+                  "src": "3010:20:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61777,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3010:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3009:22:178"
+            },
+            "returnParameters": {
+              "id": 61782,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61781,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61783,
+                  "src": "3055:7:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61780,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3055:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3054:9:178"
+            },
+            "scope": 61804,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61791,
+            "nodeType": "FunctionDefinition",
+            "src": "3252:81:178",
+            "nodes": [],
+            "documentation": {
+              "id": 61784,
+              "nodeType": "StructuredDocumentation",
+              "src": "3070:177:178",
+              "text": " @notice Get amount of stETH for a given amount of wstETH\n @param _wstETHAmount amount of wstETH\n @return Amount of stETH for a given wstETH amount"
+            },
+            "functionSelector": "bb2952fc",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getStETHByWstETH",
+            "nameLocation": "3261:16:178",
+            "parameters": {
+              "id": 61787,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61786,
+                  "mutability": "mutable",
+                  "name": "_wstETHAmount",
+                  "nameLocation": "3286:13:178",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61791,
+                  "src": "3278:21:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61785,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3278:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3277:23:178"
+            },
+            "returnParameters": {
+              "id": 61790,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61789,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61791,
+                  "src": "3324:7:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61788,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3324:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3323:9:178"
+            },
+            "scope": 61804,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61797,
+            "nodeType": "FunctionDefinition",
+            "src": "3451:57:178",
+            "nodes": [],
+            "documentation": {
+              "id": 61792,
+              "nodeType": "StructuredDocumentation",
+              "src": "3339:107:178",
+              "text": " @notice Get amount of wstETH for a one stETH\n @return Amount of stETH for 1 wstETH"
+            },
+            "functionSelector": "035faf82",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "stEthPerToken",
+            "nameLocation": "3460:13:178",
+            "parameters": {
+              "id": 61793,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3473:2:178"
+            },
+            "returnParameters": {
+              "id": 61796,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61795,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61797,
+                  "src": "3499:7:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61794,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3499:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3498:9:178"
+            },
+            "scope": 61804,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 61803,
+            "nodeType": "FunctionDefinition",
+            "src": "3628:58:178",
+            "nodes": [],
+            "documentation": {
+              "id": 61798,
+              "nodeType": "StructuredDocumentation",
+              "src": "3514:109:178",
+              "text": " @notice Get amount of stETH for a one wstETH\n @return Amount of wstETH for a 1 stETH"
+            },
+            "functionSelector": "9576a0c8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "tokensPerStEth",
+            "nameLocation": "3637:14:178",
+            "parameters": {
+              "id": 61799,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3651:2:178"
+            },
+            "returnParameters": {
+              "id": 61802,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 61801,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61803,
+                  "src": "3677:7:178",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 61800,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3677:7:178",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3676:9:178"
+            },
+            "scope": 61804,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 61752,
+              "name": "IERC20",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 60345,
+              "src": "1795:6:178"
+            },
+            "id": 61753,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1795:6:178"
+          }
+        ],
+        "canonicalName": "IwstETH",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 61751,
+          "nodeType": "StructuredDocumentation",
+          "src": "962:811:178",
+          "text": " @title StETH token wrapper with static balances.\n @dev It's an ERC20 token that represents the account's share of the total\n supply of stETH tokens. WstETH token's balance only changes on transfers,\n unlike StETH that is also changed when oracles report staking rewards and\n penalties. It's a \"power user\" token for DeFi protocols which don't\n support rebasable tokens.\n The contract is also a trustless wrapper that accepts stETH tokens and mints\n wstETH in return. Then the user unwraps, the contract burns user's wstETH\n and sends user locked stETH in return.\n The contract provides the staking shortcut: user can send ETH with regular\n transfer and get wstETH in return. The contract will send ETH to Lido submit\n method, staking it and wrapping the received stETH."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          61804,
+          60345
+        ],
+        "name": "IwstETH",
+        "nameLocation": "1784:7:178",
+        "scope": 61805,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 178
+}

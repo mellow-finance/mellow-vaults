@@ -1,0 +1,201 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "pool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "pool()": "16f0115b"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"pool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/vaults/IAMMVault.sol\":\"IAMMVault\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/vaults/IAMMVault.sol\":{\"keccak256\":\"0x2bf728b56c428bd0a687dcdefbbb690362d30cc7cd79befd010bd32b7659a209\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://0f218cc04168e6c451b5fdb9268aefbab38ebb41748ffa74aa5e43e7171aaf9c\",\"dweb:/ipfs/QmcQAenjRRVnvg5ZAZksn7yYtLHY4CKTK3vk8u8X5X6Hvi\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "pool",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/vaults/IAMMVault.sol": "IAMMVault"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/vaults/IAMMVault.sol": {
+        "keccak256": "0x2bf728b56c428bd0a687dcdefbbb690362d30cc7cd79befd010bd32b7659a209",
+        "urls": [
+          "bzz-raw://0f218cc04168e6c451b5fdb9268aefbab38ebb41748ffa74aa5e43e7171aaf9c",
+          "dweb:/ipfs/QmcQAenjRRVnvg5ZAZksn7yYtLHY4CKTK3vk8u8X5X6Hvi"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/vaults/IAMMVault.sol",
+    "id": 76102,
+    "exportedSymbols": {
+      "IAMMVault": [
+        76101
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:102:325",
+    "nodes": [
+      {
+        "id": 76095,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:325",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 76101,
+        "nodeType": "ContractDefinition",
+        "src": "70:76:325",
+        "nodes": [
+          {
+            "id": 76100,
+            "nodeType": "FunctionDefinition",
+            "src": "96:48:325",
+            "nodes": [],
+            "functionSelector": "16f0115b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "pool",
+            "nameLocation": "105:4:325",
+            "parameters": {
+              "id": 76096,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "109:2:325"
+            },
+            "returnParameters": {
+              "id": 76099,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 76098,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 76100,
+                  "src": "135:7:325",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 76097,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "135:7:325",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "134:9:325"
+            },
+            "scope": 76101,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAMMVault",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          76101
+        ],
+        "name": "IAMMVault",
+        "nameLocation": "80:9:325",
+        "scope": 76102,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 325
+}

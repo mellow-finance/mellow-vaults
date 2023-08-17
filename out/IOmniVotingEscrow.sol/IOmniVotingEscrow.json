@@ -1,0 +1,590 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "_dstChainId",
+          "type": "uint16"
+        },
+        {
+          "internalType": "bool",
+          "name": "_useZro",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_adapterParams",
+          "type": "bytes"
+        }
+      ],
+      "name": "estimateSendUserBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nativeFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "zroFee",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_dstChainId",
+          "type": "uint16"
+        },
+        {
+          "internalType": "address payable",
+          "name": "_refundAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_zroPaymentAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_adapterParams",
+          "type": "bytes"
+        }
+      ],
+      "name": "sendUserBalance",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "estimateSendUserBalance(uint16,bool,bytes)": "65d092d0",
+    "sendUserBalance(address,uint16,address,address,bytes)": "4a759489"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"_dstChainId\",\"type\":\"uint16\"},{\"internalType\":\"bool\",\"name\":\"_useZro\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"_adapterParams\",\"type\":\"bytes\"}],\"name\":\"estimateSendUserBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"nativeFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"zroFee\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint16\",\"name\":\"_dstChainId\",\"type\":\"uint16\"},{\"internalType\":\"address payable\",\"name\":\"_refundAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_zroPaymentAddress\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_adapterParams\",\"type\":\"bytes\"}],\"name\":\"sendUserBalance\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Partial voting escrow bridge interface. See https://github.com/LayerZero-Labs/lz_gauges/blob/main/contracts/OmniVotingEscrow.sol for reference.\",\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrow.sol\":\"IOmniVotingEscrow\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrow.sol\":{\"keccak256\":\"0xf133bb4c7b9610e27ca88742969be80dd586b2589ed8d57c4fc562222888bf3e\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://b38f634aeffca9fbc0437973e6598d1c268f55529bfa02cf9c90a6a910d11504\",\"dweb:/ipfs/QmdS3LTNjfJPMv3K6qDEUTVEjmFDkwiFNwdkLGTdd1TnpC\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint16",
+              "name": "_dstChainId",
+              "type": "uint16"
+            },
+            {
+              "internalType": "bool",
+              "name": "_useZro",
+              "type": "bool"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_adapterParams",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "estimateSendUserBalance",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "nativeFee",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "zroFee",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_user",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "_dstChainId",
+              "type": "uint16"
+            },
+            {
+              "internalType": "address payable",
+              "name": "_refundAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_zroPaymentAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_adapterParams",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "sendUserBalance"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrow.sol": "IOmniVotingEscrow"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrow.sol": {
+        "keccak256": "0xf133bb4c7b9610e27ca88742969be80dd586b2589ed8d57c4fc562222888bf3e",
+        "urls": [
+          "bzz-raw://b38f634aeffca9fbc0437973e6598d1c268f55529bfa02cf9c90a6a910d11504",
+          "dweb:/ipfs/QmdS3LTNjfJPMv3K6qDEUTVEjmFDkwiFNwdkLGTdd1TnpC"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IOmniVotingEscrow.sol",
+    "id": 57435,
+    "exportedSymbols": {
+      "IOmniVotingEscrow": [
+        57434
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:629:112",
+    "nodes": [
+      {
+        "id": 57406,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:112",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 57434,
+        "nodeType": "ContractDefinition",
+        "src": "876:440:112",
+        "nodes": [
+          {
+            "id": 57420,
+            "nodeType": "FunctionDefinition",
+            "src": "910:186:112",
+            "nodes": [],
+            "functionSelector": "65d092d0",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "estimateSendUserBalance",
+            "nameLocation": "919:23:112",
+            "parameters": {
+              "id": 57414,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57409,
+                  "mutability": "mutable",
+                  "name": "_dstChainId",
+                  "nameLocation": "959:11:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57420,
+                  "src": "952:18:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint16",
+                    "typeString": "uint16"
+                  },
+                  "typeName": {
+                    "id": 57408,
+                    "name": "uint16",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "952:6:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint16",
+                      "typeString": "uint16"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57411,
+                  "mutability": "mutable",
+                  "name": "_useZro",
+                  "nameLocation": "985:7:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57420,
+                  "src": "980:12:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 57410,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "980:4:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57413,
+                  "mutability": "mutable",
+                  "name": "_adapterParams",
+                  "nameLocation": "1017:14:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57420,
+                  "src": "1002:29:112",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_calldata_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 57412,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1002:5:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "942:95:112"
+            },
+            "returnParameters": {
+              "id": 57419,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57416,
+                  "mutability": "mutable",
+                  "name": "nativeFee",
+                  "nameLocation": "1069:9:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57420,
+                  "src": "1061:17:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 57415,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1061:7:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57418,
+                  "mutability": "mutable",
+                  "name": "zroFee",
+                  "nameLocation": "1088:6:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57420,
+                  "src": "1080:14:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 57417,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1080:7:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1060:35:112"
+            },
+            "scope": 57434,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 57433,
+            "nodeType": "FunctionDefinition",
+            "src": "1102:212:112",
+            "nodes": [],
+            "functionSelector": "4a759489",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "sendUserBalance",
+            "nameLocation": "1111:15:112",
+            "parameters": {
+              "id": 57431,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 57422,
+                  "mutability": "mutable",
+                  "name": "_user",
+                  "nameLocation": "1144:5:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57433,
+                  "src": "1136:13:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 57421,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1136:7:112",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57424,
+                  "mutability": "mutable",
+                  "name": "_dstChainId",
+                  "nameLocation": "1166:11:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57433,
+                  "src": "1159:18:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint16",
+                    "typeString": "uint16"
+                  },
+                  "typeName": {
+                    "id": 57423,
+                    "name": "uint16",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1159:6:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint16",
+                      "typeString": "uint16"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57426,
+                  "mutability": "mutable",
+                  "name": "_refundAddress",
+                  "nameLocation": "1203:14:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57433,
+                  "src": "1187:30:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address_payable",
+                    "typeString": "address payable"
+                  },
+                  "typeName": {
+                    "id": 57425,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1187:15:112",
+                    "stateMutability": "payable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address_payable",
+                      "typeString": "address payable"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57428,
+                  "mutability": "mutable",
+                  "name": "_zroPaymentAddress",
+                  "nameLocation": "1235:18:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57433,
+                  "src": "1227:26:112",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 57427,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1227:7:112",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 57430,
+                  "mutability": "mutable",
+                  "name": "_adapterParams",
+                  "nameLocation": "1276:14:112",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 57433,
+                  "src": "1263:27:112",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 57429,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1263:5:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1126:170:112"
+            },
+            "returnParameters": {
+              "id": 57432,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1313:0:112"
+            },
+            "scope": 57434,
+            "stateMutability": "payable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IOmniVotingEscrow",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 57407,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:162:112",
+          "text": " @dev Partial voting escrow bridge interface.\n See https://github.com/LayerZero-Labs/lz_gauges/blob/main/contracts/OmniVotingEscrow.sol for reference."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          57434
+        ],
+        "name": "IOmniVotingEscrow",
+        "nameLocation": "886:17:112",
+        "scope": 57435,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 112
+}

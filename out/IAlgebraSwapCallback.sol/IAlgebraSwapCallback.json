@@ -1,0 +1,298 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "amount0Delta",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "amount1Delta",
+          "type": "int256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "algebraSwapCallback",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "algebraSwapCallback(int256,int256,bytes)": "2c8958f6"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"int256\",\"name\":\"amount0Delta\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"amount1Delta\",\"type\":\"int256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"algebraSwapCallback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Credit to Uniswap Labs under GPL-2.0-or-later license: https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces\",\"kind\":\"dev\",\"methods\":{\"algebraSwapCallback(int256,int256,bytes)\":{\"details\":\"In the implementation you must pay the pool tokens owed for the swap. The caller of this method must be checked to be a AlgebraPool deployed by the canonical AlgebraFactory. amount0Delta and amount1Delta can both be 0 if no tokens were swapped.\",\"params\":{\"amount0Delta\":\"The amount of token0 that was sent (negative) or must be received (positive) by the pool by the end of the swap. If positive, the callback must send that amount of token0 to the pool.\",\"amount1Delta\":\"The amount of token1 that was sent (negative) or must be received (positive) by the pool by the end of the swap. If positive, the callback must send that amount of token1 to the pool.\",\"data\":\"Any data passed through by the caller via the IAlgebraPoolActions#swap call\"}}},\"title\":\"Callback for IAlgebraPoolActions#swap\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"algebraSwapCallback(int256,int256,bytes)\":{\"notice\":\"Called to `msg.sender` after executing a swap via IAlgebraPool#swap.\"}},\"notice\":\"Any contract that calls IAlgebraPoolActions#swap must implement this interface\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/quickswap/IAlgebraSwapCallback.sol\":\"IAlgebraSwapCallback\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/quickswap/IAlgebraSwapCallback.sol\":{\"keccak256\":\"0x0e8ee107fbd0cf4ea76c63b9c80323bbb797b999000c1d288bc22fa27c6a5848\",\"license\":\"GPL-2.0-or-later\",\"urls\":[\"bzz-raw://24781e079f4893f31f6542e1eb22f153f8fa398a71f953c74ed3a6c29225d279\",\"dweb:/ipfs/QmcNwjFyWUAHKgkPMP3emn6kdLH2eZCZgNezuCKMEwjcq1\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "int256",
+              "name": "amount0Delta",
+              "type": "int256"
+            },
+            {
+              "internalType": "int256",
+              "name": "amount1Delta",
+              "type": "int256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "algebraSwapCallback"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "algebraSwapCallback(int256,int256,bytes)": {
+            "details": "In the implementation you must pay the pool tokens owed for the swap. The caller of this method must be checked to be a AlgebraPool deployed by the canonical AlgebraFactory. amount0Delta and amount1Delta can both be 0 if no tokens were swapped.",
+            "params": {
+              "amount0Delta": "The amount of token0 that was sent (negative) or must be received (positive) by the pool by the end of the swap. If positive, the callback must send that amount of token0 to the pool.",
+              "amount1Delta": "The amount of token1 that was sent (negative) or must be received (positive) by the pool by the end of the swap. If positive, the callback must send that amount of token1 to the pool.",
+              "data": "Any data passed through by the caller via the IAlgebraPoolActions#swap call"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "algebraSwapCallback(int256,int256,bytes)": {
+            "notice": "Called to `msg.sender` after executing a swap via IAlgebraPool#swap."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/quickswap/IAlgebraSwapCallback.sol": "IAlgebraSwapCallback"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/quickswap/IAlgebraSwapCallback.sol": {
+        "keccak256": "0x0e8ee107fbd0cf4ea76c63b9c80323bbb797b999000c1d288bc22fa27c6a5848",
+        "urls": [
+          "bzz-raw://24781e079f4893f31f6542e1eb22f153f8fa398a71f953c74ed3a6c29225d279",
+          "dweb:/ipfs/QmcNwjFyWUAHKgkPMP3emn6kdLH2eZCZgNezuCKMEwjcq1"
+        ],
+        "license": "GPL-2.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/quickswap/IAlgebraSwapCallback.sol",
+    "id": 72502,
+    "exportedSymbols": {
+      "IAlgebraSwapCallback": [
+        72501
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:1365:279",
+    "nodes": [
+      {
+        "id": 72489,
+        "nodeType": "PragmaDirective",
+        "src": "45:23:279",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 72501,
+        "nodeType": "ContractDefinition",
+        "src": "344:1065:279",
+        "nodes": [
+          {
+            "id": 72500,
+            "nodeType": "FunctionDefinition",
+            "src": "1276:131:279",
+            "nodes": [],
+            "documentation": {
+              "id": 72491,
+              "nodeType": "StructuredDocumentation",
+              "src": "381:890:279",
+              "text": "@notice Called to `msg.sender` after executing a swap via IAlgebraPool#swap.\n @dev In the implementation you must pay the pool tokens owed for the swap.\n The caller of this method must be checked to be a AlgebraPool deployed by the canonical AlgebraFactory.\n amount0Delta and amount1Delta can both be 0 if no tokens were swapped.\n @param amount0Delta The amount of token0 that was sent (negative) or must be received (positive) by the pool by\n the end of the swap. If positive, the callback must send that amount of token0 to the pool.\n @param amount1Delta The amount of token1 that was sent (negative) or must be received (positive) by the pool by\n the end of the swap. If positive, the callback must send that amount of token1 to the pool.\n @param data Any data passed through by the caller via the IAlgebraPoolActions#swap call"
+            },
+            "functionSelector": "2c8958f6",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "algebraSwapCallback",
+            "nameLocation": "1285:19:279",
+            "parameters": {
+              "id": 72498,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 72493,
+                  "mutability": "mutable",
+                  "name": "amount0Delta",
+                  "nameLocation": "1321:12:279",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72500,
+                  "src": "1314:19:279",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  },
+                  "typeName": {
+                    "id": 72492,
+                    "name": "int256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1314:6:279",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int256",
+                      "typeString": "int256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72495,
+                  "mutability": "mutable",
+                  "name": "amount1Delta",
+                  "nameLocation": "1350:12:279",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72500,
+                  "src": "1343:19:279",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  },
+                  "typeName": {
+                    "id": 72494,
+                    "name": "int256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1343:6:279",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int256",
+                      "typeString": "int256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 72497,
+                  "mutability": "mutable",
+                  "name": "data",
+                  "nameLocation": "1387:4:279",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 72500,
+                  "src": "1372:19:279",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_calldata_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 72496,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1372:5:279",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1304:93:279"
+            },
+            "returnParameters": {
+              "id": 72499,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1406:0:279"
+            },
+            "scope": 72501,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAlgebraSwapCallback",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 72490,
+          "nodeType": "StructuredDocumentation",
+          "src": "70:274:279",
+          "text": "@title Callback for IAlgebraPoolActions#swap\n @notice Any contract that calls IAlgebraPoolActions#swap must implement this interface\n @dev Credit to Uniswap Labs under GPL-2.0-or-later license:\n https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces"
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          72501
+        ],
+        "name": "IAlgebraSwapCallback",
+        "nameLocation": "354:20:279",
+        "scope": 72502,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-2.0-or-later"
+  },
+  "id": 279
+}

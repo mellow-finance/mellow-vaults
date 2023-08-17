@@ -1,0 +1,256 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "getRateProviders",
+      "outputs": [
+        {
+          "internalType": "contract IRateProvider[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getRateProviders()": "238a2d59"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"getRateProviders\",\"outputs\":[{\"internalType\":\"contract IRateProvider[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Interface for Pools that assign rate providers to their tokens.\",\"kind\":\"dev\",\"methods\":{\"getRateProviders()\":{\"details\":\"Returns the rate provider for each of the Pool's tokens. A zero-address entry means there's no rate provider for that token.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/pool-utils/IRateProviderPool.sol\":\"IRateProviderPool\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/pool-utils/IRateProvider.sol\":{\"keccak256\":\"0x93cfb59b68b0df04ec3121448fcaa5c2b7f84e052e2d9084e7013d5fff7042ee\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://dd6e9f5ece7b5c0a5974032385a46e3dd472bedcbf480d61171b59878cf12ece\",\"dweb:/ipfs/QmR1fLJK1pVAFo889gzYw4wcoLAfg4zNR9yUG5VGGPuEYR\"]},\"src/interfaces/external/balancer/pool-utils/IRateProviderPool.sol\":{\"keccak256\":\"0xbbcb0ccee6eacaed8b5178f25b9823d418633035449ec149093501f448d4a9a0\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://75adf4f37a216ecad2a289e8e01f84637a650f81fcd61e50e6c6a2abbb284167\",\"dweb:/ipfs/QmNxELkJcA6c4QBZSACm3iEQGqJ37Db4AJ7dyzfGqpAH9S\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getRateProviders",
+          "outputs": [
+            {
+              "internalType": "contract IRateProvider[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "getRateProviders()": {
+            "details": "Returns the rate provider for each of the Pool's tokens. A zero-address entry means there's no rate provider for that token."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/pool-utils/IRateProviderPool.sol": "IRateProviderPool"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/pool-utils/IRateProvider.sol": {
+        "keccak256": "0x93cfb59b68b0df04ec3121448fcaa5c2b7f84e052e2d9084e7013d5fff7042ee",
+        "urls": [
+          "bzz-raw://dd6e9f5ece7b5c0a5974032385a46e3dd472bedcbf480d61171b59878cf12ece",
+          "dweb:/ipfs/QmR1fLJK1pVAFo889gzYw4wcoLAfg4zNR9yUG5VGGPuEYR"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/external/balancer/pool-utils/IRateProviderPool.sol": {
+        "keccak256": "0xbbcb0ccee6eacaed8b5178f25b9823d418633035449ec149093501f448d4a9a0",
+        "urls": [
+          "bzz-raw://75adf4f37a216ecad2a289e8e01f84637a650f81fcd61e50e6c6a2abbb284167",
+          "dweb:/ipfs/QmNxELkJcA6c4QBZSACm3iEQGqJ37Db4AJ7dyzfGqpAH9S"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/pool-utils/IRateProviderPool.sol",
+    "id": 58922,
+    "exportedSymbols": {
+      "IRateProvider": [
+        58908
+      ],
+      "IRateProviderPool": [
+        58921
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:408:139",
+    "nodes": [
+      {
+        "id": 58910,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:139",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 58911,
+        "nodeType": "ImportDirective",
+        "src": "713:29:139",
+        "nodes": [],
+        "absolutePath": "src/interfaces/external/balancer/pool-utils/IRateProvider.sol",
+        "file": "./IRateProvider.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 58922,
+        "sourceUnit": 58909,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 58921,
+        "nodeType": "ContractDefinition",
+        "src": "824:271:139",
+        "nodes": [
+          {
+            "id": 58920,
+            "nodeType": "FunctionDefinition",
+            "src": "1018:75:139",
+            "nodes": [],
+            "documentation": {
+              "id": 58913,
+              "nodeType": "StructuredDocumentation",
+              "src": "858:155:139",
+              "text": " @dev Returns the rate provider for each of the Pool's tokens. A zero-address entry means there's no rate provider\n for that token."
+            },
+            "functionSelector": "238a2d59",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getRateProviders",
+            "nameLocation": "1027:16:139",
+            "parameters": {
+              "id": 58914,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1043:2:139"
+            },
+            "returnParameters": {
+              "id": 58919,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 58918,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 58920,
+                  "src": "1069:22:139",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_contract$_IRateProvider_$58908_$dyn_memory_ptr",
+                    "typeString": "contract IRateProvider[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 58916,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 58915,
+                        "name": "IRateProvider",
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 58908,
+                        "src": "1069:13:139"
+                      },
+                      "referencedDeclaration": 58908,
+                      "src": "1069:13:139",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRateProvider_$58908",
+                        "typeString": "contract IRateProvider"
+                      }
+                    },
+                    "id": 58917,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1069:15:139",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_contract$_IRateProvider_$58908_$dyn_storage_ptr",
+                      "typeString": "contract IRateProvider[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1068:24:139"
+            },
+            "scope": 58921,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IRateProviderPool",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 58912,
+          "nodeType": "StructuredDocumentation",
+          "src": "744:79:139",
+          "text": " @dev Interface for Pools that assign rate providers to their tokens."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          58921
+        ],
+        "name": "IRateProviderPool",
+        "nameLocation": "834:17:139",
+        "scope": 58922,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 139
+}

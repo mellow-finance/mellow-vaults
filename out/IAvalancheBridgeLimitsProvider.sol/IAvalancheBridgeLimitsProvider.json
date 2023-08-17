@@ -1,0 +1,381 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "getAvalancheBridgeLimits",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "minBridgeAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxBridgeAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "minBridgeAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxBridgeAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "setAvalancheBridgeLimits",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getAvalancheBridgeLimits()": "440d471f",
+    "setAvalancheBridgeLimits(uint256,uint256)": "8bd2a3ef"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.9+commit.e5eed63a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"getAvalancheBridgeLimits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"minBridgeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxBridgeAmount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"minBridgeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxBridgeAmount\",\"type\":\"uint256\"}],\"name\":\"setAvalancheBridgeLimits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Balancer Labs\",\"details\":\"See the Multichain Dapp UI <https://app.multichain.org/#/router> and select a chain and token to see the current limits; they do not seem to be available anywhere on-chain. Exceeding these limits will *not* cause the source chain transaction to revert - but it *will* irretrievably lock tokens in the AnySwap token wrapper contract. These docs <https://medium.com/multichainorg/anyswap-fees-explained-bceddf535b83> say the limits are intended to roughly correspond to a range of ~$10 to ~$5 million, but this is very approximate, and they do not seem to have ever changed the limits from their starting values (there are permissioned functions to change them). To avoid loss of funds, the Avalance Root Gauge checks the amount to be bridged against these limits, and reverts if they are exceeded.\",\"kind\":\"dev\",\"methods\":{\"getAvalancheBridgeLimits()\":{\"details\":\"Getter for the Avalanche bridge limits.\"},\"setAvalancheBridgeLimits(uint256,uint256)\":{\"details\":\"Setter for the Avalanche bridge limits. This is a permissioned function, as setting inappropriate limits could either prevent distribution or cause loss of funds.\"}},\"title\":\"IAvalancheBridgeLimitsProvider interface\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"The Avalanche bridge (Multichain V4) sets both minimum and maximum limits on the number of tokens that can be successfully bridged.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/external/balancer/liquidity-mining/IAvalancheBridgeLimitsProvider.sol\":\"IAvalancheBridgeLimitsProvider\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@solmate/=lib/solmate/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\"]},\"sources\":{\"src/interfaces/external/balancer/liquidity-mining/IAvalancheBridgeLimitsProvider.sol\":{\"keccak256\":\"0x08f171ddf73a5bfa7ce5a432381e0b190e62db41d5db5696bca3a75f918123c6\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://bc19c4e1bc396bb0850d524f91e30629173982d0c3057d05544480edd3ff2970\",\"dweb:/ipfs/QmPfhadsTcuhq8AFVEsKkwLgnGnwN2EtfFikqm5RhM83GM\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.9+commit.e5eed63a"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getAvalancheBridgeLimits",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "minBridgeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxBridgeAmount",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "minBridgeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxBridgeAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setAvalancheBridgeLimits"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "getAvalancheBridgeLimits()": {
+            "details": "Getter for the Avalanche bridge limits."
+          },
+          "setAvalancheBridgeLimits(uint256,uint256)": {
+            "details": "Setter for the Avalanche bridge limits. This is a permissioned function, as setting inappropriate limits could either prevent distribution or cause loss of funds."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@solmate/=lib/solmate/",
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":openzeppelin/=lib/openzeppelin-contracts/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/external/balancer/liquidity-mining/IAvalancheBridgeLimitsProvider.sol": "IAvalancheBridgeLimitsProvider"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/interfaces/external/balancer/liquidity-mining/IAvalancheBridgeLimitsProvider.sol": {
+        "keccak256": "0x08f171ddf73a5bfa7ce5a432381e0b190e62db41d5db5696bca3a75f918123c6",
+        "urls": [
+          "bzz-raw://bc19c4e1bc396bb0850d524f91e30629173982d0c3057d05544480edd3ff2970",
+          "dweb:/ipfs/QmPfhadsTcuhq8AFVEsKkwLgnGnwN2EtfFikqm5RhM83GM"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/external/balancer/liquidity-mining/IAvalancheBridgeLimitsProvider.sol",
+    "id": 56503,
+    "exportedSymbols": {
+      "IAvalancheBridgeLimitsProvider": [
+        56502
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "688:1614:97",
+    "nodes": [
+      {
+        "id": 56484,
+        "nodeType": "PragmaDirective",
+        "src": "688:23:97",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 56502,
+        "nodeType": "ContractDefinition",
+        "src": "1778:523:97",
+        "nodes": [
+          {
+            "id": 56493,
+            "nodeType": "FunctionDefinition",
+            "src": "1893:109:97",
+            "nodes": [],
+            "documentation": {
+              "id": 56486,
+              "nodeType": "StructuredDocumentation",
+              "src": "1825:63:97",
+              "text": " @dev Getter for the Avalanche bridge limits."
+            },
+            "functionSelector": "440d471f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAvalancheBridgeLimits",
+            "nameLocation": "1902:24:97",
+            "parameters": {
+              "id": 56487,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1926:2:97"
+            },
+            "returnParameters": {
+              "id": 56492,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56489,
+                  "mutability": "mutable",
+                  "name": "minBridgeAmount",
+                  "nameLocation": "1960:15:97",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56493,
+                  "src": "1952:23:97",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56488,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1952:7:97",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56491,
+                  "mutability": "mutable",
+                  "name": "maxBridgeAmount",
+                  "nameLocation": "1985:15:97",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56493,
+                  "src": "1977:23:97",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56490,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1977:7:97",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1951:50:97"
+            },
+            "scope": 56502,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 56501,
+            "nodeType": "FunctionDefinition",
+            "src": "2206:93:97",
+            "nodes": [],
+            "documentation": {
+              "id": 56494,
+              "nodeType": "StructuredDocumentation",
+              "src": "2008:193:97",
+              "text": " @dev Setter for the Avalanche bridge limits. This is a permissioned function, as setting inappropriate limits\n could either prevent distribution or cause loss of funds."
+            },
+            "functionSelector": "8bd2a3ef",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setAvalancheBridgeLimits",
+            "nameLocation": "2215:24:97",
+            "parameters": {
+              "id": 56499,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 56496,
+                  "mutability": "mutable",
+                  "name": "minBridgeAmount",
+                  "nameLocation": "2248:15:97",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56501,
+                  "src": "2240:23:97",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56495,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2240:7:97",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 56498,
+                  "mutability": "mutable",
+                  "name": "maxBridgeAmount",
+                  "nameLocation": "2273:15:97",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 56501,
+                  "src": "2265:23:97",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 56497,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2265:7:97",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2239:50:97"
+            },
+            "returnParameters": {
+              "id": 56500,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2298:0:97"
+            },
+            "scope": 56502,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAvalancheBridgeLimitsProvider",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 56485,
+          "nodeType": "StructuredDocumentation",
+          "src": "713:1064:97",
+          "text": " @title IAvalancheBridgeLimitsProvider interface\n @author Balancer Labs\n @notice The Avalanche bridge (Multichain V4) sets both minimum and maximum limits on the number of tokens\n that can be successfully bridged.\n @dev See the Multichain Dapp UI <https://app.multichain.org/#/router> and select a chain and token to see\n the current limits; they do not seem to be available anywhere on-chain. Exceeding these limits will *not*\n cause the source chain transaction to revert - but it *will* irretrievably lock tokens in the AnySwap token\n wrapper contract.\n These docs <https://medium.com/multichainorg/anyswap-fees-explained-bceddf535b83> say the limits are intended\n to roughly correspond to a range of ~$10 to ~$5 million, but this is very approximate, and they do not seem to\n have ever changed the limits from their starting values (there are permissioned functions to change them).\n To avoid loss of funds, the Avalance Root Gauge checks the amount to be bridged against these limits, and reverts\n if they are exceeded."
+        },
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          56502
+        ],
+        "name": "IAvalancheBridgeLimitsProvider",
+        "nameLocation": "1788:30:97",
+        "scope": 56503,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 97
+}
