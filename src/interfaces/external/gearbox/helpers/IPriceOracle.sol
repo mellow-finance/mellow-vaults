@@ -38,7 +38,11 @@ interface IPriceOracleV2 is IPriceOracleV2Events, IPriceOracleV2Exceptions, IVer
     /// @param amount Amount to convert
     /// @param tokenFrom Address of the token to convert from
     /// @param tokenTo Address of the token to convert to
-    function convert(uint256 amount, address tokenFrom, address tokenTo) external view returns (uint256);
+    function convert(
+        uint256 amount,
+        address tokenFrom,
+        address tokenTo
+    ) external view returns (uint256);
 
     /// @dev Returns collateral values for two tokens, required for a fast check
     /// @param amountFrom Amount of the outbound token
@@ -65,9 +69,14 @@ interface IPriceOracleV2 is IPriceOracleV2Events, IPriceOracleV2Exceptions, IVer
     /// @dev Returns the price feed for the passed token,
     ///      with additional parameters
     /// @param token Token to get the price feed for
-    function priceFeedsWithFlags(
-        address token
-    ) external view returns (address priceFeed, bool skipCheck, uint256 decimals);
+    function priceFeedsWithFlags(address token)
+        external
+        view
+        returns (
+            address priceFeed,
+            bool skipCheck,
+            uint256 decimals
+        );
 }
 
 interface IPriceOracleV2Ext is IPriceOracleV2 {

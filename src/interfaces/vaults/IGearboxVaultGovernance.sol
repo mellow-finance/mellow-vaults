@@ -57,9 +57,10 @@ interface IGearboxVaultGovernance is IVaultGovernance {
 
     /// @notice Delayed Protocol Per Vault Params staged for commit after delay.
     /// @param nft VaultRegistry NFT of the vault
-    function stagedDelayedProtocolPerVaultParams(
-        uint256 nft
-    ) external view returns (DelayedProtocolPerVaultParams memory);
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory);
 
     /// @notice Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param nft VaultRegistry NFT of the vault

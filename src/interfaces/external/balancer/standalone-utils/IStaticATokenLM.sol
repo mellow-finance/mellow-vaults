@@ -42,7 +42,11 @@ interface IStaticATokenLM is IERC20 {
      * @return amountToBurn: StaticATokens burnt, static balance
      * @return amountToWithdraw: underlying/aToken send to `recipient`, dynamic balance
      **/
-    function withdraw(address recipient, uint256 amount, bool toUnderlying) external returns (uint256, uint256);
+    function withdraw(
+        address recipient,
+        uint256 amount,
+        bool toUnderlying
+    ) external returns (uint256, uint256);
 
     /**
      * @notice Burns `amount` of static aToken, with recipient receiving the corresponding amount of `ASSET`
@@ -179,7 +183,11 @@ interface IStaticATokenLM is IERC20 {
      * @param receiver The address to receive the rewards
      * @param forceUpdate Flag to retrieve latest rewards from `INCENTIVES_CONTROLLER`
      */
-    function claimRewardsOnBehalf(address onBehalfOf, address receiver, bool forceUpdate) external;
+    function claimRewardsOnBehalf(
+        address onBehalfOf,
+        address receiver,
+        bool forceUpdate
+    ) external;
 
     /**
      * @notice Claim rewards and send them to a receiver

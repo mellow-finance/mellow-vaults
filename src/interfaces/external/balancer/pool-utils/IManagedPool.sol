@@ -100,7 +100,12 @@ interface IManagedPool is IBasePool {
     function getGradualSwapFeeUpdateParams()
         external
         view
-        returns (uint256 startTime, uint256 endTime, uint256 startSwapFeePercentage, uint256 endSwapFeePercentage);
+        returns (
+            uint256 startTime,
+            uint256 endTime,
+            uint256 startSwapFeePercentage,
+            uint256 endSwapFeePercentage
+        );
 
     // Token weights
 
@@ -141,7 +146,12 @@ interface IManagedPool is IBasePool {
     function getGradualWeightUpdateParams()
         external
         view
-        returns (uint256 startTime, uint256 endTime, uint256[] memory startWeights, uint256[] memory endWeights);
+        returns (
+            uint256 startTime,
+            uint256 endTime,
+            uint256[] memory startWeights,
+            uint256[] memory endWeights
+        );
 
     // Join and Exit enable/disable
 
@@ -277,9 +287,7 @@ interface IManagedPool is IBasePool {
      * along with the percentage bounds. It also returns the current BPT price bounds, needed to check whether
      * the circuit breaker should trip.
      */
-    function getCircuitBreakerState(
-        IERC20 token
-    )
+    function getCircuitBreakerState(IERC20 token)
         external
         view
         returns (
@@ -347,5 +355,9 @@ interface IManagedPool is IBasePool {
      * @param burnAmount - The amount of BPT to be burned after removing `token` from the Pool.
      * @param sender - The address to burn BPT from.
      */
-    function removeToken(IERC20 tokenToRemove, uint256 burnAmount, address sender) external;
+    function removeToken(
+        IERC20 tokenToRemove,
+        uint256 burnAmount,
+        address sender
+    ) external;
 }

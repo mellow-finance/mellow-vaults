@@ -12,11 +12,11 @@ import "../interfaces/utils/IERC20RootVaultHelper.sol";
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
     /// @inheritdoc IERC20RootVaultGovernance
-    uint256 public constant MAX_PROTOCOL_FEE = 5 * 10 ** 7; // 5%
+    uint256 public constant MAX_PROTOCOL_FEE = 5 * 10**7; // 5%
     /// @inheritdoc IERC20RootVaultGovernance
-    uint256 public constant MAX_MANAGEMENT_FEE = 10 * 10 ** 7; // 10%
+    uint256 public constant MAX_MANAGEMENT_FEE = 10 * 10**7; // 10%
     /// @inheritdoc IERC20RootVaultGovernance
-    uint256 public constant MAX_PERFORMANCE_FEE = 50 * 10 ** 7; // 50%
+    uint256 public constant MAX_PERFORMANCE_FEE = 50 * 10**7; // 50%
 
     IERC20RootVaultHelper public immutable helper;
 
@@ -59,9 +59,11 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     }
 
     /// @inheritdoc IERC20RootVaultGovernance
-    function stagedDelayedProtocolPerVaultParams(
-        uint256 nft
-    ) external view returns (DelayedProtocolPerVaultParams memory) {
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory)
+    {
         if (_stagedDelayedProtocolPerVaultParams[nft].length == 0) {
             return DelayedProtocolPerVaultParams({protocolFee: 0});
         }

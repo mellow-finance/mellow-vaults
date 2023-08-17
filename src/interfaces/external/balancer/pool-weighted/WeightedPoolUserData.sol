@@ -44,9 +44,11 @@ library WeightedPoolUserData {
         (, amountsIn) = abi.decode(self, (JoinKind, uint256[]));
     }
 
-    function exactTokensInForBptOut(
-        bytes memory self
-    ) internal pure returns (uint256[] memory amountsIn, uint256 minBPTAmountOut) {
+    function exactTokensInForBptOut(bytes memory self)
+        internal
+        pure
+        returns (uint256[] memory amountsIn, uint256 minBPTAmountOut)
+    {
         (, amountsIn, minBPTAmountOut) = abi.decode(self, (JoinKind, uint256[], uint256));
     }
 
@@ -68,9 +70,11 @@ library WeightedPoolUserData {
         (, bptAmountIn) = abi.decode(self, (ExitKind, uint256));
     }
 
-    function bptInForExactTokensOut(
-        bytes memory self
-    ) internal pure returns (uint256[] memory amountsOut, uint256 maxBPTAmountIn) {
+    function bptInForExactTokensOut(bytes memory self)
+        internal
+        pure
+        returns (uint256[] memory amountsOut, uint256 maxBPTAmountIn)
+    {
         (, amountsOut, maxBPTAmountIn) = abi.decode(self, (ExitKind, uint256[], uint256));
     }
 }

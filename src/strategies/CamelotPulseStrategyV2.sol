@@ -21,9 +21,9 @@ import "../utils/DefaultAccessControlLateInit.sol";
 contract CamelotPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D6 = 10 ** 6;
-    uint256 public constant D9 = 10 ** 9;
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant D6 = 10**6;
+    uint256 public constant D9 = 10**9;
+    uint256 public constant Q96 = 2**96;
 
     IAlgebraNonfungiblePositionManager public immutable positionManager;
 
@@ -139,7 +139,11 @@ contract CamelotPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControl
     /// Only users with administrator or operator roles can call the function.
     /// @param deadline Timestamp by which the transaction must be completed
     /// @param swapData Data for swap on 1inch AggregationRouterV5
-    function rebalance(uint256 deadline, bytes calldata swapData, uint256 minAmountOutInCaseOfSwap) external {
+    function rebalance(
+        uint256 deadline,
+        bytes calldata swapData,
+        uint256 minAmountOutInCaseOfSwap
+    ) external {
         require(block.timestamp <= deadline, ExceptionsLibrary.TIMESTAMP);
         _requireAtLeastOperator();
         ImmutableParams memory immutableParams_ = immutableParams;
@@ -529,7 +533,12 @@ contract CamelotPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControl
     function withdrawCallback() external {}
 
     /// @inheritdoc IERC721Receiver
-    function onERC721Received(address, address, uint256, bytes memory) external pure returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 

@@ -45,16 +45,20 @@ contract YearnVault is IYearnVault, IntegrationVault {
             minTokenAmounts[i] = FullMath.mulDiv(
                 yToken.balanceOf(address(this)),
                 yToken.pricePerShare(),
-                10 ** yToken.decimals()
+                10**yToken.decimals()
             );
         }
         maxTokenAmounts = minTokenAmounts;
     }
 
     /// @inheritdoc IntegrationVault
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, IntegrationVault) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, IntegrationVault)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId) || type(IYearnVault).interfaceId == interfaceId;
     }
 
@@ -82,10 +86,11 @@ contract YearnVault is IYearnVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         address[] memory tokens = _vaultTokens;
         actualTokenAmounts = tokenAmounts;
         for (uint256 i = 0; i < _yTokens.length; ++i) {
@@ -114,7 +119,7 @@ contract YearnVault is IYearnVault, IntegrationVault {
             if (tokenAmounts[i] == 0) continue;
 
             IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
-            uint256 yTokenAmount = FullMath.mulDiv(tokenAmounts[i], (10 ** yToken.decimals()), yToken.pricePerShare());
+            uint256 yTokenAmount = FullMath.mulDiv(tokenAmounts[i], (10**yToken.decimals()), yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
             if (yTokenAmount > balance) {
                 yTokenAmount = balance;

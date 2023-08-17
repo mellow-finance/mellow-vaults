@@ -271,7 +271,11 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
     /// @param onBehalfOf Address of the borrower whose account is funded
     /// @param token Address of a collateral token
     /// @param amount Amount to add
-    function addCollateral(address onBehalfOf, address token, uint256 amount) external payable;
+    function addCollateral(
+        address onBehalfOf,
+        address token,
+        uint256 amount
+    ) external payable;
 
     /// @dev Executes a batch of transactions within a Multicall, to manage an existing account
     ///  - Wraps ETH and sends it back to msg.sender, if value > 0
@@ -288,7 +292,11 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
     /// @param targetContract Contract to set allowance to. Cannot be in the list of upgradeable contracts
     /// @param token Token address
     /// @param amount Allowance amount
-    function approve(address targetContract, address token, uint256 amount) external;
+    function approve(
+        address targetContract,
+        address token,
+        uint256 amount
+    ) external;
 
     /// @dev Approves account transfer from another user to msg.sender
     /// @param from Address for which account transfers are allowed/forbidden
@@ -351,7 +359,11 @@ interface ICreditFacade is ICreditFacadeEvents, ICreditFacadeExceptions, IVersio
     function params()
         external
         view
-        returns (uint128 maxBorrowedAmountPerBlock, bool isIncreaseDebtForbidden, uint40 expirationDate);
+        returns (
+            uint128 maxBorrowedAmountPerBlock,
+            bool isIncreaseDebtForbidden,
+            uint40 expirationDate
+        );
 
     /// @return minBorrowedAmount Minimal borrowed amount per credit account
     /// @return maxBorrowedAmount Maximal borrowed amount per credit account

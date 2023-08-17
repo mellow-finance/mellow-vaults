@@ -34,5 +34,9 @@ interface IOmniVotingEscrowAdaptor {
      * @param _dstChainId - Destination chain ID.
      * @param _refundAddress - Address where to return excess ETH.
      */
-    function sendUserBalance(address _user, uint16 _dstChainId, address payable _refundAddress) external payable;
+    function sendUserBalance(
+        address _user,
+        uint16 _dstChainId,
+        address payable _refundAddress
+    ) external payable;
 }

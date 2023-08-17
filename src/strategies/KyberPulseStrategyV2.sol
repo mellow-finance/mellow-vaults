@@ -20,9 +20,9 @@ import "../utils/DefaultAccessControlLateInit.sol";
 contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D6 = 10 ** 6;
-    uint256 public constant D9 = 10 ** 9;
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant D6 = 10**6;
+    uint256 public constant D9 = 10**9;
+    uint256 public constant Q96 = 2**96;
 
     IBasePositionManager public immutable positionManager;
 
@@ -318,7 +318,11 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
     }
 
     /// @dev need to check that previousTick is the closest initialized tick <= tick
-    function _checkCorrectPreviousTick(IPool pool, int24 tick, int24 previousTick) internal view {
+    function _checkCorrectPreviousTick(
+        IPool pool,
+        int24 tick,
+        int24 previousTick
+    ) internal view {
         require(previousTick <= tick, ExceptionsLibrary.INVARIANT); // condition 1: previousTick <= tick
         (int24 previousTickForP, int24 nextTickForP) = pool.initializedTicks(previousTick);
         require(previousTickForP != 0 || nextTickForP != 0, ExceptionsLibrary.INVALID_TARGET); // condition 2: initialized

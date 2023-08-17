@@ -123,10 +123,9 @@ interface IStakelessGaugeCheckpointer {
      * @param gaugeType Type of the gauge.
      * @param minRelativeWeight Threshold to filter out gauges below it.
      */
-    function checkpointGaugesOfTypeAboveRelativeWeight(
-        string memory gaugeType,
-        uint256 minRelativeWeight
-    ) external payable;
+    function checkpointGaugesOfTypeAboveRelativeWeight(string memory gaugeType, uint256 minRelativeWeight)
+        external
+        payable;
 
     /**
      * @notice Performs a checkpoint for a single added gauge of a given type.

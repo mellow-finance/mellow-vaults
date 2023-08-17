@@ -85,9 +85,7 @@ interface IAlgebraPoolState {
     /// @return hasLimitOrders Whether there are limit orders on this tick or not
     /// In addition, these values are only relative and must be used only in comparison to previous snapshots for
     /// a specific position.
-    function ticks(
-        int24 tick
-    )
+    function ticks(int24 tick)
         external
         view
         returns (
@@ -109,9 +107,7 @@ interface IAlgebraPoolState {
     /// @return boughtAmount0Cumulative The accumulator of bought tokens0 per amountToSell. Has only relative meaning
     /// @return boughtAmount1Cumulative The accumulator of bought tokens1 per amountToSell. Has only relative meaning
     /// @return initialized Will be true if a limit order was created at least once on this tick
-    function limitOrders(
-        int24 tick
-    )
+    function limitOrders(int24 tick)
         external
         view
         returns (
@@ -132,9 +128,7 @@ interface IAlgebraPoolState {
     /// @return innerFeeGrowth1Token Fee growth of token1 inside the tick range as of the last mint/burn/poke
     /// @return fees0 The computed amount of token0 owed to the position as of the last mint/burn/poke
     /// @return fees1 The computed amount of token1 owed to the position as of the last mint/burn/poke
-    function positions(
-        bytes32 key
-    )
+    function positions(bytes32 key)
         external
         view
         returns (

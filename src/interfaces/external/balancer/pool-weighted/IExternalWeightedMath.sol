@@ -21,10 +21,10 @@ interface IExternalWeightedMath {
     /**
      * @dev See `WeightedMath._calculateInvariant`.
      */
-    function calculateInvariant(
-        uint256[] memory normalizedWeights,
-        uint256[] memory balances
-    ) external pure returns (uint256);
+    function calculateInvariant(uint256[] memory normalizedWeights, uint256[] memory balances)
+        external
+        pure
+        returns (uint256);
 
     /**
      * @dev See `WeightedMath._calcOutGivenIn`.

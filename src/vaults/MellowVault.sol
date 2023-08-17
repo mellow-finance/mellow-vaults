@@ -31,7 +31,11 @@ contract MellowVault is IMellowVault, IntegrationVault {
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IMellowVault
-    function initialize(uint256 nft_, address[] memory vaultTokens_, IERC20RootVault vault_) external {
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        IERC20RootVault vault_
+    ) external {
         _initialize(vaultTokens_, nft_);
         address[] memory mTokens = vault_.vaultTokens();
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
@@ -55,10 +59,11 @@ contract MellowVault is IMellowVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory options
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory options)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         uint256 minLpTokens;
         assembly {
             minLpTokens := mload(add(options, 0x20))

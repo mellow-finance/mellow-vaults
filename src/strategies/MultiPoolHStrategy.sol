@@ -151,9 +151,10 @@ contract MultiPoolHStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     /// @notice rebalance method. Need to be called if the new position is needed
     /// @param restrictions the restrictions of the amount of tokens to be transferred and positions to be minted
     /// @return actualAmounts actual transferred token amounts and minted positions
-    function rebalance(
-        MultiPoolHStrategyRebalancer.Restrictions memory restrictions
-    ) external returns (MultiPoolHStrategyRebalancer.Restrictions memory actualAmounts) {
+    function rebalance(MultiPoolHStrategyRebalancer.Restrictions memory restrictions)
+        external
+        returns (MultiPoolHStrategyRebalancer.Restrictions memory actualAmounts)
+    {
         _requireAtLeastOperator();
         MutableParams memory mutableParams_ = mutableParams;
         Interval memory shortInterval_ = shortInterval;

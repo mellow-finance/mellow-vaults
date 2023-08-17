@@ -21,9 +21,9 @@ import "../utils/DefaultAccessControlLateInit.sol";
 contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit, ILpCallback, IERC721Receiver {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D6 = 10 ** 6;
-    uint256 public constant D9 = 10 ** 9;
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant D6 = 10**6;
+    uint256 public constant D9 = 10**9;
+    uint256 public constant Q96 = 2**96;
 
     IAlgebraNonfungiblePositionManager public immutable positionManager;
 
@@ -477,7 +477,12 @@ contract QuickPulseStrategy is ContractMeta, Multicall, DefaultAccessControlLate
     function withdrawCallback() external {}
 
     /// @inheritdoc IERC721Receiver
-    function onERC721Received(address, address, uint256, bytes memory) external pure returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 

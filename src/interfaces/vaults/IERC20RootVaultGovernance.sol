@@ -73,9 +73,10 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
 
     /// @notice Delayed Protocol Per Vault Params staged for commit after delay.
     /// @param nft VaultRegistry NFT of the vault
-    function stagedDelayedProtocolPerVaultParams(
-        uint256 nft
-    ) external view returns (DelayedProtocolPerVaultParams memory);
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory);
 
     /// @notice Strategy Params.
     /// @param nft VaultRegistry NFT of the vault

@@ -31,7 +31,11 @@ interface IKyberVault is IERC721Receiver, IIntegrationVault {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param fee_ Fee of the Kyber pool
-    function initialize(uint256 nft_, address[] memory vaultTokens_, uint24 fee_) external;
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        uint24 fee_
+    ) external;
 
     function updateFarmInfo() external;
 

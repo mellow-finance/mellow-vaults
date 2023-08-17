@@ -4,12 +4,10 @@ pragma solidity ^0.8.0;
 import "../strategies/CamelotPulseStrategyV2.sol";
 
 contract CamelotPulseStrategyV2Helper {
-    uint256 public constant Q96 = 2 ** 96;
-    uint256 public constant D6 = 10 ** 6;
+    uint256 public constant Q96 = 2**96;
+    uint256 public constant D6 = 10**6;
 
-    function getStrategyParams(
-        CamelotPulseStrategyV2 strategy
-    )
+    function getStrategyParams(CamelotPulseStrategyV2 strategy)
         public
         view
         returns (
@@ -99,9 +97,16 @@ contract CamelotPulseStrategyV2Helper {
         }
     }
 
-    function calculateAmountForSwap(
-        CamelotPulseStrategyV2 strategy
-    ) public view returns (uint256 amountIn, address from, address to, IERC20Vault erc20Vault) {
+    function calculateAmountForSwap(CamelotPulseStrategyV2 strategy)
+        public
+        view
+        returns (
+            uint256 amountIn,
+            address from,
+            address to,
+            IERC20Vault erc20Vault
+        )
+    {
         (
             CamelotPulseStrategyV2.ImmutableParams memory immutableParams,
             CamelotPulseStrategyV2.MutableParams memory mutableParams

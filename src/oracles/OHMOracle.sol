@@ -23,23 +23,39 @@ contract OHMOracle is IAggregatorV3 {
         return 1;
     }
 
-    function getRoundData(uint80) external pure returns (uint80, int256, uint256, uint256, uint80) {
+    function getRoundData(uint80)
+        external
+        pure
+        returns (
+            uint80,
+            int256,
+            uint256,
+            uint256,
+            uint80
+        )
+    {
         revert("NotImplementedError");
     }
 
     function latestAnswer() external view returns (int256 answer) {
         (, answer, , , ) = IAggregatorV3(ETH_USD_ORACLE).latestRoundData();
         (, int256 ohmEthAnswer, , , ) = IAggregatorV3(OHM_ETH_ORACLE).latestRoundData();
-        answer = int256(FullMath.mulDiv(uint256(ohmEthAnswer), uint256(answer), 10 ** 18));
+        answer = int256(FullMath.mulDiv(uint256(ohmEthAnswer), uint256(answer), 10**18));
     }
 
     function latestRoundData()
         external
         view
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        )
     {
         (roundId, answer, startedAt, updatedAt, answeredInRound) = IAggregatorV3(ETH_USD_ORACLE).latestRoundData();
         (, int256 ohmEthAnswer, , , ) = IAggregatorV3(OHM_ETH_ORACLE).latestRoundData();
-        answer = int256(FullMath.mulDiv(uint256(ohmEthAnswer), uint256(answer), 10 ** 18));
+        answer = int256(FullMath.mulDiv(uint256(ohmEthAnswer), uint256(answer), 10**18));
     }
 }

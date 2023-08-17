@@ -27,5 +27,9 @@ interface IChildChainStreamer {
 
     function reward_tokens(uint256 index) external view returns (IERC20);
 
-    function add_reward(IERC20 rewardToken, address distributor, uint256 duration) external;
+    function add_reward(
+        IERC20 rewardToken,
+        address distributor,
+        uint256 duration
+    ) external;
 }

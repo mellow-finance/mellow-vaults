@@ -148,7 +148,12 @@ interface ICreditManagerV2 is ICreditManagerV2Events, ICreditManagerV2Exceptions
     /// @param creditAccount Address of the Credit Account
     /// @param token Collateral token to add
     /// @param amount Amount to add
-    function addCollateral(address payer, address creditAccount, address token, uint256 amount) external;
+    function addCollateral(
+        address payer,
+        address creditAccount,
+        address token,
+        uint256 amount
+    ) external;
 
     /// @dev Transfers Credit Account ownership to another address
     /// @param from Address of previous owner
@@ -160,14 +165,23 @@ interface ICreditManagerV2 is ICreditManagerV2Events, ICreditManagerV2Exceptions
     /// @param targetContract Spender to change allowance for
     /// @param token Collateral token to approve
     /// @param amount New allowance amount
-    function approveCreditAccount(address borrower, address targetContract, address token, uint256 amount) external;
+    function approveCreditAccount(
+        address borrower,
+        address targetContract,
+        address token,
+        uint256 amount
+    ) external;
 
     /// @dev Requests a Credit Account to make a low-level call with provided data
     /// This is the intended pathway for state-changing interactions with 3rd-party protocols
     /// @param borrower Borrower's address
     /// @param targetContract Contract to be called
     /// @param data Data to pass with the call
-    function executeOrder(address borrower, address targetContract, bytes memory data) external returns (bytes memory);
+    function executeOrder(
+        address borrower,
+        address targetContract,
+        bytes memory data
+    ) external returns (bytes memory);
 
     //
     // COLLATERAL VALIDITY AND ACCOUNT HEALTH CHECKS
@@ -244,19 +258,29 @@ interface ICreditManagerV2 is ICreditManagerV2Events, ICreditManagerV2Exceptions
         ClosureAction closureActionType,
         uint256 borrowedAmount,
         uint256 borrowedAmountWithInterest
-    ) external view returns (uint256 amountToPool, uint256 remainingFunds, uint256 profit, uint256 loss);
+    )
+        external
+        view
+        returns (
+            uint256 amountToPool,
+            uint256 remainingFunds,
+            uint256 profit,
+            uint256 loss
+        );
 
     /// @dev Calculates the debt accrued by a Credit Account
     /// @param creditAccount Address of the Credit Account
     /// @return borrowedAmount The debt principal
     /// @return borrowedAmountWithInterest The debt principal + accrued interest
     /// @return borrowedAmountWithInterestAndFees The debt principal + accrued interest and protocol fees
-    function calcCreditAccountAccruedInterest(
-        address creditAccount
-    )
+    function calcCreditAccountAccruedInterest(address creditAccount)
         external
         view
-        returns (uint256 borrowedAmount, uint256 borrowedAmountWithInterest, uint256 borrowedAmountWithInterestAndFees);
+        returns (
+            uint256 borrowedAmount,
+            uint256 borrowedAmountWithInterest,
+            uint256 borrowedAmountWithInterestAndFees
+        );
 
     /// @dev Maps Credit Accounts to bit masks encoding their enabled token sets
     /// Only enabled tokens are counted as collateral for the Credit Account
@@ -274,9 +298,10 @@ interface ICreditManagerV2 is ICreditManagerV2Events, ICreditManagerV2Exceptions
 
     /// @dev Returns the collateral token with requested mask and its liquidationThreshold
     /// @param tokenMask Token mask corresponding to the token
-    function collateralTokensByMask(
-        uint256 tokenMask
-    ) external view returns (address token, uint16 liquidationThreshold);
+    function collateralTokensByMask(uint256 tokenMask)
+        external
+        view
+        returns (address token, uint16 liquidationThreshold);
 
     /// @dev Total number of known collateral tokens.
     function collateralTokensCount() external view returns (uint256);

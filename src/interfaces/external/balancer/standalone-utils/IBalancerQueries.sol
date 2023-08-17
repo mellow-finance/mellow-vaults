@@ -35,10 +35,9 @@ import "../vault/IVault.sol";
  * structs for simplicity.
  */
 interface IBalancerQueries {
-    function querySwap(
-        IVault.SingleSwap memory singleSwap,
-        IVault.FundManagement memory funds
-    ) external returns (uint256);
+    function querySwap(IVault.SingleSwap memory singleSwap, IVault.FundManagement memory funds)
+        external
+        returns (uint256);
 
     function queryBatchSwap(
         IVault.SwapKind kind,

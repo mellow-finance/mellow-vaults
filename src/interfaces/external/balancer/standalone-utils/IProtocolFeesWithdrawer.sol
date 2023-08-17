@@ -60,7 +60,11 @@ interface IProtocolFeesWithdrawer {
      * @param amounts - an array of the amounts of each token to withdraw.
      * @param recipient - the address to which to send the withdrawn tokens.
      */
-    function withdrawCollectedFees(IERC20[] calldata tokens, uint256[] calldata amounts, address recipient) external;
+    function withdrawCollectedFees(
+        IERC20[] calldata tokens,
+        uint256[] calldata amounts,
+        address recipient
+    ) external;
 
     /**
      * @notice Marks the provided token as ineligible for withdrawal from the Protocol Fee Collector

@@ -29,7 +29,11 @@ function _require(bool condition, uint256 errorCode) pure {
  * @dev Reverts if `condition` is false, with a revert reason containing `errorCode`. Only codes up to 999 are
  * supported.
  */
-function _require(bool condition, uint256 errorCode, bytes3 prefix) pure {
+function _require(
+    bool condition,
+    uint256 errorCode,
+    bytes3 prefix
+) pure {
     if (!condition) _revert(errorCode, prefix);
 }
 

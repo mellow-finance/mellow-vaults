@@ -9,8 +9,8 @@ import "./IntegrationVault.sol";
 contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    uint256 public constant D9 = 10 ** 9;
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant D9 = 10**9;
+    uint256 public constant Q96 = 2**96;
 
     IManagedPool public pool;
     IBalancerVault public balancerVault;
@@ -52,7 +52,7 @@ contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
 
         uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
         uint8 oracleDecimals = oracle.decimals();
-        priceX96 = FullMath.mulDiv(2 ** 96 * 10 ** 6, uint256(usdPrice), 10 ** (oracleDecimals + tokenDecimals));
+        priceX96 = FullMath.mulDiv(2**96 * 10**6, uint256(usdPrice), 10**(oracleDecimals + tokenDecimals));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -152,10 +152,11 @@ contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory opts
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory opts)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         bytes32 poolId = pool.getPoolId();
         IAsset[] memory tokens;
         uint256[] memory maxAmountsIn;

@@ -18,7 +18,7 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant D18 = 10 ** 18;
+    uint256 public constant D18 = 10**18;
 
     /// @inheritdoc IGearboxRootVault
     uint64 public lastFeeCharge;
@@ -66,9 +66,13 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, AggregateVault) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, AggregateVault)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId) || type(IGearboxRootVault).interfaceId == interfaceId;
     }
 
@@ -270,10 +274,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
     }
 
     /// @inheritdoc IGearboxRootVault
-    function withdraw(
-        address to,
-        bytes[] memory vaultsOptions
-    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
+    function withdraw(address to, bytes[] memory vaultsOptions)
+        external
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
         uint256 userLatestRequestEpoch = latestRequestEpoch[msg.sender];
         if (currentEpoch != userLatestRequestEpoch && userLatestRequestEpoch != 0) {
             _processHangingWithdrawal(msg.sender, true);
@@ -333,7 +338,11 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
 
     /// @dev we are charging fees on the deposit / withdrawal
     /// fees are charged before the tokens transfer and change the balance of the lp tokens
-    function _chargeFees(uint256 thisNft, uint256 tvl, uint256 supply) internal {
+    function _chargeFees(
+        uint256 thisNft,
+        uint256 tvl,
+        uint256 supply
+    ) internal {
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
         IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
@@ -426,10 +435,10 @@ contract GearboxRootVault is IGearboxRootVault, ERC20Token, ReentrancyGuard, Agg
         }
     }
 
-    function _pushIntoGearbox(
-        uint256 amount,
-        bytes memory vaultOptions
-    ) internal returns (uint256[] memory actualTokenAmounts) {
+    function _pushIntoGearbox(uint256 amount, bytes memory vaultOptions)
+        internal
+        returns (uint256[] memory actualTokenAmounts)
+    {
         require(_nft != 0, ExceptionsLibrary.INIT);
         IIntegrationVault gearboxVault_ = gearboxVault;
         address primaryToken_ = primaryToken;

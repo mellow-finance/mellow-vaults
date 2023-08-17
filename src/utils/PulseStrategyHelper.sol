@@ -5,11 +5,9 @@ import "../strategies/PulseStrategy.sol";
 import "../libraries/external/PositionValue.sol";
 
 contract PulseStrategyHelper {
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant Q96 = 2**96;
 
-    function getStrategyParams(
-        PulseStrategy strategy
-    )
+    function getStrategyParams(PulseStrategy strategy)
         public
         view
         returns (PulseStrategy.ImmutableParams memory immutableParams, PulseStrategy.MutableParams memory mutableParams)
@@ -68,7 +66,7 @@ contract PulseStrategyHelper {
             currentAmounts[1] + FullMath.mulDiv(currentAmounts[0], priceX96, Q96)
         );
 
-        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(mutableParams.priceImpactD6)), 10 ** 6);
+        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(mutableParams.priceImpactD6)), 10**6);
         if (currentRatioOfToken1X96 > targetRatioOfToken1X96) {
             tokenInIndex = 1;
             // (dx * y0 - dy * x0 * p) / (1 - dy * fee)
@@ -94,9 +92,16 @@ contract PulseStrategyHelper {
         }
     }
 
-    function calculateAmountForSwap(
-        PulseStrategy strategy
-    ) public view returns (uint256 amountIn, address from, address to, IERC20Vault erc20Vault) {
+    function calculateAmountForSwap(PulseStrategy strategy)
+        public
+        view
+        returns (
+            uint256 amountIn,
+            address from,
+            address to,
+            IERC20Vault erc20Vault
+        )
+    {
         (
             PulseStrategy.ImmutableParams memory immutableParams,
             PulseStrategy.MutableParams memory mutableParams

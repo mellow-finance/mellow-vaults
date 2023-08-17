@@ -13,5 +13,9 @@ interface IMellowVault is IIntegrationVault {
     /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param rootVault_ Reference to mellow root vault
-    function initialize(uint256 nft_, address[] memory vaultTokens_, IERC20RootVault rootVault_) external;
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        IERC20RootVault rootVault_
+    ) external;
 }

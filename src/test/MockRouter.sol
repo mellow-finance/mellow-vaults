@@ -12,8 +12,13 @@ contract MockRouter {
         priceX96 = priceX96_;
     }
 
-    function swap(uint256 amountIn, address tokenIn, address tokenOut, address reciever) external {
-        uint256 amountOut = (amountIn * priceX96) / 2 ** 96;
+    function swap(
+        uint256 amountIn,
+        address tokenIn,
+        address tokenOut,
+        address reciever
+    ) external {
+        uint256 amountOut = (amountIn * priceX96) / 2**96;
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenOut).safeTransfer(reciever, amountOut);
     }

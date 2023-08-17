@@ -22,5 +22,9 @@ interface IBALTokenHolder is IAuthentication {
 
     function withdrawFunds(address recipient, uint256 amount) external;
 
-    function sweepTokens(IERC20 token, address recipient, uint256 amount) external;
+    function sweepTokens(
+        IERC20 token,
+        address recipient,
+        uint256 amount
+    ) external;
 }

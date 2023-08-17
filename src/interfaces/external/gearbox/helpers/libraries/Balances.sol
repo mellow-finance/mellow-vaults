@@ -15,11 +15,19 @@ library BalanceOps {
         return Balance({token: b.token, balance: b.balance});
     }
 
-    function addBalance(Balance[] memory b, address token, uint256 amount) internal pure {
+    function addBalance(
+        Balance[] memory b,
+        address token,
+        uint256 amount
+    ) internal pure {
         b[getIndex(b, token)].balance += amount;
     }
 
-    function subBalance(Balance[] memory b, address token, uint256 amount) internal pure {
+    function subBalance(
+        Balance[] memory b,
+        address token,
+        uint256 amount
+    ) internal pure {
         b[getIndex(b, token)].balance -= amount;
     }
 
@@ -27,7 +35,11 @@ library BalanceOps {
         return b[getIndex(b, token)].balance;
     }
 
-    function setBalance(Balance[] memory b, address token, uint256 amount) internal pure {
+    function setBalance(
+        Balance[] memory b,
+        address token,
+        uint256 amount
+    ) internal pure {
         b[getIndex(b, token)].balance = amount;
     }
 

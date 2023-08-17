@@ -53,10 +53,11 @@ library MultiCallOps {
         res[len] = copyMulticall(newCall);
     }
 
-    function prepend(
-        MultiCall[] memory calls,
-        MultiCall memory newCall
-    ) internal pure returns (MultiCall[] memory res) {
+    function prepend(MultiCall[] memory calls, MultiCall memory newCall)
+        internal
+        pure
+        returns (MultiCall[] memory res)
+    {
         uint256 len = calls.length;
         res = new MultiCall[](len + 1);
         res[0] = copyMulticall(newCall);
@@ -69,10 +70,11 @@ library MultiCallOps {
         }
     }
 
-    function concat(
-        MultiCall[] memory calls1,
-        MultiCall[] memory calls2
-    ) internal pure returns (MultiCall[] memory res) {
+    function concat(MultiCall[] memory calls1, MultiCall[] memory calls2)
+        internal
+        pure
+        returns (MultiCall[] memory res)
+    {
         uint256 len1 = calls1.length;
         uint256 lenTotal = len1 + calls2.length;
 

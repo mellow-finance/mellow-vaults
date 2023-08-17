@@ -137,9 +137,12 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         return _params.withdrawLimit * unitPrices[token];
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(UnitPricesGovernance, IERC165, ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(UnitPricesGovernance, IERC165, ERC165)
+        returns (bool)
+    {
         return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
 

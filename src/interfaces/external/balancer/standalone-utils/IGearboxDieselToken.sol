@@ -49,7 +49,11 @@ interface IGearboxVault {
      * @dev Adds liquidity to pool and sends diesel (LP) tokens back to the liquidity provider
      * The Referral code can be 0
      */
-    function addLiquidity(uint256 underlyingAmount, address onBehalfOf, uint256 referralCode) external;
+    function addLiquidity(
+        uint256 underlyingAmount,
+        address onBehalfOf,
+        uint256 referralCode
+    ) external;
 
     /**
      * @dev Removes liquidity from the pool and sends the underlying tokens to the `to` address

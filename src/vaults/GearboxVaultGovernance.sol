@@ -7,13 +7,12 @@ import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultGovernance {
-    uint256 public constant D9 = 10 ** 9;
+    uint256 public constant D9 = 10**9;
 
     /// @notice Creates a new contract
-    constructor(
-        InternalParams memory internalParams_,
-        DelayedProtocolParams memory delayedProtocolParams_
-    ) VaultGovernance(internalParams_) {
+    constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
+        VaultGovernance(internalParams_)
+    {
         require(delayedProtocolParams_.withdrawDelay <= 86400 * 30, ExceptionsLibrary.INVALID_VALUE);
         require(delayedProtocolParams_.univ3Adapter != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.crv != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -58,9 +57,11 @@ contract GearboxVaultGovernance is ContractMeta, IGearboxVaultGovernance, VaultG
     }
 
     /// @inheritdoc IGearboxVaultGovernance
-    function stagedDelayedProtocolPerVaultParams(
-        uint256 nft
-    ) external view returns (DelayedProtocolPerVaultParams memory) {
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory)
+    {
         if (_stagedDelayedProtocolPerVaultParams[nft].length == 0) {
             return
                 DelayedProtocolPerVaultParams({

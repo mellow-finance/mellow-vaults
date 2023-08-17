@@ -4,11 +4,9 @@ pragma solidity ^0.8.0;
 import "../strategies/QuickPulseStrategyV2.sol";
 
 contract QuickPulseStrategyV2Helper {
-    uint256 public constant Q96 = 2 ** 96;
+    uint256 public constant Q96 = 2**96;
 
-    function getStrategyParams(
-        QuickPulseStrategyV2 strategy
-    )
+    function getStrategyParams(QuickPulseStrategyV2 strategy)
         public
         view
         returns (
@@ -70,7 +68,7 @@ contract QuickPulseStrategyV2Helper {
             currentAmounts[1] + FullMath.mulDiv(currentAmounts[0], priceX96, Q96)
         );
 
-        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(mutableParams.priceImpactD6)), 10 ** 6);
+        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(mutableParams.priceImpactD6)), 10**6);
         if (currentRatioOfToken1X96 > targetRatioOfToken1X96) {
             tokenInIndex = 1;
             // (dx * y0 - dy * x0 * p) / (1 - dy * fee)
@@ -96,9 +94,17 @@ contract QuickPulseStrategyV2Helper {
         }
     }
 
-    function calculateAmountForSwap(
-        QuickPulseStrategyV2 strategy
-    ) public view returns (uint256 amountIn, address from, address to, IERC20Vault erc20Vault, bool neededNewInterval) {
+    function calculateAmountForSwap(QuickPulseStrategyV2 strategy)
+        public
+        view
+        returns (
+            uint256 amountIn,
+            address from,
+            address to,
+            IERC20Vault erc20Vault,
+            bool neededNewInterval
+        )
+    {
         (
             QuickPulseStrategyV2.ImmutableParams memory immutableParams,
             QuickPulseStrategyV2.MutableParams memory mutableParams

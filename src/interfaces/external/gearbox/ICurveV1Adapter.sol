@@ -15,19 +15,31 @@ interface ICurveV1Adapter is IAdapter, ICurvePool, ICurveV1AdapterExceptions {
     /// @param i Index for the coin sent
     /// @param j Index for the coin received
     /// @param rateMinRAY Minimum exchange rate between coins i and j
-    function exchange_all(int128 i, int128 j, uint256 rateMinRAY) external;
+    function exchange_all(
+        int128 i,
+        int128 j,
+        uint256 rateMinRAY
+    ) external;
 
     /// @dev Sends an order to exchange the entire balance of one underlying asset to another
     /// @param i Index for the underlying coin sent
     /// @param j Index for the underlying coin received
     /// @param rateMinRAY Minimum exchange rate between underlyings i and j
-    function exchange_all_underlying(int128 i, int128 j, uint256 rateMinRAY) external;
+    function exchange_all_underlying(
+        int128 i,
+        int128 j,
+        uint256 rateMinRAY
+    ) external;
 
     /// @dev Sends an order to add liquidity with only 1 input asset
     /// @param amount Amount of asset to deposit
     /// @param i Index of the asset to deposit
     /// @param minAmount Minimal number of LP tokens to receive
-    function add_liquidity_one_coin(uint256 amount, int128 i, uint256 minAmount) external;
+    function add_liquidity_one_coin(
+        uint256 amount,
+        int128 i,
+        uint256 minAmount
+    ) external;
 
     /// @dev Sends an order to add liquidity with only 1 input asset, using the entire balance
     /// @param i Index of the asset to deposit

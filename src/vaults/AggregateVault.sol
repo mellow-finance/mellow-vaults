@@ -94,10 +94,10 @@ contract AggregateVault is IAggregateVault, Vault {
         _initialize(vaultTokens_, nft_);
     }
 
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory vaultOptions
-    ) internal returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory vaultOptions)
+        internal
+        returns (uint256[] memory actualTokenAmounts)
+    {
         require(_nft != 0, ExceptionsLibrary.INIT);
         IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
         uint256 destNft = _subvaultNfts[0];

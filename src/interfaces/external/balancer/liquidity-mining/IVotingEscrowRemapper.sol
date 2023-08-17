@@ -97,7 +97,11 @@ interface IVotingEscrowRemapper {
      * @param remoteUser - The address to receive `localUser`'s balance of veBAL on the remote chain.
      * @param chainId - The chain id of the remote chain on which `remoteUser` resides.
      */
-    function setNetworkRemapping(address localUser, address remoteUser, uint16 chainId) external payable;
+    function setNetworkRemapping(
+        address localUser,
+        address remoteUser,
+        uint16 chainId
+    ) external payable;
 
     /**
      * @notice Sets an address to manage the mapping for a given local user on their behalf.

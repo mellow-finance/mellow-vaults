@@ -44,9 +44,13 @@ contract ERC20RetroRootVault is IERC20RetroRootVault, ERC20Token, ReentrancyGuar
     }
 
     /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, AggregateVault) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, AggregateVault)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId) || type(IERC20RetroRootVault).interfaceId == interfaceId;
     }
 
@@ -317,7 +321,12 @@ contract ERC20RetroRootVault is IERC20RetroRootVault, ERC20Token, ReentrancyGuar
 
     /// @dev we are charging fees on the deposit / withdrawal
     /// fees are charged before the tokens transfer and change the balance of the lp tokens
-    function _chargeFees(uint256 thisNft, uint256[] memory tvls, uint256 supply, address[] memory tokens) internal {
+    function _chargeFees(
+        uint256 thisNft,
+        uint256[] memory tvls,
+        uint256 supply,
+        address[] memory tokens
+    ) internal {
         IERC20RetroRootVaultGovernance vg = IERC20RetroRootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
         IERC20RetroRootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
