@@ -533,8 +533,6 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
             FullMath.mulDiv(actualAmountIn, D9 - mutableParams_.swappingAmountsCoefficientD, D9) <= amountIn,
             ExceptionsLibrary.LIMIT_UNDERFLOW
         );
-
-        emit TokensSwapped(actualAmountIn, actualAmountOut, tokenInIndex);
     }
 
     /// @dev pushed maximal possible amounts of tokens from erc20Vault to kyberVault
@@ -567,12 +565,6 @@ contract KyberPulseStrategyV2 is ContractMeta, Multicall, DefaultAccessControlLa
     function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.1.0");
     }
-
-    /// @notice Emitted after a successful token swap
-    /// @param amountIn amount of token, that pushed into SwapRouter
-    /// @param amountOut amount of token, that recieved from SwapRouter
-    /// @param tokenInIndex index of token, that pushed into SwapRouter
-    event TokensSwapped(uint256 amountIn, uint256 amountOut, uint256 tokenInIndex);
 
     /// @notice Emited when mutable parameters are successfully updated
     /// @param origin Origin of the transaction (tx.origin)

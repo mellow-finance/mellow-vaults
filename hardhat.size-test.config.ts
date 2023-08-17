@@ -28,8 +28,11 @@ const config: HardhatUserConfig = {
     },
     contractSizer: {
         strict: true,
-        except: ["test/"],
+        except: ["test/", "script/"],
     },
+    paths: {
+        sources: "./src"
+    }
 };
 
 export default config;
