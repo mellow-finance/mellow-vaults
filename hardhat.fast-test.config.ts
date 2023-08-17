@@ -10,6 +10,10 @@ const config: HardhatUserConfig = {
         forbidOnly: true,
         grep: "^(?!.*(Integration__))",
     },
+    paths: {
+        tests: "./test/common-tests/",
+        sources: "./src/",
+    },
 };
 
 export default config;
