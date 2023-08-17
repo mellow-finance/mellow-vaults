@@ -40,8 +40,8 @@ contract CommonTest {
             bytes32 r,
             bytes32 s,
             uint8 v
-        ) 
-    {  
+        )
+    {
         return CommonLibrary.splitSignature(sig);
     }
 }
