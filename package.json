@@ -33,9 +33,9 @@
     "coverage": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && node --max-old-space-size=8192 ./node_modules/hardhat/internal/cli/cli.js coverage --max-memory 4096 --config hardhat.test.config.ts",
     "coverage:fast": "rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && node --max-old-space-size=8192 ./node_modules/hardhat/internal/cli/cli.js coverage --max-memory 4096  --config hardhat.fast-test.config.ts",
     "size": "rm -rf artifacts && hardhat size-contracts --config hardhat.size-test.config.ts",
-    "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts test/integration/*.ts test/behaviors/*.ts tasks/*.ts",
+    "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol",
     "prettier:changed": "./node_modules/.bin/prettier -w ./node_modules/.bin/prettier -w  $(git status | grep '.sol' | grep -v 'deleted:' | cut -d ' ' -f 4)",
-    "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts",
+    "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol",
     "clean": "rm -rf artifacts && rm -rf test/types",
     "lstrategy-slippage": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.test.config.ts lstrategy-slippage --tickchange 100 --erc20ratio 5 --percentagechange 90",
     "lstrategy-backtest": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.backtest.config.ts lstrategy-backtest --filename price_data.csv --width 60 --weth 10 --wsteth 10"
