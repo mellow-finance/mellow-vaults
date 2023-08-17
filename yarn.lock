@@ -884,16 +884,11 @@
     widest-line "^3.1.0"
     wrap-ansi "^4.0.0"
 
-"@openzeppelin/contracts@3.4.1-solc-0.7-2", "@openzeppelin3/contracts@npm:@openzeppelin/contracts@3.4.1-solc-0.7-2":
+"@openzeppelin/contracts@3.4.1-solc-0.7-2":
   name "@openzeppelin3/contracts"
   version "3.4.1-solc-0.7-2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.1-solc-0.7-2.tgz#371c67ebffe50f551c3146a9eec5fe6ffe862e92"
   integrity sha512-tAG9LWg8+M2CMu7hIsqHPaTyG4uDzjr6mhvH96LvOpLZZj6tgzTluBt+LsCf1/QaYrlis6pITvpIaIhE+iZB+Q==
-
-"@openzeppelin/contracts@^4.4.0":
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.4.0.tgz#4a1df71f736c31230bbbd634dfb006a756b51e6b"
-  integrity sha512-dlKiZmDvJnGRLHojrDoFZJmsQVeltVeoiRN7RK+cf2FmkhASDEblE0RiaYdxPNsUZa6mRG8393b9bfyp+V5IAw==
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"

@@ -61,6 +61,7 @@ const config: HardhatUserConfig = {
     },
     paths: {
         tests: "./test/common-tests/",
+        sources: "./src/",
     },
     typechain: {
         outDir: "test/types",
