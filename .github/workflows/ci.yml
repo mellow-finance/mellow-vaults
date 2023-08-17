@@ -48,15 +48,6 @@ jobs:
       - name: Check prettier
         run: yarn prettier:check
 
-      - name: Compile contracts
-        run: yarn compile
-
-      - name: Check size
-        run: yarn size
-
-      - name: Run coverage
-        run: yarn coverage:fast
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -65,6 +56,15 @@ jobs:
       - name: Run foundry tests
         run: forge test --use=0.8.9 --fork-url=${{secrets.MAINNET_RPC}}
         id: test
+
+      - name: Compile contracts
+        run: yarn compile
+
+      - name: Check size
+        run: yarn size
+
+      - name: Run coverage
+        run: yarn coverage:fast
 
       - name: Count LOC
         run: find contracts -name "*.sol" | xargs wc -l
