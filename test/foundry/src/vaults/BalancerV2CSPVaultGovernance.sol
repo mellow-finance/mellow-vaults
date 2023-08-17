@@ -83,7 +83,7 @@ contract BalancerV2CSPVaultGovernance is ContractMeta, IBalancerV2VaultGovernanc
     // -------------------  INTERNAL, VIEW  -------------------
 
     function _contractName() internal pure override returns (bytes32) {
-        return bytes32("BalancerV2VaultGovernance");
+        return bytes32("BalancerV2CSPVaultGovernance");
     }
 
     function _contractVersion() internal pure override returns (bytes32) {
