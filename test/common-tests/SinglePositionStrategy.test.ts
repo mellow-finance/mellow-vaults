@@ -514,17 +514,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                             });
                         }
                     };
-
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .stageUnitPrice(
-                            this.dai.address,
-                            BigNumber.from(10).pow(18)
-                        );
-                    await sleep(this.governanceDelay);
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .commitUnitPrice(this.dai.address);
                     return this.subject;
                 }
             );
