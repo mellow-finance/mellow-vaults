@@ -190,16 +190,8 @@ contract BalancerTest is Test {
         permissions[0] = 2;
         permissions[1] = 3;
 
-        IProtocolGovernance(governance).stagePermissionGrants(address(GHO), permissions);
-        IProtocolGovernance(governance).stageValidator(address(GHO), 0xf7A19974dC36E1Ad9A74e967B0Bc9B24e0f4C4b3);
-        IProtocolGovernance(governance).stageUnitPrice(address(GHO), 1e18);
-
         skip(24 * 3600);
-
         IProtocolGovernance(governance).commitAllPermissionGrantsSurpassedDelay();
-        IProtocolGovernance(governance).commitAllValidatorsSurpassedDelay();
-        IProtocolGovernance(governance).commitUnitPrice(address(GHO));
-
         vm.stopPrank();
     }
 

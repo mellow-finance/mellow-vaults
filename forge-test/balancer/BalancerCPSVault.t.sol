@@ -197,7 +197,6 @@ contract BalancerCSPTest is Test {
         IProtocolGovernance(governance).commitAllPermissionGrantsSurpassedDelay();
         IProtocolGovernance(governance).commitAllValidatorsSurpassedDelay();
         IProtocolGovernance(governance).commitUnitPrice(address(LUSD));
-        IProtocolGovernance(governance).commitUnitPrice(address(GHO));
 
         vm.stopPrank();
     }
