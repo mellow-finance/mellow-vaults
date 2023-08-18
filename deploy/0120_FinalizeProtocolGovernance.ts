@@ -8,22 +8,19 @@ import {
     ALLOW_MASK,
     ALL_NETWORKS,
     PermissionIdsLibrary,
-    PRIVATE_VAULT,
     WBTC_PRICE,
     USDC_PRICE,
     WETH_PRICE,
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
-import { ethers } from "ethers";
 import { deployments } from "hardhat";
-import { BigNumber } from "@ethersproject/bignumber";
 
 // TODO: refactor this
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute, read, getOrNull } = deployments;
-    const { deployer, admin, protocolTreasury, weth, wbtc, usdc } =
+    const { log, execute, read } = deployments;
+    const { deployer, admin, protocolTreasury } =
         await getNamedAccounts();
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
@@ -109,6 +106,7 @@ async function registerGovernances(
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
         "ERC20RootVaultGovernance",
+        "BalancerCSPVaultGovernance",
         "MellowVaultGovernance",
     ]) {
         const governance = await hre.deployments.getOrNull(name);
@@ -192,6 +190,7 @@ async function registerExternalProtocols(
         uniV2: "UniV2Validator",
         curve: "CurveValidator",
         erc20: "ERC20Validator",
+        all: "AllowAllValidator",
     };
     for (const key in validators) {
         // @ts-ignore
@@ -217,7 +216,7 @@ async function setUnitPrices(
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
-    const { admin, weth, wbtc, usdc, usdt, wsteth } = await hre.getNamedAccounts();
+    const { admin, weth, wbtc, usdc, usdt, wsteth, dai } = await hre.getNamedAccounts();
     const txWETH = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(weth, WETH_PRICE);
@@ -228,10 +227,18 @@ async function setUnitPrices(
             .populateTransaction.stageUnitPrice(wsteth, WETH_PRICE);
         txDatas.push(txWSTETH.data);
     }
-    const txWBTC = await protocolGovernance
-        .connect(admin)
-        .populateTransaction.stageUnitPrice(wbtc, WBTC_PRICE);
-    txDatas.push(txWBTC.data);
+    if (wbtc) {
+        const txWBTC = await protocolGovernance
+            .connect(admin)
+            .populateTransaction.stageUnitPrice(wbtc, WBTC_PRICE);
+        txDatas.push(txWBTC.data);
+    }
+    if (dai) {
+        const txDAI = await protocolGovernance
+            .connect(admin)
+            .populateTransaction.stageUnitPrice(dai, USDC_PRICE);
+        txDatas.push(txDAI.data);
+    }
     let txUSDC = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(usdc, USDC_PRICE);
@@ -250,10 +257,18 @@ async function setUnitPrices(
             .populateTransaction.commitUnitPrice(wsteth);
         txDatas.push(txWSTETHc.data);
     }
-    const txWBTCc = await protocolGovernance
-        .connect(admin)
-        .populateTransaction.commitUnitPrice(wbtc);
-    txDatas.push(txWBTCc.data);
+    if (wbtc) {
+        const txWBTCc = await protocolGovernance
+            .connect(admin)
+            .populateTransaction.commitUnitPrice(wbtc);
+        txDatas.push(txWBTCc.data);
+    }
+    if (dai) {
+        const txDAIc = await protocolGovernance
+            .connect(admin)
+            .populateTransaction.commitUnitPrice(dai);
+        txDatas.push(txDAIc.data);
+    }
     let txUSDCc = await protocolGovernance
         .connect(admin)
         .populateTransaction.commitUnitPrice(usdc);

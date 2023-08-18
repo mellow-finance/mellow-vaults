@@ -252,7 +252,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ["LStrategy", ...MAIN_NETWORKS];
+func.tags = ["LStrategy", "mainnet"];
 func.dependencies = [
     "ProtocolGovernance",
     "VaultRegistry",

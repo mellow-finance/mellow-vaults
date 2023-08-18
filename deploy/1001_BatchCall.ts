@@ -16,5 +16,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["BatchCall", "core", ...ALL_NETWORKS];
+func.tags = ["BatchCall", "core", "mainnet"];
 func.dependencies = [];

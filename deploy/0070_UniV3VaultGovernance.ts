@@ -54,5 +54,6 @@ func.tags = [
     "arbitrum",
     "optimism",
     "polygon",
+    "base",
 ];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

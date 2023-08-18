@@ -46,6 +46,7 @@ export const ALLOWED_APPROVE_LIST = {
             "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
             "0x6b175474e89094c44da98b954eedeac495271d0f", // DAI
         ],
+        all: [],
     },
     polygon: {
         uniV3: [
@@ -71,7 +72,26 @@ export const ALLOWED_APPROVE_LIST = {
             "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", // WBTC
             "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063", // DAI
         ],
+        all: [],
     },
+    base: {
+        uniV3: [
+            "0x4c36388be6f416a29c8d8eee81c771ce6be14b18", // WETH-USDC 0.05%
+            "0x10648ba41b8565907cfa1496765fa4d95390aa0d", // wsETH-WETH 0.05%
+            "0x2626664c2603336E57B271c5C0b26F421741e481", // SwapRouter
+        ],
+        uniV2: [],
+        curve: [],
+        erc20: [
+            "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA", // USDC
+            "0x4200000000000000000000000000000000000006", // WETH
+            "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22", // wtETH
+            "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb", // DAI
+        ],
+        all: [
+            "0x6352a56caadc4f1e25cd6c75970fa768a3304e64" // OpenOcean exchange V2
+        ]
+    }
 };
 
 export const PRIVATE_VAULT = true;
@@ -106,6 +126,7 @@ export const ALL_NETWORKS = [
     "fantom",
     "xdai",
     "rinkeby",
+    "base",
 ];
 export const MAIN_NETWORKS = [
     "hardhat",

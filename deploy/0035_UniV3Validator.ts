@@ -25,5 +25,6 @@ func.tags = [
     "polygon",
     "arbitrum",
     "optimism",
+    "base",
 ];
 func.dependencies = ["ProtocolGovernance"];

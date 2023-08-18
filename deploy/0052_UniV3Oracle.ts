@@ -45,4 +45,5 @@ func.tags = [
     "polygon",
     "arbitrum",
     "optimism",
+    "base",
 ];

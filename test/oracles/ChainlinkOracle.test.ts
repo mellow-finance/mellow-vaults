@@ -3,7 +3,7 @@ import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "../library/setup";
 import { expect } from "chai";
-import { ChainlinkOracle, IAggregatorV3, IERC20Metadata } from "../types";
+import { ChainlinkOracle, IAggregatorV3, ERC20 } from "../types";
 
 import {
     UNIV2_ORACLE_INTERFACE_ID,
@@ -59,8 +59,8 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                 oracle
             );
             var [, price0] = await chainlinkOracle0.latestRoundData();
-            var metaData: IERC20Metadata = await ethers.getContractAt(
-                "IERC20Metadata",
+            var metaData: ERC20 = await ethers.getContractAt(
+                "ERC20",
                 token
             );
             var metaDataDecimals = await metaData.decimals();
