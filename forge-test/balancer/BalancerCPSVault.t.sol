@@ -5,22 +5,22 @@ import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
 import "forge-std/src/console2.sol";
 
-import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../../src/interfaces/external/balancer/vault/IVault.sol";
-import {IBasePool} from "../../../src/interfaces/external/balancer/vault/IBasePool.sol";
+import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../src/interfaces/external/balancer/vault/IVault.sol";
+import {IBasePool} from "../../src/interfaces/external/balancer/vault/IBasePool.sol";
 
-import "../../../src/vaults/BalancerV2VaultGovernance.sol";
-import "../../../src/vaults/ERC20RootVaultGovernance.sol";
-import "../../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/vaults/BalancerV2CSPVaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
 
-import "../../../src/vaults/BalancerV2Vault.sol";
-import "../../../src/vaults/ERC20RootVault.sol";
-import "../../../src/vaults/ERC20Vault.sol";
+import "../../src/vaults/BalancerV2CSPVault.sol";
+import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20Vault.sol";
 
-import "../../../src/utils/DepositWrapper.sol";
+import "../../src/utils/DepositWrapper.sol";
 
-import "../../../src/strategies/SingleVaultStrategy.sol";
+import "../../src/strategies/SingleVaultStrategy.sol";
 
-contract BalancerTest is Test {
+contract BalancerCSPTest is Test {
     IBalancerVault public vault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
     address public constant GHO = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
@@ -28,9 +28,7 @@ contract BalancerTest is Test {
     address public constant LUSD = 0x5f98805A4E8be255a32880FDeC7F6728C6568bA0;
     address public constant BAL = 0xba100000625a3754423978a60c9317c58a424e3D;
 
-    address public constant GHO_WSTETH_POOL = 0x7D98f308Db99FDD04BbF4217a4be8809F38fAa64;
     address public constant GHO_LUSD_POOL = 0x3FA8C89704e5d07565444009e5d9e624B40Be813;
-    address public constant GHO_BOOSTED_STABLE_POOL = 0xc2B021133D1b0cF07dba696fd5DD89338428225B;
 
     address public sAdmin = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
     address public protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
@@ -105,7 +103,7 @@ contract BalancerTest is Test {
 
         address[] memory tokens = new address[](2);
         tokens[0] = GHO;
-        tokens[1] = WSTETH;
+        tokens[1] = LUSD;
         vm.startPrank(deployer);
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
@@ -113,9 +111,9 @@ contract BalancerTest is Test {
         IBalancerV2VaultGovernance(balancerV2VaultGovernance).createVault(
             tokens,
             deployer,
-            GHO_WSTETH_POOL,
+            GHO_LUSD_POOL,
             0xBA12222222228d8Ba445958a75a0704d566BF2C8,
-            0x6EE63656BbF5BE3fdF9Be4982BF9466F6a921b83,
+            0x70892E4355d0E04A3d19264E93c64C401520f3A4,
             0x239e55F427D44C3cc793f49bFB507ebe76638a2b
         );
 
@@ -175,11 +173,11 @@ contract BalancerTest is Test {
     }
 
     function deployGovernances() public {
-        balancerV2VaultGovernance = new BalancerV2VaultGovernance(
+        balancerV2VaultGovernance = new BalancerV2CSPVaultGovernance(
             IVaultGovernance.InternalParams({
                 protocolGovernance: IProtocolGovernance(governance),
                 registry: IVaultRegistry(registry),
-                singleton: IVault(address(new BalancerV2Vault()))
+                singleton: IVault(address(new BalancerV2CSPVault()))
             })
         );
 
@@ -190,14 +188,15 @@ contract BalancerTest is Test {
         permissions[0] = 2;
         permissions[1] = 3;
 
-        IProtocolGovernance(governance).stagePermissionGrants(address(GHO), permissions);
-        IProtocolGovernance(governance).stageValidator(address(GHO), 0xf7A19974dC36E1Ad9A74e967B0Bc9B24e0f4C4b3);
-        IProtocolGovernance(governance).stageUnitPrice(address(GHO), 1e18);
+        IProtocolGovernance(governance).stagePermissionGrants(address(LUSD), permissions);
+        IProtocolGovernance(governance).stageValidator(address(LUSD), 0xf7A19974dC36E1Ad9A74e967B0Bc9B24e0f4C4b3);
+        IProtocolGovernance(governance).stageUnitPrice(address(LUSD), 1e18);
 
         skip(24 * 3600);
 
         IProtocolGovernance(governance).commitAllPermissionGrantsSurpassedDelay();
         IProtocolGovernance(governance).commitAllValidatorsSurpassedDelay();
+        IProtocolGovernance(governance).commitUnitPrice(address(LUSD));
         IProtocolGovernance(governance).commitUnitPrice(address(GHO));
 
         vm.stopPrank();
@@ -208,19 +207,21 @@ contract BalancerTest is Test {
 
         if (tvl[0] == 0) {
             tvl = new uint256[](2);
-            tvl[0] = 1e10;
-            tvl[1] = 1e10;
+            tvl[0] = 1e10 * 76;
+            tvl[1] = 1e10 * 23;
         } else {
             tvl[0] *= 10;
             tvl[1] *= 10;
+            tvl[0] /= 3;
+            tvl[1] /= 3;
         }
 
         deal(GHO, deployer, tvl[0]);
-        deal(WSTETH, deployer, tvl[1]);
+        deal(LUSD, deployer, tvl[1]);
 
         vm.startPrank(deployer);
+        IERC20(LUSD).approve(address(depositWrapper), type(uint256).max);
         IERC20(GHO).approve(address(depositWrapper), type(uint256).max);
-        IERC20(WSTETH).approve(address(depositWrapper), type(uint256).max);
 
         depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         depositWrapper.deposit(rootVault, tvl, 0, new bytes(0));
@@ -262,13 +263,13 @@ contract BalancerTest is Test {
         console2.log("withdrawedAmount: ", withdrawedAmount[0], withdrawedAmount[1]);
 
         skip(60 * 60);
-        balancerV2Vault.claimBalancerRewardToken();
+        console2.log("Claimed BAL: ", balancerV2Vault.claimBalancerRewardToken());
         balancerV2Vault.claimRewards();
         withdraw();
     }
 
     function testVault() external {
-        BalancerV2Vault vault_ = new BalancerV2Vault();
+        BalancerV2CSPVault vault_ = new BalancerV2CSPVault();
 
         uint256 balToUSDC = vault_.getPriceToUSDX96(
             IAggregatorV3(0xdF2917806E30300537aEB49A7663062F4d1F2b5F),

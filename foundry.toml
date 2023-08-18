@@ -2,6 +2,7 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
+test = 'forge-test'
 remappings = ["@openzeppelin/=lib/openzeppelin-contracts/", "forge-std/=lib/forge-std/"]
 optimizer = true
 

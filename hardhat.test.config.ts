@@ -60,7 +60,7 @@ const config: HardhatUserConfig = {
         ),
     },
     paths: {
-        tests: "./test/common-tests/",
+        tests: "./test/",
         sources: "./src/",
     },
     typechain: {

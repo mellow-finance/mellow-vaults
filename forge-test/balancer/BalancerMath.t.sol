@@ -5,18 +5,18 @@ import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
 import "forge-std/src/console2.sol";
 
-import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../../src/interfaces/external/balancer/vault/IVault.sol";
-import {IBasePool} from "../../../src/interfaces/external/balancer/vault/IBasePool.sol";
+import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../src/interfaces/external/balancer/vault/IVault.sol";
+import {IBasePool} from "../../src/interfaces/external/balancer/vault/IBasePool.sol";
 
-import "../../../src/vaults/BalancerV2VaultGovernance.sol";
-import "../../../src/vaults/ERC20RootVaultGovernance.sol";
-import "../../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/vaults/BalancerV2VaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
 
-import "../../../src/vaults/BalancerV2Vault.sol";
-import "../../../src/vaults/ERC20RootVault.sol";
-import "../../../src/vaults/ERC20Vault.sol";
+import "../../src/vaults/BalancerV2Vault.sol";
+import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20Vault.sol";
 
-import "../../../src/utils/DepositWrapper.sol";
+import "../../src/utils/DepositWrapper.sol";
 
 contract BalancerTest is Test {
     IBalancerVault public vault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);

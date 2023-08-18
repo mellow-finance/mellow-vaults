@@ -11,7 +11,7 @@ const config: HardhatUserConfig = {
         grep: "^(?!.*(Integration__))",
     },
     paths: {
-        tests: "./test/common-tests/",
+        tests: "./test/",
         sources: "./src/",
     },
 };

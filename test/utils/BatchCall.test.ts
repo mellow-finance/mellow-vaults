@@ -39,7 +39,7 @@ contract<BatchCall, DeployOptions, CustomContext>("BatchCall", function () {
             });
 
             describe("when targets arrays not only of contracts", () => {
-                it(`reverts with "Address: delegate call to non-contract"`, async () => {
+                it(`reverts with "Address: call to non-contract"`, async () => {
                     var data = encodeToBytes(["bytes"], [0]);
                     await expect(
                         this.subject.batchcall(
@@ -47,7 +47,7 @@ contract<BatchCall, DeployOptions, CustomContext>("BatchCall", function () {
                             [data]
                         )
                     ).to.be.revertedWith(
-                        "Address: delegate call to non-contract"
+                        "Address: call to non-contract"
                     );
                 });
             });

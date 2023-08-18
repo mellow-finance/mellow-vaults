@@ -5,24 +5,24 @@ import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
 import "forge-std/src/console2.sol";
 
-import "../../../src/interfaces/external/pancakeswap/ISmartRouter.sol";
+import "../../src/interfaces/external/pancakeswap/ISmartRouter.sol";
 
-import "../../../src/strategies/PancakeSwapPulseStrategyV2.sol";
+import "../../src/strategies/PancakeSwapPulseStrategyV2.sol";
 
-import "../../../src/test/MockRouter.sol";
+import "../../src/test/MockRouter.sol";
 
-import "../../../src/utils/DepositWrapper.sol";
-import "../../../src/utils/PancakeSwapHelper.sol";
-import "../../../src/utils/PancakeSwapPulseV2Helper.sol";
+import "../../src/utils/DepositWrapper.sol";
+import "../../src/utils/PancakeSwapHelper.sol";
+import "../../src/utils/PancakeSwapPulseV2Helper.sol";
 
-import "../../../src/vaults/ERC20Vault.sol";
-import "../../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/vaults/ERC20Vault.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
 
-import "../../../src/vaults/ERC20RootVault.sol";
-import "../../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
-import "../../../src/vaults/PancakeSwapVault.sol";
-import "../../../src/vaults/PancakeSwapVaultGovernance.sol";
+import "../../src/vaults/PancakeSwapVault.sol";
+import "../../src/vaults/PancakeSwapVaultGovernance.sol";
 
 contract PancakePulseV2Test is Test {
     IERC20RootVault public rootVault;
