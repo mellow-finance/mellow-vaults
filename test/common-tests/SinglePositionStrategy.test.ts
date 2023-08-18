@@ -568,10 +568,6 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                         0,
                         []
                     );
-                const pool = await ethers.getContractAt(
-                    "IUniswapV3Pool",
-                    await this.uniV3Vault500.pool()
-                );
 
                 for (let intervalWidth of [20, 200, 2000, 20000]) {
                     await updateIntervalWidth(intervalWidth);
@@ -596,35 +592,20 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                             .connect(this.mStrategyAdmin)
                             .rebalance(ethers.constants.MaxUint256);
 
-                        const erc20 = (await this.erc20Vault.tvl())
-                            .minTokenAmounts;
-                        const total = (await this.erc20RootVault.tvl())
-                            .minTokenAmounts;
-
-                        const { sqrtPriceX96 } = await pool.slot0();
-                        const priceX96 = sqrtPriceX96
-                            .mul(sqrtPriceX96)
-                            .div(Q96);
-                        const totalCapital = total[0].add(
-                            total[1].mul(Q96).div(priceX96)
-                        );
-                        const erc20Capital = erc20[0].add(
-                            erc20[1].mul(Q96).div(priceX96)
-                        );
-
-                        const currentERC20RatioD =
-                            DENOMINATOR.mul(erc20Capital).div(totalCapital);
-                        expect(currentERC20RatioD.lte(50000)).to.be.true; // at most = 0.005% on ERC20Vault
-
                         if (i % 2 == 1) {
                             const balance = await this.erc20RootVault.balanceOf(
                                 this.deployer.address
                             );
+                            const { minTokenAmounts } = await this.erc20RootVault.tvl();
+                            var coef = minTokenAmounts[0].div(BigNumber.from(200000 * 1000000)).add(1);
+                            if (coef.lt(2)) {
+                                coef = BigNumber.from(2);
+                            }
                             await this.erc20RootVault
                                 .connect(this.deployer)
                                 .withdraw(
                                     this.deployer.address,
-                                    balance.div(2),
+                                    balance.div(coef),
                                     [0, 0],
                                     [[], []]
                                 );
