@@ -80,7 +80,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
 };
 export default func;
-func.tags = ["ContractRegistry", "core", ...ALL_NETWORKS];
+func.tags = ["ContractRegistry", "core", "mainnet"];
 func.dependencies = [
     "ProtocolGovernance",
     "VaultRegistry",

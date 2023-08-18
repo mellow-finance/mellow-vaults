@@ -18,5 +18,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["UniV2Validator", "core", ...ALL_NETWORKS];
+func.tags = ["UniV2Validator", "core", "mainnet"];
 func.dependencies = ["ProtocolGovernance"];

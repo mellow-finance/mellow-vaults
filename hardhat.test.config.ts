@@ -59,6 +59,10 @@ const config: HardhatUserConfig = {
             )
         ),
     },
+    paths: {
+        tests: "./test/",
+        sources: "./src/",
+    },
     typechain: {
         outDir: "test/types",
         target: "ethers-v5",

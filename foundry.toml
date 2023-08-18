@@ -1,0 +1,15 @@
+[profile.default]
+src = 'src'
+out = 'out'
+libs = ['lib']
+test = 'forge-test'
+remappings = ["@openzeppelin/=lib/openzeppelin-contracts/", "forge-std/=lib/forge-std/"]
+optimizer = true
+
+[profile.default.optimizer_details]
+yul = true
+
+[profile.default.optimizer_details.yulDetails]
+stackAllocation = true
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

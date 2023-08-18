@@ -278,7 +278,7 @@ export function vaultGovernanceBehavior<
         });
         it("vault is initialized with nft", async () => {
             const address = await this.vaultRegistry.vaultForNft(nft);
-            const vault: IVault = await ethers.getContractAt("IVault", address);
+            const vault: Vault = await ethers.getContractAt("Vault", address);
             expect(nft).to.eq(await vault.nft());
         });
 

@@ -20,4 +20,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["UniV2Oracle", "core", ...ALL_NETWORKS];
+func.tags = ["UniV2Oracle", "core", "mainnet"];
