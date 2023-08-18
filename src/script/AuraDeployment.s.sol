@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "../../src/vaults/AuraVault.sol";
 import "../../src/vaults/AuraVaultGovernance.sol";
 
+import "../../src/oracles/LUSDOracle.sol";
+
 contract AuraDeployment is Script {
     using SafeERC20 for IERC20;
 
@@ -27,13 +29,15 @@ contract AuraDeployment is Script {
         );
 
         console2.log("Singleton: ", address(singleton));
-        console2.log("BalancerV2VaultGovernance: ", address(auraVaultGovernance));
+        console2.log("AuraVaultGovernance: ", address(auraVaultGovernance));
     }
 
     // rebalance
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        deployGovernances();
+        // deployGovernances();
+        LUSDOracle oracle = new LUSDOracle();
+        console2.log(uint256(oracle.latestAnswer()));
         vm.stopBroadcast();
     }
 }
