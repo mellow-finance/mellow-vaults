@@ -90,7 +90,7 @@ contract Deploy is Script {
         );
 
         address[] memory wl = new address[](1);
-        wl[0] = Constants.depositWrapper;
+        wl[0] = address(depositWrapper);
         rootVault.addDepositorsToAllowlist(wl);
 
         rootVaultGovernance.commitDelayedStrategyParams(nft);
@@ -158,13 +158,15 @@ contract Deploy is Script {
         strategy.updateDesiredAmounts(PulseStrategyV2.DesiredAmounts({amount0Desired: 1e6, amount1Desired: 1e9}));
     }
 
-    PulseStrategyV2 public baseStrategy =
-        new PulseStrategyV2(INonfungiblePositionManager(Constants.uniswapPositionManager));
-    PulseStrategyV2Helper public strategyHelper = new PulseStrategyV2Helper();
+    PulseStrategyV2 public baseStrategy;
+    PulseStrategyV2Helper public strategyHelper;
 
     // deploy
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        baseStrategy = new PulseStrategyV2(INonfungiblePositionManager(Constants.uniswapPositionManager));
+        strategyHelper = new PulseStrategyV2Helper();
+
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),
             Constants.deployer,

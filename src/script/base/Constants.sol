@@ -29,5 +29,5 @@ library Constants {
     address public constant uniswapV3Factory = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD;
     address public constant uniswapV3Router = 0x2626664c2603336E57B271c5C0b26F421741e481;
 
-    address public constant depositWrapper = address(0);
+    address public constant depositWrapper = 0xca89DeB98290ec57c9838ab2edE4D3DbBDEe03B9;
 }
