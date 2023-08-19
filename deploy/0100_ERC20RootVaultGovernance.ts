@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-    
+  
     const { address: helperAddress } = await deploy("ERC20RootVaultHelper", {
         from: deployer,
         args: [],

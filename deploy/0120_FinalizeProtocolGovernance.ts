@@ -237,7 +237,7 @@ async function setUnitPrices(
         const txDAI = await protocolGovernance
             .connect(admin)
             .populateTransaction.stageUnitPrice(dai, USDC_PRICE.pow(3));
-        txDatas.push(txDAI.data);
+       txDatas.push(txDAI.data);
     }
     let txUSDC = await protocolGovernance
         .connect(admin)
