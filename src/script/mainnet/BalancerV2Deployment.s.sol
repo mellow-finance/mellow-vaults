@@ -7,8 +7,8 @@ import "forge-std/src/Vm.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import "../../src/vaults/BalancerV2Vault.sol";
-import "../../src/vaults/BalancerV2VaultGovernance.sol";
+import "../../../src/vaults/BalancerV2Vault.sol";
+import "../../../src/vaults/BalancerV2VaultGovernance.sol";
 
 contract BalancerV2Deployment is Script {
     using SafeERC20 for IERC20;

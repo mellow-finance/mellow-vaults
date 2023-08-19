@@ -420,7 +420,9 @@ const config: HardhatUserConfig = {
             default: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
         },
     },
-
+    paths: {
+        sources: "./src/"
+    },
     solidity: {
         compilers: [
             {
@@ -437,6 +439,16 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: process.env["ETHERSCAN_API_KEY"],
+        customChains: [
+            {
+                network: "base",
+                chainId: 8453,
+                urls: {
+                apiURL: "https://api.basescan.org/api",
+                browserURL: "https://basescan.org/"
+                }
+            }
+        ]
     },
 };
 

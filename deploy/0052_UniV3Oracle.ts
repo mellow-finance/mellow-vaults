@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "IUniswapV3Factory",
         uniswapV3Factory
     );
-    const pools = [];
+    const pools: any[] = [];
     for (const tokens of [
         [usdc, weth],
         [wbtc, weth],

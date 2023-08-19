@@ -7,10 +7,10 @@ import "forge-std/src/Vm.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import "../../src/vaults/AuraVault.sol";
-import "../../src/vaults/AuraVaultGovernance.sol";
+import "../../../src/vaults/AuraVault.sol";
+import "../../../src/vaults/AuraVaultGovernance.sol";
 
-import "../../src/oracles/LUSDOracle.sol";
+import "../../../src/oracles/LUSDOracle.sol";
 
 contract AuraDeployment is Script {
     using SafeERC20 for IERC20;

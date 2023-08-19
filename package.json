@@ -11,11 +11,13 @@
     "deploy:polygon": "rm -rf artifacts && hardhat --network polygon deploy --tags polygon",
     "deploy:arbitrum": "rm -rf artifacts && hardhat --network arbitrum deploy --tags arbitrum",
     "deploy:optimism": "rm -rf artifacts && hardhat --network optimism deploy --tags optimism",
+    "deploy:base": "rm -rf artifacts && hardhat --network base deploy --tags base",
     "docgen": "node docgen/generate.js",
     "verify:mainnet": "rm -rf artifacts && hardhat compile && hardhat --network mainnet etherscan-verify --license None --force-license",
     "verify:polygon": "rm -rf artifacts && hardhat compile && hardhat --network polygon etherscan-verify --license None --force-license",
     "verify:arbitrum": "rm -rf artifacts && hardhat compile && hardhat --network arbitrum etherscan-verify --license None --force-license",
     "verify:optimism": "rm -rf artifacts && hardhat compile && hardhat --network optimism etherscan-verify --license None --force-license",
+    "verify:base": "rm -rf artifacts && hardhat compile && hardhat --network base etherscan-verify --license None --force-license",
     "export": "hardhat export --export-all ./deployments/contracts.json",
     "test": "node --max-old-space-size=8192 ./node_modules/hardhat/internal/cli/cli.js test --max-memory 4096 --config hardhat.test.config.ts",
     "gastest": "hardhat test --config hardhat.gastest.config.ts",
@@ -33,6 +35,7 @@
     "forge:test:olympus": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/olympus/*.sol'",
     "forge:test:balancer": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/balancer/*.sol'",
     "forge:deploy:pancake": "forge script --use 0.8.9 src/script/DeployPancakeVault.s.sol:DeployPancakeVault --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+    "forge:deploy:base": "forge script --use 0.8.9 src/script/ERC20RootVaultHelperDeployment.s.sol:ERC20RootVaultHelperDeployment --rpc-url $(grep BASE_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep BASE_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:balancer-v2": "forge script --use 0.8.9 src/script/BalancerV2Deployment.s.sol:BalancerV2Deployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:aura": "forge script --use 0.8.9 ./src/script/AuraDeployment.s.sol:AuraDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:retro": "forge script --use 0.8.9 ./src/script/RetroDeployment.s.sol:RetroDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGON_API_KEY .env | cut -d '=' -f2) -vvvv",
@@ -43,7 +46,6 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
-    "@nomiclabs/hardhat-etherscan": "^2.1.4",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@typechain/ethers-v5": "^8.0.3",
     "@typechain/hardhat": "^3.0.0",
@@ -68,6 +70,7 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@openzeppelin/contracts": "^4.9.3",
     "@types/dotenv": "^8.2.0",
     "@uniswap/sdk-core": "^3.0.1",

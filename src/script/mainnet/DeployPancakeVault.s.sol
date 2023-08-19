@@ -7,24 +7,24 @@ import "forge-std/src/Vm.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import "../../src/interfaces/external/pancakeswap/ISmartRouter.sol";
+import "../../../src/interfaces/external/pancakeswap/ISmartRouter.sol";
 
-import "../../src/strategies/PancakeSwapPulseStrategyV2.sol";
+import "../../../src/strategies/PancakeSwapPulseStrategyV2.sol";
 
-import "../../src/test/MockRouter.sol";
+import "../../../src/test/MockRouter.sol";
 
-import "../../src/utils/DepositWrapper.sol";
-import "../../src/utils/PancakeSwapHelper.sol";
-import "../../src/utils/PancakeSwapPulseV2Helper.sol";
+import "../../../src/utils/DepositWrapper.sol";
+import "../../../src/utils/PancakeSwapHelper.sol";
+import "../../../src/utils/PancakeSwapPulseV2Helper.sol";
 
-import "../../src/vaults/ERC20Vault.sol";
-import "../../src/vaults/ERC20VaultGovernance.sol";
+import "../../../src/vaults/ERC20Vault.sol";
+import "../../../src/vaults/ERC20VaultGovernance.sol";
 
-import "../../src/vaults/ERC20RootVault.sol";
-import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../../src/vaults/ERC20RootVault.sol";
+import "../../../src/vaults/ERC20RootVaultGovernance.sol";
 
-import "../../src/vaults/PancakeSwapVault.sol";
-import "../../src/vaults/PancakeSwapVaultGovernance.sol";
+import "../../../src/vaults/PancakeSwapVault.sol";
+import "../../../src/vaults/PancakeSwapVaultGovernance.sol";
 
 contract DeployPancakeVault is Script {
     using SafeERC20 for IERC20;

@@ -3,11 +3,8 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import {
-    ALL_NETWORKS,
-    MAIN_NETWORKS,
     TRANSACTION_GAS_LIMITS,
 } from "./0000_utils";
-import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -17,14 +14,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     const vaultRegistry = await get("VaultRegistry");
     const { deployer } = await getNamedAccounts();
-    const { address: singleton } = await deploy("MellowVault", {
+    const { address: singleton } = await deploy("BalancerV2CSPVault", {
         from: deployer,
         args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-    await deploy("MellowVaultGovernance", {
+    await deploy("BalancerV2CSPVaultGovernance", {
         from: deployer,
         args: [
             {
@@ -39,5 +36,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["MellowVaultGovernance", "core", ...ALL_NETWORKS];
+func.tags = ["MellowVaultGovernance", "core", "base"];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

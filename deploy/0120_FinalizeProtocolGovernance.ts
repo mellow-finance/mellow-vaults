@@ -236,17 +236,19 @@ async function setUnitPrices(
     if (dai) {
         const txDAI = await protocolGovernance
             .connect(admin)
-            .populateTransaction.stageUnitPrice(dai, USDC_PRICE);
+            .populateTransaction.stageUnitPrice(dai, USDC_PRICE.pow(3));
         txDatas.push(txDAI.data);
     }
     let txUSDC = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(usdc, USDC_PRICE);
     txDatas.push(txUSDC.data);
-    txUSDC = await protocolGovernance
-        .connect(admin)
-        .populateTransaction.stageUnitPrice(usdt, USDC_PRICE);
-    txDatas.push(txUSDC.data);
+    if (usdt) {
+        txUSDC = await protocolGovernance
+            .connect(admin)
+            .populateTransaction.stageUnitPrice(usdt, USDC_PRICE);
+        txDatas.push(txUSDC.data);
+    }
     const txWETHc = await protocolGovernance
         .connect(admin)
         .populateTransaction.commitUnitPrice(weth);
@@ -273,10 +275,12 @@ async function setUnitPrices(
         .connect(admin)
         .populateTransaction.commitUnitPrice(usdc);
     txDatas.push(txUSDCc.data);
-    txUSDCc = await protocolGovernance
-        .connect(admin)
-        .populateTransaction.commitUnitPrice(usdt);
-    txDatas.push(txUSDCc.data);
+    if (usdt) {
+        txUSDCc = await protocolGovernance
+            .connect(admin)
+            .populateTransaction.commitUnitPrice(usdt);
+        txDatas.push(txUSDCc.data);
+    }
 }
 
 export default func;
