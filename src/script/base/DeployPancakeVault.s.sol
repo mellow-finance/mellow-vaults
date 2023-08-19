@@ -26,8 +26,6 @@ import "../../../src/vaults/ERC20RootVaultGovernance.sol";
 import "../../../src/vaults/PancakeSwapVault.sol";
 import "../../../src/vaults/PancakeSwapVaultGovernance.sol";
 
-import "./Constants.sol";
-
 contract DeployPancakeVault is Script {
     using SafeERC20 for IERC20;
 
@@ -35,17 +33,31 @@ contract DeployPancakeVault is Script {
     IERC20Vault public erc20Vault;
     IPancakeSwapVault public pancakeSwapVault;
 
+    uint256 public nftStart;
+
+    address public protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
+    address public strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
+    address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
+    address public operator = 0xE4445221cF7e2070C2C1928d0B3B3e99A0D4Fb8E;
+
+    address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+
+    address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
+    address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
+    address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
+    address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
+    address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+
     IPancakeNonfungiblePositionManager public positionManager =
         IPancakeNonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364);
-
     IMasterChef public masterChef = IMasterChef(0x556B9306565093C855AEA9AE92A594704c2Cd59e);
-
     address public swapRouter = 0x13f4EA83D0bd40E75C8222255bc855a974568Dd4;
-
+    address public oneInchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
     PancakeSwapVaultGovernance public pancakeSwapVaultGovernance =
         PancakeSwapVaultGovernance(0x99cb0f623B2679A6b83e0576950b2A4a55027557);
-    IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(Constants.erc20RootGovernance);
-    DepositWrapper public depositWrapper = DepositWrapper(Constants.depositWrapper);
+    IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
+    DepositWrapper public depositWrapper = DepositWrapper(0x231002439E1BD5b610C3d98321EA760002b9Ff64);
     PancakeSwapHelper public vaultHelper = PancakeSwapHelper(0x6DFd0eb105511615629D2C0B72E1AE4d068346Bc);
 
     uint256 public constant Q96 = 2**96;
@@ -55,13 +67,13 @@ contract DeployPancakeVault is Script {
         tokenAmounts[1] = 10**4;
         tokenAmounts[0] = 10**13;
 
-        if (IERC20(Constants.usdt).allowance(msg.sender, address(depositWrapper)) == 0) {
-            IERC20(Constants.usdt).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
-        }
+        // if (IERC20(usdt).allowance(msg.sender, address(depositWrapper)) == 0) {
+        //     IERC20(usdt).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
+        // }
 
-        if (IERC20(Constants.weth).allowance(msg.sender, address(depositWrapper)) == 0) {
-            IERC20(Constants.weth).safeApprove(address(depositWrapper), type(uint256).max);
-        }
+        // if (IERC20(weth).allowance(msg.sender, address(depositWrapper)) == 0) {
+        IERC20(weth).safeApprove(address(depositWrapper), type(uint256).max);
+        // }
 
         depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
@@ -72,13 +84,13 @@ contract DeployPancakeVault is Script {
         address[] memory tokens,
         uint256[] memory nfts
     ) public {
-        IVaultRegistry vaultRegistry = IVaultRegistry(Constants.registry);
+        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         for (uint256 i = 0; i < nfts.length; ++i) {
             vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
         }
 
         uint256 nft;
-        (rootVault, nft) = rootVaultGovernance.createVault(tokens, address(strategy_), nfts, Constants.deployer);
+        (rootVault, nft) = rootVaultGovernance.createVault(tokens, address(strategy_), nfts, deployer);
         rootVaultGovernance.setStrategyParams(
             nft,
             IERC20RootVaultGovernance.StrategyParams({
@@ -90,8 +102,8 @@ contract DeployPancakeVault is Script {
         rootVaultGovernance.stageDelayedStrategyParams(
             nft,
             IERC20RootVaultGovernance.DelayedStrategyParams({
-                strategyTreasury: Constants.strategyTreasury,
-                strategyPerformanceTreasury: Constants.protocolTreasury,
+                strategyTreasury: strategyTreasury,
+                strategyPerformanceTreasury: protocolTreasury,
                 managementFee: 0,
                 performanceFee: 0,
                 privateVault: false,
@@ -104,18 +116,18 @@ contract DeployPancakeVault is Script {
     }
 
     function deployVaults(address strategy) public {
-        IVaultRegistry vaultRegistry = IVaultRegistry(Constants.registry);
+        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[1] = Constants.usdt;
-        tokens[0] = Constants.weth;
-        IERC20VaultGovernance(Constants.erc20Governance).createVault(tokens, Constants.deployer);
+        tokens[1] = usdt;
+        tokens[0] = weth;
+        IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
         IPancakeSwapVaultGovernance(pancakeSwapVaultGovernance).createVault(
             tokens,
-            Constants.deployer,
+            deployer,
             500,
             address(vaultHelper),
             address(masterChef),
@@ -130,7 +142,7 @@ contract DeployPancakeVault is Script {
                 swapSlippageD: 1e7,
                 poolForSwap: 0x517F451b0A9E1b87Dc0Ae98A05Ee033C3310F046,
                 cake: 0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898,
-                underlyingToken: Constants.weth,
+                underlyingToken: weth,
                 smartRouter: swapRouter,
                 averageTickTimespan: 30
             })
@@ -160,10 +172,10 @@ contract DeployPancakeVault is Script {
             PancakeSwapPulseStrategyV2.ImmutableParams({
                 erc20Vault: erc20Vault,
                 pancakeSwapVault: pancakeSwapVault,
-                router: address(Constants.oneInchRouter),
+                router: address(oneInchRouter),
                 tokens: erc20Vault.vaultTokens()
             }),
-            Constants.operator
+            operator
         );
 
         uint256[] memory minSwapAmounts = new uint256[](2);
@@ -200,15 +212,15 @@ contract DeployPancakeVault is Script {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),
-            Constants.deployer,
+            deployer,
             new bytes(0)
         );
 
         deployVaults(address(newStrategy));
         firstDeposit(address(newStrategy));
 
-        IERC20(Constants.usdt).safeTransfer(address(newStrategy), 1e6);
-        IERC20(Constants.weth).safeTransfer(address(newStrategy), 1e11);
+        IERC20(usdt).safeTransfer(address(newStrategy), 1e6);
+        IERC20(weth).safeTransfer(address(newStrategy), 1e11);
 
         vm.stopBroadcast();
         vm.startBroadcast(vm.envUint("OPERATOR_PK"));

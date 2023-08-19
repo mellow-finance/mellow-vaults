@@ -10,18 +10,17 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "../../../src/vaults/BalancerV2Vault.sol";
 import "../../../src/vaults/BalancerV2VaultGovernance.sol";
 
+import "./Constants.sol";
+
 contract BalancerV2Deployment is Script {
     using SafeERC20 for IERC20;
-
-    address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
-    address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
 
     function deployGovernances() public {
         BalancerV2Vault singleton = new BalancerV2Vault();
         BalancerV2VaultGovernance balancerV2VaultGovernance = new BalancerV2VaultGovernance(
             IVaultGovernance.InternalParams({
-                protocolGovernance: IProtocolGovernance(governance),
-                registry: IVaultRegistry(registry),
+                protocolGovernance: IProtocolGovernance(Constants.governance),
+                registry: IVaultRegistry(Constants.registry),
                 singleton: IVault(address(singleton))
             })
         );
