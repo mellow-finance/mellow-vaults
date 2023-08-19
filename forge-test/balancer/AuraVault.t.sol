@@ -212,7 +212,7 @@ contract AuraVaultTest is Test {
 
             IAggregatorV3 rewardOracle = IAggregatorV3(new AuraOracle());
             IAggregatorV3 underlyingOracle = IAggregatorV3(0x3f12643D3f6f874d39C2a4c9f2Cd6f2DbAC877FC);
-            uint256 slippageD = 1e8;
+            uint256 slippageD = 2e8;
             swapParams[1] = IAuraVaultGovernance.SwapParams({
                 swaps: swaps,
                 assets: assets,
