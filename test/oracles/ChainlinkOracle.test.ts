@@ -28,9 +28,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
-                    this.subject = await ethers.getContract(
-                        "ChainlinkOracle"
-                    );
+                    this.subject = await ethers.getContract("ChainlinkOracle");
                     const { chainlinkEth, chainlinkBtc, chainlinkUsdc } =
                         await hre.getNamedAccounts();
                     this.chainlinkEth = chainlinkEth;
@@ -59,10 +57,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                 oracle
             );
             var [, price0] = await chainlinkOracle0.latestRoundData();
-            var metaData: ERC20 = await ethers.getContractAt(
-                "ERC20",
-                token
-            );
+            var metaData: ERC20 = await ethers.getContractAt("ERC20", token);
             var metaDataDecimals = await metaData.decimals();
             var aggregatorDecimals = await chainlinkOracle0.decimals();
             var decimals0 = -metaDataDecimals - aggregatorDecimals;
@@ -196,10 +191,9 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when contract does not support the given interface", () => {
                     it("returns false", async () => {
-                        let isSupported =
-                            await this.subject.supportsInterface(
-                                UNIV2_ORACLE_INTERFACE_ID
-                            );
+                        let isSupported = await this.subject.supportsInterface(
+                            UNIV2_ORACLE_INTERFACE_ID
+                        );
                         expect(isSupported).to.be.false;
                     });
                 });
@@ -274,9 +268,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                     this.weth.address,
                     this.wbtc.address,
                 ].forEach(async (token) => {
-                    var isSupported = await this.subject.hasOracle(
-                        token
-                    );
+                    var isSupported = await this.subject.hasOracle(token);
                     expect(isSupported).to.be.true;
                 });
             });
@@ -285,8 +277,9 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                 describe("when oracle is not supported", () => {
                     it("returns false", async () => {
                         [this.chainlinkEth].forEach(async (token) => {
-                            var isSupported =
-                                await this.subject.hasOracle(token);
+                            var isSupported = await this.subject.hasOracle(
+                                token
+                            );
                             expect(isSupported).to.be.false;
                         });
                     });
@@ -307,7 +300,10 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                 });
             });
         });
-        
-        ContractMetaBehaviour.call(this, { contractName:"ChainlinkOracle", contractVersion:"1.0.0" });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ChainlinkOracle",
+            contractVersion: "1.0.0",
+        });
     }
 );

@@ -94,11 +94,15 @@ contract DeployPancakeVault is Script {
                 strategyPerformanceTreasury: Constants.protocolTreasury,
                 managementFee: 0,
                 performanceFee: 0,
-                privateVault: false,
+                privateVault: true,
                 depositCallbackAddress: address(0),
                 withdrawCallbackAddress: address(0)
             })
         );
+
+        address[] memory wl = new address[](1);
+        wl[0] = address(depositWrapper);
+        rootVault.addDepositorsToAllowlist(wl);
 
         rootVaultGovernance.commitDelayedStrategyParams(nft);
     }

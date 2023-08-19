@@ -20,8 +20,7 @@ import { deployments } from "hardhat";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
-    const { deployer, admin, protocolTreasury } =
-        await getNamedAccounts();
+    const { deployer, admin, protocolTreasury } = await getNamedAccounts();
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
@@ -130,7 +129,8 @@ async function registerTokens(
         "ProtocolGovernance"
     );
     const erc20Validator = await deployments.get("ERC20Validator");
-    const { weth, wbtc, usdc, usdt, dai, wsteth } = await hre.getNamedAccounts();
+    const { weth, wbtc, usdc, usdt, dai, wsteth } =
+        await hre.getNamedAccounts();
     const tokens = [weth, wbtc, usdc, usdt, dai, wsteth]
         .map((t) => t.toLowerCase())
         .sort();
@@ -216,7 +216,8 @@ async function setUnitPrices(
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
-    const { admin, weth, wbtc, usdc, usdt, wsteth, dai } = await hre.getNamedAccounts();
+    const { admin, weth, wbtc, usdc, usdt, wsteth, dai } =
+        await hre.getNamedAccounts();
     const txWETH = await protocolGovernance
         .connect(admin)
         .populateTransaction.stageUnitPrice(weth, WETH_PRICE);
@@ -237,7 +238,7 @@ async function setUnitPrices(
         const txDAI = await protocolGovernance
             .connect(admin)
             .populateTransaction.stageUnitPrice(dai, USDC_PRICE.pow(3));
-       txDatas.push(txDAI.data);
+        txDatas.push(txDAI.data);
     }
     let txUSDC = await protocolGovernance
         .connect(admin)

@@ -41,7 +41,7 @@
     "forge:deploy:retro": "forge script --use 0.8.9 ./src/script/RetroDeployment.s.sol:RetroDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGON_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:olympus": "forge script --use 0.8.9 src/script/OlympusDeployment.s.sol:OlympusDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:polygon": "forge script --use 0.8.9 src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGONSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
-    "forge:compile": "forge build --use 0.8.9 ",
+    "forge:compile": "forge build --use 0.8.9",
     "forge:size": "forge build --sizes --force --via-ir --use 0.8.9"
   },
   "devDependencies": {
