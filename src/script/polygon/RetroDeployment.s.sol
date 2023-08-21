@@ -10,6 +10,9 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "../../../src/vaults/ERC20RetroRootVault.sol";
 import "../../../src/vaults/ERC20RetroRootVaultGovernance.sol";
 
+import "../../../src/vaults/UniV3Vault.sol";
+import "../../../src/vaults/UniV3VaultGovernance.sol";
+
 import "../../../src/oracles/CASHOracle.sol";
 
 contract RetroDeployment is Script {
@@ -18,29 +21,11 @@ contract RetroDeployment is Script {
     address public governance = 0x8Ff3148CE574B8e135130065B188960bA93799c6;
     address public registry = 0xd3D0e85F225348a2006270Daf624D8c46cAe4E1F;
 
-    function deployGovernances() public {
-        ERC20RetroRootVault singleton = new ERC20RetroRootVault();
-        IVaultGovernance.InternalParams memory internalParams = ERC20RetroRootVaultGovernance(
-            0xC12885af1d4eAfB8176905F16d23CD7A33D21f37
-        ).internalParams();
-        internalParams.singleton = singleton;
-        ERC20RetroRootVaultGovernance retroRootVaultGovernance = new ERC20RetroRootVaultGovernance(
-            internalParams,
-            ERC20RetroRootVaultGovernance(0xC12885af1d4eAfB8176905F16d23CD7A33D21f37).delayedProtocolParams(),
-            ERC20RetroRootVaultGovernance(0xC12885af1d4eAfB8176905F16d23CD7A33D21f37).helper()
-        );
-
-        console2.log("Singleton: ", address(singleton));
-        console2.log("ERC20RetroRootVaultGovernance: ", address(retroRootVaultGovernance));
-    }
+    function deployGovernances() public {}
 
     // rebalance
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        // deployGovernances();
-
-        CASHOracle oracle = new CASHOracle();
-        console2.log(uint256(oracle.latestAnswer()));
 
         vm.stopBroadcast();
     }

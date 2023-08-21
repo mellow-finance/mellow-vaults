@@ -152,19 +152,32 @@ contract Deploy is Script {
     BalancerVaultStrategy public baseStrategy;
     TransparentUpgradeableProxy public strategy;
 
+    function deployGovernances() public {
+        BalancerV2CSPVault singleton = new BalancerV2CSPVault();
+        BalancerV2CSPVaultGovernance newGov = new BalancerV2CSPVaultGovernance(
+            IVaultGovernance.InternalParams({
+                singleton: singleton,
+                registry: IVaultRegistry(Constants.registry),
+                protocolGovernance: IProtocolGovernance(Constants.governance)
+            })
+        );
+        console2.log("New governance: ", address(newGov));
+    }
+
     // deploy
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        deployGovernances();
+        if (false) {
+            baseStrategy = new BalancerVaultStrategy();
+            strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
 
-        baseStrategy = new BalancerVaultStrategy();
-        strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
+            deployVaults();
+            initializeStrategy();
+            firstDeposit();
 
-        deployVaults();
-        initializeStrategy();
-        firstDeposit();
-
-        BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
-
+            BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
+        }
         vm.stopBroadcast();
     }
 }

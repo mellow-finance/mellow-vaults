@@ -82,7 +82,7 @@ contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
         uint256 j = 0;
         for (uint256 i = 0; i < poolTokens.length; i++) {
             address poolToken = address(poolTokens[i]);
-            if (poolToken == vaultTokens_[j]) {
+            if (j < vaultTokens_.length && poolToken == vaultTokens_[j]) {
                 j++;
                 IERC20(poolToken).safeApprove(address(balancerVault_), type(uint256).max);
             } else {
