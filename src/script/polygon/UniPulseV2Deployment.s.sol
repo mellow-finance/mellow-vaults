@@ -22,6 +22,7 @@ import "../../../src/utils/DepositWrapper.sol";
 import "../../../src/utils/PulseStrategyV2Helper.sol";
 
 import "./Constants.sol";
+import "./PermissionsCheck.sol";
 
 contract Deploy is Script {
     using SafeERC20 for IERC20;
@@ -37,7 +38,7 @@ contract Deploy is Script {
     INonfungiblePositionManager public positionManager =
         INonfungiblePositionManager(0x8aAc493fd8C78536eF193882AeffEAA3E0B8b5c5);
 
-    IUniV3VaultGovernance uniV3VaultGovernance = IUniV3VaultGovernance(Constants.uniV3RetroVaultGovernance);
+    IUniV3VaultGovernance public uniV3VaultGovernance = IUniV3VaultGovernance(Constants.uniV3RetroVaultGovernance);
 
     IERC20RetroRootVaultGovernance public rootVaultGovernance =
         IERC20RetroRootVaultGovernance(Constants.erc20RetroRootVaultGovernance);
@@ -156,6 +157,8 @@ contract Deploy is Script {
         PulseStrategyV2.MutableParams memory mutableParams_,
         PulseStrategyV2.DesiredAmounts memory desiredAmounts_
     ) public {
+        PermissionsCheck.checkTokens(tokens_);
+
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),
@@ -183,12 +186,12 @@ contract Deploy is Script {
         );
     }
 
-    address[][] strategyTokens;
-    uint256[][] depositAmounts;
-    uint24[] fees;
-    string[] names;
-    PulseStrategyV2.MutableParams[] mutableParams;
-    PulseStrategyV2.DesiredAmounts[] desiredAmounts;
+    address[][] public strategyTokens;
+    uint256[][] public depositAmounts;
+    uint24[] public fees;
+    string[] public names;
+    PulseStrategyV2.MutableParams[] public mutableParams;
+    PulseStrategyV2.DesiredAmounts[] public desiredAmounts;
 
     function sort(
         address[2] memory a,
@@ -230,7 +233,7 @@ contract Deploy is Script {
         }
     }
 
-    PulseStrategyV2.MutableParams volatileParams =
+    PulseStrategyV2.MutableParams public volatileParams =
         PulseStrategyV2.MutableParams({
             priceImpactD6: 0,
             defaultIntervalWidth: 4200,
@@ -244,7 +247,7 @@ contract Deploy is Script {
             minSwapAmounts: new uint256[](2)
         });
 
-    PulseStrategyV2.MutableParams stableParams =
+    PulseStrategyV2.MutableParams public stableParams =
         PulseStrategyV2.MutableParams({
             priceImpactD6: 0,
             defaultIntervalWidth: 10,
@@ -258,7 +261,7 @@ contract Deploy is Script {
             minSwapAmounts: new uint256[](2)
         });
 
-    PulseStrategyV2.MutableParams lowVolatileParams =
+    PulseStrategyV2.MutableParams public lowVolatileParams =
         PulseStrategyV2.MutableParams({
             priceImpactD6: 0,
             defaultIntervalWidth: 2000,

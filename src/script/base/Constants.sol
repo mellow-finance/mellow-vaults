@@ -21,7 +21,7 @@ library Constants {
     address public constant erc20Governance = 0x12ED6474A19f24e3a635E312d85fbAc177D66670;
     address public constant uniV3Governance = 0x5a8552f4Bbac3c31F6E618Da23BaFFf5EaE29847;
     address public constant uniV3Helper = 0x070D1CE4eEFd798107A1C4f30b2c47375f3e5dc9;
-    address public constant balancerCSPVaultGovernance = 0x7D7fEF7bF8bE4DB0FFf06346C59efc24EE8e4c22;
+    address public constant balancerCSPVaultGovernance = 0xBc9632C642A59F82E12617b1cBB04D37cBa2Ee67;
 
     address public constant mellowOracle = 0x15b1bC5DF5C44F469394D295959bBEC861893F09;
 

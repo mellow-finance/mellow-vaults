@@ -25,6 +25,8 @@ import "../../../src/vaults/BalancerV2CSPVaultGovernance.sol";
 
 import "./Constants.sol";
 
+// import "./PermissionsCheck.sol";
+
 contract Deploy is Script {
     using SafeERC20 for IERC20;
 
@@ -92,7 +94,7 @@ contract Deploy is Script {
 
     function initializeStrategy() public {
         BalancerVaultStrategy(address(strategy)).initialize(
-            Constants.deployer,
+            Constants.operator,
             erc20Vault,
             address(balancerVault),
             Constants.openOceanRouter
@@ -110,6 +112,7 @@ contract Deploy is Script {
 
         tokens[0] = Constants.wsteth;
         tokens[1] = Constants.weth;
+        // PermissionsCheck.checkTokens(tokens);
 
         IERC20VaultGovernance(Constants.erc20Governance).createVault(tokens, Constants.deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
@@ -167,17 +170,24 @@ contract Deploy is Script {
     // deploy
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        deployGovernances();
-        if (false) {
-            baseStrategy = new BalancerVaultStrategy();
-            strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
+        baseStrategy = new BalancerVaultStrategy();
+        strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
+        deployVaults();
+        vm.stopBroadcast();
 
-            deployVaults();
-            initializeStrategy();
-            firstDeposit();
+        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        initializeStrategy();
+        vm.stopBroadcast();
 
-            BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
-        }
+        strategy = TransparentUpgradeableProxy(payable(0x5E3cBF7Ee2Fa6f19aC7aa8130Bb9Ad02Db64eedA));
+        rootVault = IERC20RootVault(0x0E7598eb80b828b2C4cA769154539A19D64DB1E0);
+
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        firstDeposit();
+        vm.stopBroadcast();
+
+        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
         vm.stopBroadcast();
     }
 }

@@ -42,7 +42,7 @@ contract BalancerVaultStrategy is ContractMeta, ILpCallback, DefaultAccessContro
 
     function compound(bytes[] memory swapParams, uint256 deadline) external returns (uint256[] memory tokenAmounts) {
         _requireAtLeastOperator();
-        require(deadline < block.timestamp, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(deadline >= block.timestamp, ExceptionsLibrary.LIMIT_OVERFLOW);
 
         address[] memory rewardTokens_ = _rewardTokens;
         require(swapParams.length == rewardTokens_.length, ExceptionsLibrary.INVALID_LENGTH);
