@@ -13,11 +13,13 @@ import "../../../src/vaults/ERC20RetroRootVaultGovernance.sol";
 import "../../../src/vaults/ERC20Vault.sol";
 import "../../../src/vaults/ERC20VaultGovernance.sol";
 
-import "../../../src/vaults/UniV3Vault.sol";
 import "../../../src/vaults/UniV3VaultGovernance.sol";
+
+import {IUniV3Vault, UniV3Vault} from "../../../src/vaults/UniV3Vault.sol";
 
 import "../../../src/strategies/PulseStrategyV2.sol";
 
+import {UniV3Helper} from "../../../src/utils/UniV3RetroHelper.sol";
 import "../../../src/utils/DepositWrapper.sol";
 import "../../../src/utils/PulseStrategyV2Helper.sol";
 
@@ -31,9 +33,10 @@ contract Deploy is Script {
     IERC20Vault public erc20Vault;
     IUniV3Vault public uniV3Vault;
 
-    UniV3Helper public vaultHelper = UniV3Helper(0x6e4857C369e44FFC32c863eCb17E1560903c4A2E);
     PulseStrategyV2 public baseStrategy = PulseStrategyV2(0x2b6CD8d562D9c6De13F026FA833b6bBA0E6384F0);
     PulseStrategyV2Helper public strategyHelper = PulseStrategyV2Helper(0x02Cd1F10252d41b996a31CBcB3cC676F5d89Dd34);
+
+    UniV3Helper public vaultHelper;
 
     INonfungiblePositionManager public positionManager =
         INonfungiblePositionManager(0x8aAc493fd8C78536eF193882AeffEAA3E0B8b5c5);
@@ -184,6 +187,7 @@ contract Deploy is Script {
             address(newStrategy),
             address(rootVault)
         );
+        rootVault.tvl();
     }
 
     address[][] public strategyTokens;
@@ -276,7 +280,7 @@ contract Deploy is Script {
         });
 
     function setStrategyParams() public {
-        {
+        if (true) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -296,7 +300,7 @@ contract Deploy is Script {
             );
         }
 
-        {
+        if (false) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -316,7 +320,7 @@ contract Deploy is Script {
             );
         }
 
-        {
+        if (false) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -336,7 +340,7 @@ contract Deploy is Script {
             );
         }
 
-        {
+        if (false) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -361,27 +365,27 @@ contract Deploy is Script {
             );
         }
 
-        // {
-        //     (
-        //         address[] memory tokens,
-        //         uint256[] memory amounts,
-        //         uint256[] memory desiredAmounts_,
-        //         uint256[] memory minSwapAmounts
-        //     ) = sort([Constants.usdt, Constants.usdc], [uint256(1e4), 1e4], [uint256(1e4), 1e4], [uint256(1e6), 1e6]);
-        //     stableParams.minSwapAmounts = minSwapAmounts;
-        //     mutableParams.push(stableParams);
+        if (false) {
+            (
+                address[] memory tokens,
+                uint256[] memory amounts,
+                uint256[] memory desiredAmounts_,
+                uint256[] memory minSwapAmounts
+            ) = sort([Constants.usdt, Constants.usdc], [uint256(1e4), 1e4], [uint256(1e4), 1e4], [uint256(1e6), 1e6]);
+            stableParams.minSwapAmounts = minSwapAmounts;
+            mutableParams.push(stableParams);
 
-        //     strategyTokens.push(tokens);
-        //     depositAmounts.push(amounts);
-        //     fees.push(100);
-        //     names.push("RetroPulse_USDC_USDT_100");
+            strategyTokens.push(tokens);
+            depositAmounts.push(amounts);
+            fees.push(100);
+            names.push("RetroPulse_USDC_USDT_100");
 
-        //     desiredAmounts.push(
-        //         PulseStrategyV2.DesiredAmounts({amount0Desired: desiredAmounts_[0], amount1Desired: desiredAmounts_[1]})
-        //     );
-        // }
+            desiredAmounts.push(
+                PulseStrategyV2.DesiredAmounts({amount0Desired: desiredAmounts_[0], amount1Desired: desiredAmounts_[1]})
+            );
+        }
 
-        {
+        if (false) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -406,7 +410,7 @@ contract Deploy is Script {
             );
         }
 
-        {
+        if (false) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -433,6 +437,10 @@ contract Deploy is Script {
     }
 
     function run() external {
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        vaultHelper = new UniV3Helper(positionManager);
+        vm.stopBroadcast();
+
         setStrategyParams();
 
         for (uint256 i = 0; i < names.length; i++) {
