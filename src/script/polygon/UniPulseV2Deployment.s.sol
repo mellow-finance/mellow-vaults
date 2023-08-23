@@ -24,7 +24,8 @@ import "../../../src/utils/DepositWrapper.sol";
 import "../../../src/utils/PulseStrategyV2Helper.sol";
 
 import "./Constants.sol";
-import "./PermissionsCheck.sol";
+
+// import "./PermissionsCheck.sol";
 
 contract Deploy is Script {
     using SafeERC20 for IERC20;
@@ -36,7 +37,7 @@ contract Deploy is Script {
     PulseStrategyV2 public baseStrategy = PulseStrategyV2(0x2b6CD8d562D9c6De13F026FA833b6bBA0E6384F0);
     PulseStrategyV2Helper public strategyHelper = PulseStrategyV2Helper(0x02Cd1F10252d41b996a31CBcB3cC676F5d89Dd34);
 
-    UniV3Helper public vaultHelper;
+    UniV3Helper public vaultHelper = UniV3Helper(0xC2Ef057b5D99e8cC70073F4be29F6C49c92CAC6b);
 
     INonfungiblePositionManager public positionManager =
         INonfungiblePositionManager(0x8aAc493fd8C78536eF193882AeffEAA3E0B8b5c5);
@@ -160,8 +161,6 @@ contract Deploy is Script {
         PulseStrategyV2.MutableParams memory mutableParams_,
         PulseStrategyV2.DesiredAmounts memory desiredAmounts_
     ) public {
-        PermissionsCheck.checkTokens(tokens_);
-
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
         TransparentUpgradeableProxy newStrategy = new TransparentUpgradeableProxy(
             address(baseStrategy),
@@ -280,7 +279,7 @@ contract Deploy is Script {
         });
 
     function setStrategyParams() public {
-        if (true) {
+        if (false) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -410,7 +409,7 @@ contract Deploy is Script {
             );
         }
 
-        if (false) {
+        if (true) {
             (
                 address[] memory tokens,
                 uint256[] memory amounts,
@@ -437,12 +436,15 @@ contract Deploy is Script {
     }
 
     function run() external {
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        vaultHelper = new UniV3Helper(positionManager);
-        vm.stopBroadcast();
+        // {
+        //     address[] memory tokens = new address[](3);
+        //     tokens[0] = Constants.wmatic;
+        //     tokens[1] = Constants.cash;
+        //     tokens[2] = Constants.usdt;
+        //     PermissionsCheck.checkTokens(tokens);
+        // }
 
         setStrategyParams();
-
         for (uint256 i = 0; i < names.length; i++) {
             address[] memory tokens_ = new address[](2);
             tokens_[0] = strategyTokens[i][0];
