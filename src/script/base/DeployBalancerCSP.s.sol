@@ -170,24 +170,27 @@ contract Deploy is Script {
     // deploy
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        baseStrategy = new BalancerVaultStrategy();
-        strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
-        deployVaults();
-        vm.stopBroadcast();
+        deployGovernances();
+        
+        
+        // baseStrategy = new BalancerVaultStrategy();
+        // strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
+        // deployVaults();
+        // vm.stopBroadcast();
 
-        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-        initializeStrategy();
-        vm.stopBroadcast();
+        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        // initializeStrategy();
+        // vm.stopBroadcast();
 
-        strategy = TransparentUpgradeableProxy(payable(0x5E3cBF7Ee2Fa6f19aC7aa8130Bb9Ad02Db64eedA));
-        rootVault = IERC20RootVault(0x0E7598eb80b828b2C4cA769154539A19D64DB1E0);
+        // strategy = TransparentUpgradeableProxy(payable(0x5E3cBF7Ee2Fa6f19aC7aa8130Bb9Ad02Db64eedA));
+        // rootVault = IERC20RootVault(0x0E7598eb80b828b2C4cA769154539A19D64DB1E0);
 
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        firstDeposit();
-        vm.stopBroadcast();
+        // vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        // firstDeposit();
+        // vm.stopBroadcast();
 
-        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-        BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
+        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        // BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
         vm.stopBroadcast();
     }
 }

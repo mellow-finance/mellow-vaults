@@ -35,7 +35,7 @@ interface IRewardTokenDistributor {
 
     function reward_data(IERC20 token) external view returns (Reward memory);
 
-    function claim_rewards(address user) external;
+    function claim_rewards(address user, address receiver) external;
 
     function add_reward(IERC20 rewardToken, address distributor) external;
 
