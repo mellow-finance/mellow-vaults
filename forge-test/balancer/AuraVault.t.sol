@@ -254,15 +254,8 @@ contract AuraVaultTest is Test {
         permissions[0] = 2;
         permissions[1] = 3;
 
-        IProtocolGovernance(governance).stagePermissionGrants(address(LUSD), permissions);
-        IProtocolGovernance(governance).stageValidator(address(LUSD), 0xf7A19974dC36E1Ad9A74e967B0Bc9B24e0f4C4b3);
-        IProtocolGovernance(governance).stageUnitPrice(address(LUSD), 1e18);
-
         skip(24 * 3600);
-
         IProtocolGovernance(governance).commitAllPermissionGrantsSurpassedDelay();
-        IProtocolGovernance(governance).commitAllValidatorsSurpassedDelay();
-        IProtocolGovernance(governance).commitUnitPrice(address(LUSD));
 
         vm.stopPrank();
     }
