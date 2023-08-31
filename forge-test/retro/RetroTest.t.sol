@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "../../src/strategies/PulseStrategyV2.sol";
 
 import "../../src/utils/DepositWrapper.sol";
-import {UniV3Helper} from "../../src/utils/UniV3RetroHelper.sol";
+import {UniV3Helper} from "../../src/utils/UniV3Helper.sol";
 import "../../src/utils/PulseStrategyV2Helper.sol";
 
 import "../../src/vaults/ERC20Vault.sol";

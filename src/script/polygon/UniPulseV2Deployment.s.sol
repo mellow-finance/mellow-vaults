@@ -19,7 +19,7 @@ import {IUniV3Vault, UniV3Vault} from "../../../src/vaults/UniV3Vault.sol";
 
 import "../../../src/strategies/PulseStrategyV2.sol";
 
-import {UniV3Helper} from "../../../src/utils/UniV3RetroHelper.sol";
+import {UniV3Helper} from "../../../src/utils/UniV3Helper.sol";
 import "../../../src/utils/DepositWrapper.sol";
 import "../../../src/utils/PulseStrategyV2Helper.sol";
 
