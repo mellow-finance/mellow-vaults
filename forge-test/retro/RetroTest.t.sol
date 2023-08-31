@@ -301,7 +301,7 @@ contract Deploy is Test {
     }
 
     function testCompound() external {
-        if (block.chainid != 1) return;
+        if (block.chainid != 137) return;
         setStrategyParams();
 
         for (uint256 i = 0; i < names.length; i++) {
