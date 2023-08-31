@@ -171,8 +171,7 @@ contract Deploy is Script {
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
         deployGovernances();
-        
-        
+
         // baseStrategy = new BalancerVaultStrategy();
         // strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
         // deployVaults();
