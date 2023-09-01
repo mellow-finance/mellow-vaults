@@ -8,7 +8,11 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 
+import "../interfaces/utils/IWrapperNativeToken.sol";
+
 import "../libraries/external/FullMath.sol";
+
+import "forge-std/src/Test.sol";
 
 contract OneSidedDepositWrapper {
     using SafeERC20 for IERC20;
@@ -19,10 +23,16 @@ contract OneSidedDepositWrapper {
 
     IUniswapV3Factory public immutable factory;
     ISwapRouter public immutable router;
+    address public immutable wrapperNativeToken;
 
-    constructor(address router_, address factory_) {
+    constructor(
+        address router_,
+        address factory_,
+        address wrapperNativeToken_
+    ) {
         router = ISwapRouter(router_);
         factory = IUniswapV3Factory(factory_);
+        wrapperNativeToken = wrapperNativeToken_;
     }
 
     function findBestPool(address tokenA, address tokenB)
@@ -60,7 +70,12 @@ contract OneSidedDepositWrapper {
         address token,
         uint256 amount
     ) private returns (uint256[] memory tokenAmounts) {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        if (token == wrapperNativeToken && msg.value != 0) {
+            amount = msg.value;
+            IWrapperNativeToken(wrapperNativeToken).deposit{value: msg.value}();
+        } else {
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        }
         address[] memory tokens = IERC20RootVault(vault).vaultTokens();
         (, uint256[] memory tvl) = IERC20RootVault(vault).tvl();
         uint24[] memory fees_ = new uint24[](tokens.length);
@@ -97,9 +112,12 @@ contract OneSidedDepositWrapper {
             }
         }
 
+        if (IERC20(token).allowance(address(this), address(router)) == 0) {
+            IERC20(token).safeApprove(address(router), type(uint256).max);
+        }
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i] == token) continue;
-            ISwapRouter(router).exactInputSingle(
+            router.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
                     tokenIn: token,
                     tokenOut: tokens[i],
@@ -116,9 +134,9 @@ contract OneSidedDepositWrapper {
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
-            uint256 allowance = IERC20(tokens[i]).allowance(address(this), addressForApprove);
-            if (allowance == 0) continue;
-            IERC20(tokens[i]).safeApprove(addressForApprove, type(uint256).max);
+            if (IERC20(tokens[i]).allowance(address(this), addressForApprove) == 0) {
+                IERC20(tokens[i]).safeApprove(addressForApprove, type(uint256).max);
+            }
         }
     }
 
@@ -128,7 +146,7 @@ contract OneSidedDepositWrapper {
         uint256 amount,
         uint256 minLpAmount,
         bytes memory vaultOptions
-    ) external returns (uint256 lpAmount) {
+    ) external payable returns (uint256 lpAmount) {
         uint256[] memory tokenAmounts = _prepare(vault, vault, token, amount);
         IERC20RootVault(vault).deposit(tokenAmounts, minLpAmount, vaultOptions);
         lpAmount = IERC20(vault).balanceOf(address(this));
@@ -142,7 +160,7 @@ contract OneSidedDepositWrapper {
         uint256 amount,
         uint256 minLpAmount,
         bytes memory vaultOptions
-    ) external returns (uint256 lpAmount) {
+    ) external payable returns (uint256 lpAmount) {
         uint256[] memory tokenAmounts = _prepare(vault, wrapper, token, amount);
         DepositWrapper(wrapper).deposit(IERC20RootVault(vault), tokenAmounts, minLpAmount, vaultOptions);
         lpAmount = IERC20(vault).balanceOf(address(this));
