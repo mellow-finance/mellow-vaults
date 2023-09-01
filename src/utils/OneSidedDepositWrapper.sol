@@ -140,17 +140,37 @@ contract OneSidedDepositWrapper {
         }
     }
 
+    function _returnLeftovers(address vault, address token) private {
+        address[] memory tokens = IERC20RootVault(vault).vaultTokens();
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 balance = IERC20(tokens[i]).balanceOf(address(this));
+            if (balance != 0) {
+                IERC20(tokens[i]).safeTransfer(msg.sender, balance);
+            }
+        }
+        {
+            uint256 balance = IERC20(token).balanceOf(address(this));
+            if (balance != 0) {
+                IERC20(token).safeTransfer(msg.sender, balance);
+            }
+        }
+    }
+
     function directDeposit(
         address vault,
         address token,
         uint256 amount,
         uint256 minLpAmount,
-        bytes memory vaultOptions
+        bytes memory vaultOptions,
+        bool needToReturnLeftovers
     ) external payable returns (uint256 lpAmount) {
         uint256[] memory tokenAmounts = _prepare(vault, vault, token, amount);
         IERC20RootVault(vault).deposit(tokenAmounts, minLpAmount, vaultOptions);
         lpAmount = IERC20(vault).balanceOf(address(this));
         IERC20(vault).safeTransfer(msg.sender, lpAmount);
+        if (needToReturnLeftovers) {
+            _returnLeftovers(vault, token);
+        }
     }
 
     function wrappedDeposit(
@@ -159,11 +179,15 @@ contract OneSidedDepositWrapper {
         address token,
         uint256 amount,
         uint256 minLpAmount,
-        bytes memory vaultOptions
+        bytes memory vaultOptions,
+        bool needToReturnLeftovers
     ) external payable returns (uint256 lpAmount) {
         uint256[] memory tokenAmounts = _prepare(vault, wrapper, token, amount);
         DepositWrapper(wrapper).deposit(IERC20RootVault(vault), tokenAmounts, minLpAmount, vaultOptions);
         lpAmount = IERC20(vault).balanceOf(address(this));
         IERC20(vault).safeTransfer(msg.sender, lpAmount);
+        if (needToReturnLeftovers) {
+            _returnLeftovers(vault, token);
+        }
     }
 }

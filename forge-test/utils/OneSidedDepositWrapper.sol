@@ -19,7 +19,6 @@ contract OneSidedDepositWrapperTest is Test {
         0x0916BCDcDB6e23e758F41D612e7a8a295fcd6DBF
     ];
 
-
     function _check(
         bool isNative,
         uint256 seed,
@@ -40,7 +39,8 @@ contract OneSidedDepositWrapperTest is Test {
                 token,
                 amount,
                 0,
-                new bytes(0)
+                new bytes(0),
+                true
             );
         } else {
             deal(user, amount);
@@ -50,7 +50,8 @@ contract OneSidedDepositWrapperTest is Test {
                 token,
                 0,
                 0,
-                new bytes(0)
+                new bytes(0),
+                true
             );
         }
 
