@@ -23,6 +23,8 @@ import "../../../src/vaults/ERC20RootVaultGovernance.sol";
 import "../../../src/vaults/BalancerV2CSPVault.sol";
 import "../../../src/vaults/BalancerV2CSPVaultGovernance.sol";
 
+import "../../../src/utils/BalancerVaultStrategyHelper.sol";
+
 import "./Constants.sol";
 
 // import "./PermissionsCheck.sol";
@@ -42,18 +44,18 @@ contract Deploy is Script {
     function firstDeposit() public {
         uint256[] memory tokenAmounts = new uint256[](2);
 
-        tokenAmounts[0] = 10**13;
-        tokenAmounts[1] = 10**13;
+        tokenAmounts[0] = 2e16;
+        tokenAmounts[1] = 4e16;
 
-        if (IERC20(Constants.wsteth).allowance(msg.sender, address(depositWrapper)) == 0) {
-            IERC20(Constants.wsteth).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
-        }
+        // if (IERC20(Constants.wsteth).allowance(msg.sender, address(depositWrapper)) == 0) {
+        //     IERC20(Constants.wsteth).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
+        // }
 
-        if (IERC20(Constants.weth).allowance(msg.sender, address(depositWrapper)) == 0) {
-            IERC20(Constants.weth).safeApprove(address(depositWrapper), type(uint256).max);
-        }
+        // if (IERC20(Constants.weth).allowance(msg.sender, address(depositWrapper)) == 0) {
+        //     IERC20(Constants.weth).safeApprove(address(depositWrapper), type(uint256).max);
+        // }
 
-        depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
+        // depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
@@ -169,10 +171,10 @@ contract Deploy is Script {
 
     // deploy
     function run() external {
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        deployGovernances();
+        // vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        // deployGovernances();
 
-        // baseStrategy = new BalancerVaultStrategy();
+        // baseStrategy = BalancerVaultStrategy(0xcE093389454B05aAEB045146A1952c0e46Ddd853);
         // strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
         // deployVaults();
         // vm.stopBroadcast();
@@ -181,15 +183,20 @@ contract Deploy is Script {
         // initializeStrategy();
         // vm.stopBroadcast();
 
-        // strategy = TransparentUpgradeableProxy(payable(0x5E3cBF7Ee2Fa6f19aC7aa8130Bb9Ad02Db64eedA));
-        // rootVault = IERC20RootVault(0x0E7598eb80b828b2C4cA769154539A19D64DB1E0);
+        // rootVault = IERC20RootVault(0x5778D083232f6070E0dF1eBD90940600FE37B638);
 
-        // vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        // firstDeposit();
-        // vm.stopBroadcast();
+        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+
+        BalancerVaultStrategyHelper helper = new BalancerVaultStrategyHelper();
+        // helper.getRewardAmounts(
+        //     BalancerVaultStrategy(0x789e03cb4adb7F0C4df3CbFC2bA2F10f4471352d)
+        // );
+        console2.log("Helper: ", address(helper));
+
+        vm.stopBroadcast();
 
         // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
         // BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
-        vm.stopBroadcast();
+        // vm.stopBroadcast();
     }
 }
