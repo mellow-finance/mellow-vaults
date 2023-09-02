@@ -16,6 +16,7 @@ library Constants {
     address public constant aura = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF;
     address public constant wsteth = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
     address public constant bal = 0xba100000625a3754423978a60c9317c58a424e3D;
+    address public constant usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     address public constant governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
     address public constant registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
@@ -23,6 +24,11 @@ library Constants {
     address public constant erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
     address public constant auraVaultGovernance = 0x2B81d60dc40f6Ca230be5Abf5641D4c2E38dba01;
     address public constant mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+
+    address public constant balancerCSPVaultGovernance = 0x1dDd9c8dF3f4a9C0f8f4F4a844742F458Cd83b99;
+    address public constant balancerUsdcUsdtGho = 0x8353157092ED8Be69a9DF8F95af097bbF33Cb2aF;
+    address public constant balancerUsdcUsdtGhoStaking = 0xf720e9137baa9C7612e6CA59149a5057ab320cFa;
+    address public constant balancerMinter = 0x239e55F427D44C3cc793f49bFB507ebe76638a2b;
 
     address public constant oneInchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
     address public constant depositWrapper = 0x231002439E1BD5b610C3d98321EA760002b9Ff64;
