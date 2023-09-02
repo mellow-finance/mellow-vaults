@@ -13,6 +13,7 @@ import {IBasePool} from "../../../src/interfaces/external/balancer/vault/IBasePo
 import "../../../src/strategies/BalancerVaultStrategy.sol";
 
 import "../../../src/utils/DepositWrapper.sol";
+import "../../../src/utils/OneSidedDepositWrapper.sol";
 
 import "../../../src/vaults/ERC20Vault.sol";
 import "../../../src/vaults/ERC20VaultGovernance.sol";
@@ -206,19 +207,27 @@ contract Deploy is Script {
     function run() external {
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
 
-        baseStrategy = new BalancerVaultStrategy();
-        strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
-        deployVaults();
+        OneSidedDepositWrapper wrapper = new OneSidedDepositWrapper(
+            Constants.uniswapV3Router,
+            Constants.uniswapV3Factory,
+            Constants.weth
+        );
 
-        vm.stopBroadcast();
-        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        console2.log(address(wrapper));
 
-        initializeStrategy();
+        // baseStrategy = new BalancerVaultStrategy();
+        // strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
+        // deployVaults();
 
-        vm.stopBroadcast();
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        // vm.stopBroadcast();
+        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
 
-        firstDeposit();
+        // initializeStrategy();
+
+        // vm.stopBroadcast();
+        // vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+
+        // firstDeposit();
 
         vm.stopBroadcast();
         // vm.startBroadcast(vm.envUint("OPERATOR_PK"));

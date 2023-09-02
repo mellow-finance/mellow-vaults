@@ -30,6 +30,8 @@ library Constants {
     address public constant balancerUsdcUsdtGhoStaking = 0xf720e9137baa9C7612e6CA59149a5057ab320cFa;
     address public constant balancerMinter = 0x239e55F427D44C3cc793f49bFB507ebe76638a2b;
 
+    address public constant uniswapV3Router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address public constant uniswapV3Factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public constant oneInchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
     address public constant depositWrapper = 0x231002439E1BD5b610C3d98321EA760002b9Ff64;
 
