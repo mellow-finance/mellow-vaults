@@ -11,6 +11,7 @@ import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../
 import {IBasePool} from "../../../src/interfaces/external/balancer/vault/IBasePool.sol";
 
 import "../../../src/strategies/BalancerVaultStrategy.sol";
+import "../../../src/strategies/BalancerVaultStrategyFix.sol";
 
 import "../../../src/utils/DepositWrapper.sol";
 
@@ -186,13 +187,8 @@ contract Deploy is Script {
         // rootVault = IERC20RootVault(0x5778D083232f6070E0dF1eBD90940600FE37B638);
 
         vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-
-        BalancerVaultStrategyHelper helper = new BalancerVaultStrategyHelper();
-        // helper.getRewardAmounts(
-        //     BalancerVaultStrategy(0x789e03cb4adb7F0C4df3CbFC2bA2F10f4471352d)
-        // );
-        console2.log("Helper: ", address(helper));
-
+        BalancerVaultStrategyFix fix = new BalancerVaultStrategyFix();
+        ITransparentUpgradeableProxy(payable(0x789e03cb4adb7F0C4df3CbFC2bA2F10f4471352d)).upgradeTo(address(fix));
         vm.stopBroadcast();
 
         // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
