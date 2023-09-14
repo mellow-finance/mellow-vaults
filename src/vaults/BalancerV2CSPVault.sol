@@ -153,6 +153,16 @@ contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
+    function _scaleAmounts(uint256[] memory amounts) private view returns (uint256[] memory) {
+        uint256[] memory scalingFactors = pool.getScalingFactors();
+        require(amounts.length == scalingFactors.length, ExceptionsLibrary.INVALID_LENGTH);
+        for (uint256 i = 0; i < scalingFactors.length; i++) {
+            amounts[i] = FullMath.mulDiv(amounts[i], scalingFactors[i], 1e18);
+            amounts[i] = FullMath.mulDiv(amounts[i], 1e18, scalingFactors[i]);
+        }
+        return amounts;
+    }
+
     function _push(uint256[] memory tokenAmounts, bytes memory opts)
         internal
         override
@@ -243,6 +253,21 @@ contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
             }
         }
 
+        uint256[] memory requestingAmounts = new uint256[](actualTokenAmounts.length);
+        {
+            minAmountsOut = _scaleAmounts(minAmountsOut);
+            uint256 j = 0;
+            for (uint256 i = 0; i < poolTokens.length; i++) {
+                tokens[i] = IAsset(address(poolTokens[i]));
+                if (address(poolTokens[i]) == address(pool)) {
+                    continue;
+                }
+                requestingAmounts[j] = actualTokenAmounts[j];
+                actualTokenAmounts[j] = minAmountsOut[i];
+                j++;
+            }
+        }
+
         balancerVault.exitPool(
             poolId,
             address(this),
@@ -252,13 +277,20 @@ contract BalancerV2CSPVault is IBalancerV2Vault, IntegrationVault {
                 minAmountsOut: minAmountsOut,
                 userData: abi.encode(
                     StablePoolUserData.ExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT,
-                    actualTokenAmounts,
+                    requestingAmounts,
                     type(uint256).max
                 ),
                 toInternalBalance: false
             })
         );
 
+        stakingLiquidityGauge.deposit(IERC20(address(pool)).balanceOf(address(this)), address(this));
+    }
+
+    function upgradeStakingLiquidityGauge(address newStakingLiquidityGauge) external {
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        stakingLiquidityGauge.withdraw(stakingLiquidityGauge.balanceOf(address(this)));
+        stakingLiquidityGauge = IStakingLiquidityGauge(newStakingLiquidityGauge);
         stakingLiquidityGauge.deposit(IERC20(address(pool)).balanceOf(address(this)), address(this));
     }
 }

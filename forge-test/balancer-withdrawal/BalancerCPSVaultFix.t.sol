@@ -1,62 +1,60 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
-import "forge-std/src/Script.sol";
+import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
+import "forge-std/src/console2.sol";
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../../src/interfaces/external/balancer/vault/IVault.sol";
-import {IBasePool} from "../../../src/interfaces/external/balancer/vault/IBasePool.sol";
+import {IVault as IBalancerVault, IAsset, IERC20 as IBalancerERC20} from "../../src/interfaces/external/balancer/vault/IVault.sol";
+import {IBasePool} from "../../src/interfaces/external/balancer/vault/IBasePool.sol";
 
-import "../../../src/strategies/BalancerVaultStrategy.sol";
-import "../../../src/strategies/BalancerVaultStrategyFix.sol";
+import "../../src/vaults/BalancerV2CSPVaultGovernance.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
 
-import "../../../src/utils/DepositWrapper.sol";
+import "../../src/vaults/BalancerV2CSPVault.sol";
+import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20Vault.sol";
 
-import "../../../src/vaults/ERC20Vault.sol";
-import "../../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/utils/DepositWrapper.sol";
 
-import "../../../src/vaults/ERC20RootVault.sol";
-import "../../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/strategies/BalancerVaultStrategy.sol";
 
-import "../../../src/vaults/BalancerV2CSPVault.sol";
-import "../../../src/vaults/BalancerV2CSPVaultGovernance.sol";
+import "./BaseConstants.sol";
 
-import "../../../src/utils/BalancerVaultStrategyHelper.sol";
-
-import "./Constants.sol";
-
-// import "./PermissionsCheck.sol";
-
-contract Deploy is Script {
+contract BalancerTest is Test {
     using SafeERC20 for IERC20;
 
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
     IBalancerV2Vault public balancerVault;
 
-    BalancerV2CSPVaultGovernance public balancerVaultGovernance =
-        BalancerV2CSPVaultGovernance(Constants.balancerCSPVaultGovernance);
+    BalancerV2CSPVaultGovernance public balancerVaultGovernance;
+
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(Constants.erc20RootGovernance);
     DepositWrapper public depositWrapper = DepositWrapper(Constants.depositWrapper);
 
     function firstDeposit() public {
         uint256[] memory tokenAmounts = new uint256[](2);
 
+        deal(Constants.wsteth, Constants.deployer, 2e18);
+        deal(Constants.weth, Constants.deployer, 2e18);
+
         tokenAmounts[0] = 2e16;
         tokenAmounts[1] = 4e16;
 
-        // if (IERC20(Constants.wsteth).allowance(msg.sender, address(depositWrapper)) == 0) {
-        //     IERC20(Constants.wsteth).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
-        // }
+        if (IERC20(Constants.wsteth).allowance(msg.sender, address(depositWrapper)) == 0) {
+            IERC20(Constants.wsteth).safeIncreaseAllowance(address(depositWrapper), type(uint128).max);
+        }
 
-        // if (IERC20(Constants.weth).allowance(msg.sender, address(depositWrapper)) == 0) {
-        //     IERC20(Constants.weth).safeApprove(address(depositWrapper), type(uint256).max);
-        // }
+        if (IERC20(Constants.weth).allowance(msg.sender, address(depositWrapper)) == 0) {
+            IERC20(Constants.weth).safeApprove(address(depositWrapper), type(uint256).max);
+        }
 
-        // depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
+        depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
@@ -120,7 +118,7 @@ contract Deploy is Script {
         IERC20VaultGovernance(Constants.erc20Governance).createVault(tokens, Constants.deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
-        IBalancerV2VaultGovernance(Constants.balancerCSPVaultGovernance).createVault(
+        IBalancerV2VaultGovernance(balancerVaultGovernance).createVault(
             tokens,
             Constants.deployer,
             Constants.balancerWstethWethPool,
@@ -159,39 +157,57 @@ contract Deploy is Script {
     TransparentUpgradeableProxy public strategy;
 
     function deployGovernances() public {
+        vm.startPrank(Constants.admin);
         BalancerV2CSPVault singleton = new BalancerV2CSPVault();
-        BalancerV2CSPVaultGovernance newGov = new BalancerV2CSPVaultGovernance(
+        balancerVaultGovernance = new BalancerV2CSPVaultGovernance(
             IVaultGovernance.InternalParams({
                 singleton: singleton,
                 registry: IVaultRegistry(Constants.registry),
                 protocolGovernance: IProtocolGovernance(Constants.governance)
             })
         );
-        console2.log("New governance: ", address(newGov));
+
+        IProtocolGovernance(Constants.governance).stagePermissionGrants(
+            address(balancerVaultGovernance),
+            new uint8[](1)
+        );
+        skip(24 * 3600);
+        IProtocolGovernance(Constants.governance).commitAllPermissionGrantsSurpassedDelay();
+
+        vm.stopPrank();
     }
 
-    // deploy
-    function run() external {
-        // vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
-        // deployGovernances();
-
-        // baseStrategy = BalancerVaultStrategy(0xcE093389454B05aAEB045146A1952c0e46Ddd853);
-        // strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
-        // deployVaults();
-        // vm.stopBroadcast();
-
-        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-        // initializeStrategy();
-        // vm.stopBroadcast();
-
-        // rootVault = IERC20RootVault(0x5778D083232f6070E0dF1eBD90940600FE37B638);
-
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+    function test() external {
         deployGovernances();
-        vm.stopBroadcast();
 
-        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-        // BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
-        // vm.stopBroadcast();
+        vm.startPrank(Constants.deployer);
+
+        baseStrategy = new BalancerVaultStrategy();
+        strategy = new TransparentUpgradeableProxy(address(baseStrategy), Constants.deployer, new bytes(0));
+        deployVaults();
+
+        vm.stopPrank();
+        vm.startPrank(Constants.operator);
+
+        initializeStrategy();
+
+        vm.stopPrank();
+        vm.startPrank(Constants.operator);
+
+        BalancerVaultStrategy(address(strategy)).compound(new bytes[](1), type(uint256).max);
+
+        vm.stopPrank();
+        vm.startPrank(Constants.deployer);
+
+        firstDeposit();
+
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = 1e18;
+        tokenAmounts[1] = 1e18;
+
+        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        rootVault.withdraw(Constants.deployer, 1e17, new uint256[](2), new bytes[](2));
+
+        vm.stopPrank();
     }
 }

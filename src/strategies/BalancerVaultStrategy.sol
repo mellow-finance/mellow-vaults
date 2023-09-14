@@ -7,6 +7,8 @@ import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IBalancerV2VaultGovernance.sol";
 
+import "../vaults/BalancerV2CSPVault.sol";
+
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
@@ -82,6 +84,11 @@ contract BalancerVaultStrategy is ContractMeta, ILpCallback, DefaultAccessContro
             subvault.nft(),
             strategyParams
         );
+    }
+
+    function upgradeStakingLiquidityGauge(address newGauge) external {
+        _requireAdmin();
+        BalancerV2CSPVault(address(subvault)).upgradeStakingLiquidityGauge(newGauge);
     }
 
     /// @inheritdoc ILpCallback
