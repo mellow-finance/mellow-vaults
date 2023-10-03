@@ -95,7 +95,7 @@ contract BalancerVaultStrategyV2 is ContractMeta, ILpCallback, DefaultAccessCont
         limits[limits.length - 1] = -int256(minAmountOut);
 
         IERC20(bal).safeApprove(balancerVault, type(uint256).max);
-        IBalancerVault(balancerVault).batchSwap(
+        int256[] memory swappedAmounts = IBalancerVault(balancerVault).batchSwap(
             IBalancerVault.SwapKind.GIVEN_IN,
             swaps,
             assets,
@@ -104,6 +104,7 @@ contract BalancerVaultStrategyV2 is ContractMeta, ILpCallback, DefaultAccessCont
             type(uint256).max
         );
         IERC20(bal).safeApprove(balancerVault, 0);
+        recievedAmount = uint256(-swappedAmounts[swappedAmounts.length - 1]);
     }
 
     function compound(

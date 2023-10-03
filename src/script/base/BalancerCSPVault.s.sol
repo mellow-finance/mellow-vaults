@@ -48,12 +48,12 @@ contract Deploy is Script {
         ITransparentUpgradeableProxy(payable(strategy)).upgradeTo(address(fix));
         vm.stopBroadcast();
 
-        vm.startBroadcast(vm.envUint("OPERATOR_PK"));
-        BalancerVaultStrategyV2(strategy).setRewardTokens(new address[](0));
+        // vm.startBroadcast(vm.envUint("OPERATOR_PK"));
+        // BalancerVaultStrategyV2(strategy).setRewardTokens(new address[](0));
         // IERC20Vault erc20Vault = BalancerVaultStrategyV2(strategy).erc20Vault();
         // console2.log("weth Balance before: ", IERC20(weth).balanceOf(address(erc20Vault)));
         // BalancerVaultStrategyV2(strategy).compound(new bytes[](0), 0, type(uint256).max);
         // console2.log("weth Balance after: ", IERC20(weth).balanceOf(address(erc20Vault)));
-        vm.stopBroadcast();
+        // vm.stopBroadcast();
     }
 }
