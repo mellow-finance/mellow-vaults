@@ -85,13 +85,17 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     function addressesByPermission(uint8 permissionId) external view returns (address[] memory addresses) {
         uint256 length = _permissionAddresses.length();
         addresses = new address[](length);
-        uint256 addressesLength = 0;
+        uint256 addressesLength;
         uint256 mask = 1 << permissionId;
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i; i < length;) {
             address addr = _permissionAddresses.at(i);
             if (permissionMasks[addr] & mask != 0) {
                 addresses[addressesLength] = addr;
                 addressesLength++;
+            }
+
+            unchecked {
+                ++i;
             }
         }
         // shrink to fit
@@ -163,11 +167,15 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     function rollbackStagedValidators() external {
         _requireAdmin();
         uint256 length = _stagedValidatorsAddresses.length();
-        for (uint256 i; i != length; ++i) {
+        for (uint256 i; i != length;) {
             address target = _stagedValidatorsAddresses.at(0);
             delete stagedValidators[target];
             delete stagedValidatorsTimestamps[target];
             _stagedValidatorsAddresses.remove(target);
+
+            unchecked {
+                ++i;
+            }
         }
         emit AllStagedValidatorsRolledBack(tx.origin, msg.sender);
     }
@@ -205,7 +213,9 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 --length;
                 emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
-                ++i;
+                unchecked {
+                    ++i;
+                }
             }
         }
         assembly {
@@ -226,11 +236,15 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     function rollbackStagedPermissionGrants() external {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
-        for (uint256 i; i != length; ++i) {
+        for (uint256 i; i != length;) {
             address target = _stagedPermissionGrantsAddresses.at(0);
             delete stagedPermissionGrantsMasks[target];
             delete stagedPermissionGrantsTimestamps[target];
             _stagedPermissionGrantsAddresses.remove(target);
+
+            unchecked {
+                ++i;
+            }
         }
         emit AllStagedPermissionGrantsRolledBack(tx.origin, msg.sender);
     }
@@ -267,7 +281,9 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 --addressesLeft;
                 emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
-                ++i;
+                unchecked {
+                    ++i;
+                }
             }
         }
         length -= addressesLeft;
@@ -338,8 +354,12 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     }
 
     function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
-        for (uint256 i = 0; i < permissionIds.length; ++i) {
+        for (uint256 i; i < permissionIds.length;) {
             mask |= 1 << permissionIds[i];
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
