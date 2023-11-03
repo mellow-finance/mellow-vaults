@@ -25,6 +25,7 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
 
     mapping(address => uint256) public epochIterator;
     mapping(address => mapping(uint256 => int256)) public balanceDelta;
+    mapping(address => bool) public hasDeposits;
 
     constructor(
         address lpToken_,
@@ -61,17 +62,17 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
 
         uint256[] memory totalCollectedAmounts_ = totalCollectedAmounts;
         uint256[] memory totalClaimedAmounts_ = totalClaimedAmounts;
-        bool isNonZeroAmounts = false;
+        bool hasPositiveAmounts = false;
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 farmBalanceBefore = totalCollectedAmounts_[i] - totalClaimedAmounts_[i];
             amounts[i] = IERC20(tokens[i]).balanceOf(this_) - farmBalanceBefore;
             if (amounts[i] > 0) {
-                isNonZeroAmounts = true;
+                hasPositiveAmounts = true;
                 totalCollectedAmounts[i] += amounts[i];
             }
         }
 
-        if (isNonZeroAmounts) {
+        if (hasPositiveAmounts) {
             _epochs.push(Epoch({amounts: amounts, totalSupply: IERC20(lpToken).balanceOf(this_)}));
         }
     }
@@ -79,15 +80,29 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
     function deposit(uint256 lpAmount, address to) external {
         IERC20(lpToken).safeTransferFrom(msg.sender, address(this), lpAmount);
         _mint(to, lpAmount);
-        uint256 epochCount = _epochs.length;
-        balanceDelta[to][epochCount] += int256(lpAmount);
+        if (!hasDeposits[to]) {
+            hasDeposits[to] = true;
+            epochIterator[to] = _epochs.length;
+        }
     }
 
     function withdraw(uint256 lpAmount, address to) external {
         _burn(msg.sender, lpAmount);
         IERC20(lpToken).safeTransfer(to, lpAmount);
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
         uint256 epochCount = _epochs.length;
-        balanceDelta[to][epochCount] -= int256(lpAmount);
+        if (from != address(0)) {
+            balanceDelta[from][epochCount] -= int256(amount);
+        }
+        if (to != address(0)) {
+            balanceDelta[to][epochCount] += int256(amount);
+        }
     }
 
     function claim(address user, address to) external returns (uint256[] memory amounts) {
@@ -97,23 +112,23 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
         address[] memory tokens = rewardTokens;
         amounts = new uint256[](tokens.length);
         if (iterator == epochCount) return amounts;
-        mapping(uint256 => int256) storage userLpDelta = balanceDelta[user];
+        mapping(uint256 => int256) storage balanceDelta_ = balanceDelta[user];
 
-        uint256 userLpAmount = balanceOf(user);
+        uint256 lpAmount = balanceOf(user);
         uint256 epochIndex = epochCount;
         while (epochIndex >= iterator) {
             if (epochIndex < epochCount) {
                 Epoch memory epoch_ = _epochs[epochIndex];
                 for (uint256 i = 0; i < tokens.length; i++) {
-                    amounts[i] += FullMath.mulDiv(userLpAmount, epoch_.amounts[i], epoch_.totalSupply);
+                    amounts[i] += FullMath.mulDiv(lpAmount, epoch_.amounts[i], epoch_.totalSupply);
                 }
             }
 
-            int256 delta = userLpDelta[epochIndex];
+            int256 delta = balanceDelta_[epochIndex];
             if (delta > 0) {
-                userLpAmount -= uint256(delta);
+                lpAmount -= uint256(delta);
             } else if (delta < 0) {
-                userLpAmount += uint256(-delta);
+                lpAmount += uint256(-delta);
             }
             if (epochIndex == 0) break;
             epochIndex--;
