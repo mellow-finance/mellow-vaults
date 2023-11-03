@@ -37,4 +37,6 @@ library Constants {
 
     address public constant balancerGhoLusdPool = 0x3FA8C89704e5d07565444009e5d9e624B40Be813;
     address public constant balancerVault = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+
+    address public constant pancakePositionManager = 0x46A15B0b27311cedF172AB29E4f4766fbE7F4364;
 }
