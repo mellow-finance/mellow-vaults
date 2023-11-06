@@ -105,8 +105,8 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
         }
     }
 
-    function claim(address user, address to) external returns (uint256[] memory amounts) {
-        require(to == user || msg.sender == user, ExceptionsLibrary.FORBIDDEN);
+    function claim(address to) external returns (uint256[] memory amounts) {
+        address user = msg.sender;
         uint256 iterator = epochIterator[user];
         uint256 epochCount = _epochs.length;
         address[] memory tokens = rewardTokens;

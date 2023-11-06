@@ -32,7 +32,7 @@ contract InstantFarmTest is Test {
     address[] public rewards;
 
     function increaseAmounts(uint256[] memory amounts) public {
-        require(rewards.length == amounts.length, 'Invalid length');
+        require(rewards.length == amounts.length, "Invalid length");
         vm.startPrank(randomUser);
         for (uint256 i = 0; i < rewards.length; i++) {
             if (amounts[i] > 0) {
@@ -56,14 +56,10 @@ contract InstantFarmTest is Test {
             rewards.push(AURA);
             rewards.push(WETH);
             rewards.push(GHO);
-            farm = new InstantFarm(
-                LUSD,
-                admin,
-                rewards
-            );
+            farm = new InstantFarm(LUSD, admin, rewards);
             vm.stopPrank();
         }
-        
+
         {
             vm.startPrank(user);
 
@@ -71,25 +67,25 @@ contract InstantFarmTest is Test {
             IERC20(LUSD).safeApprove(address(farm), 1 ether);
             farm.deposit(1 ether, user);
             require(
-                IERC20(LUSD).balanceOf(user) == 99 ether 
-                && farm.balanceOf(user) == 1 ether && 
-                farm.totalSupply() == 1 ether && 
-                farm.balanceDelta(user, 0) == 1 ether,
-                'Invalid balances'
+                IERC20(LUSD).balanceOf(user) == 99 ether &&
+                    farm.balanceOf(user) == 1 ether &&
+                    farm.totalSupply() == 1 ether &&
+                    farm.balanceDelta(user, 0) == 1 ether,
+                "Invalid balances"
             );
 
             farm.withdraw(1 ether, user);
             require(
-                IERC20(LUSD).balanceOf(user) == 100 ether 
-                && farm.balanceOf(user) == 0 ether
-                && farm.totalSupply() == 0 ether 
-                && farm.balanceDelta(user, 0) == 0 ether,
-                'Invalid balances'
+                IERC20(LUSD).balanceOf(user) == 100 ether &&
+                    farm.balanceOf(user) == 0 ether &&
+                    farm.totalSupply() == 0 ether &&
+                    farm.balanceDelta(user, 0) == 0 ether,
+                "Invalid balances"
             );
 
             vm.stopPrank();
         }
-        
+
         {
             uint256[] memory amounts = new uint256[](3);
             amounts[0] = 10 ether;
@@ -99,7 +95,7 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             try farm.updateRewardAmounts() {
-                revert('Must fail');
+                revert("Must fail");
             } catch {}
             vm.stopPrank();
         }
@@ -111,11 +107,11 @@ contract InstantFarmTest is Test {
             IERC20(LUSD).safeApprove(address(farm), 100 ether);
             farm.deposit(100 ether, user);
             require(
-                IERC20(LUSD).balanceOf(user) == 0 ether 
-                && farm.balanceOf(user) == 100 ether && 
-                farm.totalSupply() == 100 ether && 
-                farm.balanceDelta(user, 0) == 100 ether,
-                'Invalid balances'
+                IERC20(LUSD).balanceOf(user) == 0 ether &&
+                    farm.balanceOf(user) == 100 ether &&
+                    farm.totalSupply() == 100 ether &&
+                    farm.balanceDelta(user, 0) == 100 ether,
+                "Invalid balances"
             );
 
             vm.stopPrank();
@@ -124,37 +120,46 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 10 ether && amounts[1] == 0 && amounts[2] == 0 && amounts.length == 3, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 10 ether && farm.totalCollectedAmounts(1) == 0 && farm.totalCollectedAmounts(2) == 0, 'Invalid totalCollectedAmounts');
+            require(
+                amounts[0] == 10 ether && amounts[1] == 0 && amounts[2] == 0 && amounts.length == 3,
+                "Invalid reward values"
+            );
+            require(
+                farm.totalCollectedAmounts(0) == 10 ether &&
+                    farm.totalCollectedAmounts(1) == 0 &&
+                    farm.totalCollectedAmounts(2) == 0,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(0);
 
             require(
-                epoch.totalSupply == 100 ether && epoch.amounts.length == 3 && epoch.amounts[0] == 10 ether && epoch.amounts[1] == 0 && epoch.amounts[2] == 0,
-                'Invalid epoch data'
+                epoch.totalSupply == 100 ether &&
+                    epoch.amounts.length == 3 &&
+                    epoch.amounts[0] == 10 ether &&
+                    epoch.amounts[1] == 0 &&
+                    epoch.amounts[2] == 0,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
         }
-    
+
         {
             vm.startPrank(user);
 
-
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](3);
             expectedAmounts[0] = 10 ether;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
             }
             vm.stopPrank();
         }
-    
-
     }
 
     function test2() external {
@@ -162,11 +167,7 @@ contract InstantFarmTest is Test {
             vm.startPrank(admin);
             rewards.push(AURA);
             rewards.push(WETH);
-            farm = new InstantFarm(
-                LUSD,
-                admin,
-                rewards
-            );
+            farm = new InstantFarm(LUSD, admin, rewards);
             vm.stopPrank();
         }
 
@@ -180,7 +181,7 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             try farm.updateRewardAmounts() {
-                revert('Must fail');
+                revert("Must fail");
             } catch {}
             vm.stopPrank();
         }
@@ -196,23 +197,29 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(0);
 
             require(
-                epoch.totalSupply == 100 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 100 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
         }
-    
+
         {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
@@ -220,12 +227,11 @@ contract InstantFarmTest is Test {
             expectedAmounts[0] = 9 ether;
             expectedAmounts[1] = 10 ether;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
             }
             vm.stopPrank();
         }
-    
     }
 
     function test3() external {
@@ -233,11 +239,7 @@ contract InstantFarmTest is Test {
             vm.startPrank(admin);
             rewards.push(AURA);
             rewards.push(WETH);
-            farm = new InstantFarm(
-                LUSD,
-                admin,
-                rewards
-            );
+            farm = new InstantFarm(LUSD, admin, rewards);
             vm.stopPrank();
         }
 
@@ -251,7 +253,7 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             try farm.updateRewardAmounts() {
-                revert('Must fail');
+                revert("Must fail");
             } catch {}
             vm.stopPrank();
         }
@@ -275,32 +277,38 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(0);
 
             require(
-                epoch.totalSupply == 199 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 199 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
         }
-    
+
         {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(9 ether) * 100 / 199;
-            expectedAmounts[1] = uint256(10 ether) * 100 / 199;
+            expectedAmounts[0] = (uint256(9 ether) * 100) / 199;
+            expectedAmounts[1] = (uint256(10 ether) * 100) / 199;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
             }
             vm.stopPrank();
         }
@@ -309,16 +317,16 @@ contract InstantFarmTest is Test {
             vm.startPrank(user2);
 
             uint256[] memory balancesBefore = getRewardBalances(user2);
-            uint256[] memory rewardAmounts = farm.claim(user2, user2);
+            uint256[] memory rewardAmounts = farm.claim(user2);
             uint256[] memory balancesAfter = getRewardBalances(user2);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(9 ether) * 99 / 199;
-            expectedAmounts[1] = uint256(10 ether) * 99 / 199;
+            expectedAmounts[0] = (uint256(9 ether) * 99) / 199;
+            expectedAmounts[1] = (uint256(10 ether) * 99) / 199;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
             }
             vm.stopPrank();
         }
@@ -329,11 +337,7 @@ contract InstantFarmTest is Test {
             vm.startPrank(admin);
             rewards.push(AURA);
             rewards.push(WETH);
-            farm = new InstantFarm(
-                LUSD,
-                admin,
-                rewards
-            );
+            farm = new InstantFarm(LUSD, admin, rewards);
             vm.stopPrank();
         }
 
@@ -347,7 +351,7 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             try farm.updateRewardAmounts() {
-                revert('Must fail');
+                revert("Must fail");
             } catch {}
             vm.stopPrank();
         }
@@ -371,38 +375,44 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(0);
 
             require(
-                epoch.totalSupply == 199 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 199 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
         }
 
         {
-            vm.startPrank(user2); 
+            vm.startPrank(user2);
             farm.withdraw(farm.balanceOf(user2), user2);
             vm.stopPrank();
         }
-        
+
         {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(9 ether) * 100 / 199;
-            expectedAmounts[1] = uint256(10 ether) * 100 / 199;
+            expectedAmounts[0] = (uint256(9 ether) * 100) / 199;
+            expectedAmounts[1] = (uint256(10 ether) * 100) / 199;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
             }
             vm.stopPrank();
         }
@@ -411,33 +421,27 @@ contract InstantFarmTest is Test {
             vm.startPrank(user2);
 
             uint256[] memory balancesBefore = getRewardBalances(user2);
-            uint256[] memory rewardAmounts = farm.claim(user2, user2);
+            uint256[] memory rewardAmounts = farm.claim(user2);
             uint256[] memory balancesAfter = getRewardBalances(user2);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(9 ether) * 99 / 199;
-            expectedAmounts[1] = uint256(10 ether) * 99 / 199;
+            expectedAmounts[0] = (uint256(9 ether) * 99) / 199;
+            expectedAmounts[1] = (uint256(10 ether) * 99) / 199;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
             }
             vm.stopPrank();
         }
     }
-
-    
 
     function test5() external {
         {
             vm.startPrank(admin);
             rewards.push(AURA);
             rewards.push(WETH);
-            farm = new InstantFarm(
-                LUSD,
-                admin,
-                rewards
-            );
+            farm = new InstantFarm(LUSD, admin, rewards);
             vm.stopPrank();
         }
 
@@ -447,7 +451,6 @@ contract InstantFarmTest is Test {
             amounts[1] = 10 ether;
             increaseAmounts(amounts);
         }
-
 
         {
             vm.startPrank(user);
@@ -468,13 +471,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(0);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -490,13 +499,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 18 ether && farm.totalCollectedAmounts(1) == 20 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 18 ether && farm.totalCollectedAmounts(1) == 20 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(1);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -512,19 +527,23 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 27 ether && farm.totalCollectedAmounts(1) == 30 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 27 ether && farm.totalCollectedAmounts(1) == 30 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(2);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
         }
-
-
 
         uint256[] memory totalUser1Claimed = new uint256[](2);
         uint256[] memory totalUser2Claimed = new uint256[](2);
@@ -533,21 +552,20 @@ contract InstantFarmTest is Test {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(27 ether) * 100 / 200;
-            expectedAmounts[1] = uint256(30 ether) * 100 / 200;
+            expectedAmounts[0] = (uint256(27 ether) * 100) / 200;
+            expectedAmounts[1] = (uint256(30 ether) * 100) / 200;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
                 totalUser1Claimed[i] += rewardAmounts[i];
             }
             vm.stopPrank();
         }
-
 
         {
             uint256[] memory amounts = new uint256[](2);
@@ -559,13 +577,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 36 ether && farm.totalCollectedAmounts(1) == 40 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 36 ether && farm.totalCollectedAmounts(1) == 40 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(3);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -581,13 +605,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 45 ether && farm.totalCollectedAmounts(1) == 50 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 45 ether && farm.totalCollectedAmounts(1) == 50 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(4);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -597,16 +627,16 @@ contract InstantFarmTest is Test {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(18 ether) * 100 / 200;
-            expectedAmounts[1] = uint256(20 ether) * 100 / 200;
+            expectedAmounts[0] = (uint256(18 ether) * 100) / 200;
+            expectedAmounts[1] = (uint256(20 ether) * 100) / 200;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts 1');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts 1");
                 totalUser1Claimed[i] += rewardAmounts[i];
             }
             vm.stopPrank();
@@ -616,16 +646,16 @@ contract InstantFarmTest is Test {
             vm.startPrank(user2);
 
             uint256[] memory balancesBefore = getRewardBalances(user2);
-            uint256[] memory rewardAmounts = farm.claim(user2, user2);
+            uint256[] memory rewardAmounts = farm.claim(user2);
             uint256[] memory balancesAfter = getRewardBalances(user2);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(45 ether) * 100 / 200;
-            expectedAmounts[1] = uint256(50 ether) * 100 / 200;
+            expectedAmounts[0] = (uint256(45 ether) * 100) / 200;
+            expectedAmounts[1] = (uint256(50 ether) * 100) / 200;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts 2');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts 2");
                 totalUser2Claimed[i] += rewardAmounts[i];
             }
             vm.stopPrank();
@@ -633,7 +663,7 @@ contract InstantFarmTest is Test {
 
         {
             for (uint256 i = 0; i < rewards.length; i++) {
-                require(totalUser1Claimed[i] == totalUser2Claimed[i], 'Invalid ratio');
+                require(totalUser1Claimed[i] == totalUser2Claimed[i], "Invalid ratio");
             }
         }
     }
@@ -643,11 +673,7 @@ contract InstantFarmTest is Test {
             vm.startPrank(admin);
             rewards.push(AURA);
             rewards.push(WETH);
-            farm = new InstantFarm(
-                LUSD,
-                admin,
-                rewards
-            );
+            farm = new InstantFarm(LUSD, admin, rewards);
             vm.stopPrank();
         }
 
@@ -657,7 +683,6 @@ contract InstantFarmTest is Test {
             amounts[1] = 10 ether;
             increaseAmounts(amounts);
         }
-
 
         {
             vm.startPrank(user);
@@ -678,13 +703,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(0);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -700,13 +731,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 18 ether && farm.totalCollectedAmounts(1) == 20 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 18 ether && farm.totalCollectedAmounts(1) == 20 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(1);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -731,18 +768,23 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 27 ether && farm.totalCollectedAmounts(1) == 30 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 27 ether && farm.totalCollectedAmounts(1) == 30 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(2);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
         }
-
 
         uint256[] memory totalUser1Claimed = new uint256[](2);
         uint256[] memory totalUser2Claimed = new uint256[](2);
@@ -751,21 +793,20 @@ contract InstantFarmTest is Test {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(27 ether) * 100 / 200;
-            expectedAmounts[1] = uint256(30 ether) * 100 / 200;
+            expectedAmounts[0] = (uint256(27 ether) * 100) / 200;
+            expectedAmounts[1] = (uint256(30 ether) * 100) / 200;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts");
                 totalUser1Claimed[i] += rewardAmounts[i];
             }
             vm.stopPrank();
         }
-
 
         {
             uint256[] memory amounts = new uint256[](2);
@@ -777,13 +818,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 36 ether && farm.totalCollectedAmounts(1) == 40 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 36 ether && farm.totalCollectedAmounts(1) == 40 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(3);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -799,13 +846,19 @@ contract InstantFarmTest is Test {
         {
             vm.startPrank(admin);
             uint256[] memory amounts = farm.updateRewardAmounts();
-            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, 'Invalid reward values');
-            require(farm.totalCollectedAmounts(0) == 45 ether && farm.totalCollectedAmounts(1) == 50 ether, 'Invalid totalCollectedAmounts');
+            require(amounts[0] == 9 ether && amounts[1] == 10 ether && amounts.length == 2, "Invalid reward values");
+            require(
+                farm.totalCollectedAmounts(0) == 45 ether && farm.totalCollectedAmounts(1) == 50 ether,
+                "Invalid totalCollectedAmounts"
+            );
             InstantFarm.Epoch memory epoch = farm.epoch(4);
 
             require(
-                epoch.totalSupply == 200 ether && epoch.amounts.length == 2 && epoch.amounts[0] == 9 ether && epoch.amounts[1] == 10 ether,
-                'Invalid epoch data'
+                epoch.totalSupply == 200 ether &&
+                    epoch.amounts.length == 2 &&
+                    epoch.amounts[0] == 9 ether &&
+                    epoch.amounts[1] == 10 ether,
+                "Invalid epoch data"
             );
 
             vm.stopPrank();
@@ -815,16 +868,16 @@ contract InstantFarmTest is Test {
             vm.startPrank(user);
 
             uint256[] memory balancesBefore = getRewardBalances(user);
-            uint256[] memory rewardAmounts = farm.claim(user, user);
+            uint256[] memory rewardAmounts = farm.claim(user);
             uint256[] memory balancesAfter = getRewardBalances(user);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(18 ether) * 100 / 200;
-            expectedAmounts[1] = uint256(20 ether) * 100 / 200;
+            expectedAmounts[0] = (uint256(18 ether) * 100) / 200;
+            expectedAmounts[1] = (uint256(20 ether) * 100) / 200;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts 1');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts 1");
                 totalUser1Claimed[i] += rewardAmounts[i];
             }
             vm.stopPrank();
@@ -834,16 +887,16 @@ contract InstantFarmTest is Test {
             vm.startPrank(user2);
 
             uint256[] memory balancesBefore = getRewardBalances(user2);
-            uint256[] memory rewardAmounts = farm.claim(user2, user2);
+            uint256[] memory rewardAmounts = farm.claim(user2);
             uint256[] memory balancesAfter = getRewardBalances(user2);
 
             require(rewardAmounts.length == rewards.length);
             uint256[] memory expectedAmounts = new uint256[](2);
-            expectedAmounts[0] = uint256(45 ether) * 100 / 200;
-            expectedAmounts[1] = uint256(50 ether) * 100 / 200;
+            expectedAmounts[0] = (uint256(45 ether) * 100) / 200;
+            expectedAmounts[1] = (uint256(50 ether) * 100) / 200;
             for (uint256 i = 0; i < rewardAmounts.length; i++) {
-                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], 'Invalid balances');
-                require(rewardAmounts[i] == expectedAmounts[i], 'Invalid reward amounts 2');
+                require(rewardAmounts[i] == balancesAfter[i] - balancesBefore[i], "Invalid balances");
+                require(rewardAmounts[i] == expectedAmounts[i], "Invalid reward amounts 2");
                 totalUser2Claimed[i] += rewardAmounts[i];
             }
             vm.stopPrank();
@@ -851,9 +904,8 @@ contract InstantFarmTest is Test {
 
         {
             for (uint256 i = 0; i < rewards.length; i++) {
-                require(totalUser1Claimed[i] == totalUser2Claimed[i], 'Invalid ratio');
+                require(totalUser1Claimed[i] == totalUser2Claimed[i], "Invalid ratio");
             }
         }
     }
-
 }
