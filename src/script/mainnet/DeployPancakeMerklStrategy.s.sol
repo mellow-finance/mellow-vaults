@@ -194,7 +194,6 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-        depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         amounts[0] = 1e15;
         amounts[1] = 1e15;
         depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
