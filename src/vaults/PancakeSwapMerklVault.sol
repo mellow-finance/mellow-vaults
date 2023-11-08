@@ -144,7 +144,7 @@ contract PancakeSwapMerklVault is IPancakeSwapMerklVault, IntegrationVault {
         IDistributor(params.merklFarm).claim(users, tokens, amounts, proofs);
         claimedAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(IVault(this_).isVaultToken(tokens[i]), ExceptionsLibrary.FORBIDDEN);
+            require(!IVault(this_).isVaultToken(tokens[i]), ExceptionsLibrary.FORBIDDEN);
             claimedAmounts[i] = IERC20(tokens[i]).balanceOf(this_);
             IERC20(tokens[i]).safeTransfer(params.lpFarm, claimedAmounts[i]);
         }

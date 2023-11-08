@@ -157,46 +157,126 @@ contract Deploy is Script {
 
     function run() external {
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-        depositWrapper = new StakingDepositWrapper(deployer);
-        deployVaults();
-        depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
-        IERC20(RETH).safeApprove(address(depositWrapper), type(uint256).max);
-        IERC20(WETH).safeApprove(address(depositWrapper), type(uint256).max);
-        uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 1e11;
-        amounts[1] = 1e11;
-        depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
-        vm.stopBroadcast();
+        PancakeSwapMerklVault singleton = new PancakeSwapMerklVault();
 
-        vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
-        strategy.updateFarms(address(lpFarm), address(0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae));
-        uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e15;
-        minSwapAmounts[1] = 1e15;
-        strategy.updateMutableParams(
-            PancakeSwapMerklPulseStrategyV2.MutableParams({
-                priceImpactD6: 0,
-                defaultIntervalWidth: 20,
-                maxPositionLengthInTicks: 120,
-                maxDeviationForVaultPool: 5,
-                timespanForAverageTick: 30,
-                neighborhoodFactorD: 150000000,
-                extensionFactorD: 2000000000,
-                swapSlippageD: 10000000,
-                swappingAmountsCoefficientD: 10000000,
-                minSwapAmounts: minSwapAmounts
-            })
-        );
-        strategy.updateDesiredAmounts(
-            PancakeSwapMerklPulseStrategyV2.DesiredAmounts({amount0Desired: 1e9, amount1Desired: 1e9})
-        );
-        strategy.rebalance(type(uint256).max, "", 0);
-        vm.stopBroadcast();
+        // pancakeGovernance = new PancakeSwapMerklVaultGovernance(
+        //     IVaultGovernance.InternalParams({
+        //         protocolGovernance: IProtocolGovernance(governance),
+        //         registry: IVaultRegistry(registry),
+        //         singleton: IVault(address(singleton))
+        //     }),
+        //     IPancakeSwapMerklVaultGovernance.DelayedProtocolParams({
+        //         positionManager: positionManager,
+        //         oracle: IOracle(mellowOracle)
+        //     })
+        // );
 
-        vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-        amounts[0] = 1e15;
-        amounts[1] = 1e15;
-        depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
+        // address[] memory tokens = new address[](2);
+        // tokens[0] = CAKE;
+        // tokens[1] = RPL;
+        // uint256[] memory amounts = new uint256[](2);
+        // amounts[0] = 3088773800000000;
+        // amounts[1] = 333247100000000;
+        // bytes32[][] memory proofs = new bytes32[][](2);
+
+        // proofs[0] = new bytes32[](12);
+
+        // bytes32[12] memory firstProof = [
+        //     bytes32(0x28ff72d382cd72f5c252000adf1ffe4046a92d1d5ead5a0e55d83401e0744c12),
+        //     0x008a180c2b1805c92e5617456d398afdc55ca4d4e631f064500bcfc7fd189e79,
+        //     0xc37010c0ba9299a14f3e4b25f2eaf28ef5e32eb1953aca1ff09bf80c02661210,
+        //     0xda318b5fdee9dcd2d8a5d7c45d44458a793d0ec288e5ea9b1f14e68a1098af4c,
+        //     0x8eb29ee7cd7d49ea2ef60206c59048e8d8d6e7e888878333c696f3c7aaa69e81,
+        //     0xdab8f41612f7e0bbc36e0d2a4e1fe6f77b7f844043f298ff677daad518a9ab24,
+        //     0xf1947b93d92f19ef3dc6b7a1f63d96537d82fc453b6d715911c60680c79c273f,
+        //     0x74c8115c3bab0c0151811dde7d6db1a60ee3e5168852f309f087f6f04becef9f,
+        //     0xfce7bac766fa30b12f388f76de92f2c6ff7632c62de9591d9192abbcc0f45fac,
+        //     0x1ab78012b889895bf857b359a12ce6e4dd22bb082aebb39f618e89d230e7349d,
+        //     0x9da6e0c2a0faad884b77d194bd3cdb859bffcb7763d1746759144be9c9f663f8,
+        //     0x29e6427638d8058cd439a21a0b443d0e82d5f856653acf6307e02e1e55614725
+        // ];
+
+        // proofs[1] = new bytes32[](12);
+
+        // bytes32[12] memory secondProof = [
+        //     bytes32(0x90c4181b8c333ab5da5160bad244461ab1efbdfa6ad2ea507e8392699389c66b),
+        //     0xefa3e7f7f84733e11d727cad223a93b4badcbdc29d419688170b03b9f59121b3,
+        //     0x093ed64c31071229baeec51cbe0a3fccaed23011c8c06a300aa31d2801099535,
+        //     0xda318b5fdee9dcd2d8a5d7c45d44458a793d0ec288e5ea9b1f14e68a1098af4c,
+        //     0x8eb29ee7cd7d49ea2ef60206c59048e8d8d6e7e888878333c696f3c7aaa69e81,
+        //     0xdab8f41612f7e0bbc36e0d2a4e1fe6f77b7f844043f298ff677daad518a9ab24,
+        //     0xf1947b93d92f19ef3dc6b7a1f63d96537d82fc453b6d715911c60680c79c273f,
+        //     0x74c8115c3bab0c0151811dde7d6db1a60ee3e5168852f309f087f6f04becef9f,
+        //     0xfce7bac766fa30b12f388f76de92f2c6ff7632c62de9591d9192abbcc0f45fac,
+        //     0x1ab78012b889895bf857b359a12ce6e4dd22bb082aebb39f618e89d230e7349d,
+        //     0x9da6e0c2a0faad884b77d194bd3cdb859bffcb7763d1746759144be9c9f663f8,
+        //     0x29e6427638d8058cd439a21a0b443d0e82d5f856653acf6307e02e1e55614725
+        // ];
+
+        // console2.log("Here");
+
+        // for (uint256 i = 0; i < 12; i++) {
+        //     proofs[0][i] = firstProof[i];
+        //     proofs[1][i] = secondProof[i];
+        // }
+
+        // PancakeSwapMerklVault(0x6c19E8A70B65053403c9f33d3C858A363EE1E69F).compound(
+        //     tokens,
+        //     amounts,
+        //     proofs
+        // );
+
+        // depositWrapper = StakingDepositWrapper(0x9B8058Fa941835D5F287680D2f569935356B9730);
+
+        // rootVault = ERC20RootVault(0xBb467dBD7FA76f0e214eD3cbc32e7606ED2256Fa);
+
+        // lpFarm = InstantFarm(0xc2b4e7C0e3a38b1E41c65747eFC7FAA52Aa0E4D2);
+
+        // uint256[] memory amounts = new uint256[](2);
+        // amounts[0] = 1e16;
+        // amounts[1] = 1e16;
+
+        // depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
+
+        // deployVaults();
+        // depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
+        // IERC20(RETH).safeApprove(address(depositWrapper), type(uint256).max);
+        // IERC20(WETH).safeApprove(address(depositWrapper), type(uint256).max);
+        // uint256[] memory amounts = new uint256[](2);
+        // amounts[0] = 1e11;
+        // amounts[1] = 1e11;
+        // depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
+        // vm.stopBroadcast();
+
+        // vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
+        // strategy.updateFarms(address(lpFarm), address(0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae));
+        // uint256[] memory minSwapAmounts = new uint256[](2);
+        // minSwapAmounts[0] = 1e15;
+        // minSwapAmounts[1] = 1e15;
+        // strategy.updateMutableParams(
+        //     PancakeSwapMerklPulseStrategyV2.MutableParams({
+        //         priceImpactD6: 0,
+        //         defaultIntervalWidth: 20,
+        //         maxPositionLengthInTicks: 120,
+        //         maxDeviationForVaultPool: 5,
+        //         timespanForAverageTick: 30,
+        //         neighborhoodFactorD: 150000000,
+        //         extensionFactorD: 2000000000,
+        //         swapSlippageD: 10000000,
+        //         swappingAmountsCoefficientD: 10000000,
+        //         minSwapAmounts: minSwapAmounts
+        //     })
+        // );
+        // strategy.updateDesiredAmounts(
+        //     PancakeSwapMerklPulseStrategyV2.DesiredAmounts({amount0Desired: 1e9, amount1Desired: 1e9})
+        // );
+        // strategy.rebalance(type(uint256).max, "", 0);
+        // vm.stopBroadcast();
+
+        // vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
+        // amounts[0] = 1e15;
+        // amounts[1] = 1e15;
+        // depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
         vm.stopBroadcast();
     }
 }
