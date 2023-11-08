@@ -35,6 +35,7 @@
     "forge:test:olympus": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/olympus/*.sol'",
     "forge:test:balancer": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/balancer/*.sol'",
     "forge:test:farm": "forge test --use 0.8.9 -vvvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/farm/*.sol'",
+    "forge:test:ramses": "forge test --use 0.8.9 -vvvv --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --match-path 'forge-test/ramses/*.sol'",
     "forge:test:utils": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/utils/*.sol'",
     "forge:deploy:pancake": "forge script --use 0.8.9 src/script/DeployPancakeVault.s.sol:DeployPancakeVault --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:base:pulse-v2": "forge script --use 0.8.9 src/script/base/DeployUniPulseV2.s.sol:Deploy --rpc-url $(grep BASE_RPC .env | cut -d '=' -f2,3,4) --broadcast --slow --verify --etherscan-api-key $(grep BASE_API_KEY .env | cut -d '=' -f2) -vvvv",

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
-pragma abicoder v2;
+
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./IPoolInitializer.sol";
 import "./IPeripheryPayments.sol";
@@ -9,13 +10,12 @@ import "./IPeripheryImmutableState.sol";
 /// @title Non-fungible token for positions
 /// @notice Wraps Ramses V2 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface IRamsesV2NonfungiblePositionManager is IPoolInitializer, IPeripheryPayments, IPeripheryImmutableState {
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-
+interface IRamsesV2NonfungiblePositionManager is
+    IPoolInitializer,
+    IPeripheryPayments,
+    IPeripheryImmutableState,
+    IERC721
+{
     /// @notice Emitted when liquidity is increased for a position NFT
     /// @dev Also emitted when a token is minted
     /// @param tokenId The ID of the token for which liquidity was increased

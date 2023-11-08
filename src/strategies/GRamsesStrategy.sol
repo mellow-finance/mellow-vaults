@@ -2,25 +2,27 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/vaults/IUniV3Vault.sol";
+import "../interfaces/vaults/IRamsesV2Vault.sol";
+import "../interfaces/utils/ILpCallback.sol";
 
+import "../interfaces/external/ramses/libraries/OracleLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../libraries/external/OracleLibrary.sol";
-import "../libraries/external/TickMath.sol";
-
 import "../libraries/ExceptionsLibrary.sol";
 
 import "../utils/DefaultAccessControlLateInit.sol";
 
-contract GUniStrategy is DefaultAccessControlLateInit {
+contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
+    using SafeERC20 for IERC20;
+
     struct ImmutableParams {
         uint24 fee;
-        IUniswapV3Pool pool;
+        IRamsesV2Pool pool;
         IERC20Vault erc20Vault;
-        IUniV3Vault lowerVault;
-        IUniV3Vault upperVault;
+        IRamsesV2Vault lowerVault;
+        IRamsesV2Vault upperVault;
         address router;
         address[] tokens;
     }
@@ -48,7 +50,7 @@ contract GUniStrategy is DefaultAccessControlLateInit {
     uint256 public constant D9 = 1e9;
     uint256 public constant D6 = 1e6;
 
-    INonfungiblePositionManager public immutable positionManager;
+    IRamsesV2NonfungiblePositionManager public immutable positionManager;
 
     struct Storage {
         ImmutableParams immutableParams;
@@ -65,13 +67,16 @@ contract GUniStrategy is DefaultAccessControlLateInit {
         }
     }
 
-    constructor(INonfungiblePositionManager positionManager_) {
+    constructor(IRamsesV2NonfungiblePositionManager positionManager_) {
         positionManager = positionManager_;
     }
 
     function initialize(address admin, ImmutableParams memory immutableParams) external {
-        DefaultAccessControlLateInit(address(this)).init(admin);
+        DefaultAccessControlLateInit.init(admin);
         _contractStorage().immutableParams = immutableParams;
+        for (uint256 i = 0; i < 2; i++) {
+            IERC20(immutableParams.tokens[i]).safeApprove(address(positionManager), type(uint256).max);
+        }
     }
 
     function getImmutableParams() public view returns (ImmutableParams memory) {
@@ -112,12 +117,16 @@ contract GUniStrategy is DefaultAccessControlLateInit {
     function getCurrentState(Storage memory s) public view returns (State memory state) {
         uint128 lowerLiquidity;
         uint128 upperLiquidity;
-
-        (, , , , , state.upperTick, state.lowerTick, lowerLiquidity, , , , ) = positionManager.positions(
-            s.immutableParams.lowerVault.uniV3Nft()
-        );
-        (, , , , , , , upperLiquidity, , , , ) = positionManager.positions(s.immutableParams.upperVault.uniV3Nft());
-        state.ratioX96 = FullMath.mulDiv(Q96, lowerLiquidity, lowerLiquidity + upperLiquidity);
+        uint256 lowerPositionId = s.immutableParams.lowerVault.positionId();
+        if (lowerPositionId != 0) {
+            (, , , , , state.upperTick, state.lowerTick, lowerLiquidity, , , , ) = positionManager.positions(
+                lowerPositionId
+            );
+            (, , , , , , , upperLiquidity, , , , ) = positionManager.positions(
+                s.immutableParams.upperVault.positionId()
+            );
+            state.ratioX96 = FullMath.mulDiv(Q96, lowerLiquidity, lowerLiquidity + upperLiquidity);
+        }
     }
 
     function calculateTargetRatioOfToken1(Storage memory s, uint256 ratioX96)
@@ -152,8 +161,7 @@ contract GUniStrategy is DefaultAccessControlLateInit {
 
         State memory expected = calculateExpectedState(s);
         State memory current = getCurrentState(s);
-
-        if (expected.lowerTick != current.lowerTick) {
+        if (current.lowerTick == current.upperTick || expected.lowerTick != current.lowerTick) {
             _drainLiquidity(s);
 
             uint256 lowerVaultNft = _mint(s, expected.lowerTick, expected.upperTick);
@@ -163,16 +171,18 @@ contract GUniStrategy is DefaultAccessControlLateInit {
                 expected.upperTick + s.mutableParams.intervalWidth
             );
 
-            uint256 oldLowerVaultNft = s.immutableParams.lowerVault.uniV3Nft();
-            uint256 oldUpperVaultNft = s.immutableParams.upperVault.uniV3Nft();
+            uint256 oldLowerVaultNft = s.immutableParams.lowerVault.positionId();
+            uint256 oldUpperVaultNft = s.immutableParams.upperVault.positionId();
 
             positionManager.safeTransferFrom(address(this), address(s.immutableParams.lowerVault), lowerVaultNft);
             positionManager.safeTransferFrom(address(this), address(s.immutableParams.upperVault), upperVaultNft);
 
-            positionManager.burn(oldLowerVaultNft);
-            emit PositionBurned(oldLowerVaultNft);
-            positionManager.burn(oldUpperVaultNft);
-            emit PositionBurned(oldUpperVaultNft);
+            if (oldLowerVaultNft != 0) {
+                positionManager.burn(oldLowerVaultNft);
+                emit PositionBurned(oldLowerVaultNft);
+                positionManager.burn(oldUpperVaultNft);
+                emit PositionBurned(oldUpperVaultNft);
+            }
         } else {
             if (expected.ratioX96 + s.mutableParams.maxRatioDeviationX96 < current.ratioX96) {
                 _drainLiquidity(s);
@@ -182,7 +192,7 @@ contract GUniStrategy is DefaultAccessControlLateInit {
         }
 
         _swapToTarget(s, expected, swapData, minAmountOutInCaseOfSwap);
-        _pushIntoUniswap(s, expected.ratioX96);
+        _pushIntoRamses(s, expected.ratioX96);
 
         emit Rebalance(tx.origin, msg.sender);
     }
@@ -227,7 +237,7 @@ contract GUniStrategy is DefaultAccessControlLateInit {
         }
     }
 
-    function _pushIntoUniswap(Storage memory s, uint256 ratioX96) private {
+    function _pushIntoRamses(Storage memory s, uint256 ratioX96) private {
         (uint256[] memory tvl, ) = s.immutableParams.erc20Vault.tvl();
         uint256[] memory lowerAmountsQ96 = s.immutableParams.lowerVault.liquidityToTokenAmounts(uint128(ratioX96));
         uint256[] memory upperAmountsQ96 = s.immutableParams.upperVault.liquidityToTokenAmounts(
@@ -272,7 +282,7 @@ contract GUniStrategy is DefaultAccessControlLateInit {
         int24 upperTick
     ) private returns (uint256 nft) {
         (nft, , , ) = positionManager.mint(
-            INonfungiblePositionManager.MintParams({
+            IRamsesV2NonfungiblePositionManager.MintParams({
                 token0: s.immutableParams.tokens[0],
                 token1: s.immutableParams.tokens[1],
                 fee: s.immutableParams.fee,
@@ -291,18 +301,20 @@ contract GUniStrategy is DefaultAccessControlLateInit {
 
     function _drainLiquidity(Storage memory s) private {
         // drain liquidity from vaults
-        s.immutableParams.lowerVault.pull(
-            address(s.immutableParams.erc20Vault),
-            s.immutableParams.lowerVault.vaultTokens(),
-            s.immutableParams.lowerVault.liquidityToTokenAmounts(type(uint128).max),
-            ""
-        );
-        s.immutableParams.upperVault.pull(
-            address(s.immutableParams.erc20Vault),
-            s.immutableParams.upperVault.vaultTokens(),
-            s.immutableParams.upperVault.liquidityToTokenAmounts(type(uint128).max),
-            ""
-        );
+        if (s.immutableParams.lowerVault.positionId() != 0) {
+            s.immutableParams.lowerVault.pull(
+                address(s.immutableParams.erc20Vault),
+                s.immutableParams.lowerVault.vaultTokens(),
+                s.immutableParams.lowerVault.liquidityToTokenAmounts(type(uint128).max),
+                ""
+            );
+            s.immutableParams.upperVault.pull(
+                address(s.immutableParams.erc20Vault),
+                s.immutableParams.upperVault.vaultTokens(),
+                s.immutableParams.upperVault.liquidityToTokenAmounts(type(uint128).max),
+                ""
+            );
+        }
     }
 
     function _swapToTarget(
@@ -373,6 +385,16 @@ contract GUniStrategy is DefaultAccessControlLateInit {
         emit TokensSwapped(actualAmountIn, actualAmountOut, tokenInIndex);
     }
 
+    /// @inheritdoc ILpCallback
+    function depositCallback() external {
+        Storage memory s = _contractStorage();
+        State memory current = getCurrentState(s);
+        _pushIntoRamses(s, current.ratioX96);
+    }
+
+    /// @inheritdoc ILpCallback
+    function withdrawCallback() external {}
+
     /// @notice Emitted after a successful token swap
     /// @param amountIn amount of token, that pushed into SwapRouter
     /// @param amountOut amount of token, that recieved from SwapRouter
@@ -390,11 +412,11 @@ contract GUniStrategy is DefaultAccessControlLateInit {
     /// @param sender Sender of the call (msg.sender)
     event Rebalance(address indexed origin, address indexed sender);
 
-    /// @notice Emited when a new uniswap position is created
-    /// @param tokenId nft of new uniswap position
+    /// @notice Emited when a new ramses v2 position is created
+    /// @param tokenId nft of new ramses v2 position
     event PositionMinted(uint256 tokenId);
 
-    /// @notice Emited when a uniswap position is burned
-    /// @param tokenId nft of uniswap position
+    /// @notice Emited when a ramses v2 position is burned
+    /// @param tokenId nft of ramses v2 position
     event PositionBurned(uint256 tokenId);
 }

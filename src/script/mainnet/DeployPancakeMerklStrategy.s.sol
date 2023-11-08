@@ -157,7 +157,7 @@ contract Deploy is Script {
 
     function run() external {
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-        PancakeSwapMerklVault singleton = new PancakeSwapMerklVault();
+        // PancakeSwapMerklVault singleton = new PancakeSwapMerklVault();
 
         // pancakeGovernance = new PancakeSwapMerklVaultGovernance(
         //     IVaultGovernance.InternalParams({
