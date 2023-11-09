@@ -158,7 +158,13 @@ contract RamsesV2Vault is IRamsesV2Vault, IntegrationVault {
         for (uint256 i = 0; i < params.rewards.length; i++) {
             collectedRewards[i] = IERC20(params.rewards[i]).balanceOf(address(this));
             if (collectedRewards[i] > 0) {
-                IERC20(params.rewards[i]).safeTransfer(params.farm, collectedRewards[i]);
+                try IERC20(params.rewards[i]).transfer(params.farm, collectedRewards[i]) returns (bool success) {
+                    if (!success) {
+                        collectedRewards[i] = 0;
+                    }
+                } catch {
+                    collectedRewards[i] = 0;
+                }
             }
         }
 

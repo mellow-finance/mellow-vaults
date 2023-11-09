@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IRamsesV2Vault.sol";
+import "../interfaces/vaults/IRamsesV2VaultGovernance.sol";
 import "../interfaces/utils/ILpCallback.sol";
 
 import "../interfaces/external/ramses/libraries/OracleLibrary.sol";
@@ -75,7 +76,12 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
         DefaultAccessControlLateInit.init(admin);
         _contractStorage().immutableParams = immutableParams;
         for (uint256 i = 0; i < 2; i++) {
-            IERC20(immutableParams.tokens[i]).safeApprove(address(positionManager), type(uint256).max);
+            IERC20(immutableParams.tokens[i]).safeIncreaseAllowance(address(positionManager), type(uint256).max);
+            immutableParams.erc20Vault.externalCall(
+                immutableParams.tokens[i],
+                IERC20.approve.selector,
+                abi.encode(immutableParams.router, type(uint256).max)
+            );
         }
     }
 
@@ -119,7 +125,7 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
         uint128 upperLiquidity;
         uint256 lowerPositionId = s.immutableParams.lowerVault.positionId();
         if (lowerPositionId != 0) {
-            (, , , , , state.upperTick, state.lowerTick, lowerLiquidity, , , , ) = positionManager.positions(
+            (, , , , , state.lowerTick, state.upperTick, lowerLiquidity, , , , ) = positionManager.positions(
                 lowerPositionId
             );
             (, , , , , , , upperLiquidity, , , , ) = positionManager.positions(
@@ -149,6 +155,16 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
         s.mutableParams = newMutableParams;
     }
 
+    function updateVaultFarms(IRamsesV2VaultGovernance.StrategyParams memory newStrategyParams) external {
+        _requireAdmin();
+        ImmutableParams memory immutableParams = getImmutableParams();
+        IRamsesV2VaultGovernance ramsesGovernance = IRamsesV2VaultGovernance(
+            address(immutableParams.lowerVault.vaultGovernance())
+        );
+        ramsesGovernance.setStrategyParams(immutableParams.lowerVault.nft(), newStrategyParams);
+        ramsesGovernance.setStrategyParams(immutableParams.upperVault.nft(), newStrategyParams);
+    }
+
     function rebalance(
         bytes calldata swapData,
         uint256 minAmountOutInCaseOfSwap,
@@ -173,6 +189,11 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
 
             uint256 oldLowerVaultNft = s.immutableParams.lowerVault.positionId();
             uint256 oldUpperVaultNft = s.immutableParams.upperVault.positionId();
+
+            if (oldLowerVaultNft != 0) {
+                s.immutableParams.lowerVault.collectRewards();
+                s.immutableParams.upperVault.collectRewards();
+            }
 
             positionManager.safeTransferFrom(address(this), address(s.immutableParams.lowerVault), lowerVaultNft);
             positionManager.safeTransferFrom(address(this), address(s.immutableParams.upperVault), upperVaultNft);
