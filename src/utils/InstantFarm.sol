@@ -34,8 +34,8 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
     )
         DefaultAccessControl(admin_)
         ERC20(
-            string(abi.encodePacked(ERC20(lpToken_).symbol(), "IF")),
-            string(abi.encodePacked(ERC20(lpToken_).name(), " instant farm"))
+            string(abi.encodePacked(ERC20(lpToken_).name(), " instant farm")),
+            string(abi.encodePacked(ERC20(lpToken_).symbol(), "IF"))
         )
     {
         require(rewardTokens_.length > 0, ExceptionsLibrary.INVALID_LENGTH);
