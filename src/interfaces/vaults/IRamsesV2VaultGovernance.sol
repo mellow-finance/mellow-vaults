@@ -23,6 +23,7 @@ interface IRamsesV2VaultGovernance is IVaultGovernance {
         address farm;
         address gaugeV2;
         address[] rewards;
+        bool instantExitFlag;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

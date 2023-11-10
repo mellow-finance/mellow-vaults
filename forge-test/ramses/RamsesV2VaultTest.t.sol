@@ -67,7 +67,7 @@ contract RamsesV2VaultTest is Test {
 
     uint256 public constant Q96 = 2**96;
     address[] public rewards;
-    InstantFarm public lpFarm;
+    RamsesInstantFarm public lpFarm;
 
     function deposit(bool flag) public {
         deal(lusd, deployer, 100 ether);
@@ -154,14 +154,32 @@ contract RamsesV2VaultTest is Test {
             combineVaults(tokens, nfts);
         }
 
-        lpFarm = new InstantFarm(address(rootVault), deployer, rewards);
+        lpFarm = new RamsesInstantFarm(
+            RamsesInstantFarm.InitParams({
+                lpToken: address(rootVault),
+                admin: deployer,
+                rewardTokens: rewards,
+                xram: xram,
+                ram: ram,
+                weth: weth,
+                router: address(router),
+                wethRamPool: 0x688547381eEC7C1d3d9eBa778fE275D1D7e03946,
+                wethPool: 0x2Ed095289b2116D7a3399e278D603A4e4015B19D,
+                timespan: 60,
+                maxTickDeviation: 50
+            })
+        );
         vm.stopPrank();
     }
 
+    address public ram = 0xAAA6C1E32C55A7Bfa8066A6FAE9b42650F262418;
+    address public xram = 0xAAA1eE8DC1864AE49185C368e8c64Dd780a50Fb7;
+    address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+
     function deployGovernances() public {
         rewards = new address[](2);
-        rewards[0] = 0xAAA6C1E32C55A7Bfa8066A6FAE9b42650F262418;
-        rewards[1] = 0xAAA1eE8DC1864AE49185C368e8c64Dd780a50Fb7;
+        rewards[0] = ram;
+        rewards[1] = xram;
 
         ramsesGovernance = new RamsesV2VaultGovernance(
             IVaultGovernance.InternalParams({
@@ -320,7 +338,8 @@ contract RamsesV2VaultTest is Test {
             IRamsesV2VaultGovernance.StrategyParams({
                 farm: address(lpFarm),
                 rewards: rewards,
-                gaugeV2: address(0x8cfBc79E06A80f5931B3F9FCC4BbDfac91D45A50)
+                gaugeV2: address(0x8cfBc79E06A80f5931B3F9FCC4BbDfac91D45A50),
+                instantExitFlag: true
             })
         );
         vm.stopPrank();

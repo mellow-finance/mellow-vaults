@@ -64,7 +64,13 @@ contract RamsesV2VaultGovernance is ContractMeta, IRamsesV2VaultGovernance, Vaul
     /// @inheritdoc IRamsesV2VaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({gaugeV2: address(0), rewards: new address[](0), farm: address(0)});
+            return
+                StrategyParams({
+                    gaugeV2: address(0),
+                    rewards: new address[](0),
+                    farm: address(0),
+                    instantExitFlag: false
+                });
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }

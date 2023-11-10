@@ -10,6 +10,7 @@ import "../interfaces/vaults/IRamsesV2Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 import "../utils/RamsesV2Helper.sol";
+import "../utils/RamsesInstantFarm.sol";
 
 contract RamsesV2Vault is IRamsesV2Vault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -148,27 +149,11 @@ contract RamsesV2Vault is IRamsesV2Vault, IntegrationVault {
     }
 
     /// @inheritdoc IRamsesV2Vault
-    function collectRewards() external nonReentrant returns (uint256[] memory collectedRewards) {
+    function collectRewards() external nonReentrant {
         IRamsesV2VaultGovernance.StrategyParams memory params = IRamsesV2VaultGovernance(address(_vaultGovernance))
             .strategyParams(_nft);
-
-        IGaugeV2(params.gaugeV2).getReward(positionId, params.rewards);
-
-        collectedRewards = new uint256[](params.rewards.length);
-        for (uint256 i = 0; i < params.rewards.length; i++) {
-            collectedRewards[i] = IERC20(params.rewards[i]).balanceOf(address(this));
-            if (collectedRewards[i] > 0) {
-                try IERC20(params.rewards[i]).transfer(params.farm, collectedRewards[i]) returns (bool success) {
-                    if (!success) {
-                        collectedRewards[i] = 0;
-                    }
-                } catch {
-                    collectedRewards[i] = 0;
-                }
-            }
-        }
-
-        emit CollectedRewards(tx.origin, msg.sender, params.farm, params.rewards, collectedRewards);
+        positionManager.approve(params.farm, positionId);
+        RamsesInstantFarm(params.farm).rewardsCallback(params);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

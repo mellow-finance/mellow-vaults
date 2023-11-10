@@ -35,5 +35,5 @@ interface IRamsesV2Vault is IERC721Receiver, IIntegrationVault {
 
     function collectEarnings() external returns (uint256[] memory collectedEarnings);
 
-    function collectRewards() external returns (uint256[] memory collectedRewards);
+    function collectRewards() external;
 }
