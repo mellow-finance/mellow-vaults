@@ -34,7 +34,7 @@ contract Deploy is Script {
 
     // rebalance
     function run() external {
-        vm.startBroadcast(vm.envUint("DEPLOYER_PK"));
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
 
         deployGovernances();
 
