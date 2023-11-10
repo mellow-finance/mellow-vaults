@@ -209,6 +209,8 @@ contract RamsesV2VaultTest is Test {
         IProtocolGovernance(governance).stageValidator(address(grai), erc20Validator);
         IProtocolGovernance(governance).stageValidator(address(lusd), erc20Validator);
         IProtocolGovernance(governance).stageValidator(address(router), allowAllValidator);
+        IProtocolGovernance(governance).stageUnitPrice(address(grai), 1e18);
+        IProtocolGovernance(governance).stageUnitPrice(address(lusd), 1e18);
 
         skip(24 * 3600);
 
@@ -219,6 +221,8 @@ contract RamsesV2VaultTest is Test {
         IProtocolGovernance(governance).commitValidator(address(grai));
         IProtocolGovernance(governance).commitValidator(address(lusd));
         IProtocolGovernance(governance).commitValidator(address(router));
+        IProtocolGovernance(governance).commitUnitPrice(address(grai));
+        IProtocolGovernance(governance).commitUnitPrice(address(lusd));
 
         vm.stopPrank();
     }
@@ -464,5 +468,18 @@ contract RamsesV2VaultTest is Test {
         console2.log("------------");
 
         console2.log(IERC20(rewards[0]).balanceOf(address(lpFarm)), IERC20(rewards[1]).balanceOf(address(lpFarm)));
+
+        vm.startPrank(deployer);
+        lpFarm.updateRewardAmounts();
+
+        lpFarm.withdraw(lpFarm.balanceOf(deployer), deployer);
+        rootVault.withdraw(deployer, rootVault.balanceOf(deployer), new uint256[](2), new bytes[](3));
+
+        address tstAddress = address(412343241);
+        lpFarm.claim(address(tstAddress));
+
+        console2.log(IERC20(ram).balanceOf(tstAddress), IERC20(xram).balanceOf(tstAddress));
+
+        vm.stopPrank();
     }
 }
