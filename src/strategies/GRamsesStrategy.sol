@@ -173,7 +173,7 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
             immutableParams.erc20Vault.externalCall(
                 immutableParams.tokens[i],
                 IERC20.approve.selector,
-                abi.encode(newRouter, 0)
+                abi.encode(newRouter, type(uint256).max)
             );
         }
         s.immutableParams.router = newRouter;

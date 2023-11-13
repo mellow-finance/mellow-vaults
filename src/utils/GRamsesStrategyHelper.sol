@@ -62,7 +62,25 @@ contract GRamsesStrategyHelper {
         uint256 priceX96;
         (uint160 sqrtSpotPriceX96, , , , , , ) = s.immutableParams.pool.slot0();
         priceX96 = FullMath.mulDiv(sqrtSpotPriceX96, sqrtSpotPriceX96, Q96);
-        (uint256[] memory currentAmounts, ) = rootVault.tvl();
+        uint256[] memory currentAmounts;
+        {
+            GRamsesStrategy.State memory current = strategy.getCurrentState(s);
+            GRamsesStrategy.State memory expected = strategy.calculateExpectedState(s);
+
+            if (current.lowerTick == current.upperTick || expected.lowerTick != current.lowerTick) {
+                (currentAmounts, ) = rootVault.tvl();
+            } else {
+                if (expected.ratioX96 + s.mutableParams.maxRatioDeviationX96 < current.ratioX96) {
+                    (currentAmounts, ) = rootVault.tvl();
+                } else if (current.ratioX96 + s.mutableParams.maxRatioDeviationX96 < expected.ratioX96) {
+                    (currentAmounts, ) = rootVault.tvl();
+                }
+            }
+
+            if (currentAmounts.length == 0) {
+                (currentAmounts, ) = s.immutableParams.erc20Vault.tvl();
+            }
+        }
         (uint256 tokenInIndex, uint256 amountIn) = strategy.calculateAmountsForSwap(
             currentAmounts,
             s.mutableParams.priceImpactD6,
