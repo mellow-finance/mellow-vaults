@@ -5,6 +5,7 @@ import "forge-std/src/Script.sol";
 import "forge-std/src/Vm.sol";
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import "../../../src/interfaces/external/ramses/ISwapRouter.sol";
 
@@ -35,7 +36,7 @@ contract Deploy is Script {
 
     address public router = 0xAA23611badAFB62D37E7295A682D21960ac85A90;
     address public grai = 0x894134a25a5faC1c2C26F1d8fBf05111a3CB9487;
-    address public lusd = 0x93b346b6BC2548dA6A1E7d98E9a421B42541425b;
+    address public frax = 0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F;
 
     address public protocolTreasury = 0xDF6780faC92ec8D5f366584c29599eA1c97C77F5;
     address public strategyTreasury = 0xb0426fDFEfF47B23E5c2794D406A3cC8E77Ec001;
@@ -57,9 +58,9 @@ contract Deploy is Script {
         RamsesV2VaultGovernance(0xAAa8B17804220f3b45eaFCF75ef760d5c51d5d10);
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
-    StakingDepositWrapper public depositWrapper = new StakingDepositWrapper(deployer);
-    RamsesV2Helper public vaultHelper = new RamsesV2Helper(positionManager);
-    GRamsesStrategy public strategy = new GRamsesStrategy(positionManager);
+    StakingDepositWrapper public depositWrapper;
+    RamsesV2Helper public vaultHelper;
+    GRamsesStrategy public baseStrategy;
 
     uint256 public constant Q96 = 2**96;
     address[] public rewards;
@@ -72,9 +73,9 @@ contract Deploy is Script {
 
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
 
-        if (IERC20(lusd).allowance(deployer, address(depositWrapper)) == 0) {
-            IERC20(lusd).approve(address(depositWrapper), type(uint256).max);
-            IERC20(grai).approve(address(depositWrapper), type(uint256).max);
+        if (IERC20(frax).allowance(deployer, address(depositWrapper)) == 0) {
+            IERC20(frax).approve(address(depositWrapper), type(uint256).max);
+            IERC20(frax).approve(address(depositWrapper), type(uint256).max);
         }
 
         depositWrapper.addNewStrategy(address(rootVault), address(strategy), flag);
@@ -115,14 +116,21 @@ contract Deploy is Script {
         rootVaultGovernance.commitDelayedStrategyParams(nft);
     }
 
+    TransparentUpgradeableProxy public strategy;
+
     function deployVaults() public {
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
+        depositWrapper = StakingDepositWrapper(0x4c73D851CC149D48120B6e5f9288B836Da421D6D);
+        vaultHelper = RamsesV2Helper(0xFE632AB8c274d5c2C9B113f00cd2C4Aa02c37AE4);
+        baseStrategy = GRamsesStrategy(0x51BAB0F24FB5Bf86Ed7e0f24C1fC1e312fc86417);
+        strategy = new TransparentUpgradeableProxy(address(baseStrategy), deployer, new bytes(0));
+
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
 
         address[] memory tokens = new address[](2);
-        tokens[0] = grai;
-        tokens[1] = lusd;
+        tokens[0] = frax;
+        tokens[1] = grai;
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
 
@@ -171,7 +179,7 @@ contract Deploy is Script {
         );
 
         IERC20(grai).safeTransfer(address(strategy), 1 ether);
-        IERC20(lusd).safeTransfer(address(strategy), 1 ether);
+        IERC20(frax).safeTransfer(address(strategy), 1 ether);
 
         vm.stopBroadcast();
     }
@@ -183,7 +191,7 @@ contract Deploy is Script {
     function initializeStrategy() public {
         vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
 
-        strategy.initialize(
+        GRamsesStrategy(address(strategy)).initialize(
             operator,
             GRamsesStrategy.ImmutableParams({
                 fee: 500,
@@ -200,7 +208,7 @@ contract Deploy is Script {
         minSwapAmounts[0] = 1e15;
         minSwapAmounts[1] = 1e15;
 
-        strategy.updateMutableParams(
+        GRamsesStrategy(address(strategy)).updateMutableParams(
             GRamsesStrategy.MutableParams({
                 timespan: 60,
                 maxTickDeviation: 10,
@@ -215,7 +223,7 @@ contract Deploy is Script {
             })
         );
 
-        strategy.updateVaultFarms(
+        GRamsesStrategy(address(strategy)).updateVaultFarms(
             IRamsesV2VaultGovernance.StrategyParams({
                 farm: address(lpFarm),
                 rewards: rewards,
@@ -228,7 +236,7 @@ contract Deploy is Script {
 
     function rebalance() public {
         vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
-        strategy.rebalance("", 0, type(uint256).max);
+        GRamsesStrategy(address(strategy)).rebalance("", 0, type(uint256).max);
         vm.stopBroadcast();
     }
 
