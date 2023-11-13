@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import "forge-std/src/Script.sol";
+
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../interfaces/utils/ILpCallback.sol";
@@ -109,6 +111,9 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
         (, int24 tick, , , , , ) = s.immutableParams.pool.slot0();
         int24 width = s.mutableParams.intervalWidth;
         state.lowerTick = tick - (tick % width);
+        if (state.lowerTick > tick) {
+            state.lowerTick -= width;
+        }
         state.upperTick = state.lowerTick + width;
         int24 deltaX2 = 2 * tick - state.lowerTick - state.upperTick;
         if (deltaX2 < 0) {
@@ -121,13 +126,13 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
     }
 
     function getCurrentState(Storage memory s) public view returns (State memory state) {
-        uint128 lowerLiquidity;
-        uint128 upperLiquidity;
         uint256 lowerPositionId = s.immutableParams.lowerVault.positionId();
         if (lowerPositionId != 0) {
+            uint128 lowerLiquidity;
             (, , , , , state.lowerTick, state.upperTick, lowerLiquidity, , , , ) = positionManager.positions(
                 lowerPositionId
             );
+            uint128 upperLiquidity;
             (, , , , , , , upperLiquidity, , , , ) = positionManager.positions(
                 s.immutableParams.upperVault.positionId()
             );

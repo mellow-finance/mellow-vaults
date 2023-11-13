@@ -203,26 +203,26 @@ contract RamsesV2VaultTest is Test {
         vm.startPrank(admin);
 
         IProtocolGovernance(governance).stagePermissionGrants(address(ramsesGovernance), new uint8[](1));
-        IProtocolGovernance(governance).stagePermissionGrants(address(lusd), tokenPermissions);
-        IProtocolGovernance(governance).stagePermissionGrants(address(grai), tokenPermissions);
-        IProtocolGovernance(governance).stagePermissionGrants(address(router), routerPermissions);
-        IProtocolGovernance(governance).stageValidator(address(grai), erc20Validator);
-        IProtocolGovernance(governance).stageValidator(address(lusd), erc20Validator);
-        IProtocolGovernance(governance).stageValidator(address(router), allowAllValidator);
-        IProtocolGovernance(governance).stageUnitPrice(address(grai), 1e18);
-        IProtocolGovernance(governance).stageUnitPrice(address(lusd), 1e18);
+        // IProtocolGovernance(governance).stagePermissionGrants(address(lusd), tokenPermissions);
+        // IProtocolGovernance(governance).stagePermissionGrants(address(grai), tokenPermissions);
+        // IProtocolGovernance(governance).stagePermissionGrants(address(router), routerPermissions);
+        // IProtocolGovernance(governance).stageValidator(address(grai), erc20Validator);
+        // IProtocolGovernance(governance).stageValidator(address(lusd), erc20Validator);
+        // IProtocolGovernance(governance).stageValidator(address(router), allowAllValidator);
+        // IProtocolGovernance(governance).stageUnitPrice(address(grai), 1e18);
+        // IProtocolGovernance(governance).stageUnitPrice(address(lusd), 1e18);
 
         skip(24 * 3600);
 
         IProtocolGovernance(governance).commitPermissionGrants(address(ramsesGovernance));
-        IProtocolGovernance(governance).commitPermissionGrants(address(lusd));
-        IProtocolGovernance(governance).commitPermissionGrants(address(grai));
-        IProtocolGovernance(governance).commitPermissionGrants(address(router));
-        IProtocolGovernance(governance).commitValidator(address(grai));
-        IProtocolGovernance(governance).commitValidator(address(lusd));
-        IProtocolGovernance(governance).commitValidator(address(router));
-        IProtocolGovernance(governance).commitUnitPrice(address(grai));
-        IProtocolGovernance(governance).commitUnitPrice(address(lusd));
+        // IProtocolGovernance(governance).commitPermissionGrants(address(lusd));
+        // IProtocolGovernance(governance).commitPermissionGrants(address(grai));
+        // IProtocolGovernance(governance).commitPermissionGrants(address(router));
+        // IProtocolGovernance(governance).commitValidator(address(grai));
+        // IProtocolGovernance(governance).commitValidator(address(lusd));
+        // IProtocolGovernance(governance).commitValidator(address(router));
+        // IProtocolGovernance(governance).commitUnitPrice(address(grai));
+        // IProtocolGovernance(governance).commitUnitPrice(address(lusd));
 
         vm.stopPrank();
     }

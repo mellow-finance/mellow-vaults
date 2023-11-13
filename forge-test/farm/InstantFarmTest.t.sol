@@ -130,7 +130,7 @@ contract InstantFarmTest is Test {
                     farm.totalCollectedAmounts(2) == 0,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(0);
+            InstantFarm.Epoch memory epoch = farm.epochAt(0);
 
             require(
                 epoch.totalSupply == 100 ether &&
@@ -202,7 +202,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(0);
+            InstantFarm.Epoch memory epoch = farm.epochAt(0);
 
             require(
                 epoch.totalSupply == 100 ether &&
@@ -282,7 +282,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(0);
+            InstantFarm.Epoch memory epoch = farm.epochAt(0);
 
             require(
                 epoch.totalSupply == 199 ether &&
@@ -380,7 +380,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(0);
+            InstantFarm.Epoch memory epoch = farm.epochAt(0);
 
             require(
                 epoch.totalSupply == 199 ether &&
@@ -476,7 +476,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(0);
+            InstantFarm.Epoch memory epoch = farm.epochAt(0);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -504,7 +504,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 18 ether && farm.totalCollectedAmounts(1) == 20 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(1);
+            InstantFarm.Epoch memory epoch = farm.epochAt(1);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -532,7 +532,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 27 ether && farm.totalCollectedAmounts(1) == 30 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(2);
+            InstantFarm.Epoch memory epoch = farm.epochAt(2);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -582,7 +582,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 36 ether && farm.totalCollectedAmounts(1) == 40 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(3);
+            InstantFarm.Epoch memory epoch = farm.epochAt(3);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -610,7 +610,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 45 ether && farm.totalCollectedAmounts(1) == 50 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(4);
+            InstantFarm.Epoch memory epoch = farm.epochAt(4);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -708,7 +708,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 9 ether && farm.totalCollectedAmounts(1) == 10 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(0);
+            InstantFarm.Epoch memory epoch = farm.epochAt(0);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -736,7 +736,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 18 ether && farm.totalCollectedAmounts(1) == 20 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(1);
+            InstantFarm.Epoch memory epoch = farm.epochAt(1);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -773,7 +773,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 27 ether && farm.totalCollectedAmounts(1) == 30 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(2);
+            InstantFarm.Epoch memory epoch = farm.epochAt(2);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -823,7 +823,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 36 ether && farm.totalCollectedAmounts(1) == 40 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(3);
+            InstantFarm.Epoch memory epoch = farm.epochAt(3);
 
             require(
                 epoch.totalSupply == 200 ether &&
@@ -851,7 +851,7 @@ contract InstantFarmTest is Test {
                 farm.totalCollectedAmounts(0) == 45 ether && farm.totalCollectedAmounts(1) == 50 ether,
                 "Invalid totalCollectedAmounts"
             );
-            InstantFarm.Epoch memory epoch = farm.epoch(4);
+            InstantFarm.Epoch memory epoch = farm.epochAt(4);
 
             require(
                 epoch.totalSupply == 200 ether &&

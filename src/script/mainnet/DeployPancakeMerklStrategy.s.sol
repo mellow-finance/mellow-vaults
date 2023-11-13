@@ -208,16 +208,9 @@ contract Deploy is Script {
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 4e16;
         amounts[1] = 4e16;
-        rootVault = ERC20RootVault(0xCE0e8fC4d256CE8555ED5AACf3480677680651d7);
-        lpFarm = InstantFarm(0x941C716B5F57E5DdD4B94602e27Bdc6b15aD89B3);
         depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
         vm.stopBroadcast();
     }
 
-    function run() external {
-        // deployVaults();
-        // firstDeposit();
-        // initStrategy();
-        deposit();
-    }
+    function run() external {}
 }

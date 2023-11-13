@@ -49,7 +49,11 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
         totalClaimedAmounts = new uint256[](rewardTokens_.length);
     }
 
-    function epoch(uint256 index) external view returns (Epoch memory) {
+    function epochCount() external view returns (uint256) {
+        return _epochs.length;
+    }
+
+    function epochAt(uint256 index) external view returns (Epoch memory) {
         return _epochs[index];
     }
 
@@ -73,7 +77,9 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
         }
 
         if (hasPositiveAmounts) {
-            _epochs.push(Epoch({amounts: amounts, totalSupply: IERC20(lpToken).balanceOf(this_)}));
+            uint256 totalSupply_ = IERC20(lpToken).balanceOf(this_);
+            _epochs.push(Epoch({amounts: amounts, totalSupply: totalSupply_}));
+            emit RewardAmountsUpdated(_epochs.length - 1, amounts, totalSupply_);
         }
     }
 
@@ -96,28 +102,28 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
         address to,
         uint256 amount
     ) internal virtual override {
-        uint256 epochCount = _epochs.length;
+        uint256 epochCount_ = _epochs.length;
         if (from != address(0)) {
-            balanceDelta[from][epochCount] -= int256(amount);
+            balanceDelta[from][epochCount_] -= int256(amount);
         }
         if (to != address(0)) {
-            balanceDelta[to][epochCount] += int256(amount);
+            balanceDelta[to][epochCount_] += int256(amount);
         }
     }
 
     function claim(address to) external returns (uint256[] memory amounts) {
         address user = msg.sender;
         uint256 iterator = epochIterator[user];
-        uint256 epochCount = _epochs.length;
+        uint256 epochCount_ = _epochs.length;
         address[] memory tokens = rewardTokens;
         amounts = new uint256[](tokens.length);
-        if (iterator == epochCount) return amounts;
+        if (iterator == epochCount_) return amounts;
         mapping(uint256 => int256) storage balanceDelta_ = balanceDelta[user];
 
         uint256 lpAmount = balanceOf(user);
-        uint256 epochIndex = epochCount;
+        uint256 epochIndex = epochCount_;
         while (epochIndex >= iterator) {
-            if (epochIndex < epochCount) {
+            if (epochIndex < epochCount_) {
                 Epoch memory epoch_ = _epochs[epochIndex];
                 for (uint256 i = 0; i < tokens.length; i++) {
                     amounts[i] += FullMath.mulDiv(lpAmount, epoch_.amounts[i], epoch_.totalSupply);
@@ -140,6 +146,8 @@ contract InstantFarm is DefaultAccessControl, ERC20 {
                 totalClaimedAmounts[i] += amounts[i];
             }
         }
-        epochIterator[user] = epochCount;
+        epochIterator[user] = epochCount_;
     }
+
+    event RewardAmountsUpdated(uint256 indexed lastEpochId, uint256[] rewardAmounts, uint256 totalSupply);
 }
