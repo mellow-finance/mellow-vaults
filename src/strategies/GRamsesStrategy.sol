@@ -160,6 +160,25 @@ contract GRamsesStrategy is DefaultAccessControlLateInit, ILpCallback {
         s.mutableParams = newMutableParams;
     }
 
+    function updateRouter(address newRouter) external {
+        _requireAdmin();
+        Storage storage s = _contractStorage();
+        ImmutableParams memory immutableParams = s.immutableParams;
+        for (uint256 i = 0; i < immutableParams.tokens.length; i++) {
+            immutableParams.erc20Vault.externalCall(
+                immutableParams.tokens[i],
+                IERC20.approve.selector,
+                abi.encode(immutableParams.router, 0)
+            );
+            immutableParams.erc20Vault.externalCall(
+                immutableParams.tokens[i],
+                IERC20.approve.selector,
+                abi.encode(newRouter, 0)
+            );
+        }
+        s.immutableParams.router = newRouter;
+    }
+
     function updateVaultFarms(IRamsesV2VaultGovernance.StrategyParams memory newStrategyParams) external {
         _requireAdmin();
         ImmutableParams memory immutableParams = getImmutableParams();

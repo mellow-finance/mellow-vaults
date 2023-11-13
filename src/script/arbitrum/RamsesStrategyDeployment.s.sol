@@ -241,10 +241,19 @@ contract Deploy is Script {
     }
 
     function run() external {
-        deployVaults();
-        initializeStrategy();
-        deposit(false);
-        rebalance();
-        deposit(true);
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
+        address fraxStrategy = 0xf002590ca66Bc681b5499D40c41EF896D773aaC6;
+        address lusdStrategy = 0x0338527D3b2FeB516e037752e4e9b2cb29F18B50;
+        GRamsesStrategyHelper strategyHelper = new GRamsesStrategyHelper();
+        GRamsesStrategy newBaseStrategy = new GRamsesStrategy(positionManager);
+        ITransparentUpgradeableProxy(fraxStrategy).upgradeTo(address(newBaseStrategy));
+        ITransparentUpgradeableProxy(lusdStrategy).upgradeTo(address(newBaseStrategy));
+        console2.log(address(strategyHelper), address(newBaseStrategy));
+        vm.stopBroadcast();
+
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
+        GRamsesStrategy(fraxStrategy).updateRouter(0x1111111254EEB25477B68fb85Ed929f73A960582);
+        GRamsesStrategy(lusdStrategy).updateRouter(0x1111111254EEB25477B68fb85Ed929f73A960582);
+        vm.stopBroadcast();
     }
 }
