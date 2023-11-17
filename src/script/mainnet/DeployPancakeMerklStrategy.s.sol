@@ -212,5 +212,52 @@ contract Deploy is Script {
         vm.stopBroadcast();
     }
 
-    function run() external {}
+    function run() external {
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
+        address[] memory tokens = new address[](2);
+        tokens[0] = 0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898;
+        tokens[1] = 0xD33526068D116cE69F19A9ee46F0bd304F21A51f;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 51077119400000000;
+        amounts[1] = 6180925800000000;
+
+        bytes32[9][2] memory staticProofs = [
+            [
+                bytes32(0x4cfad9daf51d3fe3d1813e1a3a14104b7871084cbad5f1d93dd513ded2345487),
+                0x1ee51567f5b374077d4f50d6f4a263a6cdcda329e041467b8709a0f3fcc2e59c,
+                0x0ae40f70b3f950e01ad0f23534196a7ce8017fb608835db83e36e49e03643817,
+                0x2e772913d13a1601705dac2b47f7656815c04fea8015844fae49829a85d54ac6,
+                0x8560505f3451b64fe2f7a13c01eb4ffbfc0c71dcd3142df44986bfaa17517097,
+                0xb13c53cb22af0ce8d255d4ee13d5bc653492308a0458628085c71a7023106f73,
+                0xdd2642db6236554f9382cf6b7ba64e21c9badfe6dc0391b1fddc025d77ca8ab5,
+                0xcd4036b42bf499ac2b5c7ad838d3076ed9f497dcf77d80506b13dd47aaf5a23e,
+                0xa9cd186f76fccbe1547d9d5e4a91db743dd361960c91cd8976f374b79b16e2f9
+            ],
+            [
+                bytes32(0xac9405a88aa42f3aa325e059f62c21c6743a15106743078f4e2cbd4c8806736b),
+                0x08ad0fa949caf91333360e354cbf48db986917e1229dba3c49e3ff379c19b2ef,
+                0x0ae40f70b3f950e01ad0f23534196a7ce8017fb608835db83e36e49e03643817,
+                0x2e772913d13a1601705dac2b47f7656815c04fea8015844fae49829a85d54ac6,
+                0x8560505f3451b64fe2f7a13c01eb4ffbfc0c71dcd3142df44986bfaa17517097,
+                0xb13c53cb22af0ce8d255d4ee13d5bc653492308a0458628085c71a7023106f73,
+                0xdd2642db6236554f9382cf6b7ba64e21c9badfe6dc0391b1fddc025d77ca8ab5,
+                0xcd4036b42bf499ac2b5c7ad838d3076ed9f497dcf77d80506b13dd47aaf5a23e,
+                0xa9cd186f76fccbe1547d9d5e4a91db743dd361960c91cd8976f374b79b16e2f9
+            ]
+        ];
+        bytes32[][] memory proofs = new bytes32[][](2);
+        for (uint256 i = 0; i < 2; i++) {
+            proofs[i] = new bytes32[](9);
+            for (uint256 j = 0; j < 9; j++) {
+                proofs[i][j] = staticProofs[i][j];
+            }
+        }
+
+        PancakeSwapMerklVault(0x882a41Fd4C5d09D01900DB378903C5C00Cc31D64).compound(tokens, amounts, proofs);
+
+        InstantFarm(0x7051126223a559E3500bd0843924d971f55F0533).updateRewardAmounts();
+
+        vm.stopBroadcast();
+    }
 }
