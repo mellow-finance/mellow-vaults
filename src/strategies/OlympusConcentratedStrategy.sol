@@ -7,9 +7,15 @@ import "../utils/DefaultAccessControl.sol";
 import {BasePulseStrategy, IUniV3Vault, TickMath} from "./BasePulseStrategy.sol";
 
 import "../interfaces/external/olympus/IOlympusRange.sol";
+import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 
-contract OlympusStrategy is DefaultAccessControl {
+contract OlympusConcentratedStrategy is DefaultAccessControl {
     uint256 public constant Q96 = 2**96;
+
+    struct MutableParams {
+        int24 intervalWidth;
+        int24 tickNeighborhood;
+    }
 
     BasePulseStrategy public immutable baseStrategy;
     IOlympusRange public immutable range;
@@ -18,6 +24,8 @@ contract OlympusStrategy is DefaultAccessControl {
     uint8 public immutable reserveDecimals;
     uint8 public immutable priceDecimals;
     bool public immutable isFirstOhm;
+
+    MutableParams public mutableParams;
 
     constructor(
         address admin_,
@@ -38,7 +46,42 @@ contract OlympusStrategy is DefaultAccessControl {
         isFirstOhm = isFirstOhm_;
     }
 
-    function calculateInterval() public view returns (BasePulseStrategy.Interval memory) {
+    function updateMutableParams(MutableParams memory newMutableParams) external {
+        _requireAdmin();
+        mutableParams = newMutableParams;
+    }
+
+    function calculatePulseInterval() public view returns (BasePulseStrategy.Interval memory interval) {
+        MutableParams memory mutableParams_ = mutableParams;
+        (, IUniV3Vault vault, ) = baseStrategy.immutableParams();
+        (, int24 spotTick, , , , , ) = vault.pool().slot0();
+        uint256 uniV3Nft = vault.uniV3Nft();
+
+        if (uniV3Nft != 0) {
+            (, , , , , interval.lowerTick, interval.upperTick, , , , , ) = baseStrategy.positionManager().positions(
+                uniV3Nft
+            );
+            if (
+                mutableParams_.tickNeighborhood + interval.lowerTick <= spotTick &&
+                spotTick <= interval.upperTick - mutableParams_.tickNeighborhood &&
+                mutableParams_.intervalWidth == interval.upperTick - interval.lowerTick
+            ) {
+                return interval;
+            }
+        }
+
+        int24 reminder = spotTick % tickSpacing;
+        if (reminder < 0) reminder += tickSpacing;
+        int24 centralTick = spotTick - reminder;
+        if (reminder * 2 > tickSpacing) {
+            centralTick += tickSpacing;
+        }
+
+        interval.lowerTick = centralTick - mutableParams_.intervalWidth / 2;
+        interval.upperTick = centralTick + mutableParams_.intervalWidth / 2;
+    }
+
+    function calculateOlympusInterval() public view returns (BasePulseStrategy.Interval memory) {
         uint256 lowerCushionPrice = range.price(false, false);
         uint256 upperCushionPrice = range.price(false, true);
 
@@ -94,12 +137,24 @@ contract OlympusStrategy is DefaultAccessControl {
         return BasePulseStrategy.Interval({lowerTick: lowerTick, upperTick: upperTick});
     }
 
+    function calculateInterval() public view returns (BasePulseStrategy.Interval memory) {
+        BasePulseStrategy.Interval memory pulseInterval = calculatePulseInterval();
+        BasePulseStrategy.Interval memory olympusInterval = calculateOlympusInterval();
+        if (pulseInterval.lowerTick > olympusInterval.lowerTick) olympusInterval.lowerTick = pulseInterval.lowerTick;
+        if (pulseInterval.upperTick < olympusInterval.upperTick) olympusInterval.upperTick = pulseInterval.upperTick;
+        if (olympusInterval.lowerTick + tickSpacing > olympusInterval.upperTick) {
+            return pulseInterval;
+        }
+        return olympusInterval;
+    }
+
     function rebalance(
         uint256 deadline,
         bytes memory swapData,
         uint256 minAmountInCaseOfSwap
     ) external {
         _requireAtLeastOperator();
+
         baseStrategy.rebalance(deadline, calculateInterval(), swapData, minAmountInCaseOfSwap);
     }
 }
