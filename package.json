@@ -49,7 +49,7 @@
     "forge:deploy:mainnet:balancer": "forge script --use 0.8.9 ./src/script/mainnet/BalancerV2Deployment.s.sol:Deploy --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:mainnet:balancer-csp": "forge script --use 0.8.9 ./src/script/mainnet/DeployBalancerCSP.s.sol:Deploy --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:polygon:retro": "forge script --use 0.8.9 ./src/script/polygon/UniPulseV2Deployment.s.sol:Deploy --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGON_API_KEY .env | cut -d '=' -f2) -vvvv",
-    "forge:deploy:olympus": "forge script --use 0.8.9 src/script/OlympusDeployment.s.sol:OlympusDeployment --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
+    "forge:deploy:olympus": "forge script --use 0.8.9 src/script/mainnet/OlympusConcentratedStrategy.s.sol:Deploy --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:deploy:polygon": "forge script --use 0.8.9 src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGONSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "forge:compile": "forge build --use 0.8.9",
     "forge:size": "forge build --sizes --force --via-ir --use 0.8.9"
