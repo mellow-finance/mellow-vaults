@@ -221,33 +221,33 @@ contract Deploy is Script {
         tokens[1] = 0xD33526068D116cE69F19A9ee46F0bd304F21A51f;
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 81038611300000000;
-        amounts[1] = 10132391300000000;
+        amounts[0] = 93207241000000000;
+        amounts[1] = 11737248600000000;
 
         bytes32[LENGTH][2] memory staticProofs = [
             [
-                bytes32(0xffe7a59478be5fc3b0674ec1f6ae84f52e3e4d415f16007ec555d98a225e8678),
-                0xb427ca70974acc9768e3f52baf1e4abf191239b535e14e9f48ebb89e027ed917,
-                0xf1e18b11b169b424ef0a2550f7362fb0d459698a51b87ba21cf633e96ff4a3d9,
-                0xa295cada67793d89ee501f79afefaf5645ed3ee28ab2424b1f8001b5a3868585,
-                0x0cfc0f5266adf2f8006692dd39045a3f74602c3fd25fe4003a346a8e2587bdcc,
-                0xac226ee57b63713236768b68085ba699eb70056fefe4ee48b4d90e109d50f9ee,
-                0xa09b8e62323b73f863148c6dcde34c2a96ac4cae4f4246ca0c29b6d45d202d45,
-                0x9a1722a91a3cc973fee463dc0dd1c3c73f2658de66b5a82dd34d01452d9d86b7,
-                0x1e66d5caaa050fd3bd38ed7792bb37a26783f664ba46c5b005b73715a26e327f,
-                0x6ec8322c7b4d2503587382ed3b2f0c503afbaac56e17acd2dca64bb55d032b8b
+                bytes32(0x7945c7556831c682a91c8b7e05329a9a18420a823c2fbdab7e868320380e2028),
+                bytes32(0x10c4d2d6963432bf7037166289dc81edf8f5ef5a5d822a96d1e93dd1c20c7451),
+                bytes32(0x40750d788003fa23e6cd06a37bd33db0ff449796f01dce4d56806b2dec1f508a),
+                bytes32(0xf31c01c41fcdbb2032397ad6c316b302a95ba1e96bce48b86d3064d61a2f4909),
+                bytes32(0x21afdf725b2bd2c72eb60259f9aa4b041109579101e5bb2a1fbe77906f1b5bcf),
+                bytes32(0xc8ebfea0ac3937971c92c24ecc57ce113af0440ce8a7100990cb09b88201e14f),
+                bytes32(0x387070bb042159839f7b00ab0958b42ff50e7ee65c07592873842791a0a76ebe),
+                bytes32(0xcb435bca4eecc66363416664408044d875dd24ccdbb6710fa077a4e62336fbd9),
+                bytes32(0xacce0114f26e3f5ddaed26a260c58582f1570e4da2d07eacc793330102227ab9),
+                bytes32(0x2f1662c3e6b862710e1e00a05f7818fd308810ae0939ea1d72ab9eb065fb2cba)
             ],
             [
-                bytes32(0xcce2e430d98ff37c5076a31307a51eb65e854e0a3742bd0d79d7dc273d3568e5),
-                0xb427ca70974acc9768e3f52baf1e4abf191239b535e14e9f48ebb89e027ed917,
-                0xf1e18b11b169b424ef0a2550f7362fb0d459698a51b87ba21cf633e96ff4a3d9,
-                0xa295cada67793d89ee501f79afefaf5645ed3ee28ab2424b1f8001b5a3868585,
-                0x0cfc0f5266adf2f8006692dd39045a3f74602c3fd25fe4003a346a8e2587bdcc,
-                0xac226ee57b63713236768b68085ba699eb70056fefe4ee48b4d90e109d50f9ee,
-                0xa09b8e62323b73f863148c6dcde34c2a96ac4cae4f4246ca0c29b6d45d202d45,
-                0x9a1722a91a3cc973fee463dc0dd1c3c73f2658de66b5a82dd34d01452d9d86b7,
-                0x1e66d5caaa050fd3bd38ed7792bb37a26783f664ba46c5b005b73715a26e327f,
-                0x6ec8322c7b4d2503587382ed3b2f0c503afbaac56e17acd2dca64bb55d032b8b
+                bytes32(0xdfcd35b7098e0650cae29057062e64629c586c96f1c3d0cea71a24d3798650a4),
+                bytes32(0x10c4d2d6963432bf7037166289dc81edf8f5ef5a5d822a96d1e93dd1c20c7451),
+                bytes32(0x40750d788003fa23e6cd06a37bd33db0ff449796f01dce4d56806b2dec1f508a),
+                bytes32(0xf31c01c41fcdbb2032397ad6c316b302a95ba1e96bce48b86d3064d61a2f4909),
+                bytes32(0x21afdf725b2bd2c72eb60259f9aa4b041109579101e5bb2a1fbe77906f1b5bcf),
+                bytes32(0xc8ebfea0ac3937971c92c24ecc57ce113af0440ce8a7100990cb09b88201e14f),
+                bytes32(0x387070bb042159839f7b00ab0958b42ff50e7ee65c07592873842791a0a76ebe),
+                bytes32(0xcb435bca4eecc66363416664408044d875dd24ccdbb6710fa077a4e62336fbd9),
+                bytes32(0xacce0114f26e3f5ddaed26a260c58582f1570e4da2d07eacc793330102227ab9),
+                bytes32(0x2f1662c3e6b862710e1e00a05f7818fd308810ae0939ea1d72ab9eb065fb2cba)
             ]
         ];
         bytes32[][] memory proofs = new bytes32[][](2);

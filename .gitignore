@@ -19,3 +19,4 @@ tenderly.yaml
 spec.json
 out
 broadcast
+*.py
