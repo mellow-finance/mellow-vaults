@@ -216,44 +216,45 @@ contract Deploy is Script {
 
     function run() external {
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
+
         address[] memory tokens = new address[](2);
         tokens[0] = 0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898;
         tokens[1] = 0xD33526068D116cE69F19A9ee46F0bd304F21A51f;
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 93207241000000000;
-        amounts[1] = 11737248600000000;
+        amounts[0] = 119164795500000000;
+        amounts[1] = 15160655400000000;
 
-        bytes32[LENGTH][2] memory staticProofs = [
+        bytes32[10][2] memory staticProofs = [
             [
-                bytes32(0x7945c7556831c682a91c8b7e05329a9a18420a823c2fbdab7e868320380e2028),
-                bytes32(0x10c4d2d6963432bf7037166289dc81edf8f5ef5a5d822a96d1e93dd1c20c7451),
-                bytes32(0x40750d788003fa23e6cd06a37bd33db0ff449796f01dce4d56806b2dec1f508a),
-                bytes32(0xf31c01c41fcdbb2032397ad6c316b302a95ba1e96bce48b86d3064d61a2f4909),
-                bytes32(0x21afdf725b2bd2c72eb60259f9aa4b041109579101e5bb2a1fbe77906f1b5bcf),
-                bytes32(0xc8ebfea0ac3937971c92c24ecc57ce113af0440ce8a7100990cb09b88201e14f),
-                bytes32(0x387070bb042159839f7b00ab0958b42ff50e7ee65c07592873842791a0a76ebe),
-                bytes32(0xcb435bca4eecc66363416664408044d875dd24ccdbb6710fa077a4e62336fbd9),
-                bytes32(0xacce0114f26e3f5ddaed26a260c58582f1570e4da2d07eacc793330102227ab9),
-                bytes32(0x2f1662c3e6b862710e1e00a05f7818fd308810ae0939ea1d72ab9eb065fb2cba)
+                bytes32(0xdbe66cb2182a645b72ceac7b91747d7b6d9977818e1220fed99c212f6578aa70),
+                bytes32(0x6c0c6c408df91549a5ef5201eeccb1eec57767dee6cc52cf208f1a95cc7715ea),
+                bytes32(0xa00afda21edd5cd78d3565b8a4da081275aac143cbb5465706151084fe28f400),
+                bytes32(0x9854c8db6adcbad6f10ed39e7e3f238c0d502ac68f2a421b7e396839b3167928),
+                bytes32(0x80e5b3b55d92c049908e9bff08ec8a8346de863f0c952847102f0f57d70e00fd),
+                bytes32(0xbbbc6781e9db4b17497e4eda7d5e2891db9931bd73d4cd448519b49a66e6bab6),
+                bytes32(0x5df38f08da2cc30542ee38e926a62933fec3893a203ea1956d21c357da312abb),
+                bytes32(0x388352d252f9a6add226375a19654f048e3b19875ab7909c3084ca3593b0314d),
+                bytes32(0xadfb2ef6ff567c0b57b7a53cde8e1a48f96929310f3fc3784967aeb533f0f9f0),
+                bytes32(0x4e452adfedd76a5b4074d03ecf0e0c25e6d4e65bb8465d73bfa24c7dfaefde72)
             ],
             [
-                bytes32(0xdfcd35b7098e0650cae29057062e64629c586c96f1c3d0cea71a24d3798650a4),
-                bytes32(0x10c4d2d6963432bf7037166289dc81edf8f5ef5a5d822a96d1e93dd1c20c7451),
-                bytes32(0x40750d788003fa23e6cd06a37bd33db0ff449796f01dce4d56806b2dec1f508a),
-                bytes32(0xf31c01c41fcdbb2032397ad6c316b302a95ba1e96bce48b86d3064d61a2f4909),
-                bytes32(0x21afdf725b2bd2c72eb60259f9aa4b041109579101e5bb2a1fbe77906f1b5bcf),
-                bytes32(0xc8ebfea0ac3937971c92c24ecc57ce113af0440ce8a7100990cb09b88201e14f),
-                bytes32(0x387070bb042159839f7b00ab0958b42ff50e7ee65c07592873842791a0a76ebe),
-                bytes32(0xcb435bca4eecc66363416664408044d875dd24ccdbb6710fa077a4e62336fbd9),
-                bytes32(0xacce0114f26e3f5ddaed26a260c58582f1570e4da2d07eacc793330102227ab9),
-                bytes32(0x2f1662c3e6b862710e1e00a05f7818fd308810ae0939ea1d72ab9eb065fb2cba)
+                bytes32(0xa6e705f0246ca0c35f226fd859eb36e9cdf60d2f29f3ef44d00f03906c8486d1),
+                bytes32(0x6c0c6c408df91549a5ef5201eeccb1eec57767dee6cc52cf208f1a95cc7715ea),
+                bytes32(0xa00afda21edd5cd78d3565b8a4da081275aac143cbb5465706151084fe28f400),
+                bytes32(0x9854c8db6adcbad6f10ed39e7e3f238c0d502ac68f2a421b7e396839b3167928),
+                bytes32(0x80e5b3b55d92c049908e9bff08ec8a8346de863f0c952847102f0f57d70e00fd),
+                bytes32(0xbbbc6781e9db4b17497e4eda7d5e2891db9931bd73d4cd448519b49a66e6bab6),
+                bytes32(0x5df38f08da2cc30542ee38e926a62933fec3893a203ea1956d21c357da312abb),
+                bytes32(0x388352d252f9a6add226375a19654f048e3b19875ab7909c3084ca3593b0314d),
+                bytes32(0xadfb2ef6ff567c0b57b7a53cde8e1a48f96929310f3fc3784967aeb533f0f9f0),
+                bytes32(0x4e452adfedd76a5b4074d03ecf0e0c25e6d4e65bb8465d73bfa24c7dfaefde72)
             ]
         ];
         bytes32[][] memory proofs = new bytes32[][](2);
         for (uint256 i = 0; i < 2; i++) {
-            proofs[i] = new bytes32[](LENGTH);
-            for (uint256 j = 0; j < LENGTH; j++) {
+            proofs[i] = new bytes32[](10);
+            for (uint256 j = 0; j < 10; j++) {
                 proofs[i][j] = staticProofs[i][j];
             }
         }
