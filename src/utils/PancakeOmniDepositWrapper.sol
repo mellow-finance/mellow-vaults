@@ -3,16 +3,16 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../interfaces/external/univ3/IUniswapV3Factory.sol";
-import "../interfaces/external/univ3/IUniswapV3Pool.sol";
+import "../interfaces/external/pancakeswap/ISmartRouter.sol";
+import "../interfaces/external/pancakeswap/IPancakeV3Factory.sol";
+import "../interfaces/external/pancakeswap/IPancakeV3Pool.sol";
 
 import "./DepositWrapper.sol";
 import "./StakingDepositWrapper.sol";
 
 import "../libraries/external/FullMath.sol";
 
-contract OmniDepositWrapper {
+contract PancakeOmniDepositWrapper {
     error ExecutionError();
 
     using SafeERC20 for IERC20;
@@ -35,9 +35,9 @@ contract OmniDepositWrapper {
     uint256 public constant Q96 = 2**96;
 
     address public immutable uniswapV3Router;
-    IUniswapV3Factory public immutable uniswapV3Factory;
+    IPancakeV3Factory public immutable uniswapV3Factory;
 
-    constructor(address uniswapV3Router_, IUniswapV3Factory uniswapV3Factory_) {
+    constructor(address uniswapV3Router_, IPancakeV3Factory uniswapV3Factory_) {
         uniswapV3Router = uniswapV3Router_;
         uniswapV3Factory = uniswapV3Factory_;
     }
@@ -54,9 +54,10 @@ contract OmniDepositWrapper {
         return d;
     }
 
+    // uniswap -> pancakeswap
     function getUniswapData(Data memory d) public view returns (Data memory) {
         address[] memory tokens = IERC20RootVault(d.rootVault).vaultTokens();
-        ISwapRouter.ExactInputSingleParams[] memory swapParams = new ISwapRouter.ExactInputSingleParams[](
+        ISmartRouter.ExactInputSingleParams[] memory swapParams = new ISmartRouter.ExactInputSingleParams[](
             tokens.length
         );
         uint256[] memory pricesX96 = new uint256[](tokens.length);
@@ -70,7 +71,7 @@ contract OmniDepositWrapper {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (swapAmounts[i] == 0) continue;
             swapParams[i].amountIn = swapAmounts[i];
-            callbacks[index++] = abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector, swapParams[i]);
+            callbacks[index++] = abi.encodeWithSelector(ISmartRouter.exactInputSingle.selector, swapParams[i]);
         }
 
         assembly {
@@ -84,16 +85,15 @@ contract OmniDepositWrapper {
     function getUniswapCallback(address tokenIn, address tokenOut)
         public
         view
-        returns (ISwapRouter.ExactInputSingleParams memory, uint256)
+        returns (ISmartRouter.ExactInputSingleParams memory, uint256)
     {
         if (tokenIn == tokenOut) {
             return (
-                ISwapRouter.ExactInputSingleParams({
+                ISmartRouter.ExactInputSingleParams({
                     tokenIn: tokenIn,
                     tokenOut: tokenOut,
                     amountIn: 0,
                     fee: 0,
-                    deadline: type(uint256).max,
                     sqrtPriceLimitX96: 0,
                     amountOutMinimum: 0,
                     recipient: address(this)
@@ -116,18 +116,17 @@ contract OmniDepositWrapper {
             }
         }
         if (optimalFeeTier == 0) revert("Address zero");
-        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(optimalPool).slot0();
+        (uint160 sqrtPriceX96, , , , , , ) = IPancakeV3Pool(optimalPool).slot0();
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-        if (tokenIn == IUniswapV3Pool(optimalPool).token0()) {
+        if (tokenIn == IPancakeV3Pool(optimalPool).token0()) {
             priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
         }
         return (
-            ISwapRouter.ExactInputSingleParams({
+            ISmartRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
                 amountIn: 0,
                 fee: optimalFeeTier,
-                deadline: type(uint256).max,
                 sqrtPriceLimitX96: 0,
                 amountOutMinimum: 0,
                 recipient: address(this)
