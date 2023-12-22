@@ -21,13 +21,45 @@ library CommonLibrary {
         uint256 l = arr.length;
         for (uint256 i = 0; i < l; ++i) {
             for (uint256 j = i + 1; j < l; ++j) {
-                if (arr[i] > arr[j]) {
-                    uint256 temp = arr[i];
-                    arr[i] = arr[j];
-                    arr[j] = temp;
-                }
+                if (arr[i] > arr[j]) (arr[i], arr[j]) = (arr[j], arr[i]);
             }
         }
+    }
+
+    function getMedianValue(uint256[] memory array) internal pure returns (uint256 value) {
+        if (array.length <= 256) {
+            sortUint(array);
+            return array[array.length / 2];
+        }
+        uint256 left = 0;
+        uint256 right = array.length - 1;
+        uint256 mid;
+        while (left <= right) {
+            mid = (left + right) >> 1;
+            uint256 min = array[left];
+            uint256 max = min;
+            for (uint256 i = left + 1; i <= right; i++) {
+                if (min > array[i]) min = array[i];
+                else if (max < array[i]) max = array[i];
+            }
+            if (min == max) return min;
+            uint256 pivot = (max + min) >> 1;
+            uint256 iterator = left;
+            value = min;
+            for (uint256 i = left; i <= right; i++) {
+                if (pivot >= array[i]) {
+                    if (iterator < i) (array[i], array[iterator]) = (array[iterator], array[i]);
+                    iterator++;
+                }
+            }
+            if (iterator >= mid) {
+                if (mid == 0) return value;
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return value;
     }
 
     /// @notice Checks if array of addresses is sorted and all adresses are unique

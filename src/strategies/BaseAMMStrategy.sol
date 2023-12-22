@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 
+import "../interfaces/utils/ILpCallback.sol";
+
 import "../adapters/IAdapter.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
@@ -15,7 +17,9 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/TickMath.sol";
 
-contract BaseAMMStrategy {
+import "../utils/DefaultAccessControlLateInit.sol";
+
+contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
     struct Position {
         int24 tickLower;
         int24 tickUpper;
@@ -33,12 +37,13 @@ contract BaseAMMStrategy {
     struct MutableParams {
         bytes securityParams;
         uint256 maxPriceSlippageX96;
-        uint256 maxPriceDeviationX96;
+        int24 maxTickDeviation;
         uint256 minCapitalRatioDeviationX96;
         uint256[] minSwapAmounts;
     }
 
     struct ImmutableParams {
+        IAdapter adapter;
         address pool;
         IERC20Vault erc20Vault;
         IIntegrationVault[] ammVaults;
@@ -51,13 +56,37 @@ contract BaseAMMStrategy {
 
     uint256 public constant Q96 = 2**96;
 
-    IAdapter public adapter;
-    Storage private _s;
+    bytes32 public constant STORAGE_SLOT = keccak256("strategy.storage");
+
+    function _contractStorage() internal pure returns (Storage storage s) {
+        bytes32 slot = STORAGE_SLOT;
+        assembly {
+            s.slot := slot
+        }
+    }
+
+    function initialize(
+        address admin,
+        ImmutableParams memory immutableParams,
+        MutableParams memory mutableParams
+    ) external {
+        _contractStorage().immutableParams = immutableParams;
+        _contractStorage().mutableParams = mutableParams;
+        DefaultAccessControlLateInit.init(admin);
+    }
+
+    function updateMutableParams(MutableParams memory mutableParams) external {
+        _requireAdmin();
+        _contractStorage().mutableParams = mutableParams;
+    }
 
     function getCurrentState(Storage memory s) public view returns (Position[] memory currentState) {
         IIntegrationVault[] memory ammVaults = s.immutableParams.ammVaults;
         currentState = new Position[](ammVaults.length);
-        (uint160 sqrtPriceX96, ) = adapter.slot0EnsureNoMEV(s.immutableParams.pool, s.mutableParams.securityParams);
+        (uint160 sqrtPriceX96, ) = s.immutableParams.adapter.slot0EnsureNoMEV(
+            s.immutableParams.pool,
+            s.mutableParams.securityParams
+        );
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
 
         uint256 totalCapitalInToken1 = 0;
@@ -66,8 +95,8 @@ contract BaseAMMStrategy {
             uint256 capitalInToken1 = FullMath.mulDiv(tvl[0], priceX96, Q96) + tvl[1];
             totalCapitalInToken1 += capitalInToken1;
             currentState[i].capitalRatioX96 = capitalInToken1;
-            (currentState[i].tickLower, currentState[i].tickUpper, ) = adapter.positionInfo(
-                adapter.tokenId(address(ammVaults[i]))
+            (currentState[i].tickLower, currentState[i].tickUpper, ) = s.immutableParams.adapter.positionInfo(
+                s.immutableParams.adapter.tokenId(address(ammVaults[i]))
             );
         }
 
@@ -89,7 +118,7 @@ contract BaseAMMStrategy {
 
     function _compound(Storage memory s) private {
         for (uint256 i = 0; i < s.immutableParams.ammVaults.length; i++) {
-            (bool success, ) = address(adapter).delegatecall(
+            (bool success, ) = address(s.immutableParams.adapter).delegatecall(
                 abi.encodeWithSelector(IAdapter.compound.selector, s.immutableParams.ammVaults[i])
             );
             require(success);
@@ -113,7 +142,7 @@ contract BaseAMMStrategy {
             ) {
                 (, uint256[] memory tvl) = ammVaults[i].tvl();
                 ammVaults[i].pull(address(erc20Vault), tokens, tvl, "");
-                (bool success, bytes memory data) = address(adapter).delegatecall(
+                (bool success, bytes memory data) = address(s.immutableParams.adapter).delegatecall(
                     abi.encodeWithSelector(
                         IAdapter.mintWithDust.selector,
                         pool,
@@ -124,7 +153,7 @@ contract BaseAMMStrategy {
                 );
                 if (!success) revert();
                 uint256 newNft = abi.decode(data, (uint256));
-                (success, ) = address(adapter).delegatecall(
+                (success, ) = address(s.immutableParams.adapter).delegatecall(
                     abi.encodeWithSelector(IAdapter.swapNft.selector, address(this), ammVaults[i], newNft)
                 );
                 if (!success) revert();
@@ -144,12 +173,11 @@ contract BaseAMMStrategy {
 
     function _swap(SwapData calldata swapData, Storage memory s) private {
         IERC20Vault erc20Vault = s.immutableParams.erc20Vault;
-        address pool = s.immutableParams.pool;
         address[] memory tokens = erc20Vault.vaultTokens();
         if (swapData.amountIn < s.mutableParams.minSwapAmounts[swapData.tokenInIndex]) return;
         address tokenIn = tokens[swapData.tokenInIndex];
         address tokenOut = tokens[swapData.tokenInIndex ^ 1];
-        (uint160 sqrtPriceX96, ) = adapter.slot0(pool);
+        (uint160 sqrtPriceX96, int24 tick) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
         uint256 priceBeforeX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256 tokenInBefore = IERC20(tokenIn).balanceOf(address(erc20Vault));
         uint256 tokenOutBefore = IERC20(tokenOut).balanceOf(address(erc20Vault));
@@ -172,10 +200,10 @@ contract BaseAMMStrategy {
         }
         require(swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96));
 
-        (uint160 sqrtPriceAfterX96, ) = adapter.slot0(pool);
-        if (sqrtPriceX96 != sqrtPriceAfterX96) {
-            if (sqrtPriceX96 + s.mutableParams.maxPriceDeviationX96 < sqrtPriceAfterX96) revert();
-            if (sqrtPriceAfterX96 + s.mutableParams.maxPriceDeviationX96 < sqrtPriceX96) revert();
+        (, int24 tickAfter) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
+        if (tick != tickAfter) {
+            if (tick + s.mutableParams.maxTickDeviation < tickAfter) revert();
+            if (tickAfter + s.mutableParams.maxTickDeviation < tick) revert();
         }
     }
 
@@ -217,7 +245,7 @@ contract BaseAMMStrategy {
 
     function _ratioRebalance(Position[] memory targetState, Storage memory s) private {
         uint256 n = s.immutableParams.ammVaults.length;
-        (uint160 sqrtRatioX96, ) = adapter.slot0(s.immutableParams.pool);
+        (uint160 sqrtRatioX96, ) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
         uint256[][] memory tvls = new uint256[][](n);
         (uint256[] memory totalTvl, ) = s.immutableParams.erc20Vault.tvl();
         for (uint256 i = 0; i < n; i++) {
@@ -242,10 +270,43 @@ contract BaseAMMStrategy {
     }
 
     function rebalance(Position[] memory targetState, SwapData calldata swapData) external {
-        Storage memory s = _s;
+        _requireAtLeastOperator();
+        Storage memory s = _contractStorage();
         _compound(s);
         _positionsRebalance(targetState, getCurrentState(s), s);
         _swap(swapData, s);
         _ratioRebalance(targetState, s);
     }
+
+    function depositCallback() external {
+        // get values in erc20 vault and trying to push them proportionally into amm vaults
+        ImmutableParams memory immutableParams = _contractStorage().immutableParams;
+        IERC20Vault erc20Vault = immutableParams.erc20Vault;
+        IIntegrationVault[] memory ammVaults = immutableParams.ammVaults;
+        uint256 n = ammVaults.length;
+        uint256[][] memory tvls = new uint256[][](n);
+        uint256[] memory totalTvl = new uint256[](2);
+        for (uint256 i = 0; i < n; i++) {
+            (uint256[] memory tvl, ) = ammVaults[i].tvl();
+            totalTvl[0] += tvl[0];
+            totalTvl[1] += tvl[1];
+            tvls[i] = tvl;
+        }
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        address[] memory tokens = erc20Vault.vaultTokens();
+        for (uint256 i = 0; i < n; i++) {
+            uint256[] memory amounts = new uint256[](2);
+            uint256[] memory tvl = tvls[i];
+            for (uint256 j = 0; j < 2; j++) {
+                amounts[j] = FullMath.mulDiv(erc20Tvl[j], tvl[j], totalTvl[j]);
+            }
+            uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, amounts, "");
+            for (uint256 j = 0; j < 2; j++) {
+                totalTvl[j] -= actualAmounts[j];
+                erc20Tvl[j] -= actualAmounts[j];
+            }
+        }
+    }
+
+    function withdrawCallback() external {}
 }

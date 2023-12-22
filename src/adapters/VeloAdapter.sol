@@ -9,6 +9,7 @@ import "../interfaces/vaults/IVeloVault.sol";
 
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/CommonLibrary.sol";
 
 contract UniswapV3Adapter is IAdapter {
     using SafeERC20 for IERC20;
@@ -17,6 +18,8 @@ contract UniswapV3Adapter is IAdapter {
         uint16[] observationAgos;
         uint256 deviationMultiplierX96;
     }
+
+    uint256 public constant Q96 = 2**96;
 
     INonfungiblePositionManager public immutable positionManager;
 
@@ -97,10 +100,41 @@ contract UniswapV3Adapter is IAdapter {
         view
         returns (uint160 sqrtPriceX96, int24 spotTick)
     {
-        (sqrtPriceX96, spotTick, , , , ) = ICLPool(poolAddress).slot0();
-        if (securityParams.length > 0) {
-            // TODO: add mev checks
-            // check in different ways
+        uint16 observationIndex;
+        uint16 observationCardinality;
+        (sqrtPriceX96, spotTick, observationIndex, observationCardinality, , ) = ICLPool(poolAddress).slot0();
+        if (securityParams.length == 0) return (sqrtPriceX96, spotTick);
+        SecurityParams memory params = abi.decode(securityParams, (SecurityParams));
+        int24[] memory observations = new int24[](params.observationAgos.length - 1);
+        uint32 lastTimestamp;
+        int56 lastCumulativeTick;
+        for (uint256 i = 0; i <= observations.length; i++) {
+            require(params.observationAgos[i] < observationCardinality, "Invalid index");
+
+            uint256 index = (observationCardinality + observationIndex - params.observationAgos[i]) %
+                observationCardinality;
+            (uint32 timestamp, int56 tickCumulative, , bool initialized) = ICLPool(poolAddress).observations(index);
+            require(initialized, "Invalid index");
+            if (i > 0) {
+                observations[i - 1] = int24(
+                    (tickCumulative - lastCumulativeTick) / (int32(timestamp) - int32(lastTimestamp))
+                );
+            }
+            lastTimestamp = timestamp;
+            lastCumulativeTick = tickCumulative;
+        }
+        uint256[] memory deviations = new uint256[](observations.length - 1);
+        for (uint256 i = 0; i < observations.length - 1; i++) {
+            int56 deviation = observations[i + 1] - observations[i];
+            if (deviation < 0) deviation = -deviation;
+            deviations[i] = uint56(deviation);
+        }
+        uint256 median = CommonLibrary.getMedianValue(deviations);
+        int24 maxDeviation = int24(int256(FullMath.mulDiv(median, params.deviationMultiplierX96, Q96)));
+        for (uint256 i = 0; i < observations.length; i++) {
+            int24 deviation = spotTick - observations[i];
+            if (deviation < 0) deviation = -deviation;
+            if (deviation > maxDeviation) revert("MEV detected");
         }
     }
 
