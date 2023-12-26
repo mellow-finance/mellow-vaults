@@ -37,7 +37,7 @@ contract UniswapV3Adapter is IAdapter {
             sqrtRatioX96,
             TickMath.getSqrtRatioAtTick(tickLower),
             TickMath.getSqrtRatioAtTick(tickUpper),
-            1
+            1e9
         );
 
         IERC20(pool.token0()).safeIncreaseAllowance(address(positionManager), amount0);
@@ -73,7 +73,9 @@ contract UniswapV3Adapter is IAdapter {
     }
 
     function compound(address vault) external {
-        IUniV3Vault(vault).collectEarnings();
+        if (IUniV3Vault(vault).uniV3Nft() != 0) {
+            IUniV3Vault(vault).collectEarnings();
+        }
     }
 
     function positionInfo(uint256 tokenId_)
@@ -85,7 +87,9 @@ contract UniswapV3Adapter is IAdapter {
             uint128 liquidity
         )
     {
-        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(tokenId_);
+        if (tokenId_ != 0) {
+            (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(tokenId_);
+        }
     }
 
     function tokenId(address vault) external view returns (uint256) {

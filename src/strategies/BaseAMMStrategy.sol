@@ -40,6 +40,7 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         int24 maxTickDeviation;
         uint256 minCapitalRatioDeviationX96;
         uint256[] minSwapAmounts;
+        uint256 maxCapitalRemainderRatioX96;
     }
 
     struct ImmutableParams {
@@ -78,6 +79,14 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
     function updateMutableParams(MutableParams memory mutableParams) external {
         _requireAdmin();
         _contractStorage().mutableParams = mutableParams;
+    }
+
+    function getMutableParams() public view returns (MutableParams memory) {
+        return _contractStorage().mutableParams;
+    }
+
+    function getImmutableParams() public view returns (ImmutableParams memory) {
+        return _contractStorage().immutableParams;
     }
 
     function getCurrentState(Storage memory s) public view returns (Position[] memory currentState) {
@@ -179,6 +188,9 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         address tokenOut = tokens[swapData.tokenInIndex ^ 1];
         (uint160 sqrtPriceX96, int24 tick) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
         uint256 priceBeforeX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+        if (swapData.tokenInIndex == 1) {
+            priceBeforeX96 = FullMath.mulDiv(Q96, Q96, priceBeforeX96);
+        }
         uint256 tokenInBefore = IERC20(tokenIn).balanceOf(address(erc20Vault));
         uint256 tokenOutBefore = IERC20(tokenOut).balanceOf(address(erc20Vault));
 
@@ -192,18 +204,18 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
 
         uint256 tokenInDelta = tokenInBefore - IERC20(tokenIn).balanceOf(address(erc20Vault));
         uint256 tokenOutDelta = IERC20(tokenOut).balanceOf(address(erc20Vault)) - tokenOutBefore;
-        require(tokenOutDelta >= swapData.amountOutMin);
+        require(tokenOutDelta >= swapData.amountOutMin, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
-        uint256 swapPriceX96 = FullMath.mulDiv(tokenInDelta, Q96, tokenOutDelta);
-        if (swapData.tokenInIndex == 1) {
-            priceBeforeX96 = FullMath.mulDiv(Q96, Q96, priceBeforeX96);
-        }
-        require(swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96));
+        uint256 swapPriceX96 = FullMath.mulDiv(tokenOutDelta, Q96, tokenInDelta);
+        require(
+            swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96),
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
 
         (, int24 tickAfter) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
         if (tick != tickAfter) {
-            if (tick + s.mutableParams.maxTickDeviation < tickAfter) revert();
-            if (tickAfter + s.mutableParams.maxTickDeviation < tick) revert();
+            if (tick + s.mutableParams.maxTickDeviation < tickAfter) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
+            if (tickAfter + s.mutableParams.maxTickDeviation < tick) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
         }
     }
 
@@ -240,6 +252,16 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
             amounts[1] = FullMath.mulDiv(targetRatioOfToken1X96, requiredCapitalInToken1, Q96);
             amounts[0] = FullMath.mulDiv(requiredCapitalInToken1 - amounts[1], Q96, priceX96);
             s.immutableParams.erc20Vault.pull(address(s.immutableParams.ammVaults[i]), tokens, amounts, "");
+        }
+        {
+            uint256 maxAllowedCapitalOnERC20Vault = FullMath.mulDiv(
+                capitalInToken1,
+                s.mutableParams.maxCapitalRemainderRatioX96,
+                Q96
+            );
+            (uint256[] memory erc20Tvl, ) = s.immutableParams.erc20Vault.tvl();
+            uint256 erc20Capital = FullMath.mulDiv(erc20Tvl[0], priceX96, Q96) + erc20Tvl[1];
+            require(erc20Capital <= maxAllowedCapitalOnERC20Vault, ExceptionsLibrary.LIMIT_OVERFLOW);
         }
     }
 
@@ -297,13 +319,18 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         for (uint256 i = 0; i < n; i++) {
             uint256[] memory amounts = new uint256[](2);
             uint256[] memory tvl = tvls[i];
+            bool doesPullRequred = false;
             for (uint256 j = 0; j < 2; j++) {
+                if (totalTvl[j] == 0) continue;
                 amounts[j] = FullMath.mulDiv(erc20Tvl[j], tvl[j], totalTvl[j]);
+                if (amounts[j] > 0) doesPullRequred = true;
             }
-            uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, amounts, "");
-            for (uint256 j = 0; j < 2; j++) {
-                totalTvl[j] -= actualAmounts[j];
-                erc20Tvl[j] -= actualAmounts[j];
+            if (doesPullRequred) {
+                uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, amounts, "");
+                for (uint256 j = 0; j < 2; j++) {
+                    totalTvl[j] -= tvl[j];
+                    erc20Tvl[j] -= actualAmounts[j];
+                }
             }
         }
     }
