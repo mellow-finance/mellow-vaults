@@ -170,7 +170,7 @@ contract UniswapBaseAMMStrategy is Test {
                 maxTickDeviation: 5,
                 minCapitalRatioDeviationX96: Q96 / 100,
                 minSwapAmounts: new uint256[](2),
-                maxCapitalRemainderRatioX96: Q96 / 100
+                maxCapitalRemainderRatioX96: 5 * Q96 / 100
             })
         );
     }
@@ -300,15 +300,17 @@ contract UniswapBaseAMMStrategy is Test {
         deposit(1);
         rebalance();
         deposit(1e6);
-        for (uint256 i = 0; i < 10; i++) {
-            movePriceUSDC();
-            rebalance();
-            deposit(1e7);
-        }
-        for (uint256 i = 0; i < 10; i++) {
-            movePriceWETH();
-            rebalance();
-            deposit(1e7);
+        for (uint256 j = 0; j < 5; j++) {
+            for (uint256 i = 0; i < 10; i++) {
+                movePriceUSDC();
+                rebalance();
+                deposit(1e7);
+            }
+            for (uint256 i = 0; i < 10; i++) {
+                movePriceWETH();
+                rebalance();
+                deposit(1e7);
+            }
         }
         vm.stopPrank();
     }

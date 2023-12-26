@@ -130,7 +130,7 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
             (bool success, ) = address(s.immutableParams.adapter).delegatecall(
                 abi.encodeWithSelector(IAdapter.compound.selector, s.immutableParams.ammVaults[i])
             );
-            require(success);
+            require(success, ExceptionsLibrary.INVALID_STATE);
         }
     }
 
@@ -140,7 +140,7 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         Storage memory s
     ) private {
         IIntegrationVault[] memory ammVaults = s.immutableParams.ammVaults;
-        require(ammVaults.length == targetState.length);
+        require(ammVaults.length == targetState.length, ExceptionsLibrary.INVALID_LENGTH);
         IERC20Vault erc20Vault = s.immutableParams.erc20Vault;
         address pool = s.immutableParams.pool;
         address[] memory tokens = erc20Vault.vaultTokens();
@@ -162,12 +162,12 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
                         address(this)
                     )
                 );
-                if (!success) revert();
+                if (!success) revert(ExceptionsLibrary.INVALID_STATE);
                 uint256 newNft = abi.decode(data, (uint256));
                 (success, ) = address(s.immutableParams.adapter).delegatecall(
                     abi.encodeWithSelector(IAdapter.swapNft.selector, address(this), ammVaults[i], newNft)
                 );
-                if (!success) revert();
+                if (!success) revert(ExceptionsLibrary.INVALID_STATE);
             } else if (currentState[i].capitalRatioX96 > targetState[i].capitalRatioX96) {
                 (, uint256[] memory tvl) = ammVaults[i].tvl();
                 for (uint256 j = 0; j < tvl.length; j++) {
@@ -263,7 +263,7 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
             );
             (uint256[] memory erc20Tvl, ) = s.immutableParams.erc20Vault.tvl();
             uint256 erc20Capital = FullMath.mulDiv(erc20Tvl[0], priceX96, Q96) + erc20Tvl[1];
-            require(erc20Capital <= maxAllowedCapitalOnERC20Vault, ExceptionsLibrary.LIMIT_OVERFLOW);
+            require(erc20Capital <= maxAllowedCapitalOnERC20Vault, "Too much liquidity on erc20Vault");
         }
     }
 
@@ -303,7 +303,6 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
     }
 
     function depositCallback() external {
-        // get values in erc20 vault and trying to push them proportionally into amm vaults
         ImmutableParams memory immutableParams = _contractStorage().immutableParams;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
         IIntegrationVault[] memory ammVaults = immutableParams.ammVaults;
