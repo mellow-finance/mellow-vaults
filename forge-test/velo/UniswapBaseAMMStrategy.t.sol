@@ -145,6 +145,8 @@ contract UniswapBaseAMMStrategy is Test {
         }
     }
 
+    UniswapV3Adapter public adapter = new UniswapV3Adapter(positionManager);
+
     function initializeStrategy() public {
         uint256[] memory minSwapAmounts = new uint256[](2);
         minSwapAmounts[0] = 1e6;
@@ -159,7 +161,7 @@ contract UniswapBaseAMMStrategy is Test {
             BaseAMMStrategy.ImmutableParams({
                 erc20Vault: erc20Vault,
                 ammVaults: ammVaults,
-                adapter: new UniswapV3Adapter(positionManager),
+                adapter: adapter,
                 pool: address(uniV3Vault1.pool())
             }),
             BaseAMMStrategy.MutableParams({
@@ -192,19 +194,28 @@ contract UniswapBaseAMMStrategy is Test {
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
-    function rebalance() public {
-        PulseOperatorStrategy operatorStrategy = new PulseOperatorStrategy();
+    PulseOperatorStrategy public operatorStrategy;
+
+    function initOperatorStrategy() public {
+        operatorStrategy = new PulseOperatorStrategy();
         operatorStrategy.initialize(
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
-                intervalWidth: 4200,
-                maxPositionLengthInTicks: 10000,
+                intervalWidth: 100,
+                maxPositionLengthInTicks: 200,
                 extensionFactorD: 1e9,
                 neighborhoodFactorD: 1e8
             }),
             deployer
         );
+        strategy.grantRole(strategy.ADMIN_DELEGATE_ROLE(), address(deployer));
+        strategy.grantRole(strategy.OPERATOR(), address(operatorStrategy));
 
+        deal(usdc, address(strategy), 1e6);
+        deal(weth, address(strategy), 1e15);
+    }
+
+    function rebalance() public {
         (address tokenIn, uint256 amountIn, address tokenOut, uint256 expectedAmountOut) = operatorStrategy
             .calculateSwapAmounts(address(rootVault));
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
@@ -222,12 +233,7 @@ contract UniswapBaseAMMStrategy is Test {
             })
         );
 
-        strategy.grantRole(strategy.ADMIN_DELEGATE_ROLE(), address(deployer));
-
-        strategy.grantRole(strategy.OPERATOR(), address(operatorStrategy));
-
-        deal(usdc, address(strategy), 1e6);
-        deal(weth, address(strategy), 1e15);
+        console2.log(IERC20Metadata(tokenIn).symbol(), amountIn);
 
         operatorStrategy.rebalance(
             BaseAMMStrategy.SwapData({
@@ -240,20 +246,70 @@ contract UniswapBaseAMMStrategy is Test {
         );
     }
 
+    function movePriceUSDC() public {
+        while (true) {
+            uint256 amountIn = 1e6 * 1e6;
+            deal(usdc, deployer, amountIn);
+            IERC20(usdc).approve(swapRouter, amountIn);
+            ISwapRouter(swapRouter).exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: usdc,
+                    tokenOut: weth,
+                    fee: 500,
+                    recipient: deployer,
+                    amountIn: amountIn,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0,
+                    deadline: type(uint256).max
+                })
+            );
+            skip(24 * 3600);
+            (, bool flag) = operatorStrategy.calculateExpectedPosition();
+            if (flag) break;
+        }
+    }
+
+    function movePriceWETH() public {
+        while (true) {
+            uint256 amountIn = 500 ether;
+            deal(weth, deployer, amountIn);
+            IERC20(weth).approve(swapRouter, amountIn);
+            ISwapRouter(swapRouter).exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: weth,
+                    tokenOut: usdc,
+                    fee: 500,
+                    recipient: deployer,
+                    amountIn: amountIn,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0,
+                    deadline: type(uint256).max
+                })
+            );
+            skip(24 * 3600);
+            (, bool flag) = operatorStrategy.calculateExpectedPosition();
+            if (flag) break;
+        }
+    }
+
     function test() external {
         vm.startPrank(deployer);
         deployVaults();
         initializeStrategy();
+        initOperatorStrategy();
         deposit(1);
-
         rebalance();
-
-        deposit(1000);
-        deposit(5000);
-        deposit(10000);
-        deposit(20000);
-        deposit(50000);
-
+        deposit(1e6);
+        for (uint256 i = 0; i < 10; i++) {
+            movePriceUSDC();
+            rebalance();
+            deposit(1e7);
+        }
+        for (uint256 i = 0; i < 10; i++) {
+            movePriceWETH();
+            rebalance();
+            deposit(1e7);
+        }
         vm.stopPrank();
     }
 }
