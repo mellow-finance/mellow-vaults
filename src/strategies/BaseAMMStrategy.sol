@@ -41,6 +41,7 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         uint256 minCapitalRatioDeviationX96;
         uint256[] minSwapAmounts;
         uint256 maxCapitalRemainderRatioX96;
+        uint128 initialLiquidity;
     }
 
     struct ImmutableParams {
@@ -155,10 +156,11 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
                 ammVaults[i].pull(address(erc20Vault), tokens, pullingAmounts, "");
                 (bool success, bytes memory data) = address(s.immutableParams.adapter).delegatecall(
                     abi.encodeWithSelector(
-                        IAdapter.mintWithDust.selector,
+                        IAdapter.mint.selector,
                         pool,
                         targetState[i].tickLower,
                         targetState[i].tickUpper,
+                        s.mutableParams.initialLiquidity,
                         address(this)
                     )
                 );

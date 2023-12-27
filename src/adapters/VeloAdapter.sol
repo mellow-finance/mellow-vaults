@@ -27,10 +27,11 @@ contract UniswapV3Adapter is IAdapter {
         positionManager = positionManager_;
     }
 
-    function mintWithDust(
+    function mint(
         address poolAddress,
         int24 tickLower,
         int24 tickUpper,
+        uint128 liquidity,
         address recipient
     ) external returns (uint256 tokenId_) {
         ICLPool pool = ICLPool(poolAddress);
@@ -40,7 +41,7 @@ contract UniswapV3Adapter is IAdapter {
             sqrtRatioX96,
             TickMath.getSqrtRatioAtTick(tickLower),
             TickMath.getSqrtRatioAtTick(tickUpper),
-            1
+            liquidity
         );
 
         IERC20(pool.token0()).safeIncreaseAllowance(address(positionManager), amount0);

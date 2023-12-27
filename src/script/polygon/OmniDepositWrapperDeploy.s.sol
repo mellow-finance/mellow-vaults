@@ -18,17 +18,11 @@ contract Deploy is Script {
     OmniDepositWrapper public omniDepositWrapper;
 
     function run() external {
-        vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-
-        address router = 0x678Aa4bF4E210cf2166753e054d5b7c31cc7fa86;
-        address factory = 0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865;
-
-        // address router = 0x2626664c2603336E57B271c5C0b26F421741e481;
-        // address factory = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD;
-
-        PancakeOmniDepositWrapper wrapper = new PancakeOmniDepositWrapper(router, IPancakeV3Factory(factory));
-
-        console2.log("address:", address(wrapper));
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
+        address s = 0xb946C486d420C6597271C34ceC93e7CAEeb403bf;
+        bytes memory data = hex"";
+        (bool success, ) = s.call(data);
+        require(success);
         vm.stopBroadcast();
     }
 }

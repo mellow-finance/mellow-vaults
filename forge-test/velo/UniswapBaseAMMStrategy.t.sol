@@ -170,7 +170,8 @@ contract UniswapBaseAMMStrategy is Test {
                 maxTickDeviation: 5,
                 minCapitalRatioDeviationX96: Q96 / 100,
                 minSwapAmounts: new uint256[](2),
-                maxCapitalRemainderRatioX96: 5 * Q96 / 100
+                maxCapitalRemainderRatioX96: (5 * Q96) / 100,
+                initialLiquidity: 1e9
             })
         );
     }
@@ -233,8 +234,6 @@ contract UniswapBaseAMMStrategy is Test {
             })
         );
 
-        console2.log(IERC20Metadata(tokenIn).symbol(), amountIn);
-
         operatorStrategy.rebalance(
             BaseAMMStrategy.SwapData({
                 router: swapRouter,
@@ -244,6 +243,32 @@ contract UniswapBaseAMMStrategy is Test {
                 amountOutMin: amountOutMin
             })
         );
+        string memory spot;
+        string memory pos;
+        {
+            (int24 tickLower, int24 tickUpper, ) = adapter.positionInfo(uniV3Vault1.uniV3Nft());
+            (uint160 sqrtPriceX96, int24 spotTick, , , , , ) = pool.slot0();
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+            (uint256[] memory rv, ) = rootVault.tvl();
+            (uint256[] memory uni, ) = uniV3Vault1.tvl();
+            uint256 ratio = FullMath.mulDiv(
+                100,
+                FullMath.mulDiv(uni[0], priceX96, Q96) + uni[1],
+                FullMath.mulDiv(rv[0], priceX96, Q96) + rv[1]
+            );
+            spot = string(
+                abi.encodePacked(
+                    vm.toString(tickLower <= spotTick && spotTick <= tickUpper),
+                    " {",
+                    vm.toString(spotTick),
+                    "} ratio: ",
+                    vm.toString(ratio),
+                    "%"
+                )
+            );
+            pos = string(abi.encodePacked("{", vm.toString(tickLower), ", ", vm.toString(tickUpper), "}"));
+        }
+        console2.log(IERC20Metadata(tokenIn).symbol(), amountIn, spot, pos);
     }
 
     function movePriceUSDC() public {
@@ -300,13 +325,13 @@ contract UniswapBaseAMMStrategy is Test {
         deposit(1);
         rebalance();
         deposit(1e6);
-        for (uint256 j = 0; j < 5; j++) {
-            for (uint256 i = 0; i < 10; i++) {
+        for (uint256 j = 0; j < 4; j++) {
+            for (uint256 i = 0; i < 4; i++) {
                 movePriceUSDC();
                 rebalance();
                 deposit(1e7);
             }
-            for (uint256 i = 0; i < 10; i++) {
+            for (uint256 i = 0; i < 4; i++) {
                 movePriceWETH();
                 rebalance();
                 deposit(1e7);

@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import "./IAdapter.sol";
 
 interface IAdapter {
-    function mintWithDust(
+    function mint(
         address poolAddress,
         int24 tickLower,
         int24 tickUpper,
+        uint128 liquidity,
         address recipient
     ) external returns (uint256 tokenId);
 
