@@ -130,13 +130,14 @@ contract UniswapV3Adapter is IAdapter {
             if (deviation < 0) deviation = -deviation;
             deviations[i] = uint56(deviation);
         }
-        uint256 median = CommonLibrary.getMedianValue(deviations);
-        int24 maxDeviation = int24(int256(FullMath.mulDiv(median, params.deviationMultiplierX96, Q96)));
-        for (uint256 i = 0; i < observations.length; i++) {
-            int24 deviation = spotTick - observations[i];
-            if (deviation < 0) deviation = -deviation;
-            if (deviation > maxDeviation) revert("MEV detected");
-        }
+        // TODO: rewrite with Euler`s logic
+        // uint256 median = CommonLibrary.getMedianValue(deviations);
+        // int24 maxDeviation = int24(int256(FullMath.mulDiv(median, params.deviationMultiplierX96, Q96)));
+        // for (uint256 i = 0; i < observations.length; i++) {
+        //     int24 deviation = spotTick - observations[i];
+        //     if (deviation < 0) deviation = -deviation;
+        //     if (deviation > maxDeviation) revert("MEV detected");
+        // }
     }
 
     function slot0(address poolAddress) external view returns (uint160 sqrtPriceX96, int24 spotTick) {
