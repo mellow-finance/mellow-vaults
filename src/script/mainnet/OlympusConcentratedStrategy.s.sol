@@ -24,212 +24,76 @@ import "../../vaults/ERC20RootVaultGovernance.sol";
 import "../../vaults/UniV3Vault.sol";
 import "../../vaults/UniV3VaultGovernance.sol";
 
+import "../../interfaces/external/univ3/ISwapRouter.sol";
+
 contract Deploy is Script {
-    IERC20RootVault public rootVault;
-    IERC20Vault public erc20Vault;
-    IUniV3Vault public uniV3Vault;
-
-    address public protocolTreasury = 0x330CEcD19FC9460F7eA8385f9fa0fbbD673798A7;
-    address public strategyTreasury = 0x25C2B22477eD2E4099De5359d376a984385b4518;
-    address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
-
     address public ohm = 0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5;
     address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
-    address public inchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
-
-    address public governance = 0xDc9C17662133fB865E7bA3198B67c53a617B2153;
-    address public registry = 0xFD23F971696576331fCF96f80a20B4D3b31ca5b2;
-    address public rootGovernance = 0x973495e81180Cd6Ead654328A0bEbE01c8ad53EA;
-    address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
-    address public uniV3VaultGovernance = 0x9c319DC47cA6c8c5e130d5aEF5B8a40Cce9e877e;
-    address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
+    address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     INonfungiblePositionManager public positionManager =
         INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
-
-    IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
-
-    DepositWrapper public depositWrapper = DepositWrapper(0x231002439E1BD5b610C3d98321EA760002b9Ff64);
-
-    TransparentUpgradeableProxy public strategy;
-    OlympusConcentratedStrategy public olympusStrategy;
-
     BasePulseStrategyHelper public strategyHelper = BasePulseStrategyHelper(0x7c59Aae0Ee2EeEdeC34d235FeAF91A45CcAE2cb5);
 
     uint256 public constant Q96 = 2**96;
+    address public proxy = 0xB7D15488C8d702cBBd5870b7907FCD877d7a1C4B;
+    address public operatorStrategy = 0x8E7900eb386faBc74f7b166fFda693cB03326Dfe;
 
-    function combineVaults(uint256[] memory nfts) public {
-        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
-        for (uint256 i = 0; i < nfts.length; ++i) {
-            vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
-        }
+    address public factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address public router = 0x1111111254EEB25477B68fb85Ed929f73A960582;
 
-        uint256 nft;
-        (rootVault, nft) = rootVaultGovernance.createVault(tokens, address(strategy), nfts, deployer);
-        rootVaultGovernance.setStrategyParams(
-            nft,
-            IERC20RootVaultGovernance.StrategyParams({
-                tokenLimitPerAddress: type(uint256).max,
-                tokenLimit: type(uint256).max
-            })
-        );
+    bytes4 public constant UNISWAP_V3_SWAP_SELECTOR = bytes4(0xe449022e);
 
-        {
-            address[] memory whitelist = new address[](1);
-            whitelist[0] = address(depositWrapper);
-            rootVault.addDepositorsToAllowlist(whitelist);
-        }
+    function getSwapData(
+        address tokenIn,
+        address[] memory pools,
+        uint256 amountIn
+    ) public view returns (bytes memory) {
+        uint256[] memory poolsData = new uint256[](pools.length);
 
-        rootVaultGovernance.stageDelayedStrategyParams(
-            nft,
-            IERC20RootVaultGovernance.DelayedStrategyParams({
-                strategyTreasury: strategyTreasury,
-                strategyPerformanceTreasury: protocolTreasury,
-                managementFee: 0,
-                performanceFee: 0,
-                privateVault: true,
-                depositCallbackAddress: address(0),
-                withdrawCallbackAddress: address(0)
-            })
-        );
-
-        rootVaultGovernance.commitDelayedStrategyParams(nft);
-    }
-
-    address[] public tokens;
-
-    function deploySubvaults() public returns (uint256[] memory nfts) {
-        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
-        uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
-
-        tokens.push(ohm);
-        tokens.push(usdc);
-        IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
-        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
-
-        IUniV3VaultGovernance(uniV3VaultGovernance).createVault(
-            tokens,
-            deployer,
-            3000,
-            0xA995B345d22Db15c9a36Cb6928967AFCFAb84fDb
-        );
-
-        uniV3Vault = IUniV3Vault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
-
-        IUniV3VaultGovernance(uniV3VaultGovernance).stageDelayedStrategyParams(
-            erc20VaultNft + 1,
-            IUniV3VaultGovernance.DelayedStrategyParams({safetyIndicesSet: 2})
-        );
-        IUniV3VaultGovernance(uniV3VaultGovernance).commitDelayedStrategyParams(erc20VaultNft + 1);
-
-        nfts = new uint256[](2);
-        nfts[0] = erc20VaultNft;
-        nfts[1] = erc20VaultNft + 1;
-    }
-
-    function deployContracts() public {
-        uint256[] memory nfts = deploySubvaults();
-        deployStrategies();
-        combineVaults(nfts);
-        initStrategies();
-    }
-
-    function deposit(uint256 coef) public {
-        uint256 totalSupply = rootVault.totalSupply();
-        uint256[] memory tokenAmounts = rootVault.pullExistentials();
-        for (uint256 i = 0; i < tokens.length; i++) {
-            tokenAmounts[i] *= 10 * coef;
-        }
-        if (totalSupply == 0) {
-            for (uint256 i = 0; i < tokens.length; i++) {
-                IERC20(tokens[i]).approve(address(depositWrapper), type(uint256).max);
+        for (uint256 i = 0; i < pools.length; i++) {
+            poolsData[i] = uint160(pools[i]);
+            if (IUniswapV3Pool(pools[i]).token1() == tokenIn) {
+                poolsData[i] += 1 << 255;
+                tokenIn = IUniswapV3Pool(pools[i]).token0();
+            } else {
+                tokenIn = IUniswapV3Pool(pools[i]).token1();
             }
-            depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
-        } else {
-            depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
-    }
-
-    address public constant BASE_STRATEGY_ADDRESS = 0x0c896de0ED46517C8206b82ff7D7824D30892F14;
-    address public constant MAINNET_PROTOCOL_ADMIN_ADDRESS = 0x565766498604676D9916D4838455Cc5fED24a5B3;
-    address public constant MAINNET_STRATEGY_ADMIN_ADDRESS = 0x1EB0D48bF31caf9DBE1ad2E35b3755Fdf2898068;
-
-    function deployStrategies() public {
-        strategy = new TransparentUpgradeableProxy(BASE_STRATEGY_ADDRESS, MAINNET_PROTOCOL_ADMIN_ADDRESS, "");
-        olympusStrategy = new OlympusConcentratedStrategy(
-            deployer,
-            BasePulseStrategy(address(strategy)),
-            IOlympusRange(0xb212D9584cfc56EFf1117F412Fe0bBdc53673954),
-            60,
-            9,
-            6,
-            18,
-            true
-        );
-        olympusStrategy.updateMutableParams(
-            OlympusConcentratedStrategy.MutableParams({intervalWidth: 600, tickNeighborhood: 120})
-        );
-
-        IERC20(ohm).transfer(address(strategy), 1e4);
-        IERC20(usdc).transfer(address(strategy), 1e4);
-    }
-
-    function initStrategies() public {
-        uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e8;
-        minSwapAmounts[1] = 1e6;
-
-        BasePulseStrategy(address(strategy)).initialize(
-            BasePulseStrategy.ImmutableParams({
-                erc20Vault: erc20Vault,
-                uniV3Vault: uniV3Vault,
-                router: address(0x1111111254EEB25477B68fb85Ed929f73A960582),
-                tokens: erc20Vault.vaultTokens()
-            }),
-            deployer
-        );
-
-        BasePulseStrategy(address(strategy)).updateMutableParams(
-            BasePulseStrategy.MutableParams({
-                priceImpactD6: 0,
-                maxDeviationForVaultPool: 50,
-                timespanForAverageTick: 60,
-                swapSlippageD: 1e7,
-                swappingAmountsCoefficientD: 1e7,
-                minSwapAmounts: minSwapAmounts
-            })
-        );
-
-        BasePulseStrategy(address(strategy)).updateDesiredAmounts(
-            BasePulseStrategy.DesiredAmounts({amount0Desired: 1e4, amount1Desired: 1e4})
-        );
-    }
-
-    function rebalance() public {
-        BasePulseStrategy.Interval memory interval = olympusStrategy.calculateInterval();
-
-        console2.log("New interval:", vm.toString(interval.lowerTick), vm.toString(interval.upperTick));
-
-        BasePulseStrategy(address(strategy)).grantRole(
-            BasePulseStrategy(address(strategy)).ADMIN_DELEGATE_ROLE(),
-            address(deployer)
-        );
-        BasePulseStrategy(address(strategy)).grantRole(
-            BasePulseStrategy(address(strategy)).OPERATOR(),
-            address(olympusStrategy)
-        );
-
-        olympusStrategy.rebalance(type(uint256).max, new bytes(0), 0);
+        return
+            abi.encodePacked(
+                abi.encodeWithSelector(UNISWAP_V3_SWAP_SELECTOR, amountIn, 0, poolsData),
+                type(uint32).max
+            );
     }
 
     function run() external {
-        vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-        deployContracts();
-        deposit(1);
-        rebalance();
-        deposit(1000);
+        BasePulseStrategy.Interval memory interval = OlympusConcentratedStrategy(operatorStrategy).calculateInterval();
+
+        (uint256 amountIn, address fromToken, , ) = strategyHelper.calculateAmountForSwap(
+            BasePulseStrategy(proxy),
+            interval
+        );
+
+        address[] memory pools = new address[](2);
+        pools[0] = IUniswapV3Factory(factory).getPool(usdc, weth, 500);
+        pools[1] = IUniswapV3Factory(factory).getPool(weth, ohm, 3000);
+
+        bytes memory swapData;
+        if (fromToken == usdc) {
+            swapData = getSwapData(usdc, pools, amountIn);
+        } else {
+            (pools[0], pools[1]) = (pools[1], pools[0]);
+            swapData = getSwapData(ohm, pools, amountIn);
+        }
+
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
+        OlympusConcentratedStrategy(operatorStrategy).rebalance(
+            type(uint256).max,
+            swapData,
+            0 // TODO set minAmountOut
+        );
         vm.stopBroadcast();
+        revert("passed");
     }
 }
