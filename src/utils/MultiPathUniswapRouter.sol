@@ -28,7 +28,7 @@ contract MultiPathUniswapRouter {
         address tokenIn,
         bytes[] memory paths,
         uint256[] memory amountsIn,
-        uint256[] memory amountOutMins
+        uint256 amountOutMin
     ) external returns (uint256 amountOut) {
         uint256 amountIn = 0;
         for (uint256 i = 0; i < amountsIn.length; i++) amountIn += amountsIn[i];
@@ -41,10 +41,11 @@ contract MultiPathUniswapRouter {
                     amountIn: amountsIn[i],
                     recipient: msg.sender,
                     deadline: type(uint256).max,
-                    amountOutMinimum: amountOutMins[i]
+                    amountOutMinimum: 0
                 })
             );
         }
+        if (amountOutMin > amountOut) revert("Limit underflow");
         uint256 balance = IERC20(tokenIn).balanceOf(address(this));
         if (balance > 0) {
             IERC20(tokenIn).safeTransfer(msg.sender, balance);

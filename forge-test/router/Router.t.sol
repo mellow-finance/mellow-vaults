@@ -115,7 +115,9 @@ contract Router is Test {
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     function test() external {
-        (uint256[] memory amountsIn, uint256 amountOut, ) = findOpt(
+        uint256 amountIn = 95000 * 1e6;
+
+        (uint256[] memory amountsIn, uint256 amountOut, bytes[] memory paths) = findOpt(
             648375,
             0x1b504f17192d58b2e457A4814E4bC0d261421B49,
             95000 * 1e6,
@@ -125,5 +127,15 @@ contract Router is Test {
 
         console2.log(amountsIn[0], amountsIn[1]);
         console2.log("Amount out:", amountOut);
+
+        address testUser = address(uint160(bytes20(keccak256("test-user"))));
+        vm.startPrank(testUser);
+
+        deal(usdc, testUser, amountIn);
+        IERC20(usdc).safeApprove(address(router), amountIn);
+        uint256 actualAmountOut = router.swap(usdc, paths, amountsIn, amountOut);
+        console2.log("Actual amount out:", actualAmountOut);
+
+        vm.stopPrank();
     }
 }
