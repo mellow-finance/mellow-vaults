@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
 
-import "../../src/interfaces/external/univ3/ISwapRouter.sol";
-import "../../src/interfaces/external/univ3/INonfungiblePositionManager.sol";
+import "../../src/interfaces/external/univ3/IV3SwapRouter.sol";
+import "../../src/interfaces/external/univ3/IQuoter.sol";
 
-import "../../src/utils/MultiPathUniswapRouter.sol";
+import "../../src/interfaces/external/univ3/INonfungiblePositionManager.sol";
+import "../../src/interfaces/external/univ3/IMulticall.sol";
 
 contract Router is Test {
     using SafeERC20 for IERC20;
@@ -40,11 +41,8 @@ contract Router is Test {
         vm.stopPrank();
     }
 
-    MultiPathUniswapRouter router =
-        new MultiPathUniswapRouter(
-            ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564),
-            IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e)
-        );
+    IMulticall public swapRouter02 = IMulticall(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
+    IQuoterV2 public quoter = IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e);
 
     function findOpt(
         uint256 tokenId,
@@ -57,6 +55,7 @@ contract Router is Test {
         returns (
             uint256[] memory amountsIn,
             uint256 maxAmountOut,
+            uint256[] memory amountOuts,
             bytes[] memory paths
         )
     {
@@ -71,6 +70,7 @@ contract Router is Test {
         paths[0] = path1;
         paths[1] = path2;
         amountsIn = new uint256[](2);
+        amountOuts = new uint256[](2);
 
         uint256 optimal = 0;
         while (left <= right) {
@@ -81,25 +81,31 @@ contract Router is Test {
             {
                 amountsIn[0] = mid1;
                 amountsIn[1] = amountIn - mid1;
-                amountOut1 = router.quote(paths, amountsIn);
+                (uint256 firstPart, , , ) = quoter.quoteExactInput(paths[0], amountsIn[0]);
+                (uint256 secondPart, , , ) = quoter.quoteExactInput(paths[1], amountsIn[1]);
+                amountOut1 = firstPart + secondPart;
+                if (amountOut1 > maxAmountOut) {
+                    maxAmountOut = amountOut1;
+                    optimal = mid1;
+                    amountOuts[0] = firstPart;
+                    amountOuts[1] = secondPart;
+                }
             }
 
             uint256 amountOut2;
             {
                 amountsIn[0] = mid2;
                 amountsIn[1] = amountIn - mid2;
-                amountOut2 = router.quote(paths, amountsIn);
+                (uint256 firstPart, , , ) = quoter.quoteExactInput(paths[0], amountsIn[0]);
+                (uint256 secondPart, , , ) = quoter.quoteExactInput(paths[1], amountsIn[1]);
+                amountOut2 = firstPart + secondPart;
+                if (amountOut2 > maxAmountOut) {
+                    maxAmountOut = amountOut2;
+                    optimal = mid2;
+                    amountOuts[0] = firstPart;
+                    amountOuts[1] = secondPart;
+                }
             }
-
-            if (amountOut1 > maxAmountOut) {
-                maxAmountOut = amountOut1;
-                optimal = mid1;
-            }
-            if (amountOut2 > maxAmountOut) {
-                maxAmountOut = amountOut2;
-                optimal = mid2;
-            }
-
             if (amountOut1 > amountOut2) {
                 right = mid2 - 1;
             } else {
@@ -114,28 +120,61 @@ contract Router is Test {
     address public ohm = 0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5;
     address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
-    function test() external {
-        uint256 amountIn = 95000 * 1e6;
-
-        (uint256[] memory amountsIn, uint256 amountOut, bytes[] memory paths) = findOpt(
-            648375,
-            0x1b504f17192d58b2e457A4814E4bC0d261421B49,
-            95000 * 1e6,
-            abi.encodePacked(usdc, uint24(3000), ohm),
-            abi.encodePacked(usdc, uint24(500), weth, uint24(3000), ohm)
+    function getSwapData(
+        address vault,
+        uint256 tokenId,
+        address erc20Vault,
+        uint256 amountIn,
+        bytes memory path1,
+        bytes memory path2
+    ) public returns (bytes memory) {
+        (uint256[] memory amountsIn, uint256 amountOut, uint256[] memory amountsOut, bytes[] memory paths) = findOpt(
+            tokenId,
+            vault,
+            amountIn,
+            path1,
+            path2
         );
 
         console2.log(amountsIn[0], amountsIn[1]);
         console2.log("Amount out:", amountOut);
 
-        address testUser = address(uint160(bytes20(keccak256("test-user"))));
-        vm.startPrank(testUser);
+        bytes[] memory calls = new bytes[](paths.length);
+        for (uint256 i = 0; i < paths.length; i++) {
+            calls[i] = abi.encodeWithSelector(
+                IV3SwapRouter.exactInput.selector,
+                IV3SwapRouter.ExactInputParams({
+                    path: paths[i],
+                    amountIn: amountsIn[i],
+                    recipient: erc20Vault,
+                    amountOutMinimum: amountsOut[i]
+                })
+            );
+        }
 
-        deal(usdc, testUser, amountIn);
-        IERC20(usdc).safeApprove(address(router), amountIn);
-        uint256 actualAmountOut = router.swap(usdc, paths, amountsIn, amountOut);
-        console2.log("Actual amount out:", actualAmountOut);
+        return abi.encodeWithSelector(IMulticall.multicall.selector, type(uint256).max, calls);
+    }
 
+    function test() external {
+        uint256 tokenId = 648375;
+        address vault = 0x1b504f17192d58b2e457A4814E4bC0d261421B49;
+        address erc20Vault = address(uint160(bytes20(keccak256("erc20vault"))));
+        uint256 amountIn = 95000 * 1e6;
+
+        bytes memory data = getSwapData(
+            vault,
+            tokenId,
+            erc20Vault,
+            amountIn,
+            abi.encodePacked(usdc, uint24(3000), ohm),
+            abi.encodePacked(usdc, uint24(500), weth, uint24(3000), ohm)
+        );
+
+        deal(usdc, erc20Vault, amountIn);
+        vm.startPrank(erc20Vault);
+        IERC20(usdc).safeApprove(address(swapRouter02), amountIn);
+        (bool success, ) = address(swapRouter02).call(data);
+        require(success);
         vm.stopPrank();
     }
 }
