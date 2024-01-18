@@ -64,7 +64,6 @@ contract Deploy is Script {
 
     IMulticall public swapRouter02 = IMulticall(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
     IQuoterV2 public quoter = IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e);
-    string public stateFile = "/tmp/state_3.json";
 
     function findOpt(
         uint256 tokenId,
@@ -183,66 +182,62 @@ contract Deploy is Script {
     address public operatorStrategy = 0x8E7900eb386faBc74f7b166fFda693cB03326Dfe;
 
     function run() external {
+        BasePulseStrategyUpgradable baseStrategy = BasePulseStrategyUpgradable(
+            0x94aB171819bE4a9bb349a34C8F47087d4FFE046F
+        );
+
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
-        BasePulseStrategyUpgradable baseStrategy = new BasePulseStrategyUpgradable(positionManager);
-        console2.log(address(baseStrategy));
+
+        BasePulseStrategyUpgradable.MutableParams memory mutableParams;
+        (
+            mutableParams.priceImpactD6,
+            mutableParams.maxDeviationForVaultPool,
+            mutableParams.timespanForAverageTick,
+            mutableParams.swapSlippageD,
+            mutableParams.swappingAmountsCoefficientD
+        ) = BasePulseStrategyUpgradable(proxy).mutableParams();
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1e9 * 100;
+        amounts[1] = 1e6 * 1000;
+        mutableParams.minSwapAmounts = amounts;
+        mutableParams.swapSlippageD = 1e7;
+        BasePulseStrategyUpgradable(proxy).updateMutableParams(mutableParams);
+        BasePulseStrategyUpgradable(proxy).setRouter(address(swapRouter02));
         vm.stopBroadcast();
 
-        // vm.startPrank(protocolAdmin);
-        // ITransparentUpgradeableProxy(proxy).upgradeTo(address(baseStrategy));
-        // vm.stopPrank();
+        IUniV3Vault uniV3Vault = IUniV3Vault(0x1b504f17192d58b2e457A4814E4bC0d261421B49);
 
-        // vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
+        (uint256 amountIn, address tokenIn, , ) = BasePulseStrategyHelper(helper).calculateAmountForSwap(
+            BasePulseStrategy(proxy),
+            OlympusConcentratedStrategy(operatorStrategy).calculateInterval()
+        );
 
-        // BasePulseStrategyUpgradable.MutableParams memory mutableParams;
-        // (
-        //     mutableParams.priceImpactD6,
-        //     mutableParams.maxDeviationForVaultPool,
-        //     mutableParams.timespanForAverageTick,
-        //     mutableParams.swapSlippageD,
-        //     mutableParams.swappingAmountsCoefficientD
-        // ) = BasePulseStrategyUpgradable(proxy).mutableParams();
+        bytes memory data;
+        if (tokenIn == usdc) {
+            data = getSwapData(
+                address(uniV3Vault),
+                uniV3Vault.uniV3Nft(),
+                0x13CF9c3c1bF0FCCF72E64Bc19F2e74b809E9B56D,
+                amountIn,
+                abi.encodePacked(usdc, uint24(3000), ohm),
+                abi.encodePacked(usdc, uint24(500), weth, uint24(3000), ohm)
+            );
+        } else {
+            data = getSwapData(
+                address(uniV3Vault),
+                uniV3Vault.uniV3Nft(),
+                0x13CF9c3c1bF0FCCF72E64Bc19F2e74b809E9B56D,
+                amountIn,
+                abi.encodePacked(ohm, uint24(3000), usdc),
+                abi.encodePacked(ohm, uint24(3000), weth, uint24(500), usdc)
+            );
+        }
 
-        // mutableParams.minSwapAmounts = new uint256[](2);
-        // mutableParams.swapSlippageD = 1e7;
+        vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
+        OlympusConcentratedStrategy(operatorStrategy).rebalance(type(uint256).max, data, 0);
+        vm.stopBroadcast();
 
-        // BasePulseStrategyUpgradable(proxy).updateMutableParams(mutableParams);
-
-        // BasePulseStrategyUpgradable(proxy).setRouter(address(swapRouter02));
-        // vm.stopBroadcast();
-
-        // IUniV3Vault uniV3Vault = IUniV3Vault(0x1b504f17192d58b2e457A4814E4bC0d261421B49);
-
-        // (uint256 amountIn, address tokenIn, , ) = BasePulseStrategyHelper(helper).calculateAmountForSwap(
-        //     BasePulseStrategy(proxy),
-        //     OlympusConcentratedStrategy(operatorStrategy).calculateInterval()
-        // );
-
-        // bytes memory data;
-        // if (tokenIn == usdc) {
-        //     data = getSwapData(
-        //         address(uniV3Vault),
-        //         uniV3Vault.uniV3Nft(),
-        //         0x13CF9c3c1bF0FCCF72E64Bc19F2e74b809E9B56D,
-        //         amountIn,
-        //         abi.encodePacked(usdc, uint24(3000), ohm),
-        //         abi.encodePacked(usdc, uint24(500), weth, uint24(3000), ohm)
-        //     );
-        // } else {
-        //     data = getSwapData(
-        //         address(uniV3Vault),
-        //         uniV3Vault.uniV3Nft(),
-        //         0x13CF9c3c1bF0FCCF72E64Bc19F2e74b809E9B56D,
-        //         amountIn,
-        //         abi.encodePacked(ohm, uint24(3000), usdc),
-        //         abi.encodePacked(ohm, uint24(3000), weth, uint24(500), usdc)
-        //     );
-        // }
-
-        // vm.startBroadcast(uint256(bytes32(vm.envBytes("OPERATOR_PK"))));
-        // OlympusConcentratedStrategy(operatorStrategy).rebalance(type(uint256).max, data, 0);
-        // vm.stopBroadcast();
-
-        // revert("passed.");
+        revert("passed.");
     }
 }
