@@ -40,26 +40,26 @@ contract Deploy is Script {
         INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
 
     function removePosition(address owner, uint256 tokenId) public {
-        vm.startPrank(owner);
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(tokenId);
-        positionManager.decreaseLiquidity(
-            INonfungiblePositionManager.DecreaseLiquidityParams({
-                tokenId: tokenId,
-                liquidity: liquidity,
-                deadline: type(uint256).max,
-                amount0Min: 0,
-                amount1Min: 0
-            })
-        );
-        positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: tokenId,
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max,
-                recipient: address(this)
-            })
-        );
-        vm.stopPrank();
+        // vm.startPrank(owner);
+        // (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(tokenId);
+        // positionManager.decreaseLiquidity(
+        //     INonfungiblePositionManager.DecreaseLiquidityParams({
+        //         tokenId: tokenId,
+        //         liquidity: liquidity,
+        //         deadline: type(uint256).max,
+        //         amount0Min: 0,
+        //         amount1Min: 0
+        //     })
+        // );
+        // positionManager.collect(
+        //     INonfungiblePositionManager.CollectParams({
+        //         tokenId: tokenId,
+        //         amount0Max: type(uint128).max,
+        //         amount1Max: type(uint128).max,
+        //         recipient: address(this)
+        //     })
+        // );
+        // vm.stopPrank();
     }
 
     IMulticall public swapRouter02 = IMulticall(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45);
@@ -82,7 +82,7 @@ contract Deploy is Script {
     {
         removePosition(owner, tokenId);
 
-        uint256 left = 0;
+        uint256 left = 1;
         uint256 right = amountIn;
         uint256 mid1;
         uint256 mid2;
@@ -135,6 +135,31 @@ contract Deploy is Script {
         }
         amountsIn[0] = optimal;
         amountsIn[1] = amountIn - optimal;
+
+        {
+            (uint256 amountOut1, , , ) = quoter.quoteExactInput(path1, amountIn);
+            if (amountOut1 > maxAmountOut) {
+                maxAmountOut = amountOut1;
+                amountsIn = new uint256[](1);
+                amountsIn[0] = amountIn;
+                paths = new bytes[](1);
+                paths[0] = path1;
+                amountOuts = new uint256[](1);
+                amountOuts[0] = amountOut1;
+            }
+        }
+        {
+            (uint256 amountOut2, , , ) = quoter.quoteExactInput(path2, amountIn);
+            if (amountOut2 > maxAmountOut) {
+                maxAmountOut = amountOut2;
+                amountsIn = new uint256[](1);
+                amountsIn[0] = amountIn;
+                paths = new bytes[](1);
+                paths[0] = path2;
+                amountOuts = new uint256[](1);
+                amountOuts[0] = amountOut2;
+            }
+        }
     }
 
     address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
@@ -180,12 +205,10 @@ contract Deploy is Script {
 
     address public helper = 0x7c59Aae0Ee2EeEdeC34d235FeAF91A45CcAE2cb5;
     address public operatorStrategy = 0x8E7900eb386faBc74f7b166fFda693cB03326Dfe;
+    BasePulseStrategyUpgradable public baseStrategy =
+        BasePulseStrategyUpgradable(0x94aB171819bE4a9bb349a34C8F47087d4FFE046F);
 
     function run() external {
-        BasePulseStrategyUpgradable baseStrategy = BasePulseStrategyUpgradable(
-            0x94aB171819bE4a9bb349a34C8F47087d4FFE046F
-        );
-
         vm.startBroadcast(uint256(bytes32(vm.envBytes("DEPLOYER_PK"))));
 
         BasePulseStrategyUpgradable.MutableParams memory mutableParams;
@@ -208,9 +231,17 @@ contract Deploy is Script {
 
         IUniV3Vault uniV3Vault = IUniV3Vault(0x1b504f17192d58b2e457A4814E4bC0d261421B49);
 
+        BasePulseStrategy.Interval memory newInterval = OlympusConcentratedStrategy(operatorStrategy)
+            .calculateInterval();
+
+        console2.log("new interval:", vm.toString(newInterval.lowerTick), vm.toString(newInterval.upperTick));
+        {
+            (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Vault.uniV3Nft());
+            console2.log("current interval:", vm.toString(tickLower), vm.toString(tickUpper));
+        }
         (uint256 amountIn, address tokenIn, , ) = BasePulseStrategyHelper(helper).calculateAmountForSwap(
             BasePulseStrategy(proxy),
-            OlympusConcentratedStrategy(operatorStrategy).calculateInterval()
+            newInterval
         );
 
         bytes memory data;
@@ -238,6 +269,6 @@ contract Deploy is Script {
         OlympusConcentratedStrategy(operatorStrategy).rebalance(type(uint256).max, data, 0);
         vm.stopBroadcast();
 
-        revert("passed.");
+        // revert("passed.");
     }
 }
