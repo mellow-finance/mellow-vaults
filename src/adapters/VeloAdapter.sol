@@ -11,7 +11,7 @@ import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract UniswapV3Adapter is IAdapter {
+contract VeloAdapter is IAdapter {
     using SafeERC20 for IERC20;
 
     struct SecurityParams {
@@ -70,10 +70,12 @@ contract UniswapV3Adapter is IAdapter {
         uint256 newNft
     ) external returns (uint256 oldNft) {
         oldNft = IVeloVault(vault).tokenId();
+        IVeloVault(vault).unstakeTokenId();
         positionManager.safeTransferFrom(from, vault, newNft);
         if (oldNft != 0) {
             positionManager.burn(oldNft);
         }
+        IVeloVault(vault).stakeTokenId();
     }
 
     function compound(address vault) external {
@@ -89,7 +91,9 @@ contract UniswapV3Adapter is IAdapter {
             uint128 liquidity
         )
     {
-        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(tokenId_);
+        if (tokenId_ != 0) {
+            (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(tokenId_);
+        }
     }
 
     function tokenId(address vault) external view returns (uint256) {

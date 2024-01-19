@@ -14,6 +14,8 @@ import "../utils/DefaultAccessControlLateInit.sol";
 
 import "../strategies/BaseAMMStrategy.sol";
 
+import "forge-std/src/console2.sol";
+
 contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     struct ImmutableParams {
         int24 tickSpacing;

@@ -75,6 +75,11 @@ contract VeloVault is IVeloVault, IntegrationVault {
         uint256 tokenId_,
         bytes memory
     ) external returns (bytes4) {
+        if (from == strategyParams().gauge) {
+            // unstaking scenario
+            require(from == operator, ExceptionsLibrary.FORBIDDEN);
+            return this.onERC721Received.selector;
+        }
         require(msg.sender == address(positionManager), ExceptionsLibrary.FORBIDDEN);
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, int24 tickSpacing, , , , , , , ) = positionManager.positions(tokenId_);
@@ -98,6 +103,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
     }
 
     function collectRewards() external override {
+        if (tokenId == 0) return;
         IVeloVaultGovernance.StrategyParams memory params = strategyParams();
         ICLGauge(params.gauge).getReward(tokenId);
         address token = ICLGauge(params.gauge).rewardToken();
@@ -108,13 +114,17 @@ contract VeloVault is IVeloVault, IntegrationVault {
     }
 
     function unstakeTokenId() external override {
+        if (tokenId == 0) return;
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        ICLGauge(strategyParams().gauge).deposit(tokenId);
+        ICLGauge(strategyParams().gauge).withdraw(tokenId);
     }
 
     function stakeTokenId() external override {
+        if (tokenId == 0) return;
         require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        ICLGauge(strategyParams().gauge).withdraw(tokenId);
+        address gauge = strategyParams().gauge;
+        positionManager.approve(gauge, tokenId);
+        ICLGauge(gauge).deposit(tokenId);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
