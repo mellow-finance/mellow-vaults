@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
-import "forge-std/src/console2.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -30,11 +29,10 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
-contract VeloVaultTest is Test {
+contract UnitTest is Test {
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
-    IVeloVault public ammVault1;
-    IVeloVault public ammVault2;
+    IVeloVault public ammVault;
 
     uint256 public nftStart;
 
@@ -123,17 +121,13 @@ contract VeloVaultTest is Test {
         IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
         IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
-        ammVault1 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
+        ammVault = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
-        ammVault2 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 2));
-
-        pool = ammVault1.pool();
+        pool = ammVault.pool();
         {
-            uint256[] memory nfts = new uint256[](3);
+            uint256[] memory nfts = new uint256[](2);
             nfts[0] = erc20VaultNft;
             nfts[1] = erc20VaultNft + 1;
-            nfts[2] = erc20VaultNft + 2;
             combineVaults(tokens, nfts);
         }
 
@@ -142,10 +136,6 @@ contract VeloVaultTest is Test {
         vm.startPrank(admin);
         IVeloVaultGovernance(ammGovernance).setStrategyParams(
             erc20VaultNft + 1,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
-        );
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(
-            erc20VaultNft + 2,
             IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
         );
         vm.stopPrank();
@@ -189,9 +179,8 @@ contract VeloVaultTest is Test {
         minSwapAmounts[0] = 1e16;
         minSwapAmounts[1] = 1e7;
 
-        IIntegrationVault[] memory ammVaults = new IIntegrationVault[](2);
-        ammVaults[0] = ammVault1;
-        ammVaults[1] = ammVault2;
+        IIntegrationVault[] memory ammVaults = new IIntegrationVault[](1);
+        ammVaults[0] = ammVault;
 
         strategy.initialize(
             deployer,
@@ -199,7 +188,7 @@ contract VeloVaultTest is Test {
                 erc20Vault: erc20Vault,
                 ammVaults: ammVaults,
                 adapter: adapter,
-                pool: address(ammVault1.pool())
+                pool: address(ammVault.pool())
             }),
             BaseAMMStrategy.MutableParams({
                 securityParams: new bytes(0),
@@ -253,25 +242,9 @@ contract VeloVaultTest is Test {
         deal(weth, address(strategy), 1e15);
     }
 
-    function tvls() public view {
-        {
-            (uint256[] memory tvl, ) = erc20Vault.tvl();
-            console2.log("Erc20 vault tvl:", tvl[0], tvl[1]);
-        }
-        {
-            (uint256[] memory tvl, ) = ammVault1.tvl();
-            console2.log("velo vault 1 tvl:", tvl[0], tvl[1]);
-        }
-        {
-            (uint256[] memory tvl, ) = ammVault2.tvl();
-            console2.log("velo vault 2 tvl:", tvl[0], tvl[1]);
-        }
-    }
-
     function rebalance() public {
         (address tokenIn, uint256 amountIn, address tokenOut, uint256 expectedAmountOut) = operatorStrategy
             .calculateSwapAmounts(address(rootVault));
-        console2.log("Swap amounts:", amountIn, tokenIn);
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
         bytes memory data = abi.encodeWithSelector(
             ISwapRouter.exactInputSingle.selector,
@@ -299,11 +272,11 @@ contract VeloVaultTest is Test {
         string memory spot;
         string memory pos;
         {
-            (int24 tickLower, int24 tickUpper, ) = adapter.positionInfo(ammVault1.tokenId());
+            (int24 tickLower, int24 tickUpper, ) = adapter.positionInfo(ammVault.tokenId());
             (uint160 sqrtPriceX96, int24 spotTick, , , , ) = pool.slot0();
             uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
             (uint256[] memory rv, ) = rootVault.tvl();
-            (uint256[] memory uni, ) = ammVault1.tvl();
+            (uint256[] memory uni, ) = ammVault.tvl();
             uint256 ratio = FullMath.mulDiv(
                 100,
                 FullMath.mulDiv(uni[0], priceX96, Q96) + uni[1],
@@ -321,52 +294,63 @@ contract VeloVaultTest is Test {
             );
             pos = string(abi.encodePacked("{", vm.toString(tickLower), ", ", vm.toString(tickUpper), "}"));
         }
-        console2.log(IERC20Metadata(tokenIn).symbol(), amountIn, spot, pos);
     }
 
-    function movePriceUSDC() public {
-        while (true) {
-            uint256 amountIn = 1e6 * 1e6;
-            deal(usdc, deployer, amountIn);
-            IERC20(usdc).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: usdc,
-                    tokenOut: weth,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            skip(24 * 3600);
-            (, bool flag) = operatorStrategy.calculateExpectedPosition();
-            if (flag) break;
+    function _swapAmount(uint256 amountIn, bool zeroForOne) private {
+        if (amountIn == 0) revert("Insufficient amount for swap");
+        vm.startPrank(deployer);
+        address[] memory tokens = ammVault.vaultTokens();
+        address tokenIn = zeroForOne ? tokens[0] : tokens[1];
+        address tokenOut = zeroForOne ? tokens[1] : tokens[0];
+        deal(tokenIn, deployer, amountIn);
+        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        ISwapRouter(swapRouter).exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                tickSpacing: TICK_SPACING,
+                recipient: deployer,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+                deadline: type(uint256).max
+            })
+        );
+        vm.stopPrank();
+        skip(24 * 3600);
+    }
+
+    function movePrice(int24 targetTick) public {
+        int24 spotTick;
+        (, spotTick, , , , ) = pool.slot0();
+        uint256 usdcAmount = 1e6 * 1e6;
+        uint256 wethAmount = 500 ether;
+        if (spotTick < targetTick) {
+            while (spotTick < targetTick) {
+                _swapAmount(usdcAmount, false);
+                (, spotTick, , , , ) = pool.slot0();
+            }
+        } else {
+            while (spotTick > targetTick) {
+                _swapAmount(wethAmount, true);
+                (, spotTick, , , , ) = pool.slot0();
+            }
         }
-    }
 
-    function movePriceWETH() public {
-        while (true) {
-            uint256 amountIn = 500 ether;
-            deal(weth, deployer, amountIn);
-            IERC20(weth).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: weth,
-                    tokenOut: usdc,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            skip(24 * 3600);
-            (, bool flag) = operatorStrategy.calculateExpectedPosition();
-            if (flag) break;
+        while (spotTick != targetTick) {
+            if (spotTick < targetTick) {
+                while (spotTick < targetTick) {
+                    _swapAmount(usdcAmount, false);
+                    (, spotTick, , , , ) = pool.slot0();
+                }
+                usdcAmount >>= 1;
+            } else {
+                while (spotTick > targetTick) {
+                    _swapAmount(wethAmount, true);
+                    (, spotTick, , , , ) = pool.slot0();
+                }
+                wethAmount >>= 1;
+            }
         }
     }
 
@@ -388,6 +372,7 @@ contract VeloVaultTest is Test {
     }
 
     function normalizePool() public {
+        pool.increaseObservationCardinalityNext(2);
         addLiquidity(-887000, 887000, 1e6);
         (, int24 targetTick, , , , , ) = IUniswapV3Pool(0x85149247691df622eaF1a8Bd0CaFd40BC45154a9).slot0();
         targetTick -= targetTick % TICK_SPACING;
@@ -440,7 +425,7 @@ contract VeloVaultTest is Test {
         skip(3 * 24 * 3600);
     }
 
-    function test() external {
+    function setUp() external {
         vm.startPrank(deployer);
 
         swapRouter = new SwapRouter(positionManager.factory(), weth);
@@ -450,26 +435,167 @@ contract VeloVaultTest is Test {
         deployVaults();
         initializeBaseStrategy();
         initializeOperatorStrategy();
-        deposit(1);
-        // tvls();
-        rebalance();
-        // tvls();
-        deposit(1e6);
-        // tvls();
-        for (uint256 j = 0; j < 5; j++) {
-            for (uint256 i = 0; i < 5; i++) {
-                movePriceUSDC();
-                rebalance();
-                deposit(1e7);
-            }
-            for (uint256 i = 0; i < 5; i++) {
-                movePriceWETH();
-                rebalance();
-                deposit(1e7);
-            }
-        }
         vm.stopPrank();
-        console2.log("Velo balance:", IERC20(velo).balanceOf(address(farm)));
-        console2.log("Reward token:", gauge.rewardToken());
+    }
+
+    function fullInitialization() public {
+        vm.startPrank(deployer);
+        deposit(1);
+        rebalance();
+        deposit(1e6);
+        vm.stopPrank();
+    }
+
+    // test all parameters
+    // test how tvl function works
+    // test pull/push function
+    // test volatile cases
+    // test price movements cases
+
+    function getPositionInfo(uint256 tokenId)
+        public
+        view
+        returns (
+            uint128 liquidity,
+            int24 tickLower,
+            int24 tickUpper
+        )
+    {
+        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(tokenId);
+    }
+
+    function calculateExpectedTvl(
+        uint128 liquidity,
+        int24 tickLower,
+        int24 tickUpper
+    ) public view returns (uint256 amount0, uint256 amount1) {
+        uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+        (uint160 sqrtSpotPriceX96, , , , , ) = pool.slot0();
+        (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            sqrtSpotPriceX96,
+            sqrtLowerPriceX96,
+            sqrtUpperPriceX96,
+            liquidity
+        );
+    }
+
+    function testViewParametersAfterFinalInitialization() external {
+        fullInitialization();
+
+        require(address(ammVault.pool()) == address(pool));
+        require(address(ammVault.helper()) == address(veloHelper));
+        require(address(ammVault.positionManager()) == address(positionManager));
+        require(ammVault.tokenId() != 0);
+        require(address(ammVault.strategyParams().farm) == address(farm));
+        require(address(ammVault.strategyParams().gauge) == address(gauge));
+    }
+
+    function testViewParametersBeforeFinalInitialization() external view {
+        require(address(ammVault.pool()) == address(pool));
+        require(address(ammVault.helper()) == address(veloHelper));
+        require(address(ammVault.positionManager()) == address(positionManager));
+        require(ammVault.tokenId() == 0);
+        require(address(ammVault.strategyParams().farm) == address(farm));
+        require(address(ammVault.strategyParams().gauge) == address(gauge));
+    }
+
+    function testSupportsInterface() external view {
+        require(ammVault.supportsInterface(type(IVault).interfaceId));
+        require(ammVault.supportsInterface(type(IVeloVault).interfaceId));
+        require(!ammVault.supportsInterface(bytes4(uint32(1))));
+    }
+
+    function testTvl() external {
+        {
+            (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
+            require(minTvl.length == 2 && maxTvl.length == 2);
+            require(minTvl[0] == 0 && maxTvl[0] == 0);
+            require(minTvl[1] == 0 && maxTvl[1] == 0);
+        }
+
+        fullInitialization();
+
+        (, int24 initialTick, , , , ) = pool.slot0();
+        (uint128 initialLiquidity, int24 initialTickLower, int24 initialTickUpper) = getPositionInfo(
+            ammVault.tokenId()
+        );
+
+        require(initialTickLower <= initialTick && initialTick <= initialTickUpper);
+        require(initialLiquidity > 0);
+
+        {
+            (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
+            require(minTvl.length == 2 && maxTvl.length == 2);
+            require(minTvl[0] > 0 && maxTvl[0] == minTvl[0]);
+            require(minTvl[1] > 0 && maxTvl[1] == minTvl[1]);
+            (uint128 liquidity, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            require(liquidity == initialLiquidity && tickLower == initialTickLower && tickUpper == initialTickUpper);
+            (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
+            require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
+        }
+
+        movePrice(initialTick - 1000);
+        {
+            (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
+            require(minTvl.length == 2 && maxTvl.length == 2);
+            require(minTvl[0] > 0 && maxTvl[0] == minTvl[0]);
+            require(minTvl[1] == 0 && maxTvl[1] == minTvl[1]);
+            (uint128 liquidity, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            require(liquidity == initialLiquidity && tickLower == initialTickLower && tickUpper == initialTickUpper);
+            (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
+            require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
+        }
+
+        movePrice(initialTick + 1000);
+        {
+            (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
+            require(minTvl.length == 2 && maxTvl.length == 2);
+            require(minTvl[0] == 0 && maxTvl[0] == minTvl[0]);
+            require(minTvl[1] > 0 && maxTvl[1] == minTvl[1]);
+            (uint128 liquidity, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            require(liquidity == initialLiquidity && tickLower == initialTickLower && tickUpper == initialTickUpper);
+            (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
+            require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
+        }
+
+        movePrice(initialTick);
+
+        {
+            (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
+            require(minTvl.length == 2 && maxTvl.length == 2);
+            require(minTvl[0] > 0 && maxTvl[0] == minTvl[0]);
+            require(minTvl[1] > 0 && maxTvl[1] == minTvl[1]);
+            (uint128 liquidity, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            require(liquidity == initialLiquidity && tickLower == initialTickLower && tickUpper == initialTickUpper);
+            (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
+            require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
+        }
+    }
+
+    function testInitilalize() external {
+        try ammVault.initialize(0, new address[](0), 123) {
+            revert();
+        } catch {}
+        try ammVault.initialize(0, ammVault.vaultTokens(), 123) {
+            revert();
+        } catch {}
+        try ammVault.initialize(0, ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
+            revert();
+        } catch {}
+        try ammVault.initialize(ammVault.nft(), ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
+            revert();
+        } catch {}
+        try ammVault.initialize(ammVault.nft() + 1, ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
+            revert();
+        } catch {}
+        try ammVault.initialize(ammVault.nft() + 2, ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
+            revert();
+        } catch {}
+    }
+
+    function testCollectRewards() external {
+        fullInitialization();
+        ammVault.collectRewards();
     }
 }

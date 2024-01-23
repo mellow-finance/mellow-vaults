@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./IAdapter.sol";
+import "../interfaces/adapters/IAdapter.sol";
 
 import "../interfaces/vaults/IUniV3Vault.sol";
 
@@ -108,6 +108,8 @@ contract UniswapV3Adapter is IAdapter {
             // check in different ways
         }
     }
+
+    function getOraclePrice(address pool) external view returns (uint160, int24) {}
 
     function slot0(address poolAddress) external view returns (uint160 sqrtPriceX96, int24 spotTick) {
         (sqrtPriceX96, spotTick, , , , , ) = IUniswapV3Pool(poolAddress).slot0();

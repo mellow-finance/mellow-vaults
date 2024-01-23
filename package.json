@@ -16,6 +16,7 @@
     "test:farm": "forge test --use 0.8.9 -vvvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/farm/*.sol'",
     "test:ramses": "forge test --use 0.8.9 -vvv --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --match-path 'forge-test/ramses/*.sol'",
     "test:velo": "forge test --use 0.8.9 -vvv --rpc-url $(grep OPTIMIS_SPECIAL_RPC .env | cut -d '=' -f2) --match-path 'forge-test/velo/Velo*.sol'",
+    "test:velo:unit": "forge test --use 0.8.9 -vvv --rpc-url $(grep OPTIMIS_SPECIAL_RPC .env | cut -d '=' -f2) --match-path 'forge-test/velo/VeloUnitTests.t.sol'",
     "test:utils": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/utils/*.sol'",
     "deploy:pancake": "forge script --use 0.8.9 src/script/DeployPancakeVault.s.sol:DeployPancakeVault --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "deploy:ramses": "forge script --use 0.8.9 src/script/arbitrum/RamsesStrategyDeployment.s.sol:Deploy --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",

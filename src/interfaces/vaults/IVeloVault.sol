@@ -2,17 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+
+import "./IVeloVaultGovernance.sol";
 import "./IIntegrationVault.sol";
+
 import "../external/velo/INonfungiblePositionManager.sol";
 import "../external/velo/ICLPool.sol";
 
-interface IVeloVault is IERC721Receiver, IIntegrationVault {
-    struct Options {
-        uint256 amount0Min;
-        uint256 amount1Min;
-        uint256 deadline;
-    }
+import "../utils/IVeloHelper.sol";
 
+interface IVeloVault is IERC721Receiver, IIntegrationVault {
     /// @notice Reference to INonfungiblePositionManager of Velodrome protocol.
     function positionManager() external view returns (INonfungiblePositionManager);
 
@@ -21,6 +20,10 @@ interface IVeloVault is IERC721Receiver, IIntegrationVault {
 
     /// @notice NFT of Velo position manager
     function tokenId() external view returns (uint256);
+
+    function helper() external view returns (IVeloHelper);
+
+    function strategyParams() external view returns (IVeloVaultGovernance.StrategyParams memory);
 
     /// @notice Returns tokenAmounts corresponding to liquidity, based on the current Velodrome position
     /// @param liquidity Liquidity that will be converted to token amounts

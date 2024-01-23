@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./IAdapter.sol";
-
 interface IAdapter {
     function mint(
         address poolAddress,
@@ -34,6 +32,9 @@ interface IAdapter {
         view
         returns (uint160 sqrtPriceX96, int24 spotTick);
 
+
+    function getOraclePrice(address pool) external view returns (uint160, int24);
+    
     function slot0(address poolAddress) external view returns (uint160 sqrtPriceX96, int24 spotTick);
 
     function tokenId(address vault) external view returns (uint256);

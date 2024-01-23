@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 
-import "../adapters/IAdapter.sol";
+import "../interfaces/adapters/IAdapter.sol";
 
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/OracleLibrary.sol";

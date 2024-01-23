@@ -8,7 +8,7 @@ import "../interfaces/vaults/IIntegrationVault.sol";
 
 import "../interfaces/utils/ILpCallback.sol";
 
-import "../adapters/IAdapter.sol";
+import "../interfaces/adapters/IAdapter.sol";
 
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/UniswapCalculations.sol";
@@ -213,15 +213,15 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         uint256 swapPriceX96 = FullMath.mulDiv(tokenOutDelta, Q96, tokenInDelta);
         require(
             swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96),
-            "swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96)"
+            ExceptionsLibrary.LIMIT_UNDERFLOW
         );
         (, int24 tickAfter) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
-        if (tick != tickAfter) {
-            if (tick + s.mutableParams.maxTickDeviation < tickAfter)
-                revert("tick + s.mutableParams.maxTickDeviation < tickAfter");
-            if (tickAfter + s.mutableParams.maxTickDeviation < tick)
-                revert("tickAfter + s.mutableParams.maxTickDeviation < tick");
-        }
+        if (tick == tickAfter) return;
+        require(
+            tick + s.mutableParams.maxTickDeviation >= tickAfter &&
+                tickAfter + s.mutableParams.maxTickDeviation >= tick,
+            ExceptionsLibrary.LIMIT_OVERFLOW
+        );
     }
 
     function _pushIntoPositions(
@@ -272,7 +272,6 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
 
     function _ratioRebalance(Position[] memory targetState, Storage memory s) private {
         uint256 n = s.immutableParams.ammVaults.length;
-        (uint160 sqrtRatioX96, ) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
         uint256[][] memory tvls = new uint256[][](n);
         (uint256[] memory totalTvl, ) = s.immutableParams.erc20Vault.tvl();
         for (uint256 i = 0; i < n; i++) {
@@ -282,6 +281,7 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
             tvls[i] = tvl;
         }
 
+        (uint160 sqrtRatioX96, ) = s.immutableParams.adapter.getOraclePrice(s.immutableParams.pool);
         uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
         uint256 capitalInToken1 = FullMath.mulDiv(totalTvl[0], priceX96, Q96) + totalTvl[1];
         _pushIntoPositions(

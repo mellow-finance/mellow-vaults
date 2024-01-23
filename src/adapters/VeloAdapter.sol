@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./IAdapter.sol";
+import "../interfaces/adapters/IAdapter.sol";
 
 import "../interfaces/vaults/IVeloVault.sol";
 
@@ -14,6 +14,7 @@ import "../libraries/CommonLibrary.sol";
 contract VeloAdapter is IAdapter {
     error InvalidParams();
     error PriceManipulationDetected();
+    error NotEnoughObservations();
 
     using SafeERC20 for IERC20;
 
@@ -120,7 +121,7 @@ contract VeloAdapter is IAdapter {
         uint16 observationIndex;
         uint16 observationCardinality;
         (sqrtPriceX96, spotTick, observationIndex, observationCardinality, , ) = ICLPool(poolAddress).slot0();
-        if (observationCardinality < timestamps.length) revert InvalidParams();
+        if (observationCardinality < timestamps.length) revert NotEnoughObservations();
         for (uint16 i = 0; i < timestamps.length; i++) {
             uint16 index = (observationCardinality + observationIndex - i) % observationCardinality;
             (timestamps[i], tickCumulatives[i], , ) = ICLPool(poolAddress).observations(index);
@@ -148,6 +149,29 @@ contract VeloAdapter is IAdapter {
         ) {
             revert PriceManipulationDetected();
         }
+    }
+
+    function getOraclePrice(address pool) external view override returns (uint160, int24) {
+        (
+            uint160 spotSqrtPriceX96,
+            int24 spotTick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            ,
+
+        ) = ICLPool(pool).slot0();
+        if (observationCardinality < 2) revert NotEnoughObservations();
+        (uint32 blockTimestamp, int56 tickCumulative, , ) = ICLPool(pool).observations(observationIndex);
+        if (block.timestamp != blockTimestamp) return (spotSqrtPriceX96, spotTick);
+        uint16 previousObservationIndex = observationCardinality - 1;
+        if (observationIndex != 0) previousObservationIndex = observationIndex - 1;
+        (uint32 previousBlockTimestamp, int56 previousTickCumulative, , ) = ICLPool(pool).observations(
+            observationIndex
+        );
+        int56 tickCumulativesDelta = tickCumulative - previousTickCumulative;
+        int24 tick = int24(tickCumulativesDelta / int56(uint56(blockTimestamp - previousBlockTimestamp)));
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        return (sqrtPriceX96, tick);
     }
 
     function slot0(address poolAddress) public view returns (uint160 sqrtPriceX96, int24 spotTick) {

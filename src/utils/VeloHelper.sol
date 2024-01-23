@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "../interfaces/external/velo/ICLPool.sol";
-import "../interfaces/external/velo/ICLFactory.sol";
-import "../interfaces/external/velo/INonfungiblePositionManager.sol";
+import "../interfaces/utils/IVeloHelper.sol";
 
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 
-contract VeloHelper {
+contract VeloHelper is IVeloHelper {
     INonfungiblePositionManager public immutable positionManager;
 
     constructor(INonfungiblePositionManager positionManager_) {

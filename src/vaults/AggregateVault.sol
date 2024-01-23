@@ -38,12 +38,7 @@ contract AggregateVault is IAggregateVault, Vault {
     }
 
     /// @inheritdoc IVault
-    function tvl()
-        public
-        view
-        override(IVault, Vault)
-        returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts)
-    {
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory vaultTokens = _vaultTokens;
         minTokenAmounts = new uint256[](vaultTokens.length);

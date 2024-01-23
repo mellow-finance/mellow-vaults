@@ -21,7 +21,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
     ICLPool public pool;
     uint256 public tokenId;
 
-    VeloHelper public immutable helper;
+    IVeloHelper public immutable helper;
     INonfungiblePositionManager public immutable positionManager;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -63,7 +63,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
         address[] memory vaultTokens_,
         int24 tickSpacing_
     ) external override {
-        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
+        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         _initialize(vaultTokens_, nft_);
         pool = ICLPool(ICLFactory(positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], tickSpacing_));
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
@@ -76,12 +76,10 @@ contract VeloVault is IVeloVault, IntegrationVault {
         bytes memory
     ) external returns (bytes4) {
         if (from == strategyParams().gauge) {
-            // unstaking scenario
-            require(from == operator, ExceptionsLibrary.FORBIDDEN);
+            require(from == operator && tokenId_ == tokenId, ExceptionsLibrary.FORBIDDEN);
             return this.onERC721Received.selector;
         }
-        require(msg.sender == address(positionManager), ExceptionsLibrary.FORBIDDEN);
-        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
+        require(msg.sender == address(positionManager) && _isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, int24 tickSpacing, , , , , , , ) = positionManager.positions(tokenId_);
         // new position should have vault tokens
         require(
@@ -90,11 +88,8 @@ contract VeloVault is IVeloVault, IntegrationVault {
         );
 
         if (tokenId != 0) {
-            (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = positionManager.positions(
-                tokenId
-            );
-            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.INVALID_VALUE);
-            // return previous velo position nft
+            (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(tokenId);
+            require(liquidity == 0, ExceptionsLibrary.INVALID_VALUE);
             positionManager.transferFrom(address(this), from, tokenId);
         }
 
@@ -129,11 +124,18 @@ contract VeloVault is IVeloVault, IntegrationVault {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _parseOptions(bytes memory options) internal pure returns (Options memory) {
-        if (options.length == 0) return Options({amount0Min: 0, amount1Min: 0, deadline: type(uint256).max});
-
+    function _parseOptions(bytes memory options)
+        internal
+        pure
+        returns (
+            uint256 amount0Min,
+            uint256 amount1Min,
+            uint256 deadline
+        )
+    {
+        if (options.length == 0) return (0, 0, type(uint256).max);
         require(options.length == 32 * 3, ExceptionsLibrary.INVALID_VALUE);
-        return abi.decode(options, (Options));
+        return abi.decode(options, (uint256, uint256, uint256));
     }
 
     function _isStrategy(address addr) internal view returns (bool) {
@@ -157,15 +159,15 @@ contract VeloVault is IVeloVault, IntegrationVault {
             IERC20(tokens[i]).safeIncreaseAllowance(address(gauge), tokenAmounts[i]);
         }
 
-        Options memory opts = _parseOptions(options);
+        (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
         uint256[] memory actualAmounts = new uint256[](2);
         (, actualAmounts[0], actualAmounts[1]) = ICLGauge(gauge).increaseStakedLiquidity(
             tokenId,
             tokenAmounts[0],
             tokenAmounts[1],
-            opts.amount0Min,
-            opts.amount1Min,
-            opts.deadline
+            amount0Min,
+            amount1Min,
+            deadline
         );
 
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -181,13 +183,13 @@ contract VeloVault is IVeloVault, IntegrationVault {
     ) internal override returns (uint256[] memory) {
         uint256 tokenId_ = tokenId;
         if (tokenId_ == 0) return new uint256[](2);
-        return _pullTokenId(to, tokenAmounts, _parseOptions(options), tokenId_);
+        return _pullTokenId(to, tokenAmounts, options, tokenId_);
     }
 
     function _pullTokenId(
         address to,
         uint256[] memory tokenAmounts,
-        Options memory opts,
+        bytes memory options,
         uint256 tokenId_
     ) internal returns (uint256[] memory actualAmounts) {
         uint128 liquidityToPull;
@@ -206,21 +208,20 @@ contract VeloVault is IVeloVault, IntegrationVault {
             liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
         }
 
-        address gauge = strategyParams().gauge;
         actualAmounts = new uint256[](2);
         if (liquidityToPull != 0) {
+            (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
+            address gauge = strategyParams().gauge;
             (actualAmounts[0], actualAmounts[1]) = ICLGauge(gauge).decreaseStakedLiquidity(
                 tokenId_,
                 liquidityToPull,
-                opts.amount0Min,
-                opts.amount1Min,
-                opts.deadline
+                amount0Min,
+                amount1Min,
+                deadline
             );
-            if (actualAmounts[0] > 0) {
-                IERC20(pool.token0()).safeTransfer(to, actualAmounts[0]);
-            }
-            if (actualAmounts[1] > 0) {
-                IERC20(pool.token1()).safeTransfer(to, actualAmounts[1]);
+            address[] memory tokens = _vaultTokens;
+            for (uint256 i = 0; i < 2; i++) {
+                if (actualAmounts[i] > 0) IERC20(tokens[i]).safeTransfer(to, actualAmounts[i]);
             }
         }
 
