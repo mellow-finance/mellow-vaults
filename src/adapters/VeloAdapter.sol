@@ -12,14 +12,19 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/CommonLibrary.sol";
 
 contract VeloAdapter is IAdapter {
+    error InvalidParams();
+    error PriceManipulationDetected();
+
     using SafeERC20 for IERC20;
 
     struct SecurityParams {
-        uint16[] observationAgos;
-        uint256 deviationMultiplierX96;
+        uint16 anomalyLookback;
+        uint16 anomalyOrder;
+        uint256 anomalyFactorD9;
     }
 
     uint256 public constant Q96 = 2**96;
+    uint256 public constant D9 = 1e9;
 
     INonfungiblePositionManager public immutable positionManager;
 
@@ -62,6 +67,9 @@ contract VeloAdapter is IAdapter {
                 recipient: recipient
             })
         );
+
+        IERC20(pool.token0()).safeApprove(address(positionManager), 0);
+        IERC20(pool.token1()).safeApprove(address(positionManager), 0);
     }
 
     function swapNft(
@@ -100,51 +108,55 @@ contract VeloAdapter is IAdapter {
         return IVeloVault(vault).tokenId();
     }
 
-    function slot0EnsureNoMEV(address poolAddress, bytes memory securityParams)
+    function slot0EnsureNoMEV(address poolAddress, bytes memory params)
         external
         view
         returns (uint160 sqrtPriceX96, int24 spotTick)
     {
+        if (params.length == 0) return slot0(poolAddress);
+        SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
+        uint32[] memory timestamps = new uint32[](securityParams.anomalyLookback + 2);
+        int56[] memory tickCumulatives = new int56[](timestamps.length);
         uint16 observationIndex;
         uint16 observationCardinality;
         (sqrtPriceX96, spotTick, observationIndex, observationCardinality, , ) = ICLPool(poolAddress).slot0();
-        if (securityParams.length == 0) return (sqrtPriceX96, spotTick);
-        SecurityParams memory params = abi.decode(securityParams, (SecurityParams));
-        int24[] memory observations = new int24[](params.observationAgos.length - 1);
-        uint32 lastTimestamp;
-        int56 lastCumulativeTick;
-        for (uint256 i = 0; i <= observations.length; i++) {
-            require(params.observationAgos[i] < observationCardinality, "Invalid index");
+        if (observationCardinality < timestamps.length) revert InvalidParams();
+        for (uint16 i = 0; i < timestamps.length; i++) {
+            uint16 index = (observationCardinality + observationIndex - i) % observationCardinality;
+            (timestamps[i], tickCumulatives[i], , ) = ICLPool(poolAddress).observations(index);
+        }
 
-            uint256 index = (observationCardinality + observationIndex - params.observationAgos[i]) %
-                observationCardinality;
-            (uint32 timestamp, int56 tickCumulative, , bool initialized) = ICLPool(poolAddress).observations(index);
-            require(initialized, "Invalid index");
-            if (i > 0) {
-                observations[i - 1] = int24(
-                    (tickCumulative - lastCumulativeTick) / (int32(timestamp) - int32(lastTimestamp))
-                );
-            }
-            lastTimestamp = timestamp;
-            lastCumulativeTick = tickCumulative;
+        int24[] memory ticks = new int24[](timestamps.length);
+        ticks[0] = spotTick;
+        for (uint256 i = 0; i + 1 < timestamps.length - 1; i++) {
+            ticks[i + 1] = int24(
+                (tickCumulatives[i] - tickCumulatives[i + 1]) / int56(uint56(timestamps[i] - timestamps[i + 1]))
+            );
         }
-        uint256[] memory deviations = new uint256[](observations.length - 1);
-        for (uint256 i = 0; i < observations.length - 1; i++) {
-            int56 deviation = observations[i + 1] - observations[i];
-            if (deviation < 0) deviation = -deviation;
-            deviations[i] = uint56(deviation);
+
+        uint256[] memory deltas = new uint256[](securityParams.anomalyLookback + 1);
+        for (uint256 i = 0; i < deltas.length; i++) {
+            int24 delta = ticks[i] - ticks[i + 1];
+            if (delta > 0) delta = -delta;
+            deltas[i] = uint256(uint24(delta));
         }
-        // TODO: rewrite with Euler`s logic
-        // uint256 median = CommonLibrary.getMedianValue(deviations);
-        // int24 maxDeviation = int24(int256(FullMath.mulDiv(median, params.deviationMultiplierX96, Q96)));
-        // for (uint256 i = 0; i < observations.length; i++) {
-        //     int24 deviation = spotTick - observations[i];
-        //     if (deviation < 0) deviation = -deviation;
-        //     if (deviation > maxDeviation) revert("MEV detected");
-        // }
+
+        CommonLibrary.sortUint(deltas);
+        if (
+            deltas[deltas.length - 1] >
+            FullMath.mulDiv(deltas[securityParams.anomalyOrder], securityParams.anomalyFactorD9, D9)
+        ) {
+            revert PriceManipulationDetected();
+        }
     }
 
-    function slot0(address poolAddress) external view returns (uint160 sqrtPriceX96, int24 spotTick) {
+    function slot0(address poolAddress) public view returns (uint160 sqrtPriceX96, int24 spotTick) {
         (sqrtPriceX96, spotTick, , , , ) = ICLPool(poolAddress).slot0();
+    }
+
+    function validateSecurityParams(bytes memory params) external pure {
+        SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
+        if (securityParams.anomalyLookback <= securityParams.anomalyOrder) revert InvalidParams();
+        if (securityParams.anomalyFactorD9 > D9 * 10) revert InvalidParams();
     }
 }

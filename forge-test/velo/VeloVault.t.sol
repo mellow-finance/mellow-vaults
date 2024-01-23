@@ -11,7 +11,7 @@ import "./../../src/strategies/BaseAMMStrategy.sol";
 
 import "./../../src/test/MockRouter.sol";
 
-import "./../../src/utils/DepositWrapper.sol";
+import "./../../src/utils/VeloDepositWrapper.sol";
 import "./../../src/utils/VeloHelper.sol";
 import "./../../src/utils/VeloFarm.sol";
 
@@ -46,7 +46,7 @@ contract VeloVaultTest is Test {
 
     address public weth = 0x4200000000000000000000000000000000000006;
     address public usdc = 0x7F5c764cBc14f9669B88837ca1490cCa17c31607;
-    address public velo = 0x3c8B650257cFb5f272f799F5e2b4e65093a11a05;
+    address public velo = 0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db;
 
     address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
     address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
@@ -66,7 +66,7 @@ contract VeloVaultTest is Test {
 
     VeloHelper public veloHelper = new VeloHelper(positionManager);
 
-    DepositWrapper public depositWrapper = new DepositWrapper(deployer);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
     BaseAMMStrategy public strategy = new BaseAMMStrategy();
 
     uint256 public constant Q96 = 2**96;
@@ -184,10 +184,10 @@ contract VeloVaultTest is Test {
 
     VeloAdapter public adapter = new VeloAdapter(positionManager);
 
-    function initializeStrategy() public {
+    function initializeBaseStrategy() public {
         uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e6;
-        minSwapAmounts[1] = 1e8;
+        minSwapAmounts[0] = 1e16;
+        minSwapAmounts[1] = 1e7;
 
         IIntegrationVault[] memory ammVaults = new IIntegrationVault[](2);
         ammVaults[0] = ammVault1;
@@ -203,10 +203,10 @@ contract VeloVaultTest is Test {
             }),
             BaseAMMStrategy.MutableParams({
                 securityParams: new bytes(0),
-                maxPriceSlippageX96: Q96 / 100,
-                maxTickDeviation: 5,
+                maxPriceSlippageX96: (2 * Q96) / 100,
+                maxTickDeviation: 50,
                 minCapitalRatioDeviationX96: Q96 / 100,
-                minSwapAmounts: new uint256[](2),
+                minSwapAmounts: minSwapAmounts,
                 maxCapitalRemainderRatioX96: Q96,
                 initialLiquidity: 1e9
             })
@@ -225,22 +225,22 @@ contract VeloVaultTest is Test {
             for (uint256 i = 0; i < tokens.length; i++) {
                 IERC20(tokens[i]).approve(address(depositWrapper), type(uint256).max);
             }
-            depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
+            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), false);
         } else {
-            depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
+            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), true);
         }
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
     PulseOperatorStrategy public operatorStrategy;
 
-    function initOperatorStrategy() public {
+    function initializeOperatorStrategy() public {
         operatorStrategy = new PulseOperatorStrategy();
         operatorStrategy.initialize(
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
                 intervalWidth: 200,
-                maxPositionLengthInTicks: 200,
+                maxPositionLengthInTicks: 400,
                 extensionFactorD: 1e9,
                 neighborhoodFactorD: 1e8
             }),
@@ -253,7 +253,7 @@ contract VeloVaultTest is Test {
         deal(weth, address(strategy), 1e15);
     }
 
-    function tvls() public {
+    function tvls() public view {
         {
             (uint256[] memory tvl, ) = erc20Vault.tvl();
             console2.log("Erc20 vault tvl:", tvl[0], tvl[1]);
@@ -392,7 +392,7 @@ contract VeloVaultTest is Test {
         (, int24 targetTick, , , , , ) = IUniswapV3Pool(0x85149247691df622eaF1a8Bd0CaFd40BC45154a9).slot0();
         targetTick -= targetTick % TICK_SPACING;
         for (int24 i = 1; i <= 10; i++) {
-            addLiquidity(targetTick - i * TICK_SPACING, targetTick + i * TICK_SPACING, 1e17);
+            addLiquidity(targetTick - i * TICK_SPACING, targetTick + i * TICK_SPACING, 1e19);
         }
 
         uint256 amountIn = 1e6 * 1e6;
@@ -437,7 +437,7 @@ contract VeloVaultTest is Test {
             );
             (, spotTick, , , , ) = pool.slot0();
         }
-        skip(24 * 3600);
+        skip(3 * 24 * 3600);
     }
 
     function test() external {
@@ -448,26 +448,28 @@ contract VeloVaultTest is Test {
 
         deployGovernance();
         deployVaults();
-        initializeStrategy();
-        initOperatorStrategy();
+        initializeBaseStrategy();
+        initializeOperatorStrategy();
         deposit(1);
-        tvls();
+        // tvls();
         rebalance();
-        tvls();
+        // tvls();
         deposit(1e6);
-        tvls();
-        for (uint256 j = 0; j < 4; j++) {
-            for (uint256 i = 0; i < 4; i++) {
+        // tvls();
+        for (uint256 j = 0; j < 5; j++) {
+            for (uint256 i = 0; i < 5; i++) {
                 movePriceUSDC();
                 rebalance();
                 deposit(1e7);
             }
-            for (uint256 i = 0; i < 4; i++) {
+            for (uint256 i = 0; i < 5; i++) {
                 movePriceWETH();
                 rebalance();
                 deposit(1e7);
             }
         }
         vm.stopPrank();
+        console2.log("Velo balance:", IERC20(velo).balanceOf(address(farm)));
+        console2.log("Reward token:", gauge.rewardToken());
     }
 }

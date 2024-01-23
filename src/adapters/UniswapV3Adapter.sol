@@ -112,4 +112,6 @@ contract UniswapV3Adapter is IAdapter {
     function slot0(address poolAddress) external view returns (uint160 sqrtPriceX96, int24 spotTick) {
         (sqrtPriceX96, spotTick, , , , , ) = IUniswapV3Pool(poolAddress).slot0();
     }
+
+    function validateSecurityParams(bytes memory params) external pure {}
 }

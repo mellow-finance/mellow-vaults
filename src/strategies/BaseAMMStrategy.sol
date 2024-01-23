@@ -213,13 +213,14 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
         uint256 swapPriceX96 = FullMath.mulDiv(tokenOutDelta, Q96, tokenInDelta);
         require(
             swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96),
-            ExceptionsLibrary.LIMIT_OVERFLOW
+            "swapPriceX96 >= FullMath.mulDiv(priceBeforeX96, Q96 - s.mutableParams.maxPriceSlippageX96, Q96)"
         );
-
         (, int24 tickAfter) = s.immutableParams.adapter.slot0(s.immutableParams.pool);
         if (tick != tickAfter) {
-            if (tick + s.mutableParams.maxTickDeviation < tickAfter) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
-            if (tickAfter + s.mutableParams.maxTickDeviation < tick) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
+            if (tick + s.mutableParams.maxTickDeviation < tickAfter)
+                revert("tick + s.mutableParams.maxTickDeviation < tickAfter");
+            if (tickAfter + s.mutableParams.maxTickDeviation < tick)
+                revert("tickAfter + s.mutableParams.maxTickDeviation < tick");
         }
     }
 
