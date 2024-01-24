@@ -610,14 +610,29 @@ contract UnitTest is Test {
 
     function testStakeTokenId() external {
         fullInitialization();
-        // ammVault.unstakeTokenId();
-        // ammVault.stakeTokenId();
-    }
 
-    function testUnstakeTokenId() external {
-        fullInitialization();
-        // ammVault.unstakeTokenId();
-        // ammVault.stakeTokenId();
+        vm.startPrank(address(strategy));
+
+        uint256 tokenId = ammVault.tokenId();
+
+        assertTrue(gauge.stakedContains(address(ammVault), tokenId));
+        assertEq(positionManager.ownerOf(tokenId), address(gauge));
+
+        ammVault.unstakeTokenId();
+        assertFalse(gauge.stakedContains(address(ammVault), tokenId));
+        assertEq(positionManager.ownerOf(tokenId), address(ammVault));
+        try ammVault.unstakeTokenId() {
+            revert();
+        } catch {}
+
+        ammVault.stakeTokenId();
+        assertTrue(gauge.stakedContains(address(ammVault), tokenId));
+        assertEq(positionManager.ownerOf(tokenId), address(gauge));
+        try ammVault.stakeTokenId() {
+            revert();
+        } catch {}
+
+        vm.stopPrank();
     }
 
     function _testPush(int24 q) private {
