@@ -14,6 +14,8 @@ import "./IntegrationVault.sol";
 
 import "../utils/VeloHelper.sol";
 
+import "forge-std/src/console2.sol";
+
 /// @notice Vault that interfaces Velodrome protocol in the integration layer.
 contract VeloVault is IVeloVault, IntegrationVault {
     using SafeERC20 for IERC20;
@@ -198,13 +200,16 @@ contract VeloVault is IVeloVault, IntegrationVault {
                 tokenId_
             );
             (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
-            liquidityToPull = helper.tokenAmountsToMaximalLiquidity(
-                sqrtPriceX96,
-                tickLower,
-                tickUpper,
-                tokenAmounts[0],
-                tokenAmounts[1]
-            );
+            liquidityToPull =
+                helper.tokenAmountsToMaximalLiquidity(
+                    sqrtPriceX96,
+                    tickLower,
+                    tickUpper,
+                    tokenAmounts[0],
+                    tokenAmounts[1]
+                ) +
+                1;
+
             liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
         }
 
@@ -225,7 +230,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
             }
         }
 
-        actualAmounts[0] = actualAmounts[0] > tokenAmounts[0] ? tokenAmounts[0] : actualAmounts[0];
-        actualAmounts[1] = actualAmounts[1] > tokenAmounts[1] ? tokenAmounts[1] : actualAmounts[1];
+        // actualAmounts[0] = actualAmounts[0] > tokenAmounts[0] ? tokenAmounts[0] : actualAmounts[0];
+        // actualAmounts[1] = actualAmounts[1] > tokenAmounts[1] ? tokenAmounts[1] : actualAmounts[1];
     }
 }

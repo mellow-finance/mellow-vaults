@@ -165,8 +165,9 @@ contract VeloAdapter is IAdapter {
         if (block.timestamp != blockTimestamp) return (spotSqrtPriceX96, spotTick);
         uint16 previousObservationIndex = observationCardinality - 1;
         if (observationIndex != 0) previousObservationIndex = observationIndex - 1;
+        if (previousObservationIndex == observationCardinality) revert NotEnoughObservations();
         (uint32 previousBlockTimestamp, int56 previousTickCumulative, , ) = ICLPool(pool).observations(
-            observationIndex
+            previousObservationIndex
         );
         int56 tickCumulativesDelta = tickCumulative - previousTickCumulative;
         int24 tick = int24(tickCumulativesDelta / int56(uint56(blockTimestamp - previousBlockTimestamp)));

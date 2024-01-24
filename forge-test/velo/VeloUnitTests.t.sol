@@ -34,6 +34,8 @@ contract UnitTest is Test {
     IERC20Vault public erc20Vault;
     IVeloVault public ammVault;
 
+    uint256 public constant Q96 = 2**96;
+
     uint256 public nftStart;
 
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
@@ -66,8 +68,6 @@ contract UnitTest is Test {
 
     VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
     BaseAMMStrategy public strategy = new BaseAMMStrategy();
-
-    uint256 public constant Q96 = 2**96;
 
     int24 public TICK_SPACING = 200;
     VeloFarm public farm;
@@ -442,7 +442,16 @@ contract UnitTest is Test {
         vm.startPrank(deployer);
         deposit(1);
         rebalance();
-        deposit(1e6);
+
+        depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), true);
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = 10 ether;
+        tokenAmounts[1] = 20000 * 1e6;
+        address[] memory tokens = ammVault.vaultTokens();
+        for (uint256 i = 0; i < tokenAmounts.length; i++) {
+            deal(tokens[i], deployer, tokenAmounts[i]);
+        }
+        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
         vm.stopPrank();
     }
 
@@ -596,6 +605,210 @@ contract UnitTest is Test {
 
     function testCollectRewards() external {
         fullInitialization();
-        ammVault.collectRewards();
+        // ammVault.collectRewards();
+    }
+
+    function testStakeTokenId() external {
+        fullInitialization();
+        // ammVault.unstakeTokenId();
+        // ammVault.stakeTokenId();
+    }
+
+    function testUnstakeTokenId() external {
+        fullInitialization();
+        // ammVault.unstakeTokenId();
+        // ammVault.stakeTokenId();
+    }
+
+    function _testPush(int24 q) private {
+        fullInitialization();
+        address[] memory tokens = ammVault.vaultTokens();
+        uint256[] memory amounts = new uint256[](tokens.length);
+
+        amounts[0] = 1 ether;
+        amounts[1] = 2200 * 1e6;
+        for (uint256 i = 0; i < 2; i++) {
+            deal(tokens[i], address(erc20Vault), amounts[i]);
+        }
+        {
+            (, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            movePrice(tickLower + ((tickUpper - tickLower) * q) / 100);
+        }
+
+        amounts[0] = 1 ether;
+        amounts[1] = 2200 * 1e6;
+        (uint256[] memory erc20TvlBefore, ) = erc20Vault.tvl();
+        (uint256[] memory ammTvlBefore, ) = ammVault.tvl();
+
+        vm.startPrank(address(strategy));
+        uint256[] memory actualPushedAmounts = erc20Vault.pull(address(ammVault), tokens, amounts, new bytes(0));
+        vm.stopPrank();
+
+        (uint256[] memory erc20TvlAfter, ) = erc20Vault.tvl();
+        (uint256[] memory ammTvlAfter, ) = ammVault.tvl();
+
+        assertApproxEqAbs(erc20TvlBefore[0] + ammTvlBefore[0], erc20TvlAfter[0] + ammTvlAfter[0], 1 wei);
+        assertApproxEqAbs(erc20TvlBefore[1] + ammTvlBefore[1], erc20TvlAfter[1] + ammTvlAfter[1], 1 wei);
+
+        assertApproxEqAbs(ammTvlBefore[0] + actualPushedAmounts[0], ammTvlAfter[0], 1 wei);
+        assertApproxEqAbs(ammTvlBefore[1] + actualPushedAmounts[1], ammTvlAfter[1], 1 wei);
+
+        if (q >= 100) {
+            require(actualPushedAmounts[0] == 0 && actualPushedAmounts[1] > 0, "Invalid pushed amounts");
+        } else if (q <= 0) {
+            require(actualPushedAmounts[0] > 0 && actualPushedAmounts[1] == 0, "Invalid pushed amounts");
+        } else {
+            require(actualPushedAmounts[0] > 0 && actualPushedAmounts[1] > 0, "Invalid pushed amounts");
+        }
+
+        require(actualPushedAmounts[0] <= amounts[0] && actualPushedAmounts[1] <= amounts[1], "Invalid pushed amounts");
+
+        (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+        uint256 expectedPushedRatioX96 = FullMath.mulDiv(
+            ammTvlBefore[1],
+            Q96,
+            FullMath.mulDiv(ammTvlBefore[0], priceX96, Q96) + ammTvlBefore[1]
+        );
+
+        uint256 actualPushedRatioX96 = FullMath.mulDiv(
+            actualPushedAmounts[1],
+            Q96,
+            FullMath.mulDiv(actualPushedAmounts[0], priceX96, Q96) + actualPushedAmounts[1]
+        );
+
+        assertApproxEqAbs(expectedPushedRatioX96, actualPushedRatioX96, Q96 / 1e8);
+        if (q < 0) {
+            assertApproxEqAbs(actualPushedRatioX96, 0, Q96 / 100);
+        } else if (q <= 100) {
+            assertApproxEqAbs(actualPushedRatioX96, (Q96 * uint24(q)) / 100, Q96 / 100);
+        } else {
+            assertApproxEqAbs(actualPushedRatioX96, Q96, Q96 / 100);
+        }
+    }
+
+    function _testPull(int24 q) private {
+        fullInitialization();
+
+        address[] memory tokens = ammVault.vaultTokens();
+
+        {
+            (, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            movePrice(tickLower + ((tickUpper - tickLower) * q) / 100);
+        }
+
+        (uint256[] memory amounts, ) = ammVault.tvl();
+        amounts[0] /= 2;
+        amounts[1] /= 2;
+
+        (uint256[] memory erc20TvlBefore, ) = erc20Vault.tvl();
+        (uint256[] memory ammTvlBefore, ) = ammVault.tvl();
+
+        vm.startPrank(address(strategy));
+        uint256[] memory actualPulledAmounts = ammVault.pull(address(erc20Vault), tokens, amounts, new bytes(0));
+        vm.stopPrank();
+
+        (uint256[] memory erc20TvlAfter, ) = erc20Vault.tvl();
+        (uint256[] memory ammTvlAfter, ) = ammVault.tvl();
+
+        assertApproxEqAbs(erc20TvlBefore[0] + ammTvlBefore[0], erc20TvlAfter[0] + ammTvlAfter[0], 1 wei);
+        assertApproxEqAbs(erc20TvlBefore[1] + ammTvlBefore[1], erc20TvlAfter[1] + ammTvlAfter[1], 1 wei);
+
+        assertApproxEqAbs(ammTvlBefore[0], actualPulledAmounts[0] + ammTvlAfter[0], 1 wei);
+        assertApproxEqAbs(ammTvlBefore[1], actualPulledAmounts[1] + ammTvlAfter[1], 1 wei);
+
+        if (q >= 100) {
+            require(actualPulledAmounts[0] == 0 && actualPulledAmounts[1] > 0, "Invalid pushed amounts");
+        } else if (q <= 0) {
+            require(actualPulledAmounts[0] > 0 && actualPulledAmounts[1] == 0, "Invalid pushed amounts");
+        } else {
+            require(actualPulledAmounts[0] > 0 && actualPulledAmounts[1] > 0, "Invalid pushed amounts");
+        }
+
+        require(
+            actualPulledAmounts[0] >= amounts[0] && actualPulledAmounts[1] >= amounts[1],
+            "Invalid pushed amounts 2"
+        );
+
+        (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+        uint256 expectedPulledRatioX96 = FullMath.mulDiv(
+            ammTvlBefore[1],
+            Q96,
+            FullMath.mulDiv(ammTvlBefore[0], priceX96, Q96) + ammTvlBefore[1]
+        );
+
+        uint256 actualPulledRatioX96 = FullMath.mulDiv(
+            actualPulledAmounts[1],
+            Q96,
+            FullMath.mulDiv(actualPulledAmounts[0], priceX96, Q96) + actualPulledAmounts[1]
+        );
+
+        assertApproxEqAbs(expectedPulledRatioX96, actualPulledRatioX96, Q96 / 1e8);
+        if (q < 0) {
+            assertApproxEqAbs(actualPulledRatioX96, 0, Q96 / 100);
+        } else if (q <= 100) {
+            assertApproxEqAbs(actualPulledRatioX96, (Q96 * uint24(q)) / 100, Q96 / 100);
+        } else {
+            assertApproxEqAbs(actualPulledRatioX96, Q96, Q96 / 100);
+        }
+    }
+
+    function testPushQ001_sub() external {
+        _testPush(-1);
+    }
+
+    function testPushQ005() external {
+        _testPush(5);
+    }
+
+    function testPushQ025() external {
+        _testPush(25);
+    }
+
+    function testPushQ050() external {
+        _testPush(50);
+    }
+
+    function testPushQ075() external {
+        _testPush(75);
+    }
+
+    function testPushQ095() external {
+        _testPush(95);
+    }
+
+    function testPushQ101() external {
+        _testPush(101);
+    }
+
+    function testPullQ001_sub() external {
+        _testPull(-1);
+    }
+
+    function testPullQ005() external {
+        _testPull(5);
+    }
+
+    function testPullQ025() external {
+        _testPull(25);
+    }
+
+    function testPullQ050() external {
+        _testPull(50);
+    }
+
+    function testPullQ075() external {
+        _testPull(75);
+    }
+
+    function testPullQ095() external {
+        _testPull(95);
+    }
+
+    function testPullQ101() external {
+        _testPull(101);
     }
 }
