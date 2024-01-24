@@ -66,9 +66,9 @@ contract VeloVault is IVeloVault, IntegrationVault {
         int24 tickSpacing_
     ) external override {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        _initialize(vaultTokens_, nft_);
-        pool = ICLPool(ICLFactory(positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], tickSpacing_));
+        pool = ICLPool(ICLFactory(positionManager.factory()).getPool(vaultTokens_[0], vaultTokens_[1], tickSpacing_));
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
+        _initialize(vaultTokens_, nft_);
     }
 
     function onERC721Received(

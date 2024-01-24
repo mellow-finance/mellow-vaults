@@ -93,6 +93,7 @@ contract VeloFarm is DefaultAccessControl, ERC20 {
                     uint256 fee = FullMath.mulDiv(amount, protocolFeeD9_, D9);
                     if (fee > 0) {
                         IERC20(rewardToken).safeTransfer(protocolTreasury, fee);
+                        amount -= fee;
                     }
                 }
                 _epochs.push(Epoch({amount: amount, totalSupply: totalSupply_}));

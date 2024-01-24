@@ -30,6 +30,8 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
 contract UnitTest is Test {
+    using SafeERC20 for IERC20;
+
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
     IVeloVault public ammVault;
@@ -40,7 +42,9 @@ contract UnitTest is Test {
 
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
+    address public deployerTreasury = address(bytes20(keccak256("treasury-deployer")));
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
+    address public user = address(bytes20(keccak256("user-1")));
 
     uint256 public protocolFeeD9 = 1e8; // 10%
 
@@ -455,12 +459,6 @@ contract UnitTest is Test {
         vm.stopPrank();
     }
 
-    // test all parameters
-    // test how tvl function works
-    // test pull/push function
-    // test volatile cases
-    // test price movements cases
-
     function getPositionInfo(uint256 tokenId)
         public
         view
@@ -583,29 +581,104 @@ contract UnitTest is Test {
     }
 
     function testInitilalize() external {
-        try ammVault.initialize(0, new address[](0), 123) {
-            revert();
-        } catch {}
-        try ammVault.initialize(0, ammVault.vaultTokens(), 123) {
-            revert();
-        } catch {}
-        try ammVault.initialize(0, ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
-            revert();
-        } catch {}
-        try ammVault.initialize(ammVault.nft(), ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
-            revert();
-        } catch {}
-        try ammVault.initialize(ammVault.nft() + 1, ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
-            revert();
-        } catch {}
-        try ammVault.initialize(ammVault.nft() + 2, ammVault.vaultTokens(), ammVault.pool().tickSpacing()) {
-            revert();
-        } catch {}
+        address[] memory vaultTokens = ammVault.vaultTokens();
+        int24 tickSpacing = ammVault.pool().tickSpacing();
+        uint256 nft = ammVault.nft();
+        vm.expectRevert(abi.encodePacked("INVL"));
+        ammVault.initialize(0, new address[](0), 123);
+        vm.expectRevert(abi.encodePacked("NF"));
+        ammVault.initialize(0, vaultTokens, 123);
+        vm.expectRevert(abi.encodePacked("INIT"));
+        ammVault.initialize(0, vaultTokens, tickSpacing);
+        vm.expectRevert(abi.encodePacked("INIT"));
+        ammVault.initialize(nft, vaultTokens, tickSpacing);
+        vm.expectRevert(abi.encodePacked("INIT"));
+        ammVault.initialize(nft + 1, vaultTokens, tickSpacing);
+        vm.expectRevert(abi.encodePacked("INIT"));
+        ammVault.initialize(nft + 2, vaultTokens, tickSpacing);
     }
 
-    function testCollectRewards() external {
+    function addRewardToGauge(uint256 amount) private {
+        address voter = address(gauge.voter());
+        address rewardToken = gauge.rewardToken();
+        deal(rewardToken, voter, amount);
+        vm.startPrank(voter);
+        IERC20(rewardToken).safeIncreaseAllowance(address(gauge), amount);
+        ICLGauge(gauge).notifyRewardAmount(amount);
+        vm.stopPrank();
+    }
+
+    function _depositOnBehalf(address account, uint256[] memory tokenAmounts) private {
+        vm.startPrank(account);
+        address[] memory tokens = rootVault.vaultTokens();
+        for (uint256 i = 0; i < tokens.length; i++) {
+            deal(tokens[i], account, tokenAmounts[i]);
+            IERC20(tokens[i]).safeApprove(address(depositWrapper), type(uint256).max);
+        }
+        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        vm.stopPrank();
+    }
+
+    function _testCollectRewards(uint256 ratioD2) private {
+        require(ratioD2 > 0, "Invalid ratioD2 parameter");
         fullInitialization();
-        // ammVault.collectRewards();
+
+        {
+            (uint256[] memory amounts, ) = rootVault.tvl();
+            amounts[0] = (amounts[0] * (100 - ratioD2)) / ratioD2;
+            amounts[1] = (amounts[1] * (100 - ratioD2)) / ratioD2;
+            _depositOnBehalf(user, amounts);
+        }
+
+        uint256 amount = 10 ether;
+        addRewardToGauge(amount);
+
+        skip(7 days);
+        ammVault.collectRewards();
+
+        uint256 collectedRewardAmount = IERC20(gauge.rewardToken()).balanceOf(address(farm));
+        assertApproxEqAbs(collectedRewardAmount, amount, 1 wei);
+
+        uint256 expectedProtocolFee = FullMath.mulDiv(collectedRewardAmount, farm.protocolFeeD9(), 1e9);
+        uint256 expectedUserRewards = collectedRewardAmount - expectedProtocolFee;
+
+        uint256 deployerLp = farm.balanceOf(deployer);
+        uint256 userLp = farm.balanceOf(user);
+
+        vm.startPrank(deployer);
+        assertEq(expectedUserRewards, farm.updateRewardAmounts());
+        assertEq(expectedProtocolFee, IERC20(gauge.rewardToken()).balanceOf(protocolTreasury));
+
+        uint256 expectedClaimedByDeployerAmounts = FullMath.mulDiv(
+            deployerLp,
+            expectedUserRewards,
+            deployerLp + userLp
+        );
+        assertEq(expectedClaimedByDeployerAmounts, farm.claim(deployerTreasury));
+        assertEq(expectedClaimedByDeployerAmounts, IERC20(gauge.rewardToken()).balanceOf(deployerTreasury));
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        uint256 expectedClaimedByUserAmounts = FullMath.mulDiv(userLp, expectedUserRewards, deployerLp + userLp);
+        assertEq(expectedClaimedByUserAmounts, farm.claim(user));
+        assertEq(expectedClaimedByUserAmounts, IERC20(gauge.rewardToken()).balanceOf(user));
+        vm.stopPrank();
+    }
+
+    function testCollectRewardsQ05() external {
+        _testCollectRewards(5);
+    }
+
+    function testCollectRewardsQ25() external {
+        _testCollectRewards(25);
+    }
+
+    function testCollectRewardsQ50() external {
+        _testCollectRewards(50);
+    }
+
+    function testCollectRewardsQ95() external {
+        _testCollectRewards(95);
     }
 
     function testStakeTokenId() external {
@@ -621,17 +694,13 @@ contract UnitTest is Test {
         ammVault.unstakeTokenId();
         assertFalse(gauge.stakedContains(address(ammVault), tokenId));
         assertEq(positionManager.ownerOf(tokenId), address(ammVault));
-        try ammVault.unstakeTokenId() {
-            revert();
-        } catch {}
-
+        vm.expectRevert(abi.encodePacked("NA"));
+        ammVault.unstakeTokenId();
         ammVault.stakeTokenId();
         assertTrue(gauge.stakedContains(address(ammVault), tokenId));
         assertEq(positionManager.ownerOf(tokenId), address(gauge));
-        try ammVault.stakeTokenId() {
-            revert();
-        } catch {}
-
+        vm.expectRevert(abi.encodePacked("ERC721: approval to current owner"));
+        ammVault.stakeTokenId();
         vm.stopPrank();
     }
 
