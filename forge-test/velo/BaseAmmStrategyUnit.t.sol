@@ -480,7 +480,7 @@ contract Unit is Test {
         strategy.updateMutableParams(params);
         params.initialLiquidity = 1;
 
-        params.securityParams = abi.encode("invalid parameters");
+        params.securityParams = abi.encode("some invalid parameters");
         vm.expectRevert(bytes4(0xa86b6512));
         strategy.updateMutableParams(params);
 
@@ -562,9 +562,68 @@ contract Unit is Test {
         assertEq(mutableParams.minSwapAmounts[0], 0);
     }
 
-    function testGetCurrentState() external {}
+    function testGetCurrentState() external {
+        BaseAmmStrategy.Storage memory s;
+        s.immutableParams = strategy.getImmutableParams();
+        s.mutableParams = strategy.getMutableParams();
+        BaseAmmStrategy.Position[] memory currentState = strategy.getCurrentState(s);
+
+        assertEq(currentState.length, 2);
+        assertTrue(currentState[0].capitalRatioX96 >= (Q96 * 99) / 100); // remaining ratio on erc20Vault
+        assertEq(currentState[1].capitalRatioX96, 0);
+
+        (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+        (uint256[] memory tvl, ) = rootVault.tvl();
+        uint256 totalCapital = FullMath.mulDiv(tvl[0], priceX96, Q96) + tvl[1];
+
+        (uint256[] memory ammTvl, ) = ammVault1.tvl();
+        uint256 ammVault1Capital = FullMath.mulDiv(ammTvl[0], priceX96, Q96) + ammTvl[1];
+
+        assertApproxEqAbs(
+            FullMath.mulDiv(ammVault1Capital, Q96, totalCapital),
+            currentState[0].capitalRatioX96,
+            FullMath.mulDiv(Q96, 1, totalCapital) + 1
+        );
+
+        (uint256[] memory amm2Tvl, ) = ammVault2.tvl();
+        assertEq(amm2Tvl[0], 0);
+        assertEq(amm2Tvl[1], 0);
+    }
+
+    function testDepositCallback() external {
+        uint256[] memory additionalAmounts = new uint256[](2);
+        additionalAmounts[0] = 100 ether;
+        additionalAmounts[1] = 200000 * 1e6;
+
+        address[] memory tokens = ammVault1.vaultTokens();
+        for (uint256 i = 0; i < 2; i++) {
+            deal(tokens[i], address(erc20Vault), additionalAmounts[i]);
+        }
+
+        (uint256[] memory erc20TvlBefore, ) = erc20Vault.tvl();
+        (uint256[] memory amm1TvlBefore, ) = ammVault1.tvl();
+
+        strategy.depositCallback();
+
+        (uint256[] memory erc20TvlAfter, ) = erc20Vault.tvl();
+        (uint256[] memory amm1TvlAfter, ) = ammVault1.tvl();
+
+        uint256[] memory pushedAmounts = new uint256[](2);
+        for (uint256 i = 0; i < 2; i++) {
+            pushedAmounts[i] = erc20TvlBefore[i] - erc20TvlAfter[i];
+        }
+
+        assertApproxEqAbs(amm1TvlBefore[0] + pushedAmounts[0], amm1TvlAfter[0], 1 wei);
+        assertApproxEqAbs(amm1TvlBefore[1] + pushedAmounts[1], amm1TvlAfter[1], 1 wei);
+
+        assertApproxEqAbs(
+            FullMath.mulDiv(amm1TvlBefore[0], Q96, amm1TvlBefore[0] + amm1TvlBefore[1]),
+            FullMath.mulDiv(pushedAmounts[0], Q96, pushedAmounts[0] + pushedAmounts[1]),
+            FullMath.mulDiv(Q96, 1, amm1TvlBefore[0] + amm1TvlBefore[1])
+        );
+    }
 
     function testRebalance() external {}
-
-    function testDepositCallback() external {}
 }

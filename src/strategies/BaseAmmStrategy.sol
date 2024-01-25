@@ -135,6 +135,51 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    function rebalance(Position[] memory targetState, SwapData calldata swapData) external {
+        _requireAtLeastOperator();
+        Storage memory s = _contractStorage();
+        _compound(s);
+        _positionsRebalance(targetState, getCurrentState(s), s);
+        _swap(swapData, s);
+        _ratioRebalance(targetState, s);
+    }
+
+    function depositCallback() external {
+        ImmutableParams memory immutableParams = _contractStorage().immutableParams;
+        IERC20Vault erc20Vault = immutableParams.erc20Vault;
+        IIntegrationVault[] memory ammVaults = immutableParams.ammVaults;
+        uint256 n = ammVaults.length;
+        uint256[][] memory tvls = new uint256[][](n);
+        uint256[] memory totalTvl = new uint256[](2);
+        for (uint256 i = 0; i < n; i++) {
+            (uint256[] memory tvl, ) = ammVaults[i].tvl();
+            totalTvl[0] += tvl[0];
+            totalTvl[1] += tvl[1];
+            tvls[i] = tvl;
+        }
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        address[] memory tokens = erc20Vault.vaultTokens();
+        for (uint256 i = 0; i < n; i++) {
+            uint256[] memory amounts = new uint256[](2);
+            uint256[] memory tvl = tvls[i];
+            bool doesPullRequred = false;
+            for (uint256 j = 0; j < 2; j++) {
+                if (totalTvl[j] == 0) continue;
+                amounts[j] = FullMath.mulDiv(erc20Tvl[j], tvl[j], totalTvl[j]);
+                if (amounts[j] > 0) doesPullRequred = true;
+            }
+            if (doesPullRequred) {
+                uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, amounts, "");
+                for (uint256 j = 0; j < 2; j++) {
+                    totalTvl[j] -= tvl[j];
+                    erc20Tvl[j] -= actualAmounts[j];
+                }
+            }
+        }
+    }
+
+    function withdrawCallback() external {}
+
     function _compound(Storage memory s) private {
         for (uint256 i = 0; i < s.immutableParams.ammVaults.length; i++) {
             (bool success, ) = address(s.immutableParams.adapter).delegatecall(
@@ -304,49 +349,4 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
             s.immutableParams.erc20Vault.vaultTokens()
         );
     }
-
-    function rebalance(Position[] memory targetState, SwapData calldata swapData) external {
-        _requireAtLeastOperator();
-        Storage memory s = _contractStorage();
-        _compound(s);
-        _positionsRebalance(targetState, getCurrentState(s), s);
-        _swap(swapData, s);
-        _ratioRebalance(targetState, s);
-    }
-
-    function depositCallback() external {
-        ImmutableParams memory immutableParams = _contractStorage().immutableParams;
-        IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        IIntegrationVault[] memory ammVaults = immutableParams.ammVaults;
-        uint256 n = ammVaults.length;
-        uint256[][] memory tvls = new uint256[][](n);
-        uint256[] memory totalTvl = new uint256[](2);
-        for (uint256 i = 0; i < n; i++) {
-            (uint256[] memory tvl, ) = ammVaults[i].tvl();
-            totalTvl[0] += tvl[0];
-            totalTvl[1] += tvl[1];
-            tvls[i] = tvl;
-        }
-        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-        address[] memory tokens = erc20Vault.vaultTokens();
-        for (uint256 i = 0; i < n; i++) {
-            uint256[] memory amounts = new uint256[](2);
-            uint256[] memory tvl = tvls[i];
-            bool doesPullRequred = false;
-            for (uint256 j = 0; j < 2; j++) {
-                if (totalTvl[j] == 0) continue;
-                amounts[j] = FullMath.mulDiv(erc20Tvl[j], tvl[j], totalTvl[j]);
-                if (amounts[j] > 0) doesPullRequred = true;
-            }
-            if (doesPullRequred) {
-                uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, amounts, "");
-                for (uint256 j = 0; j < 2; j++) {
-                    totalTvl[j] -= tvl[j];
-                    erc20Tvl[j] -= actualAmounts[j];
-                }
-            }
-        }
-    }
-
-    function withdrawCallback() external {}
 }
