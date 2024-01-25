@@ -42,7 +42,11 @@ library Path {
     function decodeFirstPool(bytes memory path)
         internal
         pure
-        returns (address tokenA, address tokenB, int24 tickSpacing)
+        returns (
+            address tokenA,
+            address tokenB,
+            int24 tickSpacing
+        )
     {
         tokenA = path.toAddress(0);
         tickSpacing = path.toInt24(ADDR_SIZE);

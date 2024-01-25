@@ -14,11 +14,12 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
     using LowGasSafeMath for uint256;
 
     /// @inheritdoc IPeripheryPaymentsWithFee
-    function unwrapWETH9WithFee(uint256 amountMinimum, address recipient, uint256 feeBips, address feeRecipient)
-        public
-        payable
-        override
-    {
+    function unwrapWETH9WithFee(
+        uint256 amountMinimum,
+        address recipient,
+        uint256 feeBips,
+        address feeRecipient
+    ) public payable override {
         require(feeBips > 0 && feeBips <= 100);
 
         uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));

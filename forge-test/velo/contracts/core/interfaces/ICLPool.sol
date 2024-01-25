@@ -19,4 +19,6 @@ interface ICLPool is
     ICLPoolActions,
     ICLPoolEvents,
     ICLPoolOwnerActions
-{}
+{
+
+}

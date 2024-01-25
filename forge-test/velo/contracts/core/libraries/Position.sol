@@ -27,11 +27,12 @@ library Position {
     /// @param tickLower The lower tick boundary of the position
     /// @param tickUpper The upper tick boundary of the position
     /// @return position The position info struct of the given owners' position
-    function get(mapping(bytes32 => Info) storage self, address owner, int24 tickLower, int24 tickUpper)
-        internal
-        view
-        returns (Position.Info storage position)
-    {
+    function get(
+        mapping(bytes32 => Info) storage self,
+        address owner,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (Position.Info storage position) {
         position = self[keccak256(abi.encodePacked(owner, tickLower, tickUpper))];
     }
 
@@ -64,12 +65,16 @@ library Position {
             // calculate accumulated fees
             tokensOwed0 = uint128(
                 FullMath.mulDiv(
-                    feeGrowthInside0X128 - _self.feeGrowthInside0LastX128, _self.liquidity, FixedPoint128.Q128
+                    feeGrowthInside0X128 - _self.feeGrowthInside0LastX128,
+                    _self.liquidity,
+                    FixedPoint128.Q128
                 )
             );
             tokensOwed1 = uint128(
                 FullMath.mulDiv(
-                    feeGrowthInside1X128 - _self.feeGrowthInside1LastX128, _self.liquidity, FixedPoint128.Q128
+                    feeGrowthInside1X128 - _self.feeGrowthInside1LastX128,
+                    _self.liquidity,
+                    FixedPoint128.Q128
                 )
             );
         }

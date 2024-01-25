@@ -101,7 +101,8 @@ interface ICLPoolEvents {
     /// @param observationCardinalityNextOld The previous value of the next observation cardinality
     /// @param observationCardinalityNextNew The updated value of the next observation cardinality
     event IncreaseObservationCardinalityNext(
-        uint16 observationCardinalityNextOld, uint16 observationCardinalityNextNew
+        uint16 observationCardinalityNextOld,
+        uint16 observationCardinalityNextNew
     );
 
     /// @notice Emitted when the protocol fee is changed by the pool

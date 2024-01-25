@@ -31,16 +31,13 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
 contract Integration is Test {
-    IERC20RootVault public rootVault;
-    IERC20Vault public erc20Vault;
-    IVeloVault public ammVault1;
-    IVeloVault public ammVault2;
-
-    uint256 public nftStart;
+    uint256 public constant Q96 = 2**96;
+    int24 public constant TICK_SPACING = 200;
 
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
+    address public protocolAdmin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
     uint256 public protocolFeeD9 = 1e8; // 10%
 
@@ -50,31 +47,34 @@ contract Integration is Test {
 
     address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
     address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
-    address public rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
-    address public erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
-    address public ammGovernance;
-
-    address public admin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
-
+    address public allowAllValidator = 0x0f4A979597E16ec87d2344fD78c2cec53f37D263;
     address public mellowOracle = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
 
-    INonfungiblePositionManager public positionManager =
-        INonfungiblePositionManager(0xd557d3b47D159EB3f9B48c0f1B4a6e67e82e8B3f);
+    IERC20RootVaultGovernance public rootVaultGovernance =
+        IERC20RootVaultGovernance(0x65a440a89824AB464d7c94B184eF494c1457258D);
+    IERC20VaultGovernance public erc20Governance = IERC20VaultGovernance(0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece);
 
-    SwapRouter public swapRouter;
-    IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
-
-    VeloHelper public veloHelper = new VeloHelper(positionManager);
-
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
-    BaseAMMStrategy public strategy = new BaseAMMStrategy();
-
-    uint256 public constant Q96 = 2**96;
-
-    int24 public TICK_SPACING = 200;
-    VeloFarm public farm;
     ICLPool public pool = ICLPool(0xC358c95b146E9597339b376063A2cB657AFf84eb);
     ICLGauge public gauge = ICLGauge(0x5f090Fc694aa42569aB61397E4c996E808f0BBf2);
+    INonfungiblePositionManager public positionManager =
+        INonfungiblePositionManager(0xd557d3b47D159EB3f9B48c0f1B4a6e67e82e8B3f);
+    SwapRouter public swapRouter = new SwapRouter(positionManager.factory(), weth);
+
+    VeloAdapter public adapter = new VeloAdapter(positionManager);
+    VeloHelper public veloHelper = new VeloHelper(positionManager);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
+
+    BaseAMMStrategy public strategy = new BaseAMMStrategy();
+    PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
+
+    IVeloVaultGovernance public ammGovernance;
+
+    IERC20RootVault public rootVault;
+    IERC20Vault public erc20Vault;
+    IVeloVault public ammVault1;
+    IVeloVault public ammVault2;
+
+    VeloFarm public farm;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -116,19 +116,22 @@ contract Integration is Test {
 
     function deployVaults() public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
+
         uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
+
         address[] memory tokens = new address[](2);
         tokens[0] = weth;
         tokens[1] = usdc;
-        IERC20VaultGovernance(erc20Governance).createVault(tokens, deployer);
+
+        erc20Governance.createVault(tokens, deployer);
         erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
-        IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
+
+        ammGovernance.createVault(tokens, deployer, TICK_SPACING);
         ammVault1 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
+        ammGovernance.createVault(tokens, deployer, TICK_SPACING);
         ammVault2 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 2));
 
-        pool = ammVault1.pool();
         {
             uint256[] memory nfts = new uint256[](3);
             nfts[0] = erc20VaultNft;
@@ -138,51 +141,50 @@ contract Integration is Test {
         }
 
         farm = new VeloFarm(address(rootVault), deployer, velo, protocolTreasury, protocolFeeD9);
+
         vm.stopPrank();
-        vm.startPrank(admin);
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(
+        vm.startPrank(protocolAdmin);
+
+        ammGovernance.setStrategyParams(
             erc20VaultNft + 1,
             IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
         );
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(
+        ammGovernance.setStrategyParams(
             erc20VaultNft + 2,
             IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
         );
+
         vm.stopPrank();
         vm.startPrank(deployer);
     }
 
-    address public allowAllValidator = 0x0f4A979597E16ec87d2344fD78c2cec53f37D263;
-
     function deployGovernance() public {
         VeloVault singleton = new VeloVault(positionManager, veloHelper);
-        VeloVaultGovernance veloGovernance = new VeloVaultGovernance(
+        ammGovernance = new VeloVaultGovernance(
             IVaultGovernance.InternalParams({
                 singleton: singleton,
                 registry: IVaultRegistry(registry),
                 protocolGovernance: IProtocolGovernance(governance)
             })
         );
-        ammGovernance = address(veloGovernance);
 
         vm.stopPrank();
-        vm.startPrank(admin);
+        vm.startPrank(protocolAdmin);
 
         IProtocolGovernance(governance).stagePermissionGrants(address(ammGovernance), new uint8[](1));
-        uint8[] memory per = new uint8[](1);
-        per[0] = 4;
-        IProtocolGovernance(governance).stagePermissionGrants(address(swapRouter), per);
+        uint8[] memory permissions = new uint8[](1);
+        permissions[0] = 4;
+        IProtocolGovernance(governance).stagePermissionGrants(address(swapRouter), permissions);
         IProtocolGovernance(governance).stageValidator(address(swapRouter), allowAllValidator);
 
         skip(24 * 3600);
         IProtocolGovernance(governance).commitPermissionGrants(address(ammGovernance));
         IProtocolGovernance(governance).commitPermissionGrants(address(swapRouter));
         IProtocolGovernance(governance).commitValidator(address(swapRouter));
+
         vm.stopPrank();
         vm.startPrank(deployer);
     }
-
-    VeloAdapter public adapter = new VeloAdapter(positionManager);
 
     function initializeBaseStrategy() public {
         uint256[] memory minSwapAmounts = new uint256[](2);
@@ -232,10 +234,7 @@ contract Integration is Test {
         depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
     }
 
-    PulseOperatorStrategy public operatorStrategy;
-
     function initializeOperatorStrategy(int24 maxWidth) public {
-        operatorStrategy = new PulseOperatorStrategy();
         operatorStrategy.initialize(
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
@@ -249,8 +248,8 @@ contract Integration is Test {
         strategy.grantRole(strategy.ADMIN_DELEGATE_ROLE(), address(deployer));
         strategy.grantRole(strategy.OPERATOR(), address(operatorStrategy));
 
-        deal(usdc, address(strategy), 1e15);
-        deal(weth, address(strategy), 1e15);
+        deal(usdc, address(strategy), 1e7);
+        deal(weth, address(strategy), 1e16);
     }
 
     function rebalance() public {
@@ -284,22 +283,25 @@ contract Integration is Test {
         string memory spot;
         {
             (int24 tickLower, int24 tickUpper, ) = adapter.positionInfo(ammVault1.tokenId());
+
             (uint160 sqrtPriceX96, int24 spotTick, , , , ) = pool.slot0();
             uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-            (uint256[] memory rv, ) = rootVault.tvl();
-            (uint256[] memory uni, ) = ammVault1.tvl();
-            uint256 ratio = FullMath.mulDiv(
+
+            (uint256[] memory rootVaultTvl, ) = rootVault.tvl();
+            (uint256[] memory ammVaultTvl, ) = ammVault1.tvl();
+            uint256 ratioD2 = FullMath.mulDiv(
                 100,
-                FullMath.mulDiv(uni[0], priceX96, Q96) + uni[1],
-                FullMath.mulDiv(rv[0], priceX96, Q96) + rv[1]
+                FullMath.mulDiv(ammVaultTvl[0], priceX96, Q96) + ammVaultTvl[1],
+                FullMath.mulDiv(rootVaultTvl[0], priceX96, Q96) + rootVaultTvl[1]
             );
+
             bool flag = tickLower <= spotTick && spotTick <= tickUpper;
             assertTrue(flag);
 
             spot = string(
                 abi.encodePacked(
                     "erc20Vault capital ratio: ",
-                    vm.toString(ratio),
+                    vm.toString(ratioD2),
                     "%; range: [",
                     vm.toString(tickLower),
                     ", ",
@@ -309,8 +311,9 @@ contract Integration is Test {
                 )
             );
         }
+
         if (tokenIn == address(0)) {
-            console2.log("Nothing to rebalance");
+            console2.log("nothing to rebalace;", spot);
         } else {
             console2.log(
                 string(
@@ -327,11 +330,11 @@ contract Integration is Test {
         }
     }
 
-    function _swapAmount(uint256 amountIn, bool zeroForOne) private {
+    function _swapAmount(uint256 amountIn, uint256 tokenInIndex) private {
         if (amountIn == 0) revert("Insufficient amount for swap");
         address[] memory tokens = ammVault1.vaultTokens();
-        address tokenIn = zeroForOne ? tokens[0] : tokens[1];
-        address tokenOut = zeroForOne ? tokens[1] : tokens[0];
+        address tokenIn = tokens[tokenInIndex];
+        address tokenOut = tokens[tokenInIndex ^ 1];
         deal(tokenIn, deployer, amountIn);
         IERC20(tokenIn).approve(address(swapRouter), amountIn);
         ISwapRouter(swapRouter).exactInputSingle(
@@ -356,12 +359,12 @@ contract Integration is Test {
         uint256 wethAmount = 500 ether;
         if (spotTick < targetTick) {
             while (spotTick < targetTick) {
-                _swapAmount(usdcAmount, false);
+                _swapAmount(usdcAmount, 1);
                 (, spotTick, , , , ) = pool.slot0();
             }
         } else {
             while (spotTick > targetTick) {
-                _swapAmount(wethAmount, true);
+                _swapAmount(wethAmount, 0);
                 (, spotTick, , , , ) = pool.slot0();
             }
         }
@@ -369,13 +372,13 @@ contract Integration is Test {
         while (spotTick != targetTick) {
             if (spotTick < targetTick) {
                 while (spotTick < targetTick) {
-                    _swapAmount(usdcAmount, false);
+                    _swapAmount(usdcAmount, 1);
                     (, spotTick, , , , ) = pool.slot0();
                 }
                 usdcAmount >>= 1;
             } else {
                 while (spotTick > targetTick) {
-                    _swapAmount(wethAmount, true);
+                    _swapAmount(wethAmount, 0);
                     (, spotTick, , , , ) = pool.slot0();
                 }
                 wethAmount >>= 1;
@@ -459,10 +462,9 @@ contract Integration is Test {
         skip(3 * 24 * 3600);
     }
 
-    function _runTest(int24 maxWidth) private {
+    function _testWidth(int24 maxWidth) private {
         vm.startPrank(deployer);
 
-        swapRouter = new SwapRouter(positionManager.factory(), weth);
         normalizePool();
 
         deployGovernance();
@@ -496,14 +498,14 @@ contract Integration is Test {
     }
 
     function testNarrow() external {
-        _runTest(200);
+        _testWidth(200);
     }
 
     function testNormal() external {
-        _runTest(800);
+        _testWidth(800);
     }
 
     function testWide() external {
-        _runTest(4200);
+        _testWidth(4200);
     }
 }

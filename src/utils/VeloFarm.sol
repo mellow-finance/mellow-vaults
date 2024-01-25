@@ -10,6 +10,7 @@ import "./DefaultAccessControl.sol";
 
 contract VeloFarm is DefaultAccessControl, ERC20 {
     uint256 public constant D9 = 1e9;
+    uint256 public constant MAX_PROTOCOL_FEE = 2e8; // 20%
 
     using SafeERC20 for IERC20;
 
@@ -45,14 +46,19 @@ contract VeloFarm is DefaultAccessControl, ERC20 {
             string(abi.encodePacked(ERC20(lpToken_).symbol(), "IF"))
         )
     {
-        require(rewardToken_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        if (
+            lpToken_ == address(0) ||
+            admin_ == address(0) ||
+            protocolTreasury_ == address(0) ||
+            rewardToken_ == address(0)
+        ) {
+            revert(ExceptionsLibrary.ADDRESS_ZERO);
+        }
+        if (protocolFeeD9_ > MAX_PROTOCOL_FEE) revert(ExceptionsLibrary.FORBIDDEN);
         lpToken = lpToken_;
         rewardToken = rewardToken_;
         protocolTreasury = protocolTreasury_;
         protocolFeeD9 = protocolFeeD9_;
-
-        totalCollectedAmounts = 0;
-        totalClaimedAmounts = 0;
     }
 
     function epochCount() external view returns (uint256) {
@@ -64,14 +70,14 @@ contract VeloFarm is DefaultAccessControl, ERC20 {
     }
 
     function updateProtocolTreasury(address newProtocolTreasury) external {
-        if (address(0) == newProtocolTreasury) revert(ExceptionsLibrary.ADDRESS_ZERO);
         _requireAdmin();
+        if (newProtocolTreasury == address(0)) revert(ExceptionsLibrary.ADDRESS_ZERO);
         protocolTreasury = newProtocolTreasury;
     }
 
     function decreaseProtocolFee(uint256 newProtocolFeeD9) external {
         _requireAdmin();
-        if (protocolFeeD9 < newProtocolFeeD9) revert(ExceptionsLibrary.FORBIDDEN);
+        if (newProtocolFeeD9 > MAX_PROTOCOL_FEE) revert(ExceptionsLibrary.FORBIDDEN);
         protocolFeeD9 = newProtocolFeeD9;
     }
 

@@ -24,7 +24,16 @@ library SwapMath {
         uint128 liquidity,
         int256 amountRemaining,
         uint24 feePips
-    ) internal pure returns (uint160 sqrtRatioNextX96, uint256 amountIn, uint256 amountOut, uint256 feeAmount) {
+    )
+        internal
+        pure
+        returns (
+            uint160 sqrtRatioNextX96,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 feeAmount
+        )
+    {
         bool zeroForOne = sqrtRatioCurrentX96 >= sqrtRatioTargetX96;
         bool exactIn = amountRemaining >= 0;
 
@@ -37,7 +46,10 @@ library SwapMath {
                 sqrtRatioNextX96 = sqrtRatioTargetX96;
             } else {
                 sqrtRatioNextX96 = SqrtPriceMath.getNextSqrtPriceFromInput(
-                    sqrtRatioCurrentX96, liquidity, amountRemainingLessFee, zeroForOne
+                    sqrtRatioCurrentX96,
+                    liquidity,
+                    amountRemainingLessFee,
+                    zeroForOne
                 );
             }
         } else {
@@ -48,7 +60,10 @@ library SwapMath {
                 sqrtRatioNextX96 = sqrtRatioTargetX96;
             } else {
                 sqrtRatioNextX96 = SqrtPriceMath.getNextSqrtPriceFromOutput(
-                    sqrtRatioCurrentX96, liquidity, uint256(-amountRemaining), zeroForOne
+                    sqrtRatioCurrentX96,
+                    liquidity,
+                    uint256(-amountRemaining),
+                    zeroForOne
                 );
             }
         }

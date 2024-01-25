@@ -22,7 +22,6 @@ import "../../src/utils/InstantFarm.sol";
 
 import "../../src/strategies/PancakeSwapMerklPulseStrategyV2.sol";
 
-
 contract PancakeMerklTest is Test {
     using SafeERC20 for IERC20;
 
@@ -45,10 +44,8 @@ contract PancakeMerklTest is Test {
     address public erc20Governance = 0x0bf7B603389795E109a13140eCb07036a1534573;
     address public mellowOracle = 0x9d992650B30C6FB7a83E7e7a430b4e015433b838;
 
-
-    IPancakeNonfungiblePositionManager public immutable positionManager = IPancakeNonfungiblePositionManager(
-        0x46A15B0b27311cedF172AB29E4f4766fbE7F4364
-    );
+    IPancakeNonfungiblePositionManager public immutable positionManager =
+        IPancakeNonfungiblePositionManager(0x46A15B0b27311cedF172AB29E4f4766fbE7F4364);
 
     IPancakeSwapMerklVaultGovernance public pancakeGovernance;
     IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
@@ -139,7 +136,7 @@ contract PancakeMerklTest is Test {
 
         pancakeGovernance.commitDelayedStrategyParams(erc20VaultNft + 1);
 
-        strategy = new PancakeSwapMerklPulseStrategyV2(positionManager); 
+        strategy = new PancakeSwapMerklPulseStrategyV2(positionManager);
         strategy.initialize(
             PancakeSwapMerklPulseStrategyV2.ImmutableParams({
                 erc20Vault: erc20Vault,
@@ -148,7 +145,7 @@ contract PancakeMerklTest is Test {
                 tokens: erc20Vault.vaultTokens()
             }),
             operator
-        ); 
+        );
         {
             uint256[] memory nfts = new uint256[](2);
             nfts[0] = erc20VaultNft;
@@ -156,11 +153,7 @@ contract PancakeMerklTest is Test {
             combineVaults(tokens, nfts);
         }
 
-        lpFarm = new InstantFarm(
-            address(rootVault),
-            deployer,
-            rewards
-        );
+        lpFarm = new InstantFarm(address(rootVault), deployer, rewards);
 
         vm.stopPrank();
     }
@@ -218,78 +211,64 @@ contract PancakeMerklTest is Test {
     //     vm.stopPrank();
     // }
 
-
     function deposit() public {
         vm.startPrank(deployer);
         uint256[] memory amounts = new uint256[](2);
         if (rootVault.totalSupply() == 0) {
             amounts[0] = 1e14;
             amounts[1] = 1e14;
-            depositWrapper.addNewStrategy(
-                address(rootVault), address(strategy), false
-            );
+            depositWrapper.addNewStrategy(address(rootVault), address(strategy), false);
             deal(RETH, address(strategy), 1e14);
             deal(WETH, address(strategy), 1e14);
         } else {
             (amounts, ) = rootVault.tvl();
             amounts[0] *= 2;
             amounts[1] *= 2;
-            depositWrapper.addNewStrategy(
-                address(rootVault), address(strategy), true
-            );
+            depositWrapper.addNewStrategy(address(rootVault), address(strategy), true);
         }
-        
+
         deal(RETH, deployer, amounts[0]);
         deal(WETH, deployer, amounts[1]);
-        
+
         IERC20(RETH).safeApprove(address(depositWrapper), type(uint256).max);
         IERC20(WETH).safeApprove(address(depositWrapper), type(uint256).max);
 
-        depositWrapper.deposit(
-            rootVault,
-            lpFarm,
-            amounts,
-            0,
-            ""
-        );
-        
+        depositWrapper.deposit(rootVault, lpFarm, amounts, 0, "");
+
         IERC20(RETH).safeApprove(address(depositWrapper), 0);
         IERC20(WETH).safeApprove(address(depositWrapper), 0);
 
         vm.stopPrank();
     }
 
-
     function test() external {
         deployGovernances();
         deployVaults();
         vm.startPrank(operator);
-        strategy.updateFarms(
-            address(lpFarm),
-            address(0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae)
-        );
+        strategy.updateFarms(address(lpFarm), address(0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae));
 
         uint256[] memory minSwapAmounts = new uint256[](2);
         minSwapAmounts[0] = 1e15;
-        minSwapAmounts[1] = 1e15;        
+        minSwapAmounts[1] = 1e15;
 
-        strategy.updateMutableParams(PancakeSwapMerklPulseStrategyV2.MutableParams({
-            priceImpactD6: 0,
-            defaultIntervalWidth: 20,
-            maxPositionLengthInTicks: 60,
-            maxDeviationForVaultPool: 5,
-            timespanForAverageTick: 30,
-            neighborhoodFactorD: 150000000,
-            extensionFactorD: 2000000000,
-            swapSlippageD: 10000000,
-            swappingAmountsCoefficientD: 10000000,
-            minSwapAmounts: minSwapAmounts
-        }));
+        strategy.updateMutableParams(
+            PancakeSwapMerklPulseStrategyV2.MutableParams({
+                priceImpactD6: 0,
+                defaultIntervalWidth: 20,
+                maxPositionLengthInTicks: 60,
+                maxDeviationForVaultPool: 5,
+                timespanForAverageTick: 30,
+                neighborhoodFactorD: 150000000,
+                extensionFactorD: 2000000000,
+                swapSlippageD: 10000000,
+                swappingAmountsCoefficientD: 10000000,
+                minSwapAmounts: minSwapAmounts
+            })
+        );
 
-        strategy.updateDesiredAmounts(PancakeSwapMerklPulseStrategyV2.DesiredAmounts({
-            amount0Desired: 1e9,
-            amount1Desired: 1e9
-        }));
+        strategy.updateDesiredAmounts(
+            PancakeSwapMerklPulseStrategyV2.DesiredAmounts({amount0Desired: 1e9, amount1Desired: 1e9})
+        );
 
         vm.stopPrank();
 
@@ -297,11 +276,7 @@ contract PancakeMerklTest is Test {
 
         vm.startPrank(operator);
 
-        strategy.rebalance(
-            type(uint256).max,
-            "",
-            0
-        );
+        strategy.rebalance(type(uint256).max, "", 0);
 
         vm.stopPrank();
 

@@ -109,7 +109,11 @@ interface ICLFactory {
     /// @param tokenB The contract address of the other token
     /// @param tickSpacing The tick spacing of the pool
     /// @return pool The pool address
-    function getPool(address tokenA, address tokenB, int24 tickSpacing) external view returns (address pool);
+    function getPool(
+        address tokenA,
+        address tokenB,
+        int24 tickSpacing
+    ) external view returns (address pool);
 
     /// @notice Used in VotingEscrow to determine if a contract is a valid pool of the factory
     /// @param pool The address of the pool to check
@@ -136,9 +140,12 @@ interface ICLFactory {
     /// @dev tokenA and tokenB may be passed in either order: token0/token1 or token1/token0. The call will
     /// revert if the pool already exists, the tick spacing is invalid, or the token arguments are invalid
     /// @return pool The address of the newly created pool
-    function createPool(address tokenA, address tokenB, int24 tickSpacing, uint160 sqrtPriceX96)
-        external
-        returns (address pool);
+    function createPool(
+        address tokenA,
+        address tokenB,
+        int24 tickSpacing,
+        uint160 sqrtPriceX96
+    ) external returns (address pool);
 
     /// @notice Updates the owner of the factory
     /// @dev Must be called by the current owner

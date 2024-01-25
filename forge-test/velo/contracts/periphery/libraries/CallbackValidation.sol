@@ -12,11 +12,12 @@ library CallbackValidation {
     /// @param tokenB The contract address of the other token
     /// @param tickSpacing The tick spacing for the pool
     /// @return pool The V3 pool contract address
-    function verifyCallback(address factory, address tokenA, address tokenB, int24 tickSpacing)
-        internal
-        view
-        returns (ICLPool pool)
-    {
+    function verifyCallback(
+        address factory,
+        address tokenA,
+        address tokenB,
+        int24 tickSpacing
+    ) internal view returns (ICLPool pool) {
         return verifyCallback(factory, PoolAddress.getPoolKey(tokenA, tokenB, tickSpacing));
     }
 

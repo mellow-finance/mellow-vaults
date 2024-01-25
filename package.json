@@ -6,7 +6,7 @@
   "scripts": {
     "c": "hardhat compile",
     "docgen": "node docgen/generate.js",
-    "prettier": "prettier --write ./src/**",
+    "prettier": "prettier --write ./src/** ./forge-test/**",
     "prettier:check": "prettier --check ./src/**",
     "prettier:changed": "prettier -w  $(git status | grep '.sol' | grep -v 'deleted:' | cut -d ' ' -f 4)",
     "test:pancake": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/pancake/*.sol'",
@@ -17,6 +17,7 @@
     "test:ramses": "forge test --use 0.8.9 -vvv --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --match-path 'forge-test/ramses/*.sol'",
     "test:velo": "forge test --use 0.8.9 -vvv --rpc-url $(grep OPTIMIS_SPECIAL_RPC .env | cut -d '=' -f2) --match-path 'forge-test/velo/Velo*.sol'",
     "test:velo:unit": "forge test --use 0.8.9 -vvv --rpc-url $(grep OPTIMIS_SPECIAL_RPC .env | cut -d '=' -f2) --match-path 'forge-test/velo/VeloUnitTests.t.sol'",
+    "test:velo:integration": "forge test --use 0.8.9 -vvv --rpc-url $(grep OPTIMIS_SPECIAL_RPC .env | cut -d '=' -f2) --match-path 'forge-test/velo/*IntegrationTests.t.sol'",
     "test:utils": "forge test --use 0.8.9 -vvv --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --match-path 'forge-test/utils/*.sol'",
     "deploy:pancake": "forge script --use 0.8.9 src/script/DeployPancakeVault.s.sol:DeployPancakeVault --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "deploy:ramses": "forge script --use 0.8.9 src/script/arbitrum/RamsesStrategyDeployment.s.sol:Deploy --rpc-url $(grep ARBITRUM_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ARBISCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
