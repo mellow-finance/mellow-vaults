@@ -19,7 +19,7 @@ import "../libraries/external/TickMath.sol";
 
 import "../utils/DefaultAccessControlLateInit.sol";
 
-contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
+contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
     struct Position {
         int24 tickLower;
         int24 tickUpper;
@@ -57,7 +57,6 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
     }
 
     uint256 public constant Q96 = 2**96;
-
     bytes32 public constant STORAGE_SLOT = keccak256("strategy.storage");
 
     function _contractStorage() internal pure returns (Storage storage s) {
@@ -79,7 +78,17 @@ contract BaseAMMStrategy is DefaultAccessControlLateInit, ILpCallback {
 
     function updateMutableParams(MutableParams memory mutableParams) external {
         _requireAdmin();
-        _contractStorage().mutableParams = mutableParams;
+        Storage storage s = _contractStorage();
+        s.immutableParams.adapter.validateSecurityParams(mutableParams.securityParams);
+
+        if (mutableParams.maxPriceSlippageX96 > Q96 / 2) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
+        if (mutableParams.maxTickDeviation < 0) revert(ExceptionsLibrary.LIMIT_UNDERFLOW);
+        if (mutableParams.minCapitalRatioDeviationX96 > Q96 / 2) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
+        if (mutableParams.minSwapAmounts.length != 2) revert(ExceptionsLibrary.INVALID_LENGTH);
+        if (mutableParams.maxCapitalRemainderRatioX96 > Q96 / 2) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
+        if (mutableParams.initialLiquidity == 0) revert(ExceptionsLibrary.VALUE_ZERO);
+
+        s.mutableParams = mutableParams;
     }
 
     function getMutableParams() public view returns (MutableParams memory) {

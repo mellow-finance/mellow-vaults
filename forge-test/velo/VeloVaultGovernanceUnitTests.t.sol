@@ -6,7 +6,7 @@ import "forge-std/src/Vm.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "./../../src/strategies/BaseAMMStrategy.sol";
+import "./../../src/strategies/BaseAmmStrategy.sol";
 
 import "./../../src/test/MockRouter.sol";
 
@@ -66,7 +66,7 @@ contract Unit is Test {
     VeloHelper public veloHelper = new VeloHelper(positionManager);
     VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
 
-    BaseAMMStrategy public strategy = new BaseAMMStrategy();
+    BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
 
     VeloVaultGovernance public ammGovernance;

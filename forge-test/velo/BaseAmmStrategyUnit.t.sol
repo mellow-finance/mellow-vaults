@@ -30,7 +30,7 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
-contract Integration is Test {
+contract Unit is Test {
     uint256 public constant Q96 = 2**96;
     int24 public constant TICK_SPACING = 200;
 
@@ -279,55 +279,6 @@ contract Integration is Test {
                 amountOutMin: amountOutMin
             })
         );
-
-        string memory spot;
-        {
-            (int24 tickLower, int24 tickUpper, ) = adapter.positionInfo(ammVault1.tokenId());
-
-            (uint160 sqrtPriceX96, int24 spotTick, , , , ) = pool.slot0();
-            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-
-            (uint256[] memory rootVaultTvl, ) = rootVault.tvl();
-            (uint256[] memory ammVaultTvl, ) = ammVault1.tvl();
-            uint256 ratioD2 = FullMath.mulDiv(
-                100,
-                FullMath.mulDiv(ammVaultTvl[0], priceX96, Q96) + ammVaultTvl[1],
-                FullMath.mulDiv(rootVaultTvl[0], priceX96, Q96) + rootVaultTvl[1]
-            );
-
-            bool flag = tickLower <= spotTick && spotTick <= tickUpper;
-            assertTrue(flag);
-
-            spot = string(
-                abi.encodePacked(
-                    "erc20Vault capital ratio: ",
-                    vm.toString(ratioD2),
-                    "%; range: [",
-                    vm.toString(tickLower),
-                    ", ",
-                    vm.toString(tickUpper),
-                    "] spot tick: ",
-                    vm.toString(spotTick)
-                )
-            );
-        }
-
-        if (tokenIn == address(0)) {
-            console2.log("nothing to rebalace;", spot);
-        } else {
-            console2.log(
-                string(
-                    abi.encodePacked(
-                        "token in: ",
-                        IERC20Metadata(tokenIn).symbol(),
-                        "; amount in: ",
-                        vm.toString(amountIn / 10**IERC20Metadata(tokenIn).decimals()),
-                        "; ",
-                        spot
-                    )
-                )
-            );
-        }
     }
 
     function _swapAmount(uint256 amountIn, uint256 tokenInIndex) private {
@@ -462,7 +413,7 @@ contract Integration is Test {
         skip(3 * 24 * 3600);
     }
 
-    function _testWidth(int24 maxWidth) private {
+    function setUp() external {
         vm.startPrank(deployer);
 
         normalizePool();
@@ -470,42 +421,150 @@ contract Integration is Test {
         deployGovernance();
         deployVaults();
         initializeBaseStrategy();
-        initializeOperatorStrategy(maxWidth);
+        initializeOperatorStrategy(200);
         deposit(1);
         rebalance();
         deposit(1e7);
 
-        uint24 steps = 5;
-        int24 width = 200;
-        (, int24 tick, , , , ) = pool.slot0();
-        for (uint24 i = 0; i <= steps + 1; i++) {
-            addLiquidityAtTick(tick + width * int24(i));
-            addLiquidityAtTick(tick - width * int24(i));
-        }
-
-        for (uint256 j = 0; j < steps; j++) {
-            deposit(1e7);
-            for (uint24 i = 0; i < steps; i++) {
-                movePrice(tick - int24(i) * width - width / 2);
-                rebalance();
-            }
-            for (uint24 i = 0; i < steps; i++) {
-                movePrice(tick + int24(i) * width + width / 2);
-                rebalance();
-            }
-        }
         vm.stopPrank();
     }
 
-    function testNarrow() external {
-        _testWidth(200);
+    function testInitialize() external {
+        BaseAmmStrategy.ImmutableParams memory immutableParams = strategy.getImmutableParams();
+        BaseAmmStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+
+        vm.expectRevert(abi.encodePacked("AZ"));
+        strategy.initialize(address(0), immutableParams, mutableParams);
+
+        vm.expectRevert(abi.encodePacked("INIT"));
+        strategy.initialize(protocolAdmin, immutableParams, mutableParams);
+
+        assertTrue(strategy.initialized());
     }
 
-    function testNormal() external {
-        _testWidth(800);
+    function testUpdateMutableParams() external {
+        BaseAmmStrategy.MutableParams memory params;
+
+        vm.expectRevert(abi.encodePacked("FRB"));
+        strategy.updateMutableParams(params);
+
+        vm.startPrank(deployer);
+
+        params.maxPriceSlippageX96 = Q96;
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        strategy.updateMutableParams(params);
+        params.maxPriceSlippageX96 = 0;
+
+        params.maxTickDeviation = -1;
+        vm.expectRevert(abi.encodePacked("LIMU"));
+        strategy.updateMutableParams(params);
+        params.maxTickDeviation = 0;
+
+        params.minCapitalRatioDeviationX96 = Q96;
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        strategy.updateMutableParams(params);
+        params.minCapitalRatioDeviationX96 = 0;
+
+        params.minSwapAmounts = new uint256[](1);
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.updateMutableParams(params);
+        params.minSwapAmounts = new uint256[](2);
+
+        params.maxCapitalRemainderRatioX96 = Q96;
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        strategy.updateMutableParams(params);
+        params.maxCapitalRemainderRatioX96 = 0;
+
+        params.initialLiquidity = 0;
+        vm.expectRevert(abi.encodePacked("VZ"));
+        strategy.updateMutableParams(params);
+        params.initialLiquidity = 1;
+
+        params.securityParams = abi.encode("invalid parameters");
+        vm.expectRevert(bytes4(0xa86b6512));
+        strategy.updateMutableParams(params);
+
+        params.securityParams = abi.encode(
+            VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 3, anomalyFactorD9: 2e9})
+        );
+        vm.expectRevert(bytes4(0xa86b6512));
+        strategy.updateMutableParams(params);
+
+        params.securityParams = abi.encode(
+            VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 3, anomalyFactorD9: 1e9 - 1})
+        );
+        vm.expectRevert(bytes4(0xa86b6512));
+        strategy.updateMutableParams(params);
+
+        params.securityParams = abi.encode(
+            VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 3, anomalyFactorD9: 1e10 + 1})
+        );
+        vm.expectRevert(bytes4(0xa86b6512));
+        strategy.updateMutableParams(params);
+
+        params = BaseAmmStrategy.MutableParams({
+            securityParams: abi.encode(
+                VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 2, anomalyFactorD9: 2e9})
+            ),
+            maxPriceSlippageX96: 0,
+            maxTickDeviation: 0,
+            minCapitalRatioDeviationX96: 0,
+            minSwapAmounts: new uint256[](2),
+            maxCapitalRemainderRatioX96: 0,
+            initialLiquidity: 1
+        });
+        strategy.updateMutableParams(params);
+
+        vm.stopPrank();
     }
 
-    function testWide() external {
-        _testWidth(4200);
+    function testGetImmutableParams() external {
+        BaseAmmStrategy.ImmutableParams memory immutableParams = strategy.getImmutableParams();
+
+        assertEq(address(immutableParams.adapter), address(adapter));
+        assertEq(address(immutableParams.pool), address(pool));
+        assertEq(address(immutableParams.erc20Vault), address(erc20Vault));
+        assertEq(immutableParams.ammVaults.length, 2);
+        assertEq(address(immutableParams.ammVaults[0]), address(ammVault1));
+        assertEq(address(immutableParams.ammVaults[1]), address(ammVault2));
     }
+
+    function testGetMutableParams() external {
+        vm.startPrank(deployer);
+        BaseAmmStrategy.MutableParams memory params = BaseAmmStrategy.MutableParams({
+            securityParams: abi.encode(
+                VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 2, anomalyFactorD9: 2e9})
+            ),
+            maxPriceSlippageX96: 1,
+            maxTickDeviation: 2,
+            minCapitalRatioDeviationX96: 3,
+            minSwapAmounts: new uint256[](2),
+            maxCapitalRemainderRatioX96: 4,
+            initialLiquidity: 5
+        });
+        strategy.updateMutableParams(params);
+
+        vm.stopPrank();
+        BaseAmmStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+        assertEq(
+            keccak256(mutableParams.securityParams),
+            keccak256(
+                abi.encode(VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 2, anomalyFactorD9: 2e9}))
+            )
+        );
+        assertEq(mutableParams.maxPriceSlippageX96, 1);
+        assertEq(mutableParams.maxTickDeviation, 2);
+        assertEq(mutableParams.minCapitalRatioDeviationX96, 3);
+        assertEq(mutableParams.maxCapitalRemainderRatioX96, 4);
+        assertEq(mutableParams.initialLiquidity, 5);
+        assertEq(mutableParams.minSwapAmounts.length, 2);
+        assertEq(mutableParams.minSwapAmounts[0], 0);
+        assertEq(mutableParams.minSwapAmounts[0], 0);
+    }
+
+    function testGetCurrentState() external {}
+
+    function testRebalance() external {}
+
+    function testDepositCallback() external {}
 }

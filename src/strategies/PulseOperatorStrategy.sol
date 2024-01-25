@@ -12,12 +12,12 @@ import "../libraries/external/TickMath.sol";
 
 import "../utils/DefaultAccessControlLateInit.sol";
 
-import "../strategies/BaseAMMStrategy.sol";
+import "../strategies/BaseAmmStrategy.sol";
 
 contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     struct ImmutableParams {
         int24 tickSpacing;
-        BaseAMMStrategy strategy;
+        BaseAmmStrategy strategy;
     }
 
     struct MutableParams {
@@ -91,13 +91,13 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         DefaultAccessControlLateInit(address(this)).init(admin);
     }
 
-    function rebalance(BaseAMMStrategy.SwapData calldata swapData) external {
+    function rebalance(BaseAmmStrategy.SwapData calldata swapData) external {
         _requireAtLeastOperator();
-        (BaseAMMStrategy.Position memory newPosition, bool neededNewInterval) = calculateExpectedPosition();
+        (BaseAmmStrategy.Position memory newPosition, bool neededNewInterval) = calculateExpectedPosition();
         if (!neededNewInterval) return;
         Storage memory s = _contractStorage();
         ImmutableParams memory immutableParams = s.immutableParams;
-        BaseAMMStrategy.Position[] memory targetState = new BaseAMMStrategy.Position[](
+        BaseAmmStrategy.Position[] memory targetState = new BaseAmmStrategy.Position[](
             immutableParams.strategy.getImmutableParams().ammVaults.length
         );
         targetState[0] = newPosition;
@@ -112,7 +112,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         MutableParams memory mutableParams,
         int24 spotTick,
         int24 tickSpacing
-    ) public pure returns (BaseAMMStrategy.Position memory newInterval) {
+    ) public pure returns (BaseAmmStrategy.Position memory newInterval) {
         if (mutableParams.intervalWidth == tickSpacing) {
             newInterval.tickLower = spotTick;
         } else {
@@ -125,7 +125,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     }
 
     function calculateTargetRatioOfToken1(
-        BaseAMMStrategy.Position memory position,
+        BaseAmmStrategy.Position memory position,
         uint160 sqrtRatioX96,
         uint256 priceX96
     ) public pure returns (uint256) {
@@ -149,11 +149,11 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
             uint256 expectedAmountOut
         )
     {
-        (BaseAMMStrategy.Position memory position, bool neededNewInterval) = calculateExpectedPosition();
+        (BaseAmmStrategy.Position memory position, bool neededNewInterval) = calculateExpectedPosition();
         if (!neededNewInterval) {
             return (tokenIn, amountIn, tokenOut, expectedAmountOut);
         }
-        BaseAMMStrategy.ImmutableParams memory baseStrategyImmutableParams = getImmutableParams()
+        BaseAmmStrategy.ImmutableParams memory baseStrategyImmutableParams = getImmutableParams()
             .strategy
             .getImmutableParams();
         IAdapter adapter = baseStrategyImmutableParams.adapter;
@@ -181,16 +181,16 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     function calculateExpectedPosition()
         public
         view
-        returns (BaseAMMStrategy.Position memory newInterval, bool neededNewInterval)
+        returns (BaseAmmStrategy.Position memory newInterval, bool neededNewInterval)
     {
         MutableParams memory mutableParams = getMutableParams();
         ImmutableParams memory immutableParams = getImmutableParams();
-        BaseAMMStrategy.ImmutableParams memory baseStrategyImmutableParams = immutableParams
+        BaseAmmStrategy.ImmutableParams memory baseStrategyImmutableParams = immutableParams
             .strategy
             .getImmutableParams();
         IAdapter adapter = baseStrategyImmutableParams.adapter;
         IIntegrationVault ammVault = baseStrategyImmutableParams.ammVaults[0];
-        BaseAMMStrategy.Position memory currentPosition;
+        BaseAmmStrategy.Position memory currentPosition;
         uint256 tokenId = adapter.tokenId(address(ammVault));
         if (tokenId != 0) {
             (currentPosition.tickLower, currentPosition.tickUpper, ) = adapter.positionInfo(tokenId);
@@ -208,13 +208,13 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     }
 
     function _calculateNewInterval(
-        BaseAMMStrategy.Position memory currentPosition,
+        BaseAmmStrategy.Position memory currentPosition,
         ImmutableParams memory immutableParams,
         MutableParams memory mutableParams,
         VolatileParams memory volatileParams,
         int24 spotTick,
         uint256 tokenId
-    ) private pure returns (BaseAMMStrategy.Position memory newInterval, bool neededNewInterval) {
+    ) private pure returns (BaseAmmStrategy.Position memory newInterval, bool neededNewInterval) {
         int24 tickSpacing = immutableParams.tickSpacing;
         if (tokenId == 0 || volatileParams.forceRebalanceFlag) {
             return (formPositionWithSpotTickInCenter(mutableParams, spotTick, tickSpacing), true);

@@ -6,7 +6,7 @@ import "forge-std/src/Vm.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "./../../src/strategies/BaseAMMStrategy.sol";
+import "./../../src/strategies/BaseAmmStrategy.sol";
 
 import "./../../src/test/MockRouter.sol";
 
@@ -67,7 +67,7 @@ contract Unit is Test {
     VeloHelper public veloHelper = new VeloHelper(positionManager);
     VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
 
-    BaseAMMStrategy public strategy = new BaseAMMStrategy();
+    BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
 
     IVeloVaultGovernance public ammGovernance;
@@ -187,13 +187,13 @@ contract Unit is Test {
 
         strategy.initialize(
             deployer,
-            BaseAMMStrategy.ImmutableParams({
+            BaseAmmStrategy.ImmutableParams({
                 erc20Vault: erc20Vault,
                 ammVaults: ammVaults,
                 adapter: adapter,
                 pool: address(ammVault.pool())
             }),
-            BaseAMMStrategy.MutableParams({
+            BaseAmmStrategy.MutableParams({
                 securityParams: new bytes(0),
                 maxPriceSlippageX96: (2 * Q96) / 100,
                 maxTickDeviation: 50,
@@ -262,7 +262,7 @@ contract Unit is Test {
         );
 
         operatorStrategy.rebalance(
-            BaseAMMStrategy.SwapData({
+            BaseAmmStrategy.SwapData({
                 router: address(swapRouter),
                 data: data,
                 tokenInIndex: tokenIn < tokenOut ? 0 : 1,

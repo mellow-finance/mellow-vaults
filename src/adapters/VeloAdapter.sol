@@ -180,8 +180,9 @@ contract VeloAdapter is IAdapter {
     }
 
     function validateSecurityParams(bytes memory params) external pure {
+        if (params.length == 0) return;
         SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
         if (securityParams.anomalyLookback <= securityParams.anomalyOrder) revert InvalidParams();
-        if (securityParams.anomalyFactorD9 > D9 * 10) revert InvalidParams();
+        if (securityParams.anomalyFactorD9 > D9 * 10 || securityParams.anomalyFactorD9 < D9) revert InvalidParams();
     }
 }
