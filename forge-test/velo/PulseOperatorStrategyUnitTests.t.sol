@@ -30,51 +30,48 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
-contract Integration is Test {
-    IERC20RootVault public rootVault;
-    IERC20Vault public erc20Vault;
-    IVeloVault public ammVault1;
-    IVeloVault public ammVault2;
+contract Unit is Test {
+    uint256 public constant Q96 = 2**96;
+    int24 public constant TICK_SPACING = 200;
 
-    uint256 public nftStart;
+    address public immutable protocolTreasury = address(bytes20(keccak256("treasury-1")));
+    address public immutable strategyTreasury = address(bytes20(keccak256("treasury-2")));
+    address public immutable deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
 
-    address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
-    address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
-    address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
+    uint256 public immutable protocolFeeD9 = 1e8; // 10%
 
-    uint256 public protocolFeeD9 = 1e8; // 10%
+    address public immutable weth = 0x4200000000000000000000000000000000000006;
+    address public immutable usdc = 0x7F5c764cBc14f9669B88837ca1490cCa17c31607;
+    address public immutable velo = 0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db;
 
-    address public weth = 0x4200000000000000000000000000000000000006;
-    address public usdc = 0x7F5c764cBc14f9669B88837ca1490cCa17c31607;
-    address public velo = 0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db;
-
-    address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
-    address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
-    address public rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
-    address public erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
+    address public immutable governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
+    address public immutable registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
+    address public immutable rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
+    address public immutable erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
     address public ammGovernance;
 
     address public admin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
     address public mellowOracle = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
 
-    INonfungiblePositionManager public positionManager =
+    INonfungiblePositionManager public immutable positionManager =
         INonfungiblePositionManager(0xd557d3b47D159EB3f9B48c0f1B4a6e67e82e8B3f);
 
-    SwapRouter public swapRouter;
-    IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
+    ICLPool public immutable pool = ICLPool(0xC358c95b146E9597339b376063A2cB657AFf84eb);
+    ICLGauge public immutable gauge = ICLGauge(0x5f090Fc694aa42569aB61397E4c996E808f0BBf2);
+    IERC20RootVaultGovernance public immutable rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
 
+    SwapRouter public swapRouter = new SwapRouter(positionManager.factory(), weth);
     VeloHelper public veloHelper = new VeloHelper(positionManager);
-
     VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
     BaseAMMStrategy public strategy = new BaseAMMStrategy();
 
-    uint256 public constant Q96 = 2**96;
-
-    int24 public TICK_SPACING = 200;
     VeloFarm public farm;
-    ICLPool public pool = ICLPool(0xC358c95b146E9597339b376063A2cB657AFf84eb);
-    ICLGauge public gauge = ICLGauge(0x5f090Fc694aa42569aB61397E4c996E808f0BBf2);
+
+    IERC20RootVault public rootVault;
+    IERC20Vault public erc20Vault;
+    IVeloVault public ammVault1;
+    IVeloVault public ammVault2;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -253,25 +250,9 @@ contract Integration is Test {
         deal(weth, address(strategy), 1e15);
     }
 
-    function tvls() public view {
-        {
-            (uint256[] memory tvl, ) = erc20Vault.tvl();
-            console2.log("Erc20 vault tvl:", tvl[0], tvl[1]);
-        }
-        {
-            (uint256[] memory tvl, ) = ammVault1.tvl();
-            console2.log("velo vault 1 tvl:", tvl[0], tvl[1]);
-        }
-        {
-            (uint256[] memory tvl, ) = ammVault2.tvl();
-            console2.log("velo vault 2 tvl:", tvl[0], tvl[1]);
-        }
-    }
-
     function rebalance() public {
         (address tokenIn, uint256 amountIn, address tokenOut, uint256 expectedAmountOut) = operatorStrategy
             .calculateSwapAmounts(address(rootVault));
-        console2.log("Swap amounts:", amountIn, tokenIn);
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
         bytes memory data = abi.encodeWithSelector(
             ISwapRouter.exactInputSingle.selector,
@@ -321,7 +302,6 @@ contract Integration is Test {
             );
             pos = string(abi.encodePacked("{", vm.toString(tickLower), ", ", vm.toString(tickUpper), "}"));
         }
-        console2.log(IERC20Metadata(tokenIn).symbol(), amountIn, spot, pos);
     }
 
     function movePriceUSDC() public {
@@ -444,7 +424,6 @@ contract Integration is Test {
     function test() external {
         vm.startPrank(deployer);
 
-        swapRouter = new SwapRouter(positionManager.factory(), weth);
         normalizePool();
 
         deployGovernance();
@@ -467,7 +446,5 @@ contract Integration is Test {
             }
         }
         vm.stopPrank();
-        console2.log("Velo balance:", IERC20(velo).balanceOf(address(farm)));
-        console2.log("Reward token:", gauge.rewardToken());
     }
 }

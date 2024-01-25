@@ -29,7 +29,7 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
-contract UnitTest is Test {
+contract Unit is Test {
     using SafeERC20 for IERC20;
 
     IERC20RootVault public rootVault;
