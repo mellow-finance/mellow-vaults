@@ -14,8 +14,6 @@ import "../utils/DefaultAccessControlLateInit.sol";
 
 import "../strategies/BaseAMMStrategy.sol";
 
-import "forge-std/src/console2.sol";
-
 contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     struct ImmutableParams {
         int24 tickSpacing;
@@ -84,6 +82,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     }
 
     function rebalance(BaseAMMStrategy.SwapData calldata swapData) external {
+        _requireAtLeastOperator();
         (BaseAMMStrategy.Position memory newPosition, bool neededNewInterval) = calculateExpectedPosition();
         if (!neededNewInterval) return;
         ImmutableParams memory immutableParams = getImmutableParams();

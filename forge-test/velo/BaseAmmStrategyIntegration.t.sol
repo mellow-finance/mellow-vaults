@@ -30,7 +30,7 @@ import "./../../src/strategies/PulseOperatorStrategy.sol";
 
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
-contract VeloVaultTest is Test {
+contract IntegrationTest is Test {
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
     IVeloVault public ammVault1;

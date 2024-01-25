@@ -230,7 +230,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
             }
         }
 
-        // actualAmounts[0] = actualAmounts[0] > tokenAmounts[0] ? tokenAmounts[0] : actualAmounts[0];
-        // actualAmounts[1] = actualAmounts[1] > tokenAmounts[1] ? tokenAmounts[1] : actualAmounts[1];
+        actualAmounts[0] = actualAmounts[0] > tokenAmounts[0] ? tokenAmounts[0] : actualAmounts[0];
+        actualAmounts[1] = actualAmounts[1] > tokenAmounts[1] ? tokenAmounts[1] : actualAmounts[1];
     }
 }
