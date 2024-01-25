@@ -32,20 +32,14 @@ import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 contract Unit is Test {
     using SafeERC20 for IERC20;
 
-    IERC20RootVault public rootVault;
-    IERC20Vault public erc20Vault;
-    IVeloVault public ammVault;
-
     uint256 public constant Q96 = 2**96;
     int24 public constant TICK_SPACING = 200;
 
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
-    address public deployerTreasury = address(bytes20(keccak256("treasury-deployer")));
-
     address public randomVaultOwner = address(bytes20(keccak256("random-vault-owner")));
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
-    address public user = address(bytes20(keccak256("user-1")));
+    address public protocolAdmin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
     uint256 public protocolFeeD9 = 1e8; // 10%
 
@@ -55,30 +49,33 @@ contract Unit is Test {
 
     address public governance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
     address public registry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
-    address public rootGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
-    address public erc20Governance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
-    address public ammGovernance;
-
-    address public admin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
-
+    address public allowAllValidator = 0x0f4A979597E16ec87d2344fD78c2cec53f37D263;
     address public mellowOracle = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
 
-    INonfungiblePositionManager public positionManager =
-        INonfungiblePositionManager(0xd557d3b47D159EB3f9B48c0f1B4a6e67e82e8B3f);
+    IERC20RootVaultGovernance public rootVaultGovernance =
+        IERC20RootVaultGovernance(0x65a440a89824AB464d7c94B184eF494c1457258D);
+    IERC20VaultGovernance public erc20Governance = IERC20VaultGovernance(0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece);
 
-    IERC20RootVaultGovernance public rootVaultGovernance = IERC20RootVaultGovernance(rootGovernance);
-
-    SwapRouter public swapRouter = new SwapRouter(positionManager.factory(), weth);
-    VeloHelper public veloHelper = new VeloHelper(positionManager);
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
-    BaseAMMStrategy public strategy = new BaseAMMStrategy();
-    VeloAdapter public adapter = new VeloAdapter(positionManager);
-
-    VeloFarm public farm;
     ICLPool public pool = ICLPool(0xC358c95b146E9597339b376063A2cB657AFf84eb);
     ICLGauge public gauge = ICLGauge(0x5f090Fc694aa42569aB61397E4c996E808f0BBf2);
-    address public allowAllValidator = 0x0f4A979597E16ec87d2344fD78c2cec53f37D263;
-    PulseOperatorStrategy public operatorStrategy;
+    INonfungiblePositionManager public positionManager =
+        INonfungiblePositionManager(0xd557d3b47D159EB3f9B48c0f1B4a6e67e82e8B3f);
+    SwapRouter public swapRouter = new SwapRouter(positionManager.factory(), weth);
+
+    VeloAdapter public adapter = new VeloAdapter(positionManager);
+    VeloHelper public veloHelper = new VeloHelper(positionManager);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
+
+    BaseAMMStrategy public strategy = new BaseAMMStrategy();
+    PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
+
+    VeloVaultGovernance public ammGovernance;
+
+    IERC20RootVault public rootVault;
+    IERC20Vault public erc20Vault;
+    IVeloVault public ammVault;
+
+    VeloFarm public farm;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -138,29 +135,31 @@ contract Unit is Test {
         }
 
         farm = new VeloFarm(address(rootVault), deployer, velo, protocolTreasury, protocolFeeD9);
+
         vm.stopPrank();
-        vm.startPrank(admin);
+        vm.startPrank(protocolAdmin);
+
         IVeloVaultGovernance(ammGovernance).setStrategyParams(
             erc20VaultNft + 1,
             IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
         );
+
         vm.stopPrank();
         vm.startPrank(deployer);
     }
 
     function deployGovernance() public {
         VeloVault singleton = new VeloVault(positionManager, veloHelper);
-        VeloVaultGovernance veloGovernance = new VeloVaultGovernance(
+        ammGovernance = new VeloVaultGovernance(
             IVaultGovernance.InternalParams({
                 singleton: singleton,
                 registry: IVaultRegistry(registry),
                 protocolGovernance: IProtocolGovernance(governance)
             })
         );
-        ammGovernance = address(veloGovernance);
 
         vm.stopPrank();
-        vm.startPrank(admin);
+        vm.startPrank(protocolAdmin);
 
         IProtocolGovernance(governance).stagePermissionGrants(address(ammGovernance), new uint8[](1));
         uint8[] memory per = new uint8[](1);
@@ -172,6 +171,7 @@ contract Unit is Test {
         IProtocolGovernance(governance).commitPermissionGrants(address(ammGovernance));
         IProtocolGovernance(governance).commitPermissionGrants(address(swapRouter));
         IProtocolGovernance(governance).commitValidator(address(swapRouter));
+
         vm.stopPrank();
         vm.startPrank(deployer);
     }
@@ -187,8 +187,8 @@ contract Unit is Test {
 
     function testContractMetaParameters() external {
         _setUp();
-        assertEq(VeloVaultGovernance(ammGovernance).contractName(), "VeloVaultGovernance");
-        assertEq(VeloVaultGovernance(ammGovernance).contractVersion(), "1.0.0");
+        assertEq(ammGovernance.contractName(), "VeloVaultGovernance");
+        assertEq(ammGovernance.contractVersion(), "1.0.0");
     }
 
     function testSetStrategyParams() external {
@@ -201,14 +201,14 @@ contract Unit is Test {
         uint256 vaultNft = ammVault.nft();
 
         vm.expectRevert(abi.encodePacked("FRB"));
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(vaultNft, validStrategyParams);
+        ammGovernance.setStrategyParams(vaultNft, validStrategyParams);
 
-        vm.startPrank(admin);
+        vm.startPrank(protocolAdmin);
 
         vm.expectRevert(abi.encodePacked("AZ"));
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(vaultNft, invalidStrategyParams);
+        ammGovernance.setStrategyParams(vaultNft, invalidStrategyParams);
 
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(vaultNft, validStrategyParams);
+        ammGovernance.setStrategyParams(vaultNft, validStrategyParams);
 
         vm.stopPrank();
     }
@@ -220,9 +220,7 @@ contract Unit is Test {
 
         uint256 randomNft = 1234;
 
-        IVeloVaultGovernance.StrategyParams memory emptyParams = IVeloVaultGovernance(ammGovernance).strategyParams(
-            randomNft
-        );
+        IVeloVaultGovernance.StrategyParams memory emptyParams = ammGovernance.strategyParams(randomNft);
 
         assertEq(emptyParams.gauge, address(0));
         assertEq(emptyParams.farm, address(0));
@@ -233,9 +231,7 @@ contract Unit is Test {
 
         uint256 vaultNft = ammVault.nft();
 
-        IVeloVaultGovernance.StrategyParams memory nonEmptyParams = IVeloVaultGovernance(ammGovernance).strategyParams(
-            vaultNft
-        );
+        IVeloVaultGovernance.StrategyParams memory nonEmptyParams = ammGovernance.strategyParams(vaultNft);
 
         assertEq(nonEmptyParams.gauge, address(gauge));
         assertEq(nonEmptyParams.farm, address(farm));
@@ -244,9 +240,9 @@ contract Unit is Test {
     function testSupportsInterface() external {
         _setUp();
 
-        assertTrue(VeloVaultGovernance(ammGovernance).supportsInterface(type(IVeloVaultGovernance).interfaceId));
-        assertTrue(VeloVaultGovernance(ammGovernance).supportsInterface(type(IVaultGovernance).interfaceId));
-        assertFalse(VeloVaultGovernance(ammGovernance).supportsInterface(type(IVeloVault).interfaceId));
+        assertTrue(ammGovernance.supportsInterface(type(IVeloVaultGovernance).interfaceId));
+        assertTrue(ammGovernance.supportsInterface(type(IVaultGovernance).interfaceId));
+        assertFalse(ammGovernance.supportsInterface(type(IVeloVault).interfaceId));
     }
 
     function testCreateVault() external {
@@ -259,20 +255,20 @@ contract Unit is Test {
         vaultTokens[1] = usdc;
 
         vm.expectRevert(abi.encodePacked("FRB"));
-        VeloVaultGovernance(ammGovernance).createVault(vaultTokens, randomVaultOwner, TICK_SPACING);
+        ammGovernance.createVault(vaultTokens, randomVaultOwner, TICK_SPACING);
 
         vm.startPrank(deployer);
 
         vm.expectRevert(abi.encodePacked("INVL"));
-        VeloVaultGovernance(ammGovernance).createVault(new address[](3), randomVaultOwner, TICK_SPACING);
+        ammGovernance.createVault(new address[](3), randomVaultOwner, TICK_SPACING);
 
         vm.expectRevert(abi.encodePacked("NF"));
-        VeloVaultGovernance(ammGovernance).createVault(vaultTokens, randomVaultOwner, 0);
+        ammGovernance.createVault(vaultTokens, randomVaultOwner, 0);
 
         vaultTokens[0] = usdc;
         vaultTokens[1] = weth;
         vm.expectRevert(abi.encodePacked("INVA"));
-        VeloVaultGovernance(ammGovernance).createVault(vaultTokens, randomVaultOwner, TICK_SPACING);
+        ammGovernance.createVault(vaultTokens, randomVaultOwner, TICK_SPACING);
 
         vaultTokens[0] = weth;
         vaultTokens[1] = address(uint160(weth) + 1);
