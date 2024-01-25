@@ -22,7 +22,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
 
     struct MutableParams {
         int24 intervalWidth;
-        int24 maxPositionLengthInTicks;
+        int24 maxIntervalWidth;
         uint256 extensionFactorD;
         uint256 neighborhoodFactorD;
     }
@@ -50,7 +50,17 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
 
     function updateMutableParams(MutableParams memory mutableParams) external {
         _requireAdmin();
-        _contractStorage().mutableParams = mutableParams;
+        if (mutableParams.maxIntervalWidth < mutableParams.intervalWidth) revert(ExceptionsLibrary.INVALID_LENGTH);
+        Storage storage s = _contractStorage();
+        int24 tickSpacing = s.immutableParams.tickSpacing;
+        if (mutableParams.intervalWidth % tickSpacing != 0 || mutableParams.maxIntervalWidth % tickSpacing != 0) {
+            revert(ExceptionsLibrary.INVALID_LENGTH);
+        }
+        if (mutableParams.neighborhoodFactorD > D9) {
+            revert(ExceptionsLibrary.LIMIT_OVERFLOW);
+        }
+
+        s.mutableParams = mutableParams;
     }
 
     function setForceRebalanceFlag(bool flag) external {
@@ -85,14 +95,15 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         _requireAtLeastOperator();
         (BaseAMMStrategy.Position memory newPosition, bool neededNewInterval) = calculateExpectedPosition();
         if (!neededNewInterval) return;
-        ImmutableParams memory immutableParams = getImmutableParams();
+        Storage memory s = _contractStorage();
+        ImmutableParams memory immutableParams = s.immutableParams;
         BaseAMMStrategy.Position[] memory targetState = new BaseAMMStrategy.Position[](
             immutableParams.strategy.getImmutableParams().ammVaults.length
         );
         targetState[0] = newPosition;
         targetState[0].capitalRatioX96 = Q96;
         immutableParams.strategy.rebalance(targetState, swapData);
-        if (getVolatileParams().forceRebalanceFlag) {
+        if (s.volatileParams.forceRebalanceFlag) {
             _contractStorage().volatileParams.forceRebalanceFlag = false;
         }
     }
@@ -102,7 +113,11 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         int24 spotTick,
         int24 tickSpacing
     ) public pure returns (BaseAMMStrategy.Position memory newInterval) {
-        newInterval.tickLower = spotTick - mutableParams.intervalWidth / 2;
+        if (mutableParams.intervalWidth == tickSpacing) {
+            newInterval.tickLower = spotTick;
+        } else {
+            newInterval.tickLower = spotTick - mutableParams.intervalWidth / 2;
+        }
         int24 remainder = newInterval.tickLower % tickSpacing;
         if (remainder < 0) remainder += tickSpacing;
         newInterval.tickLower -= remainder;
@@ -134,7 +149,10 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
             uint256 expectedAmountOut
         )
     {
-        (BaseAMMStrategy.Position memory position, ) = calculateExpectedPosition();
+        (BaseAMMStrategy.Position memory position, bool neededNewInterval) = calculateExpectedPosition();
+        if (!neededNewInterval) {
+            return (tokenIn, amountIn, tokenOut, expectedAmountOut);
+        }
         BaseAMMStrategy.ImmutableParams memory baseStrategyImmutableParams = getImmutableParams()
             .strategy
             .getImmutableParams();
@@ -229,7 +247,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         newInterval.tickLower = currentPosition.tickLower - sideExtension;
         newInterval.tickUpper = currentPosition.tickUpper + sideExtension;
 
-        if (newInterval.tickUpper - newInterval.tickLower > mutableParams.maxPositionLengthInTicks) {
+        if (newInterval.tickUpper - newInterval.tickLower > mutableParams.maxIntervalWidth) {
             return (formPositionWithSpotTickInCenter(mutableParams, spotTick, tickSpacing), true);
         }
 

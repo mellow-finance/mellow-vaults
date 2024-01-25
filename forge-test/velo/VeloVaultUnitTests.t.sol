@@ -233,7 +233,7 @@ contract Unit is Test {
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
                 intervalWidth: 200,
-                maxPositionLengthInTicks: 400,
+                maxIntervalWidth: 400,
                 extensionFactorD: 1e9,
                 neighborhoodFactorD: 1e8
             }),

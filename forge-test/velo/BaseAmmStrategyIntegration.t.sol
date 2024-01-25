@@ -207,7 +207,7 @@ contract Integration is Test {
                 maxTickDeviation: 50,
                 minCapitalRatioDeviationX96: Q96 / 100,
                 minSwapAmounts: minSwapAmounts,
-                maxCapitalRemainderRatioX96: Q96,
+                maxCapitalRemainderRatioX96: Q96 / 50,
                 initialLiquidity: 1e9
             })
         );
@@ -234,13 +234,13 @@ contract Integration is Test {
 
     PulseOperatorStrategy public operatorStrategy;
 
-    function initializeOperatorStrategy() public {
+    function initializeOperatorStrategy(int24 maxWidth) public {
         operatorStrategy = new PulseOperatorStrategy();
         operatorStrategy.initialize(
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
                 intervalWidth: 200,
-                maxPositionLengthInTicks: 400,
+                maxIntervalWidth: maxWidth,
                 extensionFactorD: 1e9,
                 neighborhoodFactorD: 1e8
             }),
@@ -253,25 +253,9 @@ contract Integration is Test {
         deal(weth, address(strategy), 1e15);
     }
 
-    function tvls() public view {
-        {
-            (uint256[] memory tvl, ) = erc20Vault.tvl();
-            console2.log("Erc20 vault tvl:", tvl[0], tvl[1]);
-        }
-        {
-            (uint256[] memory tvl, ) = ammVault1.tvl();
-            console2.log("velo vault 1 tvl:", tvl[0], tvl[1]);
-        }
-        {
-            (uint256[] memory tvl, ) = ammVault2.tvl();
-            console2.log("velo vault 2 tvl:", tvl[0], tvl[1]);
-        }
-    }
-
     function rebalance() public {
         (address tokenIn, uint256 amountIn, address tokenOut, uint256 expectedAmountOut) = operatorStrategy
             .calculateSwapAmounts(address(rootVault));
-        console2.log("Swap amounts:", amountIn, tokenIn);
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
         bytes memory data = abi.encodeWithSelector(
             ISwapRouter.exactInputSingle.selector,
@@ -296,8 +280,8 @@ contract Integration is Test {
                 amountOutMin: amountOutMin
             })
         );
+
         string memory spot;
-        string memory pos;
         {
             (int24 tickLower, int24 tickUpper, ) = adapter.positionInfo(ammVault1.tokenId());
             (uint160 sqrtPriceX96, int24 spotTick, , , , ) = pool.slot0();
@@ -309,64 +293,93 @@ contract Integration is Test {
                 FullMath.mulDiv(uni[0], priceX96, Q96) + uni[1],
                 FullMath.mulDiv(rv[0], priceX96, Q96) + rv[1]
             );
+            bool flag = tickLower <= spotTick && spotTick <= tickUpper;
+            assertTrue(flag);
+
             spot = string(
                 abi.encodePacked(
-                    vm.toString(tickLower <= spotTick && spotTick <= tickUpper),
-                    " {",
-                    vm.toString(spotTick),
-                    "} ratio: ",
+                    "erc20Vault capital ratio: ",
                     vm.toString(ratio),
-                    "%"
+                    "%; range: [",
+                    vm.toString(tickLower),
+                    ", ",
+                    vm.toString(tickUpper),
+                    "] spot tick: ",
+                    vm.toString(spotTick)
                 )
             );
-            pos = string(abi.encodePacked("{", vm.toString(tickLower), ", ", vm.toString(tickUpper), "}"));
         }
-        console2.log(IERC20Metadata(tokenIn).symbol(), amountIn, spot, pos);
-    }
-
-    function movePriceUSDC() public {
-        while (true) {
-            uint256 amountIn = 1e6 * 1e6;
-            deal(usdc, deployer, amountIn);
-            IERC20(usdc).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: usdc,
-                    tokenOut: weth,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
+        if (tokenIn == address(0)) {
+            console2.log("Nothing to rebalance");
+        } else {
+            console2.log(
+                string(
+                    abi.encodePacked(
+                        "token in: ",
+                        IERC20Metadata(tokenIn).symbol(),
+                        "; amount in: ",
+                        vm.toString(amountIn / 10**IERC20Metadata(tokenIn).decimals()),
+                        "; ",
+                        spot
+                    )
+                )
             );
-            skip(24 * 3600);
-            (, bool flag) = operatorStrategy.calculateExpectedPosition();
-            if (flag) break;
         }
     }
 
-    function movePriceWETH() public {
-        while (true) {
-            uint256 amountIn = 500 ether;
-            deal(weth, deployer, amountIn);
-            IERC20(weth).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: weth,
-                    tokenOut: usdc,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            skip(24 * 3600);
-            (, bool flag) = operatorStrategy.calculateExpectedPosition();
-            if (flag) break;
+    function _swapAmount(uint256 amountIn, bool zeroForOne) private {
+        if (amountIn == 0) revert("Insufficient amount for swap");
+        address[] memory tokens = ammVault1.vaultTokens();
+        address tokenIn = zeroForOne ? tokens[0] : tokens[1];
+        address tokenOut = zeroForOne ? tokens[1] : tokens[0];
+        deal(tokenIn, deployer, amountIn);
+        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        ISwapRouter(swapRouter).exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                tickSpacing: TICK_SPACING,
+                recipient: deployer,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+                deadline: type(uint256).max
+            })
+        );
+        skip(24 * 3600);
+    }
+
+    function movePrice(int24 targetTick) public {
+        int24 spotTick;
+        (, spotTick, , , , ) = pool.slot0();
+        uint256 usdcAmount = 1e6 * 1e6;
+        uint256 wethAmount = 500 ether;
+        if (spotTick < targetTick) {
+            while (spotTick < targetTick) {
+                _swapAmount(usdcAmount, false);
+                (, spotTick, , , , ) = pool.slot0();
+            }
+        } else {
+            while (spotTick > targetTick) {
+                _swapAmount(wethAmount, true);
+                (, spotTick, , , , ) = pool.slot0();
+            }
+        }
+
+        while (spotTick != targetTick) {
+            if (spotTick < targetTick) {
+                while (spotTick < targetTick) {
+                    _swapAmount(usdcAmount, false);
+                    (, spotTick, , , , ) = pool.slot0();
+                }
+                usdcAmount >>= 1;
+            } else {
+                while (spotTick > targetTick) {
+                    _swapAmount(wethAmount, true);
+                    (, spotTick, , , , ) = pool.slot0();
+                }
+                wethAmount >>= 1;
+            }
         }
     }
 
@@ -385,6 +398,11 @@ contract Integration is Test {
         deal(weth, address(adapter), amount0 * 2);
         deal(usdc, address(adapter), amount1 * 2);
         adapter.mint(address(pool), tickLower, tickUpper, liquidity, address(adapter));
+    }
+
+    function addLiquidityAtTick(int24 targetTick) public {
+        targetTick -= targetTick % TICK_SPACING;
+        addLiquidity(targetTick, targetTick + TICK_SPACING, 1e19);
     }
 
     function normalizePool() public {
@@ -441,7 +459,7 @@ contract Integration is Test {
         skip(3 * 24 * 3600);
     }
 
-    function test() external {
+    function _runTest(int24 maxWidth) private {
         vm.startPrank(deployer);
 
         swapRouter = new SwapRouter(positionManager.factory(), weth);
@@ -450,24 +468,42 @@ contract Integration is Test {
         deployGovernance();
         deployVaults();
         initializeBaseStrategy();
-        initializeOperatorStrategy();
+        initializeOperatorStrategy(maxWidth);
         deposit(1);
         rebalance();
-        deposit(1e6);
-        for (uint256 j = 0; j < 5; j++) {
-            for (uint256 i = 0; i < 5; i++) {
-                movePriceUSDC();
+        deposit(1e7);
+
+        uint24 steps = 5;
+        int24 width = 200;
+        (, int24 tick, , , , ) = pool.slot0();
+        for (uint24 i = 0; i <= steps + 1; i++) {
+            addLiquidityAtTick(tick + width * int24(i));
+            addLiquidityAtTick(tick - width * int24(i));
+        }
+
+        for (uint256 j = 0; j < steps; j++) {
+            deposit(1e7);
+            for (uint24 i = 0; i < steps; i++) {
+                movePrice(tick - int24(i) * width - width / 2);
                 rebalance();
-                deposit(1e7);
             }
-            for (uint256 i = 0; i < 5; i++) {
-                movePriceWETH();
+            for (uint24 i = 0; i < steps; i++) {
+                movePrice(tick + int24(i) * width + width / 2);
                 rebalance();
-                deposit(1e7);
             }
         }
         vm.stopPrank();
-        console2.log("Velo balance:", IERC20(velo).balanceOf(address(farm)));
-        console2.log("Reward token:", gauge.rewardToken());
+    }
+
+    function testNarrow() external {
+        _runTest(200);
+    }
+
+    function testNormal() external {
+        _runTest(800);
+    }
+
+    function testWide() external {
+        _runTest(4200);
     }
 }
