@@ -33,26 +33,13 @@ contract BaseAmmStrategyHelper {
             totalCapital += capitals[i];
         }
 
-        for (uint256 i = 0; i < n; i++) {
-            if (target[i].capitalRatioX96 == 0) continue;
-            (amounts0[0], amounts1[1]) = LiquidityAmounts.getAmountsForLiquidity(
-                sqrtPriceX96,
-                TickMath.getSqrtRatioAtTick(target[i].tickLower),
-                TickMath.getSqrtRatioAtTick(target[i].tickUpper),
-                uint128(Q96)
-            );
-            capitals[i] = FullMath.mulDiv(amounts0[i], priceX96, Q96) + amounts1[i];
-            totalCapital += capitals[i];
-        }
         uint256[] memory targetAmounts = new uint256[](2);
 
         for (uint256 i = 0; i < n; i++) {
             if (target[i].capitalRatioX96 == 0) continue;
             uint256 targetCapital = FullMath.mulDiv(totalCapital, target[i].capitalRatioX96, Q96);
-            if (targetCapital != capitals[i]) {
-                amounts0[i] = FullMath.mulDiv(targetCapital, amounts0[i], capitals[i]);
-                amounts1[i] = FullMath.mulDiv(targetCapital, amounts1[i], capitals[i]);
-            }
+            amounts0[i] = FullMath.mulDiv(targetCapital, amounts0[i], capitals[i]);
+            amounts1[i] = FullMath.mulDiv(targetCapital, amounts1[i], capitals[i]);
 
             targetAmounts[0] += amounts0[i];
             targetAmounts[1] += amounts1[i];
@@ -65,7 +52,8 @@ contract BaseAmmStrategyHelper {
     function calculateSwapAmounts(
         uint160 sqrtPriceX96,
         BaseAmmStrategy.Position[] memory target,
-        IERC20RootVault rootVault
+        IERC20RootVault rootVault,
+        uint24 fee
     )
         external
         view
@@ -82,7 +70,7 @@ contract BaseAmmStrategyHelper {
         (uint256[] memory tvl, ) = rootVault.tvl();
         uint256 currentRatioOfToken1X96 = FullMath.mulDiv(tvl[1], Q96, FullMath.mulDiv(tvl[0], priceX96, Q96) + tvl[1]);
 
-        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(int256(500)), 1e6);
+        uint256 feesX96 = FullMath.mulDiv(Q96, uint256(fee), 1e6);
         uint256 targetRatioOfToken0X96 = Q96 - targetRatioOfToken1X96;
 
         if (currentRatioOfToken1X96 > targetRatioOfToken1X96) {

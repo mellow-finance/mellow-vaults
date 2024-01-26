@@ -260,7 +260,8 @@ contract Unit is Test {
             (tokenIn, tokenOut, amountIn, expectedAmountOut) = baseAmmStrategyHelper.calculateSwapAmounts(
                 sqrtPriceX96,
                 target,
-                rootVault
+                rootVault,
+                3000
             );
         }
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
@@ -314,14 +315,15 @@ contract Unit is Test {
         }
     }
 
-    function _swapAmount(uint256 amountIn, bool zeroForOne) private {
+    function _swapAmount(uint256 amountIn, uint256 tokenInIndex) private {
         if (amountIn == 0) revert("Insufficient amount for swap");
-        vm.startPrank(deployer);
-        address[] memory tokens = ammVault.vaultTokens();
-        address tokenIn = zeroForOne ? tokens[0] : tokens[1];
-        address tokenOut = zeroForOne ? tokens[1] : tokens[0];
+        address[] memory tokens = new address[](2);
+        tokens[0] = weth;
+        tokens[1] = usdc;
+        address tokenIn = tokens[tokenInIndex];
+        address tokenOut = tokens[tokenInIndex ^ 1];
         deal(tokenIn, deployer, amountIn);
-        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        IERC20(tokenIn).safeIncreaseAllowance(address(swapRouter), amountIn);
         ISwapRouter(swapRouter).exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
@@ -334,23 +336,22 @@ contract Unit is Test {
                 deadline: type(uint256).max
             })
         );
-        vm.stopPrank();
         skip(24 * 3600);
     }
 
     function movePrice(int24 targetTick) public {
         int24 spotTick;
         (, spotTick, , , , ) = pool.slot0();
-        uint256 usdcAmount = 1e6 * 1e6;
-        uint256 wethAmount = 500 ether;
+        uint256 usdcAmount = IERC20(usdc).balanceOf(address(pool));
+        uint256 wethAmount = IERC20(weth).balanceOf(address(pool));
         if (spotTick < targetTick) {
             while (spotTick < targetTick) {
-                _swapAmount(usdcAmount, false);
+                _swapAmount(usdcAmount, 1);
                 (, spotTick, , , , ) = pool.slot0();
             }
         } else {
             while (spotTick > targetTick) {
-                _swapAmount(wethAmount, true);
+                _swapAmount(wethAmount, 0);
                 (, spotTick, , , , ) = pool.slot0();
             }
         }
@@ -358,13 +359,13 @@ contract Unit is Test {
         while (spotTick != targetTick) {
             if (spotTick < targetTick) {
                 while (spotTick < targetTick) {
-                    _swapAmount(usdcAmount, false);
+                    _swapAmount(usdcAmount, 1);
                     (, spotTick, , , , ) = pool.slot0();
                 }
                 usdcAmount >>= 1;
             } else {
                 while (spotTick > targetTick) {
-                    _swapAmount(wethAmount, true);
+                    _swapAmount(wethAmount, 0);
                     (, spotTick, , , , ) = pool.slot0();
                 }
                 wethAmount >>= 1;
@@ -391,62 +392,45 @@ contract Unit is Test {
 
     function normalizePool() public {
         pool.increaseObservationCardinalityNext(2);
-        addLiquidity(-887000, 887000, 1e6);
-        (, int24 targetTick, , , , , ) = IUniswapV3Pool(0x85149247691df622eaF1a8Bd0CaFd40BC45154a9).slot0();
-        targetTick -= targetTick % TICK_SPACING;
-        for (int24 i = 1; i <= 10; i++) {
-            addLiquidity(targetTick - i * TICK_SPACING, targetTick + i * TICK_SPACING, 1e19);
+        {
+            int24 lowerTick = -800000;
+            int24 upperTick = 800000;
+            addLiquidity(lowerTick, upperTick, 2500 ether);
         }
 
-        uint256 amountIn = 1e6 * 1e6;
-        (, int24 spotTick, , , , ) = pool.slot0();
-        while (spotTick < targetTick) {
-            deal(usdc, deployer, amountIn);
-            IERC20(usdc).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: usdc,
-                    tokenOut: weth,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            (, spotTick, , , , ) = pool.slot0();
-        }
-        while (spotTick > targetTick) {
-            uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(spotTick);
-            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-            if (pool.token0() == weth) {
-                priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
+        (, int24 targetTick, , , , , ) = IUniswapV3Pool(0x85149247691df622eaF1a8Bd0CaFd40BC45154a9).slot0();
+
+        _swapAmount(2621439999999999988840005632, 0);
+        movePrice(targetTick);
+
+        targetTick -= targetTick % TICK_SPACING;
+
+        {
+            (uint160 sqrtRatioX96, , , , , ) = pool.slot0();
+            uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
+            uint256 usdcAmount = 5e12;
+            uint256 wethAmount = FullMath.mulDiv(usdcAmount, Q96, priceX96);
+
+            for (int24 i = 1; i <= 20; i++) {
+                int24 lowerTick = targetTick - i * TICK_SPACING;
+                int24 upperTick = targetTick + i * TICK_SPACING;
+                uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+                    sqrtRatioX96,
+                    TickMath.getSqrtRatioAtTick(lowerTick),
+                    TickMath.getSqrtRatioAtTick(upperTick),
+                    wethAmount,
+                    usdcAmount
+                );
+                addLiquidity(lowerTick, upperTick, liquidity);
             }
-            amountIn = FullMath.mulDiv(1e12, priceX96, Q96);
-            deal(weth, deployer, amountIn);
-            IERC20(weth).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: weth,
-                    tokenOut: usdc,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            (, spotTick, , , , ) = pool.slot0();
         }
+
         skip(3 * 24 * 3600);
     }
 
     function setUp() external {
         vm.startPrank(deployer);
 
-        swapRouter = new SwapRouter(positionManager.factory(), weth);
         normalizePool();
 
         deployGovernance();
@@ -536,7 +520,7 @@ contract Unit is Test {
         }
 
         fullInitialization();
-
+        vm.startPrank(deployer);
         (, int24 initialTick, , , , ) = pool.slot0();
         (uint128 initialLiquidity, int24 initialTickLower, int24 initialTickUpper) = getPositionInfo(
             ammVault.tokenId()
@@ -555,7 +539,6 @@ contract Unit is Test {
             (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
             require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
         }
-
         movePrice(initialTick - 1000);
         {
             (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
@@ -567,7 +550,6 @@ contract Unit is Test {
             (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
             require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
         }
-
         movePrice(initialTick + 1000);
         {
             (uint256[] memory minTvl, uint256[] memory maxTvl) = ammVault.tvl();
@@ -579,7 +561,6 @@ contract Unit is Test {
             (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
             require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
         }
-
         movePrice(initialTick);
 
         {
@@ -592,6 +573,7 @@ contract Unit is Test {
             (uint256 expectedAmount0, uint256 expectedAmount1) = calculateExpectedTvl(liquidity, tickLower, tickUpper);
             require(minTvl[0] == expectedAmount0 && minTvl[1] == expectedAmount1);
         }
+        vm.stopPrank();
     }
 
     function testInitilalize() external {
@@ -720,6 +702,7 @@ contract Unit is Test {
 
     function _testPush(int24 q) private {
         fullInitialization();
+
         address[] memory tokens = ammVault.vaultTokens();
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 1 ether;
@@ -728,9 +711,12 @@ contract Unit is Test {
         for (uint256 i = 0; i < 2; i++) {
             deal(tokens[i], address(erc20Vault), amounts[i]);
         }
+
         {
             (, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            vm.startPrank(deployer);
             movePrice(tickLower + ((tickUpper - tickLower) * q) / 100);
+            vm.stopPrank();
         }
 
         (uint256[] memory erc20TvlBefore, ) = erc20Vault.tvl();
@@ -791,7 +777,9 @@ contract Unit is Test {
 
         {
             (, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            vm.startPrank(deployer);
             movePrice(tickLower + ((tickUpper - tickLower) * q) / 100);
+            vm.stopPrank();
         }
 
         (uint256[] memory amounts, ) = ammVault.tvl();
@@ -937,7 +925,9 @@ contract Unit is Test {
 
         {
             (, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            vm.startPrank(deployer);
             movePrice(tickLower + ((tickUpper - tickLower) * q) / 100);
+            vm.stopPrank();
         }
 
         (uint256[] memory erc20TvlBefore, ) = erc20Vault.tvl();
@@ -998,7 +988,9 @@ contract Unit is Test {
 
         {
             (, int24 tickLower, int24 tickUpper) = getPositionInfo(ammVault.tokenId());
+            vm.startPrank(deployer);
             movePrice(tickLower + ((tickUpper - tickLower) * q) / 100);
+            vm.stopPrank();
         }
 
         (uint256[] memory amounts, ) = ammVault.tvl();

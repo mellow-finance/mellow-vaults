@@ -32,6 +32,8 @@ import "../../src/strategies/PulseOperatorStrategy.sol";
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
 contract Integration is Test {
+    using SafeERC20 for IERC20;
+
     uint256 public constant Q96 = 2**96;
     int24 public constant TICK_SPACING = 200;
 
@@ -190,8 +192,8 @@ contract Integration is Test {
 
     function initializeBaseStrategy() public {
         uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e16;
-        minSwapAmounts[1] = 1e7;
+        minSwapAmounts[0] = 1e9;
+        minSwapAmounts[1] = 1e3;
 
         IIntegrationVault[] memory ammVaults = new IIntegrationVault[](2);
         ammVaults[0] = ammVault1;
@@ -211,7 +213,7 @@ contract Integration is Test {
                 maxTickDeviation: 50,
                 minCapitalRatioDeviationX96: Q96 / 100,
                 minSwapAmounts: minSwapAmounts,
-                maxCapitalRemainderRatioX96: Q96 / 50,
+                maxCapitalRemainderRatioX96: Q96 / 2,
                 initialLiquidity: 1e9
             })
         );
@@ -269,7 +271,8 @@ contract Integration is Test {
             (tokenIn, tokenOut, amountIn, expectedAmountOut) = baseAmmStrategyHelper.calculateSwapAmounts(
                 sqrtPriceX96,
                 target,
-                rootVault
+                rootVault,
+                3000
             );
         }
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
@@ -349,11 +352,13 @@ contract Integration is Test {
 
     function _swapAmount(uint256 amountIn, uint256 tokenInIndex) private {
         if (amountIn == 0) revert("Insufficient amount for swap");
-        address[] memory tokens = ammVault1.vaultTokens();
+        address[] memory tokens = new address[](2);
+        tokens[0] = weth;
+        tokens[1] = usdc;
         address tokenIn = tokens[tokenInIndex];
         address tokenOut = tokens[tokenInIndex ^ 1];
         deal(tokenIn, deployer, amountIn);
-        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        IERC20(tokenIn).safeIncreaseAllowance(address(swapRouter), amountIn);
         ISwapRouter(swapRouter).exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
@@ -372,8 +377,8 @@ contract Integration is Test {
     function movePrice(int24 targetTick) public {
         int24 spotTick;
         (, spotTick, , , , ) = pool.slot0();
-        uint256 usdcAmount = 1e6 * 1e6;
-        uint256 wethAmount = 500 ether;
+        uint256 usdcAmount = IERC20(usdc).balanceOf(address(pool));
+        uint256 wethAmount = IERC20(weth).balanceOf(address(pool));
         if (spotTick < targetTick) {
             while (spotTick < targetTick) {
                 _swapAmount(usdcAmount, 1);
@@ -420,62 +425,41 @@ contract Integration is Test {
         adapter.mint(address(pool), tickLower, tickUpper, liquidity, address(adapter));
     }
 
-    function addLiquidityAtTick(int24 targetTick) public {
-        targetTick -= targetTick % TICK_SPACING;
-        addLiquidity(targetTick, targetTick + TICK_SPACING, 1e19);
-    }
-
     function normalizePool() public {
         pool.increaseObservationCardinalityNext(2);
-        addLiquidity(-887000, 887000, 1e6);
-        (, int24 targetTick, , , , , ) = IUniswapV3Pool(0x85149247691df622eaF1a8Bd0CaFd40BC45154a9).slot0();
-        targetTick -= targetTick % TICK_SPACING;
-        for (int24 i = 1; i <= 10; i++) {
-            addLiquidity(targetTick - i * TICK_SPACING, targetTick + i * TICK_SPACING, 1e19);
+        {
+            int24 lowerTick = -800000;
+            int24 upperTick = 800000;
+            addLiquidity(lowerTick, upperTick, 2500 ether);
         }
 
-        uint256 amountIn = 1e6 * 1e6;
-        (, int24 spotTick, , , , ) = pool.slot0();
-        while (spotTick < targetTick) {
-            deal(usdc, deployer, amountIn);
-            IERC20(usdc).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: usdc,
-                    tokenOut: weth,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            (, spotTick, , , , ) = pool.slot0();
-        }
-        while (spotTick > targetTick) {
-            uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(spotTick);
-            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
-            if (pool.token0() == weth) {
-                priceX96 = FullMath.mulDiv(Q96, Q96, priceX96);
+        (, int24 targetTick, , , , , ) = IUniswapV3Pool(0x85149247691df622eaF1a8Bd0CaFd40BC45154a9).slot0();
+
+        _swapAmount(2621439999999999988840005632, 0);
+        movePrice(targetTick);
+
+        targetTick -= targetTick % TICK_SPACING;
+
+        {
+            (uint160 sqrtRatioX96, , , , , ) = pool.slot0();
+            uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
+            uint256 usdcAmount = 5e12;
+            uint256 wethAmount = FullMath.mulDiv(usdcAmount, Q96, priceX96);
+
+            for (int24 i = 1; i <= 20; i++) {
+                int24 lowerTick = targetTick - i * TICK_SPACING;
+                int24 upperTick = targetTick + i * TICK_SPACING;
+                uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+                    sqrtRatioX96,
+                    TickMath.getSqrtRatioAtTick(lowerTick),
+                    TickMath.getSqrtRatioAtTick(upperTick),
+                    wethAmount,
+                    usdcAmount
+                );
+                addLiquidity(lowerTick, upperTick, liquidity);
             }
-            amountIn = FullMath.mulDiv(1e12, priceX96, Q96);
-            deal(weth, deployer, amountIn);
-            IERC20(weth).approve(address(swapRouter), amountIn);
-            ISwapRouter(swapRouter).exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: weth,
-                    tokenOut: usdc,
-                    tickSpacing: TICK_SPACING,
-                    recipient: deployer,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                    deadline: type(uint256).max
-                })
-            );
-            (, spotTick, , , , ) = pool.slot0();
         }
+
         skip(3 * 24 * 3600);
     }
 
@@ -495,10 +479,6 @@ contract Integration is Test {
         uint24 steps = 5;
         int24 width = 200;
         (, int24 tick, , , , ) = pool.slot0();
-        for (uint24 i = 0; i <= steps + 1; i++) {
-            addLiquidityAtTick(tick + width * int24(i));
-            addLiquidityAtTick(tick - width * int24(i));
-        }
 
         for (uint256 j = 0; j < steps; j++) {
             deposit(1e7);
