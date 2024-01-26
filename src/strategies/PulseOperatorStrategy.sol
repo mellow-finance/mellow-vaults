@@ -21,8 +21,8 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     }
 
     struct MutableParams {
-        int24 intervalWidth;
-        int24 maxIntervalWidth;
+        int24 positionWidth;
+        int24 maxPositionWidth;
         uint256 extensionFactorD;
         uint256 neighborhoodFactorD;
     }
@@ -50,17 +50,8 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
 
     function updateMutableParams(MutableParams memory mutableParams) external {
         _requireAdmin();
-        if (mutableParams.maxIntervalWidth < mutableParams.intervalWidth) revert(ExceptionsLibrary.INVALID_LENGTH);
-        Storage storage s = _contractStorage();
-        int24 tickSpacing = s.immutableParams.tickSpacing;
-        if (mutableParams.intervalWidth % tickSpacing != 0 || mutableParams.maxIntervalWidth % tickSpacing != 0) {
-            revert(ExceptionsLibrary.INVALID_LENGTH);
-        }
-        if (mutableParams.neighborhoodFactorD > D9) {
-            revert(ExceptionsLibrary.LIMIT_OVERFLOW);
-        }
-
-        s.mutableParams = mutableParams;
+        validateMutableParams(mutableParams);
+        _contractStorage().mutableParams = mutableParams;
     }
 
     function setForceRebalanceFlag(bool flag) external {
@@ -85,7 +76,10 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         MutableParams memory mutableParams,
         address admin
     ) external {
+        if (address(immutableParams.strategy) == address(0)) revert(ExceptionsLibrary.ADDRESS_ZERO);
+        if (immutableParams.tickSpacing == 0) revert(ExceptionsLibrary.VALUE_ZERO);
         _contractStorage().immutableParams = immutableParams;
+        validateMutableParams(mutableParams);
         _contractStorage().mutableParams = mutableParams;
         _contractStorage().volatileParams.forceRebalanceFlag = true;
         DefaultAccessControlLateInit(address(this)).init(admin);
@@ -93,18 +87,33 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
 
     function rebalance(BaseAmmStrategy.SwapData calldata swapData) external {
         _requireAtLeastOperator();
-        (BaseAmmStrategy.Position memory newPosition, bool neededNewInterval) = calculateExpectedPosition();
-        if (!neededNewInterval) return;
+        (BaseAmmStrategy.Position memory newPosition, bool neededNewPosition) = calculateExpectedPosition();
+        if (!neededNewPosition) return;
         Storage memory s = _contractStorage();
-        ImmutableParams memory immutableParams = s.immutableParams;
         BaseAmmStrategy.Position[] memory targetState = new BaseAmmStrategy.Position[](
-            immutableParams.strategy.getImmutableParams().ammVaults.length
+            s.immutableParams.strategy.getImmutableParams().ammVaults.length
         );
         targetState[0] = newPosition;
         targetState[0].capitalRatioX96 = Q96;
-        immutableParams.strategy.rebalance(targetState, swapData);
+        s.immutableParams.strategy.rebalance(targetState, swapData);
         if (s.volatileParams.forceRebalanceFlag) {
             _contractStorage().volatileParams.forceRebalanceFlag = false;
+        }
+    }
+
+    function validateMutableParams(MutableParams memory mutableParams) public view {
+        if (mutableParams.maxPositionWidth < mutableParams.positionWidth) revert(ExceptionsLibrary.INVALID_LENGTH);
+        Storage storage s = _contractStorage();
+        int24 tickSpacing = s.immutableParams.tickSpacing;
+        if (
+            mutableParams.positionWidth % tickSpacing != 0 ||
+            mutableParams.maxPositionWidth % tickSpacing != 0 ||
+            mutableParams.positionWidth == 0
+        ) {
+            revert(ExceptionsLibrary.INVALID_LENGTH);
+        }
+        if (mutableParams.neighborhoodFactorD > D9) {
+            revert(ExceptionsLibrary.LIMIT_OVERFLOW);
         }
     }
 
@@ -112,56 +121,46 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         MutableParams memory mutableParams,
         int24 spotTick,
         int24 tickSpacing
-    ) public pure returns (BaseAmmStrategy.Position memory newInterval) {
-        if (mutableParams.intervalWidth == tickSpacing) {
-            newInterval.tickLower = spotTick;
+    ) public pure returns (BaseAmmStrategy.Position memory newPosition) {
+        if (mutableParams.positionWidth == tickSpacing) {
+            newPosition.tickLower = spotTick;
         } else {
-            newInterval.tickLower = spotTick - mutableParams.intervalWidth / 2;
+            newPosition.tickLower = spotTick - mutableParams.positionWidth / 2;
         }
-        int24 remainder = newInterval.tickLower % tickSpacing;
+        int24 remainder = newPosition.tickLower % tickSpacing;
         if (remainder < 0) remainder += tickSpacing;
-        newInterval.tickLower -= remainder;
-        newInterval.tickUpper = newInterval.tickLower + mutableParams.intervalWidth;
+        newPosition.tickLower -= remainder;
+        newPosition.tickUpper = newPosition.tickLower + mutableParams.positionWidth;
     }
 
     function calculateExpectedPosition()
         public
         view
-        returns (BaseAmmStrategy.Position memory newInterval, bool neededNewInterval)
+        returns (BaseAmmStrategy.Position memory newPosition, bool neededNewPosition)
     {
-        MutableParams memory mutableParams = getMutableParams();
         ImmutableParams memory immutableParams = getImmutableParams();
         BaseAmmStrategy.ImmutableParams memory baseStrategyImmutableParams = immutableParams
             .strategy
             .getImmutableParams();
         IAdapter adapter = baseStrategyImmutableParams.adapter;
         IIntegrationVault ammVault = baseStrategyImmutableParams.ammVaults[0];
-        BaseAmmStrategy.Position memory currentPosition;
         uint256 tokenId = adapter.tokenId(address(ammVault));
+        BaseAmmStrategy.Position memory currentPosition;
         if (tokenId != 0) {
             (currentPosition.tickLower, currentPosition.tickUpper, ) = adapter.positionInfo(tokenId);
         }
         (, int24 spotTick) = adapter.slot0(baseStrategyImmutableParams.pool);
-        return
-            _calculateNewInterval(
-                currentPosition,
-                immutableParams,
-                mutableParams,
-                getVolatileParams(),
-                spotTick,
-                tokenId
-            );
+        return _calculateNewPosition(currentPosition, immutableParams.tickSpacing, spotTick, tokenId);
     }
 
-    function _calculateNewInterval(
+    function _calculateNewPosition(
         BaseAmmStrategy.Position memory currentPosition,
-        ImmutableParams memory immutableParams,
-        MutableParams memory mutableParams,
-        VolatileParams memory volatileParams,
+        int24 tickSpacing,
         int24 spotTick,
         uint256 tokenId
-    ) private pure returns (BaseAmmStrategy.Position memory newInterval, bool neededNewInterval) {
-        int24 tickSpacing = immutableParams.tickSpacing;
+    ) private view returns (BaseAmmStrategy.Position memory newPosition, bool neededNewPosition) {
+        MutableParams memory mutableParams = getMutableParams();
+        VolatileParams memory volatileParams = getVolatileParams();
         if (tokenId == 0 || volatileParams.forceRebalanceFlag) {
             return (formPositionWithSpotTickInCenter(mutableParams, spotTick, tickSpacing), true);
         }
@@ -190,13 +189,13 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
             sideExtension -= sideExtension % tickSpacing;
         }
 
-        newInterval.tickLower = currentPosition.tickLower - sideExtension;
-        newInterval.tickUpper = currentPosition.tickUpper + sideExtension;
+        newPosition.tickLower = currentPosition.tickLower - sideExtension;
+        newPosition.tickUpper = currentPosition.tickUpper + sideExtension;
 
-        if (newInterval.tickUpper - newInterval.tickLower > mutableParams.maxIntervalWidth) {
+        if (newPosition.tickUpper - newPosition.tickLower > mutableParams.maxPositionWidth) {
             return (formPositionWithSpotTickInCenter(mutableParams, spotTick, tickSpacing), true);
         }
 
-        neededNewInterval = true;
+        neededNewPosition = true;
     }
 }

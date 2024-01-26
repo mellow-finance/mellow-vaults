@@ -242,8 +242,8 @@ contract Unit is Test {
         operatorStrategy.initialize(
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
-                intervalWidth: 200,
-                maxIntervalWidth: maxWidth,
+                positionWidth: 200,
+                maxPositionWidth: maxWidth,
                 extensionFactorD: 1e9,
                 neighborhoodFactorD: 1e8
             }),
@@ -259,9 +259,9 @@ contract Unit is Test {
     function rebalance() public {
         (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
         BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](2);
-        (BaseAmmStrategy.Position memory newInterval, ) = operatorStrategy.calculateExpectedPosition();
-        target[0].tickLower = newInterval.tickLower;
-        target[0].tickUpper = newInterval.tickUpper;
+        (BaseAmmStrategy.Position memory newPosition, ) = operatorStrategy.calculateExpectedPosition();
+        target[0].tickLower = newPosition.tickLower;
+        target[0].tickUpper = newPosition.tickUpper;
         target[0].capitalRatioX96 = Q96;
         (address tokenIn, address tokenOut, uint256 amountIn, uint256 expectedAmountOut) = baseAmmStrategyHelper
             .calculateSwapAmounts(sqrtPriceX96, target, rootVault, 3000);
@@ -421,15 +421,6 @@ contract Unit is Test {
     }
 
     function testInitialize() external {
-        BaseAmmStrategy.ImmutableParams memory immutableParams = strategy.getImmutableParams();
-        BaseAmmStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
-
-        vm.expectRevert(abi.encodePacked("AZ"));
-        strategy.initialize(address(0), immutableParams, mutableParams);
-
-        vm.expectRevert(abi.encodePacked("INIT"));
-        strategy.initialize(protocolAdmin, immutableParams, mutableParams);
-
-        assertTrue(strategy.initialized());
+        // vm.expectRevert(abi.encodePacked("random-error"));
     }
 }

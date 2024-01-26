@@ -231,8 +231,8 @@ contract Unit is Test {
         operatorStrategy.initialize(
             PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
             PulseOperatorStrategy.MutableParams({
-                intervalWidth: 200,
-                maxIntervalWidth: 400,
+                positionWidth: 200,
+                maxPositionWidth: 400,
                 extensionFactorD: 1e9,
                 neighborhoodFactorD: 1e8
             }),
@@ -253,9 +253,9 @@ contract Unit is Test {
         {
             (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
             BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](2);
-            (BaseAmmStrategy.Position memory newInterval, ) = operatorStrategy.calculateExpectedPosition();
-            target[0].tickLower = newInterval.tickLower;
-            target[0].tickUpper = newInterval.tickUpper;
+            (BaseAmmStrategy.Position memory newPosition, ) = operatorStrategy.calculateExpectedPosition();
+            target[0].tickLower = newPosition.tickLower;
+            target[0].tickUpper = newPosition.tickUpper;
             target[0].capitalRatioX96 = Q96;
             (tokenIn, tokenOut, amountIn, expectedAmountOut) = baseAmmStrategyHelper.calculateSwapAmounts(
                 sqrtPriceX96,
