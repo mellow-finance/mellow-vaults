@@ -124,60 +124,6 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         newInterval.tickUpper = newInterval.tickLower + mutableParams.intervalWidth;
     }
 
-    function calculateTargetRatioOfToken1(
-        BaseAmmStrategy.Position memory position,
-        uint160 sqrtRatioX96,
-        uint256 priceX96
-    ) public pure returns (uint256) {
-        (uint256 ratio0X96, uint256 ratio1X96) = LiquidityAmounts.getAmountsForLiquidity(
-            sqrtRatioX96,
-            TickMath.getSqrtRatioAtTick(position.tickLower),
-            TickMath.getSqrtRatioAtTick(position.tickUpper),
-            uint128(Q96)
-        );
-        uint256 targetCapital = FullMath.mulDiv(ratio0X96, priceX96, Q96) + ratio1X96;
-        return FullMath.mulDiv(ratio1X96, Q96, targetCapital);
-    }
-
-    function calculateSwapAmounts(address rootVault)
-        external
-        view
-        returns (
-            address tokenIn,
-            uint256 amountIn,
-            address tokenOut,
-            uint256 expectedAmountOut
-        )
-    {
-        (BaseAmmStrategy.Position memory position, bool neededNewInterval) = calculateExpectedPosition();
-        if (!neededNewInterval) {
-            return (tokenIn, amountIn, tokenOut, expectedAmountOut);
-        }
-        BaseAmmStrategy.ImmutableParams memory baseStrategyImmutableParams = getImmutableParams()
-            .strategy
-            .getImmutableParams();
-        IAdapter adapter = baseStrategyImmutableParams.adapter;
-        (uint160 sqrtRatioX96, ) = adapter.slot0(baseStrategyImmutableParams.pool);
-        uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
-        uint256 targetRatioX96 = calculateTargetRatioOfToken1(position, sqrtRatioX96, priceX96);
-
-        (uint256[] memory tvl, ) = IVault(rootVault).tvl();
-        uint256 capital = FullMath.mulDiv(tvl[0], priceX96, Q96) + tvl[1];
-        uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], Q96, capital);
-        address[] memory tokens = IVault(rootVault).vaultTokens();
-        if (targetRatioX96 < currentRatioX96) {
-            amountIn = FullMath.mulDiv(currentRatioX96 - targetRatioX96, capital, Q96);
-            tokenIn = tokens[1];
-            tokenOut = tokens[0];
-            expectedAmountOut = FullMath.mulDiv(amountIn, Q96, priceX96);
-        } else {
-            amountIn = FullMath.mulDiv(targetRatioX96 - currentRatioX96, capital, priceX96);
-            tokenIn = tokens[0];
-            tokenOut = tokens[1];
-            expectedAmountOut = FullMath.mulDiv(amountIn, priceX96, Q96);
-        }
-    }
-
     function calculateExpectedPosition()
         public
         view

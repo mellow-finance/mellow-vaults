@@ -7,26 +7,27 @@ import "forge-std/src/console2.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "./../../src/strategies/BaseAmmStrategy.sol";
+import "../../src/strategies/BaseAmmStrategy.sol";
 
-import "./../../src/test/MockRouter.sol";
+import "../../src/test/MockRouter.sol";
 
-import "./../../src/utils/VeloDepositWrapper.sol";
-import "./../../src/utils/VeloHelper.sol";
-import "./../../src/utils/VeloFarm.sol";
+import "../../src/utils/VeloDepositWrapper.sol";
+import "../../src/utils/VeloHelper.sol";
+import "../../src/utils/VeloFarm.sol";
+import "../../src/utils/BaseAmmStrategyHelper.sol";
 
-import "./../../src/vaults/ERC20Vault.sol";
-import "./../../src/vaults/ERC20VaultGovernance.sol";
+import "../../src/vaults/ERC20Vault.sol";
+import "../../src/vaults/ERC20VaultGovernance.sol";
 
-import "./../../src/vaults/ERC20RootVault.sol";
-import "./../../src/vaults/ERC20RootVaultGovernance.sol";
+import "../../src/vaults/ERC20RootVault.sol";
+import "../../src/vaults/ERC20RootVaultGovernance.sol";
 
-import "./../../src/vaults/VeloVault.sol";
-import "./../../src/vaults/VeloVaultGovernance.sol";
+import "../../src/vaults/VeloVault.sol";
+import "../../src/vaults/VeloVaultGovernance.sol";
 
-import "./../../src/adapters/VeloAdapter.sol";
+import "../../src/adapters/VeloAdapter.sol";
 
-import "./../../src/strategies/PulseOperatorStrategy.sol";
+import "../../src/strategies/PulseOperatorStrategy.sol";
 
 import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
@@ -66,6 +67,7 @@ contract Integration is Test {
 
     BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
+    BaseAmmStrategyHelper public baseAmmStrategyHelper = new BaseAmmStrategyHelper();
 
     IVeloVaultGovernance public ammGovernance;
 
@@ -253,8 +255,23 @@ contract Integration is Test {
     }
 
     function rebalance() public {
-        (address tokenIn, uint256 amountIn, address tokenOut, uint256 expectedAmountOut) = operatorStrategy
-            .calculateSwapAmounts(address(rootVault));
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 expectedAmountOut;
+        {
+            (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
+            BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](2);
+            (BaseAmmStrategy.Position memory newInterval, ) = operatorStrategy.calculateExpectedPosition();
+            target[0].tickLower = newInterval.tickLower;
+            target[0].tickUpper = newInterval.tickUpper;
+            target[0].capitalRatioX96 = Q96;
+            (tokenIn, tokenOut, amountIn, expectedAmountOut) = baseAmmStrategyHelper.calculateSwapAmounts(
+                sqrtPriceX96,
+                target,
+                rootVault
+            );
+        }
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
         bytes memory data = abi.encodeWithSelector(
             ISwapRouter.exactInputSingle.selector,

@@ -208,6 +208,9 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
                 pullingAmounts[0] <<= 1;
                 pullingAmounts[1] <<= 1;
                 ammVaults[i].pull(address(erc20Vault), tokens, pullingAmounts, "");
+                if (targetState[i].tickLower == targetState[i].tickUpper) {
+                    continue;
+                }
                 (bool success, bytes memory data) = address(s.immutableParams.adapter).delegatecall(
                     abi.encodeWithSelector(
                         IAdapter.mint.selector,
