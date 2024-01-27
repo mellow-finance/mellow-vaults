@@ -636,7 +636,7 @@ contract Unit is Test {
         uint256 collectedRewardAmount = IERC20(gauge.rewardToken()).balanceOf(address(farm));
         assertApproxEqAbs(collectedRewardAmount, amount, 1 wei);
 
-        uint256 expectedProtocolFee = FullMath.mulDiv(collectedRewardAmount, farm.protocolFeeD9(), 1e9);
+        uint256 expectedProtocolFee = FullMath.mulDiv(collectedRewardAmount, farm.getStorage().protocolFeeD9, 1e9);
         uint256 expectedUserRewards = collectedRewardAmount - expectedProtocolFee;
 
         uint256 deployerLp = farm.balanceOf(deployer);
