@@ -129,7 +129,13 @@ contract Unit is Test {
         IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
         ammVault = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        pool = ammVault.pool();
+        farm = new VeloFarm();
+
+        ammGovernance.setStrategyParams(
+            erc20VaultNft + 1,
+            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
+        );
+
         {
             uint256[] memory nfts = new uint256[](2);
             nfts[0] = erc20VaultNft;
@@ -137,18 +143,13 @@ contract Unit is Test {
             combineVaults(tokens, nfts);
         }
 
-        farm = new VeloFarm(address(rootVault), deployer, velo, protocolTreasury, protocolFeeD9);
-
-        vm.stopPrank();
-        vm.startPrank(protocolAdmin);
-
-        IVeloVaultGovernance(ammGovernance).setStrategyParams(
-            erc20VaultNft + 1,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
+        farm.initialize(
+            address(rootVault),
+            address(deployer),
+            address(protocolTreasury),
+            address(gauge.rewardToken()),
+            protocolFeeD9
         );
-
-        vm.stopPrank();
-        vm.startPrank(deployer);
     }
 
     function deployGovernance() public {

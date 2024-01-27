@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "../libraries/external/FullMath.sol";
 
-import "./DefaultAccessControl.sol";
+import "./DefaultAccessControlLateInit.sol";
 
-contract VeloFarm is DefaultAccessControl, ERC20 {
+contract VeloFarm is DefaultAccessControlLateInit, ERC20 {
     uint256 public constant D9 = 1e9;
     uint256 public constant MAX_PROTOCOL_FEE = 2e8; // 20%
 
@@ -20,9 +20,9 @@ contract VeloFarm is DefaultAccessControl, ERC20 {
     }
 
     Epoch[] private _epochs;
-    address public immutable lpToken;
+    address public lpToken;
 
-    address public immutable rewardToken;
+    address public rewardToken;
     address public protocolTreasury;
     uint256 public protocolFeeD9;
 
@@ -33,19 +33,21 @@ contract VeloFarm is DefaultAccessControl, ERC20 {
     mapping(address => mapping(uint256 => int256)) public balanceDelta;
     mapping(address => bool) public hasDeposits;
 
-    constructor(
+    string private _name;
+    string private _symbol;
+
+    constructor() ERC20("", "") {}
+
+    function initialize(
         address lpToken_,
         address admin_,
-        address rewardToken_,
         address protocolTreasury_,
+        address rewardToken_,
         uint256 protocolFeeD9_
-    )
-        DefaultAccessControl(admin_)
-        ERC20(
-            string(abi.encodePacked(ERC20(lpToken_).name(), " instant farm")),
-            string(abi.encodePacked(ERC20(lpToken_).symbol(), "IF"))
-        )
-    {
+    ) external {
+        _name = string(abi.encodePacked(IERC20Metadata(lpToken_).name(), " instant farm"));
+        _symbol = string(abi.encodePacked(IERC20Metadata(lpToken_).symbol(), "IF"));
+
         if (
             lpToken_ == address(0) ||
             admin_ == address(0) ||
@@ -59,6 +61,15 @@ contract VeloFarm is DefaultAccessControl, ERC20 {
         rewardToken = rewardToken_;
         protocolTreasury = protocolTreasury_;
         protocolFeeD9 = protocolFeeD9_;
+        DefaultAccessControlLateInit.init(admin_);
+    }
+
+    function name() public view override returns (string memory) {
+        return _name;
+    }
+
+    function symbol() public view override returns (string memory) {
+        return _symbol;
     }
 
     function epochCount() external view returns (uint256) {
