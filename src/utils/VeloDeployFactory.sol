@@ -153,7 +153,12 @@ contract VeloDeployFactory is DefaultAccessControl {
                 address(this),
                 tickSpacing
             );
-            info.veloVaults[i] = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
+            uint256 nft = erc20VaultNft + 1 + i;
+            info.veloVaults[i] = IVeloVault(vaultRegistry.vaultForNft(nft));
+            IVeloVaultGovernance(params.addresses.veloVaultGovernance).setStrategyParams(
+                nft,
+                IVeloVaultGovernance.StrategyParams({farm: address(info.farm), gauge: address(info.gauge)})
+            );
         }
 
         {
@@ -171,21 +176,6 @@ contract VeloDeployFactory is DefaultAccessControl {
             params.addresses.protocolTreasury,
             params.protocolFeeD9
         );
-
-        // vm.stopPrank();
-        // vm.startPrank(protocolAdmin);
-
-        // ammGovernance.setStrategyParams(
-        //     erc20VaultNft + 1,
-        //     IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
-        // );
-        // ammGovernance.setStrategyParams(
-        //     erc20VaultNft + 2,
-        //     IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
-        // );
-
-        // vm.stopPrank();
-        // vm.startPrank(deployer);
 
         return info;
     }
