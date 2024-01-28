@@ -15,6 +15,7 @@ import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
 import "../../src/utils/VeloFarm.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
+import "../../src/utils/VeloDeployFactory.sol";
 
 import "../../src/vaults/ERC20Vault.sol";
 import "../../src/vaults/ERC20VaultGovernance.sol";
@@ -29,9 +30,9 @@ import "../../src/adapters/VeloAdapter.sol";
 
 import "../../src/strategies/PulseOperatorStrategy.sol";
 
-import {SwapRouter, ISwapRouter} from "./contracts/periphery/SwapRouter.sol";
+import {SwapRouter} from "./contracts/periphery/SwapRouter.sol";
 
-contract Unit is Test {
+contract Integration is Test {
     using SafeERC20 for IERC20;
 
     uint256 public constant Q96 = 2**96;
@@ -39,10 +40,12 @@ contract Unit is Test {
 
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
+    address public farmTreasury = address(bytes20(keccak256("treasury-3")));
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address public protocolAdmin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
     uint256 public protocolFeeD9 = 1e8; // 10%
+    uint256 public positionsCount = 2;
 
     address public weth = 0x4200000000000000000000000000000000000006;
     address public usdc = 0x7F5c764cBc14f9669B88837ca1490cCa17c31607;
@@ -53,116 +56,28 @@ contract Unit is Test {
     address public allowAllValidator = 0x0f4A979597E16ec87d2344fD78c2cec53f37D263;
     address public mellowOracle = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
 
-    IERC20RootVaultGovernance public rootVaultGovernance =
-        IERC20RootVaultGovernance(0x65a440a89824AB464d7c94B184eF494c1457258D);
-    IERC20VaultGovernance public erc20Governance = IERC20VaultGovernance(0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece);
+    address public erc20VaultGovernance = 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece;
+    address public erc20RootVaultGovernance = 0x65a440a89824AB464d7c94B184eF494c1457258D;
+    address public protocolGovernance = 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841;
+    address public vaultRegistry = 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A;
 
     ICLPool public pool = ICLPool(0xC358c95b146E9597339b376063A2cB657AFf84eb);
     ICLGauge public gauge = ICLGauge(0x5f090Fc694aa42569aB61397E4c996E808f0BBf2);
+
     INonfungiblePositionManager public positionManager =
         INonfungiblePositionManager(0xd557d3b47D159EB3f9B48c0f1B4a6e67e82e8B3f);
     SwapRouter public swapRouter = new SwapRouter(positionManager.factory(), weth);
-
-    VeloAdapter public adapter = new VeloAdapter(positionManager);
-    VeloHelper public veloHelper = new VeloHelper(positionManager);
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
-
-    BaseAmmStrategy public strategy = new BaseAmmStrategy();
-    PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
-    BaseAmmStrategyHelper public baseAmmStrategyHelper = new BaseAmmStrategyHelper();
+    ICLGaugeFactory public gaugeFactory = ICLGaugeFactory(positionManager.gaugeFactory());
+    ICLFactory public factory = ICLFactory(positionManager.factory());
 
     IVeloVaultGovernance public ammGovernance;
+    VeloHelper public veloHelper = new VeloHelper(positionManager);
+    VeloAdapter public veloAdapter = new VeloAdapter(positionManager);
+    BaseAmmStrategyHelper public baseStrategyHelper = new BaseAmmStrategyHelper();
+    VeloDepositWrapper public depositWrapper;
 
-    IERC20RootVault public rootVault;
-    IERC20Vault public erc20Vault;
-    IVeloVault public ammVault1;
-    IVeloVault public ammVault2;
-
-    VeloFarm public farm;
-
-    function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
-        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
-        for (uint256 i = 0; i < nfts.length; ++i) {
-            vaultRegistry.approve(address(rootVaultGovernance), nfts[i]);
-        }
-
-        uint256 nft;
-        (rootVault, nft) = rootVaultGovernance.createVault(tokens, address(strategy), nfts, deployer);
-        rootVaultGovernance.setStrategyParams(
-            nft,
-            IERC20RootVaultGovernance.StrategyParams({
-                tokenLimitPerAddress: type(uint256).max,
-                tokenLimit: type(uint256).max
-            })
-        );
-
-        {
-            address[] memory whitelist = new address[](1);
-            whitelist[0] = address(depositWrapper);
-            rootVault.addDepositorsToAllowlist(whitelist);
-        }
-
-        rootVaultGovernance.stageDelayedStrategyParams(
-            nft,
-            IERC20RootVaultGovernance.DelayedStrategyParams({
-                strategyTreasury: strategyTreasury,
-                strategyPerformanceTreasury: protocolTreasury,
-                managementFee: 0,
-                performanceFee: 0,
-                privateVault: true,
-                depositCallbackAddress: address(0),
-                withdrawCallbackAddress: address(0)
-            })
-        );
-
-        rootVaultGovernance.commitDelayedStrategyParams(nft);
-    }
-
-    function deployVaults() public {
-        IVaultRegistry vaultRegistry = IVaultRegistry(registry);
-
-        uint256 erc20VaultNft = vaultRegistry.vaultsCount() + 1;
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = weth;
-        tokens[1] = usdc;
-
-        erc20Governance.createVault(tokens, deployer);
-        erc20Vault = IERC20Vault(vaultRegistry.vaultForNft(erc20VaultNft));
-
-        ammGovernance.createVault(tokens, deployer, TICK_SPACING);
-        ammVault1 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
-
-        ammGovernance.createVault(tokens, deployer, TICK_SPACING);
-        ammVault2 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 2));
-
-        farm = new VeloFarm();
-
-        ammGovernance.setStrategyParams(
-            erc20VaultNft + 1,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
-        );
-        ammGovernance.setStrategyParams(
-            erc20VaultNft + 2,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
-        );
-
-        {
-            uint256[] memory nfts = new uint256[](3);
-            nfts[0] = erc20VaultNft;
-            nfts[1] = erc20VaultNft + 1;
-            nfts[2] = erc20VaultNft + 2;
-            combineVaults(tokens, nfts);
-        }
-
-        farm.initialize(
-            address(rootVault),
-            address(deployer),
-            address(protocolTreasury),
-            address(gauge.rewardToken()),
-            protocolFeeD9
-        );
-    }
+    VeloDeployFactory public deployFactory;
+    VeloDeployFactory.VaultInfo public vaultInfo;
 
     function deployGovernance() public {
         VeloVault singleton = new VeloVault(positionManager, veloHelper);
@@ -177,14 +92,19 @@ contract Unit is Test {
         vm.stopPrank();
         vm.startPrank(protocolAdmin);
 
-        IProtocolGovernance(governance).stagePermissionGrants(address(ammGovernance), new uint8[](1));
         uint8[] memory permissions = new uint8[](1);
+        permissions[0] = 0;
+        IProtocolGovernance(governance).stagePermissionGrants(address(ammGovernance), permissions);
         permissions[0] = 4;
         IProtocolGovernance(governance).stagePermissionGrants(address(swapRouter), permissions);
+        permissions[0] = 1;
+        IProtocolGovernance(governance).stagePermissionGrants(address(deployFactory), permissions);
+
         IProtocolGovernance(governance).stageValidator(address(swapRouter), allowAllValidator);
 
         skip(24 * 3600);
         IProtocolGovernance(governance).commitPermissionGrants(address(ammGovernance));
+        IProtocolGovernance(governance).commitPermissionGrants(address(deployFactory));
         IProtocolGovernance(governance).commitPermissionGrants(address(swapRouter));
         IProtocolGovernance(governance).commitValidator(address(swapRouter));
 
@@ -192,81 +112,37 @@ contract Unit is Test {
         vm.startPrank(deployer);
     }
 
-    function initializeBaseStrategy() public {
-        uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e9;
-        minSwapAmounts[1] = 1e3;
-
-        IIntegrationVault[] memory ammVaults = new IIntegrationVault[](2);
-        ammVaults[0] = ammVault1;
-        ammVaults[1] = ammVault2;
-
-        strategy.initialize(
-            deployer,
-            BaseAmmStrategy.ImmutableParams({
-                erc20Vault: erc20Vault,
-                ammVaults: ammVaults,
-                adapter: adapter,
-                pool: address(ammVault1.pool())
-            }),
-            BaseAmmStrategy.MutableParams({
-                securityParams: new bytes(0),
-                maxPriceSlippageX96: (2 * Q96) / 100,
-                maxTickDeviation: 50,
-                minCapitalRatioDeviationX96: Q96 / 100,
-                minSwapAmounts: minSwapAmounts,
-                maxCapitalRemainderRatioX96: Q96 / 50,
-                initialLiquidity: 1e9
-            })
-        );
-    }
-
     function deposit(uint256 coef) public {
-        uint256 totalSupply = rootVault.totalSupply();
-        uint256[] memory tokenAmounts = rootVault.pullExistentials();
-        address[] memory tokens = rootVault.vaultTokens();
+        uint256[] memory tokenAmounts = vaultInfo.rootVault.pullExistentials();
+        address[] memory tokens = vaultInfo.rootVault.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] *= 10 * coef;
             deal(tokens[i], deployer, tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
         }
-        if (totalSupply == 0) {
-            for (uint256 i = 0; i < tokens.length; i++) {
-                IERC20(tokens[i]).approve(address(depositWrapper), type(uint256).max);
-            }
-            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), false);
-        } else {
-            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), true);
-        }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
-    }
-
-    function initializeOperatorStrategy(int24 maxWidth) public {
-        operatorStrategy.initialize(
-            PulseOperatorStrategy.ImmutableParams({strategy: strategy, tickSpacing: pool.tickSpacing()}),
-            PulseOperatorStrategy.MutableParams({
-                positionWidth: 200,
-                maxPositionWidth: maxWidth,
-                extensionFactorD: 1e9,
-                neighborhoodFactorD: 1e8
-            }),
-            deployer
-        );
-        strategy.grantRole(strategy.ADMIN_DELEGATE_ROLE(), address(deployer));
-        strategy.grantRole(strategy.OPERATOR(), address(operatorStrategy));
-
-        deal(usdc, address(strategy), 1e7);
-        deal(weth, address(strategy), 1e16);
+        depositWrapper.deposit(vaultInfo.rootVault, tokenAmounts, 0, new bytes(0));
     }
 
     function rebalance() public {
-        (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
-        BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](2);
-        (BaseAmmStrategy.Position memory newPosition, ) = operatorStrategy.calculateExpectedPosition();
-        target[0].tickLower = newPosition.tickLower;
-        target[0].tickUpper = newPosition.tickUpper;
-        target[0].capitalRatioX96 = Q96;
-        (address tokenIn, address tokenOut, uint256 amountIn, uint256 expectedAmountOut) = baseAmmStrategyHelper
-            .calculateSwapAmounts(sqrtPriceX96, target, rootVault, 3000);
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 expectedAmountOut;
+        {
+            (uint160 sqrtPriceX96, , , , , ) = pool.slot0();
+            BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](2);
+            (BaseAmmStrategy.Position memory newPosition, ) = PulseOperatorStrategy(vaultInfo.operatorStrategy)
+                .calculateExpectedPosition();
+            target[0].tickLower = newPosition.tickLower;
+            target[0].tickUpper = newPosition.tickUpper;
+            target[0].capitalRatioX96 = Q96;
+            (tokenIn, tokenOut, amountIn, expectedAmountOut) = baseStrategyHelper.calculateSwapAmounts(
+                sqrtPriceX96,
+                target,
+                vaultInfo.rootVault,
+                3000
+            );
+        }
         uint256 amountOutMin = (expectedAmountOut * 99) / 100;
         bytes memory data = abi.encodeWithSelector(
             ISwapRouter.exactInputSingle.selector,
@@ -276,13 +152,13 @@ contract Unit is Test {
                 tickSpacing: TICK_SPACING,
                 amountIn: amountIn,
                 deadline: type(uint256).max,
-                recipient: address(erc20Vault),
+                recipient: address(vaultInfo.erc20Vault),
                 amountOutMinimum: amountOutMin,
                 sqrtPriceLimitX96: 0
             })
         );
 
-        operatorStrategy.rebalance(
+        PulseOperatorStrategy(vaultInfo.operatorStrategy).rebalance(
             BaseAmmStrategy.SwapData({
                 router: address(swapRouter),
                 data: data,
@@ -291,6 +167,57 @@ contract Unit is Test {
                 amountOutMin: amountOutMin
             })
         );
+
+        string memory spot;
+        {
+            (int24 tickLower, int24 tickUpper, ) = veloAdapter.positionInfo(
+                IVeloVault(address(vaultInfo.veloVaults[0])).tokenId()
+            );
+
+            (uint160 sqrtPriceX96, int24 spotTick, , , , ) = pool.slot0();
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
+
+            (uint256[] memory rootVaultTvl, ) = vaultInfo.rootVault.tvl();
+            (uint256[] memory ammVaultTvl, ) = vaultInfo.veloVaults[0].tvl();
+            uint256 ratioD2 = FullMath.mulDiv(
+                100,
+                FullMath.mulDiv(ammVaultTvl[0], priceX96, Q96) + ammVaultTvl[1],
+                FullMath.mulDiv(rootVaultTvl[0], priceX96, Q96) + rootVaultTvl[1]
+            );
+
+            bool flag = tickLower <= spotTick && spotTick <= tickUpper;
+            assertTrue(flag);
+
+            spot = string(
+                abi.encodePacked(
+                    "erc20Vault capital ratio: ",
+                    vm.toString(ratioD2),
+                    "%; range: [",
+                    vm.toString(tickLower),
+                    ", ",
+                    vm.toString(tickUpper),
+                    "] spot tick: ",
+                    vm.toString(spotTick)
+                )
+            );
+        }
+
+        if (tokenIn == address(0)) {
+            console2.log("nothing to rebalace;", spot);
+        } else {
+            console2.log(
+                string(
+                    abi.encodePacked(
+                        "token in: ",
+                        IERC20Metadata(tokenIn).symbol(),
+                        "; amount in: ",
+                        vm.toString(amountIn / 10**IERC20Metadata(tokenIn).decimals()),
+                        "; ",
+                        spot
+                    )
+                )
+            );
+        }
     }
 
     function _swapAmount(uint256 amountIn, uint256 tokenInIndex) private {
@@ -302,7 +229,7 @@ contract Unit is Test {
         address tokenOut = tokens[tokenInIndex ^ 1];
         deal(tokenIn, deployer, amountIn);
         IERC20(tokenIn).safeIncreaseAllowance(address(swapRouter), amountIn);
-        ISwapRouter(swapRouter).exactInputSingle(
+        ISwapRouter(address(swapRouter)).exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
@@ -363,9 +290,9 @@ contract Unit is Test {
             TickMath.getSqrtRatioAtTick(tickUpper),
             liquidity
         );
-        deal(weth, address(adapter), amount0 * 2);
-        deal(usdc, address(adapter), amount1 * 2);
-        adapter.mint(address(pool), tickLower, tickUpper, liquidity, address(adapter));
+        deal(weth, address(veloAdapter), amount0 * 2);
+        deal(usdc, address(veloAdapter), amount1 * 2);
+        veloAdapter.mint(address(pool), tickLower, tickUpper, liquidity, address(veloAdapter));
     }
 
     function normalizePool() public {
@@ -410,18 +337,389 @@ contract Unit is Test {
         vm.startPrank(deployer);
 
         normalizePool();
+        deployFactory = new VeloDeployFactory(
+            deployer,
+            positionManager,
+            ISwapRouter(address(swapRouter)),
+            factory,
+            gaugeFactory
+        );
+
+        depositWrapper = new VeloDepositWrapper(deployer);
+        depositWrapper.grantRole(depositWrapper.ADMIN_ROLE(), address(deployFactory));
 
         deployGovernance();
-        deployVaults();
-        initializeBaseStrategy();
-        initializeOperatorStrategy(200);
-        deposit(1);
-        rebalance();
-        deposit(1e7);
 
+        deployFactory.updateInternalParams(
+            VeloDeployFactory.InternalParams({
+                addresses: VeloDeployFactory.MellowProtocolAddresses({
+                    erc20VaultGovernance: 0xb55ef318B5F73414c91201Af4F467b6c5fE73Ece,
+                    erc20RootVaultGovernance: 0x65a440a89824AB464d7c94B184eF494c1457258D,
+                    veloVaultGovernance: address(ammGovernance),
+                    protocolGovernance: 0x6CeFdD08d633c4A92380E8F6217238bE2bd1d841,
+                    vaultRegistry: 0x5cC7Cb6fD996dD646cF613ac94E9E0D2436a083A,
+                    protocolTreasury: protocolTreasury,
+                    strategyTreasury: strategyTreasury,
+                    farmTreasury: farmTreasury,
+                    veloAdapter: address(veloAdapter),
+                    veloHelper: address(veloHelper),
+                    depositWrapper: address(depositWrapper),
+                    baseStrategySingleton: address(new BaseAmmStrategy()),
+                    operatorStrategySingleton: address(new PulseOperatorStrategy()),
+                    farmSingleton: address(new VeloFarm()),
+                    baseStrategyHelper: address(baseStrategyHelper),
+                    operator: deployer
+                }),
+                protocolFeeD9: protocolFeeD9,
+                positionsCount: positionsCount,
+                liquidityCoefficient: 365 // possible number of mints
+            })
+        );
+
+        uint256[] memory minSwapAmounts = new uint256[](2);
+        minSwapAmounts[0] = 1e9;
+        minSwapAmounts[1] = 1e3;
+        deployFactory.updateBaseDefaultMutableParams(
+            TICK_SPACING,
+            BaseAmmStrategy.MutableParams({
+                securityParams: new bytes(0),
+                maxPriceSlippageX96: (2 * Q96) / 100,
+                maxTickDeviation: 50,
+                minCapitalRatioDeviationX96: Q96 / 100,
+                minSwapAmounts: minSwapAmounts,
+                maxCapitalRemainderRatioX96: Q96 / 20,
+                initialLiquidity: 1e9
+            })
+        );
+
+        deployFactory.updateOperatorDefaultMutableParams(
+            TICK_SPACING,
+            PulseOperatorStrategy.MutableParams({
+                positionWidth: 200,
+                maxPositionWidth: 400,
+                extensionFactorD: 1e9,
+                neighborhoodFactorD: 1e8
+            })
+        );
+
+        deal(weth, deployer, 1 ether);
+        deal(usdc, deployer, 1e6 * 2200);
+
+        IERC20(weth).safeApprove(address(deployFactory), type(uint256).max);
+        IERC20(usdc).safeApprove(address(deployFactory), type(uint256).max);
+
+        vaultInfo = deployFactory.createStrategy(weth, usdc, TICK_SPACING);
         vm.stopPrank();
     }
 
-    // TODO:
-    function testInitialize() external {}
+    function testInitialize() external {
+        PulseOperatorStrategy strategy = PulseOperatorStrategy(vaultInfo.operatorStrategy);
+        PulseOperatorStrategy.ImmutableParams memory immutableParams;
+        PulseOperatorStrategy.MutableParams memory mutableParams;
+
+        vm.expectRevert(abi.encodePacked("AZ"));
+        strategy.initialize(immutableParams, mutableParams, address(0));
+        immutableParams.strategy = BaseAmmStrategy(address(1));
+
+        vm.expectRevert(abi.encodePacked("VZ"));
+        strategy.initialize(immutableParams, mutableParams, address(0));
+        immutableParams.tickSpacing = 1;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.initialize(immutableParams, mutableParams, address(0));
+        mutableParams.positionWidth = 1;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.initialize(immutableParams, mutableParams, address(0));
+        mutableParams.maxPositionWidth = 1;
+        mutableParams.neighborhoodFactorD = 1e9 + 1;
+
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        strategy.initialize(immutableParams, mutableParams, address(0));
+        mutableParams.neighborhoodFactorD = 1e9;
+
+        vm.expectRevert(abi.encodePacked("AZ"));
+        strategy.initialize(immutableParams, mutableParams, address(0));
+
+        vm.expectRevert(abi.encodePacked("INIT"));
+        strategy.initialize(immutableParams, mutableParams, address(1));
+    }
+
+    function testSetForceRebalanceFlag() external {
+        PulseOperatorStrategy strategy = PulseOperatorStrategy(vaultInfo.operatorStrategy);
+
+        vm.startPrank(address(bytes20(abi.encode("random-user"))));
+        vm.expectRevert(abi.encodePacked("FRB"));
+        strategy.setForceRebalanceFlag(true);
+        vm.expectRevert(abi.encodePacked("FRB"));
+        strategy.setForceRebalanceFlag(false);
+        vm.stopPrank();
+
+        vm.startPrank(deployer);
+        strategy.setForceRebalanceFlag(true);
+        assertEq(strategy.getVolatileParams().forceRebalanceFlag, true);
+
+        strategy.setForceRebalanceFlag(false);
+        assertEq(strategy.getVolatileParams().forceRebalanceFlag, false);
+        vm.stopPrank();
+    }
+
+    function testValidateMutableParams() external {
+        PulseOperatorStrategy strategy = PulseOperatorStrategy(vaultInfo.operatorStrategy);
+
+        PulseOperatorStrategy.MutableParams memory mutableParams;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.validateMutableParams(mutableParams);
+        mutableParams.positionWidth = 200;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.validateMutableParams(mutableParams);
+        mutableParams.maxPositionWidth = 200;
+        mutableParams.positionWidth = 400;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.validateMutableParams(mutableParams);
+        mutableParams.positionWidth = 200;
+        mutableParams.neighborhoodFactorD = 1e9 + 1;
+
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        strategy.validateMutableParams(mutableParams);
+        mutableParams.neighborhoodFactorD = 1e9;
+
+        strategy.validateMutableParams(mutableParams);
+    }
+
+    function testUpdateMutableParams() external {
+        PulseOperatorStrategy strategy = PulseOperatorStrategy(vaultInfo.operatorStrategy);
+
+        PulseOperatorStrategy.MutableParams memory mutableParams;
+
+        vm.startPrank(address(bytes20(abi.encode("random-user"))));
+        vm.expectRevert(abi.encodePacked("FRB"));
+        strategy.updateMutableParams(mutableParams);
+        vm.stopPrank();
+
+        vm.startPrank(deployer);
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.updateMutableParams(mutableParams);
+        mutableParams.positionWidth = 200;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.updateMutableParams(mutableParams);
+        mutableParams.maxPositionWidth = 200;
+        mutableParams.positionWidth = 400;
+
+        vm.expectRevert(abi.encodePacked("INVL"));
+        strategy.updateMutableParams(mutableParams);
+        mutableParams.positionWidth = 200;
+        mutableParams.neighborhoodFactorD = 1e9 + 1;
+
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        strategy.updateMutableParams(mutableParams);
+        mutableParams.neighborhoodFactorD = 1e9;
+
+        strategy.updateMutableParams(mutableParams);
+        vm.stopPrank();
+    }
+
+    function testFormPositionWithSpotTickInCenter() external {
+        PulseOperatorStrategy strategy = PulseOperatorStrategy(vaultInfo.operatorStrategy);
+
+        int24[] memory positionWidths = new int24[](10);
+        positionWidths[0] = 1;
+        positionWidths[1] = 50;
+        positionWidths[2] = 100;
+        positionWidths[3] = 200;
+        positionWidths[4] = 2000;
+        positionWidths[5] = 2;
+        positionWidths[6] = 3;
+        positionWidths[7] = 300;
+        positionWidths[8] = 400;
+        positionWidths[9] = 4000;
+        int24[] memory tickSpacings = new int24[](5);
+        tickSpacings[0] = 1;
+        tickSpacings[1] = 50;
+        tickSpacings[2] = 100;
+        tickSpacings[3] = 200;
+        tickSpacings[4] = 2000;
+
+        for (uint256 i = 0; i < positionWidths.length; i++) {
+            for (uint256 j = 0; j < tickSpacings.length; j++) {
+                int24 positionWidth = positionWidths[i];
+                int24 tickSpacing = tickSpacings[j];
+                if (tickSpacing > positionWidth || positionWidth % tickSpacing != 0) continue;
+                int24 step = positionWidth / 50;
+                if (step == 0) step = 1;
+                for (int24 spotTick = -positionWidth * 2; spotTick <= positionWidth * 2; spotTick += step) {
+                    BaseAmmStrategy.Position memory position = strategy.formPositionWithSpotTickInCenter(
+                        positionWidth,
+                        spotTick,
+                        tickSpacing
+                    );
+
+                    assertEq(position.tickLower % tickSpacing, 0);
+                    assertEq(position.tickUpper % tickSpacing, 0);
+                    assertEq(position.tickUpper - position.tickLower, positionWidth);
+                    assertTrue(position.tickLower <= spotTick && spotTick <= position.tickUpper);
+
+                    int24 leftLower = spotTick - (position.tickLower - tickSpacing);
+                    int24 leftUpper = position.tickUpper - tickSpacing - spotTick;
+                    int24 rightLower = spotTick - (position.tickLower + tickSpacing);
+                    int24 rightUpper = (position.tickUpper + tickSpacing) - spotTick;
+
+                    int24 leftDelta = leftLower < leftUpper ? leftUpper : leftLower;
+                    int24 rightDelta = rightLower < rightUpper ? rightUpper : rightLower;
+
+                    int24 currentLower = spotTick - position.tickLower;
+                    int24 currentUpper = position.tickUpper - spotTick;
+
+                    int24 currentDelta = currentLower < currentUpper ? currentUpper : currentLower;
+                    assertTrue(currentDelta <= leftDelta && currentDelta <= rightDelta);
+                }
+            }
+        }
+    }
+
+    function testCalculateExpectedPosition() external {
+        PulseOperatorStrategy strategy = PulseOperatorStrategy(vaultInfo.operatorStrategy);
+
+        vm.startPrank(deployer);
+
+        BaseAmmStrategy.Position memory initialPosition;
+        {
+            bool flag;
+            (initialPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, false);
+        }
+
+        {
+            strategy.setForceRebalanceFlag(true);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, true);
+            assertEq(newPosition.tickLower, initialPosition.tickLower);
+            assertEq(newPosition.tickUpper, initialPosition.tickUpper);
+        }
+
+        {
+            strategy.setForceRebalanceFlag(false);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, false);
+            assertEq(newPosition.tickLower, initialPosition.tickLower);
+            assertEq(newPosition.tickUpper, initialPosition.tickUpper);
+        }
+
+        {
+            PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+
+            int24 tickNeighborhood = int24(
+                int256((uint256(uint24(mutableParams.positionWidth)) * mutableParams.neighborhoodFactorD) / 1e9)
+            );
+
+            movePrice(initialPosition.tickLower + tickNeighborhood);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, false);
+            assertEq(newPosition.tickLower, initialPosition.tickLower);
+            assertEq(newPosition.tickUpper, initialPosition.tickUpper);
+        }
+
+        {
+            PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+
+            int24 tickNeighborhood = int24(
+                int256((uint256(uint24(mutableParams.positionWidth)) * mutableParams.neighborhoodFactorD) / 1e9)
+            );
+
+            movePrice(initialPosition.tickUpper - tickNeighborhood);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, false);
+            assertEq(newPosition.tickLower, initialPosition.tickLower);
+            assertEq(newPosition.tickUpper, initialPosition.tickUpper);
+        }
+
+        {
+            PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+
+            int24 tickNeighborhood = int24(
+                int256((uint256(uint24(mutableParams.positionWidth)) * mutableParams.neighborhoodFactorD) / 1e9)
+            );
+
+            movePrice(initialPosition.tickLower + tickNeighborhood - 1);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, true);
+            // TODO: finalize
+            // assertEq(newPosition.tickLower, initialPosition.tickLower);
+            // assertEq(newPosition.tickUpper, initialPosition.tickUpper);
+        }
+
+        {
+            PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+            PulseOperatorStrategy.ImmutableParams memory immutableParams = strategy.getImmutableParams();
+
+            movePrice(initialPosition.tickLower - 1000);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, true);
+
+            (, int24 spotTick, , , , ) = pool.slot0();
+            BaseAmmStrategy.Position memory expectedPosition = strategy.formPositionWithSpotTickInCenter(
+                mutableParams.positionWidth,
+                spotTick,
+                immutableParams.tickSpacing
+            );
+            assertEq(newPosition.tickLower, expectedPosition.tickLower);
+            assertEq(newPosition.tickUpper, expectedPosition.tickUpper);
+        }
+
+        {
+            PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+
+            int24 tickNeighborhood = int24(
+                int256((uint256(uint24(mutableParams.positionWidth)) * mutableParams.neighborhoodFactorD) / 1e9)
+            );
+
+            movePrice(initialPosition.tickUpper - tickNeighborhood + 1);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, true);
+            // TODO: finalize
+            // assertEq(newPosition.tickLower, initialPosition.tickLower);
+            // assertEq(newPosition.tickUpper, initialPosition.tickUpper);
+        }
+
+        {
+            PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
+            PulseOperatorStrategy.ImmutableParams memory immutableParams = strategy.getImmutableParams();
+
+            movePrice(initialPosition.tickUpper + 1000);
+            BaseAmmStrategy.Position memory newPosition;
+            bool flag;
+            (newPosition, flag) = strategy.calculateExpectedPosition();
+            assertEq(flag, true);
+
+            (, int24 spotTick, , , , ) = pool.slot0();
+            BaseAmmStrategy.Position memory expectedPosition = strategy.formPositionWithSpotTickInCenter(
+                mutableParams.positionWidth,
+                spotTick,
+                immutableParams.tickSpacing
+            );
+            assertEq(newPosition.tickLower, expectedPosition.tickLower);
+            assertEq(newPosition.tickUpper, expectedPosition.tickUpper);
+        }
+
+        vm.stopPrank();
+    }
 }

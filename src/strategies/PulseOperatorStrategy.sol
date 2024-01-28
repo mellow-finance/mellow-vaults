@@ -108,7 +108,8 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         if (
             mutableParams.positionWidth % tickSpacing != 0 ||
             mutableParams.maxPositionWidth % tickSpacing != 0 ||
-            mutableParams.positionWidth == 0
+            mutableParams.positionWidth == 0 ||
+            mutableParams.positionWidth > mutableParams.maxPositionWidth
         ) {
             revert(ExceptionsLibrary.INVALID_LENGTH);
         }
@@ -117,20 +118,29 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         }
     }
 
+    function _max(int24 a, int24 b) private pure returns (int24) {
+        if (a < b) return b;
+        return a;
+    }
+
     function formPositionWithSpotTickInCenter(
-        MutableParams memory mutableParams,
+        int24 positionWidth,
         int24 spotTick,
         int24 tickSpacing
-    ) public pure returns (BaseAmmStrategy.Position memory newPosition) {
-        if (mutableParams.positionWidth == tickSpacing) {
-            newPosition.tickLower = spotTick;
-        } else {
-            newPosition.tickLower = spotTick - mutableParams.positionWidth / 2;
-        }
-        int24 remainder = newPosition.tickLower % tickSpacing;
+    ) public pure returns (BaseAmmStrategy.Position memory position) {
+        position.tickLower = spotTick - positionWidth / 2;
+        int24 remainder = position.tickLower % tickSpacing;
         if (remainder < 0) remainder += tickSpacing;
-        newPosition.tickLower -= remainder;
-        newPosition.tickUpper = newPosition.tickLower + mutableParams.positionWidth;
+        position.tickLower -= remainder;
+        position.tickUpper = position.tickLower + positionWidth;
+        if (
+            position.tickUpper < spotTick ||
+            _max(spotTick - position.tickLower, position.tickUpper - spotTick) >
+            _max(spotTick - (position.tickLower + tickSpacing), (position.tickUpper + tickSpacing) - spotTick)
+        ) {
+            position.tickLower += tickSpacing;
+            position.tickUpper += tickSpacing;
+        }
     }
 
     function calculateExpectedPosition()
@@ -162,7 +172,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         MutableParams memory mutableParams = getMutableParams();
         VolatileParams memory volatileParams = getVolatileParams();
         if (tokenId == 0 || volatileParams.forceRebalanceFlag) {
-            return (formPositionWithSpotTickInCenter(mutableParams, spotTick, tickSpacing), true);
+            return (formPositionWithSpotTickInCenter(mutableParams.positionWidth, spotTick, tickSpacing), true);
         }
 
         int24 width = currentPosition.tickUpper - currentPosition.tickLower;
@@ -173,7 +183,12 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
 
         int24 minAcceptableTick = currentPosition.tickLower + currentNeighborhood;
         int24 maxAcceptableTick = currentPosition.tickUpper - currentNeighborhood;
-        if (minAcceptableTick <= spotTick && spotTick <= maxAcceptableTick) {
+        if (
+            minAcceptableTick <= spotTick &&
+            spotTick <= maxAcceptableTick &&
+            width <= mutableParams.maxPositionWidth &&
+            width >= mutableParams.positionWidth
+        ) {
             return (currentPosition, false);
         }
 
@@ -193,7 +208,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         newPosition.tickUpper = currentPosition.tickUpper + sideExtension;
 
         if (newPosition.tickUpper - newPosition.tickLower > mutableParams.maxPositionWidth) {
-            return (formPositionWithSpotTickInCenter(mutableParams, spotTick, tickSpacing), true);
+            return (formPositionWithSpotTickInCenter(mutableParams.positionWidth, spotTick, tickSpacing), true);
         }
 
         neededNewPosition = true;
