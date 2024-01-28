@@ -179,7 +179,7 @@ contract VeloFarm is DefaultAccessControlLateInit, ERC20 {
         uint256 iterator = epochIterator[user];
         epochCount_ = _epochs.length;
 
-        if (iterator == epochCount_) return amount;
+        if (iterator == epochCount_) return (amount, epochCount_);
         mapping(uint256 => int256) storage balanceDelta_ = balanceDelta[user];
 
         uint256 lpAmount = balanceOf(user);

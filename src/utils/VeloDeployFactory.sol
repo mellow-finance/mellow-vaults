@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
@@ -25,7 +26,7 @@ import "./DefaultAccessControl.sol";
 import "./VeloDepositWrapper.sol";
 import "./VeloFarm.sol";
 
-contract VeloDeployFactory is DefaultAccessControl {
+contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
@@ -76,6 +77,7 @@ contract VeloDeployFactory is DefaultAccessControl {
         MellowProtocolAddresses addresses;
         uint256 protocolFeeD9;
         uint256 positionsCount;
+        uint128 liquidityCoefficient;
     }
 
     uint256 public constant Q96 = 2**96;
@@ -85,8 +87,8 @@ contract VeloDeployFactory is DefaultAccessControl {
     INonfungiblePositionManager public immutable positionManager;
     ISwapRouter public immutable swapRouter;
 
-    mapping(int24 => BaseAmmStrategy.MutableParams) public baseDefaultMutableParamsByTickSpacing;
-    mapping(int24 => PulseOperatorStrategy.MutableParams) public operatorDefaultMutableParamsByTickSpacing;
+    mapping(int24 => BaseAmmStrategy.MutableParams) public baseDefaultMutableParams;
+    mapping(int24 => PulseOperatorStrategy.MutableParams) public operatorDefaultMutableParams;
 
     mapping(address => address) public poolToVault;
     mapping(address => VaultInfo) public poolToVaultInfo;
@@ -118,24 +120,30 @@ contract VeloDeployFactory is DefaultAccessControl {
         return _pools.values();
     }
 
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) external pure returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
     function updateInternalParams(InternalParams memory params) external {
         _requireAdmin();
         internalParams = params;
     }
 
-    function updateBaseDefaultMutableParamsByTickSpacing(int24 tickSpacing, BaseAmmStrategy.MutableParams memory params)
+    function updateBaseDefaultMutableParams(int24 tickSpacing, BaseAmmStrategy.MutableParams memory params) external {
+        _requireAdmin();
+        baseDefaultMutableParams[tickSpacing] = params;
+    }
+
+    function updateOperatorDefaultMutableParams(int24 tickSpacing, PulseOperatorStrategy.MutableParams memory params)
         external
     {
         _requireAdmin();
-        baseDefaultMutableParamsByTickSpacing[tickSpacing] = params;
-    }
-
-    function updateOperatorDefaultMutableParamsByTickSpacing(
-        int24 tickSpacing,
-        PulseOperatorStrategy.MutableParams memory params
-    ) external {
-        _requireAdmin();
-        operatorDefaultMutableParamsByTickSpacing[tickSpacing] = params;
+        operatorDefaultMutableParams[tickSpacing] = params;
     }
 
     function _combineVaults(
@@ -224,12 +232,10 @@ contract VeloDeployFactory is DefaultAccessControl {
         return info;
     }
 
-    function _initializeStrategy(InternalParams memory params, VaultInfo memory info) private {
+    function _initializeStrategies(InternalParams memory params, VaultInfo memory info) private {
         int24 tickSpacing = info.pool.tickSpacing();
-        BaseAmmStrategy.MutableParams memory baseMutableParams = baseDefaultMutableParamsByTickSpacing[tickSpacing];
-        PulseOperatorStrategy.MutableParams memory operatorMutableParams = operatorDefaultMutableParamsByTickSpacing[
-            tickSpacing
-        ];
+        BaseAmmStrategy.MutableParams memory baseMutableParams = baseDefaultMutableParams[tickSpacing];
+        PulseOperatorStrategy.MutableParams memory operatorMutableParams = operatorDefaultMutableParams[tickSpacing];
         BaseAmmStrategy(info.baseStrategy).initialize(
             address(this),
             BaseAmmStrategy.ImmutableParams({
@@ -247,24 +253,25 @@ contract VeloDeployFactory is DefaultAccessControl {
         );
         BaseAmmStrategy(info.baseStrategy).grantRole(
             BaseAmmStrategy(info.baseStrategy).OPERATOR(),
-            address(params.addresses.operator)
-        );
-        BaseAmmStrategy(info.baseStrategy).grantRole(
-            BaseAmmStrategy(info.baseStrategy).ADMIN_DELEGATE_ROLE(),
-            address(params.addresses.operator)
+            address(info.operatorStrategy)
         );
         BaseAmmStrategy(info.baseStrategy).grantRole(
             BaseAmmStrategy(info.baseStrategy).ADMIN_ROLE(),
             address(params.addresses.operator)
         );
+        BaseAmmStrategy(info.baseStrategy).revokeRole(
+            BaseAmmStrategy(info.baseStrategy).ADMIN_DELEGATE_ROLE(),
+            address(this)
+        );
+        BaseAmmStrategy(info.baseStrategy).revokeRole(BaseAmmStrategy(info.baseStrategy).ADMIN_ROLE(), address(this));
 
         (uint160 sqrtRatioX96, int24 spotTick, , , , ) = info.pool.slot0();
         uint256[] memory tokenAmounts = new uint256[](2);
         (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
             sqrtRatioX96,
-            TickMath.getSqrtRatioAtTick(spotTick - operatorMutableParams.positionWidth / 2),
-            TickMath.getSqrtRatioAtTick(spotTick + operatorMutableParams.positionWidth / 2),
-            baseMutableParams.initialLiquidity * 10
+            TickMath.getSqrtRatioAtTick(spotTick - operatorMutableParams.positionWidth),
+            TickMath.getSqrtRatioAtTick(spotTick + operatorMutableParams.positionWidth),
+            baseMutableParams.initialLiquidity * params.liquidityCoefficient
         );
 
         for (uint256 i = 0; i < info.tokens.length; i++) {
@@ -282,7 +289,23 @@ contract VeloDeployFactory is DefaultAccessControl {
                 tickSpacing: tickSpacing
             }),
             operatorMutableParams,
-            params.addresses.operator
+            address(this)
+        );
+        PulseOperatorStrategy(info.operatorStrategy).grantRole(
+            PulseOperatorStrategy(info.operatorStrategy).ADMIN_DELEGATE_ROLE(),
+            address(this)
+        );
+        PulseOperatorStrategy(info.operatorStrategy).grantRole(
+            PulseOperatorStrategy(info.operatorStrategy).OPERATOR(),
+            address(params.addresses.operator)
+        );
+        PulseOperatorStrategy(info.operatorStrategy).grantRole(
+            PulseOperatorStrategy(info.operatorStrategy).ADMIN_DELEGATE_ROLE(),
+            address(params.addresses.operator)
+        );
+        PulseOperatorStrategy(info.operatorStrategy).grantRole(
+            PulseOperatorStrategy(info.operatorStrategy).ADMIN_ROLE(),
+            address(params.addresses.operator)
         );
     }
 
@@ -303,17 +326,11 @@ contract VeloDeployFactory is DefaultAccessControl {
 
         VeloDepositWrapper(params.addresses.depositWrapper).addNewStrategy(
             address(info.rootVault),
-            address(0),
-            address(0),
+            address(info.farm),
+            address(info.baseStrategy),
             false
         );
-
-        VeloDepositWrapper(params.addresses.depositWrapper).deposit(
-            info.rootVault,
-            info.rootVault.pullExistentials(),
-            0,
-            new bytes(0)
-        );
+        VeloDepositWrapper(params.addresses.depositWrapper).deposit(info.rootVault, tokenAmounts, 0, new bytes(0));
         VeloDepositWrapper(params.addresses.depositWrapper).addNewStrategy(
             address(info.rootVault),
             address(info.farm),
@@ -361,6 +378,15 @@ contract VeloDeployFactory is DefaultAccessControl {
                 amountOutMin: amountOutMin
             })
         );
+
+        PulseOperatorStrategy(info.operatorStrategy).revokeRole(
+            PulseOperatorStrategy(info.operatorStrategy).ADMIN_DELEGATE_ROLE(),
+            address(this)
+        );
+        PulseOperatorStrategy(info.operatorStrategy).revokeRole(
+            PulseOperatorStrategy(info.operatorStrategy).ADMIN_ROLE(),
+            address(this)
+        );
     }
 
     function createStrategy(
@@ -397,7 +423,7 @@ contract VeloDeployFactory is DefaultAccessControl {
             revert("Gauge not found");
         }
         info = _deployVaults(params, info);
-        _initializeStrategy(params, info);
+        _initializeStrategies(params, info);
         _initialDeposit(params, info);
         _rebalance(params, info);
 
@@ -411,7 +437,7 @@ contract VeloDeployFactory is DefaultAccessControl {
 
     function getUserInfo(address user) external view returns (UserInfo[] memory userInfos) {
         address[] memory pools_ = _pools.values();
-        userInfos = new UserInfo[](pools_).length;
+        userInfos = new UserInfo[](pools_.length);
         InternalParams memory params = internalParams;
 
         uint256 iterator = 0;
@@ -419,9 +445,9 @@ contract VeloDeployFactory is DefaultAccessControl {
             address pool = pools_[i];
             VaultInfo memory info = poolToVaultInfo[pool];
             UserInfo memory userInfo;
-            userInfo.rootVault = info.rootVault;
+            userInfo.rootVault = address(info.rootVault);
             userInfo.farm = address(info.farm);
-            userInfo.farmFee = VeloFarm(info.farm).protocolFeeD9();
+            userInfo.farmFee = VeloFarm(info.farm).getStorage().protocolFeeD9;
             {
                 userInfo.isClosed = true;
                 address[] memory depositorsAllowlist = info.rootVault.depositorsAllowlist();
@@ -437,8 +463,8 @@ contract VeloDeployFactory is DefaultAccessControl {
                 (uint256[] memory tvl, ) = info.rootVault.tvl();
                 uint256 totalSupply = info.rootVault.totalSupply();
                 require(tvl.length == 2, "Invalid length");
-                userInfo.amount0 = FullMath.mulDiv(tvl[0], userInfo[i].lpBalance, totalSupply);
-                userInfo.amount1 = FullMath.mulDiv(tvl[1], userInfo[i].lpBalance, totalSupply);
+                userInfo.amount0 = FullMath.mulDiv(tvl[0], userInfo.lpBalance, totalSupply);
+                userInfo.amount1 = FullMath.mulDiv(tvl[1], userInfo.lpBalance, totalSupply);
             }
             userInfo.pool = address(info.pool);
             userInfo.pendingRewards = VeloFarm(info.farm).rewards(user);
@@ -449,7 +475,7 @@ contract VeloDeployFactory is DefaultAccessControl {
         }
 
         assembly {
-            mstore(userIfnos, iterator)
+            mstore(userInfos, iterator)
         }
     }
 }
