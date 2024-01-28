@@ -163,8 +163,21 @@ contract VeloFarm is DefaultAccessControlLateInit, ERC20 {
 
     function claim(address to) external returns (uint256 amount) {
         address user = msg.sender;
+        (amount, epochIterator[user]) = _calculateClaimableRewards(user);
+        if (amount > 0) {
+            Storage storage s = _contractStorage();
+            IERC20(s.rewardToken).safeTransfer(to, amount);
+            s.totalClaimedAmounts += amount;
+        }
+    }
+
+    function rewards(address user) external view returns (uint256 amount) {
+        (amount, ) = _calculateClaimableRewards(user);
+    }
+
+    function _calculateClaimableRewards(address user) private view returns (uint256 amount, uint256 epochCount_) {
         uint256 iterator = epochIterator[user];
-        uint256 epochCount_ = _epochs.length;
+        epochCount_ = _epochs.length;
 
         if (iterator == epochCount_) return amount;
         mapping(uint256 => int256) storage balanceDelta_ = balanceDelta[user];
@@ -186,13 +199,6 @@ contract VeloFarm is DefaultAccessControlLateInit, ERC20 {
             if (epochIndex == 0) break;
             epochIndex--;
         }
-
-        if (amount > 0) {
-            Storage storage s = _contractStorage();
-            IERC20(s.rewardToken).safeTransfer(to, amount);
-            s.totalClaimedAmounts += amount;
-        }
-        epochIterator[user] = epochCount_;
     }
 
     event RewardAmountsUpdated(uint256 indexed lastEpochId, uint256 amount, uint256 totalSupply);
