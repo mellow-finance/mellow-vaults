@@ -55,9 +55,6 @@ contract VeloFarm is DefaultAccessControlLateInit, ERC20 {
         uint256 protocolFeeD9_
     ) external {
         Storage storage s = _contractStorage();
-        s.name = string(abi.encodePacked(IERC20Metadata(lpToken_).name(), " instant farm"));
-        s.symbol = string(abi.encodePacked(IERC20Metadata(lpToken_).symbol(), "IF"));
-
         if (
             lpToken_ == address(0) ||
             admin_ == address(0) ||
@@ -67,6 +64,8 @@ contract VeloFarm is DefaultAccessControlLateInit, ERC20 {
             revert(ExceptionsLibrary.ADDRESS_ZERO);
         }
         if (protocolFeeD9_ > MAX_PROTOCOL_FEE) revert(ExceptionsLibrary.FORBIDDEN);
+        s.name = string(abi.encodePacked(IERC20Metadata(lpToken_).name(), " instant farm"));
+        s.symbol = string(abi.encodePacked(IERC20Metadata(lpToken_).symbol(), "IF"));
         s.lpToken = lpToken_;
         s.rewardToken = rewardToken_;
         s.protocolTreasury = protocolTreasury_;

@@ -224,8 +224,8 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         VeloFarm(info.farm).initialize(
             address(info.rootVault),
             params.addresses.operator,
-            info.gauge.rewardToken(),
             params.addresses.protocolTreasury,
+            info.gauge.rewardToken(),
             params.protocolFeeD9
         );
 
