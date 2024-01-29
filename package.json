@@ -34,7 +34,7 @@
     "deploy:olympus": "forge script --use 0.8.9 src/script/mainnet/OlympusConcentratedStrategy.s.sol:Deploy --rpc-url $(grep MAINNET_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep ETHERSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "deploy:polygon": "forge script --use 0.8.9 src/script/MainnetDeployment.s.sol:MainnetDeployment --rpc-url $(grep POLYGON_RPC .env | cut -d '=' -f2) --broadcast --slow --verify --etherscan-api-key $(grep POLYGONSCAN_API_KEY .env | cut -d '=' -f2) -vvvv",
     "compile": "forge build --use 0.8.9",
-    "size": "forge build --sizes --force --via-ir --use 0.8.9"
+    "size": "forge build --sizes --use 0.8.9"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",

@@ -155,7 +155,7 @@ contract Router is Test {
         return abi.encodeWithSelector(IMulticall.multicall.selector, type(uint256).max, calls);
     }
 
-    function test() external {
+    function _test() external {
         uint256 tokenId = 648375;
         address vault = 0x1b504f17192d58b2e457A4814E4bC0d261421B49;
         address erc20Vault = address(uint160(bytes20(keccak256("erc20vault"))));

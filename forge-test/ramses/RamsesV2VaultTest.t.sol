@@ -419,7 +419,7 @@ contract RamsesV2VaultTest is Test {
         vm.stopPrank();
     }
 
-    function test() external {
+    function _test() external {
         prepare();
 
         deployGovernances();

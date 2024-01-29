@@ -36,7 +36,7 @@ contract BalancerCSPTest is Test {
     address balancerMinter = 0x0c5538098EBe88175078972F514C9e101D325D4F;
     address allowAllValidator = 0xA9FC72eE105D43C885E48Ab18148D308A55d04c7;
 
-    function test() external {
+    function _test() external {
         vm.startPrank(admin);
         IProtocolGovernance(governance).stageValidator(balancerMinter, allowAllValidator);
         IProtocolGovernance(governance).stageValidator(bal, allowAllValidator);

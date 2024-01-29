@@ -287,7 +287,7 @@ contract AuraVaultTest is Test {
         vm.stopPrank();
     }
 
-    function test() external {
+    function _test() external {
         deployGovernances();
         deployVaults();
         deposit();

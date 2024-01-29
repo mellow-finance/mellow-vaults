@@ -27,7 +27,6 @@ import "./VeloDepositWrapper.sol";
 import "./VeloFarm.sol";
 
 contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
-    using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
     struct UserInfo {
@@ -91,7 +90,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     mapping(int24 => PulseOperatorStrategy.MutableParams) public operatorDefaultMutableParams;
 
     mapping(address => address) public poolToVault;
-    mapping(address => VaultInfo) public poolToVaultInfo;
+    mapping(address => VaultInfo) private _poolToVaultInfo;
     mapping(address => address) public vaultToPool;
 
     InternalParams public internalParams;
@@ -432,55 +431,14 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
 
         vaultToPool[address(info.rootVault)] = address(info.pool);
         poolToVault[address(info.pool)] = address(info.rootVault);
-        poolToVaultInfo[address(info.pool)] = info;
+        _poolToVaultInfo[address(info.pool)] = info;
     }
 
-    function getUserInfo(address user) external view returns (UserInfo[] memory userInfos) {
-        address[] memory pools_ = _pools;
-        userInfos = new UserInfo[](pools_.length);
-        InternalParams memory params = internalParams;
+    function getVaultInfoByPool(address pool) external view returns (VaultInfo memory) {
+        return _poolToVaultInfo[pool];
+    }
 
-        uint256 iterator = 0;
-        for (uint256 i = 0; i < pools_.length; i++) {
-            address pool = pools_[i];
-            VaultInfo memory info = poolToVaultInfo[pool];
-            UserInfo memory userInfo;
-            userInfo.rootVault = address(info.rootVault);
-            userInfo.farm = address(info.farm);
-            userInfo.farmFee = VeloFarm(info.farm).getStorage().protocolFeeD9;
-            {
-                userInfo.isClosed = true;
-                if (
-                    VeloDepositWrapper(params.addresses.depositWrapper).depositInfo(address(info.rootVault)).strategy !=
-                    address(0)
-                ) {
-                    address[] memory depositorsAllowlist = info.rootVault.depositorsAllowlist();
-                    for (uint256 j = 0; j < depositorsAllowlist.length; j++) {
-                        if (depositorsAllowlist[j] == params.addresses.depositWrapper) {
-                            userInfo.isClosed = false;
-                            break;
-                        }
-                    }
-                }
-            }
-            userInfo.lpBalance = info.rootVault.balanceOf(user);
-            {
-                (uint256[] memory tvl, ) = info.rootVault.tvl();
-                uint256 totalSupply = info.rootVault.totalSupply();
-                require(tvl.length == 2, "Invalid length");
-                userInfo.amount0 = FullMath.mulDiv(tvl[0], userInfo.lpBalance, totalSupply);
-                userInfo.amount1 = FullMath.mulDiv(tvl[1], userInfo.lpBalance, totalSupply);
-            }
-            userInfo.pool = address(info.pool);
-            userInfo.pendingRewards = VeloFarm(info.farm).rewards(user);
-
-            if (userInfo.amount0 > 0 || userInfo.amount1 > 0 || userInfo.pendingRewards > 0) {
-                userInfos[iterator++] = userInfo;
-            }
-        }
-
-        assembly {
-            mstore(userInfos, iterator)
-        }
+    function getInternalParams() external view returns (InternalParams memory) {
+        return internalParams;
     }
 }

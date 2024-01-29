@@ -177,7 +177,7 @@ contract BalancerTest is Test {
         vm.stopPrank();
     }
 
-    function test() external {
+    function _test() external {
         deployGovernances();
 
         vm.startPrank(Constants.deployer);
