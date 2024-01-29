@@ -173,7 +173,8 @@ contract BalancerTest is Test {
         vm.stopPrank();
     }
 
-    function testOneTokenComposableStablePool() external {
+    // [deprecated] due to lock of GHO - USDC - USDT - DAI pool
+    function _testOneTokenComposableStablePool() external {
         vm.startPrank(deployer);
 
         bytes32 poolId = IBasePool(GHO_BOOSTED_STABLE_POOL).getPoolId();

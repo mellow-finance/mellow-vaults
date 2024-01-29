@@ -69,9 +69,6 @@ abstract contract Vault is IVault, ERC165 {
     }
 
     /// @inheritdoc IVault
-    function tvl() public view virtual returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
-
-    /// @inheritdoc IVault
     function pullExistentials() external view returns (uint256[] memory) {
         return _pullExistentials;
     }

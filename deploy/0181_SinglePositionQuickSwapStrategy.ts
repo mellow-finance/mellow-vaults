@@ -22,7 +22,6 @@ const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-
 };
 
 const buildSinglePositionStrategy = async (
@@ -32,8 +31,13 @@ const buildSinglePositionStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get, deploy } = deployments;
-    const { deployer, mStrategyTreasury, uniswapV3Router, uniswapV3Factory, algebraPositionManager } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        mStrategyTreasury,
+        uniswapV3Router,
+        uniswapV3Factory,
+        algebraPositionManager,
+    } = await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
@@ -43,9 +47,8 @@ const buildSinglePositionStrategy = async (
     let quickSwapVaultNft = startNft + 1;
     let erc20RootVaultNft = startNft + 2;
 
-    const { address: singlePositionStrategyHelper } = await hre.ethers.getContract(
-        "SinglePositionStrategyHelper"
-    );
+    const { address: singlePositionStrategyHelper } =
+        await hre.ethers.getContract("SinglePositionStrategyHelper");
 
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
         createVaultArgs: [tokens, deployer],
@@ -61,15 +64,15 @@ const buildSinglePositionStrategy = async (
         createVaultArgs: [tokens, deployer, erc20Vault],
         delayedStrategyParams: [
             [
-                '0x958d208cdf087843e9ad98d23823d32e17d723a1',
-                '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
-                '0x1f97c0260c6a18b26a9c2681f0faa93ac2182dbc',
+                "0x958d208cdf087843e9ad98d23823d32e17d723a1",
+                "0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b",
+                "0x1f97c0260c6a18b26a9c2681f0faa93ac2182dbc",
                 1669833619,
                 4104559500,
             ],
-            '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
-            '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
-            10000000
+            "0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b",
+            "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+            10000000,
         ],
     });
 
@@ -93,25 +96,28 @@ const buildSinglePositionStrategy = async (
     await deploy(deploymentName, {
         from: deployer,
         contract: "SinglePositionQuickSwapStrategy",
-        args: [uniswapV3Factory, algebraPositionManager, singlePositionStrategyHelper],
+        args: [
+            uniswapV3Factory,
+            algebraPositionManager,
+            singlePositionStrategyHelper,
+        ],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
 
     const strategy = await hre.ethers.getContract(deploymentName);
-    const { address: proxyAddress } = await deploy("TransparentUpgradeableProxy_SinglePositionQuickSwapStrategy", {
-        from: deployer,
-        contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-    });
+    const { address: proxyAddress } = await deploy(
+        "TransparentUpgradeableProxy_SinglePositionQuickSwapStrategy",
+        {
+            from: deployer,
+            contract: "TransparentUpgradeableProxy",
+            args: [strategy.address, deployer, []],
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        }
+    );
 
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     for (let nft of [erc20VaultNft, quickSwapVaultNft]) {
@@ -254,7 +260,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         amount0Desired: 10 ** 9, // weth
         amount1Desired: 10 ** 9, // bob
         swapSlippageD: 10 ** 7,
-        minSwapAmounts: [BigNumber.from(10).pow(13), BigNumber.from(10).pow(15)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(13),
+            BigNumber.from(10).pow(15),
+        ],
     } as MutableParamsStruct);
 };
 

@@ -41,8 +41,12 @@ const buildSinglePositionStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get, deploy } = deployments;
-    const { deployer, mStrategyTreasury, aggregationRouterV5, uniswapV3PositionManager } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        mStrategyTreasury,
+        aggregationRouterV5,
+        uniswapV3PositionManager,
+    } = await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
@@ -84,7 +88,6 @@ const buildSinglePositionStrategy = async (
         tokens: tokens,
     } as ImmutableParamsStruct;
 
-
     console.log("ImmutableParams:", immutableParams);
     console.log("MutableParams:", mutableParams);
 
@@ -101,11 +104,7 @@ const buildSinglePositionStrategy = async (
     const { address: proxyAddress } = await deploy("PulseStrategyProxyWide", {
         from: deployer,
         contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
+        args: [strategy.address, deployer, []],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
@@ -245,7 +244,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         amount1Desired: 10 ** 9, // bob
         swapSlippageD: 10 ** 7,
         swappingAmountsCoefficientD: 10 ** 7,
-        minSwapAmounts: [BigNumber.from(10).pow(13), BigNumber.from(10).pow(15)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(13),
+            BigNumber.from(10).pow(15),
+        ],
     } as MutableParamsStruct);
 };
 

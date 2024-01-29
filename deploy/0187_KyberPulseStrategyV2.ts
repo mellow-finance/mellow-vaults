@@ -79,12 +79,11 @@ const buildSinglePositionStrategy = async (
         kyberVaultNft
     );
 
-
     const immutableParams = {
         router: aggregationRouterV5,
         erc20Vault: erc20Vault,
         kyberVault: kyberVault,
-        mellowOracle: '0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836',
+        mellowOracle: "0x27AeBFEBDd0fde261Ec3E1DF395061C56EEC5836",
         tokens: tokens,
     };
 
@@ -95,11 +94,7 @@ const buildSinglePositionStrategy = async (
     const { address: proxyAddress } = await deploy("PulseStrategyV2Proxy", {
         from: deployer,
         contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
+        args: [strategy.address, deployer, []],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
@@ -219,9 +214,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         extensionFactorD: 10 ** 9 * 2,
         swapSlippageD: 10 ** 7,
         swappingAmountsCoefficientD: 10 ** 7,
-        minSwapAmounts: [BigNumber.from(10).pow(15), BigNumber.from(10).pow(15)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(15),
+            BigNumber.from(10).pow(15),
+        ],
     });
-}
+};
 
 export default func;
 

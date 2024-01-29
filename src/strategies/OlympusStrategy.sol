@@ -75,12 +75,20 @@ contract OlympusStrategy is DefaultAccessControl {
         int24 lowerTick = TickMath.getTickAtSqrtRatio(lowerSqrtPriceX96);
         int24 upperTick = TickMath.getTickAtSqrtRatio(upperSqrtPriceX96);
 
-        if (lowerTick % tickSpacing != 0) {
-            lowerTick -= lowerTick % tickSpacing;
+        {
+            int24 reminder = lowerTick % tickSpacing;
+            if (reminder < 0) reminder += tickSpacing;
+            if (reminder != 0) {
+                lowerTick -= reminder;
+            }
         }
 
-        if (upperTick % tickSpacing != 0) {
-            upperTick += tickSpacing - (upperTick % tickSpacing);
+        {
+            int24 reminder = upperTick % tickSpacing;
+            if (reminder < 0) reminder += tickSpacing;
+            if (reminder != 0) {
+                upperTick += tickSpacing - reminder;
+            }
         }
 
         return BasePulseStrategy.Interval({lowerTick: lowerTick, upperTick: upperTick});

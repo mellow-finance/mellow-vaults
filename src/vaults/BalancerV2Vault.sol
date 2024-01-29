@@ -127,6 +127,7 @@ contract BalancerV2Vault is IBalancerV2Vault, IntegrationVault {
     /// @inheritdoc IBalancerV2Vault
     function claimRewards() external {
         stakingLiquidityGauge.claim_rewards(
+            address(this),
             IBalancerV2VaultGovernance(address(_vaultGovernance)).strategyParams(_nft).funds.recipient
         );
     }

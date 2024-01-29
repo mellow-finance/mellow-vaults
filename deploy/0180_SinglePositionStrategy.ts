@@ -22,7 +22,6 @@ const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-
 };
 
 const buildSinglePositionStrategy = async (
@@ -32,8 +31,12 @@ const buildSinglePositionStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get, deploy } = deployments;
-    const { deployer, mStrategyTreasury, uniswapV3Router, uniswapV3PositionManager } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        mStrategyTreasury,
+        uniswapV3Router,
+        uniswapV3PositionManager,
+    } = await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
@@ -76,7 +79,6 @@ const buildSinglePositionStrategy = async (
         tokens: tokens,
     } as ImmutableParamsStruct;
 
-
     console.log("ImmutableParams:", immutableParams.toString());
     console.log("MutableParams:", mutableParams.toString());
 
@@ -90,18 +92,17 @@ const buildSinglePositionStrategy = async (
     });
 
     const strategy = await hre.ethers.getContract(deploymentName);
-    const { address: proxyAddress } = await deploy("TransparentUpgradeableProxy_SinglePositionStrategy", {
-        from: deployer,
-        contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-    });
+    const { address: proxyAddress } = await deploy(
+        "TransparentUpgradeableProxy_SinglePositionStrategy",
+        {
+            from: deployer,
+            contract: "TransparentUpgradeableProxy",
+            args: [strategy.address, deployer, []],
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        }
+    );
 
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     for (let nft of [erc20VaultNft, uniV3VaultNft500]) {
@@ -244,7 +245,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         amount0Desired: 10 ** 9, // weth
         amount1Desired: 10 ** 9, // bob
         swapSlippageD: 10 ** 7,
-        minSwapAmounts: [BigNumber.from(10).pow(13), BigNumber.from(10).pow(15)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(13),
+            BigNumber.from(10).pow(15),
+        ],
     } as MutableParamsStruct);
 };
 

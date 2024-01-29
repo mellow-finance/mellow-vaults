@@ -31,8 +31,12 @@ const buildSinglePositionStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get, deploy } = deployments;
-    const { deployer, mStrategyTreasury, aggregationRouterV5, uniswapV3PositionManager } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        mStrategyTreasury,
+        aggregationRouterV5,
+        uniswapV3PositionManager,
+    } = await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
@@ -56,15 +60,15 @@ const buildSinglePositionStrategy = async (
         createVaultArgs: [tokens, deployer, erc20Vault],
         delayedStrategyParams: [
             [
-                '0x958d208cdf087843e9ad98d23823d32e17d723a1',
-                '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
-                '0x1f97c0260c6a18b26a9c2681f0faa93ac2182dbc',
+                "0x958d208cdf087843e9ad98d23823d32e17d723a1",
+                "0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b",
+                "0x1f97c0260c6a18b26a9c2681f0faa93ac2182dbc",
                 1669833619,
                 4104559500,
             ],
-            '0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b',
-            '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
-            10000000
+            "0xb0b195aefa3650a6908f15cdac7d92f8a5791b0b",
+            "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+            10000000,
         ],
     });
 
@@ -82,7 +86,6 @@ const buildSinglePositionStrategy = async (
         tokens: tokens,
     } as ImmutableParamsStruct;
 
-
     console.log("ImmutableParams:", immutableParams);
     console.log("MutableParams:", mutableParams);
 
@@ -96,18 +99,17 @@ const buildSinglePositionStrategy = async (
     });
 
     const strategy = await hre.ethers.getContract(deploymentName);
-    const { address: proxyAddress } = await deploy("QuickPulseStrategyProxyShort", {
-        from: deployer,
-        contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-    });
+    const { address: proxyAddress } = await deploy(
+        "QuickPulseStrategyProxyShort",
+        {
+            from: deployer,
+            contract: "TransparentUpgradeableProxy",
+            args: [strategy.address, deployer, []],
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        }
+    );
 
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     for (let nft of [erc20VaultNft, quickSwapVaultNft]) {
@@ -242,7 +244,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         amount1Desired: 10 ** 9, // bob
         swapSlippageD: 10 ** 7,
         swappingAmountsCoefficientD: 10 ** 7,
-        minSwapAmounts: [BigNumber.from(10).pow(13), BigNumber.from(10).pow(15)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(13),
+            BigNumber.from(10).pow(15),
+        ],
     } as MutableParamsStruct);
 };
 

@@ -596,8 +596,11 @@ contract<SinglePositionStrategy, DeployOptions, CustomContext>(
                             const balance = await this.erc20RootVault.balanceOf(
                                 this.deployer.address
                             );
-                            const { minTokenAmounts } = await this.erc20RootVault.tvl();
-                            var coef = minTokenAmounts[0].div(BigNumber.from(200000 * 1000000)).add(1);
+                            const { minTokenAmounts } =
+                                await this.erc20RootVault.tvl();
+                            var coef = minTokenAmounts[0]
+                                .div(BigNumber.from(200000 * 1000000))
+                                .add(1);
                             if (coef.lt(2)) {
                                 coef = BigNumber.from(2);
                             }

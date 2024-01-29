@@ -102,7 +102,8 @@ contract PulseStrategyV2Helper {
             uint256 amountIn,
             address from,
             address to,
-            IERC20Vault erc20Vault
+            IERC20Vault erc20Vault,
+            bool neededNewInterval
         )
     {
         (
@@ -117,7 +118,8 @@ contract PulseStrategyV2Helper {
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, Q96);
         uint256[] memory delta = new uint256[](2);
         {
-            (PulseStrategyV2.Interval memory interval, bool neededNewInterval) = strategy.calculateNewPosition(
+            PulseStrategyV2.Interval memory interval;
+            (interval, neededNewInterval) = strategy.calculateNewPosition(
                 mutableParams,
                 spotTick,
                 pool,

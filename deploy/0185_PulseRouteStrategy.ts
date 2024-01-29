@@ -23,7 +23,6 @@ const deployStrategy = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-
 };
 
 const buildSinglePositionStrategy = async (
@@ -33,8 +32,12 @@ const buildSinglePositionStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get, deploy } = deployments;
-    const { deployer, mStrategyTreasury, uniswapV3Router, uniswapV3PositionManager } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        mStrategyTreasury,
+        uniswapV3Router,
+        uniswapV3PositionManager,
+    } = await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
@@ -57,7 +60,6 @@ const buildSinglePositionStrategy = async (
         delayedStrategyParams: [2],
     });
 
-
     const erc20Vault = await read(
         "VaultRegistry",
         "vaultForNft",
@@ -78,7 +80,6 @@ const buildSinglePositionStrategy = async (
         tokens: tokens,
     } as ImmutableParamsStruct;
 
-
     console.log("ImmutableParams:", immutableParams.toString());
     console.log("MutableParams:", mutableParams.toString());
 
@@ -95,11 +96,7 @@ const buildSinglePositionStrategy = async (
     const { address: proxyAddress } = await deploy("PulseRoutreStrategyProxy", {
         from: deployer,
         contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
+        args: [strategy.address, deployer, []],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
@@ -235,12 +232,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         tickNeighborhood: 1200,
         maxDeviationForVaultPool: 50,
         timespanForAverageTick: 60,
-        pathZeroToOne: '0x00000000000000000000000042000000000000000000000000000000000000420000000000000000000000000000000000000000000000000000000000000bb8000000000000000000000000420000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000001f40000000000000000000000007f5c764cbc14f9669b88837ca1490cca17c3160700000000000000000000000000000000000000000000000000000000000001f4000000000000000000000000b0b195aefa3650a6908f15cdac7d92f8a5791b0b', // op to bob
-        pathOneToZero: '0x000000000000000000000000b0b195aefa3650a6908f15cdac7d92f8a5791b0b00000000000000000000000000000000000000000000000000000000000001f40000000000000000000000007f5c764cbc14f9669b88837ca1490cca17c3160700000000000000000000000000000000000000000000000000000000000001f400000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000bb80000000000000000000000004200000000000000000000000000000000000042', // bob to op
+        pathZeroToOne:
+            "0x00000000000000000000000042000000000000000000000000000000000000420000000000000000000000000000000000000000000000000000000000000bb8000000000000000000000000420000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000001f40000000000000000000000007f5c764cbc14f9669b88837ca1490cca17c3160700000000000000000000000000000000000000000000000000000000000001f4000000000000000000000000b0b195aefa3650a6908f15cdac7d92f8a5791b0b", // op to bob
+        pathOneToZero:
+            "0x000000000000000000000000b0b195aefa3650a6908f15cdac7d92f8a5791b0b00000000000000000000000000000000000000000000000000000000000001f40000000000000000000000007f5c764cbc14f9669b88837ca1490cca17c3160700000000000000000000000000000000000000000000000000000000000001f400000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000bb80000000000000000000000004200000000000000000000000000000000000042", // bob to op
         amount0Desired: 10 ** 9, // op
         amount1Desired: 10 ** 9, // bob
         swapSlippageD: 10 ** 7,
-        minSwapAmounts: [BigNumber.from(10).pow(15), BigNumber.from(10).pow(15)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(15),
+            BigNumber.from(10).pow(15),
+        ],
     } as MutableParamsStruct);
 };
 

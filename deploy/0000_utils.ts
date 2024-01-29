@@ -89,9 +89,9 @@ export const ALLOWED_APPROVE_LIST = {
             "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb", // DAI
         ],
         all: [
-            "0x6352a56caadc4f1e25cd6c75970fa768a3304e64" // OpenOcean exchange V2
-        ]
-    }
+            "0x6352a56caadc4f1e25cd6c75970fa768a3304e64", // OpenOcean exchange V2
+        ],
+    },
 };
 
 export const PRIVATE_VAULT = true;
@@ -221,8 +221,8 @@ export const setupVault = async (
             strategyTreasury !== delayedStrategyParams.strategyTreasury) ||
         (contractName == "UniV3VaultGovernance" &&
             delayedStrategyParams.length > 0) ||
-            (contractName == "QuickSwapVaultGovernance" &&
-                delayedStrategyParams.length > 0)
+        (contractName == "QuickSwapVaultGovernance" &&
+            delayedStrategyParams.length > 0)
     ) {
         log(`Setting delayed strategy params for ${contractName}`);
         log(delayedStrategyParams);
@@ -367,7 +367,7 @@ export const combineVaults = async (
                 );
             const [operator] = await hre.ethers.getSigners();
             const txResp = await operator.sendTransaction({
-                ...tx, 
+                ...tx,
                 // ...TRANSACTION_GAS_LIMITS
             });
             log(

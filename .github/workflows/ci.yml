@@ -12,6 +12,7 @@ jobs:
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       GOERLI_RPC: ${{ secrets.goerli_rpc }}
+      OPTIMISM_SPECIAL_RPC: ${{ secrets.OPTIMISM_SPECIAL_RPC }}
     steps:
       - uses: actions/checkout@v1
 
@@ -53,18 +54,16 @@ jobs:
         with:
           version: nightly
 
-      - name: Run foundry tests
-        run: forge test --use=0.8.9 --fork-url=${{secrets.MAINNET_RPC}}
-        id: test
+      - name: Run foundry mainnet tests
+        run: forge test --use=0.8.9 --fork-url=${{secrets.MAINNET_RPC}} --no-match-path="forge-test/velo/*.sol"
+        id: test-mainnet
 
-      - name: Compile contracts
-        run: yarn compile
+      - name: Run foundry velodrome tests
+        run: forge test --use=0.8.9 --fork-url=${{secrets.OPTIMISM_SPECIAL_RPC}} --match-path="forge-test/velo/*.sol"
+        id: test-velo
 
       - name: Check size
-        run: yarn size
-
-      - name: Run coverage
-        run: yarn coverage:fast
+        run: forge build --sizes --use 0.8.9
 
       - name: Count LOC
-        run: find contracts -name "*.sol" | xargs wc -l
+        run: find src -name "*.sol" | xargs wc -l

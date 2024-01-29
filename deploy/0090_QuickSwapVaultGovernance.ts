@@ -9,17 +9,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
-    
+
     const { deployer, algebraPositionManager } = await getNamedAccounts();
-    
+
     if (!algebraPositionManager) {
         return;
     }
 
-    const swapRouter = '0xf5b509bB0909a69B1c207E495f687a596C168E12';
-    const farmingCenter = '0x7F281A8cdF66eF5e9db8434Ec6D97acc1bc01E78';
-    const dQuickToken = '0x958d208Cdf087843e9AD98d23823d32E17d723A1';
-    const quickToken = '0xB5C064F955D8e7F38fE0460C556a72987494eE17';
+    const swapRouter = "0xf5b509bB0909a69B1c207E495f687a596C168E12";
+    const farmingCenter = "0x7F281A8cdF66eF5e9db8434Ec6D97acc1bc01E78";
+    const dQuickToken = "0x958d208Cdf087843e9AD98d23823d32E17d723A1";
+    const quickToken = "0xB5C064F955D8e7F38fE0460C556a72987494eE17";
 
     const { address: helper } = await deploy("QuickSwapHelper", {
         from: deployer,
@@ -31,7 +31,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const { address: singleton } = await deploy("QuickSwapVault", {
         from: deployer,
-        args: [algebraPositionManager, helper, swapRouter, farmingCenter, dQuickToken, quickToken],
+        args: [
+            algebraPositionManager,
+            helper,
+            swapRouter,
+            farmingCenter,
+            dQuickToken,
+            quickToken,
+        ],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
@@ -52,8 +59,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = [
-    "QuickSwapVaultGovernance",
-    "polygon",
-];
+func.tags = ["QuickSwapVaultGovernance", "polygon"];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

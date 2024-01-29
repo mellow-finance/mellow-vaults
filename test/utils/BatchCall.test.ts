@@ -46,9 +46,7 @@ contract<BatchCall, DeployOptions, CustomContext>("BatchCall", function () {
                             [ethers.constants.AddressZero],
                             [data]
                         )
-                    ).to.be.revertedWith(
-                        "Address: call to non-contract"
-                    );
+                    ).to.be.revertedWith("Address: call to non-contract");
                 });
             });
         });

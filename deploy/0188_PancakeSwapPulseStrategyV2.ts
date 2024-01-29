@@ -47,11 +47,17 @@ const buildSinglePositionStrategy = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, read, execute, get, deploy } = deployments;
-    const { deployer, mStrategyTreasury, weth, mStrategyAdmin, aggregationRouterV5 } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        mStrategyTreasury,
+        weth,
+        mStrategyAdmin,
+        aggregationRouterV5,
+    } = await getNamedAccounts();
 
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
-    const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+    const startNft =
+        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
     let erc20VaultNft = startNft;
     let pancakeSwapVaultNft = startNft + 1;
@@ -72,7 +78,14 @@ const buildSinglePositionStrategy = async (
     );
 
     await setupVault(hre, pancakeSwapVaultNft, "PancakeSwapVaultGovernance", {
-        createVaultArgs: [tokens, deployer, 500, pancakeSwapHelper, '0x556B9306565093C855AEA9AE92A594704c2Cd59e', erc20Vault],
+        createVaultArgs: [
+            tokens,
+            deployer,
+            500,
+            pancakeSwapHelper,
+            "0x556B9306565093C855AEA9AE92A594704c2Cd59e",
+            erc20Vault,
+        ],
         delayedStrategyParams: [2],
     });
 
@@ -88,11 +101,11 @@ const buildSinglePositionStrategy = async (
         pancakeSwapVaultNft,
         {
             swapSlippageD: BigNumber.from(10).pow(7).mul(5),
-            poolForSwap: '0x517F451b0A9E1b87Dc0Ae98A05Ee033C3310F046',
-            cake: '0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898',
+            poolForSwap: "0x517F451b0A9E1b87Dc0Ae98A05Ee033C3310F046",
+            cake: "0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898",
             underlyingToken: weth,
-            smartRouter: '0x13f4EA83D0bd40E75C8222255bc855a974568Dd4',
-            averageTickTimespan: 30
+            smartRouter: "0x13f4EA83D0bd40E75C8222255bc855a974568Dd4",
+            averageTickTimespan: 30,
         }
     );
 
@@ -102,19 +115,18 @@ const buildSinglePositionStrategy = async (
         pancakeSwapVaultNft
     );
 
-    const strategy = await hre.ethers.getContract(deploymentName);  
-    const { address: proxyAddress } = await deploy("PancakeSwapPulseStrategyV2_WETH_USDT", {
-        from: deployer,
-        contract: "TransparentUpgradeableProxy",
-        args: [
-            strategy.address,
-            deployer,
-            []
-        ],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-    });
+    const strategy = await hre.ethers.getContract(deploymentName);
+    const { address: proxyAddress } = await deploy(
+        "PancakeSwapPulseStrategyV2_WETH_USDT",
+        {
+            from: deployer,
+            contract: "TransparentUpgradeableProxy",
+            args: [strategy.address, deployer, []],
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS,
+        }
+    );
 
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     for (let nft of [erc20VaultNft, pancakeSwapVaultNft]) {
@@ -141,8 +153,11 @@ const buildSinglePositionStrategy = async (
         mStrategyTreasury
     );
 
-    const proxyStrategy = await hre.ethers.getContractAt(deploymentName, proxyAddress);  
-    
+    const proxyStrategy = await hre.ethers.getContractAt(
+        deploymentName,
+        proxyAddress
+    );
+
     await proxyStrategy.initialize(
         {
             erc20Vault: erc20Vault,
@@ -163,18 +178,19 @@ const buildSinglePositionStrategy = async (
         extensionFactorD: 1e8,
         swapSlippageD: 1e7,
         swappingAmountsCoefficientD: 1e7,
-        minSwapAmounts: [BigNumber.from(10).pow(15).mul(5), BigNumber.from(10).pow(7)]
+        minSwapAmounts: [
+            BigNumber.from(10).pow(15).mul(5),
+            BigNumber.from(10).pow(7),
+        ],
     });
 
-    await proxyStrategy.updateDesiredAmounts(
-        {amount0Desired: BigNumber.from(10 ** 9), amount1Desired: BigNumber.from(10).pow(6)}
-    );
+    await proxyStrategy.updateDesiredAmounts({
+        amount0Desired: BigNumber.from(10 ** 9),
+        amount1Desired: BigNumber.from(10).pow(6),
+    });
 
     const adminRole = await proxyStrategy.ADMIN_ROLE();
-    await proxyStrategy.grantRole(
-        adminRole,
-        mStrategyAdmin
-    );
+    await proxyStrategy.grantRole(adminRole, mStrategyAdmin);
 };
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -184,7 +200,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await deployStrategy(hre);
     return;
     await buildSinglePositionStrategy(hre, [weth, usdt]);
-}
+};
 
 export default func;
 

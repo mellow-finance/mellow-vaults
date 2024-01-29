@@ -11,7 +11,7 @@ import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, get, log, execute, read } = deployments;
+    const { deploy, get } = deployments;
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
