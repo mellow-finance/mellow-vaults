@@ -56,11 +56,11 @@ jobs:
 
       - name: Run foundry mainnet tests
         run: forge test --use=0.8.9 --fork-url=${{secrets.MAINNET_RPC}} --no-match-path="forge-test/velo/*.sol"
-        id: test
+        id: test-mainnet
 
       - name: Run foundry mainnet tests
         run: forge test --use=0.8.9 --fork-url=${{secrets.OPTIMISM_SPECIAL_RPC}} --no-match-path="forge-test/velo/*.sol"
-        id: test
+        id: test-velo
 
       - name: Check size
         run: forge build --sizes --use 0.8.9
