@@ -14,8 +14,6 @@ import "./IntegrationVault.sol";
 
 import "../utils/VeloHelper.sol";
 
-import "forge-std/src/console2.sol";
-
 /// @notice Vault that interfaces Velodrome protocol in the integration layer.
 contract VeloVault is IVeloVault, IntegrationVault {
     using SafeERC20 for IERC20;
