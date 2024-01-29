@@ -58,7 +58,7 @@ jobs:
         run: forge test --use=0.8.9 --fork-url=${{secrets.MAINNET_RPC}} --no-match-path="forge-test/velo/*.sol"
         id: test-mainnet
 
-      - name: Run foundry mainnet tests
+      - name: Run foundry optimism tests
         run: forge test --use=0.8.9 --fork-url=${{secrets.OPTIMISM_SPECIAL_RPC}} --no-match-path="forge-test/velo/*.sol"
         id: test-velo
 
