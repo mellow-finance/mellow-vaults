@@ -20,11 +20,11 @@ contract VeloDepositWrapper is DefaultAccessControl {
         bool needToCallCallback;
     }
 
-    mapping(address => StrategyInfo) public depositInfo;
-
-    constructor(address admin) DefaultAccessControl(admin) {}
+    mapping(address => StrategyInfo) private _depositInfo;
 
     // -------------------  EXTERNAL, MUTATING  -------------------
+
+    constructor(address admin) DefaultAccessControl(admin) {}
 
     function deposit(
         IERC20RootVault vault,
@@ -32,7 +32,7 @@ contract VeloDepositWrapper is DefaultAccessControl {
         uint256 minLpTokens,
         bytes calldata vaultOptions
     ) external returns (uint256[] memory actualTokenAmounts) {
-        StrategyInfo memory strategyInfo = depositInfo[address(vault)];
+        StrategyInfo memory strategyInfo = _depositInfo[address(vault)];
         require(strategyInfo.strategy != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         address[] memory tokens = vault.vaultTokens();
@@ -66,7 +66,13 @@ contract VeloDepositWrapper is DefaultAccessControl {
         bool needToCallCallback
     ) external {
         _requireAdmin();
-        depositInfo[vault] = StrategyInfo({strategy: strategy, farm: farm, needToCallCallback: needToCallCallback});
+        _depositInfo[vault] = StrategyInfo({strategy: strategy, farm: farm, needToCallCallback: needToCallCallback});
+    }
+
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    function depositInfo(address vault) external view returns (StrategyInfo memory) {
+        return _depositInfo[vault];
     }
 
     /// @notice Emitted when liquidity is deposited

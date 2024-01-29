@@ -96,8 +96,8 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
 
     InternalParams public internalParams;
 
-    EnumerableSet.AddressSet private _pools;
-    EnumerableSet.AddressSet private _vaults;
+    address[] private _pools;
+    address[] private _vaults;
 
     constructor(
         address admin,
@@ -113,11 +113,11 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     }
 
     function vaults() external view returns (address[] memory) {
-        return _vaults.values();
+        return _vaults;
     }
 
     function pools() external view returns (address[] memory) {
-        return _pools.values();
+        return _pools;
     }
 
     function onERC721Received(
@@ -427,8 +427,8 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         _initialDeposit(params, info);
         _rebalance(params, info);
 
-        _vaults.add(address(info.rootVault));
-        _pools.add(address(info.pool));
+        _vaults.push(address(info.rootVault));
+        _pools.push(address(info.pool));
 
         vaultToPool[address(info.rootVault)] = address(info.pool);
         poolToVault[address(info.pool)] = address(info.rootVault);
@@ -436,7 +436,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     }
 
     function getUserInfo(address user) external view returns (UserInfo[] memory userInfos) {
-        address[] memory pools_ = _pools.values();
+        address[] memory pools_ = _pools;
         userInfos = new UserInfo[](pools_.length);
         InternalParams memory params = internalParams;
 
@@ -450,11 +450,16 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
             userInfo.farmFee = VeloFarm(info.farm).getStorage().protocolFeeD9;
             {
                 userInfo.isClosed = true;
-                address[] memory depositorsAllowlist = info.rootVault.depositorsAllowlist();
-                for (uint256 j = 0; j < depositorsAllowlist.length; j++) {
-                    if (depositorsAllowlist[j] == params.addresses.depositWrapper) {
-                        userInfo.isClosed = false;
-                        break;
+                if (
+                    VeloDepositWrapper(params.addresses.depositWrapper).depositInfo(address(info.rootVault)).strategy !=
+                    address(0)
+                ) {
+                    address[] memory depositorsAllowlist = info.rootVault.depositorsAllowlist();
+                    for (uint256 j = 0; j < depositorsAllowlist.length; j++) {
+                        if (depositorsAllowlist[j] == params.addresses.depositWrapper) {
+                            userInfo.isClosed = false;
+                            break;
+                        }
                     }
                 }
             }
