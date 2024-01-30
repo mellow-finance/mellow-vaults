@@ -41,6 +41,8 @@ contract Integration is Test {
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
     address public farmTreasury = address(bytes20(keccak256("treasury-3")));
+    address public user1 = address(bytes20(keccak256("test-user-1")));
+    address public user2 = address(bytes20(keccak256("test-user-2")));
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address public protocolAdmin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
@@ -412,6 +414,27 @@ contract Integration is Test {
         vm.stopPrank();
     }
 
+    function addRewardToGauge(uint256 amount) private {
+        address voter = address(gauge.voter());
+        address rewardToken = gauge.rewardToken();
+        deal(rewardToken, voter, amount);
+        vm.startPrank(voter);
+        IERC20(rewardToken).safeIncreaseAllowance(address(gauge), amount);
+        ICLGauge(gauge).notifyRewardAmount(amount);
+        vm.stopPrank();
+    }
+
+    function _depositOnBehalf(address account, uint256[] memory tokenAmounts) private {
+        vm.startPrank(account);
+        address[] memory tokens = vaultInfo.rootVault.vaultTokens();
+        for (uint256 i = 0; i < tokens.length; i++) {
+            deal(tokens[i], account, tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
+        }
+        depositWrapper.deposit(vaultInfo.rootVault, tokenAmounts, 0, new bytes(0));
+        vm.stopPrank();
+    }
+
     function testInitialize() external {
         VeloFarm farm = VeloFarm(vaultInfo.farm);
 
@@ -476,5 +499,92 @@ contract Integration is Test {
         assertEq(farm.symbol(), string(abi.encodePacked(IERC20Metadata(address(vaultInfo.rootVault)).symbol(), "IF")));
     }
 
-    // TODO:
+    function testDeposit() external {
+        VeloFarm farm = VeloFarm(vaultInfo.farm);
+
+        vm.startPrank(deployer);
+        deposit(1000);
+        uint256 lpAmount = farm.balanceOf(deployer);
+        farm.transfer(user1, lpAmount);
+        vm.stopPrank();
+        vm.startPrank(user1);
+        farm.withdraw(lpAmount, user1);
+        assertEq(farm.balanceOf(user1), 0);
+        assertEq(farm.balanceOf(deployer), 0);
+        assertEq(farm.hasDeposits(user1), false);
+        assertEq(farm.hasDeposits(deployer), true);
+
+        assertEq(vaultInfo.rootVault.balanceOf(user1), lpAmount);
+        vaultInfo.rootVault.approve(address(farm), lpAmount);
+        farm.deposit(lpAmount, user1);
+        assertEq(vaultInfo.rootVault.balanceOf(user1), 0);
+        assertEq(farm.balanceOf(user1), lpAmount);
+        assertEq(farm.hasDeposits(user1), true);
+        assertEq(farm.epochIterator(user1), farm.epochCount());
+        vm.stopPrank();
+    }
+
+    function testWithdraw() external {
+        VeloFarm farm = VeloFarm(vaultInfo.farm);
+
+        vm.startPrank(deployer);
+        deposit(1000);
+        uint256 lpAmount = farm.balanceOf(deployer);
+        farm.transfer(user1, lpAmount);
+        vm.stopPrank();
+        vm.startPrank(user1);
+        farm.withdraw(lpAmount, user1);
+        assertEq(farm.balanceOf(user1), 0);
+        assertEq(farm.balanceOf(deployer), 0);
+        assertEq(farm.hasDeposits(user1), false);
+        assertEq(farm.hasDeposits(deployer), true);
+
+        assertEq(vaultInfo.rootVault.balanceOf(user1), lpAmount);
+        vaultInfo.rootVault.approve(address(farm), lpAmount);
+        farm.deposit(lpAmount, user1);
+        assertEq(vaultInfo.rootVault.balanceOf(user1), 0);
+        assertEq(farm.balanceOf(user1), lpAmount);
+        assertEq(farm.hasDeposits(user1), true);
+        assertEq(farm.epochIterator(user1), farm.epochCount());
+
+        farm.withdraw(lpAmount, user1);
+        assertEq(farm.balanceOf(user1), 0);
+        assertEq(vaultInfo.rootVault.balanceOf(user1), lpAmount);
+        assertEq(farm.hasDeposits(user1), true);
+        assertEq(farm.epochIterator(user1), farm.epochCount());
+
+        vm.stopPrank();
+    }
+
+    function testClaim() external {
+        VeloFarm farm = VeloFarm(vaultInfo.farm);
+        (uint256[] memory amounts, ) = vaultInfo.rootVault.tvl();
+        amounts[0] *= 1000;
+        amounts[1] *= 1000;
+        _depositOnBehalf(user1, amounts);
+
+        assertTrue(farm.balanceOf(user1) > 0);
+
+        uint256 amount = 10 ether;
+        addRewardToGauge(amount);
+
+        skip(7 days);
+
+        vm.startPrank(deployer);
+
+        uint256 protocolReward = (amount * farm.getStorage().protocolFeeD9) / 1e9;
+        uint256 usersRewards = amount - protocolReward;
+
+        IVeloVault(address(vaultInfo.veloVaults[0])).collectRewards();
+        assertEq(farm.updateRewardAmounts(), usersRewards);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        assertEq(farm.rewards(user1), usersRewards);
+        assertEq(farm.claim(user1), usersRewards);
+        assertEq(farm.rewards(user1), 0);
+        assertEq(IERC20(gauge.rewardToken()).balanceOf(user1), usersRewards);
+
+        vm.stopPrank();
+    }
 }

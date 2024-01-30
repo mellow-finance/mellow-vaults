@@ -47,8 +47,4 @@ interface IVeloVault is IERC721Receiver, IIntegrationVault {
     ) external;
 
     function collectRewards() external;
-
-    function unstakeTokenId() external;
-
-    function stakeTokenId() external;
 }

@@ -678,29 +678,6 @@ contract Unit is Test {
         _testCollectRewards(95);
     }
 
-    function testStakeTokenId() external {
-        fullInitialization();
-
-        vm.startPrank(address(strategy));
-
-        uint256 tokenId = ammVault.tokenId();
-
-        assertTrue(gauge.stakedContains(address(ammVault), tokenId));
-        assertEq(positionManager.ownerOf(tokenId), address(gauge));
-
-        ammVault.unstakeTokenId();
-        assertFalse(gauge.stakedContains(address(ammVault), tokenId));
-        assertEq(positionManager.ownerOf(tokenId), address(ammVault));
-        vm.expectRevert(abi.encodePacked("NA"));
-        ammVault.unstakeTokenId();
-        ammVault.stakeTokenId();
-        assertTrue(gauge.stakedContains(address(ammVault), tokenId));
-        assertEq(positionManager.ownerOf(tokenId), address(gauge));
-        vm.expectRevert(abi.encodePacked("ERC721: approval to current owner"));
-        ammVault.stakeTokenId();
-        vm.stopPrank();
-    }
-
     function _testPush(int24 q) private {
         fullInitialization();
 

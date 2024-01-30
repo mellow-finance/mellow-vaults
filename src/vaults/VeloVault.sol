@@ -75,8 +75,9 @@ contract VeloVault is IVeloVault, IntegrationVault {
         uint256 tokenId_,
         bytes memory
     ) external returns (bytes4) {
-        if (from == strategyParams().gauge) {
-            require(from == operator && tokenId_ == tokenId, ExceptionsLibrary.FORBIDDEN);
+        address gauge = strategyParams().gauge;
+        if (from == gauge) {
+            require(operator == gauge && tokenId_ == tokenId, ExceptionsLibrary.FORBIDDEN);
             return this.onERC721Received.selector;
         }
         require(msg.sender == address(positionManager) && _isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
@@ -86,14 +87,17 @@ contract VeloVault is IVeloVault, IntegrationVault {
             token0 == _vaultTokens[0] && token1 == _vaultTokens[1] && tickSpacing == pool.tickSpacing(),
             ExceptionsLibrary.INVALID_TOKEN
         );
-
-        if (tokenId != 0) {
-            (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(tokenId);
+        uint256 oldTokenId = tokenId;
+        if (oldTokenId != 0) {
+            (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(oldTokenId);
             require(liquidity == 0, ExceptionsLibrary.INVALID_VALUE);
-            positionManager.transferFrom(address(this), from, tokenId);
+            ICLGauge(gauge).withdraw(tokenId);
+            positionManager.transferFrom(address(this), operator, oldTokenId);
         }
 
         tokenId = tokenId_;
+        positionManager.approve(gauge, tokenId_);
+        ICLGauge(gauge).deposit(tokenId_);
         return this.onERC721Received.selector;
     }
 
@@ -106,20 +110,6 @@ contract VeloVault is IVeloVault, IntegrationVault {
         if (balance > 0) {
             IERC20(token).safeTransfer(params.farm, balance);
         }
-    }
-
-    function unstakeTokenId() external override {
-        if (tokenId == 0) return;
-        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        ICLGauge(strategyParams().gauge).withdraw(tokenId);
-    }
-
-    function stakeTokenId() external override {
-        if (tokenId == 0) return;
-        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        address gauge = strategyParams().gauge;
-        positionManager.approve(gauge, tokenId);
-        ICLGauge(gauge).deposit(tokenId);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

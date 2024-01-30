@@ -79,12 +79,10 @@ contract VeloAdapter is IAdapter {
         uint256 newNft
     ) external returns (uint256 oldNft) {
         oldNft = IVeloVault(vault).tokenId();
-        IVeloVault(vault).unstakeTokenId();
         positionManager.safeTransferFrom(from, vault, newNft);
         if (oldNft != 0) {
             positionManager.burn(oldNft);
         }
-        IVeloVault(vault).stakeTokenId();
     }
 
     function compound(address vault) external {
@@ -120,9 +118,10 @@ contract VeloAdapter is IAdapter {
         int56[] memory tickCumulatives = new int56[](timestamps.length);
         uint16 observationIndex;
         uint16 observationCardinality;
+        // TODO: add more tests
         (sqrtPriceX96, spotTick, observationIndex, observationCardinality, , ) = ICLPool(poolAddress).slot0();
-        if (observationCardinality < timestamps.length) revert NotEnoughObservations();
-        for (uint16 i = 0; i < timestamps.length; i++) {
+        if (observationCardinality < securityParams.anomalyLookback + 1) revert NotEnoughObservations();
+        for (uint16 i = 0; i + 1 < timestamps.length; i++) {
             uint16 index = (observationCardinality + observationIndex - i) % observationCardinality;
             (timestamps[i], tickCumulatives[i], , ) = ICLPool(poolAddress).observations(index);
         }
@@ -170,6 +169,7 @@ contract VeloAdapter is IAdapter {
             previousObservationIndex
         );
         int56 tickCumulativesDelta = tickCumulative - previousTickCumulative;
+        // TODO: check tickCumulative
         int24 tick = int24(tickCumulativesDelta / int56(uint56(blockTimestamp - previousBlockTimestamp)));
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         return (sqrtPriceX96, tick);
@@ -181,8 +181,11 @@ contract VeloAdapter is IAdapter {
 
     function validateSecurityParams(bytes memory params) external pure {
         if (params.length == 0) return;
+        // TODO: find optimal value
+        // check case: [0, 0, 0, 0, ..., 0, 1]
+        // anomalyLookback ~ trust value ~ arbitrary ability
         SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
         if (securityParams.anomalyLookback <= securityParams.anomalyOrder) revert InvalidParams();
-        if (securityParams.anomalyFactorD9 > D9 * 10 || securityParams.anomalyFactorD9 < D9) revert InvalidParams();
+        if (securityParams.anomalyFactorD9 > D9 * 100 || securityParams.anomalyFactorD9 < D9) revert InvalidParams();
     }
 }
