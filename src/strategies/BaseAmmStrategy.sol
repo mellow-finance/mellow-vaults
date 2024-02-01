@@ -71,6 +71,7 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         ImmutableParams memory immutableParams,
         MutableParams memory mutableParams
     ) external {
+        // TODO: add validation
         _contractStorage().immutableParams = immutableParams;
         _contractStorage().mutableParams = mutableParams;
         DefaultAccessControlLateInit.init(admin);
@@ -144,7 +145,18 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         _ratioRebalance(targetState, s);
     }
 
+    function manualPull(
+        IIntegrationVault fromVault,
+        IIntegrationVault toVault,
+        uint256[] memory tokenAmounts,
+        bytes memory vaultOptions
+    ) external {
+        _requireAdmin();
+        fromVault.pull(address(toVault), fromVault.vaultTokens(), tokenAmounts, vaultOptions);
+    }
+
     function depositCallback() external {
+        // TODO: fix
         ImmutableParams memory immutableParams = _contractStorage().immutableParams;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
         IIntegrationVault[] memory ammVaults = immutableParams.ammVaults;

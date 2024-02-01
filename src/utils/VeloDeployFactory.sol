@@ -409,6 +409,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         info.gauge = ICLGauge(
             Clones.predictDeterministicAddress(gaugeFactory.implementation(), salt, address(gaugeFactory))
         );
+        // TODO: make upgradable
         InternalParams memory params = internalParams;
         info.baseStrategy = Clones.cloneDeterministic(params.addresses.baseStrategySingleton, salt);
         info.operatorStrategy = Clones.cloneDeterministic(params.addresses.operatorStrategySingleton, salt);
