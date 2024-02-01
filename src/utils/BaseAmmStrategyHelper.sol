@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "../vaults/ERC20RootVault.sol";
 import "../strategies/BaseAmmStrategy.sol";
 
-import "forge-std/src/console2.sol";
-
 contract BaseAmmStrategyHelper {
     uint256 public constant Q96 = 2**96;
 

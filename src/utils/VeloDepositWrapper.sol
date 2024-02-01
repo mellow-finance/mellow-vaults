@@ -37,7 +37,6 @@ contract VeloDepositWrapper is DefaultAccessControlLateInit, StakingRewards {
     }
 
     function deposit(
-        IERC20RootVault vault,
         uint256[] calldata tokenAmounts,
         uint256 minLpTokens,
         bytes calldata vaultOptions
@@ -45,6 +44,7 @@ contract VeloDepositWrapper is DefaultAccessControlLateInit, StakingRewards {
         StrategyInfo memory strategyInfo_ = strategyInfo;
         require(strategyInfo_.strategy != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
+        IERC20RootVault vault = IERC20RootVault(address(stakingToken));
         address[] memory tokens = vault.vaultTokens();
         require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < tokens.length; ++i) {

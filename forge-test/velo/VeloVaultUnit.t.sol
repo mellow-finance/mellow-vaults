@@ -220,7 +220,7 @@ contract Unit is Test {
         } else {
             depositWrapper.setStrategyInfo(address(strategy), true);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
     }
 
     function initializeOperatorStrategy() public {
@@ -450,7 +450,7 @@ contract Unit is Test {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             deal(tokens[i], deployer, tokenAmounts[i]);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
         vm.stopPrank();
     }
 
@@ -608,7 +608,7 @@ contract Unit is Test {
             deal(tokens[i], account, tokenAmounts[i]);
             IERC20(tokens[i]).safeApprove(address(depositWrapper), type(uint256).max);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
         vm.stopPrank();
     }
 

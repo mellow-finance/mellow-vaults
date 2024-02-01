@@ -330,7 +330,7 @@ contract Integration is Test {
             deal(tokens[i], deployer, tokenAmounts[i]);
             IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
         }
-        depositWrapper.deposit(vaultInfo.rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
     }
 
     function setUp() external {
@@ -339,9 +339,10 @@ contract Integration is Test {
         deployFactory = new VeloDeployFactory(
             deployer,
             positionManager,
-            ISwapRouter(address(swapRouter)),
             factory,
-            gaugeFactory
+            ISwapRouter(address(swapRouter)),
+            gaugeFactory,
+            new VeloDeployFactoryHelper(factory, ISwapRouter(address(swapRouter)))
         );
 
         deployGovernance();

@@ -237,7 +237,7 @@ contract Integration is Test {
         } else {
             depositWrapper.setStrategyInfo(address(strategy), true);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
     }
 
     function initializeOperatorStrategy(int24 maxWidth) public {
