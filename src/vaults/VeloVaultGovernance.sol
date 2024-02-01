@@ -9,6 +9,8 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
 contract VeloVaultGovernance is ContractMeta, IVeloVaultGovernance, VaultGovernance {
+    uint256 public constant MAX_PROTOCOL_FEE = 3e8; // 30%
+
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
@@ -23,7 +25,13 @@ contract VeloVaultGovernance is ContractMeta, IVeloVaultGovernance, VaultGoverna
     /// @inheritdoc IVeloVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({gauge: address(0), farm: address(0)});
+            return
+                StrategyParams({
+                    gauge: address(0),
+                    farmingPool: address(0),
+                    protocolFeeD9: 0,
+                    protocolTreasury: address(0)
+                });
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
@@ -32,7 +40,11 @@ contract VeloVaultGovernance is ContractMeta, IVeloVaultGovernance, VaultGoverna
 
     /// @inheritdoc IVeloVaultGovernance
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
-        require(params.farm != address(0) && params.gauge != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(
+            params.farmingPool != address(0) && params.protocolTreasury != address(0) && params.gauge != address(0),
+            ExceptionsLibrary.ADDRESS_ZERO
+        );
+        require(params.protocolFeeD9 <= MAX_PROTOCOL_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }

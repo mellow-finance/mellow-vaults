@@ -8,23 +8,34 @@ import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/utils/ILpCallback.sol";
 
 import "./DefaultAccessControl.sol";
-import "./VeloFarm.sol";
+import "../../src/utils/external/synthetix/StakingRewards.sol";
 
-contract VeloDepositWrapper is DefaultAccessControl {
+contract VeloDepositWrapper is DefaultAccessControl, StakingRewards {
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20RootVault;
 
     struct StrategyInfo {
         address strategy;
-        address farm;
         bool needToCallCallback;
     }
 
-    mapping(address => StrategyInfo) private _depositInfo;
+    StrategyInfo public strategyInfo;
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    constructor(address admin) DefaultAccessControl(admin) {}
+    constructor(
+        address farmOwner,
+        address farmOperator,
+        address wrapperAdmin
+    ) StakingRewards(farmOwner, farmOperator) DefaultAccessControl(wrapperAdmin) {}
+
+    function initialize(address _rootVault, address _rewardsToken) external onlyOwner {
+        if (address(stakingToken) == address(0)) {
+            rewardsToken = IERC20(_rewardsToken);
+            stakingToken = IERC20(_rootVault);
+        }
+        IERC20(_rootVault).safeApprove(address(this), type(uint256).max);
+    }
 
     function deposit(
         IERC20RootVault vault,
@@ -32,8 +43,8 @@ contract VeloDepositWrapper is DefaultAccessControl {
         uint256 minLpTokens,
         bytes calldata vaultOptions
     ) external returns (uint256[] memory actualTokenAmounts) {
-        StrategyInfo memory strategyInfo = _depositInfo[address(vault)];
-        require(strategyInfo.strategy != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        StrategyInfo memory strategyInfo_ = strategyInfo;
+        require(strategyInfo_.strategy != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         address[] memory tokens = vault.vaultTokens();
         require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INVALID_LENGTH);
@@ -43,8 +54,10 @@ contract VeloDepositWrapper is DefaultAccessControl {
         }
 
         actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, vaultOptions);
-        if (strategyInfo.needToCallCallback) {
-            ILpCallback(strategyInfo.strategy).depositCallback();
+        uint256 lpTokenMinted = vault.balanceOf(address(this));
+        if (strategyInfo_.needToCallCallback) {
+            ILpCallback(strategyInfo_.strategy).depositCallback();
+            StakingRewards(address(this)).stake(lpTokenMinted, msg.sender);
         }
 
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -52,27 +65,12 @@ contract VeloDepositWrapper is DefaultAccessControl {
             IERC20(tokens[i]).safeTransfer(msg.sender, IERC20(tokens[i]).balanceOf(address(this)));
         }
 
-        uint256 lpTokenMinted = vault.balanceOf(address(this));
-        vault.safeApprove(strategyInfo.farm, lpTokenMinted);
-        VeloFarm(strategyInfo.farm).deposit(lpTokenMinted, msg.sender);
-
         emit Deposit(msg.sender, address(vault), tokens, actualTokenAmounts, lpTokenMinted);
     }
 
-    function addNewStrategy(
-        address vault,
-        address farm,
-        address strategy,
-        bool needToCallCallback
-    ) external {
+    function setStrategyInfo(address strategy, bool needToCallCallback) external {
         _requireAdmin();
-        _depositInfo[vault] = StrategyInfo({strategy: strategy, farm: farm, needToCallCallback: needToCallCallback});
-    }
-
-    // -------------------  EXTERNAL, VIEW  -------------------
-
-    function depositInfo(address vault) external view returns (StrategyInfo memory) {
-        return _depositInfo[vault];
+        strategyInfo = StrategyInfo({strategy: strategy, needToCallCallback: needToCallCallback});
     }
 
     /// @notice Emitted when liquidity is deposited

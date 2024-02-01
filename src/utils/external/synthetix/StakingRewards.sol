@@ -7,12 +7,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Inheritance
-import "../interfaces/external/synthetix/IFarmingPool.sol";
-import "../interfaces/external/synthetix/helpers/RewardsDistributionRecipient.sol";
-import "../interfaces/external/synthetix/helpers/Pausable.sol";
+import "./RewardsDistributionRecipient.sol";
+import "./Pausable.sol";
 
-// https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-contract SynthetixFarmingPool is IFarmingPool, RewardsDistributionRecipient, ReentrancyGuard, Pausable {
+// https://github.com/Synthetixio/synthetix/blob/v2.98.2/contracts/StakingRewards.sol
+contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -34,14 +33,7 @@ contract SynthetixFarmingPool is IFarmingPool, RewardsDistributionRecipient, Ree
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        address _owner,
-        address _rewardsDistribution,
-        address _rewardsToken,
-        address _stakingToken
-    ) public Owned(_owner) {
-        rewardsToken = IERC20(_rewardsToken);
-        stakingToken = IERC20(_stakingToken);
+    constructor(address _owner, address _rewardsDistribution) Owned(_owner) {
         rewardsDistribution = _rewardsDistribution;
     }
 
@@ -82,12 +74,12 @@ contract SynthetixFarmingPool is IFarmingPool, RewardsDistributionRecipient, Ree
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external nonReentrant notPaused updateReward(msg.sender) {
+    function stake(uint256 amount, address to) external nonReentrant notPaused updateReward(to) {
         require(amount > 0, "Cannot stake 0");
         _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
+        _balances[to] = _balances[to].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        emit Staked(msg.sender, amount);
+        emit Staked(to, amount);
     }
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {

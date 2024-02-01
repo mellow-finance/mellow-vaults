@@ -12,7 +12,6 @@ import "./../../src/test/MockRouter.sol";
 
 import "./../../src/utils/VeloDepositWrapper.sol";
 import "./../../src/utils/VeloHelper.sol";
-import "./../../src/utils/VeloFarm.sol";
 
 import "./../../src/vaults/ERC20Vault.sol";
 import "./../../src/vaults/ERC20VaultGovernance.sol";
@@ -64,7 +63,7 @@ contract Unit is Test {
 
     VeloAdapter public adapter = new VeloAdapter(positionManager);
     VeloHelper public veloHelper = new VeloHelper(positionManager);
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer, deployer, deployer);
 
     BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
@@ -74,8 +73,6 @@ contract Unit is Test {
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
     IVeloVault public ammVault;
-
-    VeloFarm public farm;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -126,11 +123,14 @@ contract Unit is Test {
         IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
         ammVault = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        farm = new VeloFarm();
-
         ammGovernance.setStrategyParams(
             erc20VaultNft + 1,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
+            IVeloVaultGovernance.StrategyParams({
+                farmingPool: address(depositWrapper),
+                gauge: address(gauge),
+                protocolTreasury: protocolTreasury,
+                protocolFeeD9: protocolFeeD9
+            })
         );
 
         {
@@ -140,13 +140,7 @@ contract Unit is Test {
             combineVaults(tokens, nfts);
         }
 
-        farm.initialize(
-            address(rootVault),
-            address(deployer),
-            address(protocolTreasury),
-            address(gauge.rewardToken()),
-            protocolFeeD9
-        );
+        depositWrapper.initialize(address(rootVault), address(gauge.rewardToken()));
     }
 
     function deployGovernance() public {
@@ -196,8 +190,10 @@ contract Unit is Test {
         _setUp();
         IVeloVaultGovernance.StrategyParams memory invalidStrategyParams;
         IVeloVaultGovernance.StrategyParams memory validStrategyParams = IVeloVaultGovernance.StrategyParams({
-            farm: address(1),
-            gauge: address(1)
+            farmingPool: address(1),
+            gauge: address(1),
+            protocolFeeD9: 0,
+            protocolTreasury: address(1)
         });
         uint256 vaultNft = ammVault.nft();
 
@@ -208,7 +204,22 @@ contract Unit is Test {
 
         vm.expectRevert(abi.encodePacked("AZ"));
         ammGovernance.setStrategyParams(vaultNft, invalidStrategyParams);
+        invalidStrategyParams.farmingPool = address(1);
 
+        vm.expectRevert(abi.encodePacked("AZ"));
+        ammGovernance.setStrategyParams(vaultNft, invalidStrategyParams);
+        invalidStrategyParams.gauge = address(1);
+
+        vm.expectRevert(abi.encodePacked("AZ"));
+        ammGovernance.setStrategyParams(vaultNft, invalidStrategyParams);
+        invalidStrategyParams.protocolTreasury = address(1);
+        invalidStrategyParams.protocolFeeD9 = 3e8 + 1;
+
+        vm.expectRevert(abi.encodePacked("LIMO"));
+        ammGovernance.setStrategyParams(vaultNft, invalidStrategyParams);
+        invalidStrategyParams.protocolFeeD9 = 3e8;
+
+        ammGovernance.setStrategyParams(vaultNft, invalidStrategyParams);
         ammGovernance.setStrategyParams(vaultNft, validStrategyParams);
 
         vm.stopPrank();
@@ -224,7 +235,9 @@ contract Unit is Test {
         IVeloVaultGovernance.StrategyParams memory emptyParams = ammGovernance.strategyParams(randomNft);
 
         assertEq(emptyParams.gauge, address(0));
-        assertEq(emptyParams.farm, address(0));
+        assertEq(emptyParams.farmingPool, address(0));
+        assertEq(emptyParams.protocolTreasury, address(0));
+        assertEq(emptyParams.protocolFeeD9, 0);
 
         vm.startPrank(deployer);
         deployVaults();
@@ -235,7 +248,9 @@ contract Unit is Test {
         IVeloVaultGovernance.StrategyParams memory nonEmptyParams = ammGovernance.strategyParams(vaultNft);
 
         assertEq(nonEmptyParams.gauge, address(gauge));
-        assertEq(nonEmptyParams.farm, address(farm));
+        assertEq(nonEmptyParams.farmingPool, address(depositWrapper));
+        assertEq(nonEmptyParams.protocolTreasury, address(protocolTreasury));
+        assertEq(nonEmptyParams.protocolFeeD9, protocolFeeD9);
     }
 
     function testSupportsInterface() external {

@@ -18,11 +18,13 @@ import "../utils/VeloHelper.sol";
 contract VeloVault is IVeloVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    ICLPool public pool;
-    uint256 public tokenId;
+    uint256 public constant D9 = 1e9;
 
     IVeloHelper public immutable helper;
     INonfungiblePositionManager public immutable positionManager;
+
+    ICLPool public pool;
+    uint256 public tokenId;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -101,15 +103,26 @@ contract VeloVault is IVeloVault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
-    function collectRewards() external override {
-        if (tokenId == 0) return;
+    function collectRewards() external override returns (uint256, uint256) {
+        if (tokenId == 0) return (0, 0);
         IVeloVaultGovernance.StrategyParams memory params = strategyParams();
         ICLGauge(params.gauge).getReward(tokenId);
         address token = ICLGauge(params.gauge).rewardToken();
         uint256 balance = IERC20(token).balanceOf(address(this));
         if (balance > 0) {
-            IERC20(token).safeTransfer(params.farm, balance);
+            uint256 protocolReward = FullMath.mulDiv(params.protocolFeeD9, balance, D9);
+
+            if (protocolReward > 0) {
+                IERC20(token).safeTransfer(params.protocolTreasury, protocolReward);
+            }
+
+            balance -= protocolReward;
+            if (balance > 0) {
+                IERC20(token).safeTransfer(params.farmingPool, balance);
+            }
+            return (balance, protocolReward);
         }
+        return (0, 0);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.0;
 
-// https://docs.synthetix.io/contracts/source/contracts/owned
+// https://github.com/Synthetixio/synthetix/blob/v2.98.2/contracts/Owned.sol
 contract Owned {
     address public owner;
     address public nominatedOwner;
