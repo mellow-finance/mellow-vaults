@@ -11,12 +11,19 @@ import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/TickMath.sol";
 
 contract UniswapV3Adapter is IAdapter {
+    error InvalidParams();
+    error PriceManipulationDetected();
+    error NotEnoughObservations();
+
     using SafeERC20 for IERC20;
 
     struct SecurityParams {
-        uint16[] observationAgos;
-        uint256 deviationMultiplierX96;
+        uint16 lookback;
+        int24 maxAllowedDelta;
     }
+
+    uint256 public constant Q96 = 2**96;
+    uint256 public constant D9 = 1e9;
 
     INonfungiblePositionManager public immutable positionManager;
 
@@ -59,6 +66,9 @@ contract UniswapV3Adapter is IAdapter {
                 recipient: recipient
             })
         );
+
+        IERC20(pool.token0()).safeApprove(address(positionManager), 0);
+        IERC20(pool.token1()).safeApprove(address(positionManager), 0);
     }
 
     function swapNft(
@@ -74,9 +84,7 @@ contract UniswapV3Adapter is IAdapter {
     }
 
     function compound(address vault) external {
-        if (IUniV3Vault(vault).uniV3Nft() != 0) {
-            IUniV3Vault(vault).collectEarnings();
-        }
+        IUniV3Vault(vault).collectEarnings();
     }
 
     function positionInfo(uint256 tokenId_)
@@ -97,23 +105,67 @@ contract UniswapV3Adapter is IAdapter {
         return IUniV3Vault(vault).uniV3Nft();
     }
 
-    function slot0EnsureNoMEV(address poolAddress, bytes memory securityParams)
+    function slot0EnsureNoMEV(address poolAddress, bytes memory params)
         external
         view
         returns (uint160 sqrtPriceX96, int24 spotTick)
     {
-        (sqrtPriceX96, spotTick, , , , , ) = IUniswapV3Pool(poolAddress).slot0();
-        if (securityParams.length > 0) {
-            // TODO: add mev checks
-            // check in different ways
+        if (params.length == 0) return slot0(poolAddress);
+        uint16 observationIndex;
+        uint16 observationCardinality;
+        (sqrtPriceX96, spotTick, observationIndex, observationCardinality, , , ) = IUniswapV3Pool(poolAddress).slot0();
+        SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
+        uint16 lookback = securityParams.lookback;
+        if (observationCardinality < lookback + 1) revert NotEnoughObservations();
+
+        (uint32 nextTimestamp, int56 nextCumulativeTick, , ) = IUniswapV3Pool(poolAddress).observations(
+            observationIndex
+        );
+        int24 nextTick = spotTick;
+        int24 maxAllowedDelta = securityParams.maxAllowedDelta;
+        for (uint16 i = 1; i <= lookback; i++) {
+            uint256 index = (observationCardinality + observationIndex - i) % observationCardinality;
+            (uint32 timestamp, int56 tickCumulative, , ) = IUniswapV3Pool(poolAddress).observations(index);
+            int24 tick = int24((nextCumulativeTick - tickCumulative) / int56(uint56(nextTimestamp - timestamp)));
+            (nextTimestamp, nextCumulativeTick) = (timestamp, tickCumulative);
+            int24 delta = nextTick - tick;
+            if (delta > maxAllowedDelta || delta < -maxAllowedDelta) revert PriceManipulationDetected();
+            nextTick = tick;
         }
     }
 
-    function getOraclePrice(address pool) external view returns (uint160, int24) {}
+    function getOraclePrice(address pool) external view override returns (uint160, int24) {
+        (
+            uint160 spotSqrtPriceX96,
+            int24 spotTick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            ,
+            ,
 
-    function slot0(address poolAddress) external view returns (uint160 sqrtPriceX96, int24 spotTick) {
+        ) = IUniswapV3Pool(pool).slot0();
+        if (observationCardinality < 2) revert NotEnoughObservations();
+        (uint32 blockTimestamp, int56 tickCumulative, , ) = IUniswapV3Pool(pool).observations(observationIndex);
+        if (block.timestamp != blockTimestamp) return (spotSqrtPriceX96, spotTick);
+        uint16 previousObservationIndex = observationCardinality - 1;
+        if (observationIndex != 0) previousObservationIndex = observationIndex - 1;
+        if (previousObservationIndex == observationCardinality) revert NotEnoughObservations();
+        (uint32 previousBlockTimestamp, int56 previousTickCumulative, , ) = IUniswapV3Pool(pool).observations(
+            previousObservationIndex
+        );
+        int56 tickCumulativesDelta = tickCumulative - previousTickCumulative;
+        int24 tick = int24(tickCumulativesDelta / int56(uint56(blockTimestamp - previousBlockTimestamp)));
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        return (sqrtPriceX96, tick);
+    }
+
+    function slot0(address poolAddress) public view returns (uint160 sqrtPriceX96, int24 spotTick) {
         (sqrtPriceX96, spotTick, , , , , ) = IUniswapV3Pool(poolAddress).slot0();
     }
 
-    function validateSecurityParams(bytes memory params) external pure {}
+    function validateSecurityParams(bytes memory params) external pure {
+        if (params.length == 0) return;
+        SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
+        if (securityParams.lookback == 0 || securityParams.maxAllowedDelta < 0) revert InvalidParams();
+    }
 }

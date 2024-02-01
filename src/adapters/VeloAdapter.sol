@@ -119,29 +119,17 @@ contract VeloAdapter is IAdapter {
         uint16 lookback = securityParams.lookback;
         if (observationCardinality < lookback + 1) revert NotEnoughObservations();
 
-        (uint32 previousTimestamp, int56 previousCumulativeTick, , ) = ICLPool(poolAddress).observations(
-            (observationCardinality + observationIndex - lookback) % observationCardinality
-        );
-
-        int24 previousTick;
-        for (uint16 i = 0; i <= lookback; i++) {
-            int24 tick;
-            if (i < lookback) {
-                uint256 index = (observationCardinality + observationIndex + 1 + i - lookback) % observationCardinality;
-                (uint32 timestamp, int56 tickCumulative, , ) = ICLPool(poolAddress).observations(index);
-                tick = int24((tickCumulative - previousCumulativeTick) / int56(uint56(timestamp - previousTimestamp)));
-                (previousTimestamp, previousCumulativeTick) = (timestamp, tickCumulative);
-            } else {
-                tick = spotTick;
-            }
-            if (i > 0) {
-                int24 delta = tick - previousTick;
-                if (delta < 0) delta = -delta;
-                if (delta > securityParams.maxAllowedDelta) {
-                    revert PriceManipulationDetected();
-                }
-            }
-            previousTick = tick;
+        (uint32 nextTimestamp, int56 nextCumulativeTick, , ) = ICLPool(poolAddress).observations(observationIndex);
+        int24 nextTick = spotTick;
+        int24 maxAllowedDelta = securityParams.maxAllowedDelta;
+        for (uint16 i = 1; i <= lookback; i++) {
+            uint256 index = (observationCardinality + observationIndex - i) % observationCardinality;
+            (uint32 timestamp, int56 tickCumulative, , ) = ICLPool(poolAddress).observations(index);
+            int24 tick = int24((nextCumulativeTick - tickCumulative) / int56(uint56(nextTimestamp - timestamp)));
+            (nextTimestamp, nextCumulativeTick) = (timestamp, tickCumulative);
+            int24 delta = nextTick - tick;
+            if (delta > maxAllowedDelta || delta < -maxAllowedDelta) revert PriceManipulationDetected();
+            nextTick = tick;
         }
     }
 
