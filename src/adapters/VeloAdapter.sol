@@ -19,9 +19,8 @@ contract VeloAdapter is IAdapter {
     using SafeERC20 for IERC20;
 
     struct SecurityParams {
-        uint16 anomalyLookback;
-        uint16 anomalyOrder;
-        uint256 anomalyFactorD9;
+        uint16 lookback;
+        int24 maxAllowedDelta;
     }
 
     uint256 public constant Q96 = 2**96;
@@ -113,40 +112,36 @@ contract VeloAdapter is IAdapter {
         returns (uint160 sqrtPriceX96, int24 spotTick)
     {
         if (params.length == 0) return slot0(poolAddress);
-        SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
-        uint32[] memory timestamps = new uint32[](securityParams.anomalyLookback + 2);
-        int56[] memory tickCumulatives = new int56[](timestamps.length);
         uint16 observationIndex;
         uint16 observationCardinality;
-        // TODO: fix indices
         (sqrtPriceX96, spotTick, observationIndex, observationCardinality, , ) = ICLPool(poolAddress).slot0();
-        if (observationCardinality < securityParams.anomalyLookback + 1) revert NotEnoughObservations();
-        for (uint16 i = 0; i + 1 < timestamps.length; i++) {
-            uint16 index = (observationCardinality + observationIndex - i) % observationCardinality;
-            (timestamps[i], tickCumulatives[i], , ) = ICLPool(poolAddress).observations(index);
-        }
+        SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
+        uint16 lookback = securityParams.lookback;
+        if (observationCardinality < lookback + 1) revert NotEnoughObservations();
 
-        int24[] memory ticks = new int24[](timestamps.length);
-        ticks[0] = spotTick;
-        for (uint256 i = 0; i + 1 < timestamps.length - 1; i++) {
-            ticks[i + 1] = int24(
-                (tickCumulatives[i] - tickCumulatives[i + 1]) / int56(uint56(timestamps[i] - timestamps[i + 1]))
-            );
-        }
+        (uint32 previousTimestamp, int56 previousCumulativeTick, , ) = ICLPool(poolAddress).observations(
+            (observationCardinality + observationIndex - lookback) % observationCardinality
+        );
 
-        uint256[] memory deltas = new uint256[](securityParams.anomalyLookback + 1);
-        for (uint256 i = 0; i < deltas.length; i++) {
-            int24 delta = ticks[i] - ticks[i + 1];
-            if (delta > 0) delta = -delta;
-            deltas[i] = uint256(uint24(delta));
-        }
-
-        CommonLibrary.sortUint(deltas);
-        if (
-            deltas[deltas.length - 1] >
-            FullMath.mulDiv(deltas[securityParams.anomalyOrder], securityParams.anomalyFactorD9, D9)
-        ) {
-            revert PriceManipulationDetected();
+        int24 previousTick;
+        for (uint16 i = 0; i <= lookback; i++) {
+            int24 tick;
+            if (i < lookback) {
+                uint256 index = (observationCardinality + observationIndex + 1 + i - lookback) % observationCardinality;
+                (uint32 timestamp, int56 tickCumulative, , ) = ICLPool(poolAddress).observations(index);
+                tick = int24((tickCumulative - previousCumulativeTick) / int56(uint56(timestamp - previousTimestamp)));
+                (previousTimestamp, previousCumulativeTick) = (timestamp, tickCumulative);
+            } else {
+                tick = spotTick;
+            }
+            if (i > 0) {
+                int24 delta = tick - previousTick;
+                if (delta < 0) delta = -delta;
+                if (delta > securityParams.maxAllowedDelta) {
+                    revert PriceManipulationDetected();
+                }
+            }
+            previousTick = tick;
         }
     }
 
@@ -180,9 +175,7 @@ contract VeloAdapter is IAdapter {
 
     function validateSecurityParams(bytes memory params) external pure {
         if (params.length == 0) return;
-        // TODO: use constants for tickSpacing
         SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
-        if (securityParams.anomalyLookback <= securityParams.anomalyOrder) revert InvalidParams();
-        if (securityParams.anomalyFactorD9 > D9 * 100 || securityParams.anomalyFactorD9 < D9) revert InvalidParams();
+        if (securityParams.lookback == 0 || securityParams.maxAllowedDelta < 0) revert InvalidParams();
     }
 }
