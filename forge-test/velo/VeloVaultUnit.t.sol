@@ -178,8 +178,8 @@ contract Unit is Test {
 
     function initializeBaseStrategy() public {
         uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e16;
-        minSwapAmounts[1] = 1e7;
+        minSwapAmounts[0] = 1e5;
+        minSwapAmounts[1] = 1e3;
 
         IIntegrationVault[] memory ammVaults = new IIntegrationVault[](1);
         ammVaults[0] = ammVault;
@@ -198,7 +198,7 @@ contract Unit is Test {
                 maxTickDeviation: 50,
                 minCapitalRatioDeviationX96: Q96 / 100,
                 minSwapAmounts: minSwapAmounts,
-                maxCapitalRemainderRatioX96: Q96,
+                maxCapitalRemainderRatioX96: Q96 / 50,
                 initialLiquidity: 1e9
             })
         );

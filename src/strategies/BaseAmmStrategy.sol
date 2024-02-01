@@ -71,14 +71,30 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         ImmutableParams memory immutableParams,
         MutableParams memory mutableParams
     ) external {
-        // TODO: add validation
+        if (
+            address(immutableParams.adapter) == address(0) &&
+            address(immutableParams.pool) == address(0) &&
+            address(immutableParams.erc20Vault) == address(0)
+        ) revert(ExceptionsLibrary.ADDRESS_ZERO);
+        if (immutableParams.ammVaults.length == 0) revert(ExceptionsLibrary.INVALID_LENGTH);
+        for (uint256 i = 0; i < immutableParams.ammVaults.length; i++) {
+            if (address(immutableParams.ammVaults[i]) == address(0)) {
+                revert(ExceptionsLibrary.ADDRESS_ZERO);
+            }
+        }
         _contractStorage().immutableParams = immutableParams;
+        validateMutableParams(mutableParams);
         _contractStorage().mutableParams = mutableParams;
         DefaultAccessControlLateInit.init(admin);
     }
 
     function updateMutableParams(MutableParams memory mutableParams) external {
         _requireAdmin();
+        validateMutableParams(mutableParams);
+        _contractStorage().mutableParams = mutableParams;
+    }
+
+    function validateMutableParams(MutableParams memory mutableParams) public view {
         Storage storage s = _contractStorage();
         s.immutableParams.adapter.validateSecurityParams(mutableParams.securityParams);
 
@@ -88,8 +104,6 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         if (mutableParams.minSwapAmounts.length != 2) revert(ExceptionsLibrary.INVALID_LENGTH);
         if (mutableParams.maxCapitalRemainderRatioX96 > Q96 / 2) revert(ExceptionsLibrary.LIMIT_OVERFLOW);
         if (mutableParams.initialLiquidity == 0) revert(ExceptionsLibrary.VALUE_ZERO);
-
-        s.mutableParams = mutableParams;
     }
 
     function getMutableParams() public view returns (MutableParams memory) {
@@ -156,37 +170,16 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
     }
 
     function depositCallback() external {
-        // TODO: fix
         ImmutableParams memory immutableParams = _contractStorage().immutableParams;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
         IIntegrationVault[] memory ammVaults = immutableParams.ammVaults;
         uint256 n = ammVaults.length;
-        uint256[][] memory tvls = new uint256[][](n);
-        uint256[] memory totalTvl = new uint256[](2);
-        for (uint256 i = 0; i < n; i++) {
-            (uint256[] memory tvl, ) = ammVaults[i].tvl();
-            totalTvl[0] += tvl[0];
-            totalTvl[1] += tvl[1];
-            tvls[i] = tvl;
-        }
         (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
         address[] memory tokens = erc20Vault.vaultTokens();
         for (uint256 i = 0; i < n; i++) {
-            uint256[] memory amounts = new uint256[](2);
-            uint256[] memory tvl = tvls[i];
-            bool doesPullRequred = false;
-            for (uint256 j = 0; j < 2; j++) {
-                if (totalTvl[j] == 0) continue;
-                amounts[j] = FullMath.mulDiv(erc20Tvl[j], tvl[j], totalTvl[j]);
-                if (amounts[j] > 0) doesPullRequred = true;
-            }
-            if (doesPullRequred) {
-                uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, amounts, "");
-                for (uint256 j = 0; j < 2; j++) {
-                    totalTvl[j] -= tvl[j];
-                    erc20Tvl[j] -= actualAmounts[j];
-                }
-            }
+            uint256[] memory actualAmounts = erc20Vault.pull(address(ammVaults[i]), tokens, erc20Tvl, "");
+            erc20Tvl[0] -= actualAmounts[0];
+            erc20Tvl[1] -= actualAmounts[1];
         }
     }
 
