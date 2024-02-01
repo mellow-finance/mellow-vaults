@@ -13,7 +13,6 @@ import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
-import "../../src/utils/VeloFarm.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
 import "../../src/utils/VeloDeployFactory.sol";
 

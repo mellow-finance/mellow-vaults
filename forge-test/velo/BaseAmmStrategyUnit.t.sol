@@ -13,7 +13,7 @@ import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
-import "../../src/utils/VeloFarm.sol";
+import "../../src/utils/SynthetixFarmingPool.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
 
 import "../../src/vaults/ERC20Vault.sol";
@@ -136,7 +136,7 @@ contract Unit is Test {
         ammGovernance.createVault(tokens, deployer, TICK_SPACING);
         ammVault2 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 2));
 
-        farm = new VeloFarm();
+        farm = new SynthetixFarmingPool();
 
         ammGovernance.setStrategyParams(
             erc20VaultNft + 1,
