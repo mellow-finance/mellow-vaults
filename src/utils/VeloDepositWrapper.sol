@@ -7,10 +7,10 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/utils/ILpCallback.sol";
 
-import "./DefaultAccessControl.sol";
+import "./DefaultAccessControlLateInit.sol";
 import "../../src/utils/external/synthetix/StakingRewards.sol";
 
-contract VeloDepositWrapper is DefaultAccessControl, StakingRewards {
+contract VeloDepositWrapper is DefaultAccessControlLateInit, StakingRewards {
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20RootVault;
 
@@ -23,18 +23,17 @@ contract VeloDepositWrapper is DefaultAccessControl, StakingRewards {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    constructor(
-        address farmOwner,
-        address farmOperator,
-        address wrapperAdmin
-    ) StakingRewards(farmOwner, farmOperator) DefaultAccessControl(wrapperAdmin) {}
+    constructor(address farmOwner, address farmOperator) StakingRewards(farmOwner, farmOperator) {}
 
-    function initialize(address _rootVault, address _rewardsToken) external onlyOwner {
-        if (address(stakingToken) == address(0)) {
-            rewardsToken = IERC20(_rewardsToken);
-            stakingToken = IERC20(_rootVault);
-        }
-        IERC20(_rootVault).safeApprove(address(this), type(uint256).max);
+    function initialize(
+        address rootVault,
+        address rewardsToken_,
+        address admin
+    ) external {
+        DefaultAccessControlLateInit(address(this)).init(admin);
+        rewardsToken = IERC20(rewardsToken_);
+        stakingToken = IERC20(rootVault);
+        IERC20(rootVault).safeApprove(address(this), type(uint256).max);
     }
 
     function deposit(

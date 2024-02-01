@@ -65,7 +65,7 @@ contract Integration is Test {
 
     VeloAdapter public adapter = new VeloAdapter(positionManager);
     VeloHelper public veloHelper = new VeloHelper(positionManager);
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer, deployer, deployer);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer, deployer);
 
     BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
@@ -161,7 +161,7 @@ contract Integration is Test {
             combineVaults(tokens, nfts);
         }
 
-        depositWrapper.initialize(address(rootVault), address(gauge.rewardToken()));
+        depositWrapper.initialize(address(rootVault), address(gauge.rewardToken()), deployer);
     }
 
     function deployGovernance() public {
