@@ -9,7 +9,9 @@ import "../libraries/CommonLibrary.sol";
 import "../strategies/BaseAmmStrategy.sol";
 import "../strategies/PulseOperatorStrategy.sol";
 
-contract VeloOperatorManager {
+import "./DefaultAccessControl.sol";
+
+contract VeloOperatorManager is DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     uint16 public constant MAX_OBSERVATIONS = 60000;
@@ -17,10 +19,13 @@ contract VeloOperatorManager {
     int24 public constant POSITION_WIDTH_COEFFICIENT = 3; // positionWidth = sigma * coeffient
     int24 public constant MAX_POSITION_WIDTH_COEFFICIENT = 2; // maxPositionWidth = positionWidth * coefficient
 
+    constructor(address admin) DefaultAccessControl(admin) {}
+
     function manage(PulseOperatorStrategy[] memory strategies)
         external
         returns (int24[] memory positionWidths, int24[] memory maxPositionWidths)
     {
+        _requireAtLeastOperator();
         positionWidths = new int24[](strategies.length);
         maxPositionWidths = new int24[](strategies.length);
         for (uint256 i = 0; i < strategies.length; i++) {
