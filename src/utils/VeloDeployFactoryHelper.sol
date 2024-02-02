@@ -82,6 +82,7 @@ contract VeloDeployFactoryHelper {
             })
         );
         IERC20RootVaultGovernance(params.addresses.erc20RootVaultGovernance).commitDelayedStrategyParams(nft);
+        vaultRegistry.approve(params.addresses.operator, nft);
         return info;
     }
 
@@ -156,7 +157,7 @@ contract VeloDeployFactoryHelper {
         external
     {
         (uint160 sqrtPriceX96, , , , , ) = info.pool.slot0();
-        BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](2);
+        BaseAmmStrategy.Position[] memory target = new BaseAmmStrategy.Position[](params.positionsCount);
         (BaseAmmStrategy.Position memory newPosition, ) = PulseOperatorStrategy(info.operatorStrategy)
             .calculateExpectedPosition();
         target[0].tickLower = newPosition.tickLower;

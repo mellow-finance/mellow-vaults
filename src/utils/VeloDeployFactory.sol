@@ -84,6 +84,8 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     mapping(address => VaultInfo) private _poolToVaultInfo;
     mapping(address => address) public vaultToPool;
 
+    bool public operatorFlag;
+
     InternalParams private _internalParams;
 
     address[] private _pools;
@@ -102,6 +104,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         swapRouter = swapRouter_;
         gaugeFactory = gaugeFactory_;
         helper = helper_;
+        operatorFlag = true;
     }
 
     function vaults() external view returns (address[] memory) {
@@ -138,6 +141,11 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         operatorDefaultMutableParams[tickSpacing] = params;
     }
 
+    function setOperatorFlag(bool flag) external {
+        _requireAdmin();
+        operatorFlag = flag;
+    }
+
     function _initializeStrategies(InternalParams memory params, VaultInfo memory info) private {
         int24 tickSpacing = info.pool.tickSpacing();
         BaseAmmStrategy.MutableParams memory baseMutableParams = baseDefaultMutableParams[tickSpacing];
@@ -154,7 +162,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         );
 
         BaseAmmStrategy(info.baseStrategy).grantRole(ADMIN_DELEGATE_ROLE, address(this));
-        BaseAmmStrategy(info.baseStrategy).grantRole(ADMIN_ROLE, address(info.operatorStrategy));
+        BaseAmmStrategy(info.baseStrategy).grantRole(OPERATOR, address(info.operatorStrategy));
         BaseAmmStrategy(info.baseStrategy).grantRole(ADMIN_ROLE, address(params.addresses.operator));
         BaseAmmStrategy(info.baseStrategy).revokeRole(ADMIN_DELEGATE_ROLE, address(this));
         BaseAmmStrategy(info.baseStrategy).revokeRole(ADMIN_ROLE, address(this));
@@ -186,8 +194,6 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
             address(this)
         );
         PulseOperatorStrategy(info.operatorStrategy).grantRole(ADMIN_DELEGATE_ROLE, address(this));
-        PulseOperatorStrategy(info.operatorStrategy).grantRole(OPERATOR, address(params.addresses.operator));
-        PulseOperatorStrategy(info.operatorStrategy).grantRole(ADMIN_DELEGATE_ROLE, address(params.addresses.operator));
         PulseOperatorStrategy(info.operatorStrategy).grantRole(ADMIN_ROLE, address(params.addresses.operator));
     }
 
@@ -196,7 +202,9 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
         address token1,
         int24 tickSpacing
     ) external returns (VaultInfo memory info) {
-        _requireAtLeastOperator();
+        if (operatorFlag) {
+            _requireAtLeastOperator();
+        }
         if (token0 > token1) {
             (token0, token1) = (token1, token0);
         }
@@ -244,6 +252,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
 
         vaultToPool[address(info.rootVault)] = address(info.pool);
         poolToVault[address(info.pool)] = address(info.rootVault);
+        _poolToVaultInfo[address(info.pool)] = info;
 
         _initializeStrategies(params, info);
         {
@@ -258,8 +267,6 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
             );
             require(success, ExceptionsLibrary.INVALID_STATE);
         }
-
-        _poolToVaultInfo[address(info.pool)] = info;
     }
 
     function getVaultInfoByPool(address pool) external view returns (VaultInfo memory) {
