@@ -105,6 +105,26 @@ contract UniswapV3Adapter is IAdapter {
         return IUniV3Vault(vault).uniV3Nft();
     }
 
+    function getDeltas(address poolAddress, uint16 lookback) public view returns (int24[] memory deltas) {
+        (, int24 spotTick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(poolAddress)
+            .slot0();
+        if (observationCardinality < lookback + 1) revert NotEnoughObservations();
+
+        (uint32 nextTimestamp, int56 nextCumulativeTick, , ) = IUniswapV3Pool(poolAddress).observations(
+            observationIndex
+        );
+        int24 nextTick = spotTick;
+        deltas = new int24[](lookback);
+        for (uint16 i = 1; i <= lookback; i++) {
+            uint256 index = (observationCardinality + observationIndex - i) % observationCardinality;
+            (uint32 timestamp, int56 tickCumulative, , ) = IUniswapV3Pool(poolAddress).observations(index);
+            int24 tick = int24((nextCumulativeTick - tickCumulative) / int56(uint56(nextTimestamp - timestamp)));
+            (nextTimestamp, nextCumulativeTick) = (timestamp, tickCumulative);
+            deltas[i - 1] = nextTick - tick;
+            nextTick = tick;
+        }
+    }
+
     function slot0EnsureNoMEV(address poolAddress, bytes memory params)
         external
         view
