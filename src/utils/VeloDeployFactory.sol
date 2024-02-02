@@ -84,7 +84,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     mapping(address => VaultInfo) private _poolToVaultInfo;
     mapping(address => address) public vaultToPool;
 
-    InternalParams public internalParams;
+    InternalParams private _internalParams;
 
     address[] private _pools;
     address[] private _vaults;
@@ -123,7 +123,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
 
     function updateInternalParams(InternalParams memory params) external {
         _requireAdmin();
-        internalParams = params;
+        _internalParams = params;
     }
 
     function updateBaseDefaultMutableParams(int24 tickSpacing, BaseAmmStrategy.MutableParams memory params) external {
@@ -213,7 +213,7 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
             Clones.predictDeterministicAddress(gaugeFactory.implementation(), salt, address(gaugeFactory))
         );
 
-        InternalParams memory params = internalParams;
+        InternalParams memory params = _internalParams;
         info.baseStrategy = address(
             new TransparentUpgradeableProxy(params.addresses.baseStrategySingleton, params.addresses.proxyAdmin, "")
         );
@@ -267,6 +267,6 @@ contract VeloDeployFactory is DefaultAccessControl, IERC721Receiver {
     }
 
     function getInternalParams() external view returns (InternalParams memory) {
-        return internalParams;
+        return _internalParams;
     }
 }
