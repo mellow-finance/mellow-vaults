@@ -16,7 +16,7 @@ contract VeloOperatorManager is DefaultAccessControl {
 
     uint16 public constant MAX_OBSERVATIONS = 60000;
     uint16 public constant DEFAULT_OBSERVATION_CARDINALITY = 600;
-    int24 public constant POSITION_WIDTH_COEFFICIENT = 3; // positionWidth = sigma * coeffient
+    int24 public constant POSITION_WIDTH_COEFFICIENT = 4; // positionWidth = sigma * coeffient
     int24 public constant MAX_POSITION_WIDTH_COEFFICIENT = 2; // maxPositionWidth = positionWidth * coefficient
 
     constructor(address admin) DefaultAccessControl(admin) {}
@@ -61,35 +61,33 @@ contract VeloOperatorManager is DefaultAccessControl {
         }
         int24 sigma;
         {
-            int24[] memory deltas = new int24[](lookback);
-
-            int24 averageDelta = 0;
+            int48 averageSqrDelta = 0;
+            int48 averageDelta = 0;
             for (uint16 i = 1; i <= lookback; i++) {
                 uint256 index = (observationCardinality + observationIndex - i) % observationCardinality;
                 (uint32 timestamp, int56 tickCumulative, , ) = pool.observations(index);
                 int24 tick = int24((nextCumulativeTick - tickCumulative) / int56(uint56(nextTimestamp - timestamp)));
 
-                int24 delta = nextTick - tick;
+                int48 delta = nextTick - tick;
                 if (delta < 0) delta = -delta;
                 averageDelta += delta;
-                deltas[i - 1] = delta;
+                averageSqrDelta += delta**2;
 
                 (nextTimestamp, nextCumulativeTick) = (timestamp, tickCumulative);
                 nextTick = tick;
             }
             averageDelta /= int16(observationCardinality);
+            averageSqrDelta /= int16(observationCardinality);
 
-            {
-                int48 d = 0;
-                for (uint16 i = 0; i < lookback; i++) {
-                    d += (deltas[i] - averageDelta)**2;
-                }
-                d /= int16(lookback - 1);
-                sigma = int24(int256(CommonLibrary.sqrt(uint48(d))));
-            }
+            int48 d = averageSqrDelta - averageDelta;
+            sigma = int24(int256(CommonLibrary.sqrt(uint48(d))));
         }
 
-        positionWidth = sigma * POSITION_WIDTH_COEFFICIENT;
+        {
+            uint256 timespan = block.timestamp - nextTimestamp;
+            int24 coefficient = int24(int256(CommonLibrary.sqrt(7 days / timespan)));
+            positionWidth = sigma * coefficient * POSITION_WIDTH_COEFFICIENT;
+        }
         int24 tickSpacing = operatorImmutableParams.tickSpacing;
         if (positionWidth % tickSpacing != 0) {
             positionWidth += tickSpacing - (positionWidth % tickSpacing);
