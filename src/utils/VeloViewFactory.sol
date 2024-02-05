@@ -8,34 +8,43 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./VeloDeployFactory.sol";
 
 contract VeloViewFactory {
+    struct UserInfo {
+        address rootVault;
+        address farm;
+        uint256 protocolFeeD9;
+        bool isClosed;
+        uint256 lpBalance;
+        uint256 amount0;
+        uint256 amount1;
+        address pool;
+        uint256 pendingRewards;
+    }
+
     VeloDeployFactory public immutable factory;
 
     constructor(VeloDeployFactory factory_) {
         factory = factory_;
     }
 
-    function getUserInfo(address user) external view returns (VeloDeployFactory.UserInfo[] memory userInfos) {
+    function getUserInfo(address user) external view returns (UserInfo[] memory userInfos) {
         address[] memory pools_ = factory.pools();
-        userInfos = new VeloDeployFactory.UserInfo[](pools_.length);
-        VeloDeployFactory.InternalParams memory params = factory.getInternalParams();
+        userInfos = new UserInfo[](pools_.length);
 
         uint256 iterator = 0;
         for (uint256 i = 0; i < pools_.length; i++) {
             address pool = pools_[i];
             VeloDeployFactory.VaultInfo memory info = factory.getVaultInfoByPool(pool);
-            VeloDeployFactory.UserInfo memory userInfo;
+            UserInfo memory userInfo;
             userInfo.rootVault = address(info.rootVault);
-            userInfo.farm = address(info.farm);
-            userInfo.farmFee = VeloFarm(info.farm).getStorage().protocolFeeD9;
+            userInfo.farm = address(info.depositWrapper);
+            userInfo.protocolFeeD9 = IVeloVault(address(info.veloVaults[0])).strategyParams().protocolFeeD9;
             {
                 userInfo.isClosed = true;
-                if (
-                    VeloDepositWrapper(params.addresses.depositWrapper).depositInfo(address(info.rootVault)).strategy !=
-                    address(0)
-                ) {
+                (address strategy_, ) = VeloDepositWrapper(info.depositWrapper).strategyInfo();
+                if (strategy_ != address(0)) {
                     address[] memory depositorsAllowlist = info.rootVault.depositorsAllowlist();
                     for (uint256 j = 0; j < depositorsAllowlist.length; j++) {
-                        if (depositorsAllowlist[j] == params.addresses.depositWrapper) {
+                        if (depositorsAllowlist[j] == info.depositWrapper) {
                             userInfo.isClosed = false;
                             break;
                         }
@@ -51,7 +60,7 @@ contract VeloViewFactory {
                 userInfo.amount1 = FullMath.mulDiv(tvl[1], userInfo.lpBalance, totalSupply);
             }
             userInfo.pool = address(info.pool);
-            userInfo.pendingRewards = VeloFarm(info.farm).rewards(user);
+            userInfo.pendingRewards = VeloDepositWrapper(info.depositWrapper).earned(user);
 
             if (userInfo.amount0 > 0 || userInfo.amount1 > 0 || userInfo.pendingRewards > 0) {
                 userInfos[iterator++] = userInfo;

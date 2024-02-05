@@ -10,7 +10,9 @@ import "./IVaultGovernance.sol";
 interface IVeloVaultGovernance is IVaultGovernance {
     struct StrategyParams {
         address gauge;
-        address farm;
+        address farmingPool;
+        address protocolTreasury;
+        uint256 protocolFeeD9;
     }
 
     /// @notice Delayed Strategy Params

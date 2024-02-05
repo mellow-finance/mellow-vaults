@@ -13,8 +13,9 @@ import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
-import "../../src/utils/VeloFarm.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
+
+import "../../src/utils/external/synthetix/StakingRewards.sol";
 
 import "../../src/vaults/ERC20Vault.sol";
 import "../../src/vaults/ERC20VaultGovernance.sol";
@@ -65,7 +66,7 @@ contract Unit is Test {
 
     VeloAdapter public adapter = new VeloAdapter(positionManager);
     VeloHelper public veloHelper = new VeloHelper(positionManager);
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer, deployer);
 
     BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
@@ -77,8 +78,6 @@ contract Unit is Test {
     IERC20Vault public erc20Vault;
     IVeloVault public ammVault1;
     IVeloVault public ammVault2;
-
-    VeloFarm public farm;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -136,15 +135,23 @@ contract Unit is Test {
         ammGovernance.createVault(tokens, deployer, TICK_SPACING);
         ammVault2 = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 2));
 
-        farm = new VeloFarm();
-
         ammGovernance.setStrategyParams(
             erc20VaultNft + 1,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
+            IVeloVaultGovernance.StrategyParams({
+                farmingPool: address(depositWrapper),
+                gauge: address(gauge),
+                protocolTreasury: protocolTreasury,
+                protocolFeeD9: protocolFeeD9
+            })
         );
         ammGovernance.setStrategyParams(
             erc20VaultNft + 2,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
+            IVeloVaultGovernance.StrategyParams({
+                farmingPool: address(depositWrapper),
+                gauge: address(gauge),
+                protocolTreasury: protocolTreasury,
+                protocolFeeD9: protocolFeeD9
+            })
         );
 
         {
@@ -155,13 +162,7 @@ contract Unit is Test {
             combineVaults(tokens, nfts);
         }
 
-        farm.initialize(
-            address(rootVault),
-            address(deployer),
-            address(protocolTreasury),
-            address(gauge.rewardToken()),
-            protocolFeeD9
-        );
+        depositWrapper.initialize(address(rootVault), address(gauge.rewardToken()), deployer);
     }
 
     function deployGovernance() public {
@@ -233,11 +234,11 @@ contract Unit is Test {
             for (uint256 i = 0; i < tokens.length; i++) {
                 IERC20(tokens[i]).approve(address(depositWrapper), type(uint256).max);
             }
-            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), false);
+            depositWrapper.setStrategyInfo(address(strategy), false);
         } else {
-            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), true);
+            depositWrapper.setStrategyInfo(address(strategy), true);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
     }
 
     function initializeOperatorStrategy(int24 maxWidth) public {
@@ -473,32 +474,20 @@ contract Unit is Test {
         strategy.updateMutableParams(params);
         params.initialLiquidity = 1;
 
-        params.securityParams = abi.encode("some invalid parameters");
+        params.securityParams = abi.encode(1);
+        vm.expectRevert();
+        strategy.updateMutableParams(params);
+
+        params.securityParams = abi.encode(VeloAdapter.SecurityParams({lookback: 0, maxAllowedDelta: 50}));
         vm.expectRevert(bytes4(0xa86b6512));
         strategy.updateMutableParams(params);
 
-        params.securityParams = abi.encode(
-            VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 3, anomalyFactorD9: 2e9})
-        );
-        vm.expectRevert(bytes4(0xa86b6512));
-        strategy.updateMutableParams(params);
-
-        params.securityParams = abi.encode(
-            VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 3, anomalyFactorD9: 1e9 - 1})
-        );
-        vm.expectRevert(bytes4(0xa86b6512));
-        strategy.updateMutableParams(params);
-
-        params.securityParams = abi.encode(
-            VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 3, anomalyFactorD9: 1e10 + 1})
-        );
+        params.securityParams = abi.encode(VeloAdapter.SecurityParams({lookback: 3, maxAllowedDelta: -1}));
         vm.expectRevert(bytes4(0xa86b6512));
         strategy.updateMutableParams(params);
 
         params = BaseAmmStrategy.MutableParams({
-            securityParams: abi.encode(
-                VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 2, anomalyFactorD9: 2e9})
-            ),
+            securityParams: abi.encode(VeloAdapter.SecurityParams({lookback: 3, maxAllowedDelta: 50})),
             maxPriceSlippageX96: 0,
             maxTickDeviation: 0,
             minCapitalRatioDeviationX96: 0,
@@ -525,9 +514,7 @@ contract Unit is Test {
     function testGetMutableParams() external {
         vm.startPrank(deployer);
         BaseAmmStrategy.MutableParams memory params = BaseAmmStrategy.MutableParams({
-            securityParams: abi.encode(
-                VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 2, anomalyFactorD9: 2e9})
-            ),
+            securityParams: abi.encode(VeloAdapter.SecurityParams({lookback: 3, maxAllowedDelta: 50})),
             maxPriceSlippageX96: 1,
             maxTickDeviation: 2,
             minCapitalRatioDeviationX96: 3,
@@ -541,9 +528,7 @@ contract Unit is Test {
         BaseAmmStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
         assertEq(
             keccak256(mutableParams.securityParams),
-            keccak256(
-                abi.encode(VeloAdapter.SecurityParams({anomalyLookback: 3, anomalyOrder: 2, anomalyFactorD9: 2e9}))
-            )
+            keccak256(abi.encode(VeloAdapter.SecurityParams({lookback: 3, maxAllowedDelta: 50})))
         );
         assertEq(mutableParams.maxPriceSlippageX96, 1);
         assertEq(mutableParams.maxTickDeviation, 2);

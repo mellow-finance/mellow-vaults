@@ -13,7 +13,6 @@ import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
-import "../../src/utils/VeloFarm.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
 import "../../src/utils/VeloDeployFactory.sol";
 
@@ -41,11 +40,12 @@ contract Integration is Test {
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
     address public farmTreasury = address(bytes20(keccak256("treasury-3")));
+    address public proxyAdmin = address(bytes20(keccak256("proxy-admin")));
+
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address public protocolAdmin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
     uint256 public protocolFeeD9 = 1e8; // 10%
-    uint256 public positionsCount = 2;
 
     address public weth = 0x4200000000000000000000000000000000000006;
     address public usdc = 0x7F5c764cBc14f9669B88837ca1490cCa17c31607;
@@ -74,7 +74,6 @@ contract Integration is Test {
     VeloHelper public veloHelper = new VeloHelper(positionManager);
     VeloAdapter public veloAdapter = new VeloAdapter(positionManager);
     BaseAmmStrategyHelper public baseStrategyHelper = new BaseAmmStrategyHelper();
-    VeloDepositWrapper public depositWrapper;
 
     VeloDeployFactory public deployFactory;
     VeloDeployFactory.VaultInfo public vaultInfo;
@@ -110,17 +109,6 @@ contract Integration is Test {
 
         vm.stopPrank();
         vm.startPrank(deployer);
-    }
-
-    function deposit(uint256 coef) public {
-        uint256[] memory tokenAmounts = vaultInfo.rootVault.pullExistentials();
-        address[] memory tokens = vaultInfo.rootVault.vaultTokens();
-        for (uint256 i = 0; i < tokens.length; i++) {
-            tokenAmounts[i] *= 10 * coef;
-            deal(tokens[i], deployer, tokenAmounts[i]);
-            IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
-        }
-        depositWrapper.deposit(vaultInfo.rootVault, tokenAmounts, 0, new bytes(0));
     }
 
     function rebalance() public {
@@ -333,20 +321,29 @@ contract Integration is Test {
         skip(3 * 24 * 3600);
     }
 
+    function deposit(uint256 coef) public {
+        uint256[] memory tokenAmounts = vaultInfo.rootVault.pullExistentials();
+        address[] memory tokens = vaultInfo.rootVault.vaultTokens();
+        VeloDepositWrapper depositWrapper = VeloDepositWrapper(vaultInfo.depositWrapper);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            tokenAmounts[i] *= 10 * coef;
+            deal(tokens[i], deployer, tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
+        }
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
+    }
+
     function setUp() external {
         vm.startPrank(deployer);
-
         normalizePool();
         deployFactory = new VeloDeployFactory(
             deployer,
             positionManager,
-            ISwapRouter(address(swapRouter)),
             factory,
-            gaugeFactory
+            ISwapRouter(address(swapRouter)),
+            gaugeFactory,
+            new VeloDeployFactoryHelper(factory, ISwapRouter(address(swapRouter)))
         );
-
-        depositWrapper = new VeloDepositWrapper(deployer);
-        depositWrapper.grantRole(depositWrapper.ADMIN_ROLE(), address(deployFactory));
 
         deployGovernance();
 
@@ -363,15 +360,15 @@ contract Integration is Test {
                     farmTreasury: farmTreasury,
                     veloAdapter: address(veloAdapter),
                     veloHelper: address(veloHelper),
-                    depositWrapper: address(depositWrapper),
                     baseStrategySingleton: address(new BaseAmmStrategy()),
                     operatorStrategySingleton: address(new PulseOperatorStrategy()),
-                    farmSingleton: address(new VeloFarm()),
+                    depositWrapperSingleton: address(new VeloDepositWrapper(deployer, deployer)),
                     baseStrategyHelper: address(baseStrategyHelper),
-                    operator: deployer
+                    operator: deployer,
+                    proxyAdmin: proxyAdmin
                 }),
-                protocolFeeD9: protocolFeeD9,
-                positionsCount: positionsCount,
+                protocolFeeD9: 1e8,
+                positionsCount: 2,
                 liquidityCoefficient: 365 // possible number of mints
             })
         );
@@ -409,6 +406,8 @@ contract Integration is Test {
         IERC20(usdc).safeApprove(address(deployFactory), type(uint256).max);
 
         vaultInfo = deployFactory.createStrategy(weth, usdc, TICK_SPACING);
+
+        deposit(1e7);
         vm.stopPrank();
     }
 
@@ -432,11 +431,11 @@ contract Integration is Test {
         vm.expectRevert(abi.encodePacked("INVL"));
         strategy.initialize(immutableParams, mutableParams, address(0));
         mutableParams.maxPositionWidth = 1;
-        mutableParams.neighborhoodFactorD = 1e9 + 1;
+        mutableParams.neighborhoodFactorD = 5e8 + 1;
 
         vm.expectRevert(abi.encodePacked("LIMO"));
         strategy.initialize(immutableParams, mutableParams, address(0));
-        mutableParams.neighborhoodFactorD = 1e9;
+        mutableParams.neighborhoodFactorD = 5e8;
 
         vm.expectRevert(abi.encodePacked("AZ"));
         strategy.initialize(immutableParams, mutableParams, address(0));
@@ -485,7 +484,7 @@ contract Integration is Test {
 
         vm.expectRevert(abi.encodePacked("LIMO"));
         strategy.validateMutableParams(mutableParams);
-        mutableParams.neighborhoodFactorD = 1e9;
+        mutableParams.neighborhoodFactorD = 5e8;
 
         strategy.validateMutableParams(mutableParams);
     }
@@ -514,11 +513,11 @@ contract Integration is Test {
         vm.expectRevert(abi.encodePacked("INVL"));
         strategy.updateMutableParams(mutableParams);
         mutableParams.positionWidth = 200;
-        mutableParams.neighborhoodFactorD = 1e9 + 1;
+        mutableParams.neighborhoodFactorD = 5e8 + 1;
 
         vm.expectRevert(abi.encodePacked("LIMO"));
         strategy.updateMutableParams(mutableParams);
-        mutableParams.neighborhoodFactorD = 1e9;
+        mutableParams.neighborhoodFactorD = 5e8;
 
         strategy.updateMutableParams(mutableParams);
         vm.stopPrank();

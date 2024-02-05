@@ -102,7 +102,6 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
     }
 
     function validateMutableParams(MutableParams memory mutableParams) public view {
-        if (mutableParams.maxPositionWidth < mutableParams.positionWidth) revert(ExceptionsLibrary.INVALID_LENGTH);
         Storage storage s = _contractStorage();
         int24 tickSpacing = s.immutableParams.tickSpacing;
         if (
@@ -113,7 +112,7 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
         ) {
             revert(ExceptionsLibrary.INVALID_LENGTH);
         }
-        if (mutableParams.neighborhoodFactorD > D9) {
+        if (mutableParams.neighborhoodFactorD * 2 > D9) {
             revert(ExceptionsLibrary.LIMIT_OVERFLOW);
         }
     }
@@ -192,10 +191,8 @@ contract PulseOperatorStrategy is DefaultAccessControlLateInit {
             return (currentPosition, false);
         }
 
-        int24 closeness = minAcceptableTick - spotTick;
-        if (spotTick - maxAcceptableTick > closeness) {
-            closeness = spotTick - maxAcceptableTick;
-        }
+        int24 closeness = _max(minAcceptableTick - spotTick, spotTick - maxAcceptableTick);
+        closeness = _max(closeness, 0);
 
         int24 sideExtension = closeness +
             int24(int256(FullMath.mulDiv(uint24(currentNeighborhood), mutableParams.extensionFactorD, D9)));

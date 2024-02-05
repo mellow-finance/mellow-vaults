@@ -46,9 +46,5 @@ interface IVeloVault is IERC721Receiver, IIntegrationVault {
         int24 tickSpacing_
     ) external;
 
-    function collectRewards() external;
-
-    function unstakeTokenId() external;
-
-    function stakeTokenId() external;
+    function collectRewards() external returns (uint256, uint256);
 }

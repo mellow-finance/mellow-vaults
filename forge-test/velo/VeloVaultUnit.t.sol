@@ -12,7 +12,7 @@ import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
-import "../../src/utils/VeloFarm.sol";
+import "../../src/utils/external/synthetix/StakingRewards.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
 
 import "../../src/vaults/ERC20Vault.sol";
@@ -34,6 +34,7 @@ contract Unit is Test {
     using SafeERC20 for IERC20;
 
     uint256 public constant Q96 = 2**96;
+    uint256 public constant D9 = 1e9;
     int24 public constant TICK_SPACING = 200;
 
     address public protocolTreasury = address(bytes20(keccak256("protocol-treasury")));
@@ -66,7 +67,7 @@ contract Unit is Test {
 
     VeloAdapter public adapter = new VeloAdapter(positionManager);
     VeloHelper public veloHelper = new VeloHelper(positionManager);
-    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer);
+    VeloDepositWrapper public depositWrapper = new VeloDepositWrapper(deployer, deployer);
 
     BaseAmmStrategy public strategy = new BaseAmmStrategy();
     PulseOperatorStrategy public operatorStrategy = new PulseOperatorStrategy();
@@ -77,8 +78,6 @@ contract Unit is Test {
     IERC20RootVault public rootVault;
     IERC20Vault public erc20Vault;
     IVeloVault public ammVault;
-
-    VeloFarm public farm;
 
     function combineVaults(address[] memory tokens, uint256[] memory nfts) public {
         IVaultRegistry vaultRegistry = IVaultRegistry(registry);
@@ -129,11 +128,14 @@ contract Unit is Test {
         IVeloVaultGovernance(ammGovernance).createVault(tokens, deployer, TICK_SPACING);
         ammVault = IVeloVault(vaultRegistry.vaultForNft(erc20VaultNft + 1));
 
-        farm = new VeloFarm();
-
         ammGovernance.setStrategyParams(
             erc20VaultNft + 1,
-            IVeloVaultGovernance.StrategyParams({farm: address(farm), gauge: address(gauge)})
+            IVeloVaultGovernance.StrategyParams({
+                farmingPool: address(depositWrapper),
+                gauge: address(gauge),
+                protocolFeeD9: protocolFeeD9,
+                protocolTreasury: protocolTreasury
+            })
         );
 
         {
@@ -143,13 +145,7 @@ contract Unit is Test {
             combineVaults(tokens, nfts);
         }
 
-        farm.initialize(
-            address(rootVault),
-            address(deployer),
-            address(protocolTreasury),
-            address(gauge.rewardToken()),
-            protocolFeeD9
-        );
+        depositWrapper.initialize(address(rootVault), address(gauge.rewardToken()), deployer);
     }
 
     function deployGovernance() public {
@@ -182,8 +178,8 @@ contract Unit is Test {
 
     function initializeBaseStrategy() public {
         uint256[] memory minSwapAmounts = new uint256[](2);
-        minSwapAmounts[0] = 1e16;
-        minSwapAmounts[1] = 1e7;
+        minSwapAmounts[0] = 1e5;
+        minSwapAmounts[1] = 1e3;
 
         IIntegrationVault[] memory ammVaults = new IIntegrationVault[](1);
         ammVaults[0] = ammVault;
@@ -202,7 +198,7 @@ contract Unit is Test {
                 maxTickDeviation: 50,
                 minCapitalRatioDeviationX96: Q96 / 100,
                 minSwapAmounts: minSwapAmounts,
-                maxCapitalRemainderRatioX96: Q96,
+                maxCapitalRemainderRatioX96: Q96 / 50,
                 initialLiquidity: 1e9
             })
         );
@@ -220,11 +216,11 @@ contract Unit is Test {
             for (uint256 i = 0; i < tokens.length; i++) {
                 IERC20(tokens[i]).approve(address(depositWrapper), type(uint256).max);
             }
-            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), false);
+            depositWrapper.setStrategyInfo(address(strategy), false);
         } else {
-            depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), true);
+            depositWrapper.setStrategyInfo(address(strategy), true);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
     }
 
     function initializeOperatorStrategy() public {
@@ -446,7 +442,7 @@ contract Unit is Test {
         deposit(1);
         rebalance();
 
-        depositWrapper.addNewStrategy(address(rootVault), address(farm), address(strategy), true);
+        depositWrapper.setStrategyInfo(address(strategy), true);
         uint256[] memory tokenAmounts = new uint256[](2);
         tokenAmounts[0] = 10 ether;
         tokenAmounts[1] = 20000 * 1e6;
@@ -454,7 +450,7 @@ contract Unit is Test {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             deal(tokens[i], deployer, tokenAmounts[i]);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
         vm.stopPrank();
     }
 
@@ -493,7 +489,7 @@ contract Unit is Test {
         require(address(ammVault.helper()) == address(veloHelper));
         require(address(ammVault.positionManager()) == address(positionManager));
         require(ammVault.tokenId() != 0);
-        require(address(ammVault.strategyParams().farm) == address(farm));
+        require(address(ammVault.strategyParams().farmingPool) == address(depositWrapper));
         require(address(ammVault.strategyParams().gauge) == address(gauge));
     }
 
@@ -502,7 +498,7 @@ contract Unit is Test {
         require(address(ammVault.helper()) == address(veloHelper));
         require(address(ammVault.positionManager()) == address(positionManager));
         require(ammVault.tokenId() == 0);
-        require(address(ammVault.strategyParams().farm) == address(farm));
+        require(address(ammVault.strategyParams().farmingPool) == address(depositWrapper));
         require(address(ammVault.strategyParams().gauge) == address(gauge));
     }
 
@@ -612,7 +608,7 @@ contract Unit is Test {
             deal(tokens[i], account, tokenAmounts[i]);
             IERC20(tokens[i]).safeApprove(address(depositWrapper), type(uint256).max);
         }
-        depositWrapper.deposit(rootVault, tokenAmounts, 0, new bytes(0));
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
         vm.stopPrank();
     }
 
@@ -631,34 +627,49 @@ contract Unit is Test {
         addRewardToGauge(amount);
 
         skip(7 days);
-        ammVault.collectRewards();
+        (uint256 collectedUserRewards, uint256 collectedProtocolRewards) = ammVault.collectRewards();
 
-        uint256 collectedRewardAmount = IERC20(gauge.rewardToken()).balanceOf(address(farm));
-        assertApproxEqAbs(collectedRewardAmount, amount, 1 wei);
+        IERC20 reward = IERC20(gauge.rewardToken());
 
-        uint256 expectedProtocolFee = FullMath.mulDiv(collectedRewardAmount, farm.getStorage().protocolFeeD9, 1e9);
-        uint256 expectedUserRewards = collectedRewardAmount - expectedProtocolFee;
-
-        uint256 deployerLp = farm.balanceOf(deployer);
-        uint256 userLp = farm.balanceOf(user);
+        assertEq(reward.balanceOf(address(protocolTreasury)), collectedProtocolRewards);
+        assertEq(reward.balanceOf(address(depositWrapper)), collectedUserRewards);
+        assertApproxEqAbs(
+            FullMath.mulDiv(collectedProtocolRewards, D9, collectedUserRewards + collectedProtocolRewards),
+            protocolFeeD9,
+            1 wei
+        );
 
         vm.startPrank(deployer);
-        assertEq(expectedUserRewards, farm.updateRewardAmounts());
-        assertEq(expectedProtocolFee, IERC20(gauge.rewardToken()).balanceOf(protocolTreasury));
+        depositWrapper.setRewardsDuration(1 days);
+        depositWrapper.notifyRewardAmount(collectedUserRewards);
+        vm.stopPrank();
+
+        skip(2 days);
+
+        uint256 deployerLp = depositWrapper.balanceOf(deployer);
+        uint256 userLp = depositWrapper.balanceOf(user);
 
         uint256 expectedClaimedByDeployerAmounts = FullMath.mulDiv(
             deployerLp,
-            expectedUserRewards,
+            collectedUserRewards,
             deployerLp + userLp
         );
-        assertEq(expectedClaimedByDeployerAmounts, farm.claim(deployerTreasury));
-        assertEq(expectedClaimedByDeployerAmounts, IERC20(gauge.rewardToken()).balanceOf(deployerTreasury));
+        uint256 deployerEarned = depositWrapper.earned(deployer);
+        uint256 userEarned = depositWrapper.earned(user);
+
+        vm.startPrank(deployer);
+        assertApproxEqAbs(deployerEarned + userEarned, collectedUserRewards, 1e5);
+        assertApproxEqAbs(expectedClaimedByDeployerAmounts, deployerEarned, 1e5);
+        uint256 balanceBefore = reward.balanceOf(deployer);
+        depositWrapper.getReward();
+        assertEq(deployerEarned, reward.balanceOf(deployer) - balanceBefore);
         vm.stopPrank();
 
         vm.startPrank(user);
-        uint256 expectedClaimedByUserAmounts = FullMath.mulDiv(userLp, expectedUserRewards, deployerLp + userLp);
-        assertEq(expectedClaimedByUserAmounts, farm.claim(user));
-        assertEq(expectedClaimedByUserAmounts, IERC20(gauge.rewardToken()).balanceOf(user));
+        uint256 expectedClaimedByUserAmounts = FullMath.mulDiv(userLp, collectedUserRewards, deployerLp + userLp);
+        assertApproxEqAbs(expectedClaimedByUserAmounts, userEarned, 1e5);
+        depositWrapper.getReward();
+        assertEq(userEarned, reward.balanceOf(user));
         vm.stopPrank();
     }
 
@@ -676,29 +687,6 @@ contract Unit is Test {
 
     function testCollectRewardsQ95() external {
         _testCollectRewards(95);
-    }
-
-    function testStakeTokenId() external {
-        fullInitialization();
-
-        vm.startPrank(address(strategy));
-
-        uint256 tokenId = ammVault.tokenId();
-
-        assertTrue(gauge.stakedContains(address(ammVault), tokenId));
-        assertEq(positionManager.ownerOf(tokenId), address(gauge));
-
-        ammVault.unstakeTokenId();
-        assertFalse(gauge.stakedContains(address(ammVault), tokenId));
-        assertEq(positionManager.ownerOf(tokenId), address(ammVault));
-        vm.expectRevert(abi.encodePacked("NA"));
-        ammVault.unstakeTokenId();
-        ammVault.stakeTokenId();
-        assertTrue(gauge.stakedContains(address(ammVault), tokenId));
-        assertEq(positionManager.ownerOf(tokenId), address(gauge));
-        vm.expectRevert(abi.encodePacked("ERC721: approval to current owner"));
-        ammVault.stakeTokenId();
-        vm.stopPrank();
     }
 
     function _testPush(int24 q) private {

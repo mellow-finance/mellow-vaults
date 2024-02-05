@@ -13,7 +13,6 @@ import "../../src/test/MockRouter.sol";
 
 import "../../src/utils/VeloDepositWrapper.sol";
 import "../../src/utils/VeloHelper.sol";
-import "../../src/utils/VeloFarm.sol";
 import "../../src/utils/BaseAmmStrategyHelper.sol";
 import "../../src/utils/VeloDeployFactory.sol";
 
@@ -41,6 +40,8 @@ contract Integration is Test {
     address public protocolTreasury = address(bytes20(keccak256("treasury-1")));
     address public strategyTreasury = address(bytes20(keccak256("treasury-2")));
     address public farmTreasury = address(bytes20(keccak256("treasury-3")));
+    address public proxyAdmin = address(bytes20(keccak256("proxy-admin")));
+
     address public deployer = 0x7ee9247b6199877F86703644c97784495549aC5E;
     address public protocolAdmin = 0xAe259ed3699d1416840033ABAf92F9dD4534b2DC;
 
@@ -73,7 +74,6 @@ contract Integration is Test {
     VeloHelper public veloHelper = new VeloHelper(positionManager);
     VeloAdapter public veloAdapter = new VeloAdapter(positionManager);
     BaseAmmStrategyHelper public baseStrategyHelper = new BaseAmmStrategyHelper();
-    VeloDepositWrapper public depositWrapper;
 
     VeloDeployFactory public deployFactory;
     VeloDeployFactory.VaultInfo public vaultInfo;
@@ -109,17 +109,6 @@ contract Integration is Test {
 
         vm.stopPrank();
         vm.startPrank(deployer);
-    }
-
-    function deposit(uint256 coef) public {
-        uint256[] memory tokenAmounts = vaultInfo.rootVault.pullExistentials();
-        address[] memory tokens = vaultInfo.rootVault.vaultTokens();
-        for (uint256 i = 0; i < tokens.length; i++) {
-            tokenAmounts[i] *= 10 * coef;
-            deal(tokens[i], deployer, tokenAmounts[i]);
-            IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
-        }
-        depositWrapper.deposit(vaultInfo.rootVault, tokenAmounts, 0, new bytes(0));
     }
 
     function rebalance() public {
@@ -332,6 +321,18 @@ contract Integration is Test {
         skip(3 * 24 * 3600);
     }
 
+    function deposit(uint256 coef) public {
+        uint256[] memory tokenAmounts = vaultInfo.rootVault.pullExistentials();
+        address[] memory tokens = vaultInfo.rootVault.vaultTokens();
+        VeloDepositWrapper depositWrapper = VeloDepositWrapper(vaultInfo.depositWrapper);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            tokenAmounts[i] *= 10 * coef;
+            deal(tokens[i], deployer, tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(depositWrapper), tokenAmounts[i]);
+        }
+        depositWrapper.deposit(tokenAmounts, 0, new bytes(0));
+    }
+
     function _testWidth(int24 maxWidth) private {
         vm.startPrank(deployer);
 
@@ -339,13 +340,11 @@ contract Integration is Test {
         deployFactory = new VeloDeployFactory(
             deployer,
             positionManager,
-            ISwapRouter(address(swapRouter)),
             factory,
-            gaugeFactory
+            ISwapRouter(address(swapRouter)),
+            gaugeFactory,
+            new VeloDeployFactoryHelper(factory, ISwapRouter(address(swapRouter)))
         );
-
-        depositWrapper = new VeloDepositWrapper(deployer);
-        depositWrapper.grantRole(depositWrapper.ADMIN_ROLE(), address(deployFactory));
 
         deployGovernance();
 
@@ -362,12 +361,12 @@ contract Integration is Test {
                     farmTreasury: farmTreasury,
                     veloAdapter: address(veloAdapter),
                     veloHelper: address(veloHelper),
-                    depositWrapper: address(depositWrapper),
                     baseStrategySingleton: address(new BaseAmmStrategy()),
                     operatorStrategySingleton: address(new PulseOperatorStrategy()),
-                    farmSingleton: address(new VeloFarm()),
+                    depositWrapperSingleton: address(new VeloDepositWrapper(deployer, deployer)),
                     baseStrategyHelper: address(baseStrategyHelper),
-                    operator: deployer
+                    operator: deployer,
+                    proxyAdmin: proxyAdmin
                 }),
                 protocolFeeD9: 1e8,
                 positionsCount: 2,
