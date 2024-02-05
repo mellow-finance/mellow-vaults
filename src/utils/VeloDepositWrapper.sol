@@ -8,7 +8,7 @@ import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/utils/ILpCallback.sol";
 
 import "./DefaultAccessControlLateInit.sol";
-import "../../src/utils/external/synthetix/StakingRewards.sol";
+import "./external/synthetix/StakingRewards.sol";
 
 contract VeloDepositWrapper is DefaultAccessControlLateInit, StakingRewards {
     using SafeERC20 for IERC20;
