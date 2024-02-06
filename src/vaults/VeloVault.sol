@@ -20,10 +20,14 @@ contract VeloVault is IVeloVault, IntegrationVault {
 
     uint256 public constant D9 = 1e9;
 
+    /// @inheritdoc IVeloVault
     IVeloHelper public immutable helper;
+    /// @inheritdoc IVeloVault
     INonfungiblePositionManager public immutable positionManager;
 
+    /// @inheritdoc IVeloVault
     ICLPool public pool;
+    /// @inheritdoc IVeloVault
     uint256 public tokenId;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -41,14 +45,17 @@ contract VeloVault is IVeloVault, IntegrationVault {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVeloVault).interfaceId);
     }
 
+    /// @inheritdoc IVeloVault
     function liquidityToTokenAmounts(uint128 liquidity) public view returns (uint256[] memory tokenAmounts) {
         return helper.liquidityToTokenAmounts(liquidity, pool, tokenId);
     }
 
+    /// @inheritdoc IVeloVault
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) public view returns (uint128 liquidity) {
         return helper.tokenAmountsToLiquidity(tokenAmounts, pool, tokenId);
     }
 
+    /// @inheritdoc IVeloVault
     function strategyParams() public view returns (IVeloVaultGovernance.StrategyParams memory) {
         return IVeloVaultGovernance(address(_vaultGovernance)).strategyParams(_nft);
     }
@@ -60,6 +67,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
         helper = helper_;
     }
 
+    /// @inheritdoc IVeloVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -71,6 +79,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
         _initialize(vaultTokens_, nft_);
     }
 
+    /// @inheritdoc IERC721Receiver
     function onERC721Received(
         address operator,
         address from,
@@ -103,6 +112,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
+    /// @inheritdoc IVeloVault
     function collectRewards() external override returns (uint256, uint256) {
         if (tokenId == 0) return (0, 0);
         IVeloVaultGovernance.StrategyParams memory params = strategyParams();
@@ -141,6 +151,9 @@ contract VeloVault is IVeloVault, IntegrationVault {
         return abi.decode(options, (uint256, uint256, uint256));
     }
 
+    /// @notice Internal function to check if an address is a strategy contract address.
+    /// @param addr The address to check.
+    /// @return bool indicating whether the address is a strategy contract.
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
@@ -209,7 +222,7 @@ contract VeloVault is IVeloVault, IntegrationVault {
                     tokenAmounts[0],
                     tokenAmounts[1]
                 ) +
-                1;
+                1; // This is necessary due to precision issues in the liquidity calculation library functions.
 
             liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
         }

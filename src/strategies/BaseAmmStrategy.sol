@@ -19,13 +19,31 @@ import "../libraries/external/TickMath.sol";
 
 import "../utils/DefaultAccessControlLateInit.sol";
 
+/*
+    The contract represents a base strategy operating on a set of positions within a specific AMM.
+    The AMM itself is exclusively defined by the corresponding adapter, while the rebalancing logic is determined by 
+    an external operator-strategy contract, which calls the rebalance function of this BaseAmmStrategy.
+    
+    Each position is defined by ticks, as well as by the capital ratio relative to the total capital of the corresponding ERC20RootVault.
+*/
 contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
+    /// @dev Structure defining information about a position - the lower and upper ticks of the position, as well as
+    /// the capital ratio within the position relative to the total capital of the corresponding ERC20RootVault.
+    /// @param tickLower The lower tick of the position.
+    /// @param tickUpper The upper tick of the position.
+    /// @param capitalRatioX96 The capital ratio within the position relative to the total capital of the ERC20RootVault, scaled by 2^96.
     struct Position {
         int24 tickLower;
         int24 tickUpper;
         uint256 capitalRatioX96;
     }
 
+    /// @dev Structure containing information about token swapping method during rebalancing process.
+    /// @param router The address of the router contract for token swapping.
+    /// @param tokenInIndex The index of the token to be swapped.
+    /// @param amountIn The amount of token to be swapped in.
+    /// @param amountOutMin The minimum acceptable amount of token to be received in the swap.
+    /// @param data Additional data needed for the token swap.
     struct SwapData {
         address router;
         uint256 tokenInIndex;
@@ -34,6 +52,14 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         bytes data;
     }
 
+    /// @dev Structure containing mutable parameters of the strategy.
+    /// @param securityParams Parameters for protecting against MEV manipulations.
+    /// @param maxPriceSlippageX96 Parameter for protecting against price slippage during token swaps.
+    /// @param maxTickDeviation Parameter determining the maximum deviation between spot ticks before and after the swap.
+    /// @param minCapitalRatioDeviationX96 Minimum deficiency expressed as a fraction of the capital, from which liquidity will be added to the position during rebalancing.
+    /// @param minSwapAmounts Minimum amounts of tokens for swaps to occur.
+    /// @param maxCapitalRemainderRatioX96 Maximum portion that should remain in the ERC20Vault after a swap.
+    /// @param initialLiquidity Initial amount of liquidity in the newly minted position.
     struct MutableParams {
         bytes securityParams;
         uint256 maxPriceSlippageX96;
@@ -44,6 +70,11 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         uint128 initialLiquidity;
     }
 
+    /// @dev Structure containing immutable parameters of the strategy.
+    /// @param adapter Adapter for interacting with the AMM protocol and corresponding AMM vaults.
+    /// @param pool Pool for which the strategy operates, as well as all AMM vaults.
+    /// @param erc20Vault Address of the ERC20 vault, serving as a buffer for deposits/withdrawals and swaps.
+    /// @param ammVaults Array of AMM vaults.
     struct ImmutableParams {
         IAdapter adapter;
         address pool;
@@ -51,6 +82,9 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         IIntegrationVault[] ammVaults;
     }
 
+    /// @dev Structure containing storage with all necessary nested structures for the strategy.
+    /// @param immutableParams Immutable parameters of the strategy.
+    /// @param mutableParams Mutable parameters of the strategy.
     struct Storage {
         ImmutableParams immutableParams;
         MutableParams mutableParams;
@@ -66,6 +100,12 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    /// @dev Function for initializing the strategy.
+    /// It performs validation of all parameters.
+    /// This function can only be called once.
+    /// @param admin The address of the admin for the strategy.
+    /// @param immutableParams Immutable parameters of the strategy.
+    /// @param mutableParams Mutable parameters of the strategy.
     function initialize(
         address admin,
         ImmutableParams memory immutableParams,
@@ -88,12 +128,18 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         DefaultAccessControlLateInit.init(admin);
     }
 
+    /// @dev Function for updating the mutable parameters of the strategy.
+    /// It can only be called by an address with the ADMIN_ROLE role.
+    /// @param mutableParams The new mutable parameters of the strategy.
     function updateMutableParams(MutableParams memory mutableParams) external {
         _requireAdmin();
         validateMutableParams(mutableParams);
         _contractStorage().mutableParams = mutableParams;
     }
 
+    /// @dev Function for validating the mutable parameters.
+    /// @param mutableParams The mutable parameters to validate.
+    /// It reverts with an error if the conditions are not met.
     function validateMutableParams(MutableParams memory mutableParams) public view {
         Storage storage s = _contractStorage();
         s.immutableParams.adapter.validateSecurityParams(mutableParams.securityParams);
@@ -106,14 +152,21 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         if (mutableParams.initialLiquidity == 0) revert(ExceptionsLibrary.VALUE_ZERO);
     }
 
+    /// @dev Function for retrieving the mutable parameters of the strategy.
+    /// @return mutableParams The mutable parameters of the strategy.
     function getMutableParams() public view returns (MutableParams memory) {
         return _contractStorage().mutableParams;
     }
 
+    /// @dev Function for retrieving the immutable parameters of the strategy.
+    /// @return immutableParams The immutable parameters of the strategy.
     function getImmutableParams() public view returns (ImmutableParams memory) {
         return _contractStorage().immutableParams;
     }
 
+    /// @dev Function for retrieving the current state of positions in the strategy.
+    /// @param s The storage struct containing all necessary information for the strategy, including both immutable and mutable parameters.
+    /// @return currentState An array of Position structs containing information about positions in all ammVaults, in the order specified in immutableParams.
     function getCurrentState(Storage memory s) public view returns (Position[] memory currentState) {
         IIntegrationVault[] memory ammVaults = s.immutableParams.ammVaults;
         currentState = new Position[](ammVaults.length);
@@ -150,6 +203,23 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    /// @notice This function performs rebalancing of positions within the strategy.
+    /// It can only be called by an address with the ADMIN_ROLE or OPERATOR roles.
+    /// @param targetState An array of Position structs representing the target positions and the desired capital allocation among them.
+    /// Each Position struct contains:
+    /// - tickLower: The lower tick of the position.
+    /// - tickUpper: The upper tick of the position.
+    /// - capitalRatioX96: The capital ratio within the position relative to the total capital of the ERC20RootVault, scaled by 2^96.
+    /// @param swapData A SwapData struct containing data necessary for token swapping during rebalancing.
+    /// The SwapData struct includes:
+    /// - router: The address of the router contract for token swapping.
+    /// - tokenInIndex: The index of the token to be swapped.
+    /// - amountIn: The amount of token to be swapped in.
+    /// - amountOutMin: The minimum acceptable amount of token to be received in the swap.
+    /// - data: Additional data needed for the token swap.
+    /// @dev This function performs the rebalancing process according to the specified targetState and swapData.
+    /// It adjusts the positions within the strategy to match the targetState, performing token swaps as necessary.
+    /// The rebalancing process is executed to ensure the strategy maintains its desired allocation of capital across its positions.
     function rebalance(Position[] memory targetState, SwapData calldata swapData) external {
         _requireAtLeastOperator();
         Storage memory s = _contractStorage();
@@ -159,6 +229,13 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         _ratioRebalance(targetState, s);
     }
 
+    /// @notice This function allows for manual movement of liquidity between integration vaults.
+    /// It can only be called by an address with the ADMIN_ROLE role.
+    /// Usage of this function is intended for emergency cases.
+    /// @param fromVault The integration vault from which liquidity will be pulled.
+    /// @param toVault The integration vault to which liquidity will be deposited.
+    /// @param tokenAmounts An array containing the amounts of tokens to be moved.
+    /// @param vaultOptions Additional options for vault manipulation.
     function manualPull(
         IIntegrationVault fromVault,
         IIntegrationVault toVault,
@@ -169,6 +246,10 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         fromVault.pull(address(toVault), fromVault.vaultTokens(), tokenAmounts, vaultOptions);
     }
 
+    /// @notice This callback function is used for pushing tokens into AMM vaults.
+    /// It is called within the deposit wrapper or ERC20RootVault under certain conditions.
+    /// It can be called by any user.
+    /// @inheritdoc ILpCallback
     function depositCallback() external {
         ImmutableParams memory immutableParams = _contractStorage().immutableParams;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
@@ -183,8 +264,12 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    /// @inheritdoc ILpCallback
     function withdrawCallback() external {}
 
+    /// @dev This function iterates through all AMM vaults associated with the strategy and collects rewards and fees using delegatecall to the adapter.
+    /// @param s The storage struct containing all necessary information for the strategy, including both immutable and mutable parameters.
+    /// It reverts with an INVALID_STATE error if the delegatecall fails.
     function _compound(Storage memory s) private {
         for (uint256 i = 0; i < s.immutableParams.ammVaults.length; i++) {
             (bool success, ) = address(s.immutableParams.adapter).delegatecall(
@@ -194,6 +279,11 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    /// @dev Private function for rebalancing positions to the state described by the targetState array.
+    /// @param targetState An array of Position structs representing the target positions and the desired capital allocation among them.
+    /// @param currentState An array of Position structs representing the current positions and capital allocation in the strategy.
+    /// @param s The storage struct containing all necessary information for the strategy, including both immutable and mutable parameters.
+    /// @notice This function compares the current positions (currentState) with the target positions (targetState) and rebalances the strategy accordingly.
     function _positionsRebalance(
         Position[] memory targetState,
         Position[] memory currentState,
@@ -246,6 +336,9 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    /// @dev This function performs token swapping according to the logic described in the swapData struct.
+    /// @param swapData A SwapData struct containing data necessary for token swapping.
+    /// @param s The storage struct containing all necessary information for the strategy, including both immutable and mutable parameters.
     function _swap(SwapData calldata swapData, Storage memory s) private {
         IERC20Vault erc20Vault = s.immutableParams.erc20Vault;
         address[] memory tokens = erc20Vault.vaultTokens();
@@ -286,6 +379,16 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         );
     }
 
+    /// @dev Private function for pushing tokens from erc20Vault into AMM vaults.
+    /// It is called from the _ratioRebalance function, where additional computations take place (separated due to stack-too-deep).
+    /// @param targetState An array of Position structs representing the target positions and the desired capital allocation among them.
+    /// @param s The storage struct containing all necessary information for the strategy, including both immutable and mutable parameters.
+    /// @param tvls An array of arrays containing the tvls for each AMM vault.
+    /// @param priceX96 The price of token1 relative to token0, scaled by 2^96.
+    /// @param minCapitalDeviationInToken1 The minimum capital deviation in token1.
+    /// @param capitalInToken1 The capital in token1.
+    /// @param sqrtRatioX96 The square root of the price ratio, scaled by 2^96.
+    /// @param tokens An array containing the addresses of tokens involved in the rebalancing.
     function _pushIntoPositions(
         Position[] memory targetState,
         Storage memory s,
@@ -332,6 +435,9 @@ contract BaseAmmStrategy is DefaultAccessControlLateInit, ILpCallback {
         }
     }
 
+    /// @dev Private function for pushing tokens from erc20Vault into AMM vaults.
+    /// @param targetState An array of Position structs representing the target positions and the desired capital allocation among them.
+    /// @param s The storage struct containing all necessary information for the strategy, including both immutable and mutable parameters.
     function _ratioRebalance(Position[] memory targetState, Storage memory s) private {
         uint256 n = s.immutableParams.ammVaults.length;
         uint256[][] memory tvls = new uint256[][](n);

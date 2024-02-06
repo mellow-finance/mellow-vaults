@@ -54,23 +54,39 @@ contract Unit is Test {
     function test() external {
         for (uint256 i = 0; i < pools.length; i++) {
             IUniswapV3Pool pool = IUniswapV3Pool(pools[i]);
+            address token0 = pool.token0();
+            address token1 = pool.token1();
+            uint256 balance0 = IERC20(token0).balanceOf(address(pool)) / 10**IERC20Metadata(token0).decimals();
+            uint256 balance1 = IERC20(token1).balanceOf(address(pool)) / 10**IERC20Metadata(token1).decimals();
+
+            if (balance0 <= 10 || balance1 <= 10) continue;
+            if (balance0 <= 100 && balance1 <= 100) continue;
+            // string memory suffix = string(
+            //     abi.encodePacked(
+            //         ", balance token0: ",
+            //         vm.toString(balance0),
+            //         ", balance token1: ",
+            //         vm.toString(balance1)
+            //     )
+            // );
+
             (int24 positionWidth, int24 maxPositionWidth) = manager.get(pool, pool.tickSpacing());
-            console2.log(
-                string(
-                    abi.encodePacked(
-                        IERC20Metadata(pool.token0()).symbol(),
-                        "-",
-                        IERC20Metadata(pool.token1()).symbol(),
-                        "-",
-                        vm.toString(pool.fee()),
-                        ": ",
-                        vm.toString(positionWidth),
-                        ", ",
-                        vm.toString(maxPositionWidth),
-                        ";"
-                    )
+
+            string memory prefix = string(
+                abi.encodePacked(
+                    IERC20Metadata(token0).symbol(),
+                    "-",
+                    IERC20Metadata(token1).symbol(),
+                    "-",
+                    vm.toString(pool.fee()),
+                    ": ",
+                    vm.toString(positionWidth),
+                    ", ",
+                    vm.toString(maxPositionWidth)
                 )
             );
+
+            console2.log(prefix);
         }
     }
 }

@@ -3,15 +3,26 @@ pragma solidity ^0.8.0;
 
 import "./external/LiquidityAmounts.sol";
 
+/*
+    Auxiliary library for Uniswap calculations.
+*/
 library UniswapCalculations {
     uint256 public constant Q96 = 2**96;
 
+    /// @dev Structure containing information about prices at position boundaries and spot price.
+    /// @param sqrtLowerPriceX96 The square root price of the lower boundary of the position.
+    /// @param sqrtUpperPriceX96 The square root price of the upper boundary of the position.
+    /// @param sqrtPriceX96 The square root spot price of the position.
     struct PositionParams {
         uint160 sqrtLowerPriceX96;
         uint160 sqrtUpperPriceX96;
         uint160 sqrtPriceX96;
     }
 
+    /// @dev Function for calculating the proportion of token1 to total capital in a given position.
+    /// @param position The parameters of the position.
+    /// @param priceX96 The price of the token.
+    /// @return targetRatioOfToken1X96 The target ratio of token1 in the position.
     function calculateTargetRatioOfToken1(PositionParams memory position, uint256 priceX96)
         public
         pure
@@ -33,6 +44,13 @@ library UniswapCalculations {
         targetRatioOfToken1X96 = FullMath.mulDiv(y, Q96, FullMath.mulDiv(x, priceX96, Q96) + y);
     }
 
+    /// @dev Function for calculating the amount of tokens for a swap, for subsequent deposit without remainder into a given position.
+    /// @param position The parameters of the position.
+    /// @param amount0 The amount of token0.
+    /// @param amount1 The amount of token1.
+    /// @param swapFee The swap fee.
+    /// @return tokenInIndex The index of the token to be swapped.
+    /// @return amountIn The amount of token to be swapped in.
     function calculateAmountsForSwap(
         PositionParams memory position,
         uint256 amount0,

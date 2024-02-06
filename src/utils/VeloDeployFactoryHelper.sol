@@ -36,11 +36,18 @@ contract VeloDeployFactoryHelper {
     ICLFactory public immutable factory;
     ISwapRouter public immutable swapRouter;
 
+    /// @param factory_ The address of the ICLFactory contract.
+    /// @param swapRouter_ The address of the ISwapRouter contract.
     constructor(ICLFactory factory_, ISwapRouter swapRouter_) {
         swapRouter = swapRouter_;
         factory = factory_;
     }
 
+    /// @notice This function creates an ERC20RootVault with subvaults erc20Vault and veloVaults.
+    /// @param params The internal parameters for the VeloDeployFactory contract.
+    /// @param info Information about the newly created ERC20RootVault.
+    /// @param nfts An array of NFT IDs representing the subvaults of the ERC20RootVault.
+    /// @return VaultInfo updated VaultInfo with ERC20RootVault address.
     function _combineVaults(
         VeloDeployFactory.InternalParams memory params,
         VeloDeployFactory.VaultInfo memory info,
@@ -86,6 +93,11 @@ contract VeloDeployFactoryHelper {
         return info;
     }
 
+    /// @notice This function deploys erc20Vault and all veloVaults, sets strategyParams for them, and initializes
+    /// VeloDepositWrapper.
+    /// @param params The internal parameters for the VeloDeployFactory contract.
+    /// @param info Information about the newly created ERC20RootVault.
+    /// @return VaultInfo updated VaultInfo with all subvaults.
     function deployVaults(VeloDeployFactory.InternalParams memory params, VeloDeployFactory.VaultInfo memory info)
         external
         returns (VeloDeployFactory.VaultInfo memory)
@@ -136,6 +148,8 @@ contract VeloDeployFactoryHelper {
         return info;
     }
 
+    /// @notice Performs the initial deposit into the ERC20RootVault.
+    /// @param info Information about the newly created ERC20RootVault.
     function initialDeposit(VeloDeployFactory.VaultInfo memory info) external {
         uint256[] memory tokenAmounts = info.rootVault.pullExistentials();
         for (uint256 i = 0; i < info.tokens.length; i++) {
@@ -153,6 +167,9 @@ contract VeloDeployFactoryHelper {
         VeloDepositWrapper(info.depositWrapper).setStrategyInfo(address(info.baseStrategy), true);
     }
 
+    /// @notice Initiates an initial rebalance for the specified strategy using the provided parameters.
+    /// @param params The internal parameters for the VeloDeployFactory contract.
+    /// @param info Information about the newly created ERC20RootVault.
     function rebalance(VeloDeployFactory.InternalParams memory params, VeloDeployFactory.VaultInfo memory info)
         external
     {

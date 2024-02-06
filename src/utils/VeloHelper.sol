@@ -14,6 +14,7 @@ contract VeloHelper is IVeloHelper {
         positionManager = positionManager_;
     }
 
+    /// @inheritdoc IVeloHelper
     function liquidityToTokenAmounts(
         uint128 liquidity,
         ICLPool pool,
@@ -33,6 +34,7 @@ contract VeloHelper is IVeloHelper {
         );
     }
 
+    /// @inheritdoc IVeloHelper
     function tokenAmountsToLiquidity(
         uint256[] memory tokenAmounts,
         ICLPool pool,
@@ -52,6 +54,7 @@ contract VeloHelper is IVeloHelper {
         );
     }
 
+    /// @inheritdoc IVeloHelper
     function tokenAmountsToMaximalLiquidity(
         uint160 sqrtRatioX96,
         int24 tickLower,
@@ -72,6 +75,7 @@ contract VeloHelper is IVeloHelper {
         }
     }
 
+    /// @inheritdoc IVeloHelper
     function calculateTvlBySpotPrice(uint256 tokenId) public view returns (uint256[] memory) {
         (, , address token0, address token1, int24 tickSpacing, , , uint128 liquidity, , , , ) = positionManager
             .positions(tokenId);

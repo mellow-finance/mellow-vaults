@@ -11,9 +11,12 @@ import "../strategies/PulseOperatorStrategy.sol";
 import "./DefaultAccessControl.sol";
 
 contract UniOperatorManager is DefaultAccessControl {
-    uint16 public constant MAX_OBSERVATIONS = 1000;
+    uint256 public constant Q96 = 2**96;
+    uint256 public constant Q48 = 2**48;
+
+    uint16 public constant MAX_OBSERVATIONS = 600;
     uint16 public constant DEFAULT_OBSERVATION_CARDINALITY = 600;
-    int24 public constant POSITION_WIDTH_COEFFICIENT = 4; // positionWidth = sigma * coeffient
+    int24 public constant POSITION_WIDTH_COEFFICIENT = 60; // positionWidth = sigma * coeffient
     int24 public constant MAX_POSITION_WIDTH_COEFFICIENT = 2; // maxPositionWidth = positionWidth * coefficient
 
     constructor(address admin) DefaultAccessControl(admin) {}
@@ -101,11 +104,14 @@ contract UniOperatorManager is DefaultAccessControl {
 
             int48 d = averageSqrDelta - averageDelta**2;
             sigma = int24(int256(CommonLibrary.sqrt(uint48(d))));
+            // TODO: calculate in offchain
+            // create bot for this
         }
         {
-            uint256 timespan = block.timestamp - nextTimestamp;
-            int24 coefficient = int24(int256(CommonLibrary.sqrt((7 days * 1000) / timespan)));
-            positionWidth = sigma * coefficient * POSITION_WIDTH_COEFFICIENT;
+            uint256 coefficientX48 = CommonLibrary.sqrt(FullMath.mulDiv(7 days, Q96, block.timestamp - nextTimestamp));
+            positionWidth = int24(
+                int256(FullMath.mulDiv(uint24(sigma * POSITION_WIDTH_COEFFICIENT), coefficientX48, Q48))
+            );
         }
         if (positionWidth % tickSpacing != 0 || positionWidth == 0) {
             positionWidth += tickSpacing - (positionWidth % tickSpacing);

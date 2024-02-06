@@ -11,6 +11,16 @@ import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/CommonLibrary.sol";
 
+/*
+    VeloAdapter is an adapter contract for VeloVault, designed to handle:
+        - Position creation
+        - Position updates within the Vault
+        - Reward and fee collection
+        - Pool price retrieval
+        - Detection of MEV manipulations within pools
+
+    It is recommended that all mutable functions are accessed by external contracts using delegatecall.
+*/
 contract VeloAdapter is IAdapter {
     error InvalidParams();
     error PriceManipulationDetected();
@@ -18,6 +28,9 @@ contract VeloAdapter is IAdapter {
 
     using SafeERC20 for IERC20;
 
+    /// @dev Parameters for protection against MEV manipulations
+    /// @param lookback - total number of deltas involved in the analysis
+    /// @param maxAllowedDelta - maximum allowed delta
     struct SecurityParams {
         uint16 lookback;
         int24 maxAllowedDelta;
@@ -32,6 +45,12 @@ contract VeloAdapter is IAdapter {
         positionManager = positionManager_;
     }
 
+    /// @dev This function creates a position with selected ticks and liquidity for a specified pool.
+    /// @param poolAddress The address of the pool where the position will be created.
+    /// @param tickLower The lower tick of the position.
+    /// @param tickUpper The upper tick of the position.
+    /// @param liquidity The amount of liquidity to be provided for the position.
+    /// @param recipient The address that will become the owner of the created position.
     function mint(
         address poolAddress,
         int24 tickLower,
@@ -72,6 +91,10 @@ contract VeloAdapter is IAdapter {
         IERC20(pool.token1()).safeApprove(address(positionManager), 0);
     }
 
+    /// @dev This function swaps an empty position in the Vault for a new position with the ID equal to newNft.
+    /// @param from The address from which the empty position is being swapped.
+    /// @param vault The address of the Vault contract.
+    /// @param newNft The ID of the new position.
     function swapNft(
         address from,
         address vault,
@@ -84,10 +107,17 @@ contract VeloAdapter is IAdapter {
         }
     }
 
+    /// @dev This function collects rewards from the Vault.
+    /// @param vault The address of the Vault contract.
     function compound(address vault) external {
         IVeloVault(vault).collectRewards();
     }
 
+    /// @dev This function returns information about the ticks and liquidity for a position based on its ID.
+    /// @param tokenId_ The ID of the position.
+    /// @return tickLower The lower tick of the position.
+    /// @return tickUpper The upper tick of the position.
+    /// @return liquidity The amount of liquidity in the position.
     function positionInfo(uint256 tokenId_)
         external
         view
@@ -102,10 +132,20 @@ contract VeloAdapter is IAdapter {
         }
     }
 
+    /// @dev This function returns the ID of the position for the Vault.
+    /// @param vault The address of the Vault contract.
+    /// @return The ID of the position.
     function tokenId(address vault) external view returns (uint256) {
         return IVeloVault(vault).tokenId();
     }
 
+    /// @dev This function returns information about the spot price, additionally checking the pool for MEV manipulations.
+    ///      If there are not enough observations in the pool's observations array, the function reverts with error NotEnoughObservations.
+    ///      If the price is manipulated, the function reverts with error PriceManipulationDetected.
+    /// @param poolAddress The address of the pool.
+    /// @param params security parameters (optional).
+    /// @return sqrtPriceX96 The square root price of the token0/token1 pair.
+    /// @return spotTick The current tick of the pool.
     function slot0EnsureNoMEV(address poolAddress, bytes memory params)
         external
         view
@@ -133,6 +173,14 @@ contract VeloAdapter is IAdapter {
         }
     }
 
+    /// @dev This function returns information about the price as follows:
+    ///      1. If no swaps were made in the current block, it returns the spot price.
+    ///      2. Otherwise, it returns the last price from the observations array.
+    ///      In the absence of inter-block price manipulation, the returned price is considered unmanipulated.
+    ///      If there are not enough observations in the pool's observations array, the function reverts with error NotEnoughObservations.
+    /// @param pool The address of the pool.
+    /// @return The square root price of the token0/token1 pair.
+    /// @return The current tick of the pool.
     function getOraclePrice(address pool) external view override returns (uint160, int24) {
         (
             uint160 spotSqrtPriceX96,
@@ -157,10 +205,17 @@ contract VeloAdapter is IAdapter {
         return (sqrtPriceX96, tick);
     }
 
+    /// @dev This function returns information about the spot price.
+    ///      There is no protection against manipulations in this function.
+    /// @param poolAddress The address of the pool.
+    /// @return sqrtPriceX96 The square root price of the token0/token1 pair.
+    /// @return spotTick The current tick of the pool.
     function slot0(address poolAddress) public view returns (uint160 sqrtPriceX96, int24 spotTick) {
         (sqrtPriceX96, spotTick, , , , ) = ICLPool(poolAddress).slot0();
     }
 
+    /// @dev Function for validating parameters for MEV protection.
+    /// @param params The parameters to validate.
     function validateSecurityParams(bytes memory params) external pure {
         if (params.length == 0) return;
         SecurityParams memory securityParams = abi.decode(params, (SecurityParams));
