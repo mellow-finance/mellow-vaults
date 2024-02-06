@@ -7,8 +7,10 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
+/// @notice Governance that manages all Velodrome Vaults params and can deploy a new VeloVault.
 contract VeloVaultGovernance is ContractMeta, IVeloVaultGovernance, VaultGovernance {
+    /// @notice The maximum protocol fee that can be charged, represented as a scaled integer.
+    /// The value is set to 3e8, which corresponds to a 30% fee.
     uint256 public constant MAX_PROTOCOL_FEE = 3e8; // 30%
 
     /// @notice Creates a new contract.

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "../interfaces/external/velo/ICLPool.sol";
-import "../interfaces/external/velo/INonfungiblePositionManager.sol";
+import "../interfaces/external/univ3/IUniswapV3Pool.sol";
+import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 
 import "../libraries/CommonLibrary.sol";
 
@@ -10,7 +10,7 @@ import "../strategies/PulseOperatorStrategy.sol";
 
 import "./DefaultAccessControl.sol";
 
-contract VeloOperatorManager is DefaultAccessControl {
+contract UniOperatorManager is DefaultAccessControl {
     uint256 public constant Q96 = 2**96;
     uint256 public constant Q48 = 2**48;
 
@@ -35,7 +35,7 @@ contract VeloOperatorManager is DefaultAccessControl {
 
     function _manage(PulseOperatorStrategy strategy) private returns (int24 positionWidth, int24 maxPositionWidth) {
         PulseOperatorStrategy.ImmutableParams memory params = strategy.getImmutableParams();
-        ICLPool pool = ICLPool(params.strategy.getImmutableParams().pool);
+        IUniswapV3Pool pool = IUniswapV3Pool(params.strategy.getImmutableParams().pool);
         (positionWidth, maxPositionWidth) = get(pool, params.tickSpacing);
         if (positionWidth != 0 && maxPositionWidth != 0) {
             PulseOperatorStrategy.MutableParams memory mutableParams = strategy.getMutableParams();
@@ -53,7 +53,7 @@ contract VeloOperatorManager is DefaultAccessControl {
         int56 nextCumulativeTick;
     }
 
-    function get(ICLPool pool, int24 tickSpacing) public returns (int24 positionWidth, int24 maxPositionWidth) {
+    function get(IUniswapV3Pool pool, int24 tickSpacing) public returns (int24 positionWidth, int24 maxPositionWidth) {
         Stack memory stack;
 
         {
@@ -64,8 +64,9 @@ contract VeloOperatorManager is DefaultAccessControl {
                 stack.observationIndex,
                 stack.observationCardinality,
                 observationCardinalityNext,
+                ,
 
-            ) = ICLPool(pool).slot0();
+            ) = IUniswapV3Pool(pool).slot0();
             if (observationCardinalityNext < DEFAULT_OBSERVATION_CARDINALITY) {
                 pool.increaseObservationCardinalityNext(DEFAULT_OBSERVATION_CARDINALITY);
             }
@@ -103,6 +104,8 @@ contract VeloOperatorManager is DefaultAccessControl {
 
             int48 d = averageSqrDelta - averageDelta**2;
             sigma = int24(int256(CommonLibrary.sqrt(uint48(d))));
+            // TODO: calculate in offchain
+            // create bot for this
         }
         {
             uint256 coefficientX48 = CommonLibrary.sqrt(FullMath.mulDiv(7 days, Q96, block.timestamp - nextTimestamp));
