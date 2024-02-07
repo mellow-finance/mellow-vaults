@@ -161,14 +161,15 @@ contract VeloAdapter is IAdapter {
 
         (uint32 nextTimestamp, int56 nextCumulativeTick, , ) = ICLPool(poolAddress).observations(observationIndex);
         int24 nextTick = spotTick;
-        int24 maxAllowedDelta = securityParams.maxAllowedDelta;
         for (uint16 i = 1; i <= lookback; i++) {
             uint256 index = (observationCardinality + observationIndex - i) % observationCardinality;
-            (uint32 timestamp, int56 tickCumulative, , ) = ICLPool(poolAddress).observations(index);
+            (uint32 timestamp, int56 tickCumulative, , bool initialized) = ICLPool(poolAddress).observations(index);
+            if (!initialized) revert NotEnoughObservations();
             int24 tick = int24((nextCumulativeTick - tickCumulative) / int56(uint56(nextTimestamp - timestamp)));
             (nextTimestamp, nextCumulativeTick) = (timestamp, tickCumulative);
             int24 delta = nextTick - tick;
-            if (delta > maxAllowedDelta || delta < -maxAllowedDelta) revert PriceManipulationDetected();
+            if (delta < 0) delta = -delta;
+            if (delta > securityParams.maxAllowedDelta) revert PriceManipulationDetected();
             nextTick = tick;
         }
     }
