@@ -9,7 +9,7 @@
 **We're buliding permissionless vaults ecosystem for trustless automatic DeFi strategies.
 The protocol is designed for implementing multi-token cross-protocol liquidity rebalancing.**
 
-The Vault contracts hold the tokens and rebalance them both inside other protocols and between them. Strategy contracts interact with Vault contracts definig the rebalancing parameters.
+The Vault contracts hold the tokens and rebalance them both inside other protocols and between them. Strategy contracts interact with Vault contracts defining the rebalancing parameters.
 
 **Liquidity provider**
 Users pick a strategy that fits their needs and allocate their assets into a vault to earn yield. When the assets are deposited, users get composable LP tokens (ERC-20).
